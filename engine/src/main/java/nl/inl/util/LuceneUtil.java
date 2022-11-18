@@ -369,6 +369,15 @@ public final class LuceneUtil {
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
             AnnotationSensitivity annotSensitivity, Set<String> searchTerms, boolean alt) {
+
+        /**
+         *  IDEAS:
+         *  - also filter by any of the terms occurring (although that won't do much if you have many terms)
+         *  - do one query per term, then get the frequency for that term per doc from the results
+         *    (probably faster than retrieving all the term vectors)
+         */
+
+
         try {
             Map<String, Integer> freq = new HashMap<>();
             IndexReader indexReader = indexSearcher.getIndexReader();

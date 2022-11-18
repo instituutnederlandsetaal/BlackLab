@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -536,7 +537,7 @@ public class WebserviceOperations {
         Query q = params.filterQuery();
         // May also null/empty to retrieve all terms!
         Set<String> terms = params.getTerms();
-        boolean useAlternateTermFreqMethod = params.getParameters().get("alt").equals("true");
+        boolean useAlternateTermFreqMethod = Boolean.parseBoolean(params.getParameters().get("alt"));
         TermFrequencyList tfl = blIndex.termFrequencies(annotSensitivity, q, terms, useAlternateTermFreqMethod);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
