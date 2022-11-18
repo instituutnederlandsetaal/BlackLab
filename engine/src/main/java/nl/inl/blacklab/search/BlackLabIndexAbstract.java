@@ -709,8 +709,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery,
-            Set<String> terms) {
-        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity, terms);
+            Set<String> terms, boolean alt) {
+        Map<String, Integer> freq = LuceneUtil.termFrequencies(searcher(), filterQuery, annotSensitivity, terms, alt);
         return new TermFrequencyList(QueryInfo.create(this, annotSensitivity.annotation().field()), freq, true);
     }
 

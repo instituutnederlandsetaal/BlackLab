@@ -223,7 +223,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param terms a list of terms to retrieve frequencies for, or null/empty to retrieve frequencies for all terms
      * @return term frequencies
      */
-    TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms);
+    TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms, boolean alt);
 
     /**
      * Explain how a SpanQuery is rewritten to an optimized version to be executed
