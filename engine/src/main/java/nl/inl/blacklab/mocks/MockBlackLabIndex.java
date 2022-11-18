@@ -232,7 +232,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms) {
+    public TermFrequencyList termFrequencies(AnnotationSensitivity annotSensitivity, Query filterQuery, Set<String> terms, boolean alt) {
         throw new UnsupportedOperationException();
     }
 

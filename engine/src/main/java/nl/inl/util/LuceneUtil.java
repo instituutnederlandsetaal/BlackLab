@@ -40,7 +40,6 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -355,9 +354,7 @@ public final class LuceneUtil {
      * @return term frequencies
      */
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
-            AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
-        boolean alt = Boolean.parseBoolean(BlackLab.featureFlag("termfreq-alt"));
-
+            AnnotationSensitivity annotSensitivity, Set<String> searchTerms, boolean alt) {
         try {
             Weight weight = null;
             if (documentFilterQuery != null) {
