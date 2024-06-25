@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.util.XmlHighlighter;
@@ -125,6 +126,14 @@ public class TestXmlHighlighter {
         hl.setUnbalancedTagsStrategy(UnbalancedTagsStrategy.REMOVE_TAG);
         String xmlContent = "The fox</word> jumps over";
         Assert.assertEquals("The fox jumps over", hl.makeWellFormed(xmlContent));
+    }
+
+    @Ignore // Fix exists, but causes StackOverflowError for large docs, see commented out code in XmlHighlighter
+    @Test
+    public void testMakeWellFormedIgnoreTagsInCdata() {
+        String xmlContent = "The fox<![CDATA[  </word>\n<test>  ]]> jumps <bla>over";
+        Assert.assertEquals("The fox<![CDATA[  </word>\n<test>  ]]> jumps <bla>over</bla>",
+                hl.makeWellFormed(xmlContent));
     }
 
 }

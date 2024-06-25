@@ -346,19 +346,23 @@ public class XmlHighlighter {
     private List<TagLocation> makeTagList(String elementContent) {
         List<TagLocation> tags = new ArrayList<>();
 
-        // Regex for finding all XML tags.
+        // Regex for finding all XML tags, comments and CDATA sections.
         // Group 1 indicates if this is an open or close tag
         // Group 2 is the tag name
-        Pattern xmlTagsAndComments = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*?-->");
+        Pattern xmlTagsCommentsAndCdatas = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*?-->");
+        // NOTE below is the version that actually includes CDATA as well, but this leads to a StackOverflowError on some
+        // (large) documents contents requests, e.g.
+        // /bls/opensonar/docs/WR-P-E-C-0000000129/contents?query=%5Bword%3D%22schip%22%5D&wordstart=7000
+        //Pattern xmlTagsCommentsAndCdatas = Pattern.compile("<(?![!?])\\s*(/?)\\s*([^>\\s]+)(\\s+[^>]*)?>|<!--[\\s\\S]*?-->|<!\\[CDATA\\[([^]]|][^]])+]]>");
 
-        Matcher matcher = xmlTagsAndComments.matcher(elementContent);
+        Matcher matcher = xmlTagsCommentsAndCdatas.matcher(elementContent);
         List<TagLocation> openTagStack = new ArrayList<>(); // keep track of open tags
         int fixStartTagObjectNum = -1; // when adding start tags to fix well-formedness, number backwards (for correct sorting)
         int findFrom = 0;
         while (matcher.find(findFrom)) {
             findFrom = matcher.end();
-            if (matcher.group(0).startsWith("<!--")) {
-                // This is a comment. Skip it, so we don't match something that looks like a tag inside it.
+            if (matcher.group(0).startsWith("<!")) {
+                // This is a comment or CDATA section. Skip it, so we don't match something that looks like a tag inside it.
                 continue;
             }
             TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, matcher.start(), matcher.end());
