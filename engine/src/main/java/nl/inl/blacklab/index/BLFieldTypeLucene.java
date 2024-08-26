@@ -85,7 +85,7 @@ public class BLFieldTypeLucene implements BLFieldType {
             }
             if (forwardIndex) {
                 // indicate that this field should get a forward index when written to the index
-                BlackLabIndexIntegrated.setForwardIndexField(type);
+                BlackLabIndexIntegrated.setFieldHasForwardIndex(type);
             }
             type.freeze();
             return new BLFieldTypeLucene(type);

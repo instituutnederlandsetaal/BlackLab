@@ -290,7 +290,7 @@ class PWPluginForwardIndex implements PWPlugin {
     public boolean startField(FieldInfo fieldInfo) {
 
         // Should this field get a forward index?
-        if (!BlackLabIndexIntegrated.isForwardIndexField(fieldInfo))
+        if (!BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfo))
             return false;
 
         // Make sure doc lengths are shared between all annotations for a single annotated field.

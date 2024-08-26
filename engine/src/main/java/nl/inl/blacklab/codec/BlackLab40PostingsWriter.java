@@ -164,7 +164,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                 }
 
                 // Should this field get a forward index?
-                boolean storeForwardIndex = BlackLabIndexIntegrated.isForwardIndexField(
+                boolean storeForwardIndex = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(
                         fieldInfos.fieldInfo(luceneField));
 
                 // If we don't need to do any per-term processing, continue
