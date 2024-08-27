@@ -136,15 +136,23 @@ public class XmlHighlighter {
 
     }
 
+    /** What tag name to use for highlighting */
+    private static final String HIGHLIGHT_TAG_NAME = "hl";
+
+    /** Add hit number attribute to highlight tag?
+     * (disabled for now, but to be used in the future)
+     */
+    private static final boolean ADD_HIT_NUMBER = false;
+
     /**
      * The XML tag to add to the content to signal where highlighting should start.
      */
-    private static final String startHighlightTag = "<hl>";
+    private static final String startHighlightTagStart = "<" + HIGHLIGHT_TAG_NAME;
 
     /**
      * The XML tag to add to the content to signal where highlighting should end.
      */
-    private static final String endHighlightTag = "</hl>";
+    private static final String endHighlightTag = "</" + HIGHLIGHT_TAG_NAME + ">";
 
     /** How deep are we inside highlighting tags? */
     private int inHighlightTag;
@@ -255,12 +263,22 @@ public class XmlHighlighter {
      */
     private void startHighlight(TagLocation tag) {
         if (inHighlightTag == 0) {
-            b.append(startHighlightTag);
+            addStartTag(tag);
         }
         //assert !openHighlightTags.contains(tag); // no two tags at one location..?
         openHighlightTags.add(tag);
         inHighlightTag++;
         assert openHighlightTags.size() == inHighlightTag;
+    }
+
+    private void addStartTag(TagLocation tag) {
+        b.append(startHighlightTagStart);
+        if (ADD_HIT_NUMBER && tag != null) {
+            b.append(" n=\"");
+            b.append(tag.objectNum);
+            b.append("\"");
+        }
+        b.append(">");
     }
 
     /** Decrement depth; End highlight if we're at level 0 */
@@ -304,7 +322,7 @@ public class XmlHighlighter {
             b.append(endHighlightTag);
         b.append(str);
         if (suspendHighlighting)
-            b.append(startHighlightTag);
+            addStartTag(null); // TODO: pass correct tag here
     }
 
     /** The start and end character position of a hit, used for highlighting the content. */
@@ -495,7 +513,9 @@ public class XmlHighlighter {
         if (removeEmptyHlTags) {
             // Because of the way the highlighting (and maintaining of well-formedness) occurs,
             // empty highlight tags may have arisen. Remove these.
-            highlighted = highlighted.replaceAll(startHighlightTag + "(\\s*)" + endHighlightTag,
+            // TODO: when we add hit number attributes, we'll need to update this. Or maybe try to prevent these from
+            //       occurring at all?
+            highlighted = highlighted.replaceAll(startHighlightTagStart + ">" + "(\\s*)" + endHighlightTag,
                     "$1");
         }
 
