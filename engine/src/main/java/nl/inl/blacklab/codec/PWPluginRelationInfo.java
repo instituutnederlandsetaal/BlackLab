@@ -272,7 +272,7 @@ class PWPluginRelationInfo implements PWPlugin {
     }
 
     @Override
-    public void finalize() throws IOException {
+    public void finish() throws IOException {
         CodecUtil.writeFooter(outTempRelationsFile);
         outTempRelationsFile.close();
         outTempRelationsFile = null;

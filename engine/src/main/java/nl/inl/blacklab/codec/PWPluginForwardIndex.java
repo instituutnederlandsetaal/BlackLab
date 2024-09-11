@@ -408,7 +408,7 @@ class PWPluginForwardIndex implements PWPlugin {
         }
     }
 
-    public void finalize() throws IOException {
+    public void finish() throws IOException {
         if (outTempTermVectorFile != null) {
             CodecUtil.writeFooter(outTempTermVectorFile);
             outTempTermVectorFile.close();

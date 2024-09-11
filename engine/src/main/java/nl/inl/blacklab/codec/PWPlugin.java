@@ -25,7 +25,7 @@ interface PWPlugin extends AutoCloseable {
 
     void termOccurrence(int position, BytesRef payload) throws IOException;
 
-    void finalize() throws IOException;
+    void finish() throws IOException;
 
     @Override
     void close() throws IOException;

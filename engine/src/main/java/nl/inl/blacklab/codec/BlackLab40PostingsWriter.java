@@ -217,7 +217,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                 for (PWPlugin action: actions) action.endField();
             } // for each field
 
-            for (PWPlugin action: allActions) action.finalize();
+            for (PWPlugin action: allActions) action.finish();
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         } finally {
