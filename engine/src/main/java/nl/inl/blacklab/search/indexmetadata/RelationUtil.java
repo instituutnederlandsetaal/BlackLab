@@ -115,7 +115,9 @@ public class RelationUtil {
         boolean isFinalChar = i == indexedTerm.length() - 1; // if true, there's no attributes
         // if true, this is an optimization term and there's no attributes
         boolean isFinalCharBeforeOptIndicator = i == indexedTerm.length() - 2 && indexedTerm.charAt(i + 1) == IS_OPTIMIZATION_INDICATOR.charAt(0);
-        if (i < 0 || isFinalChar || isFinalCharBeforeOptIndicator)
+        if (isFinalCharBeforeOptIndicator)
+            return null; // indicates attributes not available in this term; get from relation info index instead
+        if (i < 0 || isFinalChar)
             return Collections.emptyMap();
         Map<String, String> attributes = new HashMap<>();
         for (String attrPart: indexedTerm.substring(i + 1).split(ATTR_SEPARATOR)) {

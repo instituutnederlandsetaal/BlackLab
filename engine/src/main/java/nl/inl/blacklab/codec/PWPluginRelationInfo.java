@@ -274,6 +274,13 @@ class PWPluginRelationInfo implements PWPlugin {
     public void termOccurrence(int position, BytesRef payload) throws IOException {
         if (payload == null)
             return;
+        if (currentTermAttrSetOffset < 0) {
+            // This is an optimization term that we cannot extract attributes from.
+            // We need the non-optimization terms to create the relation id index.
+            // Skip this.
+            return;
+        }
+
         // Get the relation id from the payload and store the offset to this term's attribute value set.
         // We could also store other info about this occurrence here, such as info about an inline tag's parent and
         // children.

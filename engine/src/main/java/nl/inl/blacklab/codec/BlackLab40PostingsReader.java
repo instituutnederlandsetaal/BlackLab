@@ -177,10 +177,6 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
         }
     }
 
-    public RelationInfoSegmentReader relationInfo() {
-        return relationInfo.reader();
-    }
-
     /**
      * Create a forward index reader for this segment.
      *
@@ -194,14 +190,17 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
         return forwardIndex.reader();
     }
 
-//    /**
-//     * Get the BlackLab40PostingsReader for the given leafreader.
-//     *
-//     * @param lrc leafreader to get the BlackLab40PostingsReader for
-//     * @return BlackLab40PostingsReader for this leafreader
-//     */
-//    public static BlackLab40PostingsReader get(LeafReaderContext lrc) {
-//        return (BlackLab40PostingsReader) BLTerms.getTerms(lrc).getFieldsProducer();
-//    }
+    /**
+     * Create a relation info reader for this segment.
+     *
+     * The returned reader is not threadsafe and shouldn't be stored.
+     * A single thread may use it for reading from this segment. It
+     * can then be discarded.
+     *
+     * @return relation info segment reader
+     */
+    public RelationInfoSegmentReader relationInfo() {
+        return relationInfo.reader();
+    }
 
 }

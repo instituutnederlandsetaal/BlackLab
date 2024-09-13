@@ -12,7 +12,11 @@ import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
@@ -40,12 +44,12 @@ public class RelationInfo extends MatchInfo {
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, "", "");
     }
 
-    /** Include attributes in relation info? We wanted to do this but can't anymore
-     *  because they're only available in the version indexed with attributes. We also index
-     *  relations without attributes to speed up searches that don't filter on relations,
-     *  and this would make responses inconsistent. The alternative is storing attribute info
-     *  in the payload, but this will take more space and it's not clear if this is worth it. */
-    public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = false;
+    /** Include attributes in relation info?
+     *  Note that these are either extracted from the term (if your query filters on attributes),
+     *  or read from the relation info index (if your query doesn't filter on attributes).
+     *  This is because of an optimization where each term is indexed twice, once with attributes
+     *  and once without. The version without is much more efficient when not filtering on attributes. */
+    public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = true;
 
     public static void serializeInlineTag(int start, int end, int relationId, DataOutput dataOutput) throws IOException {
         serializeRelationWithRelationId(false, start, start, end, end, relationId, dataOutput);
@@ -492,10 +496,17 @@ public class RelationInfo extends MatchInfo {
      *
      * @param term indexed term
      */
-    public void setIndexedTerm(String term) {
+    public void setIndexedTerm(String term, int docId, RelationInfoSegmentReader relInfo) {
         this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
-        if (INCLUDE_ATTRIBUTES_IN_RELATION_INFO)
+        if (INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
             this.attributes = RelationUtil.attributesFromIndexedTerm(term);
+            if (this.attributes == null && relInfo != null) {
+                // Get them from relation info index instead
+                String f = AnnotatedFieldNameUtil.annotationField(getField(), AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.INTEGRATED),
+                        MatchSensitivity.SENSITIVE.luceneFieldSuffix());
+                this.attributes = relInfo.getAttributes(f, docId, relationId);
+            }
+        }
     }
 
     public int getRelationId() {

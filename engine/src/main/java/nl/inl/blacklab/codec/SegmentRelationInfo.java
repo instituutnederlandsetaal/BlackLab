@@ -21,14 +21,6 @@ import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 @ThreadSafe
 public class SegmentRelationInfo implements AutoCloseable {
 
-    /** Tokens index file record consists of:
-     * - offset in tokens file (long),
-     * - doc length in tokens (int),
-     * - tokens codec scheme (byte),
-     * - tokens codec parameter (byte)
-     */
-    private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
-
     /** Our fields producer */
     private final BlackLabPostingsReader fieldsProducer;
 
@@ -52,7 +44,7 @@ public class SegmentRelationInfo implements AutoCloseable {
     private List<String> attributeNames = new ArrayList<>();
 
     public static SegmentRelationInfo openIfPresent(BlackLab40PostingsReader postingsReader) throws IOException {
-        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.FIELDS_EXT)) {
+        try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.RI_FIELDS_EXT)) {
             return new SegmentRelationInfo(postingsReader, fieldsFile);
         } catch (NoSuchFileException | FileNotFoundException e) {
             // No relation info stored; that's okay

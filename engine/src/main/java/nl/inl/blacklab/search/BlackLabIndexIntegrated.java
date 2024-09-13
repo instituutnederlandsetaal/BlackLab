@@ -30,6 +30,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -129,6 +130,18 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      */
     public static ForwardIndexSegmentReader forwardIndex(LeafReaderContext lrc) {
         return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex();
+    }
+
+    /**
+     * Get the forward index for an index segment.
+     *
+     * The returned forward index should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the forward index for.
+     * @return forward index
+     */
+    public static RelationInfoSegmentReader relationInfo(LeafReaderContext lrc) {
+        return BlackLabCodecUtil.getPostingsReader(lrc).relationInfo();
     }
 
     /**
