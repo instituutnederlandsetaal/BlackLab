@@ -13,7 +13,6 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.IndexFileNames;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.Directory;
@@ -24,6 +23,7 @@ import org.apache.lucene.util.Accountables;
 
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 /**
  * Adds forward index reading to default FieldsProducer.
@@ -55,6 +55,9 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     /** The forward index */
     private final SegmentForwardIndex forwardIndex;
 
+    /** The relation info (if it was stored) */
+    private final SegmentRelationInfo relationInfo;
+
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
@@ -66,9 +69,11 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
         forwardIndex = new SegmentForwardIndex(this);
         if (delegateFormatName == null)
             throw new IllegalStateException("Opening the segment FI should have set the delegate format name");
-
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+
+        // If relation info was stored, make sure we can access it
+        relationInfo = SegmentRelationInfo.openIfPresent(this);
     }
 
     @Override
@@ -78,6 +83,8 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
 
     @Override
     public void close() throws IOException {
+        if (relationInfo != null)
+            relationInfo.close();
         forwardIndex.close();
         delegateFieldsProducer.close();
     }
@@ -168,6 +175,10 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
             input.close();
             throw e;
         }
+    }
+
+    public RelationInfoSegmentReader relationInfo() {
+        return relationInfo.reader();
     }
 
     /**

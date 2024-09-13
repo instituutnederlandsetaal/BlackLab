@@ -224,7 +224,6 @@ The relation info ensures that we can always look up any attributes for any rela
 
 - For each relations field:
     * Lucene field name (str), e.g. "contents%_relation@s"
-    * number of unique relations (terms, a combination of relation name and attributes, if any) in this field (int)
     * offset of field in docs file (long)
 
 This file will have an extension of `.blri.fields`.
@@ -233,8 +232,7 @@ This file will have an extension of `.blri.fields`.
 
 - For each relations field:
   * For each document:
-    - offset in the relations file (long)
-    - number of relations (int)
+    - starting offset in the relations file (long)
 
 This file will have an extension of `.blri.docs`.
 
@@ -247,7 +245,7 @@ This file will have an extension of `.blri.docs`.
 
 This file will have an extension of `.blri.relations`.
 
-### attrsets - Information per unique attribute value.
+### attrsets - Information per unique set of attributes.
 
 - For each unique attribute set:
   * number of attributes in set (int)
@@ -277,7 +275,7 @@ This file will have an extension of `.blri.attrvalues`.
 
 This is a temporary file. It is eventually replaced by the relations file.
 
-- For each term:
+- For each attribute set:
   * For each doc term occurs in:
     - Number of occurrences (int)
     * For each occurrence:

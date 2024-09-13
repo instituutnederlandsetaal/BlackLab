@@ -189,7 +189,8 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                     if (term == null)
                         break;
 
-                    for (PWPlugin action: actions) action.startTerm(term);
+                    for (PWPlugin action: actions)
+                        action.startTerm(term);
 
                     // For each document containing this term...
                     postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
@@ -208,21 +209,27 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                         for (int i = 0; i < nOccurrences; i++) {
                             int position = postingsEnum.nextPosition();
                             BytesRef payload = postingsEnum.getPayload();
-                            for (PWPlugin action: actions) action.termOccurrence(position, payload);
+                            for (PWPlugin action: actions)
+                                action.termOccurrence(position, payload);
                         }
-                        for (PWPlugin action: actions) action.endDocument();
+                        for (PWPlugin action: actions)
+                            action.endDocument();
                     }
-                    for (PWPlugin action: actions) action.endTerm();
+                    for (PWPlugin action: actions)
+                        action.endTerm();
                 }
-                for (PWPlugin action: actions) action.endField();
+                for (PWPlugin action: actions)
+                    action.endField();
             } // for each field
 
-            for (PWPlugin action: allActions) action.finish();
+            for (PWPlugin action: allActions)
+                action.finish();
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
         } finally {
             try {
-                for (PWPlugin action: allActions) action.close();
+                for (PWPlugin action: allActions)
+                    action.close();
             } catch (IOException e) {
                 throw new BlackLabRuntimeException(e);
             }

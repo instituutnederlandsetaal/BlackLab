@@ -29,14 +29,22 @@ public abstract class BlackLabPostingsFormat extends PostingsFormat {
     /** Every relation info file extension will be prefixed with this to indicate it is part of the relation info. */
     private static final String EXT_RELINFO_PREFIX = "blri.";
 
+    /** Relation info fields (gives offset into docs file for each field) */
+    static final String RI_FIELDS_EXT = EXT_RELINFO_PREFIX + "fields";
+
+    /** Relation info docs (gives offset into relations file for each doc) */
     static final String RI_DOCS_EXT = EXT_RELINFO_PREFIX + "docs";
 
+    /** Relation info docs (gives offset into attrsets file for each relation) */
     static final String RI_RELATIONS_EXT = EXT_RELINFO_PREFIX + "relations";
 
+    /** Relation info docs (gives attribute name index and offset into attrvalues file for each attribute to a relation) */
     static final String RI_ATTR_SETS_EXT = EXT_RELINFO_PREFIX + "attrsets";
 
+    /** Relation info attribute names */
     static final String RI_ATTR_NAMES_EXT = EXT_RELINFO_PREFIX + "attrnames";
 
+    /** Relation info attribute values */
     static final String RI_ATTR_VALUES_EXT = EXT_RELINFO_PREFIX + "attrvalues";
 
     /** Extension for the temporary relations file that will be converted later.
