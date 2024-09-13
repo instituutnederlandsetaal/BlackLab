@@ -4,21 +4,16 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
-import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 
 /**
  * Manages read access to forward indexes for a single segment.
@@ -170,115 +165,35 @@ public class SegmentRelationInfo implements AutoCloseable {
             return _attrValues;
         }
 
-        /** Retrieve parts of a document from a forward index.
+        /** Retrieve the attributes for a specific relation in a document.
          *
          * @param luceneField lucene field to retrieve snippet from
          * @param docId segment-local docId of document to retrieve snippet from
          * @param relationId relation id
          * @return attributes
          */
-        Map<String, String> getAttributes(String luceneField, int docId, int relationId) {
+        public Map<String, String> getAttributes(String luceneField, int docId, int relationId) {
             RelationInfoField f = fieldsByName.get(luceneField);
-            long docsOffset = f.getDocsOffset();
+            long docsOffset = f.getDocsOffset(); // offset in docs file for this field
             try {
-                 docs().seek(docsOffset + docId * (Long.BYTES + Integer.BYTES));
+                // Determine where the relations for this doc start
+                docs().seek(docsOffset + docId * (Long.BYTES + Integer.BYTES));
                 long relationsOffset = _docs.readLong();
+                // Find the attribute set offset for this relation
                 relations().seek(relationsOffset + relationId);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private int[] retrievePart(int start, int end) {
-            if (start == -1)
-                start = 0;
-            if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
-                end = docLength;
-            ForwardIndexAbstract.validateSnippetParameters(docLength, start, end);
-
-            // Read the snippet from the tokens file
-            try {
-                int[] snippet = new int[end - start];
-                switch (tokensCodec) {
-                case VALUE_PER_TOKEN:
-                    switch(VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
-                        case INT: 
-                            _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readInt();
-                            }
-                            break;
-                        case THREE_BYTES:
-                            _tokens.seek(docTokensOffset + (long) start * 3);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = ThreeByteInt.read( () -> _tokens.readByte() );
-
-                            }
-                            break;
-                        case SHORT: 
-                            _tokens.seek(docTokensOffset + (long) start * Short.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readShort();
-                            }
-                            break;
-                        case BYTE: 
-                            // Simplest encoding, just one 4-byte int per token
-                            _tokens.seek(docTokensOffset + (long) start * Byte.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readByte();
-                            }
-                            break;
-                        default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
-                                + " not implemented.");
-                    }
-                    break;
-                case ALL_TOKENS_THE_SAME:
-                    // All tokens have the same value, so we only have one value stored
-                    _tokens.seek(docTokensOffset);
-                    int value = _tokens.readInt();
-                    Arrays.fill(snippet, value);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Cannot read tokens codec: " + tokensCodec);
+                long attrSetOffset = _relations.readLong();
+                // Find the attribute set
+                attrSets().seek(attrSetOffset);
+                int nAttr = attrSets().readVInt();
+                Map<String, String> attrMap = new LinkedHashMap<>();
+                for (int i = 0; i < nAttr; i++) {
+                    int attrNameIndex = attrSets().readVInt();
+                    long attrValueOffse = attrSets().readLong();
+                    attrValues().seek(attrValueOffse);
+                    String attrValue = attrValues().readString();
+                    attrMap.put(attributeNames.get(attrNameIndex), attrValue);
                 }
-                return snippet;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private void getDocOffsetAndLength(String luceneField, int docId)  {
-            try {
-                tokensIndex(); // ensure input available
-                long fieldTokensIndexOffset = fieldsByName.get(luceneField).getTokensIndexOffset();
-                _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
-                docTokensOffset = _tokensIndex.readLong();
-                docLength = _tokensIndex.readInt();
-                tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
-                tokensCodecParameter = _tokensIndex.readByte();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        /** Get length of document in tokens from the forward index.
-         *
-         * This includes the "extra closing token" at the end, so subtract one for the real length.
-         *
-         * @param luceneField lucene field to read forward index from
-         * @param docId segment-local docId of document to get length for
-         * @return doc length
-         */
-        @Override
-        public long docLength(String luceneField, int docId) {
-            getDocOffsetAndLength(luceneField, docId);
-            return docLength;
-        }
-
-        @Override
-        public TermsSegmentReader terms(String luceneField) {
-            try {
-                return fieldsProducer.terms(luceneField);
+                return attrMap;
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

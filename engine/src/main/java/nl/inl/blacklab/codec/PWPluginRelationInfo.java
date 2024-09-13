@@ -34,67 +34,6 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 class PWPluginRelationInfo implements PWPlugin {
 
     /**
-     * Find the attribute set offsets for each term in a document,
-     * by reversing the temp relations file.
-     *
-     * This is aided by the map relationIdsPerAttrSet that maps from an "attribute
-     * set offset" (that corresponds to a unique set of attribute values) to the offset
-     * in the temporary relations file where the associated relationIds for those
-     * attribute set offsets are stored.
-     *
-     * This is analogous to the forward index, where we have a temporary term vector file
-     * (which records list of positions for each term) that we reverse to create the final tokens file
-     * (which records term id for each position in each document).
-     */
-    private static long[] getRelationAttrSetOffsets(int maxRelationId,
-            IndexInput inTempRelationsFile, RelationIdPerAttrSetOffset relationIdsPerAttrSet)
-            throws IOException {
-
-        final long[] offsetsInDoc = new long[maxRelationId + 1]; // reconstruct the document here
-
-        // NOTE: sometimes docs won't have any values for a field, but we'll
-        //   still write all NO_TERMs in this case. This is similar to sparse
-        //   fields (e.g. the field that stores <p> <s> etc.) which also have a
-        //   lot of NO_TERMs.
-        Arrays.fill(offsetsInDoc, Terms.NO_TERM);
-
-        // For each term...
-        for (Entry<Long, Long> entry: relationIdsPerAttrSet.entrySet()) {
-            long attributeSetOffset = entry.getKey();
-
-            // Position the tmep relations file at the offset where the occurrences (relation ids) for
-            // this attribute set in this document are stored.
-            Long tempRelationsFileOffset = entry.getValue();
-            inTempRelationsFile.seek(tempRelationsFileOffset);
-
-            // Record the attribute set offset at each of the relation ids it occurs at in this document.
-            int nOccurrences = inTempRelationsFile.readInt();
-            for (int i = 0; i < nOccurrences; i++) {
-                int relationId = inTempRelationsFile.readInt();
-                offsetsInDoc[relationId] = attributeSetOffset;
-            }
-        }
-        // Return the array recording the attribute set offset for each relation id in this document
-        return offsetsInDoc;
-    }
-
-    /**
-     * Write the attribute set offsets for each relation in a document to the relations file,
-     * and the offset where they can be found too the docs file.
-     */
-    private static void writeRelationsInDoc(IndexOutput outDocsFile, IndexOutput outRelationsFile, long[] offsetsForDoc)
-            throws IOException {
-
-        // Write offset in the relations file for this document.
-        outDocsFile.writeLong(outRelationsFile.getFilePointer());
-
-        // Write the attribute set offsets per relation to the relations file
-        for (long offset: offsetsForDoc) {
-            outRelationsFile.writeLong(offset);
-        }
-    }
-
-    /**
      * Offset in attribute set file per relation id for a single field and doc.
      *
      * Keeps track of position in the attribute set file where the occurrences of each relation id
@@ -264,13 +203,13 @@ class PWPluginRelationInfo implements PWPlugin {
     private long getAttributeSetOffset(SortedMap<Integer, Long> currentTermAttributes) {
         return attributeSetOffsets.computeIfAbsent(currentTermAttributes, k -> {
             try {
-                long offset = outAttrSetsFile.getFilePointer();
-                outAttrSetsFile.writeInt(currentTermAttributes.size());
+                long attributeSetOffset = outAttrSetsFile.getFilePointer();
+                outAttrSetsFile.writeVInt(currentTermAttributes.size());
                 for (Entry<Integer, Long> e: currentTermAttributes.entrySet()) {
-                    outAttrSetsFile.writeInt(e.getKey());    // attribute name id
+                    outAttrSetsFile.writeVInt(e.getKey());    // attribute name id
                     outAttrSetsFile.writeLong(e.getValue()); // attribute value offset
                 }
-                return offset;
+                return attributeSetOffset;
             } catch (IOException e1) {
                 throw new BlackLabRuntimeException(e1);
             }
@@ -296,7 +235,7 @@ class PWPluginRelationInfo implements PWPlugin {
         return indexFromAttributeName.computeIfAbsent(attrName, k -> {
             try {
                 outAttrNamesFile.writeString(attrName);
-                return indexFromAttributeName.size();
+                return indexFromAttributeName.size(); // map size before adding == attribute index
             } catch (IOException e1) {
                 throw new BlackLabRuntimeException(e1);
             }
@@ -395,10 +334,9 @@ class PWPluginRelationInfo implements PWPlugin {
 
                 // For each document...
                 for (int docId = 0; docId < postingsWriter.maxDoc(); docId++) {
+                    // Reverse the temp relations file to create the final relations file
                     final int maxRelationId = maxRelationIds.getOrDefault(docId, 0);
-                    RelationIdPerAttrSetOffset offsets = docOffsets.get(docId);
-                    long[] attrSetOffsets = getRelationAttrSetOffsets(maxRelationId, inTempRelationsFile, offsets);
-                    writeRelationsInDoc(outDocsFile, outRelationsFile, attrSetOffsets);
+                    writeRelationAttrSetOffsets(inTempRelationsFile, maxRelationId, docOffsets.get(docId));
                 }
             }
         } finally {
@@ -406,26 +344,65 @@ class PWPluginRelationInfo implements PWPlugin {
             postingsWriter.deleteIndexFile(BlackLab40PostingsFormat.RI_RELATIONS_TMP_EXT);
         }
 
-        /*
-        // WRITE RELATIONS AND DOCS FILE
-
-        // Write the offset in the relations file for this document to the docs file
-        outDocsFile.writeLong(outRelationsFile.getFilePointer());
-
-        // Write the attribute set offsets per relation to the relations file
-        outRelationsFile.writeInt(currentDocAttrSetOffsetPerRelationId.size());
-        for (long offset: currentDocAttrSetOffsetPerRelationId) {
-            outRelationsFile.writeLong(offset);
-        }
-        currentDocAttrSetOffsetPerRelationId = null;
-        */
-
         // Write the footers to our files
         CodecUtil.writeFooter(outDocsFile);
         CodecUtil.writeFooter(outRelationsFile);
         CodecUtil.writeFooter(outAttrSetsFile);
         CodecUtil.writeFooter(outAttrNamesFile);
         CodecUtil.writeFooter(outAttrValuesFile);
+    }
+
+    /**
+     * Find the attribute set offsets for each term in a document,
+     * by reversing the temp relations file.
+     *
+     * This is aided by the map relationIdsPerAttrSet that maps from an "attribute
+     * set offset" (that corresponds to a unique set of attribute values) to the offset
+     * in the temporary relations file where the associated relationIds for those
+     * attribute set offsets are stored.
+     *
+     * This is analogous to the forward index, where we have a temporary term vector file
+     * (which records list of positions for each term) that we reverse to create the final tokens file
+     * (which records term id for each position in each document).
+     */
+    private void writeRelationAttrSetOffsets(IndexInput inTempRelationsFile, int maxRelationId,
+            RelationIdPerAttrSetOffset relationIdsPerAttrSet)
+            throws IOException {
+
+        // Will records the attribute set offset for each relation id in this document
+        // (the "relation forward index" for the document, not position-based but relationId-based)
+        final long[] offsetsInDoc = new long[maxRelationId + 1];
+
+        // NOTE: sometimes docs won't have any values for a field, but we'll
+        //   still write all NO_TERMs in this case. This is similar to sparse
+        //   fields (e.g. the field that stores <p> <s> etc.) which also have a
+        //   lot of NO_TERMs.
+        Arrays.fill(offsetsInDoc, Terms.NO_TERM);
+
+        // For each term...
+        for (Entry<Long, Long> entry: relationIdsPerAttrSet.entrySet()) {
+            long attributeSetOffset = entry.getKey();
+
+            // Position the tmep relations file at the offset where the occurrences (relation ids) for
+            // this attribute set in this document are stored.
+            Long tempRelationsFileOffset = entry.getValue();
+            inTempRelationsFile.seek(tempRelationsFileOffset);
+
+            // Record the attribute set offset at each of the relation ids it occurs at in this document.
+            int nOccurrences = inTempRelationsFile.readInt();
+            for (int i = 0; i < nOccurrences; i++) {
+                int relationId = inTempRelationsFile.readInt();
+                offsetsInDoc[relationId] = attributeSetOffset;
+            }
+        }
+
+        // Write offset in the relations file for this document.
+        outDocsFile.writeLong(outRelationsFile.getFilePointer());
+
+        // Write the attribute set offsets per relation to the relations file
+        for (long offset: offsetsInDoc) {
+            outRelationsFile.writeLong(offset);
+        }
     }
 
     @Override

@@ -248,9 +248,9 @@ This file will have an extension of `.blri.relations`.
 ### attrsets - Information per unique set of attributes.
 
 - For each unique attribute set:
-  * number of attributes in set (int)
+  * number of attributes in set (VInt)
   * For each attribute in this set:
-    - attribute name id (int)
+    - attribute name id (VInt)
     - attribute value offset (long)
 
 This file will have an extension of `.blri.attrsets`.
