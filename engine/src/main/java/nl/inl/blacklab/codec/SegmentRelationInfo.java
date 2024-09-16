@@ -165,23 +165,27 @@ public class SegmentRelationInfo implements AutoCloseable {
          * @return attributes
          */
         public Map<String, String> getAttributes(String luceneField, int docId, int relationId) {
+            assert relationId >= 0 : "negative relation id";
             RelationInfoField f = fieldsByName.get(luceneField);
             long docsOffset = f.getDocsOffset(); // offset in docs file for this field
             try {
                 // Determine where the relations for this doc start
-                docs().seek(docsOffset + docId * (Long.BYTES + Integer.BYTES));
+                assert docsOffset >= 0 : "negative offset in docs file";
+                docs().seek(docsOffset + docId * Long.BYTES);
                 long relationsOffset = _docs.readLong();
+                assert relationsOffset >= 0 : "negative offset in relations file";
                 // Find the attribute set offset for this relation
-                relations().seek(relationsOffset + relationId);
+                relations().seek(relationsOffset + relationId * Long.BYTES);
                 long attrSetOffset = _relations.readLong();
                 // Find the attribute set
+                assert attrSetOffset >= 0 : "negative offset in attrSet file";
                 attrSets().seek(attrSetOffset);
                 int nAttr = attrSets().readVInt();
                 Map<String, String> attrMap = new LinkedHashMap<>();
                 for (int i = 0; i < nAttr; i++) {
                     int attrNameIndex = attrSets().readVInt();
-                    long attrValueOffse = attrSets().readLong();
-                    attrValues().seek(attrValueOffse);
+                    long attrValueOffset = attrSets().readLong();
+                    attrValues().seek(attrValueOffset);
                     String attrValue = attrValues().readString();
                     attrMap.put(attributeNames.get(attrNameIndex), attrValue);
                 }

@@ -420,9 +420,9 @@ public class AnnotationWriter {
      *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
-            Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+            Map<String, String> attributes, BlackLabIndex.IndexType indexType, int relationId) {
         RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos,
-                endPos, endPos, getNextRelationId());
+                endPos, endPos, relationId);
         String fullRelationType;
         fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
                 tagName :

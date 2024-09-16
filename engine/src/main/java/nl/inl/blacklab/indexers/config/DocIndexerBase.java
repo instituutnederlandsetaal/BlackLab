@@ -49,10 +49,13 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         private final int position;
 
-        public OpenTagInfo(String name, int index, int position) {
+        private final int relationId;
+
+        public OpenTagInfo(String name, int index, int position, int relationId) {
             this.name = name;
             this.index = index;
             this.position = position;
+            this.relationId = relationId;
         }
     }
 
@@ -468,10 +471,13 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
         int currentPos = getCurrentTokenPosition();
+        AnnotationWriter relationsAnnot = tagsAnnotation();
         if (isOpenTag) {
             trace("<" + tagName + ">");
-            int tagIndex = tagsAnnotation().indexInlineTag(tagName, currentPos, -1, attributes, getIndexType());
-            openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos));
+            int relationId = relationsAnnot.getNextRelationId();
+            int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes,
+                    getIndexType(), relationId);
+            openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos, relationId));
         } else {
             traceln("</" + tagName + ">");
 
@@ -482,16 +488,16 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            int relationId = tagsAnnotation().getNextRelationId();
-            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType(), relationId);
+            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType(),
+                    openTag.relationId);
             int index = openTag.index;
             if (index < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)
                 // and this is the index of the last term. Make sure we update both payloads.
                 index = -index;
-                tagsAnnotation().setPayloadAtIndex(index - 1, payload);
+                relationsAnnot.setPayloadAtIndex(index - 1, payload);
             }
-            tagsAnnotation().setPayloadAtIndex(index, payload);
+            relationsAnnot.setPayloadAtIndex(index, payload);
         }
     }
 

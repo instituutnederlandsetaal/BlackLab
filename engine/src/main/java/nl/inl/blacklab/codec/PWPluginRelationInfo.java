@@ -1,13 +1,17 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
+import java.util.SortedSet;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.FieldInfo;
@@ -33,14 +37,21 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  */
 class PWPluginRelationInfo implements PWPlugin {
 
+    private String debugCurrentTerm = "???";
+
     /**
-     * Offset in attribute set file per relation id for a single field and doc.
+     * Offset in temp relations file where occurrences of an attribute set are recorded
+     * (by each occurrence's relation id) for a single document and field.
      *
-     * Keeps track of position in the attribute set file where the occurrences of each relation id
-     * are stored for a single document and field.
+     * Key is an offset in the attribute set file and identifies a single unique set of
+     * attributes. Valuee is the offset in the temp relations file where the occurrences
+     * of this attribute set are recorded.
      */
-    private static class RelationIdPerAttrSetOffset extends HashMap<Long, Long> {
-        // intentionally blank; this is just a typedef for readability
+    private static class TempRelOffsetPerAttrSet extends HashMap<Long, List<Long>> {
+        public void addTmpFilePointer(long attributeSetOffset, long tempFilePointer) {
+            List<Long> list = computeIfAbsent(attributeSetOffset, k -> new ArrayList<>());
+            list.add(tempFilePointer);
+        }
     }
 
     /**
@@ -50,33 +61,34 @@ class PWPluginRelationInfo implements PWPlugin {
      * field, because those all have the same length.
      */
     private static class OffsetsAndMaxRelationIdPerDocument {
-        /** For each document id (key), the length in tokens of the annotated field this Lucene field is a part of.
-         *  (shared with other annotations on this annotated field) */
+        /** For each document id (key), the max. relation id of the annotated field this Lucene field is a part of. */
         private final Map<Integer, Integer> docId2MaxRelationId;
 
         /** For each document id (key), record the term vector file offsets (value). */
-        private final SortedMap<Integer, RelationIdPerAttrSetOffset> docId2TermVecFileOffsets = new TreeMap<>();
+        private final SortedMap<Integer, TempRelOffsetPerAttrSet> docId2TermVecFileOffsets = new TreeMap<>();
 
         OffsetsAndMaxRelationIdPerDocument(Map<Integer, Integer> docId2MaxRelationId) {
             this.docId2MaxRelationId = docId2MaxRelationId;
         }
 
         void putTempFileOffset(int docId, long attributeSetOffset, long tempFilePointer) {
-            RelationIdPerAttrSetOffset vecFileOffsetsPerTermId =
-                    docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new RelationIdPerAttrSetOffset());
-            vecFileOffsetsPerTermId.put(attributeSetOffset, tempFilePointer);
+            TempRelOffsetPerAttrSet vecFileOffsetsPerTermId =
+                    docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new TempRelOffsetPerAttrSet());
+            //assert !vecFileOffsetsPerTermId.containsKey(attributeSetOffset) : "duplicate attribute set offset";
+            assert tempFilePointer >= 0 : "negative temp file pointer";
+            vecFileOffsetsPerTermId.addTmpFilePointer(attributeSetOffset, tempFilePointer);
         }
 
         void updateMaxRelationId(int docId, int relationId) {
             docId2MaxRelationId.compute(docId, (k, v) -> v == null ? relationId : Math.max(v, relationId));
         }
 
-        RelationIdPerAttrSetOffset get(int docId) {
-            RelationIdPerAttrSetOffset termVecRelationIdPerAttrSetOffset = docId2TermVecFileOffsets.get(docId);
-            if (termVecRelationIdPerAttrSetOffset == null) {
-                termVecRelationIdPerAttrSetOffset = new RelationIdPerAttrSetOffset();
+        TempRelOffsetPerAttrSet get(int docId) {
+            TempRelOffsetPerAttrSet termVecTempRelOffsetPerAttrSet = docId2TermVecFileOffsets.get(docId);
+            if (termVecTempRelOffsetPerAttrSet == null) {
+                termVecTempRelOffsetPerAttrSet = new TempRelOffsetPerAttrSet();
             }
-            return termVecRelationIdPerAttrSetOffset;
+            return termVecTempRelOffsetPerAttrSet;
         }
     }
 
@@ -206,6 +218,8 @@ class PWPluginRelationInfo implements PWPlugin {
                 long attributeSetOffset = outAttrSetsFile.getFilePointer();
                 outAttrSetsFile.writeVInt(currentTermAttributes.size());
                 for (Entry<Integer, Long> e: currentTermAttributes.entrySet()) {
+                    assert e.getKey() >= 0 : "negative attribute name id";
+                    assert e.getValue() >= 0 : "negative attribute value offset";
                     outAttrSetsFile.writeVInt(e.getKey());    // attribute name id
                     outAttrSetsFile.writeLong(e.getValue()); // attribute value offset
                 }
@@ -245,6 +259,7 @@ class PWPluginRelationInfo implements PWPlugin {
     @Override
     public void startTerm(BytesRef term) {
         String termStr = term.utf8ToString();
+        this.debugCurrentTerm = termStr;
         boolean ignoreTerm = RelationUtil.isOptimizationTerm(termStr);
         if (!ignoreTerm) {
             // Decode the term so we can store the attribute values and refer to them from each occurrence by relation id.
@@ -254,6 +269,8 @@ class PWPluginRelationInfo implements PWPlugin {
             for (Entry<String, String> e: attributes.entrySet()) {
                 int attributeIndex = getAttributeIndex(e.getKey());
                 long attributeValueOffset = getAttributeValueOffset(e.getValue());
+                assert !currentTermAttributes.containsKey(attributeIndex) : "duplicate attribute index";
+                assert attributeValueOffset >= 0 : "negative attribute value offset";
                 currentTermAttributes.put(attributeIndex, attributeValueOffset);
             }
             // determine offset in attribute set file which we can refer to from each occurrence
@@ -270,6 +287,10 @@ class PWPluginRelationInfo implements PWPlugin {
         currentDocOccurrencesWritten = 0;
     }
 
+    SortedSet<Integer> relationIdsSeen = new TreeSet<>();
+
+    SortedSet<Integer> relationIdsSeenOptTerms = new TreeSet<>();
+
     @Override
     public void termOccurrence(int position, BytesRef payload) throws IOException {
         if (payload == null)
@@ -278,6 +299,12 @@ class PWPluginRelationInfo implements PWPlugin {
             // This is an optimization term that we cannot extract attributes from.
             // We need the non-optimization terms to create the relation id index.
             // Skip this.
+
+            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
+            int relationId = RelationInfo.getRelationId(dataInput);
+            assert relationId >= 0;
+            relationIdsSeenOptTerms.add(relationId);
+
             return;
         }
 
@@ -287,6 +314,7 @@ class PWPluginRelationInfo implements PWPlugin {
         ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
         int relationId = RelationInfo.getRelationId(dataInput);
         if (relationId >= 0) {
+            relationIdsSeen.add(relationId);
             offsetsAndMaxRelationIdPerDocument.updateMaxRelationId(currentDocId, relationId);
             currentDocPositionsOutput.writeInt(relationId);
             currentDocOccurrencesWritten++;
@@ -295,14 +323,27 @@ class PWPluginRelationInfo implements PWPlugin {
 
     @Override
     public void endDocument() throws IOException {
-        // Write the unique relation ids for this term in this document to the temp file
-        // (will be reversed later to create the final relations file)
-        offsetsAndMaxRelationIdPerDocument.putTempFileOffset(currentDocId, currentTermAttrSetOffset,
-                outTempRelationsFile.getFilePointer());
-        outTempRelationsFile.writeInt(currentDocOccurrencesWritten);
-        if (currentDocOccurrencesWritten > 0) {
-            outTempRelationsFile.writeBytes(currentDocPositionsArray, 0,
-                    currentDocOccurrencesWritten * Integer.BYTES);
+        // Was this a term we could extract attributes from? (not an optimization term?)
+        if (currentTermAttrSetOffset >= 0) {
+            // Write the unique relation ids for this term in this document to the temp file
+            // (will be reversed later to create the final relations file)
+            offsetsAndMaxRelationIdPerDocument.putTempFileOffset(currentDocId, currentTermAttrSetOffset,
+                    outTempRelationsFile.getFilePointer());
+            outTempRelationsFile.writeInt(currentDocOccurrencesWritten);
+            if (currentDocOccurrencesWritten > 0) {
+
+                // Check the relationIds (DEBUG)
+                ByteArrayDataInput test = new ByteArrayDataInput(currentDocPositionsArray);
+                for (int i = 0; i < currentDocOccurrencesWritten; i++) {
+                    int relationId = test.readInt();
+                    if (!relationIdsSeen.contains(relationId)) {
+                        throw new RuntimeException("Relation id " + relationId + " not seen in payload");
+                    }
+                }
+
+                outTempRelationsFile.writeBytes(currentDocPositionsArray, 0,
+                        currentDocOccurrencesWritten * Integer.BYTES);
+            }
         }
     }
 
@@ -336,13 +377,13 @@ class PWPluginRelationInfo implements PWPlugin {
                 currentField.setDocsOffset(outDocsFile.getFilePointer());
                 currentField.write(fieldsFile);
 
-                // Make sure we know our document lengths
+                // Make sure we know how many relations are in each document
                 Map<Integer, Integer> maxRelationIds = maxRelationIdsPerAnnotatedField.get(luceneField);
 
                 // For each document...
                 for (int docId = 0; docId < postingsWriter.maxDoc(); docId++) {
                     // Reverse the temp relations file to create the final relations file
-                    final int maxRelationId = maxRelationIds.getOrDefault(docId, 0);
+                    final int maxRelationId = maxRelationIds.getOrDefault(docId, -1);
                     writeRelationAttrSetOffsets(inTempRelationsFile, maxRelationId, docOffsets.get(docId));
                 }
             }
@@ -373,41 +414,44 @@ class PWPluginRelationInfo implements PWPlugin {
      * (which records term id for each position in each document).
      */
     private void writeRelationAttrSetOffsets(IndexInput inTempRelationsFile, int maxRelationId,
-            RelationIdPerAttrSetOffset relationIdsPerAttrSet)
+            TempRelOffsetPerAttrSet relationOffsetInTempFilePerAttrSetOffset)
             throws IOException {
 
         // Will records the attribute set offset for each relation id in this document
         // (the "relation forward index" for the document, not position-based but relationId-based)
         final long[] offsetsInDoc = new long[maxRelationId + 1];
-
-        // NOTE: sometimes docs won't have any values for a field, but we'll
-        //   still write all NO_TERMs in this case. This is similar to sparse
-        //   fields (e.g. the field that stores <p> <s> etc.) which also have a
-        //   lot of NO_TERMs.
         Arrays.fill(offsetsInDoc, Terms.NO_TERM);
 
         // For each term...
-        for (Entry<Long, Long> entry: relationIdsPerAttrSet.entrySet()) {
+        int totalOccurrences = 0;
+        for (Entry<Long, List<Long>> entry: relationOffsetInTempFilePerAttrSetOffset.entrySet()) {
             long attributeSetOffset = entry.getKey();
+            assert attributeSetOffset >= 0 : "negative attribute set offset";
 
             // Position the tmep relations file at the offset where the occurrences (relation ids) for
             // this attribute set in this document are stored.
-            Long tempRelationsFileOffset = entry.getValue();
-            inTempRelationsFile.seek(tempRelationsFileOffset);
+            List<Long> tempRelationsFileOffsets = entry.getValue();
+            for (long tempRelationsFileOffset: tempRelationsFileOffsets) {
+                inTempRelationsFile.seek(tempRelationsFileOffset);
 
-            // Record the attribute set offset at each of the relation ids it occurs at in this document.
-            int nOccurrences = inTempRelationsFile.readInt();
-            for (int i = 0; i < nOccurrences; i++) {
-                int relationId = inTempRelationsFile.readInt();
-                offsetsInDoc[relationId] = attributeSetOffset;
+                // Record the attribute set offset at each of the relation ids it occurs at in this document.
+                int nOccurrences = inTempRelationsFile.readInt();
+                for (int i = 0; i < nOccurrences; i++) {
+                    int relationId = inTempRelationsFile.readInt();
+                    assert offsetsInDoc[relationId] == Terms.NO_TERM : "duplicate relation id";
+                    offsetsInDoc[relationId] = attributeSetOffset;
+                    totalOccurrences++;
+                }
             }
         }
+        assert totalOccurrences == maxRelationId + 1;
 
         // Write offset in the relations file for this document.
         outDocsFile.writeLong(outRelationsFile.getFilePointer());
 
         // Write the attribute set offsets per relation to the relations file
         for (long offset: offsetsInDoc) {
+            assert offset >= 0 : "negative offset in attrset file";
             outRelationsFile.writeLong(offset);
         }
     }
