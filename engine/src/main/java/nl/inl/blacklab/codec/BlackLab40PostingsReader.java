@@ -197,10 +197,10 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
      * A single thread may use it for reading from this segment. It
      * can then be discarded.
      *
-     * @return relation info segment reader
+     * @return relation info segment reader if available, otherwise null
      */
     public RelationInfoSegmentReader relationInfo() {
-        return relationInfo.reader();
+        return relationInfo == null ? null : relationInfo.reader();
     }
 
 }

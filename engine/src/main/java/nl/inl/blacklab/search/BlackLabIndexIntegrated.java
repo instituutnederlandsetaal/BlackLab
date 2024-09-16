@@ -133,12 +133,12 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     /**
-     * Get the forward index for an index segment.
+     * Get the relation info index for an index segment.
      *
-     * The returned forward index should only be used from one thread.
+     * The returned relation info index should only be used from one thread.
      *
-     * @param lrc leafreader context (segment) to get the forward index for.
-     * @return forward index
+     * @param lrc leafreader context (segment) to get the relation info index for.
+     * @return relation info index, or null if not available
      */
     public static RelationInfoSegmentReader relationInfo(LeafReaderContext lrc) {
         return BlackLabCodecUtil.getPostingsReader(lrc).relationInfo();
