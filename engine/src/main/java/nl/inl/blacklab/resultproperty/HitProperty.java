@@ -104,6 +104,9 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         case HitPropertyCaptureGroup.ID:
             result = HitPropertyCaptureGroup.deserializeProp(index, field, infos);
             break;
+        case HitPropertySpanAttribute.ID:
+            result = HitPropertySpanAttribute.deserializeProp(index, field, infos);
+            break;
         case HitPropertyHitPosition.ID:
             result = new HitPropertyHitPosition();
             break;
@@ -198,22 +201,6 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      */
     protected boolean sortDescendingByDefault() {
         return false;
-    }
-
-    /**
-     * For HitProperties that need context, sets the context indices that correspond
-     * to the context(s) they need in the result set.
-     * 
-     * Only needed if the context indices differ from the assumed default of 0, 1,
-     * 2, ...
-     * 
-     * Only called from the {@link HitProperty#copyWith(Hits, boolean)}, so doesn't break immutability.
-     * 
-     * @param contextIndices the indices, in the same order as reported by
-     *            needsContext().
-     */
-    protected void setContextIndices(IntList contextIndices) {
-        this.contextIndices = new IntArrayList(contextIndices);
     }
 
     public abstract PropertyValue get(long hitIndex);
