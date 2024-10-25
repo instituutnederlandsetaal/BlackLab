@@ -213,7 +213,7 @@ public final class StringUtil {
                 s.append(".");
                 break;
             // escape special regexp-characters
-            case '^': // escape character in cmd.exe
+            case '^':
             case '(':
             case ')':
             case '[':
