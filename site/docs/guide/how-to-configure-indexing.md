@@ -641,6 +641,7 @@ annotatedFields:
         standoffAnnotations:
         - path: .//linkGrp[@targFunc='head argument']/link
           type: relation
+          relationClass: dep   # the class of relation we're indexing here
           valuePath: "replace(@ana, 'ud-syn:', '')"  # relation type
           # Note that we make sure the root relation is indexed without a source, 
           # which is required in BlackLab.
@@ -649,6 +650,8 @@ annotatedFields:
 ```
 
 The above would allow you to search for `_ -nsubj-> "I"` to find "I support", with the relation information captured. [Learn more about how to query relations](corpus-query-language.md#relations-querying)
+
+A note about the `relationClass` setting: you should declare the type of relation you're indexing here, using a short (i.e. 3-letter) code. By convention, dependency relations should use `dep`. Clients such as [BlackLab Frontend](https://github.com/INL/corpus-frontend) can use this information to display relations in a more user-friendly way, i.e. referring to the _head_ and _dependent_ of the dependency relation instead of the more generic _source_ and _target_.
 
 ### Indexing parallel corpora
 
