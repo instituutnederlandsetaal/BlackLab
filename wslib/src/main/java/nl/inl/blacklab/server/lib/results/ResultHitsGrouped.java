@@ -128,7 +128,7 @@ public class ResultHitsGrouped {
         Set<String> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs) {
             otherFields.add(def.getField());
-            if (def.getTargetField() != null)
+            if (def.getTargetField() != null && !def.getTargetField().equals(hits.queryInfo().field().name()))
                 otherFields.add(def.getTargetField());
         }
 
