@@ -155,10 +155,7 @@
         "X": {
           "type": "span"
         }
-      },
-      "otherFields": [
-        "contents"
-      ]
+      }
     },
     "requestedWindowSize": 30,
     "searchParam": {
