@@ -1,9 +1,10 @@
 package nl.inl.blacklab.search.lucene;
 
+import org.apache.lucene.queries.spans.FilterSpans;
+
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.lucene.search.spans.FilterSpans;
 
 /**
  * Gets the hits in other fields (from the matchInfo).
