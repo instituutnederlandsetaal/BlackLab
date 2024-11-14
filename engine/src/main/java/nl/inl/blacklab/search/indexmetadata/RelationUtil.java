@@ -6,8 +6,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.util.StringUtil;
 
 public class RelationUtil {
 
@@ -59,20 +61,24 @@ public class RelationUtil {
      * @return term to index in Lucene
      */
     public static String indexTerm(String fullRelationType, Map<String, String> attributes, boolean isOptimization) {
+        boolean desensitize = !BlackLab.config().getIndexing().isRelationsSensitive();
         String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
 
-        if (attributes == null || attributes.isEmpty())
-            return fullRelationType + ATTR_SEPARATOR + isOptSuffix;
+        String term;
+        if (attributes == null || attributes.isEmpty()) {
+            term = fullRelationType + ATTR_SEPARATOR + isOptSuffix;
+        } else {
+            // Sort and concatenate the attribute names and values
+            String attrPart = attributes.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(),
+                            BlackLabIndex.IndexType.INTEGRATED))
+                    .collect(Collectors.joining());
 
-        // Sort and concatenate the attribute names and values
-        String attrPart = attributes.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(),
-                                BlackLabIndex.IndexType.INTEGRATED))
-                .collect(Collectors.joining());
-
-        // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
+            // The term to index consists of the type followed by the (sorted) attributes.
+            term = fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
+        }
+        return desensitize ? StringUtil.desensitize(term) : term;
     }
 
     /**
@@ -89,21 +95,26 @@ public class RelationUtil {
      */
     public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes,
             boolean isOptimization) {
+        boolean desensitize = !BlackLab.config().getIndexing().isRelationsSensitive();
         String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
-        if (attributes == null)
-            return fullRelationType + ATTR_SEPARATOR + isOptSuffix;
 
-        // Sort and concatenate the attribute names and values
-        String attrPart = attributes.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> e.getValue().stream()
-                        .map( v -> tagAttributeIndexValue(e.getKey(), v,
+        String term;
+        if (attributes == null) {
+            term = fullRelationType + ATTR_SEPARATOR + isOptSuffix;
+        } else {
+            // Sort and concatenate the attribute names and values
+            String attrPart = attributes.entrySet().stream()
+                    .sorted(Map.Entry.comparingByKey())
+                    .map(e -> e.getValue().stream()
+                            .map(v -> tagAttributeIndexValue(e.getKey(), v,
                                     BlackLabIndex.IndexType.INTEGRATED))
-                        .collect(Collectors.joining(" ")))
-                .collect(Collectors.joining());
+                            .collect(Collectors.joining(" ")))
+                    .collect(Collectors.joining());
 
-        // The term to index consists of the type followed by the (sorted) attributes.
-        return fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
+            // The term to index consists of the type followed by the (sorted) attributes.
+            term = fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
+        }
+        return desensitize ? StringUtil.desensitize(term) : term;
     }
 
     public static boolean isOptimizationTerm(String indexedTerm) {

@@ -24,4 +24,6 @@ public interface MatchValue {
     String getBcql();
 
     TextPatternTerm textPattern();
+
+    MatchValue desensitize();
 }

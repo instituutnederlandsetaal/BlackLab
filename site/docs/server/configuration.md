@@ -360,6 +360,11 @@ indexing:
     # (only relevant if you've configured private indices and authorization)
     maxNumberOfIndicesPerUser: 10
 
+    # Should inline tags and relations be indexed case- and accent-sensitive?
+    # This used to be the default, but we've switched over to case-insensitive
+    # indexing by default.
+    relationsSensitive: false
+
 
 # Plugin options. Plugins allow you to automatically convert files (e.g. .html, .docx) or 
 # apply linguistic tagging before indexing via BLS (experimental functionality).

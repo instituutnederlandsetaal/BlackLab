@@ -7,9 +7,10 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.util.RangeRegex;
+import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a word.
@@ -55,8 +56,25 @@ public class TextPatternTags extends TextPattern {
     }
 
     public TextPatternTags(String elementName, Map<String, MatchValue> attributes, Adjust adjust, String captureAs) {
-        this.elementName = elementName;
-        this.attributes = attributes == null ? Collections.emptyMap() : attributes;
+        boolean desensitize = !BlackLab.config().getIndexing().isRelationsSensitive();
+        if (desensitize) {
+            // By default, tags are now indexed insensitive
+            // (lowercased and stripped of diacritics); desensitize the search terms as well
+            this.elementName = StringUtil.desensitize(elementName);
+            Map<String, MatchValue> desensitized = Collections.emptyMap();
+            if (attributes != null) {
+                desensitized = new HashMap<>();
+                for (Map.Entry<String, MatchValue> e: attributes.entrySet()) {
+                    desensitized.put(StringUtil.desensitize(e.getKey()), e.getValue().desensitize());
+                }
+            }
+            this.attributes = desensitized;
+        } else {
+            // BlackLab has been configured to index tags sensitive (the previous default);
+            // don't desensitize the search terms
+            this.elementName = elementName;
+            this.attributes = attributes == null ? Collections.emptyMap() : attributes;
+        }
         this.adjust = adjust == null ? Adjust.FULL_TAG : adjust;
         this.captureAs = captureAs == null ? "" : captureAs;
     }

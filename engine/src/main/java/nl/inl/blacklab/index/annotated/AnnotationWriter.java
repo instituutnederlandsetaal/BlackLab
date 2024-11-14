@@ -18,6 +18,7 @@ import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -27,6 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.CollUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
@@ -448,6 +450,7 @@ public class AnnotationWriter {
         int tagIndexInAnnotation;
         BytesRef payload;
         if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
+            boolean desensitize = !BlackLab.config().getIndexing().isRelationsSensitive();
             if (relationInfo.getType() != MatchInfo.Type.INLINE_TAG) {
                 // Classic external index doesn't support relations; ignore
                 return relationInfo.getSourceStart();
@@ -457,11 +460,15 @@ public class AnnotationWriter {
                     PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
                             BlackLabIndex.IndexType.EXTERNAL_FILES, getNextRelationId()) :
                     null;
+            if (desensitize)
+                fullRelationType = StringUtil.desensitize(fullRelationType);
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
                 String term = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
                         BlackLabIndex.IndexType.EXTERNAL_FILES);
+                if (desensitize)
+                    term = StringUtil.desensitize(term);
                 addValueAtPosition(term, relationInfo.getSourceStart(), null);
             }
         } else {
