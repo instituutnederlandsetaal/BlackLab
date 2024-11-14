@@ -3,7 +3,6 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -41,7 +40,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     private int groupIndex = -1;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
-        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName));
+        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
@@ -62,10 +61,11 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @param groupName the match info group name
      * @return the field name
      */
-    private static String determineMatchInfoField(Hits hits, String groupName) {
-        return hits.matchInfoDefs().stream()
+    private static String determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
+        List<MatchInfo.Def> defs = hits.matchInfoDefs();
+        return defs.stream()
                 .filter(d -> d.getName().equals(groupName))
-                .map(d -> d.getField())
+                .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
     }
 

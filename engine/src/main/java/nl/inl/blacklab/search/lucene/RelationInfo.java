@@ -26,7 +26,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  * Note that this is not named MatchInfoRelation, as it is
  * used while indexing as well as matching.
  */
-public class RelationInfo extends MatchInfo {
+public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     public static RelationInfo create() {
         return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, "", "");
@@ -384,22 +384,27 @@ public class RelationInfo extends MatchInfo {
         return new BytesRef(os.toByteArray());
     }
 
+    @Override
     public boolean isRoot() {
         return onlyHasTarget;
     }
 
+    @Override
     public int getSourceStart() {
         return sourceStart;
     }
 
+    @Override
     public int getSourceEnd() {
         return sourceEnd;
     }
 
+    @Override
     public int getTargetStart() {
         return targetStart;
     }
 
+    @Override
     public int getTargetEnd() {
         return targetEnd;
     }
@@ -424,6 +429,7 @@ public class RelationInfo extends MatchInfo {
         }
     }
 
+    @Override
     public String getTargetField() {
         return targetField;
     }
@@ -458,6 +464,7 @@ public class RelationInfo extends MatchInfo {
         }
     }
 
+    @Override
     public boolean isCrossFieldRelation() {
         return targetField != null && !targetField.equals(getField());
     }
