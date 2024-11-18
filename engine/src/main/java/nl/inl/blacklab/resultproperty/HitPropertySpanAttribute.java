@@ -6,11 +6,9 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -22,7 +20,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public class HitPropertySpanAttribute extends HitProperty {
 
-    public static final String ID = "span-attribute"; //TODO: deprecate, change to matchinfo? (to synch with response)
+    public static final String ID = "span-attribute";
 
     static HitPropertySpanAttribute deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         if (infos.isEmpty())
@@ -30,7 +28,7 @@ public class HitPropertySpanAttribute extends HitProperty {
         String spanName = infos.get(0);
         String spanAttribute = infos.size() > 1 ? infos.get(1) : null;
         MatchSensitivity sensitivity = infos.size() > 2 ?
-                (infos.get(2).isEmpty() ? MatchSensitivity.SENSITIVE : MatchSensitivity.valueOf(infos.get(2))) :
+                (infos.get(2).isEmpty() ? MatchSensitivity.SENSITIVE : MatchSensitivity.fromName(infos.get(2))) :
                 MatchSensitivity.SENSITIVE;
         return new HitPropertySpanAttribute(index, spanName, spanAttribute, sensitivity);
     }
