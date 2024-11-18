@@ -16,7 +16,7 @@ import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 /**
- * Manages read access to forward indexes for a single segment.
+ * Manages read access to relation info indexes for a single segment.
  */
 @ThreadSafe
 public class SegmentRelationInfo implements AutoCloseable {
@@ -108,7 +108,7 @@ public class SegmentRelationInfo implements AutoCloseable {
     }
 
     /** 
-     * Get a new ForwardIndexSegmentReader on this segment. 
+     * Get a new reader on this segment.
      * Though the reader is not Threadsafe, a new instance is returned every time, 
      * So this function can be used from multiple threads. 
      */
@@ -117,9 +117,9 @@ public class SegmentRelationInfo implements AutoCloseable {
     }
 
     /**
-     * A forward index reader for a single segment.
+     * A relation info index reader for a single segment.
      *
-     * This can be used by a single thread to read from a forward index segment.
+     * This can be used by a single thread to read from a relation info index segment.
      * Not thread-safe because it contains state (file pointers, doc offset/length).
      */
     @NotThreadSafe
