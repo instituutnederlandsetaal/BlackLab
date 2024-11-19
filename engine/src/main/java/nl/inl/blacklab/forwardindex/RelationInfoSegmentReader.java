@@ -21,4 +21,6 @@ public interface RelationInfoSegmentReader {
      * @return attributes
      */
     Map<String, String> getAttributes(String luceneField, int docId, int relationId);
+
+    String relationsField(String baseFieldName);
 }

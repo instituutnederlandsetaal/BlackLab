@@ -509,8 +509,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
             this.attributes = RelationUtil.attributesFromIndexedTerm(term);
             if (this.attributes == null && relInfo != null) {
                 // Get them from relation info index instead
-                String f = AnnotatedFieldNameUtil.annotationField(getField(), AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.INTEGRATED),
-                        MatchSensitivity.SENSITIVE.luceneFieldSuffix());
+                String f = relInfo.relationsField(getField());
                 this.attributes = relInfo.getAttributes(f, docId, relationId);
             }
         }

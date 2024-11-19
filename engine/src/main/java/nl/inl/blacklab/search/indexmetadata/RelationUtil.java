@@ -6,10 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.util.StringUtil;
 
 public class RelationUtil {
 
@@ -60,8 +58,8 @@ public class RelationUtil {
      *                not be counted when determining stats. This will be indicated in the term encoding.
      * @return term to index in Lucene
      */
-    public static String indexTerm(String fullRelationType, Map<String, String> attributes, boolean isOptimization) {
-        boolean desensitize = !BlackLab.config().getIndexing().isRelationsSensitive();
+    public static String indexTerm(String fullRelationType, Map<String, String> attributes,
+            boolean isOptimization) {
         String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
 
         String term;
@@ -78,7 +76,7 @@ public class RelationUtil {
             // The term to index consists of the type followed by the (sorted) attributes.
             term = fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
         }
-        return desensitize ? StringUtil.desensitize(term) : term;
+        return term;
     }
 
     /**
@@ -95,7 +93,6 @@ public class RelationUtil {
      */
     public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes,
             boolean isOptimization) {
-        boolean desensitize = !BlackLab.config().getIndexing().isRelationsSensitive();
         String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
 
         String term;
@@ -114,7 +111,7 @@ public class RelationUtil {
             // The term to index consists of the type followed by the (sorted) attributes.
             term = fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
         }
-        return desensitize ? StringUtil.desensitize(term) : term;
+        return term;
     }
 
     public static boolean isOptimizationTerm(String indexedTerm) {

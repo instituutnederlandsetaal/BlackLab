@@ -14,6 +14,7 @@ import org.apache.lucene.store.IndexInput;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
  * Manages read access to relation info indexes for a single segment.
@@ -194,5 +195,14 @@ public class SegmentRelationInfo implements AutoCloseable {
                 throw new RuntimeException(e);
             }
         }
+
+        @Override
+        public String relationsField(String baseFieldName) {
+            return fieldsByName.values().stream()
+                    .map(RelationInfoField::getFieldName)
+                    .filter(fieldName -> AnnotatedFieldNameUtil.getBaseName(fieldName).equals(baseFieldName))
+                    .findFirst().orElseThrow();
+        }
     }
+
 }

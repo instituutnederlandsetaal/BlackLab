@@ -36,7 +36,7 @@ public final class AnnotatedFieldNameUtil {
     /** @deprecated use {@link #relationAnnotationName(DocWriter)} instead */
     public static final String TAGS_ANNOT_NAME = LEGACY_TAGS_ANNOT_NAME;
 
-    private static final String RELATIONS_ANNOT_NAME = "_relation";
+    public static final String RELATIONS_ANNOT_NAME = "_relation";
 
     /** Annotation name for the spaces and punctuation between words */
     public static final String PUNCTUATION_ANNOT_NAME = "punct";
