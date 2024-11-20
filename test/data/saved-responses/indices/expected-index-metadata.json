@@ -71,7 +71,7 @@
           "description": "",
           "uiType": "",
           "hasForwardIndex": false,
-          "sensitivity": "ONLY_SENSITIVE",
+          "sensitivity": "ONLY_INSENSITIVE",
           "offsetsAlternative": "",
           "isInternal": true
         },
