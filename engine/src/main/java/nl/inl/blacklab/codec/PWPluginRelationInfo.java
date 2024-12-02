@@ -177,11 +177,11 @@ class PWPluginRelationInfo implements PWPlugin {
     /** Doc id of current document */
     private int currentDocId;
 
-    private byte[] currentDocPositionsArray;
+    private byte[] currentRelationIdsArray;
 
-    private DataOutput currentDocPositionsOutput;
+    private DataOutput currentRelationIdsOutput;
 
-    private int currentDocOccurrencesWritten;
+    private int currentRelationIdsWritten;
 
     PWPluginRelationInfo(BlackLab40PostingsWriter postingsWriter) throws IOException {
         this.postingsWriter = postingsWriter;
@@ -280,16 +280,18 @@ class PWPluginRelationInfo implements PWPlugin {
 
     @Override
     public void startDocument(int docId, int nOccurrences) {
-        // Keep track of term positions offsets in term vector file
+        // Keep track of relation ids in relations file
         this.currentDocId = docId;
-        currentDocPositionsArray = new byte[Integer.BYTES * nOccurrences];
-        currentDocPositionsOutput = new ByteArrayDataOutput(currentDocPositionsArray);
-        currentDocOccurrencesWritten = 0;
+        currentRelationIdsArray = new byte[Integer.BYTES * nOccurrences];
+        currentRelationIdsOutput = new ByteArrayDataOutput(currentRelationIdsArray);
+        currentRelationIdsWritten = 0;
     }
 
-    SortedSet<Integer> relationIdsSeen = new TreeSet<>();
-
-    SortedSet<Integer> relationIdsSeenOptTerms = new TreeSet<>();
+    /** Only used when assertions are enabled */
+    SortedSet<Integer> relationIdsSeen;
+    {
+        assert (relationIdsSeen = new TreeSet<>()) != null;
+    }
 
     @Override
     public void termOccurrence(int position, BytesRef payload) throws IOException {
@@ -302,9 +304,9 @@ class PWPluginRelationInfo implements PWPlugin {
 
             ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
             int relationId = RelationInfo.getRelationId(dataInput);
-            assert relationId >= 0;
-            relationIdsSeenOptTerms.add(relationId);
-
+            if (relationId != RelationInfo.RELATION_ID_NO_INFO) {
+                assert relationId >= 0;
+            }
             return;
         }
 
@@ -314,10 +316,14 @@ class PWPluginRelationInfo implements PWPlugin {
         ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
         int relationId = RelationInfo.getRelationId(dataInput);
         if (relationId >= 0) {
-            relationIdsSeen.add(relationId);
+            if (relationIdsSeen != null)
+                relationIdsSeen.add(relationId);
             offsetsAndMaxRelationIdPerDocument.updateMaxRelationId(currentDocId, relationId);
-            currentDocPositionsOutput.writeInt(relationId);
-            currentDocOccurrencesWritten++;
+            currentRelationIdsOutput.writeInt(relationId);
+            currentRelationIdsWritten++;
+        } else {
+            // Must be the special value that means "no info stored about this relation".
+            assert relationId == RelationInfo.RELATION_ID_NO_INFO;
         }
     }
 
@@ -329,22 +335,26 @@ class PWPluginRelationInfo implements PWPlugin {
             // (will be reversed later to create the final relations file)
             offsetsAndMaxRelationIdPerDocument.putTempFileOffset(currentDocId, currentTermAttrSetOffset,
                     outTempRelationsFile.getFilePointer());
-            outTempRelationsFile.writeInt(currentDocOccurrencesWritten);
-            if (currentDocOccurrencesWritten > 0) {
-
-                // Check the relationIds (DEBUG)
-                ByteArrayDataInput test = new ByteArrayDataInput(currentDocPositionsArray);
-                for (int i = 0; i < currentDocOccurrencesWritten; i++) {
-                    int relationId = test.readInt();
-                    if (!relationIdsSeen.contains(relationId)) {
-                        throw new RuntimeException("Relation id " + relationId + " not seen in payload");
-                    }
-                }
-
-                outTempRelationsFile.writeBytes(currentDocPositionsArray, 0,
-                        currentDocOccurrencesWritten * Integer.BYTES);
+            outTempRelationsFile.writeInt(currentRelationIdsWritten);
+            if (currentRelationIdsWritten > 0) {
+                assert allIdsSeen();
+                outTempRelationsFile.writeBytes(currentRelationIdsArray, 0,
+                        currentRelationIdsWritten * Integer.BYTES);
             }
         }
+    }
+
+    /** Check that we've seen all the relationIds we're about to write (DEBUG) */
+    private boolean allIdsSeen() {
+        ByteArrayDataInput test = new ByteArrayDataInput(currentRelationIdsArray);
+        for (int i = 0; i < currentRelationIdsWritten; i++) {
+            int relationId = test.readInt();
+            assert relationId >= 0;
+            if (!relationIdsSeen.contains(relationId)) {
+                throw new RuntimeException("Relation id " + relationId + " not seen in payload");
+            }
+        }
+        return true;
     }
 
     @Override
@@ -438,6 +448,7 @@ class PWPluginRelationInfo implements PWPlugin {
                 int nOccurrences = inTempRelationsFile.readInt();
                 for (int i = 0; i < nOccurrences; i++) {
                     int relationId = inTempRelationsFile.readInt();
+                    assert relationId >= 0;
                     assert offsetsInDoc[relationId] == Terms.NO_TERM : "duplicate relation id";
                     offsetsInDoc[relationId] = attributeSetOffset;
                     totalOccurrences++;

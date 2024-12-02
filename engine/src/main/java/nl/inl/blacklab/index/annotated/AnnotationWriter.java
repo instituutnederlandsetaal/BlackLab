@@ -433,7 +433,7 @@ public class AnnotationWriter {
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
         RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd,
-                getNextRelationId());
+                getNextRelationId(attributes));
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort
@@ -455,7 +455,7 @@ public class AnnotationWriter {
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
                     PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
-                            BlackLabIndex.IndexType.EXTERNAL_FILES, getNextRelationId()) :
+                            BlackLabIndex.IndexType.EXTERNAL_FILES, getNextRelationId(attributes)) :
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
@@ -495,7 +495,9 @@ public class AnnotationWriter {
         return tagIndexInAnnotation;
     }
 
-    public int getNextRelationId() {
+    public int getNextRelationId(Map<String, ?> attributes) {
+        if (attributes == null || attributes.isEmpty())
+            return RelationInfo.RELATION_ID_NO_INFO;
         return nextRelationId++;
     }
 }

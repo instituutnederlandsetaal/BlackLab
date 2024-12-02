@@ -264,7 +264,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             // // one for the span name, and one for each attribute name and value.
             value = RelationUtil.tagAttributeIndexValue(annotation.getName(), value,
                     BlackLabIndex.IndexType.EXTERNAL_FILES);
-            annotationValue(name, value, positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN);
+            annotationValue(name, value, positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN, Collections.emptyMap());
         }
     }
 

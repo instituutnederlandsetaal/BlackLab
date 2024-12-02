@@ -474,7 +474,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         AnnotationWriter relationsAnnot = tagsAnnotation();
         if (isOpenTag) {
             trace("<" + tagName + ">");
-            int relationId = relationsAnnot.getNextRelationId();
+            int relationId = relationsAnnot.getNextRelationId(attributes);
             int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes,
                     getIndexType(), relationId);
             openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos, relationId));
@@ -568,7 +568,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param annotType the type of annotation we're indexing: a token, a span (inline tag) or a relation
      */
     protected void annotationValue(String name, String value, Span position, Span spanEndOrRelTarget,
-            AnnotationType annotType) {
+            AnnotationType annotType, Map<String, ?> attributes) {
         // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
         // which has no source, so we index it at its target.
         int indexAtPosition = position.start() < 0 ?
@@ -583,7 +583,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             // Span: index as a relation from the start of source to the start of target (0-length)
             //   (and in the classic external index, the payload just contains the end position)
             payload = PayloadUtils.inlineTagPayload(indexAtPosition, spanEndOrRelTarget.start(),
-                    getIndexType(), tagsAnnotation().getNextRelationId());
+                    getIndexType(), tagsAnnotation().getNextRelationId(attributes));
             break;
         case RELATION:
             // Relation: index with the full source and target spans
@@ -597,7 +597,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             int sourceEnd = onlyHasTarget ? indexAtPosition : position.end();
 
             payload = PayloadUtils.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
-                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end(), tagsAnnotation().getNextRelationId());
+                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end(), tagsAnnotation().getNextRelationId(attributes));
             break;
         }
         annotationValue(name, value, indexAtPosition, payload);

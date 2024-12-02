@@ -14,9 +14,6 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
@@ -50,6 +47,10 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
      *  This is because of an optimization where each term is indexed twice, once with attributes
      *  and once without. The version without is much more efficient when not filtering on attributes. */
     public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = true;
+
+    /** If a relation has no info stored in the relation info index, it will get this special relation id.
+     *  Saves disk space and time. */
+    public static final int RELATION_ID_NO_INFO = -1;
 
     public static void serializeInlineTag(int start, int end, int relationId, DataOutput dataOutput) throws IOException {
         serializeRelationWithRelationId(false, start, start, end, end, relationId, dataOutput);
@@ -506,11 +507,17 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     public void setIndexedTerm(String term, int docId, RelationInfoSegmentReader relInfo) {
         this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
         if (INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
-            this.attributes = RelationUtil.attributesFromIndexedTerm(term);
-            if (this.attributes == null && relInfo != null) {
-                // Get them from relation info index instead
-                String f = relInfo.relationsField(getField());
-                this.attributes = relInfo.getAttributes(f, docId, relationId);
+            attributes = RelationUtil.attributesFromIndexedTerm(term);
+            if (attributes == null && relInfo != null) {
+                if (relationId == RELATION_ID_NO_INFO) {
+                    // No extra info was stored, no need to check
+                    // (we shouldn't ever get here, RelationUtil.attributesFromIndexedTerm() can tell that there's no attributes)
+                    attributes = Collections.emptyMap();
+                } else {
+                    // Get them from relation info index instead
+                    String f = relInfo.relationsField(getField());
+                    attributes = relInfo.getAttributes(f, docId, relationId);
+                }
             }
         }
     }
