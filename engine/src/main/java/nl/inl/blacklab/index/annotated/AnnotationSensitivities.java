@@ -1,5 +1,6 @@
 package nl.inl.blacklab.index.annotated;
 
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -77,8 +78,19 @@ public enum AnnotationSensitivities {
     }
 
     public static AnnotationSensitivities defaultForAnnotation(String name) {
-        return AnnotatedFieldNameUtil.defaultSensitiveInsensitive(name) ?
-                AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE :
-                AnnotationSensitivities.ONLY_INSENSITIVE;
+        if (name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
+            // Relations annotation (which includes inline tags) defaults to
+            // insensitive nowadays (used to be sensitive), unless configured otherwise.
+            boolean sensitive = BlackLab.config().getIndexing().isRelationsSensitive();
+            return sensitive ? AnnotationSensitivities.ONLY_SENSITIVE :
+                    AnnotationSensitivities.ONLY_INSENSITIVE;
+        }
+
+        // Check for legacy special cases that get sensitive+insensitive by default
+        if (AnnotatedFieldNameUtil.defaultSensitiveInsensitive(name))
+            return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
+
+        // No special case; default to insensitive unless explicitly set to sensitive
+        return AnnotationSensitivities.ONLY_INSENSITIVE;
     }
 }

@@ -18,6 +18,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Hits;
@@ -78,9 +80,12 @@ public class TestStandoffSpans {
         SearchEmpty s = testIndex.search();
 
         AnnotatedField field = testIndex.mainAnnotatedField();
-        String luceneFieldName = field.annotation(AnnotatedFieldNameUtil.relationAnnotationName(testIndex.getType())).
-                sensitivity(MatchSensitivity.SENSITIVE).luceneField();
-        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), luceneFieldName, "character", null, null);
+        String relAnnotName = AnnotatedFieldNameUtil.relationAnnotationName(testIndex.getType());
+        Annotation relAnnotation = field.annotation(relAnnotName);
+        AnnotationSensitivity annotationSensitivity = relAnnotation.hasSensitivity(MatchSensitivity.SENSITIVE) ?
+                relAnnotation.sensitivity(MatchSensitivity.SENSITIVE) :
+                relAnnotation.sensitivity(MatchSensitivity.INSENSITIVE);
+        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), annotationSensitivity.luceneField(), "character", null, null);
         Hits results = s.find(query).execute();
         Assert.assertEquals(2, results.size());
         Assert.assertEquals(0, results.get(0).start());

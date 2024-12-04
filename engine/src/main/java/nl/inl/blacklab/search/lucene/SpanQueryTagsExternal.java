@@ -132,7 +132,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
             if (startTags == null)
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(startTagFieldName);
-            boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
+            boolean primaryIndicator = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfo);
             return new SpansTagsExternal(startTags, primaryIndicator);
         }
 

@@ -87,7 +87,7 @@ Relation payloads are always stored at the source position.
 
 The payload for a relation consists of the following fields:
 
-* This number is either `relTargetStart` or `relationId`, depending on the `flags` byte (see below). `relationId` is a unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future. For `relTargetStart`, see below. Default value: `1`.
+* This number, a `ZInt`, is either `relTargetStart` or `relationId`, depending on the `flags` byte (see below). `relationId` is a unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future. Note that if `relationId == -1`, there is no extra information to look up. For `relTargetStart`, see below. Default value: `1`.
 * `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `sourceLength` and `targetLength`. If `0x08` is set, the first number in the payload is the `relationId`. The other bits are reserved for future use and must not be set. Default: `0`.
 * If flag `0x08` was set, `flags` is followed by `relTargetStart: ZInt`: relative position of the (start of the) target end. Default: `1`. If flag `0x08` was not set, this number will not be written here (in that case, the first number of the payload is `relTargetStart`, see above).
 * `sourceLength: VInt`: length of the source end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, it will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
@@ -224,7 +224,6 @@ The relation info ensures that we can always look up any attributes for any rela
 
 - For each relations field:
     * Lucene field name (str), e.g. "contents%_relation@s"
-    * number of unique relations (terms, a combination of relation name and attributes, if any) in this field (int)
     * offset of field in docs file (long)
 
 This file will have an extension of `.blri.fields`.
@@ -233,8 +232,7 @@ This file will have an extension of `.blri.fields`.
 
 - For each relations field:
   * For each document:
-    - offset in the relations file (long)
-    - number of relations (int)
+    - starting offset in the relations file (long)
 
 This file will have an extension of `.blri.docs`.
 
@@ -247,12 +245,12 @@ This file will have an extension of `.blri.docs`.
 
 This file will have an extension of `.blri.relations`.
 
-### attrsets - Information per unique attribute value.
+### attrsets - Information per unique set of attributes.
 
 - For each unique attribute set:
-  * number of attributes in set (int)
+  * number of attributes in set (VInt)
   * For each attribute in this set:
-    - attribute name id (int)
+    - attribute name id (VInt)
     - attribute value offset (long)
 
 This file will have an extension of `.blri.attrsets`.
@@ -277,7 +275,7 @@ This file will have an extension of `.blri.attrvalues`.
 
 This is a temporary file. It is eventually replaced by the relations file.
 
-- For each term:
+- For each attribute set:
   * For each doc term occurs in:
     - Number of occurrences (int)
     * For each occurrence:

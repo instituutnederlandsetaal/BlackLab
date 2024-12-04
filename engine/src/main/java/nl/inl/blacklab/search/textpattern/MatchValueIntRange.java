@@ -57,4 +57,9 @@ class MatchValueIntRange implements MatchValue {
     public String toString() {
         return getBcql();
     }
+
+    @Override
+    public MatchValue desensitize() {
+        return this;
+    }
 }

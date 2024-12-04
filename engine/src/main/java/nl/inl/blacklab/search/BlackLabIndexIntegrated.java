@@ -30,6 +30,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -52,10 +53,10 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
-    public static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+    private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
 
-    /** Lucene field attribute. Does the field have a content store */
-    static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
+    /** Lucene field attribute. Does the field have a content store? */
+    private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
 
     /**
      * Does the specified Lucene field have a forward index stored with it?
@@ -68,11 +69,19 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * See {@link nl.inl.blacklab.analysis.PayloadUtils}.
      *
      * @param fieldInfo Lucene field to check
-     * @return true if it's a forward index field
+     * @return true if it has a forward index
      */
-    public static boolean isForwardIndexField(FieldInfo fieldInfo) {
+    public static boolean doesFieldHaveForwardIndex(FieldInfo fieldInfo) {
         String v = fieldInfo.getAttribute(BLFA_FORWARD_INDEX);
         return v != null && v.equals("true");
+    }
+
+    /**
+     * Indicate that this field has a forward index.
+     * @param type field type
+     */
+    public static void setFieldHasForwardIndex(FieldType type) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
     }
 
     /**
@@ -86,14 +95,6 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public static boolean isRelationsField(FieldInfo fieldInfo) {
         String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
         return nameComponents.length > 1 && AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1]);
-    }
-
-    /**
-     * Set this field type to be a forward index field
-     * @param type field type
-     */
-    public static void setForwardIndexField(FieldType type) {
-        type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
     }
 
     /**
@@ -129,6 +130,18 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      */
     public static ForwardIndexSegmentReader forwardIndex(LeafReaderContext lrc) {
         return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex();
+    }
+
+    /**
+     * Get the relation info index for an index segment.
+     *
+     * The returned relation info index should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the relation info index for.
+     * @return relation info index, or null if not available
+     */
+    public static RelationInfoSegmentReader relationInfo(LeafReaderContext lrc) {
+        return BlackLabCodecUtil.getPostingsReader(lrc).relationInfo();
     }
 
     /**

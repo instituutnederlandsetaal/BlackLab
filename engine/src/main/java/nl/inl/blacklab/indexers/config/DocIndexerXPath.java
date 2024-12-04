@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -156,7 +157,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // annotations as attributes.
             // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
             //  not an attribute)
-            annotationValue(annotationWriter.name(), spanOrRelType, sourceSpan, targetSpan, type);
+            annotationValue(annotationWriter.name(), spanOrRelType, sourceSpan, targetSpan, type, Collections.emptyMap());
             for (ConfigAnnotation annotation: standoffAnnotations) {
                 processAnnotation(annotation, standoffNode, sourceSpan, targetSpan, this::indexAnnotationValues);
             }
@@ -181,13 +182,13 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes, false);
 
             // Actually index the value, once without and once with attributes (if any)
-            annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
+            annotationValue(name, valueToIndex, sourceSpan, targetSpan, type, attributes);
             if (attributes != null && !attributes.isEmpty()) {
                 // Also index a version without attributes. We'll use this for faster search if we don't filter on
                 // attributes.
                 // OPT: find a way to only create the payload once, because it is identical for both.
                 valueToIndex = RelationUtil.indexTermMulti(fullType, null, true);
-                annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
+                annotationValue(name, valueToIndex, sourceSpan, targetSpan, type, attributes);
             }
         }
     }

@@ -12,6 +12,7 @@ import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
@@ -54,6 +55,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** Name to capture the relation info as */
     private final String captureAs;
 
+    /** For looking up attribute values in the relation index */
+    private final RelationInfoSegmentReader relInfo;
+
     /**
      * Can our spans include root relations, or are we sure it doesn't?
      * If it might include root relations, we need to check for this in accept(),
@@ -79,7 +83,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs) {
+            String captureAs, RelationInfoSegmentReader relInfo) {
         super(relationsMatches,
                 SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.sourceField = sourceField;
@@ -88,6 +92,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         this.direction = direction;
         this.spanMode = spanMode;
         this.captureAs = captureAs == null ? "" : captureAs;
+        this.relInfo = relInfo;
     }
 
     @Override
@@ -147,7 +152,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
                 throw new BlackLabRuntimeException("Error getting payload");
             }
             if (collector.term != null) // can happen during testing...
-                relationInfo.setIndexedTerm(collector.term.text());
+                relationInfo.setIndexedTerm(collector.term.text(), docID(), relInfo);
             fetchedRelationInfo = true;
         }
         return relationInfo;

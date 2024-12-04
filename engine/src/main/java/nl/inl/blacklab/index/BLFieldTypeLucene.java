@@ -7,6 +7,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
 
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /** Represents Lucene field types. */
@@ -85,7 +86,7 @@ public class BLFieldTypeLucene implements BLFieldType {
             }
             if (forwardIndex) {
                 // indicate that this field should get a forward index when written to the index
-                BlackLabIndexIntegrated.setForwardIndexField(type);
+                BlackLabIndexIntegrated.setFieldHasForwardIndex(type);
             }
             type.freeze();
             return new BLFieldTypeLucene(type);

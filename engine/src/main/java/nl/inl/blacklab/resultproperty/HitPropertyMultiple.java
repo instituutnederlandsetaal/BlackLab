@@ -24,7 +24,10 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         List<HitProperty> values = new ArrayList<>();
         for (String strValue: strValues) {
             if (!strValue.isEmpty()) {
-                values.add(HitProperty.deserialize(index, field, strValue, contextSize));
+                HitProperty prop = HitProperty.deserialize(index, field, strValue, contextSize);
+                if (prop == null)
+                    throw new IllegalArgumentException("Incorrect hit property string: '" + strValue + "'");
+                values.add(prop);
             }
         }
         if (values.size() == 1) {

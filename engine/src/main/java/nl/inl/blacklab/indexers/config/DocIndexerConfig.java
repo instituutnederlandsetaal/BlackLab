@@ -152,9 +152,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
 
-            AnnotationWriter annotRelation = fieldWriter.addAnnotation(
-                    AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
-                    AnnotationSensitivities.ONLY_SENSITIVE, true, false);
+            String relAnnotName = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
+            AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(relAnnotName);
+            AnnotationWriter annotRelation = fieldWriter.addAnnotation(relAnnotName, relAnnotSensitivity, true, false);
             annotRelation.setHasForwardIndex(false);
 
             // Create properties for the other annotations
@@ -264,7 +264,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             // // one for the span name, and one for each attribute name and value.
             value = RelationUtil.tagAttributeIndexValue(annotation.getName(), value,
                     BlackLabIndex.IndexType.EXTERNAL_FILES);
-            annotationValue(name, value, positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN);
+            annotationValue(name, value, positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN, Collections.emptyMap());
         }
     }
 

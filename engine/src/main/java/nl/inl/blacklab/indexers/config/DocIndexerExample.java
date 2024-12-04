@@ -305,7 +305,7 @@ public class DocIndexerExample extends DocIndexerBase {
             }
 
             tagsAnnotation().indexInlineTag(spanType, spanStart, spanEnd,
-                    spanAttributes, getIndexType());
+                    spanAttributes, getIndexType(), tagsAnnotation().getNextRelationId(spanAttributes));
             break;
 
         case "FIELD_END":

@@ -6,10 +6,13 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.FieldInfo;
 
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.util.RangeRegex;
+import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a word.

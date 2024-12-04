@@ -6,7 +6,7 @@
       "hasForwardIndex": false,
       "isInternal": true,
       "offsetsAlternative": "",
-      "sensitivity": "ONLY_SENSITIVE",
+      "sensitivity": "ONLY_INSENSITIVE",
       "uiType": ""
     },
     "lemma": {

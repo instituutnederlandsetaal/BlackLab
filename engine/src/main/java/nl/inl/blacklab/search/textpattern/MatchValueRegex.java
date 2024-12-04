@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.textpattern;
 
 import java.util.Objects;
 
+import nl.inl.util.StringUtil;
+
 class MatchValueRegex implements MatchValue {
     private final String regex;
 
@@ -40,5 +42,10 @@ class MatchValueRegex implements MatchValue {
     @Override
     public String toString() {
         return getBcql();
+    }
+
+    @Override
+    public MatchValue desensitize() {
+        return MatchValue.regex(StringUtil.desensitize(regex));
     }
 }
