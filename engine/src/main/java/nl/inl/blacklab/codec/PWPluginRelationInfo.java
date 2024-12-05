@@ -364,6 +364,7 @@ class PWPluginRelationInfo implements PWPlugin {
 
     @Override
     public void endField() throws IOException {
+        currentField = null;
     }
 
     @Override
@@ -384,8 +385,9 @@ class PWPluginRelationInfo implements PWPlugin {
                 OffsetsAndMaxRelationIdPerDocument docOffsets = fieldEntry.getValue();
 
                 // Record starting offset of field in docs file
-                currentField.setDocsOffset(outDocsFile.getFilePointer());
-                currentField.write(fieldsFile);
+                RelationInfoFieldMutable field = riFields.get(luceneField);
+                field.setDocsOffset(outDocsFile.getFilePointer());
+                field.write(fieldsFile);
 
                 // Make sure we know how many relations are in each document
                 Map<Integer, Integer> maxRelationIds = maxRelationIdsPerAnnotatedField.get(luceneField);

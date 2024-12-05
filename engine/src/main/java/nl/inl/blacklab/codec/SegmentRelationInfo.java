@@ -201,7 +201,7 @@ public class SegmentRelationInfo implements AutoCloseable {
             return fieldsByName.values().stream()
                     .map(RelationInfoField::getFieldName)
                     .filter(fieldName -> AnnotatedFieldNameUtil.getBaseName(fieldName).equals(baseFieldName))
-                    .findFirst().orElseThrow();
+                    .findFirst().orElse(null);
         }
     }
 
