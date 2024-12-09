@@ -41,13 +41,6 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, "", "");
     }
 
-    /** Include attributes in relation info?
-     *  Note that these are either extracted from the term (if your query filters on attributes),
-     *  or read from the relation info index (if your query doesn't filter on attributes).
-     *  This is because of an optimization where each term is indexed twice, once with attributes
-     *  and once without. The version without is much more efficient when not filtering on attributes. */
-    public static final boolean INCLUDE_ATTRIBUTES_IN_RELATION_INFO = true;
-
     /** If a relation has no info stored in the relation info index, it will get this special relation id.
      *  Saves disk space and time. */
     public static final int RELATION_ID_NO_INFO = -1;
@@ -286,7 +279,8 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     /** Our relation type, or null if not set (set during search by SpansRelations) */
     private String fullRelationType;
 
-    /** Tag attributes (if any), or empty if not set (set during search by SpansRelations) */
+    /** Tag attributes (if any), or empty if not set (set during search by SpansRelations).
+     *  If this is empty and indexedTerm is set, attributes have not been determined yet (either from the term, or from relation info index). */
     private Map<String, String> attributes;
 
     /** Field this points to, or null if same as source field. */
@@ -506,18 +500,16 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
      */
     public void setIndexedTerm(String term, int docId, RelationInfoSegmentReader relInfo) {
         this.fullRelationType = RelationUtil.fullTypeFromIndexedTerm(term);
-        if (INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
-            attributes = RelationUtil.attributesFromIndexedTerm(term);
-            if (attributes == null && relInfo != null) {
-                if (relationId == RELATION_ID_NO_INFO) {
-                    // No extra info was stored, no need to check
-                    // (we shouldn't ever get here, RelationUtil.attributesFromIndexedTerm() can tell that there's no attributes)
-                    attributes = Collections.emptyMap();
-                } else {
-                    // Get them from relation info index instead
-                    String f = relInfo.relationsField(getField());
-                    attributes = relInfo.getAttributes(f, docId, relationId);
-                }
+        attributes = RelationUtil.attributesFromIndexedTerm(term);
+        if (attributes == null && relInfo != null) {
+            if (relationId == RELATION_ID_NO_INFO) {
+                // No extra info was stored, no need to check
+                // (we shouldn't ever get here, RelationUtil.attributesFromIndexedTerm() can tell that there's no attributes)
+                attributes = Collections.emptyMap();
+            } else {
+                // Get them from relation info index instead
+                String f = relInfo.relationsField(getField());
+                attributes = relInfo.getAttributes(f, docId, relationId);
             }
         }
     }

@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.RelationListInfo;
 
 /** KWICs ("key words in context") for a list of hits.
  *
@@ -105,25 +104,28 @@ public class Kwics {
     private static Map<String, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, MatchInfo mi, String defaultField,
             Map<String, int[]> minMaxPerField, Map<String, List<AnnotationForwardIndex>> afisPerField) {
         String field = mi.getField();
-        if (!field.equals(defaultField)) { // foreign KWICs only
+        boolean isTag = mi.getType() == MatchInfo.Type.INLINE_TAG; // not "real" relations, don't influence foreign hits
+        if (!field.equals(defaultField) && !isTag) { // foreign KWICs only
             // By default, just use the match info span
             // (which, in case of a cross-field relation, is the source span)
             minMaxPerField = updateMinMaxPerField(minMaxPerField, field, mi.getSpanStart(), mi.getSpanEnd());
             afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(
                     index.forwardIndex(index.annotatedField(field))));
         }
-        if (mi instanceof RelationInfo) {
+        if (mi instanceof RelationInfo && !isTag) {
+
+
             // Relation targets (not just sources) should influence field context
             RelationInfo rmi = (RelationInfo) mi;
-            String tfield = rmi.getTargetField() == null ? field : rmi.getTargetField();
-            if (!tfield.equals(defaultField)) { // foreign KWICs only
+            String targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
+            if (!targetField.equals(defaultField)) { // foreign KWICs only
                 int targetStart = rmi.getTargetStart();
                 int targetEnd = rmi.getTargetEnd();
                 // Use foreign targets for match position as well
-                minMaxPerField = updateMinMaxPerField(minMaxPerField, tfield, targetStart, targetEnd);
-                afisPerField.computeIfAbsent(tfield, k ->
+                minMaxPerField = updateMinMaxPerField(minMaxPerField, targetField, targetStart, targetEnd);
+                afisPerField.computeIfAbsent(targetField, k ->
                         getAnnotationForwardIndexes(
-                                index.forwardIndex(index.annotatedField(tfield))));
+                                index.forwardIndex(index.annotatedField(targetField))));
             }
         }
         /* else if (mi instanceof RelationListInfo) {

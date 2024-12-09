@@ -23,7 +23,8 @@ public class ResultAnnotatedField {
         this.indexName = indexName;
         this.fieldDesc = fieldDesc;
         this.annotInfos = annotInfos;
-        this.tokenCount = index.metadata().tokenCountPerField().get(fieldDesc.name());
+        Long tokenCount = index.metadata().tokenCountPerField().get(fieldDesc.name());
+        this.tokenCount = tokenCount == null ? 0 : tokenCount;
     }
 
     public String getIndexName() {

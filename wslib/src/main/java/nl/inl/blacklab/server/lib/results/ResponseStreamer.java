@@ -827,14 +827,12 @@ public class ResponseStreamer {
 
     /** If attribute values are avaiable, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
-        if (RelationInfo.INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
-            if (!inlineTag.getAttributes().isEmpty()) {
-                ds.startEntry("attributes").startMap();
-                for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
-                    ds.elEntry(attr.getKey(), attr.getValue());
-                }
-                ds.endMap().endEntry();
+        if (!inlineTag.getAttributes().isEmpty()) {
+            ds.startEntry("attributes").startMap();
+            for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
+                ds.elEntry(attr.getKey(), attr.getValue());
             }
+            ds.endMap().endEntry();
         }
     }
 
