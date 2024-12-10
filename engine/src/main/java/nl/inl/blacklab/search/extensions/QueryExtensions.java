@@ -8,10 +8,14 @@ import java.util.Map;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
+import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 
 /**
@@ -19,11 +23,71 @@ import nl.inl.blacklab.search.textpattern.TextPatternTerm;
  */
 public class QueryExtensions {
 
-    /** Default value for a query parameter that means "any n-gram" ( []* ) */
+    /** Default value for a query parameter that means "any n-gram" (<code>[]*</code> ) */
     public static final String VALUE_QUERY_ANY_NGRAM = "_ANY_NGRAM_";
 
     /** Prefix for extension functions that enable pseudo-annotations like punctAfter */
     public static final String PSEUDO_ANNOTATION_EXTENSION_FUNCTION_PREFIX = "annot_";
+
+    /** Default value for a query parameter that means "any span" (<code><'.*' /></code>) */
+    public static final String VALUE_ANY_SPAN = "_ANY_SPAN_";
+
+    /** Variable number of query params */
+    public static final List<ArgType> ARGS_VAR_Q = List.of(ArgType.QUERY, ArgType.ELLIPSIS);
+
+    /** Variable number of string params */
+    public static final List<ArgType> ARGS_VAR_S = List.of(ArgType.STRING, ArgType.ELLIPSIS);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_S = List.of(ArgType.STRING, ArgType.STRING);
+
+    /** A single query as an argument */
+    public static final List<ArgType> ARGS_Q = List.of(ArgType.QUERY);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_SS = List.of(ArgType.STRING, ArgType.STRING);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_SQ = List.of(ArgType.STRING, ArgType.QUERY);
+
+    /** A query and a string */
+    public static final List<ArgType> ARGS_QS = List.of(ArgType.QUERY, ArgType.STRING);
+
+    /** Two queries as an argument */
+    public static final List<ArgType> ARGS_QQ = List.of(ArgType.QUERY, ArgType.QUERY);
+
+    /** Two strings */
+    public static final List<ArgType> ARGS_SSS = List.of(ArgType.STRING, ArgType.STRING, ArgType.STRING);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_SSQ = List.of(ArgType.STRING, ArgType.STRING, ArgType.QUERY);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_SQS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_SQQ = List.of(ArgType.STRING, ArgType.QUERY, ArgType.QUERY);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_QSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_QSQ = List.of(ArgType.QUERY, ArgType.STRING, ArgType.QUERY);
+
+    /** A query, a string and another query */
+    public static final List<ArgType> ARGS_QQS = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.STRING);
+
+    /** Three queries as an argument */
+    public static final List<ArgType> ARGS_QQQ = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.QUERY);
+
+    /** A string, a query, and two strings */
+    public static final List<ArgType> ARGS_SQSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
+
+    /** A string, a query, and three strings */
+    public static final List<ArgType> ARGS_SQSSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
+
+    /** A query and three strings */
+    public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
 
     public static boolean isRelationsFunction(String name) {
         FuncInfo funcInfo = functions.get(name);
@@ -35,7 +99,16 @@ public class QueryExtensions {
     enum ArgType {
         QUERY,
         STRING,
-        ELLIPSIS, // not a real type, used to indicate a variable number of arguments
+        ELLIPSIS,
+        ; // not a real type, used to indicate a variable number of arguments
+
+        public static ArgType typeOf(Object o) {
+            if (o instanceof BLSpanQuery)
+                return QUERY;
+            if (o instanceof String)
+                return STRING;
+            throw new IllegalArgumentException("Unknown argument type: " + o);
+        }
     }
 
     private static class FuncInfo {
@@ -92,6 +165,7 @@ public class QueryExtensions {
         register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
         register(XFRelations.class);  // Functions for working with relations
         register(XFPunctBeforeAfter.class);  // Pseudo-annotations punctBefore/punctAfter
+        register(XFSpans.class);      // Functions for working with spans
     }
 
     public static void register(Class<? extends ExtensionFunctionClass> extClass) {
@@ -214,6 +288,10 @@ public class QueryExtensions {
                 if (defVal == QueryExtensions.VALUE_QUERY_ANY_NGRAM) {
                     // Special case: any n-gram (usually meaning "don't care")
                     defVal = SpanQueryAnyToken.anyNGram(context.queryInfo(), context.luceneField());
+                } else if (defVal == QueryExtensions.VALUE_ANY_SPAN) {
+                    // Special case: any span (usually meaning "don't care")
+                    defVal = context.index().tagQuery(context.queryInfo(), context.withRelationAnnotation().luceneField(),
+                            RelationUtil.ANY_TYPE_REGEX, null, TextPatternTags.Adjust.FULL_TAG, null);
                 }
                 if (i >= newArgs.size()) {
                     // Missing argument; use default value
@@ -240,7 +318,7 @@ public class QueryExtensions {
             }
             if (wrongType)
                 throw new BlackLabRuntimeException("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
-                        + ", got " + expectedType);
+                        + ", got " + ArgType.typeOf(newArgs.get(i)));
         }
 
         if (!funcInfo.isVarArg && newArgs.size() != funcInfo.argTypes.size())

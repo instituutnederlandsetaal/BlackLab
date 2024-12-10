@@ -62,14 +62,14 @@ public abstract class TextPattern implements TextPatternStruct {
      * E.g. you want hits inside sentences, and want to capture all (dependency) relations
      * in that sentence.
      *
-     * Essentially adds <code>within rcapture(<s/>)</code> to the query if <code>tagName == "s"</code>.
+     * Essentially adds <code>within rcapture(<s/>)</code> to the query if <code>tagNameRegex == "s"</code>.
      *
      * @param pattern pattern to filter
-     * @param tagName tag the hits must be within
+     * @param tagNameRegex tag the hits must be within
      * @return the filtered pattern, where relations within the tag will be captured
      */
-    public static TextPatternPositionFilter createRelationCapturingWithinQuery(TextPattern pattern, String tagName, String captureRelsAs) {
-        TextPattern tags = new TextPatternTags(tagName, null, TextPatternTags.Adjust.FULL_TAG, tagName);
+    public static TextPatternPositionFilter createRelationCapturingWithinQuery(TextPattern pattern, String tagNameRegex, String captureRelsAs) {
+        TextPattern tags = new TextPatternTags(tagNameRegex, null, TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
         // Also capture any relations that are in the tag
         tags = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(tags, captureRelsAs));
         return new TextPatternPositionFilter(pattern, tags, SpanQueryPositionFilter.Operation.WITHIN);
@@ -122,8 +122,8 @@ public abstract class TextPattern implements TextPatternStruct {
 
     /** Does this query involve any (e.g. dependency) relations operations?
      *
-     * (we sometimes treat these queries slightly differently, e.g. adjusting hits to encompass
-     *  matched relations, if requested)
+     * (we sometimes treat these queries slightly differently, e.g. automatically
+     *  adjusting hits to encompass matched relations, if requested)
      */
     public boolean isRelationsQuery() {
         return false;

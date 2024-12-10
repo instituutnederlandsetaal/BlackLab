@@ -361,7 +361,7 @@ TextPattern tag():
     Map<String, MatchValue> attr = new HashMap<String, MatchValue>();
 }
 {
-    "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
+    "<" (endTagSlash="/")? (tagName=<NAME>|tagName=<QUOTED_STRING>|tagName=<SINGLE_QUOTED_STRING>) ( attributes(attr) )* (selfCloseSlash="/")? ">"
     {
         if (endTagSlash != null && selfCloseSlash != null) {
             throw new MalformedTagException();
@@ -373,7 +373,12 @@ TextPattern tag():
             adjust = Adjust.LEADING_EDGE;
         if (endTagSlash != null)
             adjust = Adjust.TRAILING_EDGE;
-        return new TextPatternTags(tagName.toString(), attr, adjust, "");
+        String tag = tagName.toString();
+        if (tag.charAt(0) == '"' || tag.charAt(0) == '\'')
+            tag = tag.substring(1, tag.length() - 1);
+        else
+            tag = StringUtil.escapeLuceneRegexCharacters(tag);
+        return new TextPatternTags(tag, attr, adjust, "");
     }
 }
 

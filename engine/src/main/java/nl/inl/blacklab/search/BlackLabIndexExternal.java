@@ -182,9 +182,9 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     }
 
     @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
-        BLSpanQuery q = new SpanQueryTagsExternal(queryInfo, luceneField, tagName, attributes);
+        BLSpanQuery q = new SpanQueryTagsExternal(queryInfo, luceneField, tagNameRegex, attributes);
         if (adjust == TextPatternTags.Adjust.LEADING_EDGE || adjust == TextPatternTags.Adjust.TRAILING_EDGE)
             q = new SpanQueryEdge(q, adjust == TextPatternTags.Adjust.TRAILING_EDGE);
         if (!StringUtils.isEmpty(captureAs))

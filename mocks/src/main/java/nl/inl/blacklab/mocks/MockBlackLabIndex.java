@@ -269,7 +269,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         throw new UnsupportedOperationException();
     }

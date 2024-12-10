@@ -179,6 +179,31 @@ The above query will just match the word _baker_ as part of a person's name. But
 
 	<person/> containing 'baker'
 
+::: tip Using a regular expression for the span name
+You can match multiple span types (e.g. both `<person/>` and `<location/>`) using a regular expression:
+
+    'baker' within <'person|location' />
+
+To match all spans in the corpus, use:
+
+    <'.+' />
+:::
+
+::: tip Capturing all surrounding spans
+If you want to know all spans that surround (or actually overlap with) each of your hits, use::
+
+    with-spans('baker')
+
+or
+
+    with-spans('baker', <'person|location' />, 'props')
+
+The second example will capture a list of matching spans in the match info named `props`.
+
+Only the first parameter for `with-spans` is required. The second parameter defaults to `<'.+'/>` (all tags); the third defaults to `'with-spans'`.
+
+:::
+
 #### Other uses for within and containing
 
 As you might have guessed, you can use `within` and `containing` with any other query as well. For example:

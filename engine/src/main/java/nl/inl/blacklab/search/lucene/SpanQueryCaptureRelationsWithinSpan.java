@@ -149,8 +149,8 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
                 // This can happen if these relations don't occur in this segment of the index
                 return spans;
             }
-            return new SpansCaptureRelationsWithinSpan(spans, relations, captureRelsInside,
-                    captureRelsAs);
+            return new SpansCaptureRelationsWithinSpan(BLSpans.ensureSorted(spans),
+                    BLSpans.ensureSorted(relations), captureRelsInside, captureRelsAs);
         }
 
     }
@@ -163,11 +163,13 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
 
     @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return true;
+        return false; // true;   // @@@ see below
     }
 
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
+        // TODO: this could work if the internalized clause is fixed-length, but we need to take that length into
+        //       account when capturing relations!
         return new SpanQueryCaptureRelationsWithinSpan(
                 SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, onTheRight),
                 clauses.get(1), captureRelsInside, captureRelsAs);

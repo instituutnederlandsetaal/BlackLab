@@ -37,6 +37,8 @@ import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
@@ -292,6 +294,36 @@ public class TestSearches {
         expected = List.of(
                 "lazy [dog]");
         Assert.assertEquals(expected, testIndex.findConc(" 'dog' </s> "));
+    }
+
+    @Test
+    public void testRegexTags() {
+        List<String> expected = List.of(
+                "[The quick brown fox] jumps", "over [the lazy dog]", "May [the Force] be");
+        Assert.assertEquals(expected, testIndex.findConc("<'e.*'/>"));
+
+        expected = List.of(
+                "[The] quick");
+        Assert.assertEquals(expected, testIndex.findConc(" <'s'> 'the' "));
+
+        expected = List.of(
+                "over [the lazy] dog", "[To find] or");
+        Assert.assertEquals(expected, testIndex.findConc("<'.*'> [] 'lazy|find' "));
+    }
+
+    @Test
+    public void testWithSpans() {
+        if (testIndex.getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
+            Hits hits = testIndex.find("with-spans('quick' 'brown')");
+            Assert.assertEquals(1, hits.size());
+            MatchInfo[] matchInfo = hits.get(0).matchInfo();
+            Assert.assertEquals(1, matchInfo.length);
+            Assert.assertEquals(MatchInfo.Type.LIST_OF_RELATIONS, matchInfo[0].getType());
+            List<RelationInfo> rels = ((RelationListInfo) matchInfo[0]).getRelations();
+            Assert.assertEquals(2, rels.size());
+            Assert.assertEquals("entity", rels.get(0).getRelationType());
+            Assert.assertEquals("s", rels.get(1).getRelationType());
+        }
     }
 
     @Test

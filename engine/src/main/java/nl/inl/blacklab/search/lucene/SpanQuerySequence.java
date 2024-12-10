@@ -178,13 +178,13 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         if (!start.isTagQuery())
             return false;
         if (start.getSpanMode() == RelationInfo.SpanMode.SOURCE) {
-            String tagName = start.getElementName();
+            String tagName = start.getElementNameRegex();
             // Start tag found. Is there a matching end tag?
             for (int j = startTagIndex + 1; j < clauses.size(); j++) {
                 BLSpanQuery clause2 = clauses.get(j);
                 if (clause2 instanceof SpanQueryRelations) {
                     SpanQueryRelations end = (SpanQueryRelations) clause2;
-                    if (end.isTagQuery() && end.getSpanMode() == RelationInfo.SpanMode.TARGET && end.getElementName().equals(tagName)) {
+                    if (end.isTagQuery() && end.getSpanMode() == RelationInfo.SpanMode.TARGET && end.getElementNameRegex().equals(tagName)) {
                         BLSpanQuery producer = start.withSpanMode(RelationInfo.SpanMode.FULL_SPAN);
                         // Found start and end tags in sequence. Convert to containing
                         // query.
@@ -200,14 +200,14 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     private static boolean matchingTagsWithEdge(List<BLSpanQuery> clauses, int startTagIndex) {
         SpanQueryEdge start = (SpanQueryEdge)clauses.get(startTagIndex);
         if (!start.isTrailingEdge()) {
-            String tagName = start.getElementName();
-            if (tagName != null) {
+            String tagNameRegex = start.getElementNameRegex();
+            if (tagNameRegex != null) {
                 // Start tag found. Is there a matching end tag?
                 for (int j = startTagIndex + 1; j < clauses.size(); j++) {
                     BLSpanQuery clause2 = clauses.get(j);
                     if (clause2 instanceof SpanQueryEdge) {
                         SpanQueryEdge end = (SpanQueryEdge) clause2;
-                        if (end.isTrailingEdge() && end.getElementName().equals(tagName)) {
+                        if (end.isTrailingEdge() && end.getElementNameRegex().equals(tagNameRegex)) {
                             BLSpanQuery producer = start.getClause();
                             // Found start and end tags in sequence. Convert to containing
                             // query.

@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 
 /**
- * Extension functions for debugging forward index matching.
+ * Extension functions for working with relations (dependency, parallel corpus).
  */
 public class XFRelations implements ExtensionFunctionClass {
 
@@ -186,7 +186,7 @@ public class XFRelations implements ExtensionFunctionClass {
 
     public void register() {
         QueryExtensions.registerRelationsFunction(FUNC_REL, ARGS_SQSSS,
-                Arrays.asList(".*", QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
+                Arrays.asList(".+", QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
                 XFRelations::rel);
         QueryExtensions.register("rmatch", ARGS_VAR_Q,
                 List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM), XFRelations::rmatch);
@@ -195,7 +195,7 @@ public class XFRelations implements ExtensionFunctionClass {
         QueryExtensions.register("rfield", ARGS_QS, NO_DEFAULT_VALUES,
                 XFRelations::rfield);
         QueryExtensions.registerRelationsFunction(FUNC_RCAPTURE, ARGS_QSS,
-                Arrays.asList(null, DEFAULT_RCAP_NAME, ".*"), XFRelations::rcapture);
+                Arrays.asList(null, DEFAULT_RCAP_NAME, ".+"), XFRelations::rcapture);
     }
 
 }

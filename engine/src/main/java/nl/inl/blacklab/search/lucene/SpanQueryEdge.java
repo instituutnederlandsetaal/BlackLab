@@ -142,10 +142,10 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
         return trailingEdge;
     }
 
-    public String getElementName() {
+    public String getElementNameRegex() {
         BLSpanQuery cl = clauses.get(0);
         if (cl instanceof TagQuery) {
-            return ((TagQuery) cl).getElementName();
+            return ((TagQuery) cl).getElementNameRegex();
         }
         return null;
     }

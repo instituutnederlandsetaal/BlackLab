@@ -28,7 +28,7 @@ public class RelationUtil {
     public static final String CLASS_ALIGNMENT = "al";
 
     /** Default relation type: any */
-    public static final String ANY_TYPE_REGEX = ".*";
+    public static final String ANY_TYPE_REGEX = ".+";
 
     /** Separator between relation class (e.g. "__tag", "dep" for dependency relation, etc.) and relation type
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
@@ -48,6 +48,10 @@ public class RelationUtil {
      *   care about attributes)
      */
     static final String IS_OPTIMIZATION_INDICATOR = "\u0004";
+
+    /** Character class meaning "any non-special character" (replacement for .) */
+    public static final String ANY_NON_SPECIAL_CHAR = "[^" + ATTR_SEPARATOR + KEY_VALUE_SEPARATOR + CH_NAME_START +
+            IS_OPTIMIZATION_INDICATOR + "]";
 
     /**
      * Determine the term to index in Lucene for a relation.

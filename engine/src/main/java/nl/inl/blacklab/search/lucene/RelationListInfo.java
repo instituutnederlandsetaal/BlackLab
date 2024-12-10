@@ -83,8 +83,8 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
         return Objects.hash(relations);
     }
 
-    public Collection<RelationInfo> getRelations() {
-        return Collections.unmodifiableCollection(relations);
+    public List<RelationInfo> getRelations() {
+        return Collections.unmodifiableList(relations);
     }
 
     @Override

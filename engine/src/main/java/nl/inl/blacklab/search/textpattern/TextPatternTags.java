@@ -6,10 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.index.FieldInfo;
 
-import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.StringUtil;
@@ -45,7 +42,7 @@ public class TextPatternTags extends TextPattern {
         }
     }
 
-    private final String elementName;
+    private final String elementNameRegex;
 
     private final Map<String, MatchValue> attributes;
 
@@ -53,26 +50,26 @@ public class TextPatternTags extends TextPattern {
 
     private final String captureAs;
 
-    public TextPatternTags(String elementName, Map<String, MatchValue> attributes) {
-        this(elementName, attributes, Adjust.FULL_TAG, "");
+    public TextPatternTags(String elementNameRegex, Map<String, MatchValue> attributes) {
+        this(elementNameRegex, attributes, Adjust.FULL_TAG, "");
     }
 
-    public TextPatternTags(String elementName, Map<String, MatchValue> attributes, Adjust adjust, String captureAs) {
-        this.elementName = elementName;
+    public TextPatternTags(String elementNameRegex, Map<String, MatchValue> attributes, Adjust adjust, String captureAs) {
+        this.elementNameRegex = elementNameRegex;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
         this.adjust = adjust == null ? Adjust.FULL_TAG : adjust;
         this.captureAs = captureAs == null ? "" : captureAs;
     }
 
     public TextPatternTags withCapture(String captureAs) {
-        return new TextPatternTags(elementName, attributes, Adjust.FULL_TAG, captureAs);
+        return new TextPatternTags(elementNameRegex, attributes, Adjust.FULL_TAG, captureAs);
     }
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
         context = context.withRelationAnnotation();
-        String optInsensitiveElName = optInsensitive(context, elementName);
+        String optDesensitizedElNameRegex = optInsensitive(context, elementNameRegex);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, MatchValue> e : attributes.entrySet()) {
             attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue().getRegex()));
@@ -81,14 +78,14 @@ public class TextPatternTags extends TextPattern {
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
         String captureAsOrAuto = captureAs;
         if (StringUtils.isEmpty(captureAsOrAuto)) {
-            String name = elementName.isEmpty() ? "span" : elementName;
+            String name = elementNameRegex.isEmpty() ? "span" : StringUtil.sanitizeCaptureName(elementNameRegex);
             name = name.replaceAll("[^\\p{L}]", "");
             captureAsOrAuto = context.ensureUniqueCapture(name);
         }
 
         // Return the proper SpanQuery depending on index version
         return context.index().tagQuery(context.queryInfo(), context.luceneField(),
-                optInsensitiveElName, attrOptIns, adjust, captureAsOrAuto);
+                optDesensitizedElNameRegex, attrOptIns, adjust, captureAsOrAuto);
     }
 
     @Override
@@ -98,13 +95,13 @@ public class TextPatternTags extends TextPattern {
         if (o == null || getClass() != o.getClass())
             return false;
         TextPatternTags that = (TextPatternTags) o;
-        return Objects.equals(elementName, that.elementName) && Objects.equals(attributes,
+        return Objects.equals(elementNameRegex, that.elementNameRegex) && Objects.equals(attributes,
                 that.attributes) && adjust == that.adjust && Objects.equals(captureAs, that.captureAs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(elementName, attributes, adjust, captureAs);
+        return Objects.hash(elementNameRegex, attributes, adjust, captureAs);
     }
 
     @Override
@@ -112,11 +109,11 @@ public class TextPatternTags extends TextPattern {
         String optAttr = attributes != null && !attributes.isEmpty() ? ", " + attributes : "";
         String optAdjust = adjust != Adjust.FULL_TAG ? ", " + adjust : "";
         String optCapture = !captureAs.isEmpty() ? ", " + captureAs : "";
-        return "TAGS(" + elementName + optAttr + optAdjust + optCapture + ")";
+        return "TAGS(" + elementNameRegex + optAttr + optAdjust + optCapture + ")";
     }
 
-    public String getElementName() {
-        return elementName;
+    public String getElementNameRegex() {
+        return elementNameRegex;
     }
 
     public Map<String, MatchValue> getAttributes() {

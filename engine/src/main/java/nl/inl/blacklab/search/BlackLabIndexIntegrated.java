@@ -223,7 +223,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
         RelationInfo.SpanMode spanMode;
@@ -233,8 +233,15 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         default:
         case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
         }
+
+        // Replace non-escaped dots with "any non-special character", so we don't accidentally
+        // match attributes as our tag name as well.
+        // (we use a lookbehind that should match any (reasonable) odd number of backslashes before the dot)
+        tagNameRegex = tagNameRegex.replaceAll("(?<!(\\\\\\\\){0,10}\\\\)\\.",
+                RelationUtil.ANY_NON_SPECIAL_CHAR);
+
         return new SpanQueryRelations(queryInfo, luceneField,
-                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName), attributes,
+                RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex), attributes,
                 SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, null);
     }
 

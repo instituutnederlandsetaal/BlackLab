@@ -314,7 +314,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         jsonSerializers.put(TextPatternTags.class, (pattern, writer) -> {
             TextPatternTags tp = (TextPatternTags) pattern;
             writer.write(TextPattern.NT_TAGS,
-                    KEY_NAME, tp.getElementName(),
+                    KEY_NAME, tp.getElementNameRegex(),
                     KEY_ATTRIBUTES, nullIfEmpty(tp.getAttributes()),
                     KEY_ADJUST, nullIf(tp.getAdjust().toString(), "full_tag"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()));

@@ -332,7 +332,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         return relationFieldName;
     }
 
-    public String getElementName() {
+    public String getElementNameRegex() {
         return RelationUtil.typeFromFullType(relationType);
     }
 

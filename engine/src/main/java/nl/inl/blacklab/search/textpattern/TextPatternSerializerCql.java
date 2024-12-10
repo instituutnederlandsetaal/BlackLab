@@ -212,7 +212,7 @@ public class TextPatternSerializerCql {
             String optCapture = tp.getCaptureAs().isEmpty() ? "" : tp.getCaptureAs() + ":";
             RelationOperatorInfo operatorInfo = tp.getOperatorInfo();
             String typeRegex = operatorInfo.getTypeRegex();
-            String optRegex = typeRegex.equals(".*") ? "" : typeRegex;
+            String optRegex = typeRegex.matches("\\.[*+]") ? "" : typeRegex;
             boolean isRoot = operatorInfo.getDirection() == SpanQueryRelations.Direction.ROOT;
             if (isRoot && tp.getSpanMode() != RelationInfo.SpanMode.TARGET)
                 throw new IllegalArgumentException("Root relation must have span mode target (has no source)");
@@ -276,7 +276,7 @@ public class TextPatternSerializerCql {
             TextPatternTags tp = (TextPatternTags) pattern;
             String optAttr = tp.getAttributes().isEmpty() ? "" : " " + serializeAttributes(tp.getAttributes());
             String optCapture = tp.getCaptureAs().isEmpty() ? "" : tp.getCaptureAs() + ":";
-            b.append(optCapture).append("<").append(tp.getElementName()).append(optAttr).append("/>");
+            b.append(optCapture).append("<").append(tp.getElementNameRegex()).append(optAttr).append("/>");
         });
 
         // TERM
