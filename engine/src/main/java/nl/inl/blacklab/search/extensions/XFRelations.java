@@ -25,11 +25,8 @@ import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 public class XFRelations implements ExtensionFunctionClass {
 
     public static final String FUNC_REL = "rel";
-    public static final String FUNC_RMATCH = "rmatch";
     public static final String FUNC_RSPAN = "rspan";
-    public static final String FUNC_RFIELD = "rfield";
     public static final String FUNC_RCAPTURE = "rcapture";
-    public static final String FUNC_RCAPTURE2 = "rcapture2";
 
     /** Default name for match info if no explicit capture name is set for a relation operator, and none could be
         derived from the relation type filter expression. */
@@ -128,6 +125,16 @@ public class XFRelations implements ExtensionFunctionClass {
         return new SpanQueryRelationSpanAdjust(relations, mode, null);
     }
 
+    /**
+     * Get the hits from a specific parallel field/version.
+     *
+     * This is useful to e.g. highlight one of the versions with the hits from a parallel query.
+     *
+     * @param queryInfo query info
+     * @param context query execution context
+     * @param args function arguments: query, field or version name
+     * @return query with hits from the specified field
+     */
     private static BLSpanQuery rfield(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.size() < 2)
             throw new IllegalArgumentException("rfield() requires a query and a field or version name as arguments");
@@ -177,42 +184,18 @@ public class XFRelations implements ExtensionFunctionClass {
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
     }
 
-    /**
-     * Capture relations inside a captured group.
-     *
-     * Will capture all relations matching the specified type regex as a list
-     * under the specified capture name.
-     *
-     * @param queryInfo
-     * @param context
-     * @param args function arguments: query, toCapture, captureAs, relationType
-     * @return
-     */
-    private static BLSpanQuery rcaptureWithinCapture(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
-        if (args.size() < 3)
-            throw new IllegalArgumentException("rcapture() requires at least three arguments: query, toCapture, and captureAs");
-        BLSpanQuery query = (BLSpanQuery)args.get(0);
-        String toCapture = (String)args.get(1);
-        String captureAs = context.ensureUniqueCapture((String)args.get(2));
-        String relationType = RelationUtil.optPrependDefaultClass((String) args.get(3), context);
-        String field = context.withRelationAnnotation().luceneField();
-        return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, toCapture, captureAs, relationType);
-    }
-
     public void register() {
-        QueryExtensions.register(FUNC_REL, XFRelations::rel, QueryExtensions.ARGS_SQSSS,
+        QueryExtensions.registerRelationsFunction(FUNC_REL, ARGS_SQSSS,
                 Arrays.asList(".*", QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
-                true);
-        QueryExtensions.register(FUNC_RMATCH, XFRelations::rmatch, QueryExtensions.ARGS_VAR_Q,
-                List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM));
-        QueryExtensions.register(FUNC_RSPAN, XFRelations::rspan, QueryExtensions.ARGS_QS,
-                Arrays.asList(null, "full"));
-        QueryExtensions.register(FUNC_RFIELD, XFRelations::rfield, QueryExtensions.ARGS_QS,
-                Arrays.asList(null, null));
-        QueryExtensions.register(FUNC_RCAPTURE, XFRelations::rcapture, QueryExtensions.ARGS_QSS,
-                Arrays.asList(null, DEFAULT_RCAP_NAME, ".*"), true);
-        QueryExtensions.register(FUNC_RCAPTURE2, XFRelations::rcaptureWithinCapture, QueryExtensions.ARGS_QSSS,
-                Arrays.asList(null, null, DEFAULT_RCAP_NAME, ".*"), true);
+                XFRelations::rel);
+        QueryExtensions.register("rmatch", ARGS_VAR_Q,
+                List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM), XFRelations::rmatch);
+        QueryExtensions.register(FUNC_RSPAN, ARGS_QS, Arrays.asList(null, "full"),
+                XFRelations::rspan);
+        QueryExtensions.register("rfield", ARGS_QS, NO_DEFAULT_VALUES,
+                XFRelations::rfield);
+        QueryExtensions.registerRelationsFunction(FUNC_RCAPTURE, ARGS_QSS,
+                Arrays.asList(null, DEFAULT_RCAP_NAME, ".*"), XFRelations::rcapture);
     }
 
 }

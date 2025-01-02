@@ -675,21 +675,6 @@ public class TestSearches {
         Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Test
     public void testEscape() throws InvalidQuery {
         // Keys are CQL regexes (i.e. the $ part in [word="$"]), values are the expected Lucene regex
@@ -722,6 +707,60 @@ public class TestSearches {
                 Assert.assertEquals(expectedLuceneRegex, term.text());
             }
         });
+    }
+
+    @Test
+    public void testLookAhead() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find] or");
+        TextPattern patt = CorpusQueryLanguageParser.parse("'find' (?= 'or' 'not')");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testNegativeLookAhead() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find] or");
+        TextPattern patt = CorpusQueryLanguageParser.parse("'find' (?! 'That' 'is')");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testLookBehind() throws InvalidQuery {
+        List<String> expected = Arrays.asList("to [find] That");
+        TextPattern patt = CorpusQueryLanguageParser.parse("(?<= 'not' 'to' ) 'find'");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testNegativeLookBehind() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find] or");
+        TextPattern patt = CorpusQueryLanguageParser.parse("(?<! 'not' 'to' ) 'find'");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testPunctBefore() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find or] not");
+        TextPattern patt = CorpusQueryLanguageParser.parse("'find' [punctBefore='\\(']");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testPunctAfter() throws InvalidQuery {
+        List<String> expected = Arrays.asList("to [find That] is");
+        TextPattern patt = CorpusQueryLanguageParser.parse("[punctAfter='\\)\\.'] 'That'");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
 }

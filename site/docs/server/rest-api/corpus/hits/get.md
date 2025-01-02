@@ -56,7 +56,7 @@ This is useful if you want to view hits in a group, and then be able to group on
 
 Note that this may be slow at present because it finds all hits, then filters them by this criterium.
 
-(TECHNICAL NOTE: performance could be improved by internally extending the specified `patt` with the `hitfiltercrit`/`hitfilterval` so we only find the matches we're interested in, but this requires lookahead/lookbehind to be implemented).
+(TECHNICAL NOTE: performance could be improved by internally extending the specified `patt` with the `hitfiltercrit`/`hitfilterval` so we only find the matches we're interested in. This requires the use of lookahead/lookbehind, which we have working now).
 :::
 
 ::: warning PLEASE NOTE

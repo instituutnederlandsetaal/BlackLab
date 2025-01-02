@@ -22,62 +22,8 @@ public class QueryExtensions {
     /** Default value for a query parameter that means "any n-gram" ( []* ) */
     public static final String VALUE_QUERY_ANY_NGRAM = "_ANY_NGRAM_";
 
-    /** Variable number of query params */
-    public static final List<ArgType> ARGS_VAR_Q = List.of(ArgType.QUERY, ArgType.ELLIPSIS);
-
-    /** Variable number of string params */
-    public static final List<ArgType> ARGS_VAR_S = List.of(ArgType.STRING, ArgType.ELLIPSIS);
-
-    /** Two strings */
-    public static final List<ArgType> ARGS_S = List.of(ArgType.STRING, ArgType.STRING);
-
-    /** A single query as an argument */
-    public static final List<ArgType> ARGS_Q = List.of(ArgType.QUERY);
-
-    /** Two strings */
-    public static final List<ArgType> ARGS_SS = List.of(ArgType.STRING, ArgType.STRING);
-
-    /** Two strings */
-    public static final List<ArgType> ARGS_SQ = List.of(ArgType.STRING, ArgType.QUERY);
-
-    /** A query and a string */
-    public static final List<ArgType> ARGS_QS = List.of(ArgType.QUERY, ArgType.STRING);
-
-    /** Two queries as an argument */
-    public static final List<ArgType> ARGS_QQ = List.of(ArgType.QUERY, ArgType.QUERY);
-
-    /** Two strings */
-    public static final List<ArgType> ARGS_SSS = List.of(ArgType.STRING, ArgType.STRING, ArgType.STRING);
-
-    /** A query, a string and another query */
-    public static final List<ArgType> ARGS_SSQ = List.of(ArgType.STRING, ArgType.STRING, ArgType.QUERY);
-
-    /** A query, a string and another query */
-    public static final List<ArgType> ARGS_SQS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING);
-
-    /** A query, a string and another query */
-    public static final List<ArgType> ARGS_SQQ = List.of(ArgType.STRING, ArgType.QUERY, ArgType.QUERY);
-
-    /** A query, a string and another query */
-    public static final List<ArgType> ARGS_QSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING);
-
-    /** A query, a string and another query */
-    public static final List<ArgType> ARGS_QSQ = List.of(ArgType.QUERY, ArgType.STRING, ArgType.QUERY);
-
-    /** A query, a string and another query */
-    public static final List<ArgType> ARGS_QQS = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.STRING);
-
-    /** Three queries as an argument */
-    public static final List<ArgType> ARGS_QQQ = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.QUERY);
-
-    /** A string, a query, and two strings */
-    public static final List<ArgType> ARGS_SQSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
-
-    /** A string, a query, and three strings */
-    public static final List<ArgType> ARGS_SQSSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
-
-    /** A query and three strings */
-    public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
+    /** Prefix for extension functions that enable pseudo-annotations like punctAfter */
+    public static final String PSEUDO_ANNOTATION_EXTENSION_FUNCTION_PREFIX = "annot_";
 
     public static boolean isRelationsFunction(String name) {
         FuncInfo funcInfo = functions.get(name);
@@ -118,7 +64,7 @@ public class QueryExtensions {
                 if (argTypes.stream().anyMatch(t -> t == ArgType.ELLIPSIS))
                     throw new IllegalArgumentException("Illegal argument type ELLIPSIS");
             }
-            this.defaultValues = defaultValues;
+            this.defaultValues = defaultValues == null ? Collections.emptyList() : defaultValues;
             this.relationsFunction = relationsFunction;
         }
 
@@ -145,6 +91,7 @@ public class QueryExtensions {
     static {
         register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
         register(XFRelations.class);  // Functions for working with relations
+        register(XFPunctBeforeAfter.class);  // Pseudo-annotations punctBefore/punctAfter
     }
 
     public static void register(Class<? extends ExtensionFunctionClass> extClass) {
@@ -162,22 +109,37 @@ public class QueryExtensions {
      * @param argTypes argument types
      */
     public static void register(String name, ExtensionFunction func, List<ArgType> argTypes) {
-        register(name, func, argTypes, Collections.emptyList(), false);
+        register(name, argTypes, Collections.emptyList(), func, false);
     }
 
     /**
      * Add a query function to the registry.
      *
-     * @param func query extension function
-     * @param argTypes argument types
+     * @param argTypes      argument types
      * @param defaultValues default values for arguments
+     * @param func          query extension function
      */
-    public static void register(String name, ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
-        register(name, func, argTypes, defaultValues, false);
+    public static void register(String name, List<ArgType> argTypes, List<Object> defaultValues, ExtensionFunction func) {
+        register(name, argTypes, defaultValues, func, false);
     }
 
-    public static void register(String name, ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues, boolean relationsFunction) {
+    private static void register(String name, List<ArgType> argTypes, List<Object> defaultValues, ExtensionFunction func,
+            boolean relationsFunction) {
         functions.put(name, new FuncInfo(func, argTypes, defaultValues, relationsFunction));
+    }
+
+    public static void registerRelationsFunction(String name, List<ArgType> argTypes, List<Object> defaultValues,
+            ExtensionFunction func) {
+        register(name, argTypes, defaultValues, func, true);
+    }
+
+    public static void registerPseudoAnnotation(String name, List<ArgType> argTypes, List<Object> defaultValues,
+            ExtensionFunction func) {
+        register(pseudoAnnotationFunctionName(name), argTypes, defaultValues, func);
+    }
+
+    public static String pseudoAnnotationFunctionName(String annotName) {
+        return PSEUDO_ANNOTATION_EXTENSION_FUNCTION_PREFIX + annotName;
     }
 
     /**

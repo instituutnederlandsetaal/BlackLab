@@ -135,7 +135,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_SETTINGS = "settings";
     private static final String KEY_START = "start";
     private static final String KEY_TARGET_VERSION = "targetVersion";
-    private static final String KEY_TRAILING_EDGE = "trailingEdge";
+    private static final String KEY_WHERE = "where";
     private static final String KEY_VALUE = "value"; // term, regex, etc.
 
     static {
@@ -176,10 +176,13 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             writer.write(TextPattern.NT_DEFVAL);
         });
 
-        // Edge
-        jsonSerializers.put(TextPatternEdge.class, (pattern, writer) -> {
-            TextPatternEdge tp = (TextPatternEdge) pattern;
-            writer.write(TextPattern.NT_EDGE, KEY_CLAUSE, tp.getClause(), KEY_TRAILING_EDGE, tp.isTrailingEdge());
+        // Lookahead/lookbehind
+        jsonSerializers.put(TextPatternLook.class, (pattern, writer) -> {
+            TextPatternLook tp = (TextPatternLook) pattern;
+            writer.write(TextPattern.NT_LOOK,
+                KEY_WHERE, tp.isLookBehind() ? "behind" : "ahead",
+                    KEY_NEGATE, tp.isNegate(),
+                    KEY_CLAUSE, tp.getClause());
         });
 
         // Expansion
@@ -458,10 +461,11 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (MatchFilter) args.get(KEY_CONSTRAINT));
         case TextPattern.NT_DEFVAL:
             return TextPatternDefaultValue.get();
-        case TextPattern.NT_EDGE:
-            return new TextPatternEdge(
+        case TextPattern.NT_LOOK:
+            return new TextPatternLook(
                     (TextPattern) args.get(KEY_CLAUSE),
-                    (boolean) args.get(KEY_TRAILING_EDGE));
+                    !((boolean) args.getOrDefault(KEY_WHERE, "ahead").equals("behind")),
+                    (boolean)args.getOrDefault(KEY_NEGATE, false));
         case TextPattern.NT_EXPANSION:
             return new TextPatternExpansion(
                     (TextPattern) args.get(KEY_CLAUSE),

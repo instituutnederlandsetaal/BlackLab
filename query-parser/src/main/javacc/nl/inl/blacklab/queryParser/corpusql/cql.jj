@@ -51,6 +51,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
+import nl.inl.blacklab.search.textpattern.TextPatternLook;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 import nl.inl.blacklab.search.textpattern.TextPatternOverlapping;
@@ -61,7 +62,6 @@ import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternSettings;
 import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
-import nl.inl.util.RangeRegex;
 
 @SuppressWarnings("all")
 
@@ -98,12 +98,17 @@ TOKEN [IGNORE_CASE]:
 |   <OVERLAP: "overlap" >
 |   <IN: "in">
 |   <DEFAULT_VALUE: "_">
+
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
 |   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-", " ", "'", "\"", "]"] | "-" ~[">", " ", "'", "\"", "]"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <DEP_OP: ("!")? "-" ( ~["-"] (~["-", " ", "'", "\"", "]"] | "-" ~[">", " ", "'", "\"", "]"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <ALIGNMENT_OP: "=" ( ~["="] (~["=", " ", "'", "\"", "]"] | "=" ~[">", " ", "'", "\"", "]"] )* )? "=>" (["A"-"Z","a"-"z","_","-","0"-"9"])* ("?")? >
+
+|   <LOOKAHEAD_OP: "?" ("<")? ["=", "!"] >
+
 |   <QUOTED_STRING: ("l")? "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: ("l")? "'" (~["'","\\"] | "\\" ~[] )* "'" >
+
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
@@ -492,9 +497,27 @@ TextPattern sequencePartNoCapture():
 {
     TextPattern m = null;
     Integer[] rep = null;
+    Token lookaheadOp = null;
 }
 {
-    ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() )
+    (
+        m=tag() |
+        m=position() |
+        "("
+            ( lookaheadOp=<LOOKAHEAD_OP> )?   /* lookahead/lookbehind? */
+            m=constrainedQuery()
+            {
+                if (lookaheadOp != null) {
+                    // For lookahead/lookbehind, we need zero-length matches of either the leading or trailing edge.
+                    String op = lookaheadOp.toString();
+                    boolean behind = op.contains("<");
+                    boolean negative = op.contains("!");
+                    m = new TextPatternLook(m, behind, negative);
+                }
+            }
+        ")" |
+        m=queryFunctionCall()
+    )
     ( LOOKAHEAD(6) rep=repetitionAmount() {
         if (m instanceof TextPatternAnyToken) {
             TextPatternAnyToken any = (TextPatternAnyToken)m;

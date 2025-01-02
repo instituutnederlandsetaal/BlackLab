@@ -245,6 +245,18 @@ public class TextPatternSerializerCql {
             infix(b, parenthesizeIfNecessary, insideTokenBrackets, " ", ((TextPatternSequence)pattern).getClauses());
         });
 
+        // LOOKAHEAD/BEHIND
+        cqlSerializers.put(TextPatternLook.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            if (insideTokenBrackets)
+                throw new UnsupportedOperationException("Cannot serialize TextPatternLookahead inside brackets to CQL");
+            TextPatternLook tp = (TextPatternLook) pattern;
+            b.append("(");
+            b.append(lookaheadOperator(tp.isLookBehind(), tp.isNegate()));
+            b.append(" ");
+            serialize(tp.getClause(), b, false, insideTokenBrackets);
+            b.append(")");
+        });
+
         // Settings
         cqlSerializers.put(TextPatternSettings.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             if (insideTokenBrackets)
@@ -418,6 +430,10 @@ public class TextPatternSerializerCql {
         b.append(StringUtils.join(strCl, " "));
         if (parenthesizeIfNecessary)
             b.append(")");
+    }
+
+    private static String lookaheadOperator(boolean lookBehind, boolean negate) {
+        return "?" + (lookBehind ? "<" : "") + (negate ? "!" : "=");
     }
 
     private static String repetitionOperator(int min, int max) {

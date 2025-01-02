@@ -33,7 +33,7 @@ public abstract class TextPattern implements TextPatternStruct {
     public static final String NT_CAPTURE = "capture";
     public static final String NT_CONSTRAINED = "constrained";
     public static final String NT_DEFVAL = "defval";
-    public static final String NT_EDGE = "edge";
+    public static final String NT_LOOK = "look";
     public static final String NT_EXPANSION = "expansion";
     public static final String NT_FILTERNGRAMS = "filterngrams";
     public static final String NT_FIXEDSPAN = "fixedspan";
