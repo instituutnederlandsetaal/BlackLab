@@ -23,6 +23,8 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import nl.inl.util.LuceneUtil;
+
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 
@@ -47,6 +49,10 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.util.Timer;
+
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 /**
  * Determine frequency lists over annotation(s) and
@@ -171,8 +177,7 @@ public class FrequencyTool {
                 .toArray(Terms[]::new);
         List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation).collect(Collectors.toList());
         List<String> metadataFields = freqList.getMetadataFields();
-        final List<Integer> docIds = new ArrayList<>();
-        index.forEachDocument((__, id) -> docIds.add(id));
+        final List<Integer> docIds = getDocIds(index, freqList);
 
         // Create tmp dir for the chunk files
         File tmpDir = new File(outputDir, "tmp");
@@ -205,7 +210,7 @@ public class FrequencyTool {
                 }
 
                 // Process current run of documents and add to grouping
-                CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk, occurrences);
+                CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk, occurrences, freqList.getNgramSize());
 
                 System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries");
 
@@ -260,6 +265,24 @@ public class FrequencyTool {
         }
         if (!tmpDir.delete())
             System.err.println("Could not delete: " + tmpDir);
+    }
+
+    private static List<Integer> getDocIds(BlackLabIndex index, ConfigFreqList freqList) {
+        final List<Integer> docIds = new ArrayList<>();
+
+        String filter = freqList.getFilter();
+        if (filter != null) {
+            try {
+                Query q = LuceneUtil.parseLuceneQuery(index, filter, index.analyzer(), "");
+                index.queryDocuments(q).forEach(d -> docIds.add(d.docId()));
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            // No filter: include all documents.
+            index.forEachDocument((__, id) -> docIds.add(id));
+        }
+        return docIds;
     }
 
     private static void writeChunkFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, boolean compress) {

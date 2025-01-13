@@ -26,6 +26,16 @@ class ConfigFreqList {
      */
     private List<String> metadataFields = Collections.emptyList();
 
+    /**
+     * The size of the n-grams to use for the frequency list. Defaults to 1.
+     */
+    private int ngramSize = 1;
+
+    /**
+     * Lucene query to filter documents for the frequency list. Optional.
+     */
+    private String filter = null;
+
     public String getReportName() {
         return name.isEmpty() ? generateName() : name;
     }
@@ -60,18 +70,33 @@ class ConfigFreqList {
         this.metadataFields = metadataFields;
     }
 
+    public int getNgramSize() { return ngramSize; }
+
+    @SuppressWarnings("unused")
+    public void setNgramSize(int ngramSize) { this.ngramSize = ngramSize; }
+
+    public String getFilter() { return filter; }
+
+    @SuppressWarnings("unused")
+    public void setFilter(String filter) { this.filter = filter; }
+
     @Override
     public String toString() {
         return "ConfigFreqList{" +
                 "name='" + name + '\'' +
                 ", annotations=" + annotations +
                 ", metadataFields=" + metadataFields +
+                ", ngramSize=" + ngramSize +
+                ", filter=" + filter +
                 '}';
     }
 
     public String show() {
         return "- " + getReportName() + "\n" +
                 "  annotations: " + annotations + "\n" +
-                "  metadataFields: " + metadataFields;
+                "  metadataFields: " + metadataFields + "\n" +
+                "  ngramSize: " + ngramSize + "\n" +
+                "  filter: " + filter;
+
     }
 }

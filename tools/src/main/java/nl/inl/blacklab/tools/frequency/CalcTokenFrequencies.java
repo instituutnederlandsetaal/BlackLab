@@ -51,9 +51,14 @@ class CalcTokenFrequencies {
      * @param metadataFields metadata fields to group on
      * @param occurrences grouping to add to
      */
-    public static void get(BlackLabIndex index, List<Annotation> annotations,
-                                                               List<String> metadataFields, List<Integer> docIds,
-                                                               ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences) {
+    public static void get(
+            BlackLabIndex index,
+            List<Annotation> annotations,
+            List<String> metadataFields,
+            List<Integer> docIds,
+            ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences,
+            int ngramSize
+        ) {
 
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
@@ -132,23 +137,24 @@ class CalcTokenFrequencies {
                     Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
                     try (BlockTimer ignored = c.child("Group tokens")) {
-
-                        for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
-                                int[] annotationValuesForThisToken = new int[numAnnotations];
-                            int[] sortPositions = new int[numAnnotations];
+                        // We can't get an ngram for the last ngramSize-1 tokens
+                        for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++ tokenIndex) {
+                            int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
+                            int[] sortPositions = new int[numAnnotations * ngramSize];
 
                             // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
                             // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
                             // so in essence it's also an "id", but a case-insensitive one.
                             // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
                             // that hashes the token ids instead of the sortpositions in that case.
-                            for (int annotationIndex = 0; annotationIndex < numAnnotations; ++annotationIndex) {
+                            for (int annotationIndex = 0, arrIndex = 0; annotationIndex < numAnnotations; ++annotationIndex, arrIndex += ngramSize) {
+                                // get array slices of ngramSize
                                 int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
-                                annotationValuesForThisToken[annotationIndex] = tokenValues[tokenIndex];
+                                System.arraycopy(tokenValues, tokenIndex, annotationValuesForThisToken, arrIndex, ngramSize);
                                 int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
-                                sortPositions[annotationIndex] = sortValuesThisAnnotation[tokenIndex];
+                                System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex, ngramSize);
                             }
-                            final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
+                            final GroupIdHash groupId = new GroupIdHash(ngramSize, annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
 
                             // Count occurrence in this doc
                             OccurrenceCounts occ = occsInDoc.get(groupId);

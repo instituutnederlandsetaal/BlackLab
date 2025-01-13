@@ -21,17 +21,18 @@ annotatedField: contents
 # The frequency lists we want to make
 frequencyLists:
 
-  # word frequencies over the entire corpus
+  # word frequencies over the entire corpus (defaults to 1-grams)
   - annotations:
       - word
 
-  # lemma frequencies per year
+  # lemma bigram frequencies per year
   - annotations:
       - lemma
     metadataFields:
       - year
+    ngramSize: 2
 
-  # lemma+pos+word frequencies per year+medium+language
+  # lemma+pos+word trigram frequencies per year+medium+language
   - annotations:
       - lemma
       - pos
@@ -40,6 +41,7 @@ frequencyLists:
       - year
       - medium
       - language
+    ngramSize: 3
 ```
 
 Part of output TSV file for word+medium (annotations, metadata fields, frequency):

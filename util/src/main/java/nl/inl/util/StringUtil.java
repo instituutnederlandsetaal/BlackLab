@@ -274,8 +274,10 @@ public final class StringUtil {
         return Normalizer.normalize(value, Normalizer.Form.NFC);
     }
 
+    public static Pattern insensitiveCollatorPattern = Pattern.compile("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]");
+
     public static String removeCharsIgnoredByInsensitiveCollator(String s) {
-        return s.replaceAll("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]", "");
+        return insensitiveCollatorPattern.matcher(s).replaceAll("");
     }
 
     /** A backslash followed by any other character (which will be captured). */

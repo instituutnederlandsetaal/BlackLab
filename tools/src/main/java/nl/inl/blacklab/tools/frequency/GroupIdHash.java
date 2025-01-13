@@ -7,6 +7,7 @@ import java.util.Arrays;
  * Precalculated hashcode for group id, to save time while grouping and sorting.
  */
 class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
+    private final int ngramSize;
     private final int[] tokenIds;
     private final int[] tokenSortPositions;
     private final String[] metadataValues;
@@ -17,7 +18,8 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
      * @param metadataValues     relevant metadatavalues
      * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
      */
-    public GroupIdHash(int[] tokenIds, int[] tokenSortPositions, String[] metadataValues, int metadataValuesHash) {
+    public GroupIdHash(int ngramSize, int[] tokenIds, int[] tokenSortPositions, String[] metadataValues, int metadataValuesHash) {
+        this.ngramSize = ngramSize;
         this.tokenIds = tokenIds;
         this.tokenSortPositions = tokenSortPositions;
         this.metadataValues = metadataValues;
@@ -50,9 +52,14 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
     public int compareTo(GroupIdHash other) {
         int cmp = Integer.compare(hash, other.hash);
         if (cmp == 0)
+            // flatmap for comparison
             cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
         if (cmp == 0)
             cmp = Arrays.compare(metadataValues, other.metadataValues);
         return cmp;
+    }
+
+    public int getNgramSize() {
+        return ngramSize;
     }
 }
