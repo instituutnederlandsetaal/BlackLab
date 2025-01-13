@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -58,7 +59,11 @@ public interface BlackLabIndex extends AutoCloseable {
     BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex, Map<String, String> attributes,
             TextPatternTags.Adjust adjust, String captureAs);
 
+    /** Get our index type (external or integrated). */
     IndexType getType();
+
+    /** Get the strategy to use for indexing/searching relations. */
+    RelationsStrategy getRelationsStrategy();
 
     enum IndexType {
         EXTERNAL_FILES, // classic index with external forward index, etc.

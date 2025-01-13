@@ -1,0 +1,36 @@
+
+### request with authorization
+GET http://localhost:8080/blacklab-server/
+Authorization: Basic user password
+
+### create input format
+POST http://localhost:8080/blacklab-server/input-formats
+Authorization: Basic user password
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="data"; filename="voice-tei.blf.yaml"
+
+< ./data/voice-tei.blf.yaml
+--WebAppBoundary--
+
+
+### create index
+POST http://localhost:8080/blacklab-server/
+Authorization: Basic user password
+Content-Type: application/x-www-form-urlencoded
+
+name = user:test &
+format = user:voice-tei &
+display = Test
+
+### add doc
+POST http://localhost:8080/blacklab-server/user%3Atest/docs
+Authorization: Basic user password
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="data"; filename="data/input/PBsve435.xml"
+
+< ./data/input/PBsve435.xml
+--WebAppBoundary--

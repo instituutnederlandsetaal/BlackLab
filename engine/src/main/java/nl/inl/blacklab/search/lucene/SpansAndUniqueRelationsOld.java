@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.PriorityQueue;
 
@@ -48,7 +49,7 @@ import org.apache.lucene.util.PriorityQueue;
  *
  *
  */
-public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
+public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
 
     /** One subspans exhausted in current doc, so there's no more hits in this doc. */
     boolean oneExhaustedInCurrentDoc;
@@ -86,7 +87,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         return bucketized;
     }
 
-    public SpansAndMultiUniqueRelations(List<BLSpans> subSpans) {
+    public SpansAndUniqueRelationsOld(List<BLSpans> subSpans) {
         super(bucketizeSameStartEnd(subSpans),
                 SpanQueryAnd.createGuarantees(SpanGuarantees.from(subSpans), false));
 
@@ -109,8 +110,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         void startDocument() throws IOException {
             // Place all spans in the first bucket and add to the queue
             clear();
-            for (int i = 0; i < subSpans.length; i++) {
-                SpansInBuckets spans = subSpans[i];
+            for (SpansInBuckets spans: subSpans) {
                 int docId = spans.nextBucket();
                 assert docId != SpansInBuckets.NO_MORE_BUCKETS;
                 assert spans.bucketSize() > 0;
@@ -121,7 +121,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         boolean nextPosition() throws IOException {
             // Advance the top (most lagging) span
             SpansInBuckets topSpans = top();
-            assert topSpans.startPosition(0) != NO_MORE_POSITIONS;
+            assert topSpans.bucketStart() != NO_MORE_POSITIONS;
             if (topSpans.nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
                 return false;
             }
@@ -136,10 +136,10 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
             while (it.hasNext()) {
                 SpansInBuckets spans = it.next();
                 if (start == -1) {
-                    start = spans.startPosition(0);
-                    end = spans.endPosition(0);
+                    start = spans.bucketStart();
+                    end = spans.bucketEnd();
                 } else {
-                    if (spans.startPosition(0) != start || spans.endPosition(0) != end) {
+                    if (spans.bucketStart() != start || spans.bucketEnd() != end) {
                         return false;
                     }
                 }
@@ -156,9 +156,9 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
      */
     static boolean positionsOrdered(SpansInBuckets spans1, SpansInBuckets spans2) {
         assert spans1.docID() == spans2.docID() : "doc1 " + spans1.docID() + " != doc2 " + spans2.docID();
-        int start1 = spans1.startPosition(0);
-        int start2 = spans2.startPosition(0);
-        return (start1 == start2) ? (spans1.endPosition(0) < spans2.endPosition(0)) : (start1 < start2);
+        int start1 = spans1.bucketStart();
+        int start2 = spans2.bucketStart();
+        return (start1 == start2) ? (spans1.bucketEnd() < spans2.bucketEnd()) : (start1 < start2);
     }
 
     @Override
@@ -193,11 +193,10 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         assert startPosition() != NO_MORE_POSITIONS;
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
-            int r = spanWindow.top().startPosition(0);
-            return r;
+            return spanWindow.top().bucketStart();
         }
-        assert spanWindow.top().startPosition(0) != -1;
-        assert spanWindow.top().startPosition(0) != NO_MORE_POSITIONS;
+        assert spanWindow.top().bucketStart() != -1;
+        assert spanWindow.top().bucketStart() != NO_MORE_POSITIONS;
 
         // Make sure we return all combinations of matches with this start and end
         // (and different match information)
@@ -237,7 +236,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
                 List<RelationInfo> relStr = getRelationsSorted();
                 if (relationsReturnedAtThisPosition.add(relStr)) {
                     // this is a new combination of relations
-                    return spanWindow.top().startPosition(0);
+                    return spanWindow.top().bucketStart();
                 }
             }
         }
@@ -300,7 +299,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
         assert spanWindow.top() != null;
         int r = atFirstInCurrentDoc ? -1
                 : oneExhaustedInCurrentDoc ? NO_MORE_POSITIONS
-                : spanWindow.top().startPosition(0);
+                : spanWindow.top().bucketStart();
         return r;
     }
 
@@ -322,7 +321,7 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
     public int endPosition() {
         return atFirstInCurrentDoc ? -1
                 : oneExhaustedInCurrentDoc ? NO_MORE_POSITIONS
-                : spanWindow.top().endPosition(0);
+                : spanWindow.top().bucketEnd();
     }
 
     @Override
@@ -339,6 +338,6 @@ public class SpansAndMultiUniqueRelations extends BLConjunctionSpansInBuckets {
 
     @Override
     public String toString() {
-        return "ANDUNIQREL(" + subSpans[0] + ", " + subSpans[1] + ")";
+        return "ANDUNIQREL(" + StringUtils.join(subSpans, ", ") + ")";
     }
 }

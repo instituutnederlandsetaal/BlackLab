@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
+import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
 
 /**
  * Relations operator, matching a source (parent) to one or more targets (children).
@@ -118,7 +119,7 @@ public class TextPatternRelationMatch extends TextPattern {
             return clauses.get(0);
         }
         SpanQueryAnd spanQueryAnd = new SpanQueryAnd(clauses);
-        spanQueryAnd.setRequireUniqueRelations(true); // discard match if relation matched twice
+        spanQueryAnd.setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // discard match if relation matched twice
         return spanQueryAnd;
     }
 

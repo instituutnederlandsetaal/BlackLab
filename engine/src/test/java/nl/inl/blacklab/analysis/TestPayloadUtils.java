@@ -11,9 +11,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
 public class TestPayloadUtils {
+
+    RelationsStrategy.PayloadCodec payloadCodec = RelationsStrategy.forNewIndex().getPayloadCodec();
 
     @Test
     public void testIsPrimaryValueIndicator() {
@@ -65,13 +68,13 @@ public class TestPayloadUtils {
         int[] ends  = { 0, 11, 30 };
         for (int i = 0; i < starts.length; i++) {
             // External index type: only writes end position
-            BytesRef b = PayloadUtils.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.EXTERNAL_FILES, 0);
+            BytesRef b = payloadCodec.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.EXTERNAL_FILES, 0, true);
             Assert.assertEquals(ends[i], ByteBuffer.wrap(b.bytes).getInt());
 
             // Integrated index type: writes start and end position
-            b = PayloadUtils.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED, 0);
+            b = payloadCodec.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED, 0, true);
             RelationInfo r = RelationInfo.create();
-            r.deserialize(starts[i], new ByteArrayDataInput(b.bytes));
+            payloadCodec.deserialize(starts[i], new ByteArrayDataInput(b.bytes), r);
             Assert.assertEquals(starts[i], r.getSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());
             Assert.assertEquals(starts[i], r.getSourceEnd());

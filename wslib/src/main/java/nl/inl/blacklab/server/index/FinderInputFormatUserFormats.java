@@ -162,7 +162,8 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      */
     public void createUserFormat(User user, String fileName, InputStream is) throws NotAuthorized, BadRequest, InternalServerError {
         try {
-            String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getId(), fileName);
+            String formatIdentifier = fileName.contains(":") ? ConfigInputFormat.stripExtensions(fileName) :
+                    getFormatIdentifier(user.getId(), fileName);
             
             String userIdFromFormatIdentifier = getUserIdFromFormatIdentifier(formatIdentifier);
             if (!user.canManageFormatsFor(userIdFromFormatIdentifier))

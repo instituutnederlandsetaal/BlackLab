@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
 import nl.inl.blacklab.mocks.MockSpans;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public class TestUniqueHits {
 
@@ -31,11 +32,11 @@ public class TestUniqueHits {
      *  we therefore expect the last two hits to both be returned, and not reduced to 1 using SpansUnique.
      */
     RelationInfo[] aRelationInfo = {
-            RelationInfo.create(false, 10, 10, 11, 11, 0, "abc"),
-            RelationInfo.create(false, 10, 10, 11, 11, 0, "abc"),
-            RelationInfo.create(false, 10, 10, 11, 11, 0, "abc"),
-            RelationInfo.create(false, 1, 1, 2, 2, 0, "abc"),
-            RelationInfo.create(false, 1, 1, 1, 2, 0, "abc"),
+            RelationInfo.create(false, 10, 10, 11, 11, 0, "abc", false),
+            RelationInfo.create(false, 10, 10, 11, 11, 0, "abc", false),
+            RelationInfo.create(false, 10, 10, 11, 11, 0, "abc", false),
+            RelationInfo.create(false, 1, 1, 2, 2, 0, "abc", false),
+            RelationInfo.create(false, 1, 1, 1, 2, 0, "abc", false),
     };
 
     @Test
@@ -43,7 +44,7 @@ public class TestUniqueHits {
         BLSpans a = MockSpans.withRelationInfoObjectsInPayload(aDoc, aStart, aEnd, aRelationInfo);
         BLSpans tags = new SpansRelations("contents", "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                RelationInfo.SpanMode.FULL_SPAN, "abc", null);
+                RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.ifNotRecorded());
         BLSpans spans = new SpansUnique(tags);
         HitQueryContext context = new HitQueryContext(null, "contents");
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
@@ -62,7 +63,7 @@ public class TestUniqueHits {
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
         BLSpans tags = new SpansRelations("contents", "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                RelationInfo.SpanMode.FULL_SPAN, "abc", null);
+                RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.ifNotRecorded());
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
         HitQueryContext context = new HitQueryContext(null, "contents");
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);

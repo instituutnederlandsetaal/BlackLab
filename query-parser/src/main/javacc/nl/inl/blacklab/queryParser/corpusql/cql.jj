@@ -62,6 +62,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternSettings;
 import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
+import nl.inl.util.StringUtil;
 
 @SuppressWarnings("all")
 

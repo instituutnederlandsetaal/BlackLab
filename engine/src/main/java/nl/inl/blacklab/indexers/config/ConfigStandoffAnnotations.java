@@ -181,7 +181,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public String getRelationClass() {
         // Return default value for relation class if not specified
-        return relationClass != null ? relationClass : RelationUtil.DEFAULT_CLASS;
+        return relationClass != null ? relationClass : RelationUtil.CLASS_DEFAULT;
     }
 
     public void setRelationClass(String relationClass) {

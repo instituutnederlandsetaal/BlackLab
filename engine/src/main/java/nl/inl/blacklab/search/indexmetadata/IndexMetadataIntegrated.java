@@ -99,6 +99,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return new IndexMetadataIntegrated(index, config);
     }
 
+    /** Is this one of the special fields that only occur in the index metadata document? */
+    public static boolean isMetadataDocField(String luceneFieldName) {
+        return luceneFieldName.startsWith(MetadataDocument.INDEX_METADATA_FIELD_PREFIX);
+    }
+
     public Query metadataDocQuery() {
         return metadataDocument.query();
     }

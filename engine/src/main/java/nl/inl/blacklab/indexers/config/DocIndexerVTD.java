@@ -240,12 +240,16 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             finder.setFragPos(FragmentPosition.AFTER_CLOSE_TAG);
             endWord();
 
-            // Add empty values to all lagging annotations
+            // Add empty values to all lagging annotations with a forward index
             for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
-                while (prop.lastValuePosition() < lastValuePositionAllAnnots) {
-                    prop.addValue("");
-                    if (prop.hasPayload())
-                        prop.addPayload(null);
+                if (prop.hasForwardIndex() || prop == annotatedFieldWriter.mainAnnotation()) {
+                    while (prop.lastValuePosition() < lastValuePositionAllAnnots) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                        if (prop == annotatedFieldWriter.mainAnnotation())
+                            annotatedFieldWriter.addFinalStartEndChars();
+                    }
                 }
             }
         }
@@ -389,7 +393,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         try {
             if (basePath != null) {
                 // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
-                // @@@ why only first? shouldn't we process all matches?
+                // FIXME (?) why only first? shouldn't we process all matches?
                 finder.navpush();
                 AutoPilot apBase = finder.acquireExpression(basePath);
                 apBase.evalXPath();

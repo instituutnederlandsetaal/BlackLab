@@ -34,6 +34,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileReference;
 import nl.inl.util.FileUtil;
@@ -565,7 +566,6 @@ class IndexerImpl implements DocWriter, Indexer {
         this.numberOfThreadsToUse = numberOfThreadsToUse;
 
         // Some of the class-based docIndexers don't support theaded indexing
-        //@@@ enable threaded indexing with (threadsafe) class-based docIndexers
         InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
         if (!inputFormat.isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
@@ -587,5 +587,10 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public boolean needsPrimaryValuePayloads() {
         return indexWriter.needsPrimaryValuePayloads();
+    }
+
+    /** Get the strategy to use for indexing relations. */
+    public RelationsStrategy getRelationsStrategy() {
+        return indexWriter.getRelationsStrategy();
     }
 }

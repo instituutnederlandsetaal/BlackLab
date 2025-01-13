@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsWithinSpan;
 import nl.inl.blacklab.search.lucene.SpanQueryOtherFieldHits;
 import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
+import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 
@@ -78,7 +79,7 @@ public class XFRelations implements ExtensionFunctionClass {
             BLSpanQuery rel = new SpanQueryRelations(queryInfo, field, relationType, null,
                     direction, RelationInfo.SpanMode.TARGET, captureAs, targetField);
             BLSpanQuery relAndTarget = new SpanQueryAnd(List.of(rel, matchTarget));
-            ((SpanQueryAnd) relAndTarget).setRequireUniqueRelations(true); // don't match the same relation twice
+            ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
                 relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.field().name());

@@ -19,6 +19,7 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -31,7 +32,7 @@ import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 import nl.inl.util.StringUtil;
 
 /**
@@ -245,13 +246,13 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         if (Span.isValid(spanEndOrRelTarget)) {
             // Relation (span) attributes in classic external index
             assert getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
-            indexAnnotationValuesRelation(annotation, positionSpanEndOrSource, spanEndOrRelTarget, valuesToIndex);
+            indexAnnotationValuesSpanExternal(annotation, positionSpanEndOrSource, spanEndOrRelTarget, valuesToIndex);
         } else {
             indexAnnotationValuesNoRelation(annotation, positionSpanEndOrSource.start(), valuesToIndex);
         }
     }
 
-    private void indexAnnotationValuesRelation(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget,
+    private void indexAnnotationValuesSpanExternal(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             Collection<String> valuesToIndex) {
         // For attributes to span annotations in classic external index (which are all added to the same annotation),
         // the span name has already been indexed at this position with an increment of 1,
@@ -262,9 +263,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             // External index, attribute values are indexed separately from the tag name
             // For the external index format (annotation "starrtag"), we index several terms:
             // // one for the span name, and one for each attribute name and value.
-            value = RelationUtil.tagAttributeIndexValue(annotation.getName(), value,
-                    BlackLabIndex.IndexType.EXTERNAL_FILES);
-            annotationValue(name, value, positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN, Collections.emptyMap());
+            value = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(annotation.getName(), value);
+
+            int indexAtPosition = positionSpanEndOrSource.start();
+            BytesRef payload = getPayload(positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN,
+                    true, indexAtPosition);
+            annotationValue(name, value, indexAtPosition, payload);
         }
     }
 

@@ -275,7 +275,8 @@ public class TestSearches {
 
     @Test
     public void testTags() {
-        List<String> expected = List.of(
+        List<String> expected;
+        expected = List.of(
                 "[The quick brown fox] jumps", "over [the lazy dog]", "May [the Force] be");
         Assert.assertEquals(expected, testIndex.findConc("<entity/>"));
 

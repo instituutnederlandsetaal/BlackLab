@@ -37,9 +37,9 @@ public class XFSpans implements ExtensionFunctionClass {
     }
 
     public void register() {
-        QueryExtensions.register(FUNC_WITH_SPANS, XFSpans::withSpans, QueryExtensions.ARGS_QQS,
+        QueryExtensions.register(FUNC_WITH_SPANS, QueryExtensions.ARGS_QQS,
                 Arrays.asList(null, QueryExtensions.VALUE_ANY_SPAN, "with-spans"),
-                false);
+                XFSpans::withSpans);
     }
 
 }

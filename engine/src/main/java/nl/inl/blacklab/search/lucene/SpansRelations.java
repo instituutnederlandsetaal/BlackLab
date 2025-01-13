@@ -1,7 +1,10 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.PostingsEnum;
@@ -15,6 +18,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 
 /**
@@ -58,6 +62,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
     /** For looking up attribute values in the relation index */
     private final RelationInfoSegmentReader relInfo;
 
+    /** Strategy for indexing/searching relations */
+    private final RelationsStrategy relStrat;
+
     /**
      * Can our spans include root relations, or are we sure it doesn't?
      * If it might include root relations, we need to check for this in accept(),
@@ -83,7 +90,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
-            String captureAs, RelationInfoSegmentReader relInfo) {
+            String captureAs, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
         super(relationsMatches,
                 SpanQueryRelations.createGuarantees(relationsMatches.guarantees(), direction, spanMode));
         this.sourceField = sourceField;
@@ -93,6 +100,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         this.spanMode = spanMode;
         this.captureAs = captureAs == null ? "" : captureAs;
         this.relInfo = relInfo;
+        this.relStrat = relStrat;
     }
 
     @Override
@@ -147,15 +155,42 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
                 if (relationInfo == null) { // should only happen in tests
                     relationInfo = RelationInfo.create();
                 }
-                relationInfo.deserialize(in.startPosition(), dataInput);
+                relStrat.getPayloadCodec().deserialize(in.startPosition(), dataInput, relationInfo);
             } catch (IOException e) {
                 throw new BlackLabRuntimeException("Error getting payload");
             }
             if (collector.term != null) // can happen during testing...
-                relationInfo.setIndexedTerm(collector.term.text(), docID(), relInfo);
+                setIndexedTerm(relationInfo, collector.term.text(), docID(), relInfo, relStrat);
             fetchedRelationInfo = true;
         }
         return relationInfo;
+    }
+
+    /**
+     * Decode the indexed term for this relation.
+     * <p>
+     * We decode the relation class and type and any attributes from the indexed term.
+     * Note that if multiple values were indexed for a single attribute, only the first
+     * value is extracted.
+     *
+     * @param term indexed term
+     */
+    public static void setIndexedTerm(RelationInfo info, String term, int docId, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
+        info.setFullRelationType(relStrat.fullTypeFromIndexedTerm(term));
+        Map<String, String> attributes = relStrat.getAllAttributesFromIndexedTerm(term);
+        if (attributes == null && relInfo != null) {
+            if (info.mayHaveInfoInRelationIndex()) {
+                // Get them from relation info index
+                int infoRelationId = info.getRelationId();
+                String f = relInfo.relationsField(info.getField());
+                attributes = relInfo.getAttributes(f, docId, infoRelationId);
+            } else {
+                // No extra info was stored, no need to check
+                // (we shouldn't ever get here, RelationUtil.attributesFromIndexedTerm() can tell that there's no attributes)
+                attributes = Collections.emptyMap();
+            }
+        }
+        info.setAttributes(attributes);
     }
 
     @Override
@@ -261,23 +296,47 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         return acc ? FilterSpans.AcceptStatus.YES : FilterSpans.AcceptStatus.NO;
     }
 
-    /** SpanCollector that collects both the the payload and term for the current match. */
-    private static class PayloadAndTermCollector extends PayloadSpanCollector {
-        public Term term;
-
-        @Override
-        public void collectLeaf(PostingsEnum postings, int position, Term term) throws IOException {
-            this.term = term;
-            super.collectLeaf(postings, position, term);
-        }
-    }
-
-    private final PayloadAndTermCollector collector = new PayloadAndTermCollector();
+    private final SpansInBucketsPayloadAndTermCollector collector = new SpansInBucketsPayloadAndTermCollector();
 
     @Override
     public String toString() {
         return "REL(" + relationType + ", " + spanMode + (direction != Direction.BOTH_DIRECTIONS ?
                 ", " + direction :
                 "") + ")";
+    }
+
+    /** Payload collector where you can override the payload (for use with SpansAndFiltered) */
+    public static class SpansInBucketsPayloadAndTermCollector extends PayloadSpanCollector {
+        private byte[] payload = null;
+
+        private Term term = null;
+
+        @Override
+        public void collectLeaf(PostingsEnum postings, int position, Term term) throws IOException {
+            this.term = term;
+            super.collectLeaf(postings, position, term);
+        }
+
+        void setPayload(byte[] payload) {
+            this.payload = payload;
+        }
+
+        void setTerm(Term term) {
+            this.term = term;
+        }
+
+        @Override
+        public Collection<byte[]> getPayloads() {
+            if (payload != null) {
+                byte[] p = payload;
+                payload = null;
+                return Collections.singletonList(p);
+            }
+            return super.getPayloads();
+        }
+
+        public Term getTerm() {
+            return term;
+        }
     }
 }

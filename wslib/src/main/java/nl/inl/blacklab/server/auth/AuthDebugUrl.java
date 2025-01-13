@@ -16,7 +16,7 @@ import nl.inl.blacklab.server.search.UserRequest;
  */
 public class AuthDebugUrl implements AuthMethod {
 
-    static final Logger logger = LogManager.getLogger(AuthDebugFixed.class);
+    static final Logger logger = LogManager.getLogger(AuthDebugUrl.class);
 
     public AuthDebugUrl(Map<String, Object> param) {
         // doesn't take any parameters

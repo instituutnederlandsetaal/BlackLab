@@ -336,7 +336,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         if (results == null || results.getLimitValues() < limitValues) {
             // We either don't have cached relationsStats, or the limitValues value is too low.
             boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
-            results = new RelationsStats(oldStyleStarttag, limitValues);
+            results = new RelationsStats(index.getRelationsStrategy(), limitValues);
 
             // Look up the correct field for the _relation annotation (depending on whether it
             // was indexed sensitively or insensitively)

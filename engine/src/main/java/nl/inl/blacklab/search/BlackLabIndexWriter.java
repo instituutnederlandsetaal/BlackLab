@@ -14,6 +14,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public interface BlackLabIndexWriter extends AutoCloseable {
 
@@ -143,4 +144,7 @@ public interface BlackLabIndexWriter extends AutoCloseable {
 
     /** Get the ContentStore with this name. If no such ContentStore exists, the implementation should create it. */
     ContentStore contentStore(Field contentStoreName);
+
+    /** Get the strategy to use for indexing relations. */
+    RelationsStrategy getRelationsStrategy();
 }

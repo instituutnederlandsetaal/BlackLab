@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.StringUtil;
 
@@ -27,6 +28,8 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     protected static final Logger logger = LogManager.getLogger(DocIndexerAbstract.class);
 
     private DocWriter docWriter;
+
+    private RelationsStrategy relationsStrategy;
 
     /**
      * File we're currently parsing. This can be useful for storing the original
@@ -84,6 +87,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     @Override
     public void setDocWriter(DocWriter docWriter) {
         this.docWriter = docWriter;
+        this.relationsStrategy = docWriter.getRelationsStrategy();
     }
 
     /**
@@ -310,5 +314,14 @@ public abstract class DocIndexerAbstract implements DocIndexer {
 
     protected BLInputDocument createNewDocument() {
         return getDocWriter().indexObjectFactory().createInputDocument();
+    }
+
+    /** Get the strategy to use for indexing relations. */
+    public RelationsStrategy getRelationsStrategy() {
+        return relationsStrategy;
+    }
+
+    public RelationsStrategy.PayloadCodec getPayloadCodec() {
+        return relationsStrategy.getPayloadCodec();
     }
 }

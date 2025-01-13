@@ -39,6 +39,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 import nl.inl.blacklab.search.lucene.SpanQueryEdge;
@@ -277,4 +279,8 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         }
     }
 
+    @Override
+    public RelationsStrategy getRelationsStrategy() {
+        return RelationsStrategyNaiveSeparateTerms.INSTANCE;
+    }
 }

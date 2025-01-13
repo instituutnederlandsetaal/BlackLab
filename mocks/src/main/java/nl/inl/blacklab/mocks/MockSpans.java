@@ -10,6 +10,7 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -21,6 +22,8 @@ import nl.inl.blacklab.search.lucene.SpanGuarantees;
  * these arrays.
  */
 public class MockSpans extends BLSpans {
+
+    static RelationsStrategy relationsStrategy = RelationsStrategy.forNewIndex();
 
     private final class MockPostingsEnum extends PostingsEnum {
         private int currentDoc = -1;
@@ -175,8 +178,8 @@ public class MockSpans extends BLSpans {
     private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            BytesRef payload = PayloadUtils.inlineTagPayload(aStart[i], aEnd[i],
-                    BlackLabIndex.IndexType.EXTERNAL_FILES, -1);
+            BytesRef payload = relationsStrategy.getPayloadCodec().inlineTagPayload(aStart[i], aEnd[i],
+                    BlackLabIndex.IndexType.EXTERNAL_FILES, -1, true);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
             this.payloads[i] = payload;
@@ -187,8 +190,8 @@ public class MockSpans extends BLSpans {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
             RelationInfo relInfo = RelationInfo.create(false, aStart[i], aStart[i],
-                    aEnd[i], aEnd[i], 0, "test");
-            BytesRef payload = relInfo.serialize();
+                    aEnd[i], aEnd[i], 0, "test", false);
+            BytesRef payload = relationsStrategy.getPayloadCodec().serialize(relInfo);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
             this.payloads[i] = payload;
@@ -198,7 +201,7 @@ public class MockSpans extends BLSpans {
     private void setPayloadsMatchInfo(int[] aStart, int[] aEnd, RelationInfo[] relationInfo) {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
-            this.payloads[i] = relationInfo[i].serialize();
+            this.payloads[i] = relationsStrategy.getPayloadCodec().serialize(relationInfo[i]);
         }
     }
 

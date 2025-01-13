@@ -16,13 +16,12 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.util.automaton.RegExp;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -151,33 +150,32 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     private String targetField;
 
+    private final RelationsStrategy relationsStrategy;
+
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
             Map<String, String> attributes, Direction direction, RelationInfo.SpanMode spanMode, String captureAs,
             String targetField) {
         super(queryInfo);
-
+        this.relationsStrategy = queryInfo.index().getRelationsStrategy();
         if (StringUtils.isEmpty(relationFieldName))
             throw new IllegalArgumentException("relationFieldName must be non-empty");
         if (spanMode == RelationInfo.SpanMode.ALL_SPANS)
             throw new IllegalArgumentException("ALL_SPANS makes no sense for SpanQueryRelations");
 
-        BLSpanQuery clause = getRelationsQuery(queryInfo, relationFieldName, relationTypeRegex, attributes);
-        init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
-    }
+        // Do any sanitization (e.g. replace regex dot with "any non-special character" to avoid unintended matches)
+        // (should hopefully not be necessary anymore with better relations strategy)
+        relationTypeRegex = relationsStrategy.sanitizeTagNameRegex(relationTypeRegex);
 
-    public static BLSpanQuery getRelationsQuery(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
-            Map<String, String> attributes) {
-        // Construct the clause from the field, relation type and attributes
-        String completeRegex = RelationUtil.searchRegex(queryInfo.index(), relationTypeRegex, attributes);
-        RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, completeRegex), RegExp.COMPLEMENT);
-        BLSpanQuery clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
-        return clause;
+        BLSpanQuery clause = relationsStrategy.getRelationsQuery(queryInfo, relationFieldName, relationTypeRegex, attributes);
+        //BLSpanQuery clause = getRelationsQuery(queryInfo, relationFieldName, relationTypeRegex, attributes);
+        init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
     }
 
     public SpanQueryRelations(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
             Map<String, String> attributes, BLSpanQuery clause, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs, String targetField) {
         super(queryInfo);
+        this.relationsStrategy = queryInfo.index().getRelationsStrategy();
         init(relationFieldName, relationTypeRegex, attributes, clause, direction, spanMode, captureAs, targetField);
     }
 
@@ -258,7 +256,8 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationFieldName);
             boolean primaryIndicator = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfo);
             spans = new SpansRelations(baseFieldName, relationType, spans, primaryIndicator,
-                    direction, spanMode, captureAs, BlackLabIndexIntegrated.relationInfo(context));
+                    direction, spanMode, captureAs, BlackLabIndexIntegrated.relationInfo(context),
+                    relationsStrategy);
             if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
                 spans = new SpansOverrideField(spans, targetField);
             return spans;

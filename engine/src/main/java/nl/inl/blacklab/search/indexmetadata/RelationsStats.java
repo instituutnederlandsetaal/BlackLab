@@ -26,7 +26,7 @@ public class RelationsStats {
                 .filter(cls -> !cls.equals(RelationUtil.CLASS_INLINE_TAG))
                 .map(cls -> AnnotatedFieldNameUtil.baseFromParallelFieldName(cls))
                 .findFirst()
-                .orElse(RelationUtil.DEFAULT_CLASS);
+                .orElse(RelationUtil.CLASS_DEFAULT);
     }
 
     /**
@@ -46,12 +46,12 @@ public class RelationsStats {
 
         void add(String term, long freq) {
             count += freq;
-            Map<String, String> termAttr = RelationUtil.attributesFromIndexedTerm(term);
-            termAttr.forEach((attr, value) -> {
+
+            relationsStrategy.attributesInTerm(term).forEach(e -> {
                 // Add the attribute
-                TruncatableFreqList attrValues = attributesAndValues.computeIfAbsent(attr,
+                TruncatableFreqList attrValues = attributesAndValues.computeIfAbsent(e.getKey(),
                         k -> new TruncatableFreqList(limitValues));
-                attrValues.add(value, freq);
+                attrValues.add(e.getValue(), freq);
             });
         }
 
@@ -92,8 +92,8 @@ public class RelationsStats {
         private Map<String, TypeStats> relationTypes = new TreeMap<>();
 
         void add(String term, long freq) {
-            String relationType = RelationUtil.typeFromFullType(RelationUtil.fullTypeFromIndexedTerm(term));
-            // Add the relation type
+            String fullRelationType = relationsStrategy.fullTypeFromIndexedTerm(term);
+            String relationType = RelationUtil.typeFromFullType(fullRelationType);
             TypeStats typeStats = relationTypes.computeIfAbsent(relationType, k -> new TypeStats());
             typeStats.add(term, freq);
         }
@@ -115,6 +115,9 @@ public class RelationsStats {
      */
     private boolean oldStyleStarttag;
 
+    /** How relations were indexed */
+    private RelationsStrategy relationsStrategy;
+
     private long limitValues;
 
     /**
@@ -122,8 +125,9 @@ public class RelationsStats {
      */
     private Map<String, ClassStats> classes = new TreeMap<>();
 
-    RelationsStats(boolean oldStyleStarttag, long limitValues) {
-        this.oldStyleStarttag = oldStyleStarttag;
+    RelationsStats(RelationsStrategy relationsStrategy, long limitValues) {
+        this.relationsStrategy = relationsStrategy;
+        this.oldStyleStarttag = relationsStrategy instanceof RelationsStrategyNaiveSeparateTerms;
         this.limitValues = limitValues;
     }
 
@@ -133,7 +137,7 @@ public class RelationsStats {
         if (limitValues > this.limitValues) //@@@ could be okay if no lists are truncated
             throw new IllegalArgumentException("Cannot increase limitValues from " + this.limitValues + " to " + limitValues);
 
-        RelationsStats result = new RelationsStats(oldStyleStarttag, limitValues);
+        RelationsStats result = new RelationsStats(relationsStrategy, limitValues);
         result.classes = LimitUtil.limit(classes, limitValues);
         return result;
     }
@@ -151,7 +155,7 @@ public class RelationsStats {
     }
 
     boolean addIndexedTerm(String term, long freq) {
-        if (term.endsWith(RelationUtil.IS_OPTIMIZATION_INDICATOR)) {
+        if (relationsStrategy.isOptimizationTerm(term)) {
             // Don't count these; they are extra terms to speed up certain searches.
             return true;
         }
@@ -167,11 +171,10 @@ public class RelationsStats {
         if (oldStyleStarttag) {
             // Old external index. Convert term to new style so we can process it the same way.
             relationClass = RelationUtil.CLASS_INLINE_TAG;
-            term = RelationUtil.indexTerm(RelationUtil.fullType(relationClass, term),
-                    null, false);
+            term = RelationsStrategyNaiveSeparateTerms.indexedTermNoAttributes(RelationUtil.fullType(relationClass, term));
         } else {
             // New integrated index with spans indexed as relations as well.
-            relationClass = RelationUtil.classFromFullType(RelationUtil.fullTypeFromIndexedTerm(term));
+            relationClass = RelationUtil.classFromFullType(relationsStrategy.fullTypeFromIndexedTerm(term));
         }
         ClassStats relClassStats = classes.computeIfAbsent(relationClass, k -> new ClassStats());
         relClassStats.add(term, freq);

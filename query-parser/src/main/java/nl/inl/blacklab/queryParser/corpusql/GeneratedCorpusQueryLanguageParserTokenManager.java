@@ -41,6 +41,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSettings;
 import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
+import nl.inl.util.StringUtil;
 
 /** Token Manager. */
 @SuppressWarnings("unused")public class GeneratedCorpusQueryLanguageParserTokenManager implements GeneratedCorpusQueryLanguageParserConstants {

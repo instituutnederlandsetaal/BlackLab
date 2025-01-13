@@ -36,6 +36,7 @@ public class MockSpansInBuckets extends SpansInBuckets {
     private boolean atFirstInCurrentDoc = false;
 
     public MockSpansInBuckets(int[] bucketDoc, int[] bucketStart, int[] start, int[] end) {
+        super(null);
         this.bucketDoc = bucketDoc;
         this.bucketStart = bucketStart;
         this.start = start;
@@ -165,5 +166,10 @@ public class MockSpansInBuckets extends SpansInBuckets {
     @Override
     public int width() {
         return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "SIB-MOCK(" + source + ")";
     }
 }

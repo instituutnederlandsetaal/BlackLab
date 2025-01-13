@@ -183,7 +183,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     private final List<BLSpanQuery> exclude;
 
-    private boolean requireUniqueRelations = false;
+    private SpansAndFilterFactory filterFactory = null;
 
     public SpanQueryAndNot(List<BLSpanQuery> include, List<BLSpanQuery> exclude) {
         super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
@@ -199,15 +199,14 @@ public class SpanQueryAndNot extends BLSpanQuery {
     }
 
     /**
-     * Do we require that the active relation matched by the include clauses are unique?
-     * <p>
-     * I.e. if two clauses match the same relation, the match is discarded. This can
-     * happen in queries that match the same relation type twice.
+     * Set how to filter hits.
      *
-     * @param b true if we require unique relations, false if not
+     * @param filterFactory the filter factory to create our hits filters
      */
-    public void setRequireUniqueRelations(boolean b) {
-        this.requireUniqueRelations = b;
+    public void setFilter(SpansAndFilterFactory filterFactory) {
+        this.filterFactory = filterFactory;
+        if (!exclude.isEmpty())
+            throw new BlackLabRuntimeException("Cannot combine exclude and filter!");
     }
 
     @Override
@@ -312,7 +311,11 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 result = rewrCl.get(0);
             else {
                 result = new SpanQueryAndNot(rewrCl, null);
-                ((SpanQueryAndNot)result).setRequireUniqueRelations(requireUniqueRelations);
+                if (filterFactory != null) {
+                    if (!rewrNotCl.isEmpty())
+                        throw new BlackLabRuntimeException("Cannot combine exclude and filter!");
+                    ((SpanQueryAndNot) result).setFilter(filterFactory);
+                }
             }
             if (!rewrNotCl.isEmpty()) {
                 // Add the negative clauses, using an inverted position filter
@@ -406,7 +409,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     private boolean canFlatten(BLSpanQuery child) {
         return child instanceof SpanQueryAndNot &&
-                ((SpanQueryAndNot) child).requireUniqueRelations == requireUniqueRelations;
+                ((SpanQueryAndNot) child).filterFactory.equals(filterFactory);
     }
 
     @Override
@@ -424,13 +427,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
         if (o == null || getClass() != o.getClass())
             return false;
         SpanQueryAndNot that = (SpanQueryAndNot) o;
-        return requireUniqueRelations == that.requireUniqueRelations && Objects.equals(include, that.include)
+        return Objects.equals(filterFactory, that.filterFactory) && Objects.equals(include, that.include)
                 && Objects.equals(exclude, that.exclude);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(include, exclude, requireUniqueRelations);
+        return Objects.hash(include, exclude, filterFactory);
     }
 
     @Override
@@ -490,8 +493,8 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 spans.add(s);
             }
 
-            if (requireUniqueRelations) {
-                return new SpansAndMultiUniqueRelations(spans);
+            if (filterFactory != null) {
+                return new SpansAndFiltered(spans, filterFactory);
             } else {
                 BLSpans combined = BLSpans.ensureSortedUnique(spans.get(0));
                 for (int i = 1; i < weights.size(); i++) {
@@ -513,7 +516,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     @Override
     public String toString(String field) {
-        String type = requireUniqueRelations ? "RMATCH" : "AND";
+        String type = filterFactory == null ?
+                "AND" :
+                "AND_" + filterFactory.name() + ", ";
         if (exclude.isEmpty())
             return type + "(" + clausesToString(field, include) + ")";
         return type + "(" + clausesToString(field, include) + ", " + clausesToString(field, exclude, "!") + ")";
@@ -542,11 +547,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
         if (!exclude.isEmpty())
             throw new BlackLabRuntimeException("Query should've been rewritten! (exclude clauses left)");
         List<NfaState> nfaClauses = new ArrayList<>();
-//		List<NfaState> dangling = new ArrayList<>();
         for (BLSpanQuery clause : include) {
             Nfa nfa = clause.getNfa(fiAccessor, direction);
             nfaClauses.add(nfa.getStartingState());
-//			dangling.addAll(nfa.getDanglingArrows());
         }
         NfaState andAcyclic = NfaState.and(false, nfaClauses);
         return new Nfa(andAcyclic, List.of(andAcyclic));

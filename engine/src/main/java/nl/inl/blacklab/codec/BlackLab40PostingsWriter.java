@@ -31,7 +31,8 @@ import org.apache.lucene.util.BytesRef;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm;
 
 /**
  * BlackLab FieldsConsumer: writes postings information to the index,
@@ -53,6 +54,9 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     /** Name of the postings format we've adapted. */
     private final String delegatePostingsFormatName;
 
+    /** How to index relations */
+    private final RelationsStrategy relationsStrategy;
+
     /**
      * Instantiates a fields consumer.
      *
@@ -66,6 +70,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
+        this.relationsStrategy = RelationsStrategy.forNewIndex();
     }
 
     /**
@@ -146,8 +151,15 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         List<PWPlugin> allActions = new ArrayList<>();
         try {
             allActions.add(new PWPluginForwardIndex(this));
-            if (RelationInfo.writeRelationInfoToIndex())
-                allActions.add(new PWPluginRelationInfo(this));
+            if (relationsStrategy.writeRelationInfoToIndex()) {
+                if (relationsStrategy instanceof RelationsStrategySingleTerm) {
+                    // Older dev versions used this. We need to support it for a while for backwards compatibility.
+                    allActions.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
+                } else {
+                    // This is the current version of the relation info plugin, used for new indexes.
+                    allActions.add(new PWPluginRelationInfo(this, relationsStrategy));
+                }
+            }
 
             // Write our postings extension information
 

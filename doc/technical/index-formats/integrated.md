@@ -49,8 +49,56 @@ A relation is indexed once or twice: relations without attributes are indexed on
 
 A relation is indexed as a term containing the relation class and type (which together we call the _full relation type_) and (optionally) attributes, with a payload containing the source and target information.
 
+### Terms indexed
 
-### Term
+We'll use a span `<img src="test.png" class="pict" />` as an example; relations work the same, but usually don't have attributes, just a relation type.
+
+These terms will be indexed:
+- `__tag::img` (no attributes)
+- `__tag::img\u0001src\u0002test.png`
+- `__tag::img\u0001class\u0002pict`
+
+Or in more general terms:
+
+- `relClass::relType`
+- `relClass::relType\u0001attrName1\u0002value1`
+- `relClass::relType\u0001attrName2\u0002value2`
+- etc.
+
+Again, we call `relClass::relType` (the relation class and the relation type) the _full relation type_. The relation class distinguishes between different types of relations, e.g. `__tag` for inline tags, `dep` for dependency relations, etc. The relation type is used to distinguish between different relations of the same class, e.g. `dep::subject` for subject relations, `dep::object` for object relations, `dep::nsubj` for nominal subject relations, etc.
+
+Three special characters delineate the separate parts of a term:
+
+- `\u0001` ("name separator") separates the type name from the attribute name.
+- `\u0002` ("value separator") separates the attribute name from the value.
+
+These delineation characters make sure we can generate a regular expressions that avoid any unwanted matches (e.g. prefix or suffix matches).
+
+
+### Payload
+
+The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the target end to save space.
+
+Relation payloads are always stored at the source position. Only the first term (the relation type term, i.e. `__tag::img`) stores the full payload described below. The subsequent attribute terms (see above) only store the `relationId` as a single `VInt`, just to make sure all matched terms refer to the same relation.
+
+The payload for a relation consists of the following fields:
+
+* `relationId: VInt`: a unique id for this relation, which can be used to look up extra information, such as attributes, and maybe other information in the future. (always present, no default value)
+* `flags: byte`: If `0x02` is set, the relation only has a target (root relation). If `0x04` is set, use a default length of 1 for `sourceLength` and `targetLength`. If `0x08` is set, there is no extra information to look up (i.e. no attributes), so we can save time and skip that step. The other bits are reserved for future use and must not be set. Default: `0`.
+* `relTargetStart: ZInt`: relative position of the (start of the) target end. Default: `1`.
+* `sourceLength: VInt`: length of the source end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, it will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
+* `targetLength: VInt`: length of the target end of the relation. For a single word this would be 1; for a span of words, greater than one. For inline tags, this will be set to 0 (start and end tags are considered to be zero-length). Default: `0` (normally) or `1` (if flag `0x04` is set)
+
+Fields may be omitted from the end if they have the default value. Therefore, an payload with only a `VInt` with value `1234`  means `{ relationId: 1234, flags: 0, relTargetStart: 1, sourceLength: 0, targetLength: 0 }`.
+
+As another example, the payload `0x81; 0x04` would mean `{ relationId: 1, flags: 4, relTargetStart: 1, sourceLength: 1, targetLength: 1 }`. Explanation: `0x81` is the `VInt` encoding for `1` (the lower seven bits giving the number and the high bit set because this is the last byte of the number). The flag `0x04` is set, so the lengths default to `1` instead of `0`.
+
+
+
+
+### Old single-term approach
+
+***(we used to do this, but this was superseded by indexing several terms, one extra per attribute; older indexes should still work for now, but eventually we'll drop support)***
 
 The term indexed is a string of one of these forms.
 
@@ -78,10 +126,9 @@ Relations with attributes are indexed twice: once with, and once without
 attributes. The second version is used to speed up queries that don't
 filter on the attributes. This version is marked with a `\u0004` appended to the term, so we know to skip it when determining relations statistics.
 
+### Old payload (for single-term approach, see above)
 
-### Payload
-
-The payload uses Lucene's `VInt` (for non-negative numbers) and `ZInt` (an implementation of [variable-length quantity (VLQ)](https://en.wikipedia.org/wiki/Variable-length_quantity)). We store a relative position for the target end to save space.
+This payload was almost the same as the current one, but used a scheme where the first `ZInt` could be two different things depending on a `flag`. This is now no longer needed.
 
 Relation payloads are always stored at the source position.
 

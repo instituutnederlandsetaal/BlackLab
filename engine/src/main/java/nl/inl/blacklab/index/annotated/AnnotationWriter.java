@@ -6,15 +6,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
 import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
-import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
@@ -24,6 +25,10 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.CollUtil;
@@ -87,6 +92,9 @@ public class AnnotationWriter {
     /** Should the payload indicate whether this token is primary or secondary? (see PayloadUtils) */
     private boolean needsPrimaryValuePayload = false;
 
+    /** If this is a relations annotation: the indexing strategy to use. Otherwise null. */
+    private final RelationsStrategy relationsStrategy;
+
     public String mainSensitivity() {
         return mainSensitivity;
     }
@@ -120,6 +128,7 @@ public class AnnotationWriter {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
+        relationsStrategy = AnnotatedFieldNameUtil.isRelationAnnotation(name) ? fieldWriter.getRelationsStrategy() : null;
         this.sensitivitySetting = sensitivity;
         if (fieldWriter.field() != null) {
             annotation = fieldWriter.field().annotation(annotationName);
@@ -156,6 +165,13 @@ public class AnnotationWriter {
     }
 
     TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
+
+        if (relationsStrategy instanceof RelationsStrategySeparateTerms && annotationName.equals("_relation")) {
+            for (int i = 0; i < payloads.size(); i++) {
+                assert payloads.get(i) != null;
+            }
+        }
+
         TokenStream ts;
         if (includeOffsets) {
             ts = new TokenStreamWithOffsets(values, increments, startChars, endChars);
@@ -178,7 +194,7 @@ public class AnnotationWriter {
         return ts;
     }
 
-    BLFieldType getFieldType(BLIndexObjectFactory indexObjectFactory, String sensitivityName) {
+    BLFieldType getFieldType(BLIndexObjectFactory indexObjectFactory, String sensitivityName, RelationsStrategy relationsStrategy) {
         boolean isMainSensitivity = sensitivityName.equals(mainSensitivity);
 
         // Main sensitivity of main annotation gets character offsets
@@ -186,13 +202,13 @@ public class AnnotationWriter {
         boolean offsets = includeOffsets && isMainSensitivity;
 
         // Main sensitivity of main annotation may get content store
-        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity);
+        return indexObjectFactory.fieldTypeAnnotationSensitivity(offsets, hasForwardIndex && isMainSensitivity, relationsStrategy);
     }
 
     public void addToDoc(BLInputDocument doc, String annotatedFieldName, IntList startChars,
             IntList endChars) {
         for (String sensitivityName : sensitivities.keySet()) {
-            BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName);
+            BLFieldType fieldType = getFieldType(doc.indexObjectFactory(), sensitivityName, relationsStrategy);
             TokenStream tokenStream = tokenStream(sensitivityName, startChars, endChars);
             String luceneFieldName = AnnotatedFieldNameUtil.annotationField(annotatedFieldName,
                     annotationName, sensitivityName);
@@ -273,15 +289,16 @@ public class AnnotationWriter {
     public int addValueAtPosition(String value, int position, BytesRef payload) {
         assert position >= 0;
 
-        if (fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
+        if (getRelationsStrategy() instanceof RelationsStrategySingleTerm &&
+                fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
                 AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
                 !value.isEmpty() && !value.contains("\u0001")) {
 
             // This is the _relation annotation in the integrated index format, but not the right sort of value
             // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
             // Warn the user.
-            System.err.println("===== WARNING: your DocIndexer is using AnnotationWriter.addValuePosition() to index " +
-                    "inline tags. To work properly with the new index format, update it to use " +
+            System.err.println("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
+                    "inline tags. To work properly with the new integrated index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
 
         }
@@ -420,27 +437,37 @@ public class AnnotationWriter {
      *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
-            Map<String, String> attributes, BlackLabIndex.IndexType indexType, int relationId) {
-        RelationInfo matchInfo = RelationInfo.create(false, startPos, startPos,
-                endPos, endPos, relationId);
+            Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+
+        // NOTE: for single-term strategy, we only create a relationId if we know the end position. If we don't,
+        // the payload will be added later (when the closing tag is encountered) with
+        // the correct relationId, and this way we don't generate unused dummy relationIds.
+        // (not a problem for multi-term strategy)
+        int relationId = relationsStrategy.getRelationId(this, endPos, attributes);
+        boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
+        RelationInfo relationInfo = RelationInfo.create(false, startPos, startPos,
+                endPos, endPos, relationId, hasExtraInfoStored);
         String fullRelationType;
         fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
                 tagName :
                 RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
-        return indexRelation(fullRelationType, attributes, indexType, matchInfo);
+        return indexRelation(fullRelationType, attributes, indexType, relationInfo);
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
             int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
-        RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd, targetStart, targetEnd,
-                getNextRelationId(attributes));
+        int relationId = relationsStrategy.getRelationId(this, targetStart, attributes);
+          //getNextRelationId(attributes != null && !attributes.isEmpty());
+        boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
+        RelationInfo relationInfo = RelationInfo.create(onlyHasTarget, sourceStartPos, sourceEnd,
+                targetStart, targetEnd, relationId, hasExtraInfoStored);
 
         // We index relations at the source start position. This way, we don't have to sort
         // if we need the source (which is what we usually use), but we will have to sort
         // for the target or full span (because target position can be before source).
         // (we also might not even need to decode the payload if we ONLY need the source
         //  start position)
-        indexRelation(fullRelationType, attributes, indexType, matchInfo);
+        indexRelation(fullRelationType, attributes, indexType, relationInfo);
     }
 
     private int indexRelation(String fullRelationType, Map<String, String> attributes,
@@ -454,14 +481,14 @@ public class AnnotationWriter {
             }
             // classic external index; tag name and attributes are indexed separately
             payload = relationInfo.getSpanEnd() >= 0 ?
-                    PayloadUtils.inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
-                            BlackLabIndex.IndexType.EXTERNAL_FILES, getNextRelationId(attributes)) :
+                    relationsStrategy.getPayloadCodec().inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
+                            BlackLabIndex.IndexType.EXTERNAL_FILES, 0,
+                            relationInfo.mayHaveInfoInRelationIndex()) :
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
             for (Map.Entry<String, String> e: attributes.entrySet()) {
-                String term = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
-                        BlackLabIndex.IndexType.EXTERNAL_FILES);
+                String term = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(e.getKey(), e.getValue());
                 addValueAtPosition(term, relationInfo.getSourceStart(), null);
             }
         } else {
@@ -469,35 +496,37 @@ public class AnnotationWriter {
             // We only add the payload if we know the complete relation info;
             // for inline tags, we'll only know it when we encounter the closing tag,
             // and we'll add the payload then.
-            payload = relationInfo.hasTarget() ? relationInfo.serialize() : null;
-            addValueAtPosition(RelationUtil.indexTerm(fullRelationType, attributes, false),
-                    relationInfo.getSourceStart(), payload);
-            boolean indexedTwice = false;
-            if (attributes != null && !attributes.isEmpty()) {
-                // Also index a version without attributes. We'll use this for faster search if we don't filter on
-                // attributes. The indexed term will be tagged as an optimization term, so it won't be counted when we
-                // determine statistics.
-                // NOTE: this should always be indexed AFTER the version with attributes; that version will be
-                //       used to store the attribute info when writing the index files. When we encounter this second
-                //       version, we've already seen any attributes the relation has and can just skip this.
-                addValueAtPosition(RelationUtil.indexTerm(fullRelationType, null, true),
-                        relationInfo.getSourceStart(), payload);
-                indexedTwice = true;
-            }
+            payload = relationsStrategy.getPayload(relationInfo);
 
-            tagIndexInAnnotation = lastValueIndex();
+            AtomicInteger indexedCount = new AtomicInteger(0);
+            relationsStrategy.indexRelationTerms(fullRelationType, attributes, payload,
+                    (valueToIndex, payloadThisToken) -> {
+                        addValueAtPosition(valueToIndex, relationInfo.getSourceStart(), payloadThisToken);
+                        indexedCount.incrementAndGet();
+                    });
+            boolean indexedTwice = indexedCount.get() > 1 && (relationsStrategy instanceof RelationsStrategySingleTerm);
+            tagIndexInAnnotation = lastValueIndex() - indexedCount.get() + 1; // make sure this points to the first term indexed!
             if (indexedTwice) {
                 // HACK so we will be able to update both payloads if this is an open tag and we have yet to
-                // encounter the close tag
+                // encounter the close tag (only for single-term relations strategy)
                 tagIndexInAnnotation = -tagIndexInAnnotation;
             }
         }
         return tagIndexInAnnotation;
     }
 
-    public int getNextRelationId(Map<String, ?> attributes) {
-        if (attributes == null || attributes.isEmpty())
+    public int getNextRelationId(boolean maybeExtraInfo) {
+        if (!maybeExtraInfo)
             return RelationInfo.RELATION_ID_NO_INFO;
         return nextRelationId++;
+    }
+
+    public RelationsStrategy getRelationsStrategy() {
+        return relationsStrategy;
+    }
+
+    public int getRelationIdAtIndex(int tagIndex) {
+        ByteArrayDataInput dataInput = new ByteArrayDataInput(payloads.get(tagIndex).bytes);
+        return relationsStrategy.getPayloadCodec().readRelationId(dataInput);
     }
 }
