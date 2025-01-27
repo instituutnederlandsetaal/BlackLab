@@ -1433,7 +1433,7 @@ tagPlugin: DutchTagger
 This setup will convert `doc, docx, txt, epub, html, alto, rtf and odt` into `tei`.
 
 
-This will however not work until you provide the right .jar and data files to the plugins. Adding the following configuration to `blacklab.json` will enable the plugins to do their work.
+This will however not work until you provide the right .jar and data files to the plugins. Adding the following configuration to `blacklab-server.yaml` will enable the plugins to do their work.
 
 ```yaml
 plugins:
