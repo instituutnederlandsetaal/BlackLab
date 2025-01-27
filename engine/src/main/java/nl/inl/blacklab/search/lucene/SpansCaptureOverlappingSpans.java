@@ -70,7 +70,7 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
         }
         if (docId == candidate.docID()) {
             // Remove all spans that close before the current hit's start position
-            possiblyOverlappingSpans.removeIf(span -> span.getSpanEnd() < start);
+            possiblyOverlappingSpans.removeIf(span -> span.getSpanEnd() <= start);
 
             // Find and add new spans that open before the current hit's start position and close after it
             while (spans.startPosition() != NO_MORE_POSITIONS) {
@@ -91,7 +91,8 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
             // Capture all relations within the toCapture span
             capturedSpans.clear();
             possiblyOverlappingSpans.forEach(span -> {
-                if (span.getSpanStart() < end && span.getSpanEnd() >= start) {
+                boolean b = span.getSpanStart() < end && span.getSpanEnd() > start;
+                if (b) {
                     // Actually overlaps this hit, record
                     capturedSpans.add(span);
                 }
