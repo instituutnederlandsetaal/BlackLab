@@ -813,15 +813,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
-    public void freezeBeforeIndexing() {
-        // Contrary to the "classic" index format, with this one the metadata
-        // cannot change while indexing. So freeze it now to enforce that.
-        // UPDATE: we actually CAN update metadata while indexing and probably should
-        //  (e.g. because you can add documents with different configs to one corpus)
-        //freeze();
-    }
-
-    @Override
     public void addToTokenCount(long tokensProcessed) {
         // We don't keep the token count in the metadata in the integrated
         // index format because it cannot change during indexing.

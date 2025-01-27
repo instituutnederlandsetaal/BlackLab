@@ -78,10 +78,6 @@ public interface BlackLabIndexWriter extends AutoCloseable {
      * @param document document to add
      */
     default void addDocument(BLInputDocument document) throws IOException {
-        // If we're using the integrated index format, we must make sure
-        // the metadata is frozen as soon as we start adding documents.
-        metadata().freezeBeforeIndexing();
-
         writer().addDocument(document);
     }
 
@@ -92,10 +88,6 @@ public interface BlackLabIndexWriter extends AutoCloseable {
      * @param document new version of the document
      */
     default void updateDocument(Term term, BLInputDocument document) throws IOException {
-        // If we're using the integrated index format, we must make sure
-        // the metadata is frozen as soon as we start adding documents.
-        metadata().freezeBeforeIndexing();
-
         writer().updateDocument(term, document);
     }
 
