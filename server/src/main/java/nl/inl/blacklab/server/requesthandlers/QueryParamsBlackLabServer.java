@@ -29,7 +29,7 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
             WebserviceParameter par = WebserviceParameter.fromValue(name).orElse(null);
             if (par != null) {
                 String value = ServletUtil.getParameter(request, name, "");
-                if (value.length() == 0)
+                if (value.isEmpty())
                     continue;
                 map.put(par, value);
             }

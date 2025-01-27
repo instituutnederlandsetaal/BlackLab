@@ -93,6 +93,7 @@ public enum WebserviceParameter {
     // CSV options
     CSV_INCLUDE_SUMMARY("csvsummary"), // include summary of search in the CSV output? [no]
     CSV_DECLARE_SEPARATOR("csvsepline"), // include separator declaration for Excel? [no]
+    CSV_DESCRIPTION("csvdescription"), // description of search operation to include in the CSV file [none]
 
     // list relations options
     REL_CLASSES("classes"),               // what relation classes to report (default all)
@@ -115,7 +116,8 @@ public enum WebserviceParameter {
     API_VERSION("api");
 
     public static Optional<WebserviceParameter> fromValue(String str) {
-        for (WebserviceParameter v: values()) {
+        WebserviceParameter[] values = values();
+        for (WebserviceParameter v: values) {
             if (v.name.equals(str))
                 return Optional.of(v);
             if (v.synonyms.contains(str))
