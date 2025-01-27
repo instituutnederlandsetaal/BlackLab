@@ -5,14 +5,14 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.OutputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -86,7 +86,7 @@ public class TagPluginDutchTagger implements TagPlugin {
     }
 
     @Override
-    public synchronized void perform(Reader reader, Writer writer) throws PluginException {
+    public void perform(InputStream is, Charset cs, String fileName, OutputStream os) throws PluginException {
         // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
         // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
         // and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
@@ -94,13 +94,13 @@ public class TagPluginDutchTagger implements TagPlugin {
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
-            performImpl(reader, writer);
+            performImpl(is, cs, os);
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
     }
 
-    private synchronized void performImpl(Reader reader, Writer writer) throws PluginException {
+    private synchronized void performImpl(InputStream is, Charset cs, OutputStream os) throws PluginException {
         Path tmpInput = null;
         Path tmpOutput = null;
         try {
@@ -108,15 +108,14 @@ public class TagPluginDutchTagger implements TagPlugin {
             tmpOutput = Files.createTempFile("", ".xml");
 
             // Use this, as the tagger is a little dumb and doesn't allow us to specify a charset
-            final Charset intermediateCharset = Charset.defaultCharset();
-            try (FileOutputStream os = new FileOutputStream(tmpInput.toFile())) {
-                IOUtils.copy(reader, os, intermediateCharset);
+            try (FileOutputStream fos = new FileOutputStream(tmpInput.toFile())) {
+                IOUtils.copy(is, fos);
             }
 
             handleFile.invoke(converter, tmpInput.toString(), tmpOutput.toString());
 
             try (FileInputStream fis = new FileInputStream(tmpOutput.toFile())) {
-                IOUtils.copy(fis, writer, intermediateCharset);
+                IOUtils.copy(fis, os);
             }
         } catch (Exception e) {
             throw new PluginException("Could not tag file: " + e.getMessage(), e);
@@ -129,18 +128,13 @@ public class TagPluginDutchTagger implements TagPlugin {
     }
 
     @Override
-    public String getInputFormat() {
-        return "tei";
-    }
-
-    @Override
-    public String getOutputFormatIdentifier() {
-        return "tei";
-    }
-
-    @Override
     public String getOutputFileName(String inputFileName) {
         return FilenameUtils.removeExtension(inputFileName).concat(".xml");
+    }
+
+    public Charset getOutputCharset() {
+        // tagger always outputs in utf8
+        return StandardCharsets.UTF_8;
     }
 
     @Override
@@ -156,6 +150,20 @@ public class TagPluginDutchTagger implements TagPlugin {
     @Override
     public String getDescription() {
         return "Tags dutch text in the TEI format";
+    }
+
+    public boolean canConvert(InputStream is, Charset cs, String filename) {
+        if (filename.toLowerCase().endsWith(".xml")) {
+            try {
+                byte[] buffer = new byte[250];
+                int bytesRead = is.read(buffer);
+                String content = new String(buffer, 0, bytesRead, cs != null ? cs : StandardCharsets.UTF_8);
+                return content.contains("<tei");
+            } catch (IOException e) {
+                return false;
+            }
+        }
+        return false;
     }
 
     /**

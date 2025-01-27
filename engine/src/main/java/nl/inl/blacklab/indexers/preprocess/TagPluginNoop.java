@@ -1,8 +1,9 @@
 package nl.inl.blacklab.indexers.preprocess;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
@@ -37,24 +38,24 @@ public class TagPluginNoop implements TagPlugin {
     }
 
     @Override
-    public String getInputFormat() {
-        return "";
-    }
-
-    @Override
-    public String getOutputFormatIdentifier() {
-        return "";
-    }
-
-    @Override
     public String getOutputFileName(String inputFileName) {
         return inputFileName;
     }
 
     @Override
-    public void perform(Reader reader, Writer writer) throws PluginException {
+    public Charset getOutputCharset() {
+        return null;
+    }
+
+    @Override
+    public boolean canConvert(InputStream is, Charset cs, String filename) {
+        return false;
+    }
+
+    @Override
+    public void perform(InputStream is, Charset cs, String fileName, OutputStream os) throws PluginException {
         try {
-            IOUtils.copy(reader, writer);
+            IOUtils.copy(is, os);
         } catch (IOException e) {
             throw new PluginException(e);
         }

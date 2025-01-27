@@ -12,11 +12,12 @@ import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
+
+import org.apache.commons.io.FilenameUtils;
 
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Plugin;
@@ -68,7 +69,7 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
     }
 
     @Override
-    public void perform(InputStream is, Charset inputCharset, String inputFormat, OutputStream os)
+    public void perform(InputStream is, Charset inputCharset, String fileName, OutputStream os)
             throws PluginException {
         // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
         // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
@@ -77,24 +78,23 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
         ClassLoader originalClassLoader = Thread.currentThread().getContextClassLoader();
         Thread.currentThread().setContextClassLoader(loader);
         try {
-            performImpl(is, inputCharset, inputFormat, os);
+            performImpl(is, inputCharset, fileName, os);
         } finally {
             Thread.currentThread().setContextClassLoader(originalClassLoader);
         }
     }
 
-    private void performImpl(InputStream in, Charset inputCharset, String inputFormat, OutputStream out)
+    private void performImpl(InputStream in, Charset inputCharset, String fileName, OutputStream out)
             throws PluginException {
         try (PushbackInputStream pbIn = new PushbackInputStream(in, 251)) {
             // important to let openconvert know what we want to do
-            inputFormat = getActualFormat(pbIn, inputFormat);
-            if (!canConvert(pbIn, inputCharset, inputFormat))
-                throw new PluginException("The OpenConvert plugin does not support conversion from '" + inputFormat
-                        + "' to '" + getOutputFormat() + "'");
+            if (!canConvert(pbIn, inputCharset, fileName))
+                throw new PluginException("The OpenConvert plugin does not support conversion from '" + fileName
+                        + "' to tei");
 
             Object openConvertInstance = clsOpenConvert.getConstructor().newInstance();
             Object simpleInputOutputProcessInstance = methodOpenConvert_GetConverter.invoke(openConvertInstance,
-                    getOutputFormat(), inputFormat);
+                    "tei", fileName);
 
             SimpleInputOutputProcess_handleStream.invoke(simpleInputOutputProcessInstance, pbIn, inputCharset, out);
         } catch (ReflectiveOperationException | IllegalArgumentException | IOException | SecurityException e) {
@@ -121,37 +121,36 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
             Arrays.asList("doc", "docx", "txt", "epub", "html", "alto", "rtf", "odt")); // TODO (not supported in openconvert yet): pdf
 
     @Override
-    public Set<String> getInputFormats() {
-        return Collections.unmodifiableSet(inputFormats);
+    public String getOutputFileName(String inputFileName) {
+        return FilenameUtils.removeExtension(inputFileName).concat(".tei.xml");
+    }
+
+    public Charset getOutputCharset() {
+        // openconvert always outputs in utf8
+        return StandardCharsets.UTF_8;
     }
 
     @Override
-    public String getOutputFormat() {
-        return "tei";
+    public boolean canConvert(InputStream is, Charset cs, String fileName) {
+        return inputFormats.contains(getActualFormat(is, cs, fileName));
     }
 
-    @Override
-    public boolean canConvert(PushbackInputStream is, Charset cs, String inputFormat) {
-        return inputFormats.contains(getActualFormat(is, inputFormat));
-    }
-
-    private static String getActualFormat(PushbackInputStream is, String reportedFormat) {
-        reportedFormat = reportedFormat.toLowerCase();
-        if (reportedFormat.equals("xhtml"))
+    private static String getActualFormat(InputStream is, Charset cs, String fileName) {
+        String extension = FilenameUtils.getExtension(fileName).toLowerCase();
+        if (extension.equals("xhtml"))
             return "html";
-        if (reportedFormat.equals("xml") && isAlto(is)) {
+        if (extension.equals("xml") && isAlto(is, cs)) {
             return "alto";
         }
 
-        return reportedFormat;
+        return extension;
     }
 
-    private static boolean isAlto(PushbackInputStream i) {
+    private static boolean isAlto(InputStream i, Charset cs) {
         try {
             byte[] buffer = new byte[250];
             int bytesRead = i.read(buffer);
-            String head = new String(buffer, StandardCharsets.US_ASCII).toLowerCase();
-            i.unread(buffer, 0, bytesRead);
+            String head = new String(buffer, 0, bytesRead, cs != null ? cs : StandardCharsets.UTF_8).toLowerCase();
             return head.contains("<alto");
         } catch (IOException e) {
             return false;

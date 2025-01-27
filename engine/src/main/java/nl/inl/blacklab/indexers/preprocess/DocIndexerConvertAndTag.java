@@ -1,15 +1,11 @@
 package nl.inl.blacklab.indexers.preprocess;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PushbackInputStream;
-import java.io.Reader;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -33,8 +29,7 @@ import nl.inl.util.FileReference;
  * be considered an internal implementation detail of the DocIndexer system.
  */
 public class DocIndexerConvertAndTag extends DocIndexerConfig {
-
-    PushbackInputStream input;
+    InputStream input;
     /**
      * Charset of the data for our converter and tagger input/output, might be null
      * if our converter/tagger do not use charsets (because they process binary data
@@ -55,7 +50,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     public void setDocument(InputStream is, Charset cs) {
-        input = new PushbackInputStream(is, 251);
+        input = is;
         charset = cs;
     }
 
@@ -70,22 +65,20 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         if (this.input == null)
             throw new IllegalStateException("A document must be set before calling index()");
 
-        // If the converter can't handle the file, we assume that the file is already in
-        // the output format, and we attempt to index it directly.
-        // This isn't entirely correct when the file is in a format neither the
-        // converter nor the indexer can handle, but that is technically user error.
-        //
-        // ByteArrayOutputStream can conveniently be read and reused even after close()
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         if (config.getConvertPluginId() != null) {
             ConvertPlugin converter = PluginManager.getConverter(config.getConvertPluginId())
                     .orElseThrow(
                             () -> new RuntimeException("Unknown conversion plugin: " + config.getConvertPluginId()));
 
-            // convertplugin always outputs in the input charset if provided, utf8 otherwise
-            if (converter.canConvert(input, charset, FilenameUtils.getExtension(this.documentName).toLowerCase())) {
-                converter.perform(input, charset, FilenameUtils.getExtension(this.documentName).toLowerCase(), output);
-                input = new PushbackInputStream(new ByteArrayInputStream(output.toByteArray()), 1);
+            BufferedInputStream converterInput = new BufferedInputStream(input);
+            converterInput.mark(converter.getBufferSize());
+            if (converter.canConvert(converterInput, charset, documentName)) {
+                converterInput.reset();
+                converter.perform(converterInput, charset, FilenameUtils.getExtension(this.documentName).toLowerCase(), output);
+                this.documentName = converter.getOutputFileName(this.documentName);
+                this.charset = converter.getOutputCharset();
+                this.input = new ByteArrayInputStream(output.toByteArray());
                 output.reset();
             }
         }
@@ -94,22 +87,22 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
             TagPlugin tagger = PluginManager.getTagger(config.getTagPluginId())
                     .orElseThrow(() -> new RuntimeException("Unknown tagging plugin: " + config.getTagPluginId()));
 
-            // read in the original charset (if provided)
-            Reader taggerInput = new InputStreamReader(input, charset);
-
-            // always output in utf8 for ease of mind
-            charset = StandardCharsets.UTF_8;
-            try (OutputStreamWriter w = new OutputStreamWriter(output, charset)) {
-                tagger.perform(taggerInput, w);
+            BufferedInputStream taggerInput = new BufferedInputStream(input);
+            taggerInput.mark(tagger.getBufferSize());
+            if (tagger.canConvert(taggerInput, charset, documentName)) {
+                taggerInput.reset();
+                tagger.perform(taggerInput, charset, documentName, output);
+                this.documentName = tagger.getOutputFileName(documentName);
+                this.charset = tagger.getOutputCharset();
+                this.input = new ByteArrayInputStream(output.toByteArray());
+                output.reset();
             }
-
-            this.documentName = tagger.getOutputFileName(this.documentName);
         }
 
         this.outputIndexer.setDocumentName(this.documentName);
         this.outputIndexer.setConfigInputFormat(config);
 
-        this.outputIndexer.setDocument(FileReference.fromBytesOverrideCharset(documentName, output.toByteArray(), charset));
+        this.outputIndexer.setDocument(FileReference.fromInputStream(documentName, input, null));
         this.outputIndexer.index();
     }
 
@@ -151,6 +144,16 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     @Override
     public void setConfigInputFormat(ConfigInputFormat config) {
         outputIndexer.setConfigInputFormat(config);
+    }
+
+    @Override
+    public int numberOfDocsDone() {
+        return outputIndexer.numberOfDocsDone();
+    }
+
+    @Override
+    public long numberOfTokensDone() {
+        return outputIndexer.numberOfTokensDone();
     }
 
     // do not override setDocumentName

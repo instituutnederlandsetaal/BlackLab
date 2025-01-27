@@ -11,7 +11,7 @@ Convert and Tag plugins allow you to convert documents from formats like `.docx`
     - Add your jar to BlackLab's classpath.
 
 Configuring your plugin is possible through `blacklab[-server].yaml`.  
-Any options under `plugins.yourPluginId` will be passed to your plugin when it's initialized.
+Any options under `plugins.${yourPluginId}` will be passed to your plugin when it's initialized.
 
 Example:
 
@@ -30,18 +30,24 @@ plugins:
 
     # Conversion plugin
     OpenConvert:
+      # Note: this jar just a dependency of the OpenConvert plugin, not the plugin itself
+      # Should you implement a plugin yourself, it's enough to place it in the classpath
+      # and add the plugin's id to the import format.
       jarPath: "/home/jan/int-projects/blacklab-data/autosearch-plugins/jars/OpenConvert-0.2.0.jar"
 
     # Tagging plugin
     DutchTagger:
+      # Note: this jar just a dependency of the DutchTagger plugin, not the plugin itself
+      # Should you implement a plugin yourself, it's enough to place it in the classpath
+      # and add the plugin's id to the import format.
       jarPath: "/home/jan/int-projects/blacklab-data/autosearch-plugins/jars/DutchTagger-0.2.0.jar"
       vectorFile:  "/home/jan/int-projects/blacklab-data/autosearch-plugins/tagger-data/sonar.vectors.bin"
       modelFile:   "/home/jan/int-projects/blacklab-data/autosearch-plugins/tagger-data/withMoreVectorrs"
       lexiconFile: "/home/jan/int-projects/blacklab-data/autosearch-plugins/tagger-data/spelling.tab"
 ```
 
-If your plugin was loaded successfully it can now be used by adding the following to an import format (`.blf.yaml` file):
-
+If your plugin was loaded successfully, it can now be used by adding the following lines to an import format (`.blf.yaml` file):
+This will cause the indexer to first pass input files through the plugins before indexing the plugin's output.
 ```yaml
 tagPlugin: yourPluginId
 convertPlugin: yourPluginId
