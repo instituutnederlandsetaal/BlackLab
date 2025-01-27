@@ -2,6 +2,8 @@
 
 Returns frequencies per term, sorted by descending frequency.
 
+**NOTE:** consider using the [grouped hits](/server/rest-api/corpus/hits/get.md) operation instead, which can also return term frequencies (search for `patt=[]` and use e.g. `group=hit:word:s`) and e.g. allows sorting the results alphabetically (`sort=identity`) or by frequency (`sort=size`).
+
 **URL** : `/blacklab-server/<corpus-name>/termfreq`
 
 **Method** : `GET`
