@@ -291,22 +291,20 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
         if (o == null || getClass() != o.getClass())
             return false;
         SpanQueryRelations that = (SpanQueryRelations) o;
-        return Objects.equals(attributes, that.attributes) && Objects.equals(clause, that.clause)
-                && Objects.equals(relationType, that.relationType) && Objects.equals(baseFieldName,
+        return Objects.equals(clause, that.clause) && Objects.equals(relationType, that.relationType)
+                && Objects.equals(attributes, that.attributes) && Objects.equals(baseFieldName,
                 that.baseFieldName) && Objects.equals(relationFieldName, that.relationFieldName)
                 && direction == that.direction && spanMode == that.spanMode && Objects.equals(captureAs,
-                that.captureAs);
+                that.captureAs) && Objects.equals(targetField, that.targetField);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(attributes, clause, relationType, baseFieldName, relationFieldName, direction, spanMode,
-                captureAs);
+        return Objects.hash(clause, relationType, attributes, baseFieldName, relationFieldName, direction, spanMode,
+                captureAs, targetField);
     }
 
     /**
