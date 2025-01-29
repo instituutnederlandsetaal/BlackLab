@@ -41,7 +41,10 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
         assert docID() != NO_MORE_DOCS;
         atFirstInCurrentDoc = false;
         startPos = -1;
-        in.nextDoc();
+        // advance the doc filter first, because it means we can skip hits from our hits clause (in),
+        // which would likely slower to iterate over
+        acceptedDocs.nextDoc();
+        // now re-synchronize the filter and the hits clause
         return nextMatchingDoc();
     }
 
@@ -51,18 +54,17 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
             // Make sure in and acceptedDocs are in the same doc
             int inDocId = in.docID();
             while (inDocId != NO_MORE_DOCS && acceptedDocs.docID() != NO_MORE_DOCS && inDocId != acceptedDocs.docID()) {
-                // Do we need to advance acceptedDocs to catch up with in?
-                if (acceptedDocs.docID() < inDocId) {
-                    if (acceptedDocs.advance(inDocId) == NO_MORE_DOCS)
-                        return NO_MORE_DOCS;
-                }
                 // Do we need to advance in to catch up with acceptedDocs?
                 if (inDocId < acceptedDocs.docID())
                     inDocId = in.advance(acceptedDocs.docID());
+                // Do we need to advance acceptedDocs to catch up with in?
+                if (acceptedDocs.docID() < inDocId)
+                    acceptedDocs.advance(inDocId);
             }
             //assert inDocId == approximation.docID();
+            assert acceptedDocs.docID() >= 0;
             assert inDocId >= 0;
-            if (inDocId == NO_MORE_DOCS) {
+            if (acceptedDocs.docID() == NO_MORE_DOCS || inDocId == NO_MORE_DOCS) {
                 // Done
                 return NO_MORE_DOCS;
             } else if (twoPhaseCurrentDocMatches()) {
@@ -77,7 +79,10 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
         assert target >= 0 && target > in.docID();
         atFirstInCurrentDoc = false;
         startPos = -1;
-        in.advance(target);
+        // advance the doc filter first, because it means we can skip hits from our hits clause (in),
+        // which would likely slower to iterate over
+        acceptedDocs.advance(target);
+        // now re-synchronize the filter and the hits clause
         return nextMatchingDoc();
     }
 
