@@ -182,7 +182,7 @@ public class IndexManager {
         File userIdFile = new File(dir, USER_ID_FILE_NAME);
         try {
             if (userIdFile.exists()) {
-                String readUserId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8);
+                String readUserId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
                 assert user.getId().equals(readUserId);
             } else {
                 FileUtils.writeStringToFile(userIdFile, user.getId(), StandardCharsets.UTF_8);
