@@ -52,24 +52,24 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
         // Keep going until we find a doc or we run out
         while (true) {
             // Make sure in and acceptedDocs are in the same doc
-            int inDocId = in.docID();
-            while (inDocId != NO_MORE_DOCS && acceptedDocs.docID() != NO_MORE_DOCS && inDocId != acceptedDocs.docID()) {
+            int filterDocId = acceptedDocs.docID();
+            while (filterDocId != NO_MORE_DOCS && in.docID() != NO_MORE_DOCS && in.docID() != filterDocId) {
                 // Do we need to advance in to catch up with acceptedDocs?
-                if (inDocId < acceptedDocs.docID())
-                    inDocId = in.advance(acceptedDocs.docID());
+                if (in.docID() < filterDocId)
+                    in.advance(filterDocId);
                 // Do we need to advance acceptedDocs to catch up with in?
-                if (acceptedDocs.docID() < inDocId)
-                    acceptedDocs.advance(inDocId);
+                if (filterDocId < in.docID())
+                    filterDocId = acceptedDocs.advance(in.docID());
             }
-            //assert inDocId == approximation.docID();
-            assert acceptedDocs.docID() >= 0;
-            assert inDocId >= 0;
-            if (acceptedDocs.docID() == NO_MORE_DOCS || inDocId == NO_MORE_DOCS) {
+            //assert filterDocId == approximation.docID();
+            assert filterDocId >= 0;
+            assert in.docID() >= 0 || filterDocId == NO_MORE_DOCS;
+            if (filterDocId == NO_MORE_DOCS || in.docID() == NO_MORE_DOCS) {
                 // Done
                 return NO_MORE_DOCS;
             } else if (twoPhaseCurrentDocMatches()) {
                 // Found a match; return it
-                return inDocId;
+                return filterDocId;
             }
         }
     }
