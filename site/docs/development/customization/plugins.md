@@ -43,6 +43,8 @@ plugins:
 If your plugin was loaded successfully it can now be used by adding the following to an import format (`.blf.yaml` file):
 
 ```yaml
-tagplugin: yourPluginId
+tagPlugin: yourPluginId
 convertPlugin: yourPluginId
 ```
+
+**NOTE:** Even if you only use `convertPlugin`, you must still put `tagPlugin: noop` in your configuration to make the converters work. We will fix this technical limitation in a future version. 
