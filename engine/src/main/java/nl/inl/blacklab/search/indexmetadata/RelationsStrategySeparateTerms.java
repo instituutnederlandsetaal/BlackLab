@@ -41,10 +41,6 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
 
     private RelationsStrategySeparateTerms() { }
 
-    public boolean writeRelationInfoToIndex() {
-        return true;
-    }
-
     /**
      * Separator between relation type name and attribute name in _relation annotation.
      */

@@ -6,6 +6,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.analysis.TokenStream;
@@ -166,9 +168,23 @@ public class AnnotationWriter {
 
     TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
 
+        boolean debugMode = false;
+        assert (debugMode = true);
         if (relationsStrategy instanceof RelationsStrategySeparateTerms && annotationName.equals("_relation")) {
-            for (int i = 0; i < payloads.size(); i++) {
-                assert payloads.get(i) != null;
+            if (debugMode) {
+                SortedSet<Integer> relIdsSeen = new TreeSet<>();
+                for (int i = 0; i < payloads.size(); i++) {
+                    BytesRef payload = payloads.get(i);
+                    assert payload != null;
+                    int relationId = relationsStrategy.getPayloadCodec()
+                            .readRelationId(new ByteArrayDataInput(payload.bytes));
+                    relIdsSeen.add(relationId);
+                }
+                int expectedRelId = 0;
+                for (int relId: relIdsSeen) {
+                    assert relId == expectedRelId : "Expected relationId " + expectedRelId + ", got " + relId;
+                    expectedRelId++;
+                }
             }
         }
 

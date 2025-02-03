@@ -21,7 +21,6 @@ import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.RegExp;
 
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -40,14 +39,6 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
     public static final RelationsStrategy INSTANCE = new RelationsStrategySingleTerm();
 
     private RelationsStrategySingleTerm() { }
-
-    private Boolean isWriteRelationInfoToIndex = null;
-
-    public boolean writeRelationInfoToIndex() {
-        if (isWriteRelationInfoToIndex == null)
-            isWriteRelationInfoToIndex = BlackLab.featureFlag(BlackLab.FEATURE_WRITE_RELATION_INFO).equals("true");
-        return isWriteRelationInfoToIndex;
-    }
 
     /**
      * Separator after relation type and attribute value in _relation annotation.

@@ -82,9 +82,6 @@ class PWPluginRelationInfo implements PWPlugin {
     /** Field we're currently processing. */
     private RelationInfoFieldMutable currentField;
 
-    /** Doc we're currently processing (for current single term) */
-    private int currentDocId;
-
     /** Offsets of attribute set in the attrsets file.
      * The key is a sorted map of attribute name index to attribute value offset.
      * The value is the offset in the attrsets file.
@@ -137,6 +134,12 @@ class PWPluginRelationInfo implements PWPlugin {
 
         currentField = riFields.computeIfAbsent(fieldInfo.name, RelationInfoFieldMutable::new);
         attrPerRelationIdPerDoc = new TreeMap<>();
+
+        {
+            // make sure this is instantiated if assertions are enabled
+            //noinspection ConstantValue
+            assert (relationIdsSeenPerDoc = new HashMap<>()) != null;
+        }
 
         return true;
     }
@@ -205,7 +208,6 @@ class PWPluginRelationInfo implements PWPlugin {
     @Override
     public void startDocument(int docId, int nOccurrences) {
         // Keep track of relation ids in relations file
-        currentDocId = docId;
         attrPerRelationId = attrPerRelationIdPerDoc.computeIfAbsent(docId, __ -> new TreeMap<>());
         if (relationIdsSeenPerDoc != null)
             relationIdsSeen = relationIdsSeenPerDoc.computeIfAbsent(docId, __ -> new TreeSet<>());
@@ -213,11 +215,6 @@ class PWPluginRelationInfo implements PWPlugin {
 
     /** Relation Ids seen for all documents. Only used when assertions are enabled. */
     Map<Integer, SortedSet<Integer>> relationIdsSeenPerDoc;
-    {
-        // make sure the set is instantiated when assertions are enabled
-        //noinspection ConstantValue
-        assert (relationIdsSeenPerDoc = new HashMap<>()) != null;
-    }
 
     /** Relation ids seen for current doc. Only used when assertions are enabled. */
     SortedSet<Integer> relationIdsSeen;
@@ -245,8 +242,7 @@ class PWPluginRelationInfo implements PWPlugin {
         if (relationId >= 0) {
             if (relationIdsSeen != null) {
                 relationIdsSeen.add(relationId);
-                // duplicates are normal (for attributes)
-                // assert !relationIdsSeen.add(relationId) : "Duplicate relation id " + relationId + " in document " + currentDocId;
+                // Note that duplicates are normal (for attributes, using RelationsStrategyMultipleTerms)
             }
 
             // Add the attributes from this term to those for this relationId
@@ -280,6 +276,7 @@ class PWPluginRelationInfo implements PWPlugin {
                     expectedRelationId++;
                 }
             }
+            relationIdsSeenPerDoc = null;
         }
 
         // Record info about field: name and offset to docs file
@@ -307,7 +304,7 @@ class PWPluginRelationInfo implements PWPlugin {
                 assert rel.getKey() == expectedRelationId : "Not all relationIds found (expected " + expectedRelationId + ", got " + rel.getKey() + ")";
                 // mitigation for when assertions are disabled: write invalid values to the file to prevent desynching
                 while (expectedRelationId < rel.getKey()) {
-                    outRelationsFile.writeLong(-1); // no info for this relation
+                    outRelationsFile.writeLong(RelationInfo.RELATION_ID_NO_INFO); // no info for this relation
                     expectedRelationId++;
                 }
                 long attrSetOffset = getAttributeSetOffset(rel.getValue());
@@ -329,6 +326,7 @@ class PWPluginRelationInfo implements PWPlugin {
         CodecUtil.writeFooter(outAttrSetsFile);
         CodecUtil.writeFooter(outAttrNamesFile);
         CodecUtil.writeFooter(outAttrValuesFile);
+
     }
 
     @Override

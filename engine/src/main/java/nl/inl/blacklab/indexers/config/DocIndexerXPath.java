@@ -18,6 +18,8 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
@@ -165,7 +167,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 processAnnotation(annotation, standoffNode, sourceSpan, targetSpan, this::indexAnnotationValues);
             }
         } else {
-            // Integrated index format; span name and attributes indexed together as one term.
+            // Integrated index format.
 
             // Collect any attribute values
             Map<String, Collection<String>> attributes = new HashMap<>();
@@ -185,8 +187,11 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
             // which has no source, so we index it at its target.
             int indexAtPosition = sourceSpan.start() >= 0 ? sourceSpan.start() : targetSpan.start();
-            BytesRef payload = getPayload(sourceSpan, targetSpan, type, !attributes.isEmpty(), indexAtPosition);
-            getDocWriter().getRelationsStrategy().indexRelationTermsMulti(fullType, attributes, payload, (String valueToIndex, BytesRef payloadThisToken) -> {
+            RelationsStrategy relationsStrategy = getDocWriter().getRelationsStrategy();
+            // For separate terms: always assign relationId even if no attributes, because it is needed for matching
+            boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
+            BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);
+            relationsStrategy.indexRelationTermsMulti(fullType, attributes, payload, (String valueToIndex, BytesRef payloadThisToken) -> {
                 annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken);
             });
         }

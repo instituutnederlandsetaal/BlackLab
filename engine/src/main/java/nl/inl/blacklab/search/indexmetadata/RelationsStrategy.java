@@ -116,7 +116,9 @@ public interface RelationsStrategy {
     /**
      * Should we write the extra relation info index?
      */
-    boolean writeRelationInfoToIndex();
+    default boolean writeRelationInfoToIndex() {
+        return true;
+    }
 
     /**
      * Index the given relation using the indexTermFunc provided.

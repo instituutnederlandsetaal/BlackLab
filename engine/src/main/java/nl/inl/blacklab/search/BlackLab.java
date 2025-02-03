@@ -87,10 +87,6 @@ public final class BlackLab {
      */
     public static final String FEATURE_DEFAULT_XML_PROCESSOR = "defaultXmlProcessor";
 
-    /** Write relation info for each relation/tag stored in the index? This allows
-     * us to include attribute values when matching tags (and relations). */
-    public static final String FEATURE_WRITE_RELATION_INFO = "writeRelationInfo";
-
     private static RuleBasedCollator fieldValueSortCollator = null;
 
     /**
