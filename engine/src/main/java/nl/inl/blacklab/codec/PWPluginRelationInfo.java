@@ -82,6 +82,9 @@ class PWPluginRelationInfo implements PWPlugin {
     /** Field we're currently processing. */
     private RelationInfoFieldMutable currentField;
 
+    /** Doc we're currently processing (for current single term) */
+    private int currentDocId;
+
     /** Offsets of attribute set in the attrsets file.
      * The key is a sorted map of attribute name index to attribute value offset.
      * The value is the offset in the attrsets file.
@@ -202,16 +205,22 @@ class PWPluginRelationInfo implements PWPlugin {
     @Override
     public void startDocument(int docId, int nOccurrences) {
         // Keep track of relation ids in relations file
+        currentDocId = docId;
         attrPerRelationId = attrPerRelationIdPerDoc.computeIfAbsent(docId, __ -> new TreeMap<>());
+        if (relationIdsSeenPerDoc != null)
+            relationIdsSeen = relationIdsSeenPerDoc.computeIfAbsent(docId, __ -> new TreeSet<>());
     }
 
-    /** Only used when assertions are enabled */
-    SortedSet<Integer> relationIdsSeen;
+    /** Relation Ids seen for all documents. Only used when assertions are enabled. */
+    Map<Integer, SortedSet<Integer>> relationIdsSeenPerDoc;
     {
         // make sure the set is instantiated when assertions are enabled
         //noinspection ConstantValue
-        assert (relationIdsSeen = new TreeSet<>()) != null;
+        assert (relationIdsSeenPerDoc = new HashMap<>()) != null;
     }
+
+    /** Relation ids seen for current doc. Only used when assertions are enabled. */
+    SortedSet<Integer> relationIdsSeen;
 
     @Override
     public void termOccurrence(int position, BytesRef payload) throws IOException {
@@ -234,8 +243,11 @@ class PWPluginRelationInfo implements PWPlugin {
         // We could also store other info about this occurrence here, such as info about an inline tag's parent and
         // children.
         if (relationId >= 0) {
-            if (relationIdsSeen != null)
+            if (relationIdsSeen != null) {
                 relationIdsSeen.add(relationId);
+                // duplicates are normal (for attributes)
+                // assert !relationIdsSeen.add(relationId) : "Duplicate relation id " + relationId + " in document " + currentDocId;
+            }
 
             // Add the attributes from this term to those for this relationId
             attrPerRelationId.computeIfAbsent(relationId, __ -> new TreeMap<>())
@@ -246,6 +258,7 @@ class PWPluginRelationInfo implements PWPlugin {
     @Override
     public void endDocument() throws IOException {
         attrPerRelationId = null;
+        relationIdsSeen = null;
     }
 
     @Override
@@ -255,27 +268,53 @@ class PWPluginRelationInfo implements PWPlugin {
 
     @Override
     public void endField() throws IOException {
+        // Check that relationIdsSeen contains all relation ids (if assertions are enabled)
+        if (relationIdsSeenPerDoc != null) {
+            for (var e: relationIdsSeenPerDoc.entrySet()) {
+                relationIdsSeen = e.getValue();
+                int expectedRelationId = 0;
+                for (int relationId: relationIdsSeen) {
+                    assert relationId == expectedRelationId :
+                            "Not all relationIds found in docId " + e.getKey() + " (expected " + expectedRelationId +
+                                    ", got " + relationId + ")";
+                    expectedRelationId++;
+                }
+            }
+        }
+
         // Record info about field: name and offset to docs file
         currentField.setDocsOffset(outDocsFile.getFilePointer());
         currentField.write(outFieldsFile);
 
         // For each doc...
-        //int expectedDocId = 0;
+        int expectedDocId = 0;
         for (var docEntry: attrPerRelationIdPerDoc.entrySet()) {
-            // (doc may not have relations. including the metadata doc..?)
-            //assert docEntry.getKey() == expectedDocId : "Not all docIds found";
+            // Some documents may not have relations. For example, the special internal metadata document never has any)
+            // We still need to write an entry for them in the docs file, or everything will break.
+            while (expectedDocId < docEntry.getKey()) {
+                outDocsFile.writeLong(-1); // no relations for this doc
+                expectedDocId++;
+            }
+            assert docEntry.getKey() == expectedDocId : "Wrong docId!?";
+
             outDocsFile.writeLong(outRelationsFile.getFilePointer());
             int expectedRelationId = 0;
             // For each relationId...
-            for (var rel: docEntry.getValue().entrySet()) {
+            SortedMap<Integer, SortedMap<Integer, Long>> relationId2AttributeSet = docEntry.getValue();
+            for (var rel: relationId2AttributeSet.entrySet()) {
                 // Get attribute set offset (storing it if this is the first time we've seen it)
                 // and write it to the relations file
                 assert rel.getKey() == expectedRelationId : "Not all relationIds found (expected " + expectedRelationId + ", got " + rel.getKey() + ")";
+                // mitigation for when assertions are disabled: write invalid values to the file to prevent desynching
+                while (expectedRelationId < rel.getKey()) {
+                    outRelationsFile.writeLong(-1); // no info for this relation
+                    expectedRelationId++;
+                }
                 long attrSetOffset = getAttributeSetOffset(rel.getValue());
                 outRelationsFile.writeLong(attrSetOffset);
                 expectedRelationId++;
             }
-            //expectedDocId++;
+            expectedDocId++;
         }
 
         currentField = null;
