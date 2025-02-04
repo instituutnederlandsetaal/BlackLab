@@ -11,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -291,6 +292,10 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     public void documentDone(String documentName) {
         numberOfDocsDone++;
         getDocWriter().listener().documentDone(documentName);
+
+        // Force a merge after each document? (debug feature)
+        if (Boolean.parseBoolean(BlackLab.featureFlag(BlackLab.FEATURE_DEBUG_FORCE_MERGE)))
+            docWriter.debugForceMerge();
     }
 
     /**

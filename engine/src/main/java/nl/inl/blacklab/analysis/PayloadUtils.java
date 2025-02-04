@@ -180,4 +180,10 @@ public class PayloadUtils {
         int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
         return new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
     }
+
+    /** Get a DataInput from a payload that may contain primary-value indicators. */
+    public static ByteArrayDataInput getDataInput(BytesRef payload, boolean payloadIndicatesPrimaryValues) {
+        int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
+        return new ByteArrayDataInput(payload.bytes, payload.offset + skipBytes, payload.length - skipBytes);
+    }
 }

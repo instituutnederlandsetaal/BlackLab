@@ -593,4 +593,13 @@ class IndexerImpl implements DocWriter, Indexer {
     public RelationsStrategy getRelationsStrategy() {
         return indexWriter.getRelationsStrategy();
     }
+
+    @Override
+    public void debugForceMerge() {
+        try {
+            ((BLIndexWriterProxyLucene) indexWriter().writer()).getWriter().forceMerge(1);
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
+    }
 }

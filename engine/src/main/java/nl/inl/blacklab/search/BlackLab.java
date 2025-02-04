@@ -87,6 +87,9 @@ public final class BlackLab {
      */
     public static final String FEATURE_DEFAULT_XML_PROCESSOR = "defaultXmlProcessor";
 
+    /** Force a merge after every document? Can be useful when debugging Lucene codec issues. */
+    public static final String FEATURE_DEBUG_FORCE_MERGE = "debugForceMerge";
+
     private static RuleBasedCollator fieldValueSortCollator = null;
 
     /**

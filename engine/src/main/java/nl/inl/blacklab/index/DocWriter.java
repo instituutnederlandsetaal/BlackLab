@@ -87,4 +87,7 @@ public interface DocWriter {
     }
 
     RelationsStrategy getRelationsStrategy();
+
+    /** Force a merge (debug feature) */
+    void debugForceMerge();
 }

@@ -314,7 +314,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
             // We need the non-optimization terms to create the relation id index.
             // Skip this.
 
-            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
+            ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, false);
             int relationId = relPayloadCodec.readRelationId(dataInput);
             if (relationId != RelationInfo.RELATION_ID_NO_INFO) {
                 assert relationId >= 0;
@@ -325,7 +325,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
         // Get the relation id from the payload and store the offset to this term's attribute value set.
         // We could also store other info about this occurrence here, such as info about an inline tag's parent and
         // children.
-        ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
+        ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, false);
         int relationId = relPayloadCodec.readRelationId(dataInput);
         if (relationId >= 0) {
             if (relationIdsSeen != null)

@@ -57,6 +57,9 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     /** How to index relations */
     private final RelationsStrategy relationsStrategy;
 
+    /** Extensions to our PostingsWriter (write the forward index and relation index) */
+    private final List<PWPlugin> plugins;
+
     /**
      * Instantiates a fields consumer.
      *
@@ -71,6 +74,23 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         this.state = state;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
         this.relationsStrategy = RelationsStrategy.forNewIndex();
+
+        plugins = new ArrayList<>();
+        try {
+            plugins.add(new PWPluginForwardIndex(this));
+            if (relationsStrategy.writeRelationInfoToIndex()) {
+                if (relationsStrategy instanceof RelationsStrategySingleTerm) {
+                    // Older dev versions used this. We need to support it for a while for backwards compatibility.
+                    plugins.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
+                } else {
+                    // This is the current version of the relation info plugin, used for new indexes.
+                    plugins.add(new PWPluginRelationInfo(this, relationsStrategy));
+                }
+            }
+        } catch (IOException e) {
+            // Something went wrong, e.g. we couldn't create the output files.
+            throw new BlackLabRuntimeException("Error initializing PostingsWriter plugins", e);
+        }
     }
 
     /**
@@ -148,19 +168,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
      * This method also records metadata about fields in the FieldInfo attributes.
      */
     private void write(FieldInfos fieldInfos, Fields fields) {
-        List<PWPlugin> allActions = new ArrayList<>();
         try {
-            allActions.add(new PWPluginForwardIndex(this));
-            if (relationsStrategy.writeRelationInfoToIndex()) {
-                if (relationsStrategy instanceof RelationsStrategySingleTerm) {
-                    // Older dev versions used this. We need to support it for a while for backwards compatibility.
-                    allActions.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
-                } else {
-                    // This is the current version of the relation info plugin, used for new indexes.
-                    allActions.add(new PWPluginRelationInfo(this, relationsStrategy));
-                }
-            }
-
             // Write our postings extension information
 
             // Process fields
@@ -185,12 +193,13 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
 
                 // Determine what actions to perform for this field
                 List<PWPlugin> actions = new ArrayList<>();
-                for (PWPlugin action: allActions) {
+                for (PWPlugin action: plugins) {
+                    // Check if this applies to this field or not
                     if (action.startField(fieldInfos.fieldInfo(luceneField)))
-                        actions.add(action);
+                        actions.add(action); // yes
                 }
                 if (actions.isEmpty())
-                    continue;
+                    continue; // nothing to do for this field
 
                 // For each term in this field...
                 PostingsEnum postingsEnum = null; // we'll reuse this for efficiency
@@ -233,18 +242,8 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                 for (PWPlugin action: actions)
                     action.endField();
             } // for each field
-
-            for (PWPlugin action: allActions)
-                action.finish();
         } catch (IOException e) {
             throw new BlackLabRuntimeException(e);
-        } finally {
-            try {
-                for (PWPlugin action: allActions)
-                    action.close();
-            } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
-            }
         }
     }
 
@@ -292,7 +291,18 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
 
     @Override
     public void close() throws IOException {
+        try {
+            for (PWPlugin action: plugins) {
+                action.finish();
+            }
+        } finally {
+            for (PWPlugin action: plugins)
+                action.close();
+        }
         delegateFieldsConsumer.close();
     }
 
+    public String getSegmentName() {
+        return state.segmentInfo.name;
+    }
 }

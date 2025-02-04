@@ -167,11 +167,11 @@ public class AnnotationWriter {
     }
 
     TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
-
         boolean debugMode = false;
         assert (debugMode = true);
         if (relationsStrategy instanceof RelationsStrategySeparateTerms && annotationName.equals("_relation")) {
             if (debugMode) {
+                // In debug mode, ensure that we've seen each relationId.
                 SortedSet<Integer> relIdsSeen = new TreeSet<>();
                 for (int i = 0; i < payloads.size(); i++) {
                     BytesRef payload = payloads.get(i);
