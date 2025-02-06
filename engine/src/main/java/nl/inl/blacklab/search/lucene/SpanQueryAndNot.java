@@ -312,9 +312,11 @@ public class SpanQueryAndNot extends BLSpanQuery {
             else {
                 result = new SpanQueryAndNot(rewrCl, null);
                 if (filterFactory != null) {
-                    if (!rewrNotCl.isEmpty())
-                        throw new BlackLabRuntimeException("Cannot combine exclude and filter!");
                     ((SpanQueryAndNot) result).setFilter(filterFactory);
+                    if (!rewrNotCl.isEmpty()) {
+                        // Apply the exclusions after filtering (exclude+filter not supported in one operation)
+                        result = new SpanQueryAndNot(null, rewrNotCl);
+                    }
                 }
             }
             if (!rewrNotCl.isEmpty()) {
