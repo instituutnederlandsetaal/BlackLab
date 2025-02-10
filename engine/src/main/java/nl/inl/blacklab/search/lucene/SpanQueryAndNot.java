@@ -315,7 +315,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     ((SpanQueryAndNot) result).setFilter(filterFactory);
                     if (!rewrNotCl.isEmpty()) {
                         // Apply the exclusions after filtering (exclude+filter not supported in one operation)
-                        result = new SpanQueryAndNot(null, rewrNotCl);
+                        result = new SpanQueryAndNot(List.of(result), rewrNotCl);
                     }
                 }
             }
