@@ -40,6 +40,13 @@ public class XFSpans implements ExtensionFunctionClass {
         QueryExtensions.register(FUNC_WITH_SPANS, QueryExtensions.ARGS_QQS,
                 Arrays.asList(null, QueryExtensions.VALUE_ANY_SPAN, "with-spans"),
                 XFSpans::withSpans);
+        /** Register the same function as _with-spans(...); this is used by corpus-frontend to (sometimes)
+            automatically add it and easily strip it when reinterpreting the query. This way, when you explicitly
+            write a query using within-spans(), corpus-frontend won't accidentally strip it.
+            This way is easier than tracking exactly when with-spans() was added automatically or added by the user. */
+        QueryExtensions.register("_" + FUNC_WITH_SPANS, QueryExtensions.ARGS_QQS,
+                Arrays.asList(null, QueryExtensions.VALUE_ANY_SPAN, "with-spans"),
+                XFSpans::withSpans);
     }
 
 }
