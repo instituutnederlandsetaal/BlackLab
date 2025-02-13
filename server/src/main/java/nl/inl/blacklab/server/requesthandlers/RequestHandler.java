@@ -129,7 +129,7 @@ public abstract class RequestHandler {
         if (indexName.startsWith(user.getId() + ":")) {
             // User trying to access their own private corpus. See if they're logged in.
             if (!user.isLoggedIn())
-                return errorObj.unauthorized("Log in to access your private index.");
+                return errorObj.unauthorized("You are not logged in. Log in to access your private corpus.");
         }
         // If we're reading a private index, we must own it or be on the share list.
         // If we're modifying a private index, it must be our own.
@@ -139,11 +139,11 @@ public abstract class RequestHandler {
         if (IndexUtil.isUserIndex(indexName)) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
-                return errorObj.unauthorized("Log in to access a private index.");
+                return errorObj.unauthorized("You are not logged in. Log in to access a private corpus.");
             try {
                 privateIndex = indexManager.getIndex(indexName);
                 if (!privateIndex.userMayRead(user))
-                    return errorObj.unauthorized("You are not authorized to access this index.");
+                    return errorObj.unauthorized("You (" + user.getId() + ") are not authorized to access corpus " + indexName + "; you are not the owner and it was not shared with you.");
             } catch (IndexNotFound e) {
                 // Ignore this here; this is either not an index name but some other request (e.g. cache-info)
                 // or it is an index name but will trigger an error later.
@@ -192,12 +192,12 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj
-                                .unauthorized("You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
+                                .unauthorized("You (IP " + ServletUtil.getOriginatingAddress(request) + ") are not authorized to do this.");
                     }
                     requestHandler = new RequestHandlerClearCache(userRequest);
                 } else if (isInputFormatsRequest) {
                     if (!user.isLoggedIn())
-                        return errorObj.unauthorized("You must be logged in to add a format.");
+                        return errorObj.unauthorized("You are not logged in. Log in to add a format.");
                     requestHandler = new RequestHandlerAddFormat(userRequest);
                 } else if (ServletFileUpload.isMultipartContent(request)) {
                     // Add document to index
@@ -230,14 +230,14 @@ public abstract class RequestHandler {
                     }
                     if (!debugMode) {
                         return errorObj.unauthorized(
-                                "You (" + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
+                                "You (IP " + ServletUtil.getOriginatingAddress(request) + ") are not authorized to see this information.");
                     }
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
                 } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
                 } else if (!isNewEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
                     if (!user.isLoggedIn())
-                        return errorObj.unauthorized("You must be logged in to see corpora shared with you.");
+                        return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");
                     requestHandler = new RequestHandlerSharedWithMe(userRequest);
                 } else if (indexName.length() == 0) {
                     // No index or operation given; server info

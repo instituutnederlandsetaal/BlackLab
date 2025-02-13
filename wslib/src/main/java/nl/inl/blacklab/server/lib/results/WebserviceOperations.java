@@ -554,8 +554,12 @@ public class WebserviceOperations {
         String indexName = params.getCorpusName();
         User user = params.getUser();
         Index index = indexMan.getIndex(indexName);
-        if (!index.userMayRead(user))
-            throw new NotAuthorized("You are not authorized to access this index.");
+        if (!index.userMayRead(user)) {
+            if (index.isUserIndex())
+                throw new NotAuthorized("You (" + user.getId() + ") are not authorized to access corpus " + indexName + "; you are not the owner, and it is not shared with you");
+            else
+                throw new NotAuthorized("You (" + user.getId() + ") are not authorized to access this global (non-user) index.");
+        }
         return index.getShareWithUsers();
     }
 
@@ -581,8 +585,10 @@ public class WebserviceOperations {
         IndexManager indexMan = params.getIndexManager();
         String indexName = params.getCorpusName();
         Index index = indexMan.getIndex(indexName);
-        if (!index.isUserIndex() || (!index.userMayRead(user)))
-            throw new NotAuthorized("You can only share your own private indices with others.");
+        if (!index.isUserIndex())
+            throw new NotAuthorized("You cannot share global corpus " + indexName + "; it is not a user index.");
+        if (!index.userMayRead(user))
+            throw new NotAuthorized("You (" + user.getId() + ") are not authorized to share " + indexName + "; you are not the owner.");
         // Update the list of users to share with
         List<String> shareWithUsers = Arrays.stream(users).map(String::trim).collect(Collectors.toList());
         index.setShareWithUsers(shareWithUsers);
@@ -636,8 +642,9 @@ public class WebserviceOperations {
         Index index = params.getIndexManager().getIndex(params.getCorpusName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
-        if (!index.userMayAddData(params.getUser()))
-            throw new NotAuthorized("You can only add new data to your own private indices.");
+        User user = params.getUser();
+        if (!index.userMayAddData(user))
+            throw new NotAuthorized("You (" + user.getId() + ") may not add data to " + params.getCorpusName() + "; you are not the owner.");
 
         long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
         if (indexMetadata.tokenCountPerField().values().stream().anyMatch(count -> count > maxTokenCount)) {
