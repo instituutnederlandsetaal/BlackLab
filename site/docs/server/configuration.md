@@ -244,8 +244,6 @@ authentication:
     system:
         class: AuthDebugFixed
         userId: jan.niestadt@ivdnt.org
-        # For CLARIN (Shibboleth), use the following authentication config:
-        #class: AuthClarinEppn
 
     #  Clients from these IPs may choose their own user id and send it along in a GET parameter userid.
     #  This setting exists for web applications that contact the webservice (partly) through the

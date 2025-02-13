@@ -6,7 +6,7 @@ If you configure a form of user authentication, you can allow users to manager t
 
 BlackLab Server includes support for creating indices and adding documents to them. We use these features in BlackLab Frontend to allow users to quickly index data and search it, without having to set up a BlackLab installation themselves. Here's a very quick overview.
 
-Currently, only private indices can be created and appended to. This means there must be a logged-in user. The `authentication` section in `blacklab-server.yaml` will let you specify what authentication system you'd like to use. If you specify class `AuthDebugFixed` and a `userId`, you will always be logged in as this user. Note that this debug authentication method only works if you are a debug client (i.e. your IP address is listed in the `debug.addresses` setting, see [Configuration files](configuration.md)). Have a look at the other `Auth*` classes (mostly `AuthHttpBasic` and `AuthRequestAttribute`) to see how real authentication would work.
+Currently, only private indices can be created and appended to. This means there must be a logged-in user. The `authentication` section in `blacklab-server.yaml` will let you specify what authentication system you'd like to use. If you specify class `AuthDebugFixed` and a `userId`, you will always be logged in as this user. Have a look at the other `Auth*` classes (mostly `AuthHttpBasic` and `AuthRequestAttribute`) to see how real authentication would work.
 
 Another required setting is `userIndexes` (in addition to `indexLocations` which points to the "globally available" indices). In this directory, user-private indices will be created. Obviously, the application needs write permissions on this directory.
 
