@@ -7,8 +7,10 @@ import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -22,6 +24,8 @@ public class HitPropertySpanAttribute extends HitProperty {
 
     public static final String ID = "span-attribute";
 
+    public static final PropertyValueString VALUE_ATTR_NOT_FOUND = new PropertyValueString("ATTRIBUTE_NOT_FOUND");
+
     static HitPropertySpanAttribute deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         if (infos.isEmpty())
             throw new IllegalArgumentException("span-attribute requires at least one argument (span name)");
@@ -30,17 +34,23 @@ public class HitPropertySpanAttribute extends HitProperty {
         MatchSensitivity sensitivity = infos.size() > 2 ?
                 (infos.get(2).isEmpty() ? MatchSensitivity.SENSITIVE : MatchSensitivity.fromName(infos.get(2))) :
                 MatchSensitivity.SENSITIVE;
-        return new HitPropertySpanAttribute(index, spanName, spanAttribute, sensitivity);
+        return new HitPropertySpanAttribute(spanName, spanAttribute, sensitivity);
     }
 
     /** Name of match info to use */
-    private String spanName;
+    private String groupName;
 
     /** Index of the match info */
-    private int spanIndex = -1;
+    private int groupIndex = -1;
+
+    /** If set: use the first tag/relation with this name in the match info list */
+    private String relNameInList = null;
+
+    /** Is it a full relation type (e.g. "relClass::relType") or not (e.g. "relType")? */
+    private boolean relNameIsFullRelType = false;
 
     /** Name of the attribute to capture */
-    private String spanAttribute;
+    private String attributeName;
 
     /** The sensitivity of the match */
     private MatchSensitivity sensitivity;
@@ -49,23 +59,37 @@ public class HitPropertySpanAttribute extends HitProperty {
 
     HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, boolean invert) {
         super();
-        spanName = prop.spanName;
-        spanAttribute = prop.spanAttribute;
+        groupName = prop.groupName;
+        relNameInList = prop.relNameInList;
+        relNameIsFullRelType = prop.relNameIsFullRelType;
+        attributeName = prop.attributeName;
         sensitivity = prop.sensitivity;
         this.hits = hits;
         reverse = prop.reverse ? !invert : invert;
 
         // Determine group index. We don't use the one from prop (if any), because
         // index might be different for different hits object.
-        spanIndex = spanName.isEmpty() ? 0 : this.hits.matchInfoIndex(spanName);
-        if (spanIndex < 0)
-            throw new MatchInfoNotFound(spanName);
+        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
+        if (groupIndex < 0)
+            throw new MatchInfoNotFound(groupName);
     }
 
-    public HitPropertySpanAttribute(BlackLabIndex index, String spanName, String spanAttribute,
+    public HitPropertySpanAttribute(String groupName, String attributeName,
             MatchSensitivity sensitivity) {
-        this.spanName = spanName;
-        this.spanAttribute = spanAttribute;
+        this.groupName = groupName;
+
+        // If groupName is of the form capturelist[relType], extract the relType
+        // (in this case, we will only use the first relation with this type in the captured list;
+        //  useful in combination with with-spans() to group on any tag in the hits found)
+        int openBracketIndex = groupName.indexOf("[");
+        if (openBracketIndex >= 0) {
+            int closeBracketIndex = groupName.indexOf("]", openBracketIndex + 1);
+            relNameInList = groupName.substring(openBracketIndex + 1, closeBracketIndex);
+            this.groupName = groupName.substring(0, openBracketIndex);
+            relNameIsFullRelType = RelationUtil.isFullType(relNameInList);
+        }
+
+        this.attributeName = attributeName;
         this.sensitivity = sensitivity;
     }
 
@@ -81,31 +105,35 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        if (!super.equals(o))
-            return false;
-        HitPropertySpanAttribute that = (HitPropertySpanAttribute) o;
-        return spanIndex == that.spanIndex && Objects.equals(spanName, that.spanName) && Objects.equals(
-                spanAttribute, that.spanAttribute) && sensitivity == that.sensitivity && Objects.equals(hits,
-                that.hits);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(super.hashCode(), spanName, spanIndex, spanAttribute, sensitivity, hits);
-    }
-
-    @Override
     public PropertyValue get(long hitIndex) {
-        MatchInfo matchInfo = hits.get(hitIndex).matchInfo()[spanIndex];
-        if (matchInfo == null || !(matchInfo instanceof RelationInfo))
-            return new PropertyValueString("ATTRIBUTE_NOT_FOUND");
+        MatchInfo matchInfo = hits.get(hitIndex).matchInfo()[groupIndex];
+        if (matchInfo == null)
+            return VALUE_ATTR_NOT_FOUND;
+
+        if (relNameInList != null && matchInfo instanceof RelationListInfo) {
+            RelationListInfo relList = (RelationListInfo) matchInfo;
+            if (relNameIsFullRelType) {
+                // Look for the first full-type match in the list
+                for (RelationInfo namedGroup: relList.getRelations()) {
+                    if (namedGroup.getFullRelationType().equals(relNameInList)) {
+                        matchInfo = namedGroup;
+                        break;
+                    }
+                }
+            } else {
+                // Look for the first type match in the list
+                for (RelationInfo namedGroup: relList.getRelations()) {
+                    if (namedGroup.getRelationType().equals(relNameInList)) {
+                        matchInfo = namedGroup;
+                        break;
+                    }
+                }
+            }
+        }
+        if (!(matchInfo instanceof RelationInfo))
+            return VALUE_ATTR_NOT_FOUND;
         RelationInfo span = (RelationInfo) matchInfo;
-        return new PropertyValueString(span.getAttributes().get(spanAttribute));
+        return new PropertyValueString(span.getAttributes().get(attributeName));
     }
 
     @Override
@@ -115,6 +143,24 @@ public class HitPropertySpanAttribute extends HitProperty {
 
     @Override
     public String serialize() {
-        return PropertySerializeUtil.combineParts("span-attribute", spanName, spanAttribute, sensitivity.toString());
+        return PropertySerializeUtil.combineParts("span-attribute", groupName, attributeName, sensitivity.toString());
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
+        HitPropertySpanAttribute that = (HitPropertySpanAttribute) o;
+        return Objects.equals(groupName, that.groupName) && Objects.equals(relNameInList,
+                that.relNameInList) && Objects.equals(attributeName, that.attributeName)
+                && sensitivity == that.sensitivity && Objects.equals(hits, that.hits);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), groupName, relNameInList, attributeName,
+                sensitivity, hits);
     }
 }

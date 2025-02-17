@@ -27,7 +27,7 @@ public class QueryExtensions {
     /** Prefix for extension functions that enable pseudo-annotations like punctAfter */
     public static final String PSEUDO_ANNOTATION_EXTENSION_FUNCTION_PREFIX = "annot_";
 
-    /** Default value for a query parameter that means "any span" (<code><'.*' /></code>) */
+    /** Default value for a query parameter that means "any span" (<code><'.*' //></code>) */
     public static final String VALUE_ANY_SPAN = "_ANY_SPAN_";
 
     /** Variable number of query params */
