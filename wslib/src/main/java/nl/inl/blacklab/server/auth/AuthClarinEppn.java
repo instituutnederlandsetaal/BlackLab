@@ -13,12 +13,12 @@ import nl.inl.blacklab.server.search.UserRequest;
  * the same userid twice in the attribute (i.e.
  * user@domain.com;user@domain.com). We detect and correct this anomaly here.
  */
-public class AuthClarinEppn extends AuthRequestAttribute {
+public class AuthClarinEppn extends AuthRequestValue {
 
     private static final Logger logger = LogManager.getLogger(AuthClarinEppn.class);
 
     public AuthClarinEppn(Map<String, Object> param) {
-        super("eppn");
+        super(AttributeType.ATTRIBUTE, "eppn");
         if (param.size() > 0)
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }

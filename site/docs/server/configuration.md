@@ -23,6 +23,45 @@ Where should this file (or files) be located? BlackLab looks for them in the fol
 
 In addition, BlackLab Server will also look for `blacklab-server.yaml` in the directory where the .war file is located, e.g. `/usr/share/tomcat/webapps`.
 
+## Sections
+
+Here we take a look at individual sections of the configuration file.
+
+### Authentication and authorization
+
+You can configure an authentication system in BlackLab. This does not take care of log in, sign up, etc., but only instructs BlackLab how to find the currently logged-in user (if there is one). This is useful if you want users to be able to create private corpora.
+
+To read the user id from a request header, attribute or parameter:
+
+```yaml
+authentication:
+    system:
+        class: AuthRequestValue
+        # attribute|header|parameter
+        type: attribute
+        # name of the attribute, header or parameter that contains the user id
+        name: userId
+```
+
+To use HTTP Basic Authentication (if enabled in `web.xml`, which it is not by default):
+
+```yaml
+authentication:
+    system:
+        class: AuthHttpBasic
+```
+
+For testing, `AuthDebugFixed` can be useful:
+
+```yaml
+authentication:
+    system:
+        class: AuthDebugFixed
+        userId: me@example.com
+```
+
+With this, BlackLab will simply assume the specified user is always logged in. This is obviously not safe to use in production.
+
 ## Minimal config file
 
 Here's a minimal configuration file for BlackLab Server. Name it `blacklab-server.yaml` and place it in the same directory as the `blacklab-server.war` file or in `/etc/blacklab` (or configure a different location as just described).
@@ -31,8 +70,8 @@ Here's a minimal configuration file for BlackLab Server. Name it `blacklab-serve
 ---
 configVersion: 2
 
-# Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single index)
+# Where corpora (indexes) can be found
+# (list directories whose subdirectories are cocpora, or directories containing a single corpus)
 indexLocations:
 - /data/index
 ```
