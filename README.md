@@ -10,6 +10,8 @@ To learn how to index and search your data, see the [official project site](http
 
 To learn about BlackLab development, see the [dev docs](doc/#readme). 
 
+If you wish to cite BlackLab, see [Citing BlackLab](https://inl.github.io/BlackLab/guide/about.html#citing-blacklab). Thank you!
+
 ## Branches
 
 The default branch, **dev**, corresponds to the "bleeding edge" in-development version. You can certainly run it (we do), but if you need maximum stability, it might be better to stay on a stable release instead. 
