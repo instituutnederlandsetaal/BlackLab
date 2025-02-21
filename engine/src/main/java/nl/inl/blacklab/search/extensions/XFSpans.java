@@ -32,7 +32,7 @@ public class XFSpans implements ExtensionFunctionClass {
             throw new IllegalArgumentException("with-spans not supported for deprecated external files index; use new integrated index");
         BLSpanQuery query = (BLSpanQuery) args.get(0);
         BLSpanQuery spans = (BLSpanQuery) args.get(1);
-        String captureAs = (String) args.get(2);
+        String captureAs = context.ensureUniqueCapture((String)args.get(2));
         return new SpanQueryCaptureOverlappingSpans(query, spans, captureAs);
     }
 

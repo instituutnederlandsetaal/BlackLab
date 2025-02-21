@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 
 /** KWICs ("key words in context") for a list of hits.
  *
@@ -49,11 +50,15 @@ public class Kwics {
             Map<String, int[]> minMaxPerField = null; // start and end of the "foreign match"
             MatchInfo[] matchInfo = hit.matchInfo();
             if (matchInfo != null) {
+                Iterator<MatchInfo.Def> defIt = hits.matchInfoDefs().iterator();
                 for (MatchInfo mi: matchInfo) {
                     if (mi == null)
                         continue; // not captured for this hit
+                    MatchInfo.Def def = defIt.hasNext() ? defIt.next() : null; // null should only happen in testing...
+                    boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
+                            def != null && def.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
                     minMaxPerField = updateMinMaxForMatchInfo(hits.index(), mi, defaultField, minMaxPerField,
-                            afisPerField);
+                            afisPerField, isTargetHit);
                 }
 
                 if (minMaxPerField != null) {
@@ -102,71 +107,33 @@ public class Kwics {
      * @return updated map of min/max positions per field
      */
     private static Map<String, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, MatchInfo mi, String defaultField,
-            Map<String, int[]> minMaxPerField, Map<String, List<AnnotationForwardIndex>> afisPerField) {
+            Map<String, int[]> minMaxPerField, Map<String, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
         String field = mi.getField();
         boolean isTag = mi.getType() == MatchInfo.Type.INLINE_TAG; // not "real" relations, don't influence foreign hits
-        if (!field.equals(defaultField) && !isTag) { // foreign KWICs only
+        if (!field.equals(defaultField)) { // foreign KWICs only
             // By default, just use the match info span
             // (which, in case of a cross-field relation, is the source span)
-            minMaxPerField = updateMinMaxPerField(minMaxPerField, field, mi.getSpanStart(), mi.getSpanEnd());
             afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(
                     index.forwardIndex(index.annotatedField(field))));
+            if (isTargetHit) {
+                // Special __@target capture that is actually the foreign hit we're looking for.
+                // Keep track of the min/max positions of the match in each foreign field
+                if (minMaxPerField == null)
+                    minMaxPerField = new HashMap<>();
+                minMaxPerField.computeIfAbsent(field,
+                        (k) -> new int[] { mi.getSpanStart(), mi.getSpanEnd() });
+            }
         }
         if (mi instanceof RelationInfo && !isTag) {
-
-
             // Relation targets (not just sources) should influence field context
             RelationInfo rmi = (RelationInfo) mi;
             String targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
             if (!targetField.equals(defaultField)) { // foreign KWICs only
-                int targetStart = rmi.getTargetStart();
-                int targetEnd = rmi.getTargetEnd();
-                // Use foreign targets for match position as well
-                minMaxPerField = updateMinMaxPerField(minMaxPerField, targetField, targetStart, targetEnd);
                 afisPerField.computeIfAbsent(targetField, k ->
                         getAnnotationForwardIndexes(
                                 index.forwardIndex(index.annotatedField(targetField))));
             }
         }
-        /* else if (mi instanceof RelationListInfo) {
-
-            // SKIP; use the single (auto)capture for the right side of the operator as the min/max of the foreign
-            // hit. Don't expand it using the list of overlapping relations, because this might expand it to a full
-            // sentence or verse, even if you only matched by one or two words.
-
-            // For a list of relations, update min/max for each relation
-            RelationListInfo l = (RelationListInfo) mi;
-            for (RelationInfo rmi: l.getRelations()) {
-                minMaxPerField = updateMinMaxForMatchInfo(index, rmi, defaultField, minMaxPerField, afisPerField);
-            }
-        } */
-        return minMaxPerField;
-    }
-
-    /**
-     * Update the min/max positions of the match in each foreign field.
-     *
-     * @param minMaxPerField for each foreign field, the min/max positions we've seen so far
-     * @param field field to update min/max for
-     * @param start start position of the match
-     * @param end end position of the match
-     * @return updated minMaxPerField
-     */
-    private static Map<String, int[]> updateMinMaxPerField(Map<String, int[]> minMaxPerField, String field,
-            int start, int end) {
-        // Keep track of the min/max positions of the match in each foreign field
-        if (minMaxPerField == null)
-            minMaxPerField = new HashMap<>();
-        minMaxPerField.compute(field, (k, v) -> {
-            if (v == null) {
-                return new int[] { start, end };
-            } else {
-                assert start >= 0 && end >= 0 && v[0] >= 0 && v[1] >= 0 : "All values should be valid";
-                v[0] = Math.min(v[0], start);
-                v[1] = Math.max(v[1], end);
-                return v;
-            }
-        });
         return minMaxPerField;
     }
 
