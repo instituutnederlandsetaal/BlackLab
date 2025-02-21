@@ -261,7 +261,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     // Check if this is a better target match than we had before.
                     int targetStart = target.target.startPosition(i);
                     int targetEnd = target.target.endPosition(i);
-                    if (targetLimits.min > targetEnd || targetLimits.max < targetStart) {
+                    if (targetLimits.min >= targetEnd || targetLimits.max <= targetStart) {
                         // The targets of the relations we matched on are outside this target span. Reject it.
                         continue;
                     }
@@ -294,13 +294,21 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, adjustedStart, adjustedEnd);
                 // Only keep the captured relations that overlap the target span we found.
                 final int finalTargetIndex = targetIndex;
-                capturedRelations.removeIf(r -> r.getTargetEnd() <= target.target.startPosition(finalTargetIndex)
-                        || r.getTargetStart() >= target.target.endPosition(finalTargetIndex));
+                final int targetClauseStart = target.target.startPosition(finalTargetIndex);
+                final int targetClauseEnd = target.target.endPosition(finalTargetIndex);
+                capturedRelations.removeIf(r -> r.getTargetEnd() <= targetClauseStart
+                        || r.getTargetStart() >= targetClauseEnd);
                 capturedRelations.sort(RelationInfo::compareTo);
 
                 matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
-                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(target.target.startPosition(finalTargetIndex),
-                        target.target.endPosition(finalTargetIndex), target.targetField);
+
+                // Expand target to cover all relations matched by =type=> operator,
+                // so e.g. "water" =sentence-alignment=>en "water" will return whole sentences for target,
+                // not just the matching words from the query.
+                int targetStart = targetLimits.min < targetClauseStart ? targetLimits.min : targetClauseStart;
+                int targetEnd = targetLimits.max > targetClauseEnd ? targetLimits.max : targetClauseEnd;
+                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetStart, targetEnd, target.targetField);
+
                 target.target.getMatchInfo(finalTargetIndex, matchInfo); // also perform captures on the target
             } else {
                 // Target document has no matches. Reject this hit.
