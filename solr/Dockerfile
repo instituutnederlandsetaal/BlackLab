@@ -1,9 +1,11 @@
 ## Stage 0: Build Solr plugin
 #=============================
-FROM maven:3.8-amazoncorretto-17-debian AS builder
+#FROM maven:3.8-amazoncorretto-17-debian AS builder
+FROM maven:3.9-eclipse-temurin-17-alpine AS builder
 
 # Make sure Git is installed (for maven buildnumber plugin)
-RUN apt-get update && apt-get install -y git
+#RUN apt-get update && apt-get install -y git
+RUN apk add --no-cache git
 
 # Copy source
 WORKDIR /app
