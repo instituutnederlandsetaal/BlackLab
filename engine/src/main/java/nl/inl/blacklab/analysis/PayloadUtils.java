@@ -175,45 +175,15 @@ public class PayloadUtils {
         return bytes;
     }
 
-    /**
-     * Get the payload to store with the span start tag.
-     *
-     * Spans are stored in the "_relation" annotation, at the token position of the start tag.
-     * The payload gives the token position of the end tag.
-     *
-     * Note that in the integrated index, we store the relative position of the last token
-     * inside the span, not the first token after the span. This is so it matches how relations
-     * are stored.
-     *
-     * @param startPosition  start position (inclusive), or the first token of the span
-     * @param endPosition    end position (exclusive), or the first token after the span
-     * @param indexType      type of index we're writing
-     * @param relationId     unique id for this relation, to look up attributes later
-     * @return payload to store
-     */
-    public static BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId) {
-        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
-            return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
-
-        try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            RelationInfo.serializeInlineTag(startPosition, endPosition, relationId, new OutputStreamDataOutput(os));
-            return new BytesRef(os.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    public static BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
-            int targetEnd, int relationId) {
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        RelationInfo.serializeRelationWithRelationId(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                relationId, new OutputStreamDataOutput(os));
-        return new BytesRef(os.toByteArray());
-    }
-
+    /** Get a DataInput from a payload that may contain primary-value indicators. */
     public static ByteArrayDataInput getDataInput(byte[] payload, boolean payloadIndicatesPrimaryValues) {
         int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
         return new ByteArrayDataInput(payload, skipBytes, payload.length - skipBytes);
+    }
+
+    /** Get a DataInput from a payload that may contain primary-value indicators. */
+    public static ByteArrayDataInput getDataInput(BytesRef payload, boolean payloadIndicatesPrimaryValues) {
+        int skipBytes = payloadIndicatesPrimaryValues ? getPrimaryValueIndicatorLength(payload) : 0;
+        return new ByteArrayDataInput(payload.bytes, payload.offset + skipBytes, payload.length - skipBytes);
     }
 }

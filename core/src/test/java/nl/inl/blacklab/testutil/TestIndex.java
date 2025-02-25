@@ -150,10 +150,10 @@ public class TestIndex {
 
             "<doc pid='3' title='Bastardized Shakespeare'> <s><w l='to' p='pre'>To</w> "
                     + "<w l='find' p='vrb'>find</w> "
-                    + "<w l='or' p='con'>or</w> "
+                    + "(<w l='or' p='con'>or</w> "
                     + "<w l='be' p='adv'>not</w> "
                     + "<w l='to' p='pre'>to</w> "
-                    + "<w l='find' p='vrb'>find</w>.</s>"
+                    + "<w l='find' p='vrb'>find</w>).</s>"
                     + "<s><w l='that' p='pro'>That</w> "
                     + "<w l='be' p='vrb'>is</w> "
                     + "<w l='the' p='art'>the</w> "

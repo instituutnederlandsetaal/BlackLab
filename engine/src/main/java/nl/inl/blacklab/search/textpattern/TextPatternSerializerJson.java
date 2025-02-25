@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.textpattern;
 import static nl.inl.blacklab.search.textpattern.TextPattern.MAX_UNLIMITED;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,7 +51,31 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                         Object value = e.getValue();
                         if (value != null) {
                             gen.writeFieldName(e.getKey());
-                            serializerProvider.defaultSerializeValue(value, gen);
+                            if (e.getKey().equals(KEY_ATTRIBUTES)) {
+                                // Attributes in "tags" node. Special case because match values can now be an int range
+                                // as well as (the more common) regex.
+                                // (we could have made MatchValue a TextPatternStruct, but that would change
+                                //  the JSON structure (each attribute value would be a JSON object with a type).
+                                //  We want to keep everything as-is while also adding the int range filter option)
+                                gen.writeStartObject();
+                                Map<String, MatchValue> attributes = (Map<String, MatchValue>) value;
+                                for (Map.Entry<String, MatchValue> attr: attributes.entrySet()) {
+                                    gen.writeFieldName(attr.getKey());
+                                    if (attr.getValue() instanceof MatchValueIntRange) {
+                                        // Int range; serialize as an object with min and max fields
+                                        MatchValueIntRange range = (MatchValueIntRange) attr.getValue();
+                                        gen.writeStartObject();
+                                        gen.writeNumberField(KEY_MIN, range.getMin());
+                                        gen.writeNumberField(KEY_MAX, range.getMax());
+                                        gen.writeEndObject();
+                                    } else {
+                                        // Regex; serialize as a simple string (as we have always done)
+                                        gen.writeString(attr.getValue().getRegex());
+                                    }
+                                }
+                                gen.writeEndObject();
+                            } else
+                                serializerProvider.defaultSerializeValue(value, gen);
                         }
                     }
                 }
@@ -83,7 +108,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_ALIGNMENT = "alignment";
     private static final String KEY_ANNOTATION = "annotation";
     private static final String KEY_ARGS = "args";
-    private static final String KEY_ATTRIBUTES = "attributes";
+    static final String KEY_ATTRIBUTES = "attributes";
     private static final String KEY_CAPTURE = "capture"; // capture, tags
     private static final String KEY_CAPTURES = "captures";
     private static final String KEY_CHILDREN = "children";
@@ -96,8 +121,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_FILTER = "filter";
     private static final String KEY_INCLUDE = "include";
     private static final String KEY_INVERT = "invert";
-    private static final String KEY_MAX = "max"; // (same)
-    private static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
+    static final String KEY_MAX = "max"; // (same)
+    static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
     private static final String KEY_NAME = "name"; // annotation, function
     private static final String KEY_NEGATE = "negate";
     private static final String KEY_OPERATION = "operation"; // posfilter, ngrams
@@ -110,7 +135,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_SETTINGS = "settings";
     private static final String KEY_START = "start";
     private static final String KEY_TARGET_VERSION = "targetVersion";
-    private static final String KEY_TRAILING_EDGE = "trailingEdge";
+    private static final String KEY_WHERE = "where";
     private static final String KEY_VALUE = "value"; // term, regex, etc.
 
     static {
@@ -148,14 +173,16 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
 
         // Default value
         jsonSerializers.put(TextPatternDefaultValue.class, (pattern, writer) -> {
-            TextPatternDefaultValue tp = (TextPatternDefaultValue) pattern;
             writer.write(TextPattern.NT_DEFVAL);
         });
 
-        // Edge
-        jsonSerializers.put(TextPatternEdge.class, (pattern, writer) -> {
-            TextPatternEdge tp = (TextPatternEdge) pattern;
-            writer.write(TextPattern.NT_EDGE, KEY_CLAUSE, tp.getClause(), KEY_TRAILING_EDGE, tp.isTrailingEdge());
+        // Lookahead/lookbehind
+        jsonSerializers.put(TextPatternLook.class, (pattern, writer) -> {
+            TextPatternLook tp = (TextPatternLook) pattern;
+            writer.write(TextPattern.NT_LOOK,
+                KEY_WHERE, tp.isLookBehind() ? "behind" : "ahead",
+                    KEY_NEGATE, tp.isNegate(),
+                    KEY_CLAUSE, tp.getClause());
         });
 
         // Expansion
@@ -184,6 +211,15 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             writer.write(TextPattern.NT_FIXEDSPAN, KEY_START, tp.getStart(), KEY_END, tp.getEnd());
         });
 
+        // IntRange
+        jsonSerializers.put(TextPatternIntRange.class, (pattern, writer) -> {
+            TextPatternIntRange tp = (TextPatternIntRange) pattern;
+            writer.write(TextPattern.NT_INT_RANGE,
+                    KEY_MIN, tp.getMin(),
+                    KEY_MAX, tp.getMax(),
+                    KEY_ANNOTATION, tp.getAnnotation());    // (omitted if null)
+        });
+
         // Not
         jsonSerializers.put(TextPatternNot.class, (pattern, writer) -> {
             writer.write(TextPattern.NT_NOT, KEY_CLAUSE, ((TextPatternNot) pattern).getClause());
@@ -204,6 +240,14 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_INVERT, nullIf(tp.isInvert(), false),
                     KEY_ADJUST_LEADING, nullIf(tp.getAdjustLeading(), 0),
                     KEY_ADJUST_TRAILING, nullIf(tp.getAdjustTrailing(), 0));
+        });
+
+        // Overlapping
+        jsonSerializers.put(TextPatternOverlapping.class, (pattern, writer) -> {
+            TextPatternOverlapping tp = (TextPatternOverlapping) pattern;
+            writer.write(TextPattern.NT_OVERLAPPING,
+                    KEY_CLAUSES, Arrays.asList(tp.getLeft(), tp.getRight()),
+                    KEY_OPERATION, tp.getOperation());
         });
 
         // QueryFunction
@@ -270,7 +314,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         jsonSerializers.put(TextPatternTags.class, (pattern, writer) -> {
             TextPatternTags tp = (TextPatternTags) pattern;
             writer.write(TextPattern.NT_TAGS,
-                    KEY_NAME, tp.getElementName(),
+                    KEY_NAME, tp.getElementNameRegex(),
                     KEY_ATTRIBUTES, nullIfEmpty(tp.getAttributes()),
                     KEY_ADJUST, nullIf(tp.getAdjust().toString(), "full_tag"),
                     KEY_CAPTURE, nullIfEmpty(tp.getCaptureAs()));
@@ -378,7 +422,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         return str == null || str.isEmpty() ? null : str;
     }
 
-    private static Map<String, String> nullIfEmpty(Map<String, String> attributes) {
+    private static <K,V> Map<K, V> nullIfEmpty(Map<K, V> attributes) {
         return attributes.isEmpty() ? null : attributes;
     }
 
@@ -417,10 +461,11 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (MatchFilter) args.get(KEY_CONSTRAINT));
         case TextPattern.NT_DEFVAL:
             return TextPatternDefaultValue.get();
-        case TextPattern.NT_EDGE:
-            return new TextPatternEdge(
+        case TextPattern.NT_LOOK:
+            return new TextPatternLook(
                     (TextPattern) args.get(KEY_CLAUSE),
-                    (boolean) args.get(KEY_TRAILING_EDGE));
+                    !((boolean) args.getOrDefault(KEY_WHERE, "ahead").equals("behind")),
+                    (boolean)args.getOrDefault(KEY_NEGATE, false));
         case TextPattern.NT_EXPANSION:
             return new TextPatternExpansion(
                     (TextPattern) args.get(KEY_CLAUSE),
@@ -439,6 +484,11 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (int) args.get(KEY_END));
         case TextPattern.NT_FUZZY:
             throw new UnsupportedOperationException("Cannot deserialize deprecated TextPatternFuzzy");
+        case TextPattern.NT_INT_RANGE:
+            return new TextPatternIntRange(
+                    (int) args.get(KEY_MIN),
+                    (int) args.get(KEY_MAX),
+                    (String) args.get(KEY_ANNOTATION));
         case TextPattern.NT_NOT:
             return new TextPatternNot((TextPattern) args.get(KEY_CLAUSE));
         case TextPattern.NT_OR:
@@ -451,6 +501,14 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (boolean) args.getOrDefault(KEY_INVERT, false),
                     (int) args.getOrDefault(KEY_ADJUST_LEADING, 0),
                     (int) args.getOrDefault(KEY_ADJUST_TRAILING, 0));
+        case TextPattern.NT_OVERLAPPING: {
+            List<TextPattern> clauses = (List<TextPattern>)args.get(KEY_CLAUSES);
+            return new TextPatternOverlapping(
+                    clauses.get(0),
+                    clauses.get(1),
+                    (String) args.get(KEY_OPERATION)
+            );
+        }
         case TextPattern.NT_PREFIX:
             return new TextPatternPrefix(
                     (String) args.get(KEY_VALUE),
@@ -494,7 +552,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         case TextPattern.NT_TAGS:
             return new TextPatternTags(
                     (String) args.get(KEY_NAME),
-                    (Map<String, String>) args.get(KEY_ATTRIBUTES),
+                     (Map<String, MatchValue>)args.get(KEY_ATTRIBUTES),
                     optArgAdjust(args),
                     (String) args.get(KEY_CAPTURE));
         case TextPattern.NT_TERM:

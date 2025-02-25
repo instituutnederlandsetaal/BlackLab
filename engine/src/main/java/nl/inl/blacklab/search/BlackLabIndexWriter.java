@@ -14,6 +14,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public interface BlackLabIndexWriter extends AutoCloseable {
 
@@ -77,10 +78,6 @@ public interface BlackLabIndexWriter extends AutoCloseable {
      * @param document document to add
      */
     default void addDocument(BLInputDocument document) throws IOException {
-        // If we're using the integrated index format, we must make sure
-        // the metadata is frozen as soon as we start adding documents.
-        metadata().freezeBeforeIndexing();
-
         writer().addDocument(document);
     }
 
@@ -91,10 +88,6 @@ public interface BlackLabIndexWriter extends AutoCloseable {
      * @param document new version of the document
      */
     default void updateDocument(Term term, BLInputDocument document) throws IOException {
-        // If we're using the integrated index format, we must make sure
-        // the metadata is frozen as soon as we start adding documents.
-        metadata().freezeBeforeIndexing();
-
         writer().updateDocument(term, document);
     }
 
@@ -143,4 +136,7 @@ public interface BlackLabIndexWriter extends AutoCloseable {
 
     /** Get the ContentStore with this name. If no such ContentStore exists, the implementation should create it. */
     ContentStore contentStore(Field contentStoreName);
+
+    /** Get the strategy to use for indexing relations. */
+    RelationsStrategy getRelationsStrategy();
 }

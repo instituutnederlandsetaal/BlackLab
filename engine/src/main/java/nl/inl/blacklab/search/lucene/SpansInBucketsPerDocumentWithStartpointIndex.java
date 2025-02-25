@@ -26,6 +26,34 @@ class SpansInBucketsPerDocumentWithStartpointIndex extends SpansInBucketsPerDocu
 
     public SpansInBucketsPerDocumentWithStartpointIndex(BLSpans source) {
         super(source);
+        setBucket(new PerDocBucket() {
+            @Override
+            public void gatherHits() throws IOException {
+                do {
+                    addHitFromSource();
+                    int index = bucketSize() - 1;
+                    int start = startPosition(index);
+
+                    if (curStart == start) {
+                        // Keep track of how many hits there are at this start position.
+                        curStartCount++;
+                    } else {
+                        // New start position.
+                        if (curStart != -1) {
+                            // Store offset and count of previous in index.
+                            long value = ((long) curStartFirstIndex << 32) | curStartCount;
+                            startPositionIndex.put(curStart, value);
+                        }
+
+                        // Start counting for the new start position.
+                        curStart = start;
+                        curStartFirstIndex = index;
+                        curStartCount = 1;
+                    }
+
+                } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
+            }
+        });
     }
 
     @Override
@@ -48,33 +76,6 @@ class SpansInBucketsPerDocumentWithStartpointIndex extends SpansInBucketsPerDocu
         return returnValue;
     }
 
-    @Override
-    protected void gatherHits() throws IOException {
-        do {
-            addHitFromSource();
-            int index = bucketSize() - 1;
-            int start = startPosition(index);
-
-            if (curStart == start) {
-                // Keep track of how many hits there are at this start position.
-                curStartCount++;
-            } else {
-                // New start position.
-                if (curStart != -1) {
-                    // Store offset and count of previous in index.
-                    long value = ((long) curStartFirstIndex << 32) | curStartCount;
-                    startPositionIndex.put(curStart, value);
-                }
-
-                // Start counting for the new start position.
-                curStart = start;
-                curStartFirstIndex = index;
-                curStartCount = 1;
-            }
-
-        } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
-    }
-
     /**
      * Get the first index and count for a given start position.
      *
@@ -83,6 +84,11 @@ class SpansInBucketsPerDocumentWithStartpointIndex extends SpansInBucketsPerDocu
      */
     long indexAndCountForStartPoint(int start) {
         return startPositionIndex.get(start);
+    }
+
+    @Override
+    public String toString() {
+        return "SIB-DOC-SPI(" + source + ")";
     }
 
 }

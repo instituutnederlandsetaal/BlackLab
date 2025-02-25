@@ -108,8 +108,7 @@ public class DocumentFormats {
      * @return the list of input formats
      */
     public static synchronized Collection<InputFormat> getFormats() {
-        // does the frontend rely on the order of this list? we may have changed it with our refactor
-        // @@@ maybe we should have a well-defined order? alphabetical, or configs before classes?
+        // TODO maybe we should have a well-defined order? alphabetical, or configs before classes?
         List<InputFormat> result = inputFormats.values().stream()
                 .filter(f -> !f.isError())
                 .collect(Collectors.toList());

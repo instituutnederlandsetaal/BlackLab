@@ -14,9 +14,6 @@ import org.apache.lucene.queries.spans.Spans;
  * object again.
  */
 class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
-    public SpansInBucketsPerDocument(BLSpans source) {
-        super(source);
-    }
 
     public static SpansInBucketsPerDocument sorted(BLSpans spansFilter) {
         if (spansFilter.guarantees().hitsStartPointSorted()) {
@@ -27,13 +24,24 @@ class SpansInBucketsPerDocument extends SpansInBucketsAbstract {
         return new SpansInBucketsPerDocumentSorted(spansFilter, true);
     }
 
-    @Override
-    protected void gatherHits() throws IOException {
-        assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
-        do {
-            addHitFromSource();
-        } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
-        assert source.startPosition() == Spans.NO_MORE_POSITIONS;
+    protected class PerDocBucket extends AbstractBucket {
+        @Override
+        public void gatherHits() throws IOException {
+            assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
+            do {
+                addHitFromSource();
+            } while (source.nextStartPosition() != Spans.NO_MORE_POSITIONS);
+            assert source.startPosition() == Spans.NO_MORE_POSITIONS;
+        }
     }
 
+    public SpansInBucketsPerDocument(BLSpans source) {
+        super(source);
+        setBucket(new PerDocBucket());
+    }
+
+    @Override
+    public String toString() {
+        return "SIB-DOC(" + source + ")";
+    }
 }

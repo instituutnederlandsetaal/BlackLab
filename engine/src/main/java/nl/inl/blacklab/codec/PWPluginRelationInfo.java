@@ -1,39 +1,46 @@
 package nl.inl.blacklab.codec;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Arrays;
+import java.io.PrintWriter;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.store.ByteArrayDataInput;
-import org.apache.lucene.store.ByteArrayDataOutput;
-import org.apache.lucene.store.DataOutput;
-import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * Hook into the postings writer to write the relation info.
- *
- * Keeps track of attributes per unique relation id and writes them to the relation info files so we can look them up later.
+ * <p>
+ * Keeps track of attributes per unique relation id and writes them to the relation info
+ * files so we can look them up later.
  */
 class PWPluginRelationInfo implements PWPlugin {
 
-    private final BlackLab40PostingsWriter postingsWriter;
+    /** Log all events to a log file? Useful while debugging. */
+    private static final boolean ENABLE_DEBUG_LOG = false;
+
+    /** Our log file (if enabled) */
+    private PrintWriter logFile = null;
+
+    /** Lucene fields that we'll store relation info for */
+    private final Map<String, RelationInfoFieldMutable> riFields = new HashMap<>();
+
+    /** Information about different fields we store relations for. */
+    private final IndexOutput outFieldsFile;
 
     /**
      * Information per unique relation id.
@@ -70,130 +77,112 @@ class PWPluginRelationInfo implements PWPlugin {
      */
     private final Map<String, Integer> indexFromAttributeName = new HashMap<>();
 
-    /**
-     * Offsets of attribute values in attrvalues file
-     */
+    /** Offsets of attribute values in attrvalues file */
     private final Map<String, Long> attrValueOffsets = new HashMap<>();
 
-    /** Temporary file with attribute set id per term that will be converted into relations file per doc later. */
-    private IndexOutput outTempRelationsFile;
+    /** Attributes per relationId, per document (docId -> (relationId -> (attrIndex -> valueOffset))) */
+    SortedMap<Integer, SortedMap<Integer, SortedMap<Integer, Long>>> attrPerRelationIdPerDoc;
 
-    /**
-     * Offsets of attribute set in the attrsets file.
+    /** For current document: attributes per relationId (relationId -> (attrIndex -> valueOffset)) */
+    SortedMap<Integer, SortedMap<Integer, Long>> attrPerRelationId;
+
+    /** Field we're currently processing. */
+    private RelationInfoFieldMutable currentField;
+
+    /** Offsets of attribute set in the attrsets file.
+     * The key is a sorted map of attribute name index to attribute value offset.
+     * The value is the offset in the attrsets file.
      */
-    private Map<SortedMap<Integer, Long>, Long> idFromAttributeSet = new HashMap<>();
-
-    /**
-     * Number of relations in each doc, per field (e.g. "contents%_relation@s").
-     *
-     * We keep track of number of relations so we can preallocate our relations offsets structure
-     * when writing the final relations file.
-     */
-    private final Map<String, Map<Integer, Integer>> maxRelationIdsPerAnnotatedField = new HashMap<>();
-
-    /** For each field and document id, record the temp relations file offsets (list of longs). */
-    private final Map<String, OffsetsAndMaxRelationIdPerDocument> field2docTempRelFileOffsets = new LinkedHashMap<>();
+    private final Map<SortedMap<Integer, Long>, Long> attributeSetOffsets = new HashMap<>();
 
 
     // PER FIELD
 
-    /** List of offsets in temp relations file for each doc id */
-    private OffsetsAndMaxRelationIdPerDocument offsetsAndMaxRelationIdPerDocument;
-
 
     // PER TERM
 
-    /**
-     * Offset of attribute set for current term in attrset file
+    /** Should we ignore the current term? (because it's a duplicate "optimization" term) */
+    private boolean ignoreCurrentTerm = false;
+
+    /** Attribute(s) found in current term (key is attribute index, value is offset in value file)
+     * <p>
+     * NOTE: once we drop support for {@link nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm},
+     * this doesn't need to be a map anymore, as there can only be 1 attribute per term.
      */
-    private long currentTermAttrSetOffset = -1;
+    private final SortedMap<Integer, Long> currentTermAttributes = new TreeMap<>();
 
 
     // PER DOCUMENT
 
-    private int currentDocId;
+    /** How we should index the relations */
+    private final RelationsStrategy relationsStrategy;
 
-    private byte[] currentDocPositionsArray;
+    /** How to encode/decode payload for relations */
+    private final RelationsStrategy.PayloadCodec relPayloadCodec;
 
-    private DataOutput currentDocPositionsOutput;
+    PWPluginRelationInfo(BlackLab40PostingsWriter postingsWriter, RelationsStrategy relationsStrategy) throws IOException {
+        this.relationsStrategy = relationsStrategy;
+        this.relPayloadCodec = relationsStrategy.getPayloadCodec();
 
-    private int currentDocOccurrencesWritten;
-
-    PWPluginRelationInfo(BlackLab40PostingsWriter postingsWriter) throws IOException {
-        this.postingsWriter = postingsWriter;
-
+        outFieldsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_FIELDS_EXT);
         outDocsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_DOCS_EXT);
         outRelationsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_RELATIONS_EXT);
         outAttrSetsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_SETS_EXT);
         outAttrNamesFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_NAMES_EXT);
         outAttrValuesFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_VALUES_EXT);
-        outTempRelationsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_RELATIONS_TMP_EXT);
+
+        // Open a log file
+        if (ENABLE_DEBUG_LOG) {
+            File tempDir = new File(System.getProperty("java.io.tmpdir"));
+            String name = "relation_info_" + postingsWriter.getSegmentName() + ".log";
+            logFile = new PrintWriter(new FileWriter(new File(tempDir, name)));
+        }
     }
 
-    @Override
-    public void close() throws IOException {
-        // Close the index files we've been writing to
-        if (outTempRelationsFile != null) {
-            outTempRelationsFile.close();
-            outTempRelationsFile = null;
+    public void log(String msg) {
+        if (logFile != null) {
+            logFile.println(msg);
+            logFile.flush();
         }
-        outDocsFile.close();
-        outRelationsFile.close();
-        outAttrSetsFile.close();
-        outAttrNamesFile.close();
-        outAttrValuesFile.close();
     }
 
     @Override
     public boolean startField(FieldInfo fieldInfo) {
+
         // Is this the relation annotation? Then we want to store relation info such as attribute values,
         // so we can look them up for individual relations matched.
-        if (!BlackLabIndexIntegrated.isRelationsField(fieldInfo))
+        if (!BlackLabIndexIntegrated.isRelationsField(fieldInfo)) {
+            log("startField: skip non-rel field " + fieldInfo.name);
             return false;
+        }
 
-        Map<Integer, Integer> maxRelationIds = maxRelationIdsPerAnnotatedField.computeIfAbsent(
-                fieldInfo.name, __ -> new HashMap<>());
+        log("startField: processing field " + fieldInfo.name);
 
-        offsetsAndMaxRelationIdPerDocument = field2docTempRelFileOffsets.computeIfAbsent(fieldInfo.name, __ -> new OffsetsAndMaxRelationIdPerDocument(maxRelationIds));
+        currentField = riFields.computeIfAbsent(fieldInfo.name, RelationInfoFieldMutable::new);
+        attrPerRelationIdPerDoc = new TreeMap<>();
+
+        {
+            // make sure this is instantiated if assertions are enabled
+            //noinspection ConstantValue
+            assert (relationIdsSeenPerDoc = new HashMap<>()) != null;
+        }
 
         return true;
     }
 
-    @Override
-    public void endField() throws IOException {
-
-    }
-
-    @Override
-    public void startTerm(BytesRef term) throws IOException {
-        String termStr = term.utf8ToString();
-        boolean ignoreTerm = RelationUtil.isOptimizationTerm(termStr);
-        if (!ignoreTerm) {
-            // Decode the term so we can store the attribute values and refer to them from each occurrence by relation id.
-            // (we determine the correct offset to look up the attributes starting from the attribute set file)
-            Map<String, String> attributes = RelationUtil.attributesFromIndexedTerm(termStr);
-            SortedMap<Integer, Long> currentTermAttributes = new TreeMap<>();
-            for (Entry<String, String> e: attributes.entrySet()) {
-                int attributeIndex = getAttributeIndex(e.getKey());
-                long attributeValueOffset = getAttributeValueOffset(e.getValue());
-                currentTermAttributes.put(attributeIndex, attributeValueOffset);
-            }
-            // determine offset in attribute set file which we can refer to from each occurrence
-            currentTermAttrSetOffset = getAttributeSetOffset(currentTermAttributes);
-        }
-    }
-
     /** Look up this attribute set's offset, storing the attribute set if this is the first time we see it */
     private long getAttributeSetOffset(SortedMap<Integer, Long> currentTermAttributes) {
-        return idFromAttributeSet.computeIfAbsent(currentTermAttributes, k -> {
+        return attributeSetOffsets.computeIfAbsent(currentTermAttributes, k -> {
             try {
-                long offset = outAttrSetsFile.getFilePointer();
-                outAttrSetsFile.writeInt(currentTermAttributes.size());
+                long attributeSetOffset = outAttrSetsFile.getFilePointer();
+                outAttrSetsFile.writeVInt(currentTermAttributes.size());
                 for (Entry<Integer, Long> e: currentTermAttributes.entrySet()) {
-                    outAttrSetsFile.writeInt(e.getKey());    // attribute name id
+                    assert e.getKey() >= 0 : "negative attribute name id";
+                    assert e.getValue() >= 0 : "negative attribute value offset";
+                    outAttrSetsFile.writeVInt(e.getKey());    // attribute name id
                     outAttrSetsFile.writeLong(e.getValue()); // attribute value offset
                 }
-                return offset;
+                return attributeSetOffset;
             } catch (IOException e1) {
                 throw new BlackLabRuntimeException(e1);
             }
@@ -202,7 +191,7 @@ class PWPluginRelationInfo implements PWPlugin {
 
     /** Look up the attribute value offset, storing the attribute name if this is the first time we see it */
     private long getAttributeValueOffset(String attrValue) {
-        long attrValueOffset = attrValueOffsets.computeIfAbsent(attrValue, k -> {
+        return attrValueOffsets.computeIfAbsent(attrValue, k -> {
             try {
                 long offset = outAttrValuesFile.getFilePointer();
                 outAttrValuesFile.writeString(attrValue);
@@ -211,117 +200,174 @@ class PWPluginRelationInfo implements PWPlugin {
                 throw new BlackLabRuntimeException(e1);
             }
         });
-        return attrValueOffset;
     }
 
     /** Look up the attribute name index, storing the attribute name if this is the first time we see it */
     private int getAttributeIndex(String attrName) {
-        int attrNameIndex = indexFromAttributeName.computeIfAbsent(attrName, k -> {
+        return indexFromAttributeName.computeIfAbsent(attrName, k -> {
             try {
-                long offset = outAttrNamesFile.getFilePointer();
                 outAttrNamesFile.writeString(attrName);
-                return (int) offset;
+                return indexFromAttributeName.size(); // map size before adding == attribute index
             } catch (IOException e1) {
                 throw new BlackLabRuntimeException(e1);
             }
         });
-        return attrNameIndex;
     }
 
     @Override
-    public void endTerm() {
-        currentTermAttrSetOffset = -1;
+    public void startTerm(BytesRef term) {
+        String termStr = term.utf8ToString();
+        this.ignoreCurrentTerm = relationsStrategy.isOptimizationTerm(termStr);
+        if (!ignoreCurrentTerm) {
+            log("  startTerm: processing term '" + termStr + "'");
+            // Decode the term so we have the attribute(s) index and value offset. We need these for each occurrence.
+            this.currentTermAttributes.clear();
+            relationsStrategy.attributesInTerm(termStr).forEach(e -> {
+                int attributeIndex = getAttributeIndex(e.getKey());
+                assert !currentTermAttributes.containsKey(attributeIndex) : "duplicate attribute index";
+                long attributeValueOffset = getAttributeValueOffset(e.getValue());
+                assert attributeValueOffset >= 0 : "negative attribute value offset";
+                currentTermAttributes.put(attributeIndex, attributeValueOffset);
+            });
+        } else {
+            log("  startTerm: ignoring: " + termStr);
+        }
     }
 
     @Override
     public void startDocument(int docId, int nOccurrences) {
-        // Keep track of term positions offsets in term vector file
-        this.currentDocId = docId;
-        currentDocPositionsArray = new byte[Integer.BYTES * nOccurrences];
-        currentDocPositionsOutput = new ByteArrayDataOutput(currentDocPositionsArray);
-        currentDocOccurrencesWritten = 0;
+        log("    startDocument: " + docId + " (" + nOccurrences + " occurrences)");
+        // Keep track of relation ids in relations file
+        attrPerRelationId = attrPerRelationIdPerDoc.computeIfAbsent(docId, __ -> new TreeMap<>());
+        if (relationIdsSeenPerDoc != null)
+            relationIdsSeen = relationIdsSeenPerDoc.computeIfAbsent(docId, __ -> new TreeMap<>());
+    }
+
+    /** Relation Ids seen for all documents, and their position in doc. Only used when assertions are enabled. */
+    Map<Integer, SortedMap<Integer, Integer>> relationIdsSeenPerDoc;
+
+    /** Relation ids (and position in doc) seen for current doc. Only used when assertions are enabled. */
+    SortedMap<Integer, Integer> relationIdsSeen;
+
+    @Override
+    public void termOccurrence(int position, BytesRef payload) {
+        if (payload == null) {
+            log("      occurrence at position " + position + " has null payload");
+            return;
+        }
+
+        if (ignoreCurrentTerm) {
+            // This is an optimization term that we cannot extract attributes from.
+            // We need the non-optimization terms to create the relation id index.
+            // Skip this.
+            return;
+        }
+
+        // Get the relation id from the payload and check that it's valid
+        ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, false);
+        int relationId = relPayloadCodec.readRelationId(dataInput);
+        log("      occurrence at position " + position + " has relationId " + relationId);
+        assert relationId >= 0 || relationId == RelationInfo.RELATION_ID_NO_INFO;
+
+        // Store the offset to this term's attribute value set.
+        // We could also store other info about this occurrence here, such as info about an inline tag's parent and
+        // children.
+        if (relationId >= 0) {
+            if (relationIdsSeen != null) {
+                Integer prevPos = relationIdsSeen.get(relationId);
+                if (prevPos != null && prevPos != position) {
+                    log("ERROR: Duplicate relationId " + relationId + " at position " + position);
+                }
+                relationIdsSeen.put(relationId, position);
+                // Note that duplicates are normal (for attributes, using RelationsStrategyMultipleTerms)
+            }
+
+            // Add the attributes from this term to those for this relationId
+            attrPerRelationId.computeIfAbsent(relationId, __ -> new TreeMap<>())
+                    .putAll(currentTermAttributes);
+        }
     }
 
     @Override
     public void endDocument() throws IOException {
-        // Write the unique relation ids for this term in this document to the temp file
-        // (will be reversed later to create the final relations file)
-        offsetsAndMaxRelationIdPerDocument.putTempFileOffset(currentDocId, currentTermAttrSetOffset,
-                outTempRelationsFile.getFilePointer());
-        outTempRelationsFile.writeInt(currentDocOccurrencesWritten);
-        if (currentDocOccurrencesWritten > 0) {
-            outTempRelationsFile.writeBytes(currentDocPositionsArray, 0,
-                    currentDocOccurrencesWritten * Integer.BYTES);
-        }
+        log("    endDocument");
+        attrPerRelationId = null;
+        relationIdsSeen = null;
     }
 
     @Override
-    public void termOccurrence(int position, BytesRef payload) throws IOException {
-        if (payload == null)
-            return;
-        // Get the relation id from the payload and store the offset to this term's attribute value set.
-        // We could also store other info about this occurrence here, such as info about an inline tag's parent and
-        // children.
-        ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload.bytes, false);
-        int relationId = RelationInfo.getRelationId(dataInput);
-        if (relationId >= 0) {
-            offsetsAndMaxRelationIdPerDocument.updateMaxRelationId(currentDocId, relationId);
-            currentDocPositionsOutput.writeInt(relationId);
-            currentDocOccurrencesWritten++;
-        }
+    public void endTerm() {
+        log("  endTerm");
+        ignoreCurrentTerm = false;
     }
 
     @Override
-    public void finalize() throws IOException {
-        CodecUtil.writeFooter(outTempRelationsFile);
-        outTempRelationsFile.close();
-        outTempRelationsFile = null;
-
-        // Reverse the reverse index to create forward index
-        // (this time we iterate per field and per document first, then reconstruct the document by
-        //  looking at each term's occurrences. This produces our forward index)
-        Map<String, Long> field2DocsFileOffset = new HashMap<>();
-        try (IndexInput inTempRelationsFile = postingsWriter.openInput(BlackLab40PostingsFormat.RI_RELATIONS_TMP_EXT)) {
-
-            // For each field...
-            for (Entry<String, OffsetsAndMaxRelationIdPerDocument> fieldEntry: field2docTempRelFileOffsets.entrySet()) {
-                String luceneField = fieldEntry.getKey();
-                OffsetsAndMaxRelationIdPerDocument docOffsets = fieldEntry.getValue();
-
-                // Record starting offset of field in tokensindex file (written to fields file later)
-                field2DocsFileOffset.put(luceneField, outDocsFile.getFilePointer());
-
-                // Make sure we know our document lengths
-                Map<Integer, Integer> maxRelationIds = maxRelationIdsPerAnnotatedField.get(luceneField);
-
-                // For each document...
-                for (int docId = 0; docId < postingsWriter.maxDoc(); docId++) {
-                    final int maxRelationId = maxRelationIds.getOrDefault(docId, 0);
-                    FileOffsetPerTermId offsets = docOffsets.get(docId);
-                    long[] attrSetOffsets = getRelationAttrSetOffsets(maxRelationId, inTempRelationsFile, offsets);
-                    writeTokensInDoc(outDocsFile, outRelationsFile, attrSetOffsets);
+    public void endField() throws IOException {
+        log("endField");
+        // Check that relationIdsSeen contains all relation ids (if assertions are enabled)
+        if (relationIdsSeenPerDoc != null) {
+            for (var e: relationIdsSeenPerDoc.entrySet()) {
+                relationIdsSeen = e.getValue();
+                int expectedRelationId = 0;
+                for (int relationId: relationIdsSeen.keySet()) {
+                    if (relationId != expectedRelationId) {
+                        throw new AssertionError(
+                                "Not all relationIds found in docId " + e.getKey() + " (expected " + expectedRelationId
+                                        +
+                                        ", got " + relationId + ")");
+                    }
+                    expectedRelationId++;
                 }
             }
-        } finally {
-            // Clean up after ourselves
-            postingsWriter.deleteIndexFile(BlackLab40PostingsFormat.RI_RELATIONS_TMP_EXT);
+            relationIdsSeen = null;
+            relationIdsSeenPerDoc = null;
         }
 
-        /*
-        // WRITE RELATIONS AND DOCS FILE
+        // Record info about field: name and offset to docs file
+        currentField.setDocsOffset(outDocsFile.getFilePointer());
+        currentField.write(outFieldsFile);
 
-        // Write the offset in the relations file for this document to the docs file
-        outDocsFile.writeLong(outRelationsFile.getFilePointer());
+        // For each doc...
+        int expectedDocId = 0;
+        for (var docEntry: attrPerRelationIdPerDoc.entrySet()) {
+            // Some documents may not have relations. For example, the special internal metadata document never has any.
+            // We still need to write an entry for them in the docs file, or everything will break.
+            while (expectedDocId < docEntry.getKey()) {
+                outDocsFile.writeLong(-1); // no relations for this doc
+                expectedDocId++;
+            }
+            assert docEntry.getKey() == expectedDocId : "Wrong docId!?";
 
-        // Write the attribute set offsets per relation to the relations file
-        outRelationsFile.writeInt(currentDocAttrSetOffsetPerRelationId.size());
-        for (long offset: currentDocAttrSetOffsetPerRelationId) {
-            outRelationsFile.writeLong(offset);
+            outDocsFile.writeLong(outRelationsFile.getFilePointer());
+            int expectedRelationId = 0;
+            // For each relationId...
+            SortedMap<Integer, SortedMap<Integer, Long>> relationId2AttributeSet = docEntry.getValue();
+            for (var rel: relationId2AttributeSet.entrySet()) {
+                // Get attribute set offset (storing it if this is the first time we've seen it)
+                // and write it to the relations file
+                if (rel.getKey() != expectedRelationId)
+                    throw new AssertionError(
+                            "Not all relationIds found (expected " + expectedRelationId + ", got " + rel.getKey()
+                                    + ")");
+                // mitigation for when assertions are disabled: write invalid values to the file to prevent desynching
+                while (expectedRelationId < rel.getKey()) {
+                    outRelationsFile.writeLong(RelationInfo.RELATION_ID_NO_INFO); // no info for this relation
+                    expectedRelationId++;
+                }
+                long attrSetOffset = getAttributeSetOffset(rel.getValue());
+                outRelationsFile.writeLong(attrSetOffset);
+                expectedRelationId++;
+            }
+            expectedDocId++;
         }
-        currentDocAttrSetOffsetPerRelationId = null;
-        */
 
-        // Write the footers to our files
+        currentField = null;
+        attrPerRelationIdPerDoc = null;
+    }
+
+    @Override
+    public void finish() throws IOException {
+        CodecUtil.writeFooter(outFieldsFile);
         CodecUtil.writeFooter(outDocsFile);
         CodecUtil.writeFooter(outRelationsFile);
         CodecUtil.writeFooter(outAttrSetsFile);
@@ -329,165 +375,15 @@ class PWPluginRelationInfo implements PWPlugin {
         CodecUtil.writeFooter(outAttrValuesFile);
     }
 
-    static long[] getRelationAttrSetOffsets(int maxRelationId,
-            IndexInput inTempRelationsFile, FileOffsetPerTermId termPosOffsets)
-            throws IOException {
-
-        final long[] offsetsInDoc = new long[maxRelationId + 1]; // reconstruct the document here
-
-        // NOTE: sometimes docs won't have any values for a field, but we'll
-        //   still write all NO_TERMs in this case. This is similar to sparse
-        //   fields (e.g. the field that stores <p> <s> etc.) which also have a
-        //   lot of NO_TERMs.
-        Arrays.fill(offsetsInDoc, Terms.NO_TERM);
-
-        // For each term...
-        for (Entry<Long, Long> entry: termPosOffsets.entrySet()) {
-            long attributeSetOffset = entry.getKey();
-            Long tempRelationsFileOffset = entry.getValue();
-            inTempRelationsFile.seek(tempRelationsFileOffset);
-            int nOccurrences = inTempRelationsFile.readInt();
-            // For each occurrence...
-            for (int i = 0; i < nOccurrences; i++) {
-                int relationId = inTempRelationsFile.readInt();
-                offsetsInDoc[relationId] = attributeSetOffset;
-            }
-        }
-        return offsetsInDoc;
+    @Override
+    public void close() throws IOException {
+        if (logFile != null)
+            logFile.close();
+        outFieldsFile.close();
+        outDocsFile.close();
+        outRelationsFile.close();
+        outAttrSetsFile.close();
+        outAttrNamesFile.close();
+        outAttrValuesFile.close();
     }
-
-    /**
-     * Write the tokens to the tokens file.
-     *
-     * Also records offset, length and encoding in the tokens index file.
-     *
-     * Chooses the most appropriate encoding for the tokens and records this choice in
-     * the tokens index file.
-     *
-     * @param outDocsFile       docs file
-     * @param outRelationsFile  relations file
-     * @param offsetsForDoc     offsets into attribute set file for this document
-     * @throws IOException       When failing to write
-     */
-    static void writeTokensInDoc(IndexOutput outDocsFile, IndexOutput outRelationsFile, long[] offsetsForDoc)
-            throws IOException {
-        long max = 0, min = 0;
-        boolean allTheSame = offsetsForDoc.length > 0; // if no tokens, then not all the same.
-        long last = -1;
-        for (long token: offsetsForDoc) {
-            max = Math.max(max, token);
-            min = Math.min(min, token);
-            allTheSame = allTheSame && (last == -1 || last == token);
-            last = token;
-            if ((min < Short.MIN_VALUE || max > Short.MAX_VALUE) && !allTheSame) // stop if already at worst case (int per token + not all the same).
-                break;
-        }
-
-        // determine codec
-        TokensCodec tokensCodec = allTheSame ? TokensCodec.ALL_TOKENS_THE_SAME : TokensCodec.VALUE_PER_TOKEN;
-
-        // determine parameter byte for codec.
-        byte tokensCodecParameter = 0;
-        switch (tokensCodec) {
-        case ALL_TOKENS_THE_SAME: tokensCodecParameter = 0; break;
-        case VALUE_PER_TOKEN: {
-            if (min >= Byte.MIN_VALUE && max <= Byte.MAX_VALUE) tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.BYTE.code;
-            else if (min >= Short.MIN_VALUE && max <= Short.MAX_VALUE) tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.SHORT.code;
-            else if (min >= ThreeByteInt.MIN_VALUE && max <= ThreeByteInt.MAX_VALUE) tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.THREE_BYTES.code;
-            else tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.INT.code;
-            break;
-        }
-        default: throw new NotImplementedException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
-        }
-
-        // Write offset in the tokens file, doc length in tokens and tokens codec used
-        outDocsFile.writeLong(outRelationsFile.getFilePointer());
-        outDocsFile.writeInt(offsetsForDoc.length);
-        outDocsFile.writeByte(tokensCodec.code);
-        outDocsFile.writeByte(tokensCodecParameter);
-
-        if (offsetsForDoc.length == 0) {
-            return; // done.
-        }
-
-        // Write the tokens
-        switch (tokensCodec) {
-        case VALUE_PER_TOKEN:
-            switch (TokensCodec.VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
-            case BYTE:
-                for (long token: offsetsForDoc) {
-                    outRelationsFile.writeByte((byte) token);
-                }
-                break;
-            case SHORT:
-                for (long token: offsetsForDoc) {
-                    outRelationsFile.writeShort((short) token);
-                }
-                break;
-            case THREE_BYTES:
-                for (long token : offsetsForDoc) {
-                    ThreeByteInt.write((b) -> outRelationsFile.writeByte(b), (int)token);
-                }
-                break;
-            case INT:
-                for (long token: offsetsForDoc) {
-                    outRelationsFile.writeLong(token);
-                }
-                break;
-            default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
-            }
-            break;
-        case ALL_TOKENS_THE_SAME:
-            outRelationsFile.writeLong(offsetsForDoc[0]);
-            break;
-        }
-    }
-
-    /**
-     * Offset in term vector file per term id for a single doc and field.
-     *
-     * Keeps track of position in the term vector file where the occurrences of each term id
-     * are stored for a single document and field.
-     */
-    static class FileOffsetPerTermId extends HashMap<Long, Long> {
-        // intentionally blank; this is just a typedef for readability
-    }
-
-    /**
-     * Keeps track of tokens length and term vector file offsets for a single Lucene field.
-     *
-     * Tokens length is shared between all Lucene fields belonging to a single annotated
-     * field, because those all have the same length.
-     */
-    static class OffsetsAndMaxRelationIdPerDocument {
-        /** For each document id (key), the length in tokens of the annotated field this Lucene field is a part of.
-         *  (shared with other annotations on this annotated field) */
-        private final Map<Integer, Integer> docId2MaxRelationId;
-
-        /** For each document id (key), record the term vector file offsets (value). */
-        private final SortedMap<Integer, FileOffsetPerTermId> docId2TermVecFileOffsets = new TreeMap<>();
-
-        OffsetsAndMaxRelationIdPerDocument(Map<Integer, Integer> docId2MaxRelationId) {
-            this.docId2MaxRelationId = docId2MaxRelationId;
-        }
-
-        void putTempFileOffset(int docId, long attributeSetOffset, long tempFilePointer) {
-            FileOffsetPerTermId vecFileOffsetsPerTermId =
-                    docId2TermVecFileOffsets.computeIfAbsent(docId, k -> new FileOffsetPerTermId());
-            vecFileOffsetsPerTermId.put(attributeSetOffset, tempFilePointer);
-        }
-
-        void updateMaxRelationId(int docId, int relationId) {
-            docId2MaxRelationId.compute(docId, (k, v) -> v == null ? relationId : Math.max(v, relationId));
-        }
-
-        FileOffsetPerTermId get(int docId) {
-            FileOffsetPerTermId termVecFileOffsetPerTermId = docId2TermVecFileOffsets.get(docId);
-            if (termVecFileOffsetPerTermId == null) {
-                termVecFileOffsetPerTermId = new FileOffsetPerTermId();
-            }
-            return termVecFileOffsetPerTermId;
-        }
-    }
-
 }

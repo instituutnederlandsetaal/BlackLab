@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.index.BLIndexWriterProxyLucene;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormat;
@@ -47,7 +48,7 @@ public class IndexTool {
 
     static final Map<String, String> indexerParam = new TreeMap<>();
 
-    public static void main(String[] args) throws ErrorOpeningIndex, ParseException {
+    public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
         // If the current directory contains indexer.properties, read it

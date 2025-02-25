@@ -212,13 +212,6 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
     }
 
     @Override
-    public void freezeBeforeIndexing() {
-        // don't freeze; with this index format, it was traditionally allowed
-        // for the metadata to change during indexing, because it is re-saved at
-        // the end.
-    }
-
-    @Override
     protected String getLatestIndexFormat() {
         /* The latest index format. Written to the index metadata file.
          *

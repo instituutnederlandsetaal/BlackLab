@@ -46,6 +46,7 @@ import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationLikeInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -781,6 +782,8 @@ public class ResponseStreamer {
         ds.startMap();
         {
             ds.entry(KEY_MATCH_INFO_TYPE, MatchInfo.Type.LIST_OF_RELATIONS.jsonName());
+            // report min/max of source target of list items? disabled for now
+            //matchInfoRelationSourceTarget(ds, listOfRelations);
             ds.entry(KEY_SPAN_START, listOfRelations.getSpanStart());
             ds.entry(KEY_SPAN_END, listOfRelations.getSpanEnd());
             ds.startEntry("infos").startList();
@@ -824,14 +827,12 @@ public class ResponseStreamer {
 
     /** If attribute values are avaiable, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
-        if (RelationInfo.INCLUDE_ATTRIBUTES_IN_RELATION_INFO) {
-            if (!inlineTag.getAttributes().isEmpty()) {
-                ds.startEntry("attributes").startMap();
-                for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
-                    ds.elEntry(attr.getKey(), attr.getValue());
-                }
-                ds.endMap().endEntry();
+        if (!inlineTag.getAttributes().isEmpty()) {
+            ds.startEntry("attributes").startMap();
+            for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
+                ds.elEntry(attr.getKey(), attr.getValue());
             }
+            ds.endMap().endEntry();
         }
     }
 
@@ -842,12 +843,7 @@ public class ResponseStreamer {
             ds.entry("relClass", relationInfo.getRelationClass());
             ds.entry("relType", relationInfo.getRelationType());
             optAttributes(ds, relationInfo);
-            if (!relationInfo.isRoot()) {
-                ds.entry("sourceStart", relationInfo.getSourceStart());
-                ds.entry("sourceEnd", relationInfo.getSourceEnd());
-            }
-            ds.entry("targetStart", relationInfo.getTargetStart());
-            ds.entry("targetEnd", relationInfo.getTargetEnd());
+            matchInfoRelationSourceTarget(ds, relationInfo);
             ds.entry(KEY_SPAN_START, relationInfo.getSpanStart());
             ds.entry(KEY_SPAN_END, relationInfo.getSpanEnd());
 
@@ -857,6 +853,15 @@ public class ResponseStreamer {
             }
         }
         ds.endMap();
+    }
+
+    private static void matchInfoRelationSourceTarget(DataStream ds, RelationLikeInfo relationInfo) {
+        if (!relationInfo.isRoot()) {
+            ds.entry("sourceStart", relationInfo.getSourceStart());
+            ds.entry("sourceEnd", relationInfo.getSourceEnd());
+        }
+        ds.entry("targetStart", relationInfo.getTargetStart());
+        ds.entry("targetEnd", relationInfo.getTargetEnd());
     }
 
     private static Set<Map.Entry<String, MatchInfo>> filterMatchInfo(Map<String, MatchInfo> matchInfo, Predicate<MatchInfo> predicate) {

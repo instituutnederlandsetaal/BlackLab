@@ -4,6 +4,7 @@ import org.apache.lucene.index.IndexWriter;
 
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 /**
  * Factory object for objects related to indexing.
@@ -17,7 +18,8 @@ public interface BLIndexObjectFactory {
 
     BLFieldType fieldTypeContentStore();
 
-    BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex);
+    BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex,
+            RelationsStrategy relationsStrategy);
 
     BLFieldType fieldTypeIndexMetadataMarker();
 

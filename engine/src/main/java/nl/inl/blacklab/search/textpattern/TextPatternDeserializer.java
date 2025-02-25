@@ -62,7 +62,7 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             value = true;
             break;
         case VALUE_NULL:
-            value = null; // illegal, see below
+            // illegal, see below
             break;
         case VALUE_STRING:
             value = parser.getValueAsString();
@@ -77,9 +77,9 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             value = readArray(parser);
             break;
         case START_OBJECT:
-            if (fieldName.equals("attr")) {
+            if (fieldName.equals(TextPatternSerializerJson.KEY_ATTRIBUTES)) {
                 // Attributes to a "tags" TextPattern.
-                value = readStringMap(parser);
+                value = readMatchValueMap(parser);
             } else {
                 // A TextPattern or MatchFilter (determined by "type")
                 value = readObject(parser);
@@ -100,12 +100,12 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
         return list;
     }
 
-    public static Map<String, String> readStringMap(JsonParser parser) throws IOException {
+    public static Map<String, MatchValue> readMatchValueMap(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
             throw new RuntimeException("Expected START_OBJECT, found " + token);
 
-        Map<String, String> result = new LinkedHashMap<>();
+        Map<String, MatchValue> result = new LinkedHashMap<>();
         while (true) {
             token = parser.nextToken();
             if (token == JsonToken.END_OBJECT)
@@ -116,11 +116,33 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             String key = parser.getCurrentName();
 
             token = parser.nextToken();
-            if (token != JsonToken.VALUE_STRING)
-                throw new RuntimeException("Expected VALUE_STRING, found " + token);
-            String value = parser.getValueAsString();
+            if (token == JsonToken.VALUE_STRING) {
+                // Regex (just a string value)
+                String value = parser.getValueAsString();
+                result.put(key, MatchValue.regex(value));
+            } else if (token == JsonToken.START_OBJECT) {
+                // Range (object with min and max fields)
+                int min = Integer.MIN_VALUE, max = Integer.MAX_VALUE;
+                while (true) {
+                    token = parser.nextToken();
+                    if (token == JsonToken.END_OBJECT)
+                        break;
 
-            result.put(key, value);
+                    if (token != JsonToken.FIELD_NAME)
+                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    String rangeKey = parser.getCurrentName();
+                    if (rangeKey.equals(TextPatternSerializerJson.KEY_MIN))
+                        min = parser.nextIntValue(-1);
+                    else if (rangeKey.equals(TextPatternSerializerJson.KEY_MAX))
+                        max = parser.nextIntValue(-1);
+                    else
+                        throw new RuntimeException("Expected min or max, found " + key);
+                }
+                if (min == Integer.MIN_VALUE && max == Integer.MAX_VALUE)
+                    throw new RuntimeException("Range must have min, max or both");
+                result.put(key, MatchValue.intRange(min, max));
+            } else
+                throw new RuntimeException("Expected VALUE_STRING, found " + token);
         }
         return result;
     }

@@ -248,7 +248,7 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
                             annotatedFieldName, __ -> new HashMap<>());
 
                     // If this field should get a forward index...
-                    if (!BlackLabIndexIntegrated.isForwardIndexField(fieldInfos.fieldInfo(luceneField))) {
+                    if (!BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfos.fieldInfo(luceneField))) {
                         continue;
                     }
                     ForwardIndexFieldMutable offsets = fiFields.computeIfAbsent(luceneField, ForwardIndexFieldMutable::new);

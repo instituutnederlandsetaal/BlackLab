@@ -21,7 +21,6 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -100,13 +99,15 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
 
             // Add empty values to all lagging properties
             for (AnnotationWriter prop: contentsField.annotationWriters()) {
-                while (prop.lastValuePosition() < lastValuePos) {
-                    prop.addValue("");
-                    if (prop.hasPayload())
-                        prop.addPayload(null);
-                    if (prop == propMain) {
-                        contentsField.addStartChar(getCharacterPosition());
-                        contentsField.addEndChar(getCharacterPosition());
+                if (prop.hasForwardIndex() || prop == propMain) {
+                    while (prop.lastValuePosition() < lastValuePos) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                        if (prop == propMain) {
+                            contentsField.addStartChar(getCharacterPosition());
+                            contentsField.addEndChar(getCharacterPosition());
+                        }
                     }
                 }
             }
@@ -246,7 +247,8 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             for (int i = 0; i < attributes.getLength(); i++) {
                 attrMap.put(attributes.getLocalName(i), attributes.getValue(i));
             }
-            int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1, attrMap, getIndexType());
+            int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1,
+                    attrMap, getIndexType());
             openTagIndexes.add(openTagIndex);
             openTagPositions.add(currentPos);
         }
@@ -258,8 +260,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             int lastIndex = openTagIndexes.size() - 1;
             int openTagPosition = openTagPositions.remove(lastIndex);
             int closeTagPosition = propMain.lastValuePosition() + 1;
-            BytesRef payload = PayloadUtils.inlineTagPayload(openTagPosition,
-                    closeTagPosition, getIndexType(), -1);
+            boolean maybeExtraInfo = true; // we're not sure, but that's okay; slightly slower
+            BytesRef payload = getPayloadCodec().inlineTagPayload(openTagPosition,
+                    closeTagPosition, getIndexType(), -1, maybeExtraInfo);
             Integer openTagIndex = openTagIndexes.remove(lastIndex);
             if (openTagIndex < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)

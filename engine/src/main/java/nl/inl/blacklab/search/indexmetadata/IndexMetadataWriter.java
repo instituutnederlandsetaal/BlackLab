@@ -100,15 +100,6 @@ public interface IndexMetadataWriter extends IndexMetadata {
     @Override
     String documentFormat();
 
-	/**
-	 * If necessary, freeze the metadata so we can start indexing.
-	 *
-	 * We're about to start indexing. For the integrated index format,
-	 * metadata must not change during indexing, so in that case, we
-	 * freeze it to enforce this.
-	 */
-	void freezeBeforeIndexing();
-
     default void setIndexFlag(String name, String value) {
         throw new UnsupportedOperationException("Not implemented");
     }

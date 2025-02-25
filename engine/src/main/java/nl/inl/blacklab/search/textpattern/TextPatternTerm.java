@@ -1,14 +1,17 @@
 package nl.inl.blacklab.search.textpattern;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.util.StringUtil;
 
 /**
  * A TextPattern matching a word.
@@ -39,9 +42,35 @@ public class TextPatternTerm extends TextPattern {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+        // Rewrite pseudo-annotation to extension function call
+        TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, true);
+        if (rewrittenPseudoAnnot != null)
+            return rewrittenPseudoAnnot.translate(context);
+
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
         return new BLSpanTermQuery(context.queryInfo(), new Term(context.luceneField(),
                 context.optDesensitize(optInsensitive(context, value))));
+    }
+
+    /**
+     * If the annotation doesn't exist in the data, but there is a suitable
+     * extension function, rewrite this term to a function call.
+     *
+     * @param context the query execution context
+     */
+    protected TextPattern rewriteIfPseudoAnnotation(QueryExecutionContext context, boolean convertToRegex) {
+        TextPattern rewrittenPseudoAnnot = null;
+        if (!context.field().annotations().exists(annotation)) {
+            // Annotation doesn't exist in the data.
+            // Check if there's an extension function that functions as a pseudo-annotation,
+            // e.g. annot_punctAfter(query, ".") to enable [punctAfter="."]
+            String functionName = QueryExtensions.pseudoAnnotationFunctionName(annotation);
+            if (QueryExtensions.exists(functionName)) {
+                String regex = convertToRegex ? StringUtil.escapeLuceneRegexCharacters(value) : value;
+                rewrittenPseudoAnnot = new TextPatternQueryFunction(functionName, List.of(regex));
+            }
+        }
+        return rewrittenPseudoAnnot;
     }
 
     @Override

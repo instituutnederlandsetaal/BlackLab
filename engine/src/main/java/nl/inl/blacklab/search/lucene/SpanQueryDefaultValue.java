@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
+import java.util.Objects;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.search.IndexSearcher;
@@ -60,13 +61,16 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
     }
 
     @Override
-    public int hashCode() {
-        return SpanQueryDefaultValue.class.hashCode();
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass())
+            return false;
+        SpanQueryDefaultValue that = (SpanQueryDefaultValue) o;
+        return Objects.equals(luceneField, that.luceneField);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return obj instanceof SpanQueryDefaultValue;
+    public int hashCode() {
+        return Objects.hashCode(luceneField);
     }
 
     @Override

@@ -5,7 +5,7 @@ import org.apache.lucene.index.LeafReaderContext;
 public class BlackLabCodecUtil {
 
     /**
-     * Get the BlackLab40StoredFieldsReader for the given leafreader.
+     * Get the BlackLabStoredFieldsReader for the given leafreader.
      *
      * The luceneField must be any existing Lucene field in the index.
      * It doesn't matter which. This is because BLTerms is used as an
@@ -22,7 +22,7 @@ public class BlackLabCodecUtil {
     }
 
     /**
-     * Get the BlackLab40PostingsReader for the given leafreader.
+     * Get the BlackLabPostingsReader for the given leafreader.
      *
      * @param lrc leafreader to get the BlackLab40PostingsReader for
      * @return BlackLab40PostingsReader for this leafreader

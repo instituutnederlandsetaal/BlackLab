@@ -157,8 +157,8 @@ class SpansAnd extends BLSpans {
         while (true) {
             if (oneExhaustedInCurrentDoc)
                 return NO_MORE_POSITIONS;
-            int leftStart = subSpans[0].startPosition(0);
-            int rightStart = subSpans[1].startPosition(0);
+            int leftStart = subSpans[0].bucketStart();
+            int rightStart = subSpans[1].bucketStart();
 
             // Synch at match start level
             if ((leftStart == -1 && rightStart == -1) ||
@@ -166,9 +166,9 @@ class SpansAnd extends BLSpans {
                 // Starts don't match
                 int laggingSpans = leftStart < rightStart ? 0 : 1;
                 catchUpMatchStart(laggingSpans);
-            } else if (subSpans[0].endPosition(0) != subSpans[1].endPosition(0)) {
+            } else if (subSpans[0].bucketEnd() != subSpans[1].bucketEnd()) {
                 // Starts match but ends don't
-                int laggingSpans = subSpans[0].endPosition(0) < subSpans[1].endPosition(0) ? 0 : 1;
+                int laggingSpans = subSpans[0].bucketEnd() < subSpans[1].bucketEnd() ? 0 : 1;
                 catchUpMatchEnd(laggingSpans);
             } else {
                 // Both match
@@ -181,8 +181,8 @@ class SpansAnd extends BLSpans {
 
     /** See if we can get starts to line up. */
     private void catchUpMatchStart(int laggingSpans) throws IOException {
-        int catchUpTo = subSpans[1 - laggingSpans].startPosition(0);
-        int catchUpFrom = subSpans[laggingSpans].startPosition(0);
+        int catchUpTo = subSpans[1 - laggingSpans].bucketStart();
+        int catchUpFrom = subSpans[laggingSpans].bucketStart();
         if (catchUpFrom < catchUpTo || catchUpFrom == -1) { // also covers catchUpFrom != NO_MORE_POSITIONS
             if (subSpans[laggingSpans].advanceBucket(catchUpTo) == SpansInBuckets.NO_MORE_BUCKETS)
                 oneExhaustedInCurrentDoc = true;
@@ -191,10 +191,10 @@ class SpansAnd extends BLSpans {
 
     /** Try to get ends to line up without moving starts. */
     private void catchUpMatchEnd(int laggingSpans) throws IOException {
-        int catchUpFromStart = subSpans[laggingSpans].startPosition(0);
-        int catchUpToEnd = subSpans[1 - laggingSpans].endPosition(0);
-        while ((subSpans[laggingSpans].startPosition(0) == catchUpFromStart &&
-                subSpans[laggingSpans].endPosition(0) < catchUpToEnd) || subSpans[laggingSpans].startPosition(0) == -1) {
+        int catchUpFromStart = subSpans[laggingSpans].bucketStart();
+        int catchUpToEnd = subSpans[1 - laggingSpans].bucketEnd();
+        while ((subSpans[laggingSpans].bucketStart() == catchUpFromStart &&
+                subSpans[laggingSpans].bucketEnd() < catchUpToEnd) || subSpans[laggingSpans].bucketStart() == -1) {
             if (subSpans[laggingSpans].nextBucket() == SpansInBuckets.NO_MORE_BUCKETS) {
                 oneExhaustedInCurrentDoc = true;
                 break;

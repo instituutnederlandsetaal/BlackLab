@@ -8,6 +8,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRegex;
@@ -85,9 +86,8 @@ public class CorpusQueryLanguageParser {
         return quotedUnescaped;
     }
 
-    TextPatternTerm simplePattern(String str) {
-        // Treat everything like regex now; will be simplified later if possible
-        return new TextPatternRegex(str);
+    TextPatternTerm simplePattern(MatchValue str) {
+        return str.textPattern();
     }
 
     /** Allow strings to be quoted using single quotes? [default: yes] 

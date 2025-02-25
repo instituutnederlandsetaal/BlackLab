@@ -179,6 +179,31 @@ The above query will just match the word _baker_ as part of a person's name. But
 
 	<person/> containing 'baker'
 
+::: tip Using a regular expression for the span name
+You can match multiple span types (e.g. both `<person/>` and `<location/>`) using a regular expression:
+
+    'baker' within <'person|location' />
+
+To match all spans in the corpus, use:
+
+    <'.+' />
+:::
+
+::: tip Capturing all surrounding spans
+If you want to know all spans that surround (or actually overlap with) each of your hits, use::
+
+    with-spans('baker')
+
+or
+
+    with-spans('baker', <'person|location' />, 'props')
+
+The second example will capture a list of matching spans in the match info named `props`.
+
+Only the first parameter for `with-spans` is required. The second parameter defaults to `<'.+'/>` (all tags); the third defaults to `'with-spans'`.
+
+:::
+
 #### Other uses for within and containing
 
 As you might have guessed, you can use `within` and `containing` with any other query as well. For example:
@@ -266,7 +291,51 @@ This is NOT valid (may not produce an error, but the results are undefined):
     A:[] ('and' B:[] :: A.word = B.word) 'again'   # BAD
 
 
+### Lookahead/lookbehind
 
+::: tip Supported from v4.0
+This feature will be supported from BlackLab 4.0 (and current development snapshots).
+:::
+
+Just like most regular expressions engines, BlackLab supports lookahead and lookbehind assertions. These match a position in the text but do not consume any tokens. They are useful for matching a token only if it is followed or preceded by other token(s).
+
+For example, to find the word _cat_ only if it is followed by _in the hat_:
+
+    'cat' (?= 'in' 'the' 'hat')
+
+Similarly, to find the word _dog_, but only if it is preceded by _very good_:
+    
+    (?<= 'very' 'good') 'dog'
+
+Negative lookahead is also supported. To only find _cat_ if it is not followed by _call_:
+
+    'cat' (?! 'call')
+
+And negative lookbehind:
+
+    (?<! 'bad') 'dog'
+
+### Finding punctuation / pseudo-annotations
+
+(The following applies to corpora that index punctuation as the `punct` property of the next word, not to corpora that index punctuation as a separate token)
+
+Often in BlackLab, the punctuation and spaces between words will be indexed as a property named `punct`. This property always contains the spaces and interpunction that occurs before the word where it is indexed.
+
+Because of where it is indexed, it can be tricky to find specific punctuation _after_ a certain word. To find the word `dog` followed by a comma, you'd need to do something like this:
+
+    'dog' [punct=', *']
+
+Because spaces are also indexed with the `punct` annotation, you need to include them in the regex as well.
+
+BlackLab supports _pseudo-annotations_ that can help with this. You can pretend that every corpus has a `punctBefore` and `punctAfter` annotation. So you can write the above query as:
+
+    [word='dog' punctAfter=',']
+
+Note that in special cases where more than one punctuation mark is indexed with a word, you may still need to tweak your regular expression. For example, if your input data contained the fragment "(white) dog, (black) cat", the above query would not work because the `punct` annotation for the word after `dog` would have the value `, (`. You'd have to use a more general regular expression:
+
+    [word='dog' punctAfter=',.*']
+
+Note that `punctBefore` and `punctAfter` look like annotations when used in the query, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index.
 
 ## Relations querying
 
@@ -594,6 +663,13 @@ You can capture parts of the target query like normal, e.g.:
 
 There will be one match info named `w1` for the primary field searched (English in this case), and one named `w2` for the target field (Dutch). 
 
+### rfield(): get only hits from a target field
+
+If you only want to see hits from the target field, you can use the `rfield` operator:
+
+    rfield('fluffy' =word=>nl 'pluizig', 'nl')
+
+This can be useful when, after running a parallel query, you want to show the highlighted contents of one of the target fields. In this case, you would like to only get the target hits (in `contents__nl`), not the source hits (in e.g. `contents__en`). 
 
 ## Advanced subjects
 
@@ -662,6 +738,7 @@ BlackLab currently supports (arguably) most of the important features of Corpus 
 * Using an anchor to capture a token position. Example: `'big' A:[]`. Captured matches can be used in capture 
   constraints (see next item) or processed separately later (using the Java interface; capture information is not yet returned by BlackLab Server). Note that BlackLab can actually capture entire groups of tokens as well, similarly to regular expression engines.
 * Capture constraints, such as requiring two captures to contain the same word. Example: `'big' A:[] 'or' 'small' B:[] :: A.word = B.word`
+  * Integer ranges: `[pos='verb' & pos_confidence=in[50,100]]` or `<verse number=in[1,10]/>` (ranges are always inclusive)
 
 See below for features not in this list that may be added soon, and let us know if you want a particular feature to be added.
 

@@ -12,6 +12,16 @@ BlackLab was developed at the [Dutch Language Institute (INT)](http://www.ivdnt.
 
 For technical questions, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org).
 
+## Citing BlackLab
+
+If you wish to cite BlackLab, you can use the following publication:
+
+> Does, Jesse de, Jan Niestadt en Katrien Depuydt (2017), Creating research environments with BlackLab. In: Jan Odijk and Arjan van Hessen (eds.) _CLARIN in the Low Countries_, pp. 151-165. London: Ubiquity Press. DOI: [https://doi.org/10.5334/bbi](https://doi.org/10.5334/bbi)
+
+In other contexts, linking to this website or the GitHub repositories is also a good way to refer people to the project.
+
+Thank you!
+
 ## Older resources
 
 * [Old BlackLab blog](/development/archive/blog.md)

@@ -247,7 +247,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
                     targetSpanses.add(spansTarget); // if null, query has no hits at all; we'll check this later
                 }
             }
-            return targetSpanses;
+            return targetSpanses; // tricksy little spanses, they stole it from us!
         }
 
         private SpansCaptureRelationsBetweenSpans.Target getSpans(LeafReaderContext context,
@@ -255,9 +255,14 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpans matchRelationsSpans = matchRelations.getSpans(context, requiredPostings);
             if (matchRelationsSpans == null)
                 return null;
+            matchRelationsSpans = BLSpans.ensureSorted(matchRelationsSpans);
             BLSpans captureRelationsSpans = captureRelations.getSpans(context, requiredPostings);
+            if (captureRelationsSpans != null)
+                captureRelationsSpans = BLSpans.ensureSorted(captureRelationsSpans);
             boolean hasTargetRestrictions = target != null;
             BLSpans targetSpans = hasTargetRestrictions ? target.getSpans(context, requiredPostings) : null;
+            if (targetSpans != null)
+                targetSpans = BLSpans.ensureSorted(targetSpans);
             return new SpansCaptureRelationsBetweenSpans.Target(matchRelationsSpans, targetSpans, hasTargetRestrictions,
                     captureRelationsSpans, captureAs, captureTargetAs, targetField, optionalMatch);
         }

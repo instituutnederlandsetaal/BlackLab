@@ -89,7 +89,7 @@ public class TextPatternPositionFilter extends TextPattern {
         if (operation != SpanQueryPositionFilter.Operation.WITHIN)
             return false;
         boolean isCorrectTag = filter instanceof TextPatternTags &&
-                ((TextPatternTags)filter).getElementName().equals(tagName);
+                ((TextPatternTags)filter).getElementNameRegex().equals(tagName);
         return isCorrectTag && adjustLeading == 0 && adjustTrailing == 0;
     }
 

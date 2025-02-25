@@ -1,12 +1,15 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.Objects;
+import java.util.Iterator;
 
-import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.index.PostingsEnum;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.queries.spans.Spans;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * Gather buckets where all hits have the same start and end position.
@@ -16,207 +19,198 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  * sure you eliminate any duplicate matches.
  */
 class SpansInBucketsSameStartEnd extends SpansInBuckets {
-    protected final BLSpans source;
 
-    /** Current start position */
-    protected int currentStartPosition = -1;
+    class SameStartEndBucket implements Bucket {
 
-    /** Current end position */
-    protected int currentEndPosition = -1;
+        /** Current start position */
+        protected int currentStartPosition = -1;
 
-    /** How many hits with this start and end? */
-    protected int currentBucketSize = -1;
+        /** Current end position */
+        protected int currentEndPosition = -1;
+
+        /** How many hits with this start and end? */
+        protected int currentBucketSize = -1;
+
+        /**
+         * For each hit we fetched, store the match info (e.g. captured groups, relations),
+         * so we don't lose this information.
+         */
+        protected ObjectArrayList<MatchInfo[]> matchInfos = null;
+
+        /**
+         * For each hit we fetched, store the active relation info, if any.
+         */
+        protected ObjectArrayList<RelationInfo> activeRelationPerHit = null;
+
+        /** Payloads in bucket, if enabled */
+        protected ObjectArrayList<byte[]> payloads = null;
+
+        /** Terms, if enabled */
+        protected ObjectArrayList<Term> terms = null;
+
+        @Override
+        public int size() {
+            return currentBucketSize;
+        }
+
+        @Override
+        public int startPosition(int indexInBucket) {
+            return currentStartPosition;
+        }
+
+        @Override
+        public int endPosition(int indexInBucket) {
+            return currentEndPosition;
+        }
+
+        @Override
+        public MatchInfo[] matchInfos(int indexInBucket) {
+            return matchInfos.get(indexInBucket);
+        }
+
+        @Override
+        public RelationInfo relationInfo(int indexInBucket) {
+            return activeRelationPerHit.get(indexInBucket);
+        }
+
+        /** Get relation id from payload (if enabled) */
+        public byte[] payload(int indexInBucket) {
+            return payloads.get(indexInBucket);
+        }
+
+        public Term term(int indexInBucket) {
+            return terms.get(indexInBucket);
+        }
+
+        public void clear() {
+            currentStartPosition = -1;
+            currentEndPosition = -1;
+            currentBucketSize = 0;
+            if (doMatchInfo) {
+                if (matchInfos == null)
+                    matchInfos = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+                else
+                    matchInfos.clear();
+                if (activeRelationPerHit == null)
+                    activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+                else
+                    activeRelationPerHit.clear();
+            }
+            if (collectPayloadsAndTerms) {
+                if (payloads == null)
+                    payloads = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+                else
+                    payloads.clear();
+                if (terms == null)
+                    terms = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
+                else
+                    terms.clear();
+            }
+        }
+
+        @Override
+        public int gatherHitsInternal() throws IOException {
+            assert positionedAtHitIfPositionedInDoc();
+            doMatchInfo = hitQueryContext != null && (clauseCapturesMatchInfo && hitQueryContext.numberOfMatchInfos() > 0 ||
+                    hitQueryContext.hasRelationCaptures());
+            clear();
+            assert(source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS);
+            gatherHits();
+            assert(source.startPosition() >= 0);
+            assert positionedAtHitIfPositionedInDoc();
+            return source.docID();
+        }
+
+        private void gatherHits() throws IOException {
+            currentStartPosition = source.startPosition();
+            currentEndPosition = source.endPosition();
+            currentBucketSize = 0;
+            int sourceStart = currentStartPosition;
+            while (sourceStart != Spans.NO_MORE_POSITIONS &&
+                    sourceStart == currentStartPosition &&
+                    source.endPosition() == currentEndPosition) {
+                assert positionedAtHitIfPositionedInDoc();
+                assert source.startPosition() >= 0 && source.startPosition() != Spans.NO_MORE_POSITIONS;
+                assert source.endPosition() >= 0 && source.endPosition() != Spans.NO_MORE_POSITIONS;
+                if (doMatchInfo) {
+                    // Store match information such as captured groups and active relation (if any)
+                    int n = hitQueryContext == null ? 0 : hitQueryContext.numberOfMatchInfos();
+                    MatchInfo[] matchInfo = new MatchInfo[n];
+                    source.getMatchInfo(matchInfo);
+                    matchInfos.add(matchInfo);
+                    RelationInfo relationInfo = source.getRelationInfo();
+                    activeRelationPerHit.add(relationInfo == null ? null  : relationInfo.copy());
+                }
+                if (collectPayloadsAndTerms) {
+                    // This is used for matching relations with the new RelationsStrategySeparateTerms.
+                    // so we know every term has a payload, and every payload starts with the relationId.
+                    // Collect them now.
+                    collector.reset();
+                    try {
+                        source.collect(collector);
+                        Iterator<byte[]> iterator = collector.getPayloads().iterator();
+                        byte[] payload = iterator.hasNext() ? iterator.next() : null;
+                        payloads.add(payload);
+                        terms.add(collectedTerm);
+                    } catch (IOException e) {
+                        throw new BlackLabRuntimeException("Error getting payload");
+                    }
+                }
+                assert positionedAtHitIfPositionedInDoc();
+                currentBucketSize++;
+                sourceStart = source.nextStartPosition();
+            }
+        }
+    }
+
+    /** Collect payload and terms? */
+    protected final boolean collectPayloadsAndTerms;
+
+    /** Used to collect payloads and terms, if enabled */
+    private final PayloadSpanCollector collector;
+
+    /** Current term while collecting bucket hits */
+    private Term collectedTerm;
 
     /**
-     * For each hit we fetched, store the match info (e.g. captured groups, relations),
-     * so we don't lose this information.
-     */
-    private ObjectArrayList<MatchInfo[]> matchInfos = null;
-
-    /**
-     * For each hit we fetched, store the active relation info, if any.
-     */
-    protected ObjectArrayList<RelationInfo> activeRelationPerHit = null;
-
-    private HitQueryContext hitQueryContext;
-
-    /** Is there match info (e.g. captured groups) for each hit that we need to store? */
-    private boolean doMatchInfo;
-
-    /**
-     * Does our clause capture any match info? If not, we don't need to mess with those
-     */
-    private boolean clauseCapturesMatchInfo = true;
-
-    /**
-     * Construct SpansInBucketsSameStartEnd.
+     * Construct the spans in buckets object.
      *
      * @param source (startpoint-sorted) source spans
      */
     public SpansInBucketsSameStartEnd(BLSpans source) {
-        this.source = Objects.requireNonNull(source);
+        this(source, false);
     }
 
-    @Override
-    public int docID() {
-        return source.docID();
+    public byte[] payload(int index) {
+        return ((SameStartEndBucket)bucket).payload(index);
     }
 
-    @Override
-    public int nextDoc() throws IOException {
-        int docId = source.nextDoc();
-        if (docId != NO_MORE_DOCS) {
-            prepareForFirstBucketInDocument(source);
-        }
-        currentStartPosition = -1; // no bucket yet
-        return docId;
-    }
-
-    @Override
-    public int nextBucket() throws IOException {
-        assert source.docID() >= 0;
-        ensureAtFirstHit(source);
-        if (source.startPosition() == Spans.NO_MORE_POSITIONS)
-            return NO_MORE_BUCKETS;
-        return gatherHitsWithSameStartEnd();
+    public Term term(int index) {
+        return ((SameStartEndBucket)bucket).term(index);
     }
 
     /**
-     * Go to the next bucket at or beyond the specified start point.
-     * <p>
-     * Always at least advances to the next bucket, even if we were already at or
-     * beyond the specified target.
+     * Construct the spans in buckets object.
      *
-     * @param targetPos the target start point
-     * @return docID if we're at a valid bucket, or NO_MORE_BUCKETS if we're done.
+     * @param source (startpoint-sorted) source spans
+     * @param collectPayloadsAndTerms whether to retrieve payloads and terms
+     *                    (if true, rel strategy MUST be the new RelationsStrategySeparateTerms!!)
      */
-    public int advanceBucket(int targetPos) throws IOException {
-        assert source.docID() >= 0;
-        if (source.startPosition() >= targetPos)
-            return nextBucket();
-        if (source.advanceStartPosition(targetPos) == Spans.NO_MORE_POSITIONS)
-            return NO_MORE_BUCKETS;
-        return gatherHitsWithSameStartEnd();
-    }
-
-    /**
-     * Gather matchinfos for all hits with the same start and end position as the current one.
-     *
-     * @return current doc id
-     */
-    protected int gatherHitsWithSameStartEnd() throws IOException {
-        if (doMatchInfo) {
-            matchInfos.clear();
-            activeRelationPerHit.clear();
-        }
-        doMatchInfo = clauseCapturesMatchInfo && hitQueryContext != null && hitQueryContext.numberOfMatchInfos() > 0;
-        if (doMatchInfo && matchInfos == null) {
-            matchInfos = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
-            activeRelationPerHit = new ObjectArrayList<>(LIST_INITIAL_CAPACITY);
-        }
-        currentStartPosition = source.startPosition();
-        currentEndPosition = source.endPosition();
-        currentBucketSize = 0;
-        int sourceStart = currentStartPosition;
-        while (sourceStart != Spans.NO_MORE_POSITIONS && sourceStart == currentStartPosition &&
-                source.endPosition() == currentEndPosition) {
-            if (doMatchInfo) {
-                int n = hitQueryContext == null ? 0 : hitQueryContext.numberOfMatchInfos();
-                MatchInfo[] matchInfo = new MatchInfo[n];
-                source.getMatchInfo(matchInfo);
-                matchInfos.add(matchInfo);
-                RelationInfo relationInfo = source.getRelationInfo();
-                activeRelationPerHit.add(relationInfo == null ? null  : relationInfo.copy());
+    public SpansInBucketsSameStartEnd(BLSpans source, boolean collectPayloadsAndTerms) {
+        super(source);
+        this.collectPayloadsAndTerms = collectPayloadsAndTerms;
+        this.collector = !collectPayloadsAndTerms ? null : new PayloadSpanCollector() {
+            @Override
+            public void collectLeaf(PostingsEnum postings, int position, Term term) throws IOException {
+                collectedTerm = term;
+                super.collectLeaf(postings, position, term);
             }
-            currentBucketSize++;
-            sourceStart = source.nextStartPosition();
-        }
-        return source.docID();
-    }
-
-    @Override
-    public int advance(int target) throws IOException {
-        assert target >= 0 && target > docID();
-        int docId = source.advance(target);
-        if (docId != NO_MORE_DOCS) {
-            prepareForFirstBucketInDocument(source);
-        }
-        currentStartPosition = -1; // no bucket yet
-        return docId;
+        };
+        setBucket(new SameStartEndBucket());
     }
 
     @Override
     public String toString() {
-        return source.toString();
-    }
-
-    @Override
-    public int bucketSize() {
-        return currentBucketSize;
-    }
-
-    @Override
-    public int startPosition(int indexInBucket) {
-        return currentStartPosition;
-    }
-
-    @Override
-    public int endPosition(int indexInBucket) {
-        return currentEndPosition;
-    }
-
-    @Override
-    public void setHitQueryContext(HitQueryContext context) {
-        clauseCapturesMatchInfo = hasMatchInfo();
-        this.hitQueryContext = context;
-        source.setHitQueryContext(context);
-    }
-
-    @Override
-    public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
-        if (!doMatchInfo)
-            return;
-        MatchInfo[] thisMatchInfo = matchInfos.get(indexInBucket);
-        if (thisMatchInfo != null) {
-            for (int i = 0; i < matchInfo.length; i++) {
-                if (thisMatchInfo[i] != null) // don't overwrite other clause's captures!
-                    matchInfo[i] = thisMatchInfo[i];
-            }
-        }
-    }
-
-    @Override
-    public boolean hasMatchInfo() {
-        return source.hasMatchInfo();
-    }
-
-    @Override
-    public RelationInfo getRelationInfo(int indexInBucket) {
-        return doMatchInfo ? activeRelationPerHit.get(indexInBucket) : null;
-    }
-
-    @Override
-    public SpanGuarantees guarantees() {
-        return source.guarantees();
-    }
-
-    @Override
-    public long cost() {
-        return source.cost();
-    }
-
-    @Override
-    public TwoPhaseIterator asTwoPhaseIterator() {
-        return getTwoPhaseIterator(source);
-    }
-
-    @Override
-    public float positionsCost() {
-        throw new UnsupportedOperationException(); // asTwoPhaseIterator never returns null here.
-    }
-
-    @Override
-    public int width() {
-        return source.width();
+        return "SIB-STARTEND(" + source + ")";
     }
 }

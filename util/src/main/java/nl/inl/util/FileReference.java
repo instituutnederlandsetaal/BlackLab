@@ -141,7 +141,7 @@ public interface FileReference {
         // We could do this using a Reader, but better to leave managing that to the caller,
         // which knows if it needs multiple parts of the file and can make sure to minimize
         // passes over the file.
-        throw new UnsupportedOperationException("Cannot get text content; call withCharArray() on the FileReference first");
+        throw new UnsupportedOperationException("Cannot get text content; call withCreateReader() on the FileReference first");
     }
 
     /**

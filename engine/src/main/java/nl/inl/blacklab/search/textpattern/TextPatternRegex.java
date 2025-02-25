@@ -27,18 +27,27 @@ public class TextPatternRegex extends TextPatternTerm {
 
     @Override
     public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+        // Rewrite pseudo-annotation to extension function call
+        TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, false);
+        if (rewrittenPseudoAnnot != null)
+            return rewrittenPseudoAnnot.translate(context);
+
+        // See if this is really a regex query or just a term query maskerading as one...
         TextPattern result = rewriteForQuery();
-        if (result != this)
+        if (result != this) {
+            // Rewritten into a regular term query; translate that instead
             return result.translate(context);
+        }
+        // We're dealing with an actual regex query.
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
-        String valueNoStartEndMatch = optInsensitive(context, value);
+        String valueDesensitized = optInsensitive(context, value);
 
         // Lucene's regex engine requires double quotes to be escaped, unlike most others.
         // Escape double quotes
-        valueNoStartEndMatch = StringUtil.escapeQuote(valueNoStartEndMatch, "\"");
+        valueDesensitized = StringUtil.escapeQuote(valueDesensitized, "\"");
 
         try {
-            Term term = new Term(context.luceneField(), valueNoStartEndMatch);
+            Term term = new Term(context.luceneField(), valueDesensitized);
             RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
             return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
         } catch (IllegalArgumentException e) {

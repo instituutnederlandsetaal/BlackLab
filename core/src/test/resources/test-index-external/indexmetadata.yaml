@@ -1,5 +1,5 @@
 ---
-displayName: "BlackLabTest_TestIndex_e1464844-3a97-49d1-89f2-a74eae91f390"
+displayName: "BlackLabTest_TestIndex_67470e54-f516-4616-be93-1ae8af9625a4"
 description: ""
 contentViewable: true
 textDirection: "ltr"
@@ -9,8 +9,8 @@ versionInfo:
   blackLabBuildTime: "UNKNOWN"
   blackLabVersion: "UNKNOWN"
   indexFormat: "3.1"
-  timeCreated: "2023-07-24 09:14:20"
-  timeModified: "2023-07-24 09:14:20"
+  timeCreated: "2024-12-24 10:35:52"
+  timeModified: "2024-12-24 10:35:52"
   alwaysAddClosingToken: true
   tagLengthInPayload: true
 fieldInfo:
@@ -20,12 +20,12 @@ fieldInfo:
   unknownValue: "unknown"
   titleField: "fromInputFile"
   metadataFieldGroups:
-  - name: "Other fields group"
-    addRemainingFields: true
-    fields: []
   - name: "Title group"
     fields:
     - "title"
+  - name: "Other fields group"
+    addRemainingFields: true
+    fields: []
   annotationGroups:
     contents:
     - name: "Basic"
@@ -47,10 +47,10 @@ fieldInfo:
       unknownCondition: "NEVER"
       valueListComplete: true
       values:
-        test4: 1
+        test1: 1
         test2: 1
         test3: 1
-        test1: 1
+        test4: 1
       displayValues: {}
       displayOrder: []
     pid:
@@ -79,10 +79,10 @@ fieldInfo:
       unknownCondition: "NEVER"
       valueListComplete: true
       values:
-        Star Wars: 1
-        Pangram: 1
-        Learning words: 1
         Bastardized Shakespeare: 1
+        Learning words: 1
+        Pangram: 1
+        Star Wars: 1
       displayValues: {}
       displayOrder: []
   complexFields:

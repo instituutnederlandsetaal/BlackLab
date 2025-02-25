@@ -10,7 +10,7 @@ import java.util.Objects;
  * we need a start and an end. This class is used for that, and it's mutable to avoid
  * creating instances for each position.
  */
-class Span {
+public class Span {
     private int start;
     private int end;
 

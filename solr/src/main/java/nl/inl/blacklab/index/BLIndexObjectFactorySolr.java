@@ -3,6 +3,7 @@ package nl.inl.blacklab.index;
 import org.apache.lucene.index.IndexWriter;
 
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 /**
  * Factory for objects related to indexing to Solr.
@@ -30,9 +31,10 @@ public class BLIndexObjectFactorySolr implements BLIndexObjectFactory {
     }
 
     @Override
-    public BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex) {
+    public BLFieldType fieldTypeAnnotationSensitivity(boolean offsets, boolean forwardIndex,
+            RelationsStrategy relationsStrategy) {
         // ignored in solr path, see BLInputDocumentSolr.
-        return BLFieldTypeLucene.annotationSensitivity(offsets, forwardIndex);
+        return BLFieldTypeLucene.annotationSensitivity(offsets, forwardIndex, relationsStrategy);
     }
 
     public BLFieldType fieldTypeIndexMetadataMarker() {

@@ -62,7 +62,7 @@ public abstract class ContentStoreExternal implements ContentStore {
      * @return the content store id assigned to the document
      */
     public int store(String content) {
-        return store(new TextContent(content));
+        return store(TextContent.from(content));
     }
     
     

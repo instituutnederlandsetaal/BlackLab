@@ -172,15 +172,17 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
             if (annotMain.lastValuePosition() == lastValuePos)
                 lastValuePos++;
 
-            // Add empty values to all lagging properties
+            // Add empty values to all lagging properties with a forward index
             for (AnnotationWriter prop : contentsField.annotationWriters()) {
-                while (prop.lastValuePosition() < lastValuePos) {
-                    prop.addValue("");
-                    if (prop.hasPayload())
-                        prop.addPayload(null);
-                    if (prop == annotMain) {
-                        contentsField.addStartChar(getCharacterPosition());
-                        contentsField.addEndChar(getCharacterPosition());
+                if (prop.hasForwardIndex() || prop == annotMain) {
+                    while (prop.lastValuePosition() < lastValuePos) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                        if (prop == annotMain) {
+                            contentsField.addStartChar(getCharacterPosition());
+                            contentsField.addEndChar(getCharacterPosition());
+                        }
                     }
                 }
             }

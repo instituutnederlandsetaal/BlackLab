@@ -124,7 +124,7 @@ Please note that when declaring annotations, the first annotation you declare wi
 - be used to generate concordances (the KWIC view).
 - be returned as the value (text content) of the `<w>` tag (in the XML response).
 
-The rest of this page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](how-to-configure-indexing.md#annotated-configuration-file).
+The rest of this page will address how to accomplish specific things with the input format configuration. For a more complete picture that can serve as a reference, see the [annotated input format configuration file example](#full-example-of-a-configuration-file).
 
 
 ### XPath support level
@@ -641,6 +641,7 @@ annotatedFields:
         standoffAnnotations:
         - path: .//linkGrp[@targFunc='head argument']/link
           type: relation
+          relationClass: dep   # the class of relation we're indexing here
           valuePath: "replace(@ana, 'ud-syn:', '')"  # relation type
           # Note that we make sure the root relation is indexed without a source, 
           # which is required in BlackLab.
@@ -649,6 +650,8 @@ annotatedFields:
 ```
 
 The above would allow you to search for `_ -nsubj-> "I"` to find "I support", with the relation information captured. [Learn more about how to query relations](corpus-query-language.md#relations-querying)
+
+A note about the `relationClass` setting: you should declare the type of relation you're indexing here, using a short (i.e. 3-letter) code. By convention, dependency relations should use `dep`. Clients such as [BlackLab Frontend](https://github.com/INL/corpus-frontend) can use this information to display relations in a more user-friendly way, i.e. referring to the _head_ and _dependent_ of the dependency relation instead of the more generic _source_ and _target_.
 
 ### Indexing parallel corpora
 
@@ -808,7 +811,7 @@ The best way to influence the corpus metadata is by including a special section 
 
 If you add `addRemainingFields: true` to one of the groups, any field that wasn't explicitly listed will be added to that group.
 
-There's also a complete [annotated index metadata file](/guide/how-to-configure-indexing.md#annotated-configuration-file) if you want to know more details about that.
+There's also a complete [annotated index metadata file](#full-example-of-a-configuration-file) if you want to know more details about that.
 
 There are also (hacky) ways to make changes to the corpus metadata after it was indexed: you can export the metadata to a file and re-import it later (older indexes had an external `indexmetadata.yaml` file that could be edited directly). Start the `IndexTool` with `--help` to learn more, but be careful, as it is easy to make the index unusable this way. 
 
@@ -1336,7 +1339,7 @@ annotatedFields:
       valuePath: 2
 ```
 
-If one of your columns contains multiple values, for example multiple alternative lemmatizations, set the `multipleValues` option for that annotation to true and specify a regular expression to use for splitting a column value into multiple values in the `fileTypeOptions`. The default is a semicolon `;`. See also [here](/guide/how-to-configure-indexing.md#multiple-values-at-one-position).
+If one of your columns contains multiple values, for example multiple alternative lemmatizations, set the `multipleValues` option for that annotation to true and specify a regular expression to use for splitting a column value into multiple values in the `fileTypeOptions`. The default is a semicolon `;`. See also [here](#multiple-values-at-one-position).
 
 ```yaml
 fileType: tabular
@@ -1430,7 +1433,7 @@ tagPlugin: DutchTagger
 This setup will convert `doc, docx, txt, epub, html, alto, rtf and odt` into `tei`.
 
 
-This will however not work until you provide the right .jar and data files to the plugins. Adding the following configuration to `blacklab.json` will enable the plugins to do their work.
+This will however not work until you provide the right .jar and data files to the plugins. Adding the following configuration to `blacklab-server.yaml` will enable the plugins to do their work.
 
 ```yaml
 plugins:

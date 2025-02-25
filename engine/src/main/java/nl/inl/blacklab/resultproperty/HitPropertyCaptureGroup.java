@@ -3,14 +3,15 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 
@@ -39,9 +40,15 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     private RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.FULL_SPAN;
 
     private int groupIndex = -1;
+    
+    /** If set: use the first tag/relation with this name in the match info list */
+    private String relNameInList = null;
+
+    /** If set: use the first tag/relation with this name in the match info list */
+    private boolean relNameIsFullRelType = false;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
-        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName));
+        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
@@ -50,6 +57,9 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
         if (groupIndex < 0)
             throw new MatchInfoNotFound(groupName);
+        
+        relNameInList = prop.relNameInList;
+        relNameIsFullRelType = prop.relNameIsFullRelType;
     }
 
     /**
@@ -62,10 +72,11 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @param groupName the match info group name
      * @return the field name
      */
-    private static String determineMatchInfoField(Hits hits, String groupName) {
-        return hits.matchInfoDefs().stream()
+    private static String determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
+        List<MatchInfo.Def> defs = hits.matchInfoDefs();
+        return defs.stream()
                 .filter(d -> d.getName().equals(groupName))
-                .map(d -> d.getField())
+                .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
     }
 
@@ -76,6 +87,18 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName, RelationInfo.SpanMode spanMode) {
         super("captured group", ID, index, annotation, sensitivity, false);
         this.groupName = groupName;
+
+        // If groupName is of the form capturelist[relType], extract the relType
+        // (in this case, we will only use the first relation with this type in the captured list;
+        //  useful in combination with with-spans() to group on any tag in the hits found)
+        int openBracketIndex = groupName.indexOf("[");
+        if (openBracketIndex >= 0) {
+            int closeBracketIndex = groupName.indexOf("]", openBracketIndex + 1);
+            relNameInList = groupName.substring(openBracketIndex + 1, closeBracketIndex);
+            this.groupName = groupName.substring(0, openBracketIndex);
+            relNameIsFullRelType = RelationUtil.isFullType(relNameInList);
+        }
+
         this.spanMode = spanMode;
     }
 
@@ -88,6 +111,27 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     public void fetchContext() {
         fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
             MatchInfo group = hit.matchInfo()[groupIndex];
+            
+            if (relNameInList != null && group instanceof RelationListInfo) {
+                RelationListInfo relList = (RelationListInfo) group;
+                if (relNameIsFullRelType) {
+                    // Look for the first full-type match in the list
+                    for (RelationInfo namedGroup: relList.getRelations()) {
+                        if (namedGroup.getFullRelationType().equals(relNameInList)) {
+                            group = namedGroup;
+                            break;
+                        }
+                    }
+                } else {
+                    // Look for the first type match in the list
+                    for (RelationInfo namedGroup: relList.getRelations()) {
+                        if (namedGroup.getRelationType().equals(relNameInList)) {
+                            group = namedGroup;
+                            break;
+                        }
+                    }
+                }
+            }
             starts[indexInArrays] = group == null ? 0 : group.spanStart(spanMode);
             ends[indexInArrays] = group == null ? 0 : group.spanEnd(spanMode);
         });
@@ -101,19 +145,17 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
         if (o == null || getClass() != o.getClass())
             return false;
         if (!super.equals(o))
             return false;
         HitPropertyCaptureGroup that = (HitPropertyCaptureGroup) o;
-        return groupIndex == that.groupIndex && Objects.equals(groupName, that.groupName)
-                && spanMode == that.spanMode;
+        return Objects.equals(groupName, that.groupName) && spanMode == that.spanMode && Objects.equals(
+                relNameInList, that.relNameInList);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), groupName, spanMode, groupIndex);
+        return Objects.hash(super.hashCode(), groupName, spanMode, relNameInList);
     }
 }

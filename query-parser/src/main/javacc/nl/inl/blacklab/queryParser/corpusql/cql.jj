@@ -29,8 +29,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser.ChildRelationStruct;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -45,6 +43,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 import nl.inl.blacklab.search.matchfilter.MatchFilterString;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
+import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
@@ -52,9 +51,10 @@ import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
 import nl.inl.blacklab.search.textpattern.TextPatternConstrained;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
-import nl.inl.blacklab.search.textpattern.TextPatternEdge;
+import nl.inl.blacklab.search.textpattern.TextPatternLook;
 import nl.inl.blacklab.search.textpattern.TextPatternNot;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
+import nl.inl.blacklab.search.textpattern.TextPatternOverlapping;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
@@ -62,6 +62,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternSettings;
 import nl.inl.blacklab.search.textpattern.TextPatternTags.Adjust;import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
+import nl.inl.util.StringUtil;
 
 @SuppressWarnings("all")
 
@@ -95,13 +96,20 @@ TOKEN [IGNORE_CASE]:
 {
     <WITHIN: "within" >
 |   <CONTAINING: "containing" >
+|   <OVERLAP: "overlap" >
+|   <IN: "in">
 |   <DEFAULT_VALUE: "_">
+
     /* valid are e.g. --> -root-> -.*-> -a-b-> (and same preceded by ^ or !) */
 |   <ROOT_DEP_OP: "^-" ( ~["-"] (~["-", " ", "'", "\"", "]"] | "-" ~[">", " ", "'", "\"", "]"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <DEP_OP: ("!")? "-" ( ~["-"] (~["-", " ", "'", "\"", "]"] | "-" ~[">", " ", "'", "\"", "]"] )* )? "->" (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <ALIGNMENT_OP: "=" ( ~["="] (~["=", " ", "'", "\"", "]"] | "=" ~[">", " ", "'", "\"", "]"] )* )? "=>" (["A"-"Z","a"-"z","_","-","0"-"9"])* ("?")? >
+
+|   <LOOKAHEAD_OP: "?" ("<")? ["=", "!"] >
+
 |   <QUOTED_STRING: ("l")? "\"" (~["\"","\\"] | "\\" ~[] )* "\"" >
 |   <SINGLE_QUOTED_STRING: ("l")? "'" (~["'","\\"] | "\\" ~[] )* "'" >
+
 |   <NAME: ["A"-"Z","a"-"z","_"] (["A"-"Z","a"-"z","_","-","0"-"9"])* >
 |   <FLAGS: "%" (["c", "C", "d", "D", "l", "L"])+ >
 |   <NUMBER: (["0"-"9"])+ >
@@ -251,15 +259,18 @@ TextPattern containingWithinQuery():
 {
     a=relationQuery() [ op=containingWithinOperator() b=containingWithinQuery() ]
     {
-        if (op == null)
-            return a;
-        if (op.toString().equals("within")) {
-            // a within b
-            oper = Operation.WITHIN;
-        }
-
-        return new TextPatternPositionFilter(a, b, oper);
+    if (op == null)
+        return a;
+    if (op.toString().equals("within")) {
+        // a within b
+        oper = Operation.WITHIN;
+    } else if (op.toString().equals("overlap")) {
+        // a overlaps b
+        return new TextPatternOverlapping(a, b, op.toString());
     }
+
+    return new TextPatternPositionFilter(a, b, oper);
+}
 }
 
 Token containingWithinOperator():
@@ -267,7 +278,7 @@ Token containingWithinOperator():
     Token t = null;
 }
 {
-    (t=<WITHIN> | t=<CONTAINING>)
+    (t=<WITHIN> | t=<CONTAINING> | t=<OVERLAP>)
     {
         return t;
     }
@@ -348,10 +359,10 @@ TextPattern rootRelationType():
 TextPattern tag():
 {
     Token tagName, endTagSlash = null, selfCloseSlash = null;
-    Map<String, String> attr = new HashMap<String, String>();
+    Map<String, MatchValue> attr = new HashMap<String, MatchValue>();
 }
 {
-    "<" (endTagSlash="/")? tagName=<NAME> ( attributes(attr) )* (selfCloseSlash="/")? ">"
+    "<" (endTagSlash="/")? (tagName=<NAME>|tagName=<QUOTED_STRING>|tagName=<SINGLE_QUOTED_STRING>) ( attributes(attr) )* (selfCloseSlash="/")? ">"
     {
         if (endTagSlash != null && selfCloseSlash != null) {
             throw new MalformedTagException();
@@ -363,7 +374,12 @@ TextPattern tag():
             adjust = Adjust.LEADING_EDGE;
         if (endTagSlash != null)
             adjust = Adjust.TRAILING_EDGE;
-        return new TextPatternTags(tagName.toString(), attr, adjust, "");
+        String tag = tagName.toString();
+        if (tag.charAt(0) == '"' || tag.charAt(0) == '\'')
+            tag = tag.substring(1, tag.length() - 1);
+        else
+            tag = StringUtil.escapeLuceneRegexCharacters(tag);
+        return new TextPatternTags(tag, attr, adjust, "");
     }
 }
 
@@ -378,15 +394,31 @@ String quotedString():
     }
 }
 
-void attributes(Map<String, String> attr):
+void attributes(Map<String, MatchValue> attr):
 {
     Token name;
-    String value;
+    String quotedString = null;
+    MatchValue value = null;
 }
 {
-    name=<NAME> "=" value=quotedString()
+    name=<NAME> "=" (quotedString=quotedString() | value=inIntegerRange())
     {
+        if (quotedString != null)
+            value = MatchValue.regex(quotedString);
         attr.put(name.toString(), value);
+    }
+}
+
+MatchValue inIntegerRange():
+{
+    Token tMin, tMax;
+}
+{
+    <IN> "[" tMin=<NUMBER> "," tMax=<NUMBER> "]"
+    {
+        int min = Integer.parseInt(tMin.toString());
+        int max = Integer.parseInt(tMax.toString());
+        return MatchValue.intRange(min, max);
     }
 }
 
@@ -471,9 +503,27 @@ TextPattern sequencePartNoCapture():
 {
     TextPattern m = null;
     Integer[] rep = null;
+    Token lookaheadOp = null;
 }
 {
-    ( m=tag() | m=position() | "(" m=constrainedQuery() ")" | m=queryFunctionCall() )
+    (
+        m=tag() |
+        m=position() |
+        "("
+            ( lookaheadOp=<LOOKAHEAD_OP> )?   /* lookahead/lookbehind? */
+            m=constrainedQuery()
+            {
+                if (lookaheadOp != null) {
+                    // For lookahead/lookbehind, we need zero-length matches of either the leading or trailing edge.
+                    String op = lookaheadOp.toString();
+                    boolean behind = op.contains("<");
+                    boolean negative = op.contains("!");
+                    m = new TextPatternLook(m, behind, negative);
+                }
+            }
+        ")" |
+        m=queryFunctionCall()
+    )
     ( LOOKAHEAD(6) rep=repetitionAmount() {
         if (m instanceof TextPatternAnyToken) {
             TextPatternAnyToken any = (TextPatternAnyToken)m;
@@ -571,7 +621,7 @@ TextPattern positionWord():
     String t = null;
 }
 {
-    t=quotedString()      { return wrapper.simplePattern(t); }
+    t=quotedString()      { return wrapper.simplePattern(MatchValue.regex(t)); }
 }
 
 /* expression inside square brackets: an attribute clause, or multiple
@@ -617,9 +667,6 @@ TextPattern attValuePair():
     LOOKAHEAD(2)
     annot=annotName() "=" v=valuePart() [f=flags()]  { return wrapper.annotationClause(annot, v); }
 |   annot=annotName() "!=" v=valuePart() [f=flags()] { return new TextPatternNot(wrapper.annotationClause(annot, v)); }
-/* UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. ["word"], meaning the same as just "word" without brackets)
-|   v=valuePart() [f=flags()]                      { return v; }
-*/
 }
 
 String annotName():
@@ -636,35 +683,17 @@ String annotName():
     }
 }
 
-/* value expression: a value or multiple values combined with boolean operators */
-/*   UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
-TextPattern value():
-{
-    TextPattern a = null, c = null;
-    Token b = null;
-}
-{
-    LOOKAHEAD(3) a=valuePart() b=booleanOperator() c=value()
-    {
-        if (b.toString().equals("->"))
-            throw new UnsupportedOperationException("Implication operator only supported within global constraints");
-        if (b.toString().equals("&"))
-            return new TextPatternAnd(a, c);
-        return new TextPatternOr(a, c);
-    }
-|   a=valuePart()                   { return a; }
-}
-*/
-
-/* value: a quoted string or a value expression between parentheses */
+/* value: a quoted string or an integer range */
 TextPatternTerm valuePart():
 {
     TextPatternTerm m = null;
     String t = null;
+    MatchValue v = null;
 }
 {
-    t=quotedString()               { return wrapper.simplePattern(t); }
-/*  UNDOCUMENTED AND NONSTANDARD, REMOVE  (e.g. [word=("word"|"other")], use [word="word|other"] or [word="word" | word="other"])
-|   "(" m=value() ")"              { return m; }
- */
+    (t=quotedString() | v=inIntegerRange())  {
+        if (t != null)
+            v = MatchValue.regex(t);
+        return wrapper.simplePattern(v);
+    }
 }

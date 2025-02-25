@@ -120,6 +120,8 @@ public interface QueryParams {
 
     boolean getCsvDeclareSeparator();
 
+    String getCsvDescription();
+
     boolean getExplain();
 
     boolean getSensitive();

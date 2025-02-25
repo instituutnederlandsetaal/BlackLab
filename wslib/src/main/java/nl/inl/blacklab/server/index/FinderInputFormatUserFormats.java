@@ -162,11 +162,12 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      */
     public void createUserFormat(User user, String fileName, InputStream is) throws NotAuthorized, BadRequest, InternalServerError {
         try {
-            String formatIdentifier = fileName.contains(":") ? fileName : getFormatIdentifier(user.getId(), fileName);
+            String formatIdentifier = fileName.contains(":") ? ConfigInputFormat.stripExtensions(fileName) :
+                    getFormatIdentifier(user.getId(), fileName);
             
             String userIdFromFormatIdentifier = getUserIdFromFormatIdentifier(formatIdentifier);
             if (!user.canManageFormatsFor(userIdFromFormatIdentifier))
-                throw new NotAuthorized("You can only create formats for yourself.");
+                throw new NotAuthorized("You (" + user.getId() + ") cannot create format " + formatIdentifier + "; creating a format for another user is not allowed");
 
             // This is a little stupid, but we need to read the stream twice:
             // once to validate the file's contents, then again to store the file once the validation passes
@@ -208,8 +209,11 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
     public static void deleteUserFormat(User user, String formatIdentifier)
             throws NotAuthorized, NotFound, InternalServerError, BadRequest {
         try {
-            if (isBuiltinFormat(formatIdentifier) || !user.canManageFormatsFor(getUserIdFromFormatIdentifier(formatIdentifier)))
-                throw new NotAuthorized("Can only delete your own formats");
+            boolean builtinFormat = isBuiltinFormat(formatIdentifier);
+            if (builtinFormat)
+                throw new NotAuthorized("Deleting a non-user format (" + formatIdentifier + ") is not allowed");
+            if (!user.canManageFormatsFor(getUserIdFromFormatIdentifier(formatIdentifier)))
+                throw new NotAuthorized("You (" + user.getId() + ") are not allowed to delete format " + formatIdentifier + " because it belongs to another user");
         } catch (IllegalUserFormatIdentifier e) {
             throw new BadRequest("ILLEGAL_INDEX_NAME", e.getMessage());
         }

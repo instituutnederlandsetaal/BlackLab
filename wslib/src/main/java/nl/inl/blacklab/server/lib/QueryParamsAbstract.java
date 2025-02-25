@@ -354,6 +354,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
+    public String getCsvDescription() {
+        return get(WebserviceParameter.CSV_DESCRIPTION);
+    }
+
+    @Override
     public boolean getExplain() { return getBool(WebserviceParameter.EXPLAIN_QUERY_REWRITE); }
 
     @Override

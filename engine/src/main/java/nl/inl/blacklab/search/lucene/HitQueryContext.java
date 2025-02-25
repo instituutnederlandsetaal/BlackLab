@@ -145,4 +145,16 @@ public class HitQueryContext {
     public String getDefaultField() {
         return defaultField;
     }
+
+    /**
+     * Are any of the captures of type INLINE_TAG or RELATION?
+     *
+     * If yes, getRelationId() can return non-null values, and we must
+     * e.g. store these in SpansInBuckets.
+     *
+     * @return true if any of the captures are of type INLINE_TAG or RELATION
+     */
+    public boolean hasRelationCaptures() {
+        return matchInfoDefs.stream().anyMatch(mid -> mid.getType() == MatchInfo.Type.INLINE_TAG || mid.getType() == MatchInfo.Type.RELATION);
+    }
 }

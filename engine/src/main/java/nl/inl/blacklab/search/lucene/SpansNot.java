@@ -222,7 +222,8 @@ class SpansNot extends BLSpans {
             return NO_MORE_POSITIONS;
         }
         // Advance us to just before the requested start point, then call nextStartPosition().
-        clauseStart = clause.advanceStartPosition(targetPosition);
+        if (clauseStart < targetPosition)
+            clauseStart = clause.advanceStartPosition(targetPosition);
         currentStart = targetPosition - 1;
         currentEnd = targetPosition;
         return nextStartPosition();
@@ -313,7 +314,14 @@ class SpansNot extends BLSpans {
 
     @Override
     public float positionsCost() {
-        return clause.positionsCost();
+        // we have no clause to derive this from; we should really return a value indicating
+        // how many n-grams are in the entire corpus?
+        // For now we just return a random value that seems fairly high, but maybe look into this more
+        return 10_000;
+
+        // This is wrong, because we don't know that the clause supports positionsCost().
+        // (Spans classes that never return null from asTwoPhaseIterator() often don't implement this method)
+        //return clause.positionsCost();
     }
 
     @Override

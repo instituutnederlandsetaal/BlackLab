@@ -69,40 +69,8 @@ public class Response {
         return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
     }
 
-    public static int internalError(ResponseStreamer rs, String message, boolean debugMode, String code) {
-        logger.debug("INTERNAL ERROR " + code + ": " + message);
-        rs.getDataStream().internalError(message, debugMode, code);
-        return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-    }
-
-    public static int internalError(ResponseStreamer rs, String code) {
-        logger.debug("INTERNAL ERROR " + code + " (no message)");
-        rs.getDataStream().internalError(code);
-        return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-    }
-
     public static int success(ResponseStreamer rs, String msg) {
         return status(rs, "SUCCESS", msg, HttpServletResponse.SC_OK);
-    }
-
-    public static int accepted(ResponseStreamer rs) {
-        return status(rs, "SUCCESS", "Documents uploaded succesfully; indexing started.",
-                HttpServletResponse.SC_ACCEPTED);
-    }
-
-    public static int searchTimedOut(ResponseStreamer rs) {
-        return error(rs, "SEARCH_TIMED_OUT", "Search took too long, cancelled.", null,
-                HttpServletResponse.SC_SERVICE_UNAVAILABLE);
-    }
-
-    public static int unauthorized(ResponseStreamer rs, String reason) {
-        return error(rs, "NOT_AUTHORIZED", "Unauthorized operation. " + reason, null, HttpServletResponse.SC_UNAUTHORIZED);
-    }
-
-    public static int methodNotAllowed(ResponseStreamer rs, String method, String reason) {
-        reason = reason == null ? "" : " " + reason;
-        return error(rs, "ILLEGAL_REQUEST", "Illegal " + method + " request." + reason,
-                null, HttpServletResponse.SC_METHOD_NOT_ALLOWED);
     }
 
     public static int forbidden(ResponseStreamer rs) {
@@ -117,21 +85,6 @@ public class Response {
 
     public static int badRequest(ResponseStreamer rs, String code, String message) {
         return error(rs, code, message, null,HttpServletResponse.SC_BAD_REQUEST);
-    }
-
-    public static int unavailable(ResponseStreamer rs, String indexName, String status) {
-        return error(rs, "INDEX_UNAVAILABLE",
-                "The index '" + indexName + "' is not available right now. Status: " + status,
-                null,HttpServletResponse.SC_CONFLICT);
-    }
-
-    public static int indexNotFound(ResponseStreamer rs, String indexName) {
-        return error(rs, "CANNOT_OPEN_INDEX", "Could not open index '" + indexName + "'. Please check the name.",
-                null,HttpServletResponse.SC_NOT_FOUND);
-    }
-
-    public static int illegalIndexName(ResponseStreamer rs, String shortName) {
-        return badRequest(rs, "ILLEGAL_INDEX_NAME", "\"" + shortName + "\" " + IllegalIndexName.ILLEGAL_NAME_ERROR);
     }
 
 }

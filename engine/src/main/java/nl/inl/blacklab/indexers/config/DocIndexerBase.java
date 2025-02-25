@@ -13,7 +13,6 @@ import java.util.Set;
 
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -49,10 +48,16 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         private final int position;
 
-        public OpenTagInfo(String name, int index, int position) {
+        private final int relationId;
+
+        private final Map<String, String> attributes;
+
+        public OpenTagInfo(String name, int index, int position, int relationId, Map<String, String> attributes) {
             this.name = name;
             this.index = index;
             this.position = position;
+            this.relationId = relationId;
+            this.attributes = attributes;
         }
     }
 
@@ -348,12 +353,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
             // Add empty values to all lagging annotations
             for (AnnotationWriter prop : field.annotationWriters()) {
-                while (prop.lastValuePosition() < lastValuePos) {
-                    prop.addValue("");
-                    if (prop.hasPayload())
-                        prop.addPayload(null);
-                    if (prop == propMain) {
-                        field.addFinalStartEndChars();
+                if (prop.hasForwardIndex() || prop == propMain) {
+                    while (prop.lastValuePosition() < lastValuePos) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                        if (prop == propMain) {
+                            field.addFinalStartEndChars();
+                        }
                     }
                 }
             }
@@ -417,7 +424,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param document document to store
      */
     protected void storeWholeDocument(String document) {
-        storeWholeDocument(new TextContent(document));
+        storeWholeDocument(TextContent.from(document));
     }
 
     /**
@@ -468,10 +475,17 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
         int currentPos = getCurrentTokenPosition();
+        AnnotationWriter relationsAnnot = tagsAnnotation();
         if (isOpenTag) {
             trace("<" + tagName + ">");
-            int tagIndex = tagsAnnotation().indexInlineTag(tagName, currentPos, -1, attributes, getIndexType());
-            openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos));
+            int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes,
+                    getIndexType());
+            // We'll remember the relationId assigned above, even though the payload will updated later, when we encounter
+            // the closing tag. We have to use the same relationId in the updated payload, or it won't match the relationId
+            // stored in the attribute terms (which get a payload that only contains the relation id, so we can match them
+            // to their tag).
+            int relationId = relationsAnnot.getRelationIdAtIndex(tagIndex < 0 ? -tagIndex : tagIndex);
+            openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos, relationId, attributes));
         } else {
             traceln("</" + tagName + ">");
 
@@ -482,16 +496,18 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (!openTag.name.equals(tagName))
                 throw new MalformedInputFile(
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
-            int relationId = tagsAnnotation().getNextRelationId();
-            BytesRef payload = PayloadUtils.inlineTagPayload(openTag.position, currentPos, getIndexType(), relationId);
+            attributes = openTag.attributes;
+            boolean maybeExtraInfo = attributes != null && !attributes.isEmpty();
+            BytesRef payload = getPayloadCodec().inlineTagPayload(openTag.position, currentPos, getIndexType(),
+                    openTag.relationId, maybeExtraInfo);
             int index = openTag.index;
             if (index < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)
                 // and this is the index of the last term. Make sure we update both payloads.
                 index = -index;
-                tagsAnnotation().setPayloadAtIndex(index - 1, payload);
+                relationsAnnot.setPayloadAtIndex(index - 1, payload);
             }
-            tagsAnnotation().setPayloadAtIndex(index, payload);
+            relationsAnnot.setPayloadAtIndex(index, payload);
         }
     }
 
@@ -553,21 +569,17 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     /**
-     * Index a token, span or relation.
+     * Get payload for a span or relation.
      *
-     * @param name annotation name
-     * @param value annotation value (or span name or span attribute value)
-     * @param position token position, span start, or relation source
-     * @param spanEndOrRelTarget (optional) span end or relation target (or null if this is just a token)
-     * @param annotType the type of annotation we're indexing: a token, a span (inline tag) or a relation
+     * @param source relation source (or span start, 0-length)
+     * @param target relation target (or span end, 0-length)
+     * @param annotType type of payload to get: token, span or relation
+     * @param maybeExtraInfo is there (maybe) extra information to be lookup in the relation index?
+     * @param indexPosition token position this will be indexed at
+     * @return null for token annotations; the payload for spans and relations.
      */
-    protected void annotationValue(String name, String value, Span position, Span spanEndOrRelTarget,
-            AnnotationType annotType) {
-        // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
-        // which has no source, so we index it at its target.
-        int indexAtPosition = position.start() < 0 ?
-                spanEndOrRelTarget.start() : position.start();
-
+    protected BytesRef getPayload(Span source, Span target, AnnotationType annotType,
+            boolean maybeExtraInfo, int indexPosition) {
         BytesRef payload = null;
         switch (annotType) {
         case TOKEN:
@@ -576,25 +588,26 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         case SPAN:
             // Span: index as a relation from the start of source to the start of target (0-length)
             //   (and in the classic external index, the payload just contains the end position)
-            payload = PayloadUtils.inlineTagPayload(indexAtPosition, spanEndOrRelTarget.start(),
-                    getIndexType(), tagsAnnotation().getNextRelationId());
+            payload = getPayloadCodec().inlineTagPayload(indexPosition, target.start(),
+                    getIndexType(), tagsAnnotation().getNextRelationId(maybeExtraInfo), maybeExtraInfo);
             break;
         case RELATION:
             // Relation: index with the full source and target spans
-            boolean onlyHasTarget = !Span.isValid(position); // standoff root annotation
+            boolean onlyHasTarget = !Span.isValid(source); // standoff root annotation
 
             // Root relations have no source, so we index them at their target position.
             // In this case we set source start/end to target start, so it is indexed there and
             // source length does not need to be stored (because 0 is the default value, see
             // RelationInfo.serializeRelation).
-            int sourceStart = indexAtPosition;
-            int sourceEnd = onlyHasTarget ? indexAtPosition : position.end();
+            int sourceStart = indexPosition;
+            int sourceEnd = onlyHasTarget ? indexPosition : source.end();
 
-            payload = PayloadUtils.relationPayload(onlyHasTarget, sourceStart, sourceEnd,
-                    spanEndOrRelTarget.start(), spanEndOrRelTarget.end(), tagsAnnotation().getNextRelationId());
+            payload = getPayloadCodec().relationPayload(onlyHasTarget, sourceStart, sourceEnd,
+                    target.start(), target.end(), tagsAnnotation().getNextRelationId(maybeExtraInfo),
+                    maybeExtraInfo);
             break;
         }
-        annotationValue(name, value, indexAtPosition, payload);
+        return payload;
     }
 
     /**

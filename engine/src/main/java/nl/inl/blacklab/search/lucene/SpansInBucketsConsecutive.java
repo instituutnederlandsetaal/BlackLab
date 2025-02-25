@@ -12,16 +12,22 @@ import org.apache.lucene.queries.spans.Spans;
 class SpansInBucketsConsecutive extends SpansInBucketsAbstract {
     public SpansInBucketsConsecutive(BLSpans source) {
         super(source);
+        setBucket(new AbstractBucket() {
+            @Override
+            public void gatherHits() throws IOException {
+                int lastEnd = source.startPosition();
+                while (source.startPosition() == lastEnd) {
+                    addHitFromSource();
+                    lastEnd = source.endPosition();
+                    if (source.nextStartPosition() == Spans.NO_MORE_POSITIONS)
+                        break;
+                }
+            }
+        });
     }
 
     @Override
-    protected void gatherHits() throws IOException {
-        int lastEnd = source.startPosition();
-        while (source.startPosition() == lastEnd) {
-            addHitFromSource();
-            lastEnd = source.endPosition();
-            if (source.nextStartPosition() == Spans.NO_MORE_POSITIONS)
-                break;
-        }
+    public String toString() {
+        return "SIB-CONS(" + source + ")";
     }
 }

@@ -8,6 +8,8 @@ import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 
 /** Represents Lucene field types. */
 public class BLFieldTypeLucene implements BLFieldType {
@@ -48,22 +50,30 @@ public class BLFieldTypeLucene implements BLFieldType {
     }
 
     public static synchronized BLFieldType contentStore() {
-        return getFieldType(false, false, true);
+        return getFieldType(false, false, true, null);
     }
 
-    public static synchronized BLFieldType annotationSensitivity(boolean offsets, boolean forwardIndex) {
-        return getFieldType(offsets, forwardIndex, false);
+    public static synchronized BLFieldType annotationSensitivity(boolean offsets, boolean forwardIndex,
+            RelationsStrategy relationsStrategy) {
+        return getFieldType(offsets, forwardIndex, false, relationsStrategy);
     }
 
     /**
      * Get the appropriate FieldType given the options for an annotation sensitivity.
+     *
+     * @param offsets whether to store offsets
+     * @param forwardIndex whether to store a forward index
+     * @param contentStore whether to store a content store
+     * @param strategy the relation strategy (if this is a relation field; null otherwise)
      */
-    private static synchronized BLFieldType getFieldType(boolean offsets, boolean forwardIndex, boolean contentStore) {
+    private static synchronized BLFieldType getFieldType(boolean offsets, boolean forwardIndex, boolean contentStore,
+            RelationsStrategy strategy) {
         if (contentStore && (offsets || forwardIndex))
             throw new IllegalArgumentException("Field can either be content store or can have offsets/forward index, "
                     + "not both!");
 
-        String key = (offsets ? "O" : "-") + (forwardIndex ? "F" : "-") + (contentStore ? "C" : "-");
+        String key = (offsets ? "O" : "-") + (forwardIndex ? "F" : "-") + (contentStore ? "C" : "-") +
+                "[" + (strategy != null ? strategy.getName() : "-") + "]";
         return fieldTypeCache.computeIfAbsent(key, (__) -> {
             FieldType type = new FieldType();
             type.setStored(contentStore);
@@ -85,7 +95,11 @@ public class BLFieldTypeLucene implements BLFieldType {
             }
             if (forwardIndex) {
                 // indicate that this field should get a forward index when written to the index
-                BlackLabIndexIntegrated.setForwardIndexField(type);
+                BlackLabIndexIntegrated.setFieldHasForwardIndex(type);
+            }
+            if (strategy != null) {
+                // Record the relation strategy used for this _relations field
+                BlackLabIndexIntegrated.setRelationsStrategy(type, strategy);
             }
             type.freeze();
             return new BLFieldTypeLucene(type);

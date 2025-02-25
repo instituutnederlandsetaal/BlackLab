@@ -12,6 +12,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.csv.CSVFormat;
@@ -40,8 +42,19 @@ class FreqListOutputTsv implements FreqListOutput {
         List<String> record = new ArrayList<>();
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
-        for (int i = 0; i < tokenIds.length; i++) {
-            String token = sensitivity[i].desensitize(terms[i].get(tokenIds[i]));
+        // for each annotation construct a string for the ngram
+        int ngramSize = groupId.getNgramSize();
+        for (int i = 0, tokenArrIndex = 0; tokenArrIndex < tokenIds.length; i++, tokenArrIndex += ngramSize) {
+            // get respective sensitivity and term index for the annotation
+            MatchSensitivity matchSensitivity = sensitivity == null ? MatchSensitivity.INSENSITIVE : sensitivity[i];
+            Terms termIndex = terms[i]; // contains id to string mapping
+            // map token int ids to their string values
+            String[] tokenList = new String[ngramSize];
+            for (int j = 0; j < ngramSize; j++) {
+                tokenList[j] = matchSensitivity.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
+            }
+            // join with a space
+            String token = String.join(" ", tokenList);
             record.add(token);
         }
         // - metadata values

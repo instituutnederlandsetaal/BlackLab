@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 /**
  * A (variable-size) list of captured relations, e.g. all relations in a sentence.
  */
-public class RelationListInfo extends MatchInfo {
+public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
 
     public static RelationListInfo create(List<RelationInfo> relations, String overriddenField) {
         return new RelationListInfo(relations, overriddenField);
@@ -82,7 +83,62 @@ public class RelationListInfo extends MatchInfo {
         return Objects.hash(relations);
     }
 
-    public Collection<RelationInfo> getRelations() {
-        return Collections.unmodifiableCollection(relations);
+    public List<RelationInfo> getRelations() {
+        return Collections.unmodifiableList(relations);
+    }
+
+    @Override
+    public boolean isRoot() {
+        return relations.stream().allMatch(RelationInfo::isRoot);
+    }
+
+    @Override
+    public int getSourceStart() {
+        return relations.stream()
+                .filter(r -> !r.isRoot())
+                .map(RelationInfo::getSourceStart)
+                .min(Comparator.naturalOrder())
+                .orElse(0);
+    }
+
+    @Override
+    public int getSourceEnd() {
+        return relations.stream()
+                .filter(r -> !r.isRoot())
+                .map(RelationInfo::getSourceEnd)
+                .max(Comparator.naturalOrder())
+                .orElse(0);
+    }
+
+    @Override
+    public int getTargetStart() {
+        return relations.stream()
+                .map(RelationInfo::getTargetStart)
+                .min(Comparator.naturalOrder())
+                .orElse(0);
+    }
+
+    @Override
+    public int getTargetEnd() {
+        return relations.stream()
+                .map(RelationInfo::getTargetEnd)
+                .max(Comparator.naturalOrder())
+                .orElse(0);
+    }
+
+    @Override
+    public String getField() {
+        return relations.isEmpty() ? null : relations.get(0).getField();
+    }
+
+    @Override
+    public String getTargetField() {
+        return relations.isEmpty() ? null : relations.get(0).getTargetField();
+    }
+
+    @Override
+    public boolean isCrossFieldRelation() {
+        String targetField = getTargetField();
+        return targetField != null && !targetField.equals(getField());
     }
 }

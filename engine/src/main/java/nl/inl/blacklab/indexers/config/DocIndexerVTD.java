@@ -23,7 +23,6 @@ import com.ximpleware.VTDException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 
-import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -33,6 +32,7 @@ import nl.inl.blacklab.indexers.config.InlineObject.InlineObjectType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
+import nl.inl.util.TextContent;
 import nl.inl.util.XmlUtil;
 
 /**
@@ -240,12 +240,16 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             finder.setFragPos(FragmentPosition.AFTER_CLOSE_TAG);
             endWord();
 
-            // Add empty values to all lagging annotations
+            // Add empty values to all lagging annotations with a forward index
             for (AnnotationWriter prop: annotatedFieldWriter.annotationWriters()) {
-                while (prop.lastValuePosition() < lastValuePositionAllAnnots) {
-                    prop.addValue("");
-                    if (prop.hasPayload())
-                        prop.addPayload(null);
+                if (prop.hasForwardIndex() || prop == annotatedFieldWriter.mainAnnotation()) {
+                    while (prop.lastValuePosition() < lastValuePositionAllAnnots) {
+                        prop.addValue("");
+                        if (prop.hasPayload())
+                            prop.addPayload(null);
+                        if (prop == annotatedFieldWriter.mainAnnotation())
+                            annotatedFieldWriter.addFinalStartEndChars();
+                    }
                 }
             }
         }
@@ -389,7 +393,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
         try {
             if (basePath != null) {
                 // Basepath given. Navigate to the (first) matching element and evaluate the other XPaths from there.
-                // @@@ why only first? shouldn't we process all matches?
+                // FIXME (?) why only first? shouldn't we process all matches?
                 finder.navpush();
                 AutoPilot apBase = finder.acquireExpression(basePath);
                 apBase.evalXPath();
@@ -434,7 +438,8 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     @Override
     protected void storeDocument() {
-        storeWholeDocument(new TextContent(inputDocument, documentByteOffset, documentLengthBytes, StandardCharsets.UTF_8));
+        storeWholeDocument(TextContent.from(inputDocument, documentByteOffset,
+                documentLengthBytes, StandardCharsets.UTF_8));
     }
 
     @Override

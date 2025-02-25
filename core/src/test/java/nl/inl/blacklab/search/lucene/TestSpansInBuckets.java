@@ -40,8 +40,8 @@ public class TestSpansInBuckets {
         Assert.assertEquals(1, hpd.docID());
         Assert.assertEquals(1, hpd.nextBucket());
         Assert.assertEquals(1, hpd.bucketSize());
-        Assert.assertEquals(1, hpd.startPosition(0));
-        Assert.assertEquals(5, hpd.endPosition(0));
+        Assert.assertEquals(1, hpd.bucketStart());
+        Assert.assertEquals(5, hpd.bucketEnd());
         Assert.assertEquals(SpansInBuckets.NO_MORE_BUCKETS, hpd.nextBucket());
     }
 

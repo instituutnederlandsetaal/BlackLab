@@ -29,6 +29,7 @@
             <artifactId>blacklab-query-parser</artifactId>
             <version>${project.version}</version>
         </dependency>
+
     </dependencies>
 
 

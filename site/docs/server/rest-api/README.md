@@ -61,7 +61,7 @@ Information about the corpus such as size, documentFormat, fields, and status.
 Search for individual matches of a text pattern, or for documents matching criteria.
 
 * [Find hits / group hits](corpus/hits/get.md) : `GET /hits`
-* [Parse a pattern without searching](corpus/parse-pattern) : `GET /parse-pattern`
+* [Parse a pattern without searching](corpus/parse-pattern/get.md) : `GET /parse-pattern`
 * [Find documents / group documents](corpus/docs/get.md) : `GET /docs`
 
 ### Information about a document

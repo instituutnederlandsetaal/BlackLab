@@ -26,6 +26,7 @@ public class WebserviceParamsUtils {
      * @param patt pattern string
      * @param pattLang pattern language (usually corpusql)
      * @param pattGapData optional pattern gap data if the pattern string contains gaps
+     * @param adjustRelationHits if true, automatically add rspan(..., 'all') so hit encompasses all matched relations
      * @return text pattern
      */
     public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattLang, String pattGapData, boolean adjustRelationHits) {

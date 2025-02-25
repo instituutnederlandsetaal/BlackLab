@@ -67,7 +67,7 @@ async function createIndex(indexName) {
     return request.send();
 }
 
-async function getIndexRequest(indexName) {
+async function getIndexStatus(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
             .request(constants.SERVER_URL)
@@ -160,28 +160,29 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
         it('create a new index', async () => {
             const indexName = createIndexName();
             const respFormat = await createInputFormat();
-            assert.isTrue(respFormat.ok);
+            assert.isTrue(respFormat.ok, 'Error creating input format');
 
             const createRes = await createIndex(indexName);
-            assert.isTrue(createRes.ok);
+            assert.isTrue(createRes.ok, 'Error creating index');
 
-            const resGetIndex = await getIndexRequest(indexName);
-            assert.isTrue(resGetIndex.ok);
+            const resGetIndex = await getIndexStatus(indexName);
+            assert.isTrue(resGetIndex.ok, 'Error getting index status');
         });
         it('adds to index', async () => {
 
             const indexName = createIndexName();
             const req = await createInputFormat();
-            assert.isTrue(req.ok);
+            assert.isTrue(req.ok, 'Error creating input format');
 
             const createRes = await createIndex(indexName);
-            assert.isTrue(createRes.ok);
+            assert.isTrue(createRes.ok, 'Error creating index');
 
             const addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-            assert.isTrue(addReq.ok);
+            assert.equal(200, addReq.status, `Received code ${addReq.status} adding to index`);
+            assert.isTrue(addReq.ok, 'Error adding to index');
 
             const indexContents = await getIndexContent(indexName);
-            assert.isTrue(indexContents.ok);
+            assert.isTrue(indexContents.ok, 'Error getting index contents');
 
             const body = indexContents.body;
             const expectedContent = JSON.parse(fs.readFileSync(EXPECTED_INDEX_CONTENT_PATH, READ_FILE_OPTS));
@@ -192,18 +193,19 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
 
         it('get index metadata', async () => {
             const indexName = createIndexName();
-            await createInputFormat();
+            const req = await createInputFormat();
+            assert.isTrue(req.ok, 'Error creating input format');
 
             let createRes = await createIndex(indexName);
-            assert.isTrue(createRes.ok);
+            assert.isTrue(createRes.ok, 'Error creating index');
 
             let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-            //assert.isTrue(addReq.ok);
-            assert.equal(200, addReq.status);
+            assert.equal(200, addReq.status, `Received code ${addReq.status} adding to index`);
+            assert.isTrue(addReq.ok, 'Error adding to index');
 
             const indexMetadata = await getIndexMetadata(indexName);
             const body = indexMetadata.body;
-            assert.isTrue(indexMetadata.ok);
+            assert.isTrue(indexMetadata.ok, 'Error getting index metadata');
 
             const expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH, READ_FILE_OPTS));
 
@@ -213,19 +215,21 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
 
         it('query from config', async () => {
             const indexName = createIndexName();
-            await createInputFormat();
+            const req = await createInputFormat();
+            assert.isTrue(req.ok, 'Error creating input format');
 
             let createRes = await createIndex(indexName);
-            assert.isTrue(createRes.ok);
+            assert.isTrue(createRes.ok, 'Error creating index');
 
             let addReq = await addToIndex(indexName, DOC_TO_INDEX_PATH);
-            assert.isTrue(addReq.ok);
+            assert.equal(200, addReq.status, `Received code ${addReq.status} adding to index`);
+            assert.isTrue(addReq.ok, 'Error adding to index');
 
             const queriesTest = TEST_CONFIG['queries'];
             for (let [testName, testCase] of Object.entries(queriesTest)) {
                 const filterTerms = testCase['filters'];
                 const queryInd = await queryIndex(indexName, '"120"', filterTerms, "application/xml")
-                assert.isTrue(queryInd.ok);
+                assert.isTrue(queryInd.ok, 'Error querying index');
                 const body = await xmlToJson(queryInd.body);
 
                 const key = 'summary';

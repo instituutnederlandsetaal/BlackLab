@@ -9,7 +9,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
@@ -33,6 +35,7 @@ import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.config.BLSConfigDebug;
 import nl.inl.blacklab.server.config.ConfigFileReader;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -96,6 +99,8 @@ public class BlackLabServer extends HttpServlet {
                 setMetricsProvider(config);
                 getInstrumentationProvider(); // ensure creation
 
+                checkExpectedDebugAddresses(config);
+
                 // Determine default output type.
                 defaultOutputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(),
                         DataFormat.XML);
@@ -104,6 +109,20 @@ public class BlackLabServer extends HttpServlet {
             } catch (IOException e) {
                 throw new ConfigurationException("Error reading configuration file", e);
             }
+        }
+    }
+
+    /** Check if localhost addresses are in the list of debug addresses. If not, warn about it.
+     * This may help to debug issues in some cases.
+     */
+    public static void checkExpectedDebugAddresses(BLSConfig config) {
+        List<String> addresses = config.getDebug().getAddresses();
+        Set<String> missingLocalhosts = new HashSet<>(BLSConfigDebug.DEBUG_ADDRESSES_LOCALHOST);
+        for (String address: addresses)
+            missingLocalhosts.remove(address);
+        if (!missingLocalhosts.isEmpty()) {
+            logger.info("NOTE: debug.addresses has been overridden and no longer contains these expected localhost values: " +
+                    StringUtils.join(missingLocalhosts, "; "));
         }
     }
 

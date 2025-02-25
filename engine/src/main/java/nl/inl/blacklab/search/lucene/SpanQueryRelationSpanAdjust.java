@@ -120,17 +120,16 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
         if (o == null || getClass() != o.getClass())
             return false;
         SpanQueryRelationSpanAdjust that = (SpanQueryRelationSpanAdjust) o;
-        return Objects.equals(clause, that.clause) && mode == that.mode;
+        return Objects.equals(clause, that.clause) && mode == that.mode && Objects.equals(
+                overriddenField, that.overriddenField);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, mode);
+        return Objects.hash(clause, mode, overriddenField);
     }
 
     /**

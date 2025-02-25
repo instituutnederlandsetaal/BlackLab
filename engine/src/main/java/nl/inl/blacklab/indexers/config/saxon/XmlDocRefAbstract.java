@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.CountingReader;
 import nl.inl.util.TextContent;
@@ -36,6 +37,8 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
      * @throws IOException
      */
     private static char[] readerToCharArray(Reader reader, long startOffset, long endOffset) {
+        if (endOffset - startOffset > Constants.JAVA_MAX_ARRAY_SIZE)
+            throw new IllegalArgumentException("Content doesn't fit char array");
         try {
             if (startOffset > 0)
                 IOUtils.skip(reader, startOffset);
@@ -61,9 +64,8 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
      */
     @Override
     public TextContent getTextContent(long startOffset, long endOffset) {
-        Reader reader = getInternalReader(startOffset);
-        char[] result = readerToCharArray(reader, 0, endOffset - startOffset);
-        return new TextContent(result);
+        char[] result = readerToCharArray(getInternalReader(startOffset), 0, endOffset - startOffset);
+        return TextContent.from(result);
     }
 
     /** Get a Reader at the specified position. */

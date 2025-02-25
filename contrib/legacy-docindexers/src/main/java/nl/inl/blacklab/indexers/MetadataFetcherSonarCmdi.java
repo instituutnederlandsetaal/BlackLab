@@ -24,12 +24,12 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
+import nl.inl.util.TextContent;
 
 /**
  * Example of a metadata fetcher, a class used to fetch metadata from an
@@ -149,7 +149,7 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
             docIndexer.addMetadataField("AuthorNameOrPseudonymSearch", authorNameAndPseudonym);
 
             // Store metadata XML in content store and corresponding id in Lucene document
-            TextContent document = new TextContent(cmdiBuffer, Indexer.DEFAULT_INPUT_ENCODING);
+            TextContent document = TextContent.from(cmdiBuffer, Indexer.DEFAULT_INPUT_ENCODING);
             docIndexer.getDocWriter().storeInContentStore(luceneDoc, document, "metadataCid", "metadata");
 
             if (metadataZipFile == null)

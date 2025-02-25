@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -50,15 +51,19 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
-    default BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes,
+    default BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex, Map<String, String> attributes,
             String captureAs) {
-        return tagQuery(queryInfo, luceneField, tagName, attributes, TextPatternTags.Adjust.FULL_TAG, captureAs);
+        return tagQuery(queryInfo, luceneField, tagNameRegex, attributes, TextPatternTags.Adjust.FULL_TAG, captureAs);
     }
 
-    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName, Map<String, String> attributes,
+    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex, Map<String, String> attributes,
             TextPatternTags.Adjust adjust, String captureAs);
 
+    /** Get our index type (external or integrated). */
     IndexType getType();
+
+    /** Get the strategy to use for indexing/searching relations. */
+    RelationsStrategy getRelationsStrategy();
 
     enum IndexType {
         EXTERNAL_FILES, // classic index with external forward index, etc.

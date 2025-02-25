@@ -34,15 +34,6 @@ public class ForwardIndexField {
         this.tokensIndexOffset = file.readLong();
     }
 
-    public ForwardIndexField(String fieldName, int numberOfTerms, long termIndexOffset, long termOrderOffset,
-            long tokensIndexOffset) {
-        this.fieldName = fieldName;
-        this.numberOfTerms = numberOfTerms;
-        this.termOrderOffset = termOrderOffset;
-        this.termIndexOffset = termIndexOffset;
-        this.tokensIndexOffset = tokensIndexOffset;
-    }
-
     public String getFieldName() {
         return fieldName;
     }

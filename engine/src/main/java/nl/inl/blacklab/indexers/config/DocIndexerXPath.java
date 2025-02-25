@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.lucene.util.BytesRef;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -16,6 +18,8 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
@@ -156,12 +160,14 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // annotations as attributes.
             // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
             //  not an attribute)
-            annotationValue(annotationWriter.name(), spanOrRelType, sourceSpan, targetSpan, type);
+            int indexAtPosition = sourceSpan.start();
+            BytesRef payload = getPayload(sourceSpan, targetSpan, type, false, indexAtPosition);
+            annotationValue(annotationWriter.name(), spanOrRelType, indexAtPosition, payload);
             for (ConfigAnnotation annotation: standoffAnnotations) {
                 processAnnotation(annotation, standoffNode, sourceSpan, targetSpan, this::indexAnnotationValues);
             }
         } else {
-            // Integrated index format; span name and attributes indexed together as one term.
+            // Integrated index format.
 
             // Collect any attribute values
             Map<String, Collection<String>> attributes = new HashMap<>();
@@ -177,18 +183,17 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             if (type == AnnotationType.SPAN)
                 fullType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, spanOrRelType);
 
-            // Determine the full value to index, e.g. full type and any attributes
-            String valueToIndex = RelationUtil.indexTermMulti(fullType, attributes, false);
-
-            // Actually index the value, once without and once with attributes (if any)
-            annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
-            if (attributes != null && !attributes.isEmpty()) {
-                // Also index a version without attributes. We'll use this for faster search if we don't filter on
-                // attributes.
-                // OPT: find a way to only create the payload once, because it is identical for both.
-                valueToIndex = RelationUtil.indexTermMulti(fullType, null, true);
-                annotationValue(name, valueToIndex, sourceSpan, targetSpan, type);
-            }
+            // Actually index the relation according to our relation indexing strategy (single term / multiple terms)
+            // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
+            // which has no source, so we index it at its target.
+            int indexAtPosition = sourceSpan.start() >= 0 ? sourceSpan.start() : targetSpan.start();
+            RelationsStrategy relationsStrategy = getDocWriter().getRelationsStrategy();
+            // For separate terms: always assign relationId even if no attributes, because it is needed for matching
+            boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
+            BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);
+            relationsStrategy.indexRelationTermsMulti(fullType, attributes, payload, (String valueToIndex, BytesRef payloadThisToken) -> {
+                annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken);
+            });
         }
     }
 
@@ -416,7 +421,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
      */
     protected String determineValuePath(ConfigAnnotation annotation, T context) {
         String valuePath = annotation.getValuePath();
-        //@@@ warn about eventual deprecation
+        // TODO: warn about eventual deprecation
         // Substitute any captured values into the valuePath?
         int i = 1;
         for (String captureValuePath : annotation.getCaptureValuePaths()) {

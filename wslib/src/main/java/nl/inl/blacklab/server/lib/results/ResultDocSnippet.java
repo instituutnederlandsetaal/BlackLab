@@ -27,6 +27,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.util.BlsUtils;
+import nl.inl.util.StringUtil;
 
 public class ResultDocSnippet {
 
@@ -83,8 +84,8 @@ public class ResultDocSnippet {
         if (context.isInlineTag()) {
             // Make sure we capture the tag so we can use its boundaries for the snippet
             TextPatternFixedSpan producer = new TextPatternFixedSpan(start, end);
-            String tagName = context.inlineTagName();
-            TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagName, XFRelations.DEFAULT_CONTEXT_REL_NAME);
+            String tagNameRegex = StringUtil.escapeLuceneRegexCharacters(context.inlineTagName());
+            TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagNameRegex, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             try {

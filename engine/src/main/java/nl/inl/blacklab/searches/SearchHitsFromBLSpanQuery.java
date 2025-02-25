@@ -3,6 +3,7 @@ package nl.inl.blacklab.searches;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -74,7 +75,8 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
 
     @Override
     public boolean isAnyTokenQuery() {
-        return spanQuery.guarantees().isSingleAnyToken();
+        return spanQuery instanceof SpanQueryAnyToken &&
+                spanQuery.guarantees().producesSingleTokens();
     }
 
     @Override

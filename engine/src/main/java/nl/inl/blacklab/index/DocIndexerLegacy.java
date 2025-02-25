@@ -5,12 +5,12 @@ import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import nl.inl.util.TextContent;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
 import nl.inl.util.FileReference;
+import nl.inl.util.TextContent;
 
 /**
  * Abstract base class for a DocIndexer processing XML files.
@@ -69,7 +69,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         // storePart only works for the classic external index format.
         // for internal, we just ignore it (will be fully stored eventually by final call to store())
 
-        getDocWriter().storeInContentStore(null, new TextContent(content.toString()), captureContentFieldName, "contents");
+        getDocWriter().storeInContentStore(null, TextContent.from(content.toString()), captureContentFieldName, "contents");
     }
 
     private void appendContentInternal(String str) {
@@ -360,9 +360,9 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
     }
 
     protected void storeDocument() {
-        TextContent document = new TextContent(content.toString());
         String contentStoreName = captureContentFieldName;
         String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
-        getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);
+        getDocWriter().storeInContentStore(currentDoc, TextContent.from(content.toString()),
+                contentIdFieldName, contentStoreName);
     }
 }

@@ -8,6 +8,7 @@ import java.util.Set;
 
 import jakarta.xml.bind.annotation.XmlTransient;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
@@ -19,6 +20,8 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.codec.BlackLab40Codec;
+import nl.inl.blacklab.codec.BlackLabCodec;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
@@ -29,6 +32,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -37,6 +41,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -52,10 +57,15 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
-    public static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+    private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
 
-    /** Lucene field attribute. Does the field have a content store */
-    static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
+    /** Lucene field attribute. Does the field have a content store? */
+    private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
+
+    /** Lucene field attribute. How is this relation field encoded?
+     *  ("naive-separate-terms" / "single-term" / ...)
+     */
+    private static final String BLFA_RELATION_STRATEGY = "BL_relationsStrategy";
 
     /**
      * Does the specified Lucene field have a forward index stored with it?
@@ -68,31 +78,18 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * See {@link nl.inl.blacklab.analysis.PayloadUtils}.
      *
      * @param fieldInfo Lucene field to check
-     * @return true if it's a forward index field
+     * @return true if it has a forward index
      */
-    public static boolean isForwardIndexField(FieldInfo fieldInfo) {
+    public static boolean doesFieldHaveForwardIndex(FieldInfo fieldInfo) {
         String v = fieldInfo.getAttribute(BLFA_FORWARD_INDEX);
         return v != null && v.equals("true");
     }
 
     /**
-     * Is the specified Lucene field a relations field?
-     *
-     * If yes, we should store relations info for this field.
-     *
-     * @param fieldInfo Lucene field to check
-     * @return true if it's a relations field
-     */
-    public static boolean isRelationsField(FieldInfo fieldInfo) {
-        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
-        return nameComponents.length > 1 && AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1]);
-    }
-
-    /**
-     * Set this field type to be a forward index field
+     * Indicate that this field has a forward index.
      * @param type field type
      */
-    public static void setForwardIndexField(FieldType type) {
+    public static void setFieldHasForwardIndex(FieldType type) {
         type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
     }
 
@@ -105,6 +102,30 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public static boolean isContentStoreField(FieldInfo fieldInfo) {
         String v = fieldInfo.getAttribute(BLFA_CONTENT_STORE);
         return v != null && v.equals("true");
+    }
+
+    /**
+     * Set this field type to be a content store field
+     * @param type field type
+     */
+    public static void setContentStoreField(FieldType type) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
+    }
+
+    public static RelationsStrategy getRelationsStrategy(FieldInfo fieldInfo) {
+        String strategyName = fieldInfo.getAttribute(BLFA_RELATION_STRATEGY);
+        if (StringUtils.isEmpty(strategyName))
+            return RelationsStrategy.ifNotRecorded();
+        return RelationsStrategy.fromName(strategyName);
+    }
+
+    /**
+     * Set the relations index/search strategy for this relations field
+     * @param type field type
+     * @param strategy strategy to use
+     */
+    public static void setRelationsStrategy(FieldType type, RelationsStrategy strategy) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_RELATION_STRATEGY, strategy.getName());
     }
 
     /**
@@ -132,15 +153,43 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     /**
-     * Set this field type to be a content store field
-     * @param type field type
+     * Is the specified Lucene field a relations field?
+     *
+     * If yes, we should store relations info for this field.
+     *
+     * @param fieldInfo Lucene field to check
+     * @return true if it's a relations field
      */
-    public static void setContentStoreField(FieldType type) {
-        type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
+    public static boolean isRelationsField(FieldInfo fieldInfo) {
+        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
+        return nameComponents.length > 1 && nameComponents[1] != null &&
+                AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1]);
+    }
+
+    /**
+     * Get the relation info index for an index segment.
+     *
+     * The returned relation info index should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the relation info index for.
+     * @return relation info index, or null if not available
+     */
+    public static RelationInfoSegmentReader relationInfo(LeafReaderContext lrc) {
+        return BlackLabCodecUtil.getPostingsReader(lrc).relationInfo();
     }
 
     /** A list of stored fields that doesn't include content store fields. */
     private Set<String> allExceptContentStoreFields;
+
+    /** Relation index/search strategy for this index.
+     * ("all encoded into one term" / "type and attributes in separate terms" / ...)
+     */
+    public RelationsStrategy relationsStrategy = RelationsStrategy.ifNotRecorded();
+
+    /** Get the strategy to use for indexing/searching relations. */
+    public RelationsStrategy getRelationsStrategy() {
+        return relationsStrategy;
+    }
 
     BlackLabIndexIntegrated(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
@@ -163,12 +212,24 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         // whole input document) we don't generally want returned when requesting
         // a Document)
         allExceptContentStoreFields = new HashSet<>();
+        boolean fieldsFounds = false; // is this a completely empty index..? (except for the metadata doc)
         for (LeafReaderContext lrc: reader().leaves()) {
             for (FieldInfo fi: lrc.reader().getFieldInfos()) {
                 if (!isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
+
+                if (IndexMetadataIntegrated.isMetadataDocField(fi.name))
+                    continue;
+                fieldsFounds = true;
+
+                // Also determine the relations strategy used when indexing,
+                // so we can use the same one for searching.
+                if (!createNewIndex && isRelationsField(fi))
+                    relationsStrategy = getRelationsStrategy(fi);
             }
         }
+        if (createNewIndex || !fieldsFounds)
+            relationsStrategy = RelationsStrategy.forNewIndex();
     }
 
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
@@ -210,7 +271,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagName,
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
         RelationInfo.SpanMode spanMode;
@@ -220,9 +281,10 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         default:
         case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
         }
+
         return new SpanQueryRelations(queryInfo, luceneField,
-                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName), attributes,
-                SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, null);
+                RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),
+                attributes, SpanQueryRelations.Direction.FORWARD, spanMode, captureAs, null);
     }
 
     @Override

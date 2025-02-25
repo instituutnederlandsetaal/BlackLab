@@ -1,10 +1,9 @@
 package nl.inl.blacklab.search.lucene;
 
-import org.apache.lucene.queries.spans.FilterSpans;
-
 import java.io.IOException;
 import java.util.Arrays;
 
+import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Gets the hits in other fields (from the matchInfo).
@@ -67,12 +66,19 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
             endAdjusted = Integer.MIN_VALUE;
             for (int i = 0; i < matchInfo.length; i++) {
                 MatchInfo info = matchInfo[i];
-                if (info != null && info.getType() == MatchInfo.Type.RELATION) {
-                    RelationInfo rel = (RelationInfo) info;
-                    if (rel.isCrossFieldRelation() && rel.getTargetField().equals(targetField)) {
-                        // Target of cross-field relation to our targetField.
-                        startAdjusted = Math.min(startAdjusted, rel.getTargetStart());
-                        endAdjusted = Math.max(endAdjusted, rel.getTargetEnd());
+                if (info != null) {
+                    if (targetField.equals(info.getField())) {
+                        // This match info's (source) span is in our target field
+                        startAdjusted = Math.min(startAdjusted, info.getSpanStart());
+                        endAdjusted = Math.max(endAdjusted, info.getSpanEnd());
+                    }
+                    if (info.getType() == MatchInfo.Type.RELATION) {
+                        RelationInfo rel = (RelationInfo) info;
+                        if (rel.isCrossFieldRelation() && rel.getTargetField().equals(targetField)) {
+                            // Target of cross-field relation to our targetField.
+                            startAdjusted = Math.min(startAdjusted, rel.getTargetStart());
+                            endAdjusted = Math.max(endAdjusted, rel.getTargetEnd());
+                        }
                     }
                 }
             }

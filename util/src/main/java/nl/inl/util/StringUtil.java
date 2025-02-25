@@ -33,11 +33,11 @@ public final class StringUtil {
     }
 
     /** Any characters that should be escaped when constructing a Java regular expression matching a value */
-    private static final Pattern PATT_REGEX_CHARACTERS_JAVA = Pattern.compile("([|\\\\?!*+()<>\\[\\]\\-=^${}.])");
+    private static final Pattern PATT_REGEX_CHARACTERS_JAVA =   Pattern.compile("([|\\\\?*+()<\\[\\]{}.!>\\-=^$])");
 
     /** Any characters that should be escaped when constructing a Lucene regular expression matching a value.
-        (compared to Java, doesn't escape &lt;&gt;-=!^$) but does escape &quot; and <) */
-    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()\\[\\]\\{}\\<.\"])");
+        (compared to Java, doesn't escape !&gt;-=^$) but does escape &quot;) */
+    private static final Pattern PATT_REGEX_CHARACTERS_LUCENE = Pattern.compile("([|\\\\?*+()<\\[\\]{}.\"#@&])");
 
     /**
      * Escape regex special characters
@@ -213,7 +213,7 @@ public final class StringUtil {
                 s.append(".");
                 break;
             // escape special regexp-characters
-            case '^': // escape character in cmd.exe
+            case '^':
             case '(':
             case ')':
             case '[':
@@ -274,8 +274,10 @@ public final class StringUtil {
         return Normalizer.normalize(value, Normalizer.Form.NFC);
     }
 
+    public static Pattern insensitiveCollatorPattern = Pattern.compile("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]");
+
     public static String removeCharsIgnoredByInsensitiveCollator(String s) {
-        return s.replaceAll("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]", "");
+        return insensitiveCollatorPattern.matcher(s).replaceAll("");
     }
 
     /** A backslash followed by any other character (which will be captured). */
@@ -318,5 +320,14 @@ public final class StringUtil {
         }
         matcher.appendTail(result); // add the final bit
         return result.toString();
+    }
+
+    /** Remove characters that shouldn't occur in a capture name.
+     *  Used for e.g. capturing tags using a regular expression. */
+    public static String sanitizeCaptureName(String stringOrRegex) {
+        String name = stringOrRegex.replaceAll("[^\\p{L}\\p{N}\\-._]+", "");
+        if (name.isEmpty())
+            return "span";
+        return name;
     }
 }

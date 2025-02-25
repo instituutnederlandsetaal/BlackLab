@@ -1,5 +1,7 @@
 package nl.inl.blacklab.index;
 
+import java.io.Reader;
+
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;

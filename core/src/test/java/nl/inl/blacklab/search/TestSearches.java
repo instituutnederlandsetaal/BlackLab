@@ -37,6 +37,8 @@ import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
@@ -273,7 +275,8 @@ public class TestSearches {
 
     @Test
     public void testTags() {
-        List<String> expected = List.of(
+        List<String> expected;
+        expected = List.of(
                 "[The quick brown fox] jumps", "over [the lazy dog]", "May [the Force] be");
         Assert.assertEquals(expected, testIndex.findConc("<entity/>"));
 
@@ -292,6 +295,36 @@ public class TestSearches {
         expected = List.of(
                 "lazy [dog]");
         Assert.assertEquals(expected, testIndex.findConc(" 'dog' </s> "));
+    }
+
+    @Test
+    public void testRegexTags() {
+        List<String> expected = List.of(
+                "[The quick brown fox] jumps", "over [the lazy dog]", "May [the Force] be");
+        Assert.assertEquals(expected, testIndex.findConc("<'e.*'/>"));
+
+        expected = List.of(
+                "[The] quick");
+        Assert.assertEquals(expected, testIndex.findConc(" <'s'> 'the' "));
+
+        expected = List.of(
+                "over [the lazy] dog", "[To find] or");
+        Assert.assertEquals(expected, testIndex.findConc("<'.*'> [] 'lazy|find' "));
+    }
+
+    @Test
+    public void testWithSpans() {
+        if (testIndex.getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
+            Hits hits = testIndex.find("with-spans('quick' 'brown')");
+            Assert.assertEquals(1, hits.size());
+            MatchInfo[] matchInfo = hits.get(0).matchInfo();
+            Assert.assertEquals(1, matchInfo.length);
+            Assert.assertEquals(MatchInfo.Type.LIST_OF_RELATIONS, matchInfo[0].getType());
+            List<RelationInfo> rels = ((RelationListInfo) matchInfo[0]).getRelations();
+            Assert.assertEquals(2, rels.size());
+            Assert.assertEquals("entity", rels.get(0).getRelationType());
+            Assert.assertEquals("s", rels.get(1).getRelationType());
+        }
     }
 
     @Test
@@ -675,21 +708,6 @@ public class TestSearches {
         Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     @Test
     public void testEscape() throws InvalidQuery {
         // Keys are CQL regexes (i.e. the $ part in [word="$"]), values are the expected Lucene regex
@@ -722,6 +740,60 @@ public class TestSearches {
                 Assert.assertEquals(expectedLuceneRegex, term.text());
             }
         });
+    }
+
+    @Test
+    public void testLookAhead() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find] or");
+        TextPattern patt = CorpusQueryLanguageParser.parse("'find' (?= 'or' 'not')");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testNegativeLookAhead() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find] or");
+        TextPattern patt = CorpusQueryLanguageParser.parse("'find' (?! 'That' 'is')");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testLookBehind() throws InvalidQuery {
+        List<String> expected = Arrays.asList("to [find] That");
+        TextPattern patt = CorpusQueryLanguageParser.parse("(?<= 'not' 'to' ) 'find'");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testNegativeLookBehind() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find] or");
+        TextPattern patt = CorpusQueryLanguageParser.parse("(?<! 'not' 'to' ) 'find'");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testPunctBefore() throws InvalidQuery {
+        List<String> expected = Arrays.asList("To [find or] not");
+        TextPattern patt = CorpusQueryLanguageParser.parse("'find' [punctBefore='\\(']");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
+    }
+
+    @Test
+    public void testPunctAfter() throws InvalidQuery {
+        List<String> expected = Arrays.asList("to [find That] is");
+        TextPattern patt = CorpusQueryLanguageParser.parse("[punctAfter='\\)\\.'] 'That'");
+        BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
+                testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
+        Assert.assertEquals(expected, testIndex.findConc(query));
     }
 
 }

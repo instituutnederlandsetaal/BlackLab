@@ -34,6 +34,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.FileProcessor;
 import nl.inl.util.FileReference;
 import nl.inl.util.FileUtil;
@@ -404,13 +405,6 @@ class IndexerImpl implements DocWriter, Indexer {
     public void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName,
             String contentStoreName) {
 
-        Field field = indexWriter.metadata().annotatedField(contentStoreName);
-        if (field == null) field = indexWriter.metadata().metadataField(contentStoreName);
-
-        // TODO move store function into ContentStore
-        // this will require moving ContentStore into engine module so it can see BlInputDocument class.
-        ContentStore store = indexWriter.contentStore(field);
-
         if (getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
             // Integrated index: store as a field in the document
             AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
@@ -420,8 +414,18 @@ class IndexerImpl implements DocWriter, Indexer {
 
             String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
             BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
+
             currentDoc.addField(luceneFieldName, document.toString(), fieldType);
+
         } else {
+            Field field = indexWriter.metadata().annotatedField(contentStoreName);
+            if (field == null)
+                field = indexWriter.metadata().metadataField(contentStoreName);
+
+            // TODO move store function into ContentStore
+            // this will require moving ContentStore into engine module so it can see BlInputDocument class.
+            ContentStore store = indexWriter.contentStore(field);
+
             // External content store, with content id stored in the document
             ContentStoreExternal contentStore = (ContentStoreExternal) store;
             int contentId = contentStore.store(document);
@@ -562,7 +566,6 @@ class IndexerImpl implements DocWriter, Indexer {
         this.numberOfThreadsToUse = numberOfThreadsToUse;
 
         // Some of the class-based docIndexers don't support theaded indexing
-        //@@@ enable threaded indexing with (threadsafe) class-based docIndexers
         InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
         if (!inputFormat.isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
@@ -584,5 +587,19 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public boolean needsPrimaryValuePayloads() {
         return indexWriter.needsPrimaryValuePayloads();
+    }
+
+    /** Get the strategy to use for indexing relations. */
+    public RelationsStrategy getRelationsStrategy() {
+        return indexWriter.getRelationsStrategy();
+    }
+
+    @Override
+    public void debugForceMerge() {
+        try {
+            ((BLIndexWriterProxyLucene) indexWriter().writer()).getWriter().forceMerge(1);
+        } catch (IOException e) {
+            throw BlackLabRuntimeException.wrap(e);
+        }
     }
 }

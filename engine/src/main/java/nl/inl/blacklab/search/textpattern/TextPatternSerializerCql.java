@@ -57,6 +57,7 @@ public class TextPatternSerializerCql {
             boolean negate) {
         String className = pattern.getClass().getSimpleName();
         boolean isRegexPattern = pattern instanceof TextPatternRegex;
+        boolean isIntRange = pattern instanceof TextPatternIntRange;
         TextPatternTerm tp = (TextPatternTerm) pattern;
         String annotation = tp.getAnnotation();
         if (negate && annotation == null)
@@ -68,12 +69,21 @@ public class TextPatternSerializerCql {
         String optCloseBracket = insideTokenBrackets ? "" : "]";
         if (annotation != null)
             b.append(optOpenBracket).append(annotation).append(negate ? "!" : "").append("=");
-        String value = tp.getValue();
-        if (!isRegexPattern) {
-            // We're looking for an exact value, which may include regex characters.
-            value = StringUtil.escapeLuceneRegexCharacters(value);
+        if (isIntRange) {
+            // Integer range, e.g. [number=in[1,5]]
+            TextPatternIntRange tpIntRange = (TextPatternIntRange) tp;
+            int min = tpIntRange.getMin();
+            int max = tpIntRange.getMax();
+            b.append("in[").append(min).append(",").append(max).append("]");
+        } else {
+            // Regular regex or literal, e.g. [word="the"]
+            String value = tp.getValue();
+            if (!isRegexPattern) {
+                // We're looking for an exact value, which may include regex characters.
+                value = StringUtil.escapeLuceneRegexCharacters(value);
+            }
+            serializeToSingleQuotedString(b, value);
         }
-        serializeToSingleQuotedString(b, value);
         if (annotation != null)
             b.append(optCloseBracket);
     }
@@ -162,8 +172,14 @@ public class TextPatternSerializerCql {
         // POSFILTER
         cqlSerializers.put(TextPatternPositionFilter.class, TextPatternSerializerCql::serializePosFilter);
 
+        // OVERLAPPING
+        cqlSerializers.put(TextPatternOverlapping.class, TextPatternSerializerCql::serializeOverlapping);
+
         // QUERYFUNCTION
         cqlSerializers.put(TextPatternQueryFunction.class, TextPatternSerializerCql::serializeFuncCall);
+
+        // INTRANGE
+        cqlSerializers.put(TextPatternIntRange.class, TextPatternSerializerCql::serializeRegexOrTerm);
 
         // REGEX
         cqlSerializers.put(TextPatternRegex.class, TextPatternSerializerCql::serializeRegexOrTerm);
@@ -196,7 +212,7 @@ public class TextPatternSerializerCql {
             String optCapture = tp.getCaptureAs().isEmpty() ? "" : tp.getCaptureAs() + ":";
             RelationOperatorInfo operatorInfo = tp.getOperatorInfo();
             String typeRegex = operatorInfo.getTypeRegex();
-            String optRegex = typeRegex.equals(".*") ? "" : typeRegex;
+            String optRegex = typeRegex.matches("\\.[*+]") ? "" : typeRegex;
             boolean isRoot = operatorInfo.getDirection() == SpanQueryRelations.Direction.ROOT;
             if (isRoot && tp.getSpanMode() != RelationInfo.SpanMode.TARGET)
                 throw new IllegalArgumentException("Root relation must have span mode target (has no source)");
@@ -229,6 +245,18 @@ public class TextPatternSerializerCql {
             infix(b, parenthesizeIfNecessary, insideTokenBrackets, " ", ((TextPatternSequence)pattern).getClauses());
         });
 
+        // LOOKAHEAD/BEHIND
+        cqlSerializers.put(TextPatternLook.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            if (insideTokenBrackets)
+                throw new UnsupportedOperationException("Cannot serialize TextPatternLookahead inside brackets to CQL");
+            TextPatternLook tp = (TextPatternLook) pattern;
+            b.append("(");
+            b.append(lookaheadOperator(tp.isLookBehind(), tp.isNegate()));
+            b.append(" ");
+            serialize(tp.getClause(), b, false, insideTokenBrackets);
+            b.append(")");
+        });
+
         // Settings
         cqlSerializers.put(TextPatternSettings.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             if (insideTokenBrackets)
@@ -248,7 +276,7 @@ public class TextPatternSerializerCql {
             TextPatternTags tp = (TextPatternTags) pattern;
             String optAttr = tp.getAttributes().isEmpty() ? "" : " " + serializeAttributes(tp.getAttributes());
             String optCapture = tp.getCaptureAs().isEmpty() ? "" : tp.getCaptureAs() + ":";
-            b.append(optCapture).append("<").append(tp.getElementName()).append(optAttr).append("/>");
+            b.append(optCapture).append("<").append(tp.getElementNameRegex()).append(optAttr).append("/>");
         });
 
         // TERM
@@ -351,6 +379,19 @@ public class TextPatternSerializerCql {
                 List.of(tp.getProducer(), tp.getFilter()));
     }
 
+    private static void serializeOverlapping(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
+            boolean insideTokenBrackets) {
+        if (insideTokenBrackets)
+            throw new UnsupportedOperationException("Cannot serialize TextPatternOverlapping inside brackets to CQL");
+        TextPatternOverlapping tp = (TextPatternOverlapping) pattern;
+        boolean supportedOp = tp.getOperation().toUpperCase().equals("OVERLAP");
+        if (!supportedOp)
+            throw new IllegalArgumentException(
+                    "Cannot serialize to CorpusQL: TextPatternOverlapping with operation " + tp.getOperation());
+        infix(b, parenthesizeIfNecessary, insideTokenBrackets, " " + tp.getOperation().toLowerCase() + " ",
+                List.of(tp.getLeft(), tp.getRight()));
+    }
+
     private static void serializeFuncCall(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
             boolean insideTokenBrackets) {
         if (insideTokenBrackets)
@@ -391,6 +432,10 @@ public class TextPatternSerializerCql {
             b.append(")");
     }
 
+    private static String lookaheadOperator(boolean lookBehind, boolean negate) {
+        return "?" + (lookBehind ? "<" : "") + (negate ? "!" : "=");
+    }
+
     private static String repetitionOperator(int min, int max) {
         if (min ==1 && max == 1) {
             return "";
@@ -411,9 +456,11 @@ public class TextPatternSerializerCql {
         return b.append("'").append(StringUtil.escapeQuote(value, "'")).append("'");
     }
 
-    private static String serializeAttributes(Map<String, String> attr) {
+    private static String serializeAttributes(Map<String, MatchValue> attr) {
         return attr.entrySet().stream()
-                .map(e -> e.getKey() + "='" + e.getValue().replaceAll("[\\\\']", "\\\\$0") + "'")
+                .map(e -> {
+                    return e.getKey() + "=" + e.getValue().getBcql();
+                })
                 .collect(Collectors.joining(" "));
     }
 

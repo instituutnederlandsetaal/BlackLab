@@ -91,4 +91,11 @@ public class TestTextPatternSerialize {
         String pattern = "A:[] 'or' B:[] :: A.lemma = B.lemma & start(A) > end(B) & A.word = 'koe'";
         assertRoundtrip(pattern);
     }
+
+    @Test
+    public void testIntRange() throws IOException {
+        //assertRoundtrip("[number=in[24,42]]");
+        assertRoundtrip("<s number='1'/>");
+        //assertRoundtrip("<s number=in[123,4567]/>");
+    }
 }

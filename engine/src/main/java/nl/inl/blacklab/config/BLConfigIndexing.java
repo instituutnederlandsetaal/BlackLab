@@ -24,6 +24,12 @@ public class BLConfigIndexing {
 
     int maxNumberOfIndicesPerUser = 10;
 
+    /** Should inline tags and relations be indexed case- and accent-sensitive?
+     * This used to be the default, but we've switched over to case-insensitive
+     * indexing by default.
+     */
+    boolean relationsSensitive = false;
+
     public DownloadCache.Config downloadCacheConfig() {
         return new DownloadCache.Config() {
             @Override
@@ -124,5 +130,14 @@ public class BLConfigIndexing {
 
     public long getUserIndexMaxTokenCount() {
         return this.userIndexMaxTokenCount;
+    }
+
+    public boolean isRelationsSensitive() {
+        return relationsSensitive;
+    }
+
+    @SuppressWarnings("unused")
+    public void setRelationsSensitive(boolean relationsSensitive) {
+        this.relationsSensitive = relationsSensitive;
     }
 }

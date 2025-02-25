@@ -51,8 +51,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     /** The annotations to index at the referenced token positions. */
     private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
 
-    /** For relations: the relation class to index this as. If not specified, a logical default is chosen
-     *  ("al" if targetField/targetVersion specified; "dep" otherwise
+    /** For relations: the relation class to index this as. If not specified, "rel" is used
      */
     private String relationClass = null;
 
@@ -182,7 +181,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public String getRelationClass() {
         // Return default value for relation class if not specified
-        return relationClass != null ? relationClass : RelationUtil.DEFAULT_CLASS;
+        return relationClass != null ? relationClass : RelationUtil.CLASS_DEFAULT;
     }
 
     public void setRelationClass(String relationClass) {

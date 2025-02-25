@@ -10,6 +10,12 @@ import nl.inl.blacklab.search.results.HitGroups;
 
 interface FreqListOutput {
 
+    enum Type {
+        TSV,           // TSV file
+        TSV_GZIP,      // gzipped TSV file
+        UNMERGED_TSV_GZ   // separate TSV files for each chunk (to avoid crash when merging)
+    }
+
     FreqListOutput TSV = new FreqListOutputTsv();
 
     /**
@@ -39,6 +45,5 @@ interface FreqListOutput {
     File write(BlackLabIndex index, AnnotatedField annotatedField, String reportName,
                List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
                File outputDir, boolean gzip);
-
 
 }

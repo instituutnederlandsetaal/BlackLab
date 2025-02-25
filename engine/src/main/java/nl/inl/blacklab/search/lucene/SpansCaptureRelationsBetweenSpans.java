@@ -164,6 +164,13 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     }
 
     @Override
+    public int nextStartPosition() throws IOException {
+        if (super.nextStartPosition() == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
+        return adjustedStart;
+    }
+
+    @Override
     public int startPosition() {
         if (atFirstInCurrentDoc)
             return -1;
@@ -221,11 +228,12 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             }
 
             if (!target.hasTargetRestrictions) {
+                updateSourceStartEndWithMatchingRelations(); // update start/end to cover all matching relations
 
                 // Find relations to capture.
                 // (these may be more than just the relations we matched on, e.g. if we match by
                 //  sentence alignment, we still want to see any word alignments returned in the result)
-                findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, sourceStart, sourceEnd);
+                findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, adjustedStart, adjustedEnd);
                 capturedRelations.sort(RelationInfo::compareTo);
 
                 // No target span specified (or e.g. A:[]* ); just accept the relations we captured.
@@ -235,7 +243,6 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetLimits.min, targetLimits.max,
                         target.targetField);
 
-                updateSourceStartEndWithCapturedRelations(); // update start/end to cover all captured relations
                 continue;
             }
 
@@ -254,7 +261,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     // Check if this is a better target match than we had before.
                     int targetStart = target.target.startPosition(i);
                     int targetEnd = target.target.endPosition(i);
-                    if (targetLimits.min > targetEnd || targetLimits.max < targetStart) {
+                    if (targetLimits.min >= targetEnd || targetLimits.max <= targetStart) {
                         // The targets of the relations we matched on are outside this target span. Reject it.
                         continue;
                     }
@@ -279,22 +286,30 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                         continue; // check next target
                 }
 
+                updateSourceStartEndWithMatchingRelations(); // update start/end to cover all matching relations
+
                 // Find relations to capture.
                 // (these may be more than just the relations we matched on, e.g. if we match by
                 //  sentence alignment, we still want to see any word alignments returned in the result)
-                findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, sourceStart, sourceEnd);
+                findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, adjustedStart, adjustedEnd);
                 // Only keep the captured relations that overlap the target span we found.
-                int finalTargetIndex = targetIndex;
-                capturedRelations.removeIf(r -> r.getTargetEnd() <= target.target.startPosition(finalTargetIndex)
-                        || r.getTargetStart() >= target.target.endPosition(finalTargetIndex));
+                final int finalTargetIndex = targetIndex;
+                final int targetClauseStart = target.target.startPosition(finalTargetIndex);
+                final int targetClauseEnd = target.target.endPosition(finalTargetIndex);
+                capturedRelations.removeIf(r -> r.getTargetEnd() <= targetClauseStart
+                        || r.getTargetStart() >= targetClauseEnd);
                 capturedRelations.sort(RelationInfo::compareTo);
 
                 matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
-                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(target.target.startPosition(finalTargetIndex),
-                        target.target.endPosition(finalTargetIndex), target.targetField);
-                target.target.getMatchInfo(finalTargetIndex, matchInfo); // also perform captures on the target
 
-                updateSourceStartEndWithCapturedRelations(); // update start/end to cover all captured relations
+                // Expand target to cover all relations matched by =type=> operator,
+                // so e.g. "water" =sentence-alignment=>en "water" will return whole sentences for target,
+                // not just the matching words from the query.
+                int targetStart = targetLimits.min < targetClauseStart ? targetLimits.min : targetClauseStart;
+                int targetEnd = targetLimits.max > targetClauseEnd ? targetLimits.max : targetClauseEnd;
+                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetStart, targetEnd, target.targetField);
+
+                target.target.getMatchInfo(finalTargetIndex, matchInfo); // also perform captures on the target
             } else {
                 // Target document has no matches. Reject this hit.
                 if (!target.isOptionalMatch())
@@ -327,12 +342,14 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     break;
             }
             while (relations.startPosition() < sourceEnd) {
-                // Source of this relation overlaps our source hit.
-                RelationInfo relInfo = relations.getRelationInfo().copy();
-                results.add(relInfo);
-                // Keep track of the min and max target positions so we can quickly reject targets below.
-                targetPos.min = Math.min(targetPos.min, relInfo.getTargetStart());
-                targetPos.max = Math.max(targetPos.max, relInfo.getTargetEnd());
+                if (relations.endPosition() > sourceStart) {
+                    // Source of this relation overlaps our source hit.
+                    RelationInfo relInfo = relations.getRelationInfo().copy();
+                    results.add(relInfo);
+                    // Keep track of the min and max target positions so we can quickly reject targets below.
+                    targetPos.min = Math.min(targetPos.min, relInfo.getTargetStart());
+                    targetPos.max = Math.max(targetPos.max, relInfo.getTargetEnd());
+                }
 
                 relations.nextStartPosition();
             }
@@ -340,7 +357,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         return targetPos;
     }
 
-    private void updateSourceStartEndWithCapturedRelations() {
+    private void updateSourceStartEndWithMatchingRelations() {
         // Our final (source) span will cover all captured relations, so that
         // e.g. "the" =sentence-alignment=>nl "de" will have the aligned sentences as hits, not just single words.
         matchingRelations.forEach(r -> {

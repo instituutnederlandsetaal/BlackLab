@@ -99,6 +99,11 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return new IndexMetadataIntegrated(index, config);
     }
 
+    /** Is this one of the special fields that only occur in the index metadata document? */
+    public static boolean isMetadataDocField(String luceneFieldName) {
+        return luceneFieldName.startsWith(MetadataDocument.INDEX_METADATA_FIELD_PREFIX);
+    }
+
     public Query metadataDocQuery() {
         return metadataDocument.query();
     }
@@ -805,15 +810,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             ensureMainAnnotatedFieldSet();
 
         metadataDocument.saveToIndex(indexWriter, this);
-    }
-
-    @Override
-    public void freezeBeforeIndexing() {
-        // Contrary to the "classic" index format, with this one the metadata
-        // cannot change while indexing. So freeze it now to enforce that.
-        // UPDATE: we actually CAN update metadata while indexing and probably should
-        //  (e.g. because you can add documents with different configs to one corpus)
-        //freeze();
     }
 
     @Override

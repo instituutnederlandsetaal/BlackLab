@@ -1,0 +1,479 @@
+package nl.inl.blacklab.search.indexmetadata;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.stream.Stream;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.RegexpQuery;
+import org.apache.lucene.store.ByteArrayDataInput;
+import org.apache.lucene.store.DataOutput;
+import org.apache.lucene.store.OutputStreamDataOutput;
+import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.automaton.RegExp;
+
+import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpansAndFilterFactorySameRelationId;
+import nl.inl.blacklab.search.results.QueryInfo;
+
+/**
+ * A span/relation strategy where the type (span name) and any attributes are indexed
+ * in separate terms, all with the same relationId. When searching, we use a special
+ * AND search that checks that all relationIds match.
+ */
+public class RelationsStrategySeparateTerms implements RelationsStrategy {
+
+    static final String NAME = "separate-terms";
+
+    public static final RelationsStrategy INSTANCE = new RelationsStrategySeparateTerms();
+
+    private RelationsStrategySeparateTerms() { }
+
+    /**
+     * Separator between relation type name and attribute name in _relation annotation.
+     */
+    private static final String NAME_SEPARATOR = "\u0001";
+
+    /**
+     * Separator between attribute name and its value in _relation annotation.
+     */
+    private static final String VALUE_SEPARATOR = "\u0002";
+
+    /**
+     * Character class meaning "any non-special character" (replacement for .)
+     */
+    public static final String ANY_NON_SPECIAL_CHAR = "[^" + NAME_SEPARATOR + VALUE_SEPARATOR + "]";
+
+    /**
+     * Determine the term to index in Lucene for a relation.
+     *
+     * @param fullRelationType full relation type
+     * @param attributes       any attributes for this relation
+     * @return term to index in Lucene
+     */
+    public static List<String> indexTerms(String fullRelationType, Map<String, String> attributes) {
+        if (attributes == null || attributes.isEmpty())
+            return List.of(fullRelationType);
+        List<String> terms = new ArrayList<>();
+        terms.add(fullRelationType);
+        attributes.entrySet().stream()
+                .map(e -> tagAttributeIndexTerm(fullRelationType, e.getKey(), e.getValue()))
+                .forEach(terms::add);
+        return terms;
+    }
+
+    /**
+     * Determine the term to index in Lucene for a relation.
+     * <p>
+     * This version can handle relations with multiple values for the same attribute,
+     * which can happen as a result of processing steps during indexing.
+     *
+     * @param fullRelationType full relation type
+     * @param attributes       any attributes for this relation
+     * @return term to index in Lucene
+     */
+    public static List<String> indexTermsMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
+        if (attributes == null || attributes.isEmpty())
+            return List.of(fullRelationType);
+        List<String> terms = new ArrayList<>();
+        terms.add(fullRelationType);
+        attributes.entrySet().stream()
+                .flatMap(e -> e.getValue().stream()
+                        .map(val -> tagAttributeIndexTerm(fullRelationType, e.getKey(), val)))
+                .forEach(terms::add);
+        return terms;
+    }
+
+    @Override
+    public Stream<Map.Entry<String, String>> attributesInTerm(String indexedTerm) {
+        int i = indexedTerm.indexOf(NAME_SEPARATOR); // if <0, this is not an attribute term
+        if (i < 0)
+            return Stream.empty();
+        int j = indexedTerm.indexOf(VALUE_SEPARATOR, i + 1);
+        if (j < 0) {
+            // This is a relation type term, not an attribute term.
+            return Stream.empty();
+            //throw new RuntimeException("Malformed attribute term, no value sep: " + indexedTerm);
+        }
+        String name = indexedTerm.substring(i + 1, j);
+        String value = indexedTerm.substring(j + 1);
+        return Stream.of(Map.entry(name, value));
+    }
+
+    @Override
+    public Map<String, String> getAllAttributesFromIndexedTerm(String indexedTerm) {
+        // we can't get attributes from terms in this strategy
+        // (we'll get them from the relation index instead)
+        return null;
+    }
+
+    /**
+     * What value do we index for attributes to tags (spans)?
+     * <p>
+     * (integrated index) A tag <s id="123"> ... </s> would be indexed in annotation "_relation"
+     * with a single tokens: "__tag::s\u0001\u0003id\u0002123\u0001".
+     *
+     * @param name  attribute name
+     * @param value attribute value
+     * @return value to index for this attribute
+     */
+    private static String tagAttributeIndexTerm(String fullRelationType, String name, String value) {
+        return fullRelationType + NAME_SEPARATOR + name + VALUE_SEPARATOR + value;
+    }
+
+    /**
+     * What regex do we need to match an attribute term?
+     *
+     * @param nameRegex      attribute name regex
+     * @param valueRegex     attribute value regex
+     * @return regex for this attribute
+     */
+    private static String tagAttributeRegex(String relTypeRegex, String nameRegex, String valueRegex) {
+        if (StringUtils.isEmpty(relTypeRegex))
+            relTypeRegex = ".+";
+        if (StringUtils.isEmpty(nameRegex))
+            nameRegex = ".+";
+        return RelationUtil.optParRegex(relTypeRegex) + NAME_SEPARATOR +
+                RelationUtil.optParRegex(nameRegex) + VALUE_SEPARATOR +
+                RelationUtil.optParRegex(valueRegex);
+    }
+
+    /**
+     * Given the indexed term, return the full relation type.
+     * <p>
+     * This leaves out any attributes indexed with the relation.
+     *
+     * @param indexedTerm the term indexed in Lucene
+     * @return the full relation type
+     */
+    public String fullTypeFromIndexedTerm(String indexedTerm) {
+        int sep = indexedTerm.indexOf(NAME_SEPARATOR);
+        if (sep < 0)
+            return indexedTerm;
+        return indexedTerm.substring(0, sep);
+    }
+
+    @Override
+    public BLSpanQuery getRelationsQuery(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex,
+            Map<String, String> attributes) {
+        // Construct the clause from the field, relation type and attributes
+        List<String> regexes = searchRegexes(queryInfo.index(), relationTypeRegex, attributes);
+        assert regexes.size() == (attributes == null ? 0 : attributes.size()) + 1;
+        List<BLSpanQuery> queries = new ArrayList<>();
+        for (int i = 0; i < regexes.size(); i++) {
+            RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexes.get(i)), RegExp.COMPLEMENT);
+            queries.add(new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery));
+        }
+        SpanQueryAnd q =  new SpanQueryAnd(queries);
+        q.setFilter(SpansAndFilterFactorySameRelationId.INSTANCE);
+        return q;
+    }
+
+    /**
+     * Determine the search regexes for a relation.
+     * <p>
+     * NOTE: both fullRelationTypeRegex and attribute names/values are interpreted as regexes,
+     * so any regex special characters you wish to find should be escaped!
+     *
+     * @param fullRelationTypeRegex full relation type
+     * @param attributes            any attribute criteria for this relation (regexes)
+     * @return regexes to find this relation (first is the type, rest are attributes)
+     */
+    public List<String> searchRegexes(BlackLabIndex index, String fullRelationTypeRegex,
+            Map<String, String> attributes) {
+        String typeRegex = RelationUtil.optParRegex(fullRelationTypeRegex);
+        if (attributes == null || attributes.isEmpty())
+            return List.of(typeRegex);
+
+        List<String> regexes = new ArrayList<>();
+        regexes.add(typeRegex);
+
+        // Sort and concatenate the attribute names and values
+        attributes.entrySet().stream()
+                .map(e -> tagAttributeRegex(typeRegex, e.getKey(), e.getValue()))
+                .forEach(regexes::add); // zero or more chars between attribute matches
+
+        // The regex consists of the type part followed by the (sorted) attributes part.
+        return regexes;
+    }
+
+    @Override
+    public String sanitizeTagNameRegex(String tagNameRegex) {
+        // Replace non-escaped dots with "any non-special character", so we don't accidentally
+        // match attributes as our tag name as well.
+        // (we use a lookbehind that should match any (reasonable) odd number of backslashes before the dot;
+        //  so "." is replaced; "\." is not; "\\." is; "\\\." is not; etc.)
+        return tagNameRegex.replaceAll("(?<!(\\\\\\\\){0,10}\\\\)\\.", ANY_NON_SPECIAL_CHAR);
+    }
+
+    @Override
+    public void indexRelationTermsMulti(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+        List<String> terms = indexTermsMulti(fullType, attributes);
+        indexTermFunc.accept(terms.get(0), payload);
+
+        // Extract only the relationId from the payload, and index it with the other terms
+        ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes);
+        int relationId = CODEC.readRelationId(dataInput);
+        BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
+        for (int i = 1; i < terms.size(); i++)
+            indexTermFunc.accept(terms.get(i), relIdOnly);
+    }
+
+    @Override
+    public void indexRelationTerms(String fullType, Map<String, String> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+        List<String> terms = indexTerms(fullType, attributes);
+        indexTermFunc.accept(terms.get(0), payload);
+
+        // Extract only the relationId from the payload, and index it with the other terms
+        if (terms.size() > 1) {
+            ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes);
+            int relationId = CODEC.readRelationId(dataInput);
+            BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
+            for (int i = 1; i < terms.size(); i++)
+                indexTermFunc.accept(terms.get(i), relIdOnly);
+            }
+    }
+
+    @Override
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, String> attributes) {
+        // Always assign a relation id, because we need it to match tags to attributes,
+        // even if there's no extra information stored in the relation index (which there should be
+        // if there's attributes, but ok).
+        return writer.getNextRelationId(true);
+    }
+
+    @Override
+    public BytesRef getPayload(RelationInfo relationInfo) {
+        // If not yet complete, we will create the payload later when we know the end position
+        return relationInfo.hasTarget() ?
+                CODEC.serialize(relationInfo) :
+                CODEC.relationIdOnlyPayload(relationInfo.getRelationId());
+    }
+
+    @Override
+    public String getName() {
+        return NAME;
+    }
+
+    public static final PayloadCodec CODEC = new Codec();
+
+    public PayloadCodec getPayloadCodec() { return CODEC; }
+
+    static class Codec implements PayloadCodec {
+
+        /** Default value for where the other end of this relation starts.
+         *  We use 1 because it's pretty common for adjacent words to have a
+         *  relation, and in this case we don't store the value. */
+        private static final int DEFAULT_REL_OTHER_START = 1;
+
+        /**
+         * Default length for the source and target.
+         * Inline tags are always stored with a 0-length source and target.
+         * Dependency relations will usually store 1 (a single word), unless
+         * the relation involves word group(s).
+         */
+        private static final int DEFAULT_LENGTH = 0;
+
+        /**
+         * Default length for the source and target if {@link #FLAG_DEFAULT_LENGTH_ALT} is set.
+         * <p>
+         * See there for details.
+         */
+        private static final int DEFAULT_LENGTH_ALT = 1;
+
+        /** Is it a root relationship, that only has a target, no source? */
+        public static final byte FLAG_ONLY_HAS_TARGET = 0x02;
+
+        /** If set, use DEFAULT_LENGTH_ALT (1) as the default length
+         * (dependency relations) instead of 0 (tags).
+         * <p>
+         * Doing it this way saves us a byte in the payload for dependency relations, as
+         * we don't have to store two 1s, just one flags value.
+         */
+        public static final byte FLAG_DEFAULT_LENGTH_ALT = 0x04;
+
+        /** If set, this relation has no extra info in the relation index,
+         *  so no need to look. */
+        public static final byte FLAG_NO_EXTRA_INFO = 0x08;
+
+        /**
+         * Default value for the flags byte.
+         * This means the relation has both a source and target, and has an id.
+         * Older indexes had 0 as their default flags value, meaning they don't have unique relations ids.
+         * This is the most common case (e.g. always true for inline tags), so we use it as the default.
+         */
+        private static final byte DEFAULT_FLAGS = 0;
+
+        public void serializeInlineTag(int start, int end, int relationId, boolean maybeExtraInfo, DataOutput dataOutput) throws IOException {
+            serializeRelationWithRelationId(false, start, start, end, end, relationId, maybeExtraInfo, dataOutput);
+        }
+
+        public void serializeRelationWithRelationId(boolean onlyHasTarget, int sourceStart, int sourceEnd,
+                int targetStart, int targetEnd, int relationId, boolean maybeExtraInfo, DataOutput dataOutput) {
+            assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
+            // Determine values to write from our source and target, and the position we're being indexed at
+            int sourceLength = sourceEnd - sourceStart;
+            int relTargetStart = targetStart - sourceStart;
+            int targetLength = targetEnd - targetStart;
+
+            // Which default length should we use? (can save 1 byte per relation)
+            boolean useAlternateDefaultLength = sourceLength == DEFAULT_LENGTH_ALT && targetLength == DEFAULT_LENGTH_ALT;
+            int defaultLength = useAlternateDefaultLength ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
+
+            byte flags = (byte) ((onlyHasTarget ? FLAG_ONLY_HAS_TARGET : 0)
+                    | (useAlternateDefaultLength ? FLAG_DEFAULT_LENGTH_ALT : 0)
+                    | (maybeExtraInfo ? 0 : FLAG_NO_EXTRA_INFO));
+
+            // Only write as much as we need (omitting default values from the end)
+            boolean writeOtherLength = targetLength != defaultLength;
+            boolean writeSourceLength = writeOtherLength || sourceLength != defaultLength;
+            boolean writeRelTargetStart = writeSourceLength || relTargetStart != DEFAULT_REL_OTHER_START;
+            try {
+                writeRelationId(relationId, dataOutput);
+                dataOutput.writeByte(flags);      // default is 0 but flags is never 0 anymore... (relation id)
+                if (writeRelTargetStart)
+                    dataOutput.writeZInt(relTargetStart);
+                if (writeSourceLength)
+                    dataOutput.writeVInt(sourceLength);
+                if (writeOtherLength)
+                    dataOutput.writeVInt(targetLength);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
+         * Read the relation id from the payload.
+         *
+         * Note that relation type terms ("span name" terms) have the full payload;
+         * attribute terms only have relationId. In either case, the first VInt in
+         * the payload is the relationId.
+         *
+         * @param dataInput payload
+         * @return relation id
+         */
+        public int readRelationId(ByteArrayDataInput dataInput) {
+            return dataInput.readVInt();
+        }
+
+        private static void writeRelationId(int relationId, DataOutput dataOuput) throws IOException {
+            dataOuput.writeVInt(relationId);
+        }
+
+        /**
+         * Deserialize relation info from the payload.
+         *
+         * @param currentTokenPosition the position we're currently at
+         * @param dataInput data to deserialize
+         */
+        public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput,
+                RelationInfo target) {
+            try {
+                // Read values from payload (or use defaults for missing values)
+                int relTargetStart = DEFAULT_REL_OTHER_START;
+                int relationId = readRelationId(dataInput); // should always be present
+                byte flags = DEFAULT_FLAGS;
+                if (!dataInput.eof())
+                    flags = dataInput.readByte();
+                int defaultLength = (flags & FLAG_DEFAULT_LENGTH_ALT) != 0 ? DEFAULT_LENGTH_ALT : DEFAULT_LENGTH;
+                if (!dataInput.eof()) {
+                    // relTargetStart comes after flags (because first number is now relationId)
+                    relTargetStart = dataInput.readZInt();
+                }
+                int sourceLength = defaultLength, targetLength = defaultLength;
+                if (!dataInput.eof())
+                    sourceLength = dataInput.readVInt();
+                if (!dataInput.eof())
+                    targetLength = dataInput.readVInt();
+
+                // Fill the relationinfo structure with the source and target start/end positions
+                boolean onlyHasTarget = (flags & FLAG_ONLY_HAS_TARGET) != 0;
+                int sourceStart = currentTokenPosition;
+                int sourceEnd = currentTokenPosition + sourceLength;
+                int targetStart = currentTokenPosition + relTargetStart;
+                int targetEnd = targetStart + targetLength;
+                boolean maybeExtraInfo = (flags & FLAG_NO_EXTRA_INFO) == 0;
+                assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
+                target.fill(relationId, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, maybeExtraInfo);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
+         * Serialize to a BytesRef.
+         *
+         * @return the serialized data
+         */
+        public BytesRef serialize(RelationInfo relInfo) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            DataOutput dataOutput = new OutputStreamDataOutput(os);
+            serializeRelationWithRelationId(relInfo.isRoot(), relInfo.getSourceStart(),
+                    relInfo.getSourceEnd(), relInfo.getTargetStart(), relInfo.getTargetEnd(),
+                    relInfo.getRelationId(), relInfo.mayHaveInfoInRelationIndex(), dataOutput);
+            return new BytesRef(os.toByteArray());
+        }
+
+        /**
+         * Get the payload to store with the span start tag.
+         *
+         * Spans are stored in the "_relation" annotation, at the token position of the start tag.
+         * The payload gives the token position of the end tag.
+         *
+         * Note that in the integrated index, we store the relative position of the last token
+         * inside the span, not the first token after the span. This is so it matches how relations
+         * are stored.
+         *
+         * @param startPosition  start position (inclusive), or the first token of the span
+         * @param endPosition    end position (exclusive), or the first token after the span
+         * @param indexType      type of index we're writing
+         * @param relationId     unique id for this relation, to look up attributes later
+         * @return payload to store
+         */
+        public BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId, boolean maybeExtraInfo) {
+            if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
+                return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
+
+            try {
+                ByteArrayOutputStream os = new ByteArrayOutputStream();
+
+                serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
+                return new BytesRef(os.toByteArray());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
+                int targetEnd, int relationId, boolean maybeExtraInfo) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            serializeRelationWithRelationId(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
+                    relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
+            return new BytesRef(os.toByteArray());
+        }
+
+        @Override
+        public BytesRef relationIdOnlyPayload(int relationId) {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            try {
+                OutputStreamDataOutput outputStreamDataOutput = new OutputStreamDataOutput(os);
+                writeRelationId(relationId, outputStreamDataOutput);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return new BytesRef(os.toByteArray());
+        }
+    }
+}

@@ -180,7 +180,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
 
             // Store this line now, so the start/end offsets are correct
             if (isStoreDocuments())
-                csvData.append(origLine).append(" ");
+                csvData.append(origLine).append("\n");
 
             Span span = idSpan(id, sentenceStartPosition);
             boolean isMultiWordToken = id.contains("-");

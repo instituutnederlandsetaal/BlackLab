@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 /**
  * An annotated field is like a Lucene field, but in addition to its "normal"
@@ -66,6 +67,9 @@ public class AnnotatedFieldWriter {
     /** The name of the annotation where relations and spans are stored. */
     private final String relationAnnotationName;
 
+    /** How we index relations */
+    private final RelationsStrategy relationsStrategy;
+
     public void setNoForwardIndexProps(Set<String> noForwardIndexAnnotations) {
         this.noForwardIndexAnnotations.clear();
         this.noForwardIndexAnnotations.addAll(noForwardIndexAnnotations);
@@ -87,6 +91,7 @@ public class AnnotatedFieldWriter {
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
         indexType = docWriter.getIndexType();
+        relationsStrategy = docWriter.getRelationsStrategy();
         relationAnnotationName = AnnotatedFieldNameUtil.relationAnnotationName(indexType);
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
@@ -234,5 +239,9 @@ public class AnnotatedFieldWriter {
 
     public IndexType getIndexType() {
         return indexType;
+    }
+
+    public RelationsStrategy getRelationsStrategy() {
+        return relationsStrategy;
     }
 }

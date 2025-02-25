@@ -13,9 +13,9 @@ public class TestStringUtil {
     }
 
     @Test
-    public void testEscapeRegexCharacters() {
-        Assert.assertEquals("^the\\*\\.quick\\?brown\\(fox\\)$", StringUtil.escapeLuceneRegexCharacters("^the*.quick?brown(fox)$"));
-        String charsToEscape = "|\\?*+()[]{}";
+    public void testEscapeLuceneRegexCharacters() {
+        Assert.assertEquals("^the\\*\\.quick\\?brown\\(fox\\)jumps\\@over\\#the\\&lazy$", StringUtil.escapeLuceneRegexCharacters("^the*.quick?brown(fox)jumps@over#the&lazy$"));
+        String charsToEscape = "|\\?*+()<[]{}.\"#@&";
         for (int i = 0; i < charsToEscape.length(); i++) {
             char c = charsToEscape.charAt(i);
             Assert.assertEquals("test\\" + c + "test", StringUtil.escapeLuceneRegexCharacters("test" + c + "test"));

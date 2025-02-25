@@ -22,7 +22,9 @@ import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 import nl.inl.blacklab.codec.SegmentForwardIndex;
+import nl.inl.blacklab.codec.SegmentRelationInfo;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 /**
  * Adds forward index reading to default FieldsProducer.
@@ -54,6 +56,9 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
     /** The forward index */
     private final SegmentForwardIndex forwardIndex;
 
+    /** The relation info (if it was stored) */
+    private final SegmentRelationInfo relationInfo;
+
     /** Terms object for each field */
     private final Map<String, BLTerms> termsPerField = new HashMap<>();
 
@@ -68,6 +73,9 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
 
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+
+        // If relation info was stored, make sure we can access it
+        relationInfo = SegmentRelationInfo.openIfPresent(this);
     }
 
     @Override
@@ -77,6 +85,8 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
 
     @Override
     public void close() throws IOException {
+        if (relationInfo != null)
+            relationInfo.close();
         forwardIndex.close();
         delegateFieldsProducer.close();
     }
@@ -173,14 +183,17 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
         return forwardIndex.reader();
     }
 
-//    /**
-//     * Get the BlackLab50PostingsReader for the given leafreader.
-//     *
-//     * @param lrc leafreader to get the BlackLab50PostingsReader for
-//     * @return BlackLab50PostingsReader for this leafreader
-//     */
-//    public static BlackLab50PostingsReader get(LeafReaderContext lrc) {
-//        return (BlackLab50PostingsReader) BLTerms.getTerms(lrc).getFieldsProducer();
-//    }
+    /**
+     * Create a relation info reader for this segment.
+     *
+     * The returned reader is not threadsafe and shouldn't be stored.
+     * A single thread may use it for reading from this segment. It
+     * can then be discarded.
+     *
+     * @return relation info segment reader if available, otherwise null
+     */
+    public RelationInfoSegmentReader relationInfo() {
+        return relationInfo == null ? null : relationInfo.reader();
+    }
 
 }

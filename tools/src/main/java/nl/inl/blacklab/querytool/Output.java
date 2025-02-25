@@ -1,6 +1,8 @@
 package nl.inl.blacklab.querytool;
 
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,12 +52,12 @@ class Output {
     /**
      * Our output writer.
      */
-    private PrintWriter out;
+    private PrintWriter out = new PrintWriter(new OutputStreamWriter(System.out, Charset.defaultCharset()), true);
 
     /**
      * Our error writer (if null, output errors to out as well)
      */
-    private PrintWriter err;
+    private PrintWriter err = new PrintWriter(new OutputStreamWriter(System.err, Charset.defaultCharset()), true);
 
     /** Show extra information about query being processed? */
     private boolean verbose = false;

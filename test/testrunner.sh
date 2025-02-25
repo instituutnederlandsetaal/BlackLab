@@ -31,7 +31,7 @@ export DOCKER_BUILDKIT=1
 
 #----------------------------------------------------------
 # Build and run BlackLab Server
-echo === Testing classic index format...
+echo '=== Testing classic index format...'
 $COMPOSE build testserver "$SERVICE_NAME"
 export BLACKLAB_FEATURE_defaultIndexType=external
 $COMPOSE up -d --force-recreate testserver # (--force-recreate to avoid error 'network not found')
@@ -41,7 +41,7 @@ $COMPOSE rm -fv testserver
 
 #----------------------------------------------------------
 # Re-run to test the other index format as well
-echo === Testing integrated index format...
+echo '=== Testing integrated index format...'
 export BLACKLAB_FEATURE_defaultIndexType=integrated
 export INDEX_TYPE=integrated
 $COMPOSE up -d testserver
@@ -51,7 +51,7 @@ $COMPOSE rm -fv testserver
 
 ##----------------------------------------------------------
 ## Re-run the same tests using Solr+proxy
-#echo === Testing Solr \(with integrated index format\)...
+#echo '=== Testing Solr (with integrated index format)...'
 #$COMPOSE build proxy solr "$SERVICE_NAME"
 #$COMPOSE down -v  # delete previous index so it updates if it was changed in the repo
 #$COMPOSE up --force-recreate -d proxy solr

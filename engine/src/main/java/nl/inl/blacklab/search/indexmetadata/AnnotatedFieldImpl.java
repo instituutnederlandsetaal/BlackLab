@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -313,6 +312,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
             entry.getValue().fixAfterDeserialization(index, this, entry.getKey());
         }
+
         // These are no longer used, but we need to keep them around for deserialization of some pre-release indexes
         this.relations = null;
         this.relationsInitialized = false;
@@ -336,11 +336,16 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         if (results == null || results.getLimitValues() < limitValues) {
             // We either don't have cached relationsStats, or the limitValues value is too low.
             boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
-            results = new RelationsStats(oldStyleStarttag, limitValues);
-            String annotName = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
-            String luceneField = annotation(annotName).sensitivity(MatchSensitivity.SENSITIVE)
-                    .luceneField();
-            LuceneUtil.getFieldTerms(index.reader(), luceneField,
+            results = new RelationsStats(index.getRelationsStrategy(), limitValues);
+
+            // Look up the correct field for the _relation annotation (depending on whether it
+            // was indexed sensitively or insensitively)
+            Annotation annotation = annotation(AnnotatedFieldNameUtil.relationAnnotationName(index.getType()));
+            AnnotationSensitivity annotationSensitivity = annotation.hasSensitivity(MatchSensitivity.SENSITIVE) ?
+                    annotation.sensitivity(MatchSensitivity.SENSITIVE) :
+                    annotation.sensitivity(MatchSensitivity.INSENSITIVE);
+
+            LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
                     null, results::addIndexedTerm);
         }
         // Should we cache these results?

@@ -1,13 +1,17 @@
 package nl.inl.blacklab.server.config;
 
-import java.util.Arrays;
 import java.util.List;
 
 import nl.inl.blacklab.server.util.BlsUtils;
 
 public class BLSConfigDebug {
+
+    /** Default value for debug.addresses */
+    public static final List<String> DEBUG_ADDRESSES_LOCALHOST = List.of("127.0.0.1",
+            "0:0:0:0:0:0:0:1", "::1");
+
     /** Explicit list of debug addresses */
-    List<String> addresses = Arrays.asList("127.0.0.1", "0:0:0:0:0:0:0:1", "::1");
+    List<String> addresses = DEBUG_ADDRESSES_LOCALHOST;
 
     /** Run all local requests in debug mode */
     boolean alwaysAllowDebugInfo = false;

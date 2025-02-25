@@ -182,7 +182,7 @@ public class IndexManager {
         File userIdFile = new File(dir, USER_ID_FILE_NAME);
         try {
             if (userIdFile.exists()) {
-                String readUserId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8);
+                String readUserId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
                 assert user.getId().equals(readUserId);
             } else {
                 FileUtils.writeStringToFile(userIdFile, user.getId(), StandardCharsets.UTF_8);
@@ -235,7 +235,7 @@ public class IndexManager {
         if (!DocumentFormats.isSupported(formatIdentifier))
             throw new BadRequest("FORMAT_NOT_FOUND", "Unknown format: " + formatIdentifier);
         if (!Index.isUserIndex(indexId))
-            throw new NotAuthorized("Can only create private indices.");
+            throw new NotAuthorized("You are trying to create a global (non-private) corpus (" + indexId + "). Only private corpora can be created via BLS.");
         if (!Index.isValidIndexName(indexId))
             throw new IllegalIndexName(indexId);
         if (indexExists(indexId))
@@ -244,12 +244,12 @@ public class IndexManager {
 
         User indexOwner = Index.getUser(indexId);
         if (!indexOwner.getId().equals(user.getId()) && !user.isSuperuser())
-            throw new NotAuthorized("Could not create index. Can only create your own private indices.");
+            throw new NotAuthorized("You (" + user.getId() + ") are not allowed to create a corpus for another user (" + indexId + ")");
         String indexName = Index.getIndexName(indexId);
 
         if (userCollectionsDir == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
-                "Could not create index. The server is not configured with support for user content.");
+                "Could not create index. The server is not configured with support for user content. See https://inl.github.io/BlackLab/server/howtos.html#let-users-manage-their-own-corpora");
 
         int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
         if (!canCreateIndex(user))
@@ -330,7 +330,7 @@ public class IndexManager {
     public synchronized void deleteUserIndex(String indexId)
             throws NotAuthorized, IndexNotFound, InternalServerError, IllegalIndexName {
         if (!Index.isUserIndex(indexId))
-            throw new NotAuthorized("Can only delete private indices.");
+            throw new NotAuthorized("Deleting a global (non-private) corpus is not allowed. You can only delete your own private corpora.");
 
         Index index = getIndex(indexId);
 

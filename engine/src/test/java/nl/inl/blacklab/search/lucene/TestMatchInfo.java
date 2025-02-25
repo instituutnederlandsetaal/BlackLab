@@ -8,6 +8,8 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+
 public class TestMatchInfo {
 
     /** Bound for our random numbers, chosen safely to avoid over/underflow */
@@ -16,6 +18,10 @@ public class TestMatchInfo {
     public static final int NUMBER_OF_TESTS = 10_000;
 
     private Random random;
+
+    RelationsStrategy relationsStrategy = RelationsStrategy.forNewIndex();
+
+    RelationsStrategy.PayloadCodec payloadCodec = relationsStrategy.getPayloadCodec();
 
     @Before
     public void setUp() {
@@ -32,7 +38,7 @@ public class TestMatchInfo {
             int sourceEnd = sourceStart + random.nextInt(RND_BOUND);
             int targetStart = random.nextInt(RND_BOUND);
             int targetEnd = targetStart + random.nextInt(RND_BOUND);
-            int relationId = RelationInfo.writeRelationInfoToIndex() ? random.nextInt(RND_BOUND) : -1;
+            int relationId = relationsStrategy.writeRelationInfoToIndex() ? random.nextInt(RND_BOUND) : -1;
             if (onlyHasTarget) {
                 // We'll index the same values for source and target in this case,
                 // even though source shouldn't be used.
@@ -40,14 +46,14 @@ public class TestMatchInfo {
                 sourceEnd = targetEnd;
             }
             RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                    relationId);
+                    relationId, false);
 
             // Encode the payload
-            byte[] payload = matchInfo.serialize().bytes;
+            byte[] payload = payloadCodec.serialize(matchInfo).bytes;
 
             // Decode it again
             RelationInfo decoded = RelationInfo.create();
-            decoded.deserialize(sourceStart, new ByteArrayDataInput(payload));
+            payloadCodec.deserialize(sourceStart, new ByteArrayDataInput(payload), decoded);
 
             Assert.assertEquals(matchInfo, decoded);
         }

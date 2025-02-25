@@ -51,7 +51,7 @@ import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
- * Wraps the WebserviceParams and interprets them to create searches.
+ * Wraps the QueryParams and interprets them to create searches.
  */
 public class WebserviceParamsImpl implements WebserviceParams {
 
@@ -750,6 +750,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public boolean getCsvDeclareSeparator() {
         return params.getCsvDeclareSeparator();
+    }
+
+    @Override
+    public String getCsvDescription() {
+        return params.getCsvDescription();
     }
 
     @Override

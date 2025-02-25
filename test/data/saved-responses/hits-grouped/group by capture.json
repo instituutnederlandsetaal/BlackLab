@@ -150,6 +150,11 @@
           }
         ],
         "type": "sequence"
+      },
+      "matchInfos": {
+        "X": {
+          "type": "span"
+        }
       }
     },
     "requestedWindowSize": 30,

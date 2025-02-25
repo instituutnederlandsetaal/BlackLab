@@ -14,13 +14,13 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -39,9 +39,9 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         return SpanGuarantees.SORTED;
     }
 
-    final BLSpanTermQuery clause;
+    BLSpanQuery clause;
 
-    private final String tagName;
+    private final String tagNameRegex;
 
     private final String baseFieldName;
 
@@ -49,26 +49,32 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
 
     private final String startTagFieldName;
 
-    public SpanQueryTagsExternal(QueryInfo queryInfo, String startTagFieldName, String tagName, Map<String, String> attr) {
+    public SpanQueryTagsExternal(QueryInfo queryInfo, String startTagFieldName, String tagNameRegex, Map<String, String> attr) {
         super(queryInfo);
-        this.tagName = tagName;
+        this.tagNameRegex = tagNameRegex;
         baseFieldName = AnnotatedFieldNameUtil.getBaseName(startTagFieldName);
         this.startTagFieldName = startTagFieldName;
-        this.clause = new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, tagName));
+        RegexpQuery regexpQuery = new RegexpQuery(new Term(startTagFieldName, tagNameRegex));
+        this.clause = new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery);
         this.attr = attr != null && attr.isEmpty() ? null : attr;
         this.guarantees = createGuarantees();
     }
 
     @Override
-    public BLSpanQuery rewrite(IndexReader reader) {
-        if (attr == null)
-            return this;
+    public BLSpanQuery rewrite(IndexReader reader) throws IOException {
+        if (attr == null) {
+            BLSpanQuery cl = clause.rewrite(reader);
+            if (cl == clause)
+                return this;
+            SpanQueryTagsExternal rewritten = new SpanQueryTagsExternal(queryInfo, startTagFieldName, tagNameRegex, null);
+            rewritten.clause = cl;
+            return rewritten;
+        }
 
         // Construct attribute filters
         List<BLSpanQuery> attrFilters = new ArrayList<>();
         for (Map.Entry<String, String> e : attr.entrySet()) {
-            String value = RelationUtil.tagAttributeIndexValue(e.getKey(), e.getValue(),
-                    BlackLabIndex.IndexType.EXTERNAL_FILES);
+            String value = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(e.getKey(), e.getValue());
             attrFilters.add(new BLSpanTermQuery(queryInfo, new Term(startTagFieldName, value)));
         }
 
@@ -80,7 +86,8 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
             filter = attrFilters.get(0);
         else
             filter = new SpanQueryAnd(attrFilters);
-        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTagsExternal(queryInfo, startTagFieldName, tagName, null), filter,
+        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTagsExternal(queryInfo, startTagFieldName,
+                tagNameRegex, null), filter,
                 SpanQueryPositionFilter.Operation.STARTS_AT, false);
         r.setQueryInfo(queryInfo);
         return r;
@@ -127,7 +134,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
             if (startTags == null)
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(startTagFieldName);
-            boolean primaryIndicator = BlackLabIndexIntegrated.isForwardIndexField(fieldInfo);
+            boolean primaryIndicator = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfo);
             return new SpansTagsExternal(startTags, primaryIndicator);
         }
 
@@ -136,8 +143,8 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
     @Override
     public String toString(String field) {
         if (attr != null && !attr.isEmpty())
-            return "TAGS(" + tagName + ", " + attr + ")";
-        return "TAGS(" + tagName + ")";
+            return "TAGS(" + tagNameRegex + ", " + attr + ")";
+        return "TAGS(" + tagNameRegex + ")";
     }
 
     @Override
@@ -147,7 +154,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         result = prime * result + ((attr == null) ? 0 : attr.hashCode());
         result = prime * result + ((clause == null) ? 0 : clause.hashCode());
         result = prime * result + ((startTagFieldName == null) ? 0 : startTagFieldName.hashCode());
-        result = prime * result + ((tagName == null) ? 0 : tagName.hashCode());
+        result = prime * result + ((tagNameRegex == null) ? 0 : tagNameRegex.hashCode());
         return result;
     }
 
@@ -175,10 +182,10 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
                 return false;
         } else if (!startTagFieldName.equals(other.startTagFieldName))
             return false;
-        if (tagName == null) {
-            if (other.tagName != null)
+        if (tagNameRegex == null) {
+            if (other.tagNameRegex != null)
                 return false;
-        } else if (!tagName.equals(other.tagName))
+        } else if (!tagNameRegex.equals(other.tagNameRegex))
             return false;
         return true;
     }
@@ -201,8 +208,8 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         return startTagFieldName;
     }
 
-    public String getElementName() {
-        return tagName;
+    public String getElementNameRegex() {
+        return tagNameRegex;
     }
 
     @Override
