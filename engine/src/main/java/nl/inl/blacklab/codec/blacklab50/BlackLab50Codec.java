@@ -62,20 +62,6 @@ public class BlackLab50Codec extends BlackLabCodec {
         super(NAME);
     }
 
-    public static BLTerms getTerms(LeafReaderContext lrc) {
-        // Find the first field that has terms.
-        for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
-            try {
-                BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
-                if (terms != null)
-                    return terms;
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        throw new IllegalStateException("No suitable field found for codec access!");
-    }
-
     private synchronized Codec delegate() {
         if (_delegate == null) {
             // We defer initialization to prevent an error about getting the default codec before all codecs

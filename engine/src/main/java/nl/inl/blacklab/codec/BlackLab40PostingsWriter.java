@@ -248,7 +248,8 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         }
     }
 
-    IndexOutput createOutput(String ext) throws IOException {
+    @Override
+    protected IndexOutput createOutput(String ext) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
         IndexOutput output = state.directory.createOutput(fileName, state.context);
 
@@ -267,7 +268,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     }
 
     @SuppressWarnings("SameParameterValue")
-    IndexInput openInput(String ext) throws IOException {
+    protected IndexInput openInput(String ext) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
         IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
 
@@ -285,7 +286,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     }
 
     @SuppressWarnings("SameParameterValue")
-    void deleteIndexFile(String ext) throws IOException {
+    protected void deleteIndexFile(String ext) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
         state.directory.deleteFile(fileName);
     }

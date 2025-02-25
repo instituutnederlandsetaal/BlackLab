@@ -37,7 +37,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * Keeps track of attributes per unique relation id and writes them to the relation info
  * files so we can look them up later.
  */
-class PWPluginRelationInfoLegacy implements PWPlugin {
+public class PWPluginRelationInfoLegacy implements PWPlugin {
 
     /**
      * Offset in temp relations file where occurrences of an attribute set are recorded
@@ -93,7 +93,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
     }
 
     /** Our PostingsWriter, used for reading/writing our files */
-    private final BlackLab40PostingsWriter postingsWriter;
+    private final BlackLabPostingsWriter postingsWriter;
 
     /** Lucene fields that we'll store relation info for */
     private Map<String, RelationInfoFieldMutable> riFields = new HashMap<>();
@@ -189,7 +189,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
     /** How to encode/decode payload for relations */
     private final RelationsStrategy.PayloadCodec relPayloadCodec;
 
-    PWPluginRelationInfoLegacy(BlackLab40PostingsWriter postingsWriter, RelationsStrategy relationsStrategy) throws IOException {
+    public PWPluginRelationInfoLegacy(BlackLabPostingsWriter postingsWriter, RelationsStrategy relationsStrategy) throws IOException {
         this.postingsWriter = postingsWriter;
         this.relationsStrategy = relationsStrategy;
         this.relPayloadCodec = relationsStrategy.getPayloadCodec();

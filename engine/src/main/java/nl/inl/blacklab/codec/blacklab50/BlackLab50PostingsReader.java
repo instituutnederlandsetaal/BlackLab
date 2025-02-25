@@ -70,7 +70,6 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
         forwardIndex = new SegmentForwardIndex(this);
         if (delegateFormatName == null)
             throw new IllegalStateException("Opening the segment FI should have set the delegate format name");
-
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
 
@@ -134,6 +133,7 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
         return getClass().getSimpleName() + "(delegate=" + delegateFieldsProducer + ")";
     }
 
+    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         return directory.openInput(fileName, ioContext);
     }
@@ -146,8 +146,6 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
      */
     public IndexInput openIndexFile(String extension) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
-        // NOTE: we have to deal with Lucene 9's switch to little-endian.
-        //IndexInput input = state.directory.openInput(fileName, state.context);
         IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
         try {
             // Check index header

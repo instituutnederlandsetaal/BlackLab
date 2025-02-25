@@ -137,7 +137,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     /**
      * Open a custom file for reading and check the header.
      *
-     * @param extension extension of the file to open (should be one of the prefixed constants from Blacklab40PostingsFormat)
+     * @param extension extension of the file to open (should be one of the prefixed constants from BlacklabPostingsFormat)
      * @return handle to the opened segment file
      */
     public IndexInput openIndexFile(String extension) throws IOException {
