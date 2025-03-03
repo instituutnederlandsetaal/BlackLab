@@ -24,7 +24,8 @@ public class HitPropertySpanAttribute extends HitProperty {
 
     public static final String ID = "span-attribute";
 
-    public static final PropertyValueString VALUE_ATTR_NOT_FOUND = new PropertyValueString("ATTRIBUTE_NOT_FOUND");
+    /** If multiple matches were found for the span (i.e. in with-spans() list), join them using this separator */
+    public static final String SEPARATOR_MULTIPLE_VALUES = "; ";
 
     static HitPropertySpanAttribute deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         if (infos.isEmpty())
@@ -108,32 +109,44 @@ public class HitPropertySpanAttribute extends HitProperty {
     public PropertyValue get(long hitIndex) {
         MatchInfo matchInfo = hits.get(hitIndex).matchInfo()[groupIndex];
         if (matchInfo == null)
-            return VALUE_ATTR_NOT_FOUND;
+            return PropertyValueString.NO_VALUE;
 
+        String value;
         if (relNameInList != null && matchInfo instanceof RelationListInfo) {
             RelationListInfo relList = (RelationListInfo) matchInfo;
+            StringBuilder b = new StringBuilder();
+            boolean found = false;
             if (relNameIsFullRelType) {
                 // Look for the first full-type match in the list
                 for (RelationInfo namedGroup: relList.getRelations()) {
                     if (namedGroup.getFullRelationType().equals(relNameInList)) {
-                        matchInfo = namedGroup;
-                        break;
+                        if (b.length() > 0)
+                            b.append(SEPARATOR_MULTIPLE_VALUES);
+                        b.append(namedGroup.getAttributes().get(attributeName));
+                        found = true;
                     }
                 }
             } else {
                 // Look for the first type match in the list
                 for (RelationInfo namedGroup: relList.getRelations()) {
                     if (namedGroup.getRelationType().equals(relNameInList)) {
-                        matchInfo = namedGroup;
-                        break;
+                        if (b.length() > 0)
+                            b.append(SEPARATOR_MULTIPLE_VALUES);
+                        b.append(namedGroup.getAttributes().get(attributeName));
+                        found = true;
                     }
                 }
             }
+            if (!found)
+                return PropertyValueString.NO_VALUE;
+            value = b.toString();
+        } else {
+            if (!(matchInfo instanceof RelationInfo))
+                return PropertyValueString.NO_VALUE;
+            RelationInfo span = (RelationInfo) matchInfo;
+            value = span.getAttributes().get(attributeName);
         }
-        if (!(matchInfo instanceof RelationInfo))
-            return VALUE_ATTR_NOT_FOUND;
-        RelationInfo span = (RelationInfo) matchInfo;
-        return new PropertyValueString(span.getAttributes().get(attributeName));
+        return new PropertyValueString(value);
     }
 
     @Override

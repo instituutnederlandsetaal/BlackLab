@@ -6,19 +6,11 @@ import java.util.List;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
-
-    /** String to use to indicate there was no value.
-     *
-     * For example: you're grouping by the word left of the match, but the
-     * match occurred at the start of the document.
-     */
-    public static final String NO_VALUE_STR = "(no value)";
 
     /** Term ids for this value */
     int[] valueTokenId;

@@ -19,6 +19,13 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class PropertyValue implements Comparable<Object> {
     protected static final Logger logger = LogManager.getLogger(PropertyValue.class);
 
+    /** String to use to indicate there was no value.
+     *
+     * For example: you're grouping by the word left of the match, but the
+     * match occurred at the start of the document.
+     */
+    public static final String NO_VALUE_STR = "(no value)";
+
     /**
      * Collator to use for string comparison while sorting/grouping
      */
