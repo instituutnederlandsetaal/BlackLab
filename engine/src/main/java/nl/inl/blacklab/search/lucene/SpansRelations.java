@@ -153,7 +153,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
                 byte[] payload = iterator.hasNext() ? iterator.next() : EMPTY_PAYLOAD;
                 ByteArrayDataInput dataInput = PayloadUtils.getDataInput(payload, payloadIndicatesPrimaryValues);
                 if (relationInfo == null) { // should only happen in tests
-                    relationInfo = RelationInfo.create();
+                    relationInfo = RelationInfo.createWithFields(sourceField, sourceField);
                 }
                 relStrat.getPayloadCodec().deserialize(in.startPosition(), dataInput, relationInfo);
             } catch (IOException e) {

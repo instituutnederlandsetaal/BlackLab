@@ -122,10 +122,14 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     protected QueryInfo queryInfo;
 
     public static boolean isAnyNGram(BLSpanQuery matchTarget) {
+        return isAnyNGram(matchTarget, 0);
+    }
+
+    public static boolean isAnyNGram(BLSpanQuery matchTarget, int atLeastLength) {
         boolean isAnyNGram = false;
         if (matchTarget instanceof SpanQueryAnyToken) {
             SpanQueryAnyToken any = (SpanQueryAnyToken) matchTarget;
-            if (any.getMin() == 0 && any.getMax() == MAX_UNLIMITED) {
+            if (any.getMin() <= atLeastLength && any.getMax() == MAX_UNLIMITED) {
                 // No restrictions on target.
                 isAnyNGram = true;
             }

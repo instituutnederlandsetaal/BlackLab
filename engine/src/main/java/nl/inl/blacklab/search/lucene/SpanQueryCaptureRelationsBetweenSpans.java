@@ -40,7 +40,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
     public static class Target {
 
         public static Target get(QueryInfo queryInfo, String relationFieldName, BLSpanQuery target, String targetField,
-                String captureRelsAs, String relationType, boolean optionalMatch) {
+                String captureRelsAs, String relationType, boolean optionalMatch, BLSpanQuery captureTargetOverlaps, String captureTargetOverlapsAs) {
 
             // Determine what relations to capture based on the class of the matching regex, if any
             String relClass = RelationUtil.classFromFullType(relationType);
@@ -49,7 +49,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
             return new Target(getRelationsQuery(queryInfo, relationFieldName, relationType),
                     getRelationsQuery(queryInfo, relationFieldName, anyType), target, targetField,
-                    captureRelsAs, optionalMatch);
+                    captureRelsAs, optionalMatch, captureTargetOverlaps, captureTargetOverlapsAs);
         }
 
         private static SpanQueryRelations getRelationsQuery(QueryInfo queryInfo, String relationFieldName,
@@ -82,14 +82,22 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
 
+        /** Used for ==> _with-spans(_) capturing */
+        private final BLSpanQuery captureTargetOverlaps;
+
+        /** Name for target spans captured in case of ==> _with-spans(_) */
+        private final String captureTargetOverlapsAs;
+
         private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, String targetField,
-                String captureAs, boolean optionalMatch) {
+                String captureAs, boolean optionalMatch, BLSpanQuery captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
             this.target = target;
             this.targetField = targetField;
             this.captureAs = captureAs;
             this.optionalMatch = optionalMatch;
+            this.captureTargetOverlaps = captureTargetOverlaps;
+            this.captureTargetOverlapsAs = captureTargetOverlapsAs;
         }
 
         public static List<Target> rewriteTargets(List<Target> targets, IndexReader reader) throws IOException {
@@ -117,34 +125,51 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         private TargetWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
             BLSpanWeight matchRelationsWeight = matchRelations.createWeight(searcher, scoreMode, boost);
             BLSpanWeight captureRelationsWeight = captureRelations.createWeight(searcher, scoreMode, boost);
-            BLSpanWeight targetWeight = null;
-            String captureTargetAs;
+
+            // Are we using _with-spans() on target?
+            BLSpanQuery realTarget = target;
+            String captureTargetOverlapsAs = null;
+            BLSpanWeight captureTargetOverlapsWeight = null;
+            if (target instanceof SpanQueryCaptureOverlappingSpans) {
+                SpanQueryCaptureOverlappingSpans overl = (SpanQueryCaptureOverlappingSpans) target;
+                realTarget = overl.clauses.get(0);
+                BLSpanQuery captureTargetOverlaps = overl.clauses.get(1); // spans to capture
+                captureTargetOverlapsAs = overl.captureAs;
+                captureTargetOverlapsWeight = realTarget == null ? null :
+                        captureTargetOverlaps.createWeight(searcher, scoreMode, boost);
+            }
 
             // Are we explicitly capturing target, without any edge adjustments?
-            if (target instanceof SpanQueryCaptureGroup && ((SpanQueryCaptureGroup) target).leftAdjust == 0 && ((SpanQueryCaptureGroup) target).rightAdjust == 0) {
+            String captureTargetAs = null;
+            if (realTarget instanceof SpanQueryCaptureGroup && ((SpanQueryCaptureGroup) realTarget).leftAdjust == 0 && ((SpanQueryCaptureGroup) realTarget).rightAdjust == 0) {
                 // Yes; remember the capture name, and strip the capture from the clause
                 // (capturing will be done by SpansCaptureRelationsBetweenSpans)
-                captureTargetAs = ((SpanQueryCaptureGroup) target).getCaptureName();
-                BLSpanQuery targetClause = ((SpanQueryCaptureGroup) target).getClause();
-                if (BLSpanQuery.isAnyNGram(targetClause)) {
-                    // Special case: target is e.g. A:[]*. Don't actually search for all n-grams, just ignore
-                    // target while matching relations and capture the relation targets as A.
-                } else {
-                    // Normal case: target is a real query. Create a weight for it.
-                    targetWeight = targetClause.createWeight(searcher, scoreMode, boost);
-                }
-            } else {
-                // Not explicitly capturing target; just create a weight for it.
+                captureTargetAs = ((SpanQueryCaptureGroup) realTarget).getCaptureName();
+                realTarget = ((SpanQueryCaptureGroup) realTarget).getClause();
+            }
 
+            BLSpanWeight targetWeight = null;
+            if (realTarget == null || BLSpanQuery.isAnyNGram(realTarget, 1)) {
+                // Special case: target is e.g. A:[]+. Don't actually search for all n-grams, just ignore
+                // target while matching relations and capture the relation targets as A.
+            } else {
+                // Normal case: target is a real query. Create a weight for it.
+                captureTargetAs = null; // no A:[]* capturing
+                captureTargetOverlapsWeight = null; // no _with-spans(_) capturing
+                captureTargetOverlapsAs = null;
+                targetWeight = target.createWeight(searcher, scoreMode, boost);
+            }
+
+            // Target should always be captured to ensure we can determine foreign hit
+            if (captureTargetAs == null) {
                 // tag this so it can be omitted from the response
                 // (the only reason we're capturing it is so we know the correct "foreign hit" to
                 //  return in the otherFields section of the response)
                 captureTargetAs = captureAs + TAG_MATCHINFO_TARGET_HIT;
-                targetWeight = target == null || BLSpanQuery.isAnyNGram(target) ? null :
-                        target.createWeight(searcher, scoreMode, boost);
-            }
+            } // @@@ goes wrong if captureTargetAs is set to something else!
+
             return new TargetWeight(matchRelationsWeight, captureRelationsWeight, targetWeight, captureAs,
-                    captureTargetAs, targetField, optionalMatch);
+                    captureTargetAs, targetField, optionalMatch, captureTargetOverlapsWeight, captureTargetOverlapsAs);
         }
 
         private Target rewrite(IndexReader reader) throws IOException {
@@ -152,7 +177,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpanQuery newCaptureRelations = captureRelations.rewrite(reader);
             BLSpanQuery newTarget = target == null ? null : target.rewrite(reader);
             if (newMatchRelations != matchRelations || newCaptureRelations != captureRelations || newTarget != target) {
-                return new Target(newMatchRelations, newCaptureRelations, newTarget, targetField, captureAs, optionalMatch);
+                return new Target(newMatchRelations, newCaptureRelations, newTarget, targetField, captureAs,
+                        optionalMatch, captureTargetOverlaps, captureTargetOverlapsAs);
             }
             return this;
         }
@@ -208,8 +234,15 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
 
+        /** Used for ==> _with-spans(_) capturing */
+        private final BLSpanWeight captureTargetOverlaps;
+
+        /** Name for target spans captured in case of ==> _with-spans(_) */
+        private final String captureTargetOverlapsAs;
+
         public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target,
-                String captureAs, String captureTargetAs, String targetField, boolean optionalMatch) {
+                String captureAs, String captureTargetAs, String targetField, boolean optionalMatch,
+                BLSpanWeight captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
             this.captureAs = captureAs;
@@ -217,6 +250,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             this.targetField = targetField;
             this.target = target;
             this.optionalMatch = optionalMatch;
+            this.captureTargetOverlaps = captureTargetOverlaps;
+            this.captureTargetOverlapsAs = captureTargetOverlapsAs;
         }
 
         public static void extractTermsFromTargets(List<TargetWeight> targets, Set<Term> terms) {
@@ -269,8 +304,9 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpans targetSpans = hasTargetRestrictions ? target.getSpans(context, requiredPostings) : null;
             if (targetSpans != null)
                 targetSpans = BLSpans.ensureSorted(targetSpans);
+            BLSpans captureTargetOverlapsSpans = captureTargetOverlaps.getSpans(context, requiredPostings);
             return new SpansCaptureRelationsBetweenSpans.Target(matchRelationsSpans, targetSpans, hasTargetRestrictions,
-                    captureRelationsSpans, captureAs, captureTargetAs, targetField, optionalMatch);
+                    captureRelationsSpans, captureAs, captureTargetAs, targetField, optionalMatch, captureTargetOverlapsSpans, captureTargetOverlapsAs);
         }
 
         private void extractTermStates(Map<Term, TermStates> contexts) {
