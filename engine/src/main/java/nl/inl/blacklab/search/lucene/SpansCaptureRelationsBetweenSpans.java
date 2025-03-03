@@ -55,10 +55,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
          *  In that case, this gives the capture name for that.
          *  (if target is not null, any desired capture operation is included in that,
          *   so we don't need it here) */
-        private final String captureTargetAs;
+        private final List<String> captureTargetAs;
 
         /** Group index of captureTargetAs */
-        private int captureTargetAsIndex = -1;
+        private List<Integer> captureTargetAsIndex = new ArrayList<>();
 
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
         private final String targetField;
@@ -76,7 +76,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private String captureTargetOverlapsAs = null;
 
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
-                BLSpans captureRelations, String captureRelationsAs, String captureTargetAs, String targetField,
+                BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, String targetField,
                 boolean optionalMatch, BLSpans captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
@@ -99,7 +99,9 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
 
             HitQueryContext targetContext = context.withField(targetField);
-            captureTargetAsIndex = targetContext.registerMatchInfo(captureTargetAs, MatchInfo.Type.SPAN);
+            for (String captureName: captureTargetAs) {
+                captureTargetAsIndex.add(targetContext.registerMatchInfo(captureName, MatchInfo.Type.SPAN));
+            }
             if (target != null)
                 target.setHitQueryContext(targetContext);
 
@@ -314,7 +316,11 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             }
 
             // Capture target span
-            matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetStart, targetEnd, target.targetField);
+            // (may be captured multiple times, one implicitly with __@target at the end to determine the "foreign hit"
+            // later, and once explicitly specified by the user in the query, e.g. ==> A:"something")
+            for (int index: target.captureTargetAsIndex) {
+                matchInfo[index] = SpanInfo.create(targetStart, targetEnd, target.targetField);
+            }
 
             if (target.hasTargetRestrictions) {
                 // Get captures from the target match

@@ -140,11 +140,13 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             }
 
             // Are we explicitly capturing target, without any edge adjustments?
-            String captureTargetAs = null;
+            // (captureTargetAs is a list because we need __@target capture to determine
+            // foreign hits, but there may be an explicit capture as well)
+            List<String> captureTargetAs = new ArrayList<>();
             if (realTarget instanceof SpanQueryCaptureGroup && ((SpanQueryCaptureGroup) realTarget).leftAdjust == 0 && ((SpanQueryCaptureGroup) realTarget).rightAdjust == 0) {
                 // Yes; remember the capture name, and strip the capture from the clause
                 // (capturing will be done by SpansCaptureRelationsBetweenSpans)
-                captureTargetAs = ((SpanQueryCaptureGroup) realTarget).getCaptureName();
+                captureTargetAs.add(((SpanQueryCaptureGroup) realTarget).getCaptureName());
                 realTarget = ((SpanQueryCaptureGroup) realTarget).getClause();
             }
 
@@ -154,19 +156,17 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
                 // target while matching relations and capture the relation targets as A.
             } else {
                 // Normal case: target is a real query. Create a weight for it.
-                captureTargetAs = null; // no A:[]* capturing
+                captureTargetAs.clear(); // no A:[]* capturing
                 captureTargetOverlapsWeight = null; // no _with-spans(_) capturing
                 captureTargetOverlapsAs = null;
                 targetWeight = target.createWeight(searcher, scoreMode, boost);
             }
 
             // Target should always be captured to ensure we can determine foreign hit
-            if (captureTargetAs == null) {
-                // tag this so it can be omitted from the response
-                // (the only reason we're capturing it is so we know the correct "foreign hit" to
-                //  return in the otherFields section of the response)
-                captureTargetAs = captureAs + TAG_MATCHINFO_TARGET_HIT;
-            } // @@@ goes wrong if captureTargetAs is set to something else!
+            // tag this so it can be omitted from the response
+            // (the only reason we're capturing it is so we know the correct "foreign hit" to
+            //  return in the otherFields section of the response)
+            captureTargetAs.add(captureAs + TAG_MATCHINFO_TARGET_HIT);
 
             return new TargetWeight(matchRelationsWeight, captureRelationsWeight, targetWeight, captureAs,
                     captureTargetAs, targetField, optionalMatch, captureTargetOverlapsWeight, captureTargetOverlapsAs);
@@ -223,7 +223,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         private final String captureAs;
 
         /** Match info name for the target span (if target == null, and if desired) */
-        private final String captureTargetAs;
+        private final List<String> captureTargetAs;
 
         /** Target field for capture. */
         private final String targetField;
@@ -241,7 +241,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         private final String captureTargetOverlapsAs;
 
         public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target,
-                String captureAs, String captureTargetAs, String targetField, boolean optionalMatch,
+                String captureAs, List<String> captureTargetAs, String targetField, boolean optionalMatch,
                 BLSpanWeight captureTargetOverlaps, String captureTargetOverlapsAs) {
             this.matchRelations = matchRelations;
             this.captureRelations = captureRelations;
