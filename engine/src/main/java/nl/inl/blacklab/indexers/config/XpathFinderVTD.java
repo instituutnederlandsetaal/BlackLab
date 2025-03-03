@@ -229,18 +229,18 @@ class XpathFinderVTD {
     /**
      * Gets attribute map for current element
      */
-    public Map<String, String> getAttributes() {
+    public Map<String, List<String>> getAttributes() {
         navpush();
         AutoPilot apAttr = new AutoPilot(nav);
         apAttr.selectAttr("*");
         int i;
-        Map<String, String> attr = new HashMap<>();
+        Map<String, List<String>> attr = new HashMap<>();
         try {
             while ((i = apAttr.iterateAttr()) != -1) {
                 String name = nav.toString(i);
                 name = name.replaceAll("^\\w+:", ""); // remove namespace prefix
                 String value = nav.toString(i + 1);
-                attr.put(name, value);
+                attr.put(name, List.of(value));
             }
         } catch (NavException e) {
             throw BlackLabRuntimeException.wrap(e);

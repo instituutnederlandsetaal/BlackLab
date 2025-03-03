@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -129,13 +130,13 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     /** Tag attributes (if any), or empty if not set (set during search by SpansRelations).
      *  If this is empty and indexedTerm is set, attributes have not been determined yet (either from the term, or from relation info index). */
-    private Map<String, String> attributes;
+    private Map<String, List<String>> attributes;
 
     /** Field this points to, or null if same as source field. */
     private final String targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
-            int relationId, String fullRelationType, Map<String, String> attributes, String sourceField, String targetField, boolean hasExtraInfoStored) {
+            int relationId, String fullRelationType, Map<String, List<String>> attributes, String sourceField, String targetField, boolean hasExtraInfoStored) {
         super(sourceField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
@@ -291,7 +292,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     /** (Used by SpansRelations) */
-    public void setAttributes(Map<String, String> attributes) {
+    public void setAttributes(Map<String, List<String>> attributes) {
         this.attributes = attributes;
     }
 
@@ -312,7 +313,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         return fullRelationType;
     }
 
-    public Map<String, String> getAttributes() {
+    public Map<String, List<String>> getAttributes() {
         return attributes;
     }
 

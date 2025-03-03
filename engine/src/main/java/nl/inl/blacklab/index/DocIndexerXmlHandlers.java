@@ -243,9 +243,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 Attributes attributes) {
             int currentPos = propMain.lastValuePosition() + 1;
 
-            Map<String, String> attrMap = new HashMap<>();
+            Map<String, List<String>> attrMap = new HashMap<>();
             for (int i = 0; i < attributes.getLength(); i++) {
-                attrMap.put(attributes.getLocalName(i), attributes.getValue(i));
+                attrMap.put(attributes.getLocalName(i), List.of(attributes.getValue(i)));
             }
             int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1,
                     attrMap, getIndexType());

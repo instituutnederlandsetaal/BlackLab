@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -55,7 +54,7 @@ public interface RelationsStrategy {
         throw new IllegalArgumentException("Unknown relation strategy: " + name);
     }
 
-    int getRelationId(AnnotationWriter writer, int endPos, Map<String, String> attributes);
+    int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes);
 
     /**
      * Get a query to match the given relation type and attributes.
@@ -128,18 +127,7 @@ public interface RelationsStrategy {
      *
      * (used in AnnotationWriter)
      */
-    void indexRelationTerms(String fullType, Map<String, String> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc);
-
-    /**
-     * Index the given relation using the indexTermFunc provided.
-     *
-     * Function may be called once or multiple times depending on the indexing strategy.
-     * This corresponds to a single term or multiple terms being indexed at the same position.
-     *
-     * (used in DocIndexerXPath for standoff annotations, where attributes can have multiple values)
-     */
-    void indexRelationTermsMulti(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc);
-
+    void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc);
 
 
     // SEARCH

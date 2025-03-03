@@ -214,7 +214,7 @@ inlineTags:
     # Sentence tags
     - path: .//s
     - excludeAttributes:
-        # Don't index Unique ids unless you need them; 
+        # Don't index unique ids unless you need them; 
         # they slow down indexing and searching and increase index size
         - "xml:id" 
     - path: .//p
@@ -232,6 +232,8 @@ inlineTags:
 ```
 
 As you can see, `excludeAttributes` can be used to prevent the index size ballooning because of a unique id (although of course you won't be able to search sentences by their id anymore), and `displayAs` can be used to give the span a different CSS class in the generated XSLT (see [Automatic XSLT generation](#automatic-xslt-generation)).
+
+`extraAttributes` can be used to add attributes to the tag that are not actually on the tag in the input document, by evaluating an XPath expression. In addition, you can also apply `process` steps to attributes this way. This can even be done on attributes that do appear on the tag in the input document.
 
 ### Document metadata
 

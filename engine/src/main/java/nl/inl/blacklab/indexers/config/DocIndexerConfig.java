@@ -198,7 +198,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }
     }
 
-    protected Collection<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
+    protected List<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
         List<ConfigProcessStep> processingSteps = annotation.getProcess();
         boolean hasProcessing = !processingSteps.isEmpty();
 
@@ -210,7 +210,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).collect(Collectors.toList());
         }
 
-        Collection<String> results = new ArrayList<>();
+        List<String> results = new ArrayList<>();
 
         // Apply processing steps
         if (annotation.isMultipleValues()) {
@@ -564,21 +564,23 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     /**
      * Split the result string on a separator and return one or all parts.
      *
+     * Note that if multiple values are not allowed, only the first part returned will be used.
+     *
      * @param result the string to split
      * @param param
      * <pre>
      * - "separator" for the separator (defaults to ;),
-     * - "keep" for the keep index, accepts numbers or the special string "all" (defaults to -1)
-     *      if "keep" <= 0 returns the first part.
-     *      if "keep" > number of splits return empty string.
-     *      if "keep" == "all" return all parts
+     * - "keep" for the keep index, accepts numbers or the special string "all" (the default)
+     *      if "keep" >= 0 && < number of splits: return only that part
+     *      if "keep" >= number of splits return empty string.
+     *      if "keep" == "all" return all parts (the default)
      *      if "keep" == "both" return both the original (unsplit) string and all parts
      * </pre>
      */
     private List<String> opSplit(String result, Map<String, String> param) {
         // Split on a separator regex and keep one or all parts (first part by default)
         String separator = param.getOrDefault("separator", ";");
-        String keep = param.getOrDefault("keep", "-1").toLowerCase();
+        String keep = param.getOrDefault("keep", "all").toLowerCase();
         String[] parts = result.split(separator, -1);
 
         if (keep.equals("all")) {

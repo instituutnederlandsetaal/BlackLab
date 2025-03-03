@@ -50,9 +50,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         private final int relationId;
 
-        private final Map<String, String> attributes;
+        private final Map<String, List<String>> attributes;
 
-        public OpenTagInfo(String name, int index, int position, int relationId, Map<String, String> attributes) {
+        public OpenTagInfo(String name, int index, int position, int relationId, Map<String, List<String>> attributes) {
             this.name = name;
             this.index = index;
             this.position = position;
@@ -473,7 +473,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      */
     protected abstract void storeDocument();
 
-    protected void inlineTag(String tagName, boolean isOpenTag, Map<String, String> attributes) {
+    protected void inlineTag(String tagName, boolean isOpenTag, Map<String, List<String>> attributes) {
         int currentPos = getCurrentTokenPosition();
         AnnotationWriter relationsAnnot = tagsAnnotation();
         if (isOpenTag) {

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -191,7 +192,7 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
                                 throw new MalformedInputFile("Close tag must not also end with /: " + tagName);
                             if (selfClosing)
                                 rest = rest.substring(0, rest.length() - 1);
-                            Map<String, String> attributes = getAttr(rest);
+                            Map<String, List<String>> attributes = getAttr(rest);
 
                             if (lookForDocumentTags && tagName.equals(config.getDocumentPath())) {
                                 // Document tag.
@@ -204,9 +205,11 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
                                     // Start a new document and add attributes as metadata fields
                                     inDocument = true;
                                     startDocument();
-                                    for (Map.Entry<String, String> e : attributes.entrySet()) {
-                                        String value = processMetadataValue(e.getKey(), e.getValue());
-                                        addMetadataField(e.getKey(), value);
+                                    for (Map.Entry<String, List<String>> e : attributes.entrySet()) {
+                                        for (String value: e.getValue()) {
+                                            value = processMetadataValue(e.getKey(), value);
+                                            addMetadataField(e.getKey(), value);
+                                        }
                                     }
                                 } else {
                                     endDocument();
@@ -267,17 +270,17 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
      * @param group the attributes part of the tag
      * @return attributes map
      */
-    private static Map<String, String> getAttr(String group) {
+    private static Map<String, List<String>> getAttr(String group) {
         if (group == null)
             return Collections.emptyMap();
         String strAttrDef = StringUtil.trimWhitespace(group);
         Matcher m = REGEX_ATTR.matcher(strAttrDef);
-        Map<String, String> attributes = new LinkedHashMap<>();
+        Map<String, List<String>> attributes = new LinkedHashMap<>();
         while (m.find()) {
             String key = m.group(1);
             String value = m.group(2);
             value = value.substring(1, value.length() - 1); // chop quotes
-            attributes.put(key, value);
+            attributes.put(key, List.of(value));
         }
         return attributes;
     }

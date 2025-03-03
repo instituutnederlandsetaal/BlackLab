@@ -602,6 +602,9 @@ public class InputFormatReader extends YamlJsonReader {
                 case "valuePath":
                     a.setValuePath(str(eea));
                     break;
+                case "process":
+                    a.setProcess(readProcess(eea));
+                    break;
                 default:
                     throw new InvalidInputFormatConfig(
                             "Unknown key " + eea.getKey() + " in extra attribute " + a.getName());

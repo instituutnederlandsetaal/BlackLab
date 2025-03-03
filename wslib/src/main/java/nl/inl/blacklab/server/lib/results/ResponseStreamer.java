@@ -21,6 +21,7 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.InputFormatWithConfig;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitPropertySpanAttribute;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLab;
@@ -829,8 +830,8 @@ public class ResponseStreamer {
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
         if (!inlineTag.getAttributes().isEmpty()) {
             ds.startEntry("attributes").startMap();
-            for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
-                ds.elEntry(attr.getKey(), attr.getValue());
+            for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
+                ds.elEntry(attr.getKey(), StringUtils.join(attr.getValue(), HitPropertySpanAttribute.SEPARATOR_MULTIPLE_VALUES));
             }
             ds.endMap().endEntry();
         }

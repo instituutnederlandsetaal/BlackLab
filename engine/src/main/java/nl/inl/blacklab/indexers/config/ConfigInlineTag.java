@@ -1,5 +1,6 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -16,6 +17,9 @@ public class ConfigInlineTag {
         private String name;
         /** XPath to get attribute's value */
         private String valuePath;
+
+        /** How to process annotation values (if at all) */
+        private final List<ConfigProcessStep> process = new ArrayList<>();
 
         public ConfigExtraAttribute() {
 
@@ -40,6 +44,23 @@ public class ConfigInlineTag {
 
         public void setValuePath(String valuePath) {
             this.valuePath = valuePath;
+        }
+
+        public List<ConfigProcessStep> getProcess() {
+            return process;
+        }
+
+        public void setProcess(List<ConfigProcessStep> process) {
+            this.process.clear();
+            this.process.addAll(process);
+        }
+
+        public void validate() {
+            ConfigInputFormat.req(name, "extra attribute", "name");
+            ConfigInputFormat.req(valuePath, "extra attribute", "valuePath");
+            for (ConfigProcessStep step : process) {
+                step.validate();
+            }
         }
     }
 
@@ -80,6 +101,9 @@ public class ConfigInlineTag {
 
     public void validate() {
         ConfigInputFormat.req(path, "inline tag", "path");
+        for (ConfigExtraAttribute ea : extraAttributes) {
+            ea.validate();
+        }
     }
 
     public ConfigInlineTag copy() {

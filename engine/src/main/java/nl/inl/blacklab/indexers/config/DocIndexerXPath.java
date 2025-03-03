@@ -170,7 +170,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // Integrated index format.
 
             // Collect any attribute values
-            Map<String, Collection<String>> attributes = new HashMap<>();
+            Map<String, List<String>> attributes = new HashMap<>();
             for (ConfigAnnotation annotation: standoffAnnotations) {
                 // NOTE: we pass invalid values for the positions because they don't matter here; we're not indexing,
                 //       just finding XPath matches for the attributes and collecting them.
@@ -191,7 +191,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // For separate terms: always assign relationId even if no attributes, because it is needed for matching
             boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
             BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);
-            relationsStrategy.indexRelationTermsMulti(fullType, attributes, payload, (String valueToIndex, BytesRef payloadThisToken) -> {
+            relationsStrategy.indexRelationTerms(fullType, attributes, payload, (String valueToIndex, BytesRef payloadThisToken) -> {
                 annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken);
             });
         }
@@ -308,7 +308,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     protected void processSubannotations(ConfigAnnotation parentAnnot, T context,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
-            AnnotationHandler handler, Collection<String> parentAnnotValues) {
+            AnnotationHandler handler, List<String> parentAnnotValues) {
         // For each configured subannotation...
         for (ConfigAnnotation subannot : parentAnnot.getSubAnnotations()) {
             // Subannotation configs without a valuePath are just for
@@ -361,17 +361,17 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     protected void findAndIndexSubannotation(ConfigAnnotation toIndex, T context, ConfigAnnotation indexAs,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler,
-            ConfigAnnotation parent, Collection<String> parentValues) {
-        Collection<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
+            ConfigAnnotation parent, List<String> parentValues) {
+        List<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
                 parentValues :
                 findAnnotationMatches(indexAs, toIndex.getValuePath(), context);
-        Collection<String> processedValues = processAnnotationValues(indexAs, unprocessed);
+        List<String> processedValues = processAnnotationValues(indexAs, unprocessed);
         handler.values(indexAs, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
     }
 
-    protected Collection<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, T context) {
+    protected List<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, T context) {
         // Not the same values as the parent annotation; we have to find our own.
-        Collection<String> values = new ArrayList<>();
+        List<String> values = new ArrayList<>();
         if (annotation.isMultipleValues()) {
             // Multiple matches will be indexed at the same position.
             if (annotation.isCaptureXml()) {
@@ -396,8 +396,8 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         String valuePath = determineValuePath(annotation, word);
         if (valuePath != null) {
             // Find annotation matches, process and dedupe and index them.
-            Collection<String> unprocessedValues = findAnnotationMatches(annotation, valuePath, word);
-            Collection<String> processedValues = processAnnotationValues(annotation, unprocessedValues);
+            List<String> unprocessedValues = findAnnotationMatches(annotation, valuePath, word);
+            List<String> processedValues = processAnnotationValues(annotation, unprocessedValues);
             handler.values(annotation, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
             processSubannotations(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler, unprocessedValues);
         } else {
@@ -615,6 +615,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected abstract T contextNodeWholeDocument();
 
     protected interface AnnotationHandler {
-        void values(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget, Collection<String> values);
+        void values(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget, List<String> values);
     }
 }

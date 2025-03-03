@@ -364,19 +364,31 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         if (isDescendant) {
             // Yes, word is a descendant.   (i.e. not a self-closing inline tag?)
             // Find the attributes and index the tag.
-            Map<String, String> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
+            Map<String, List<String>> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
             try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
                 while ((next = attributes.next()) != null) {
                     if (currentInline.indexAttribute(next.getDisplayName())) {
-                        atts.put(next.getLocalPart(), next.getStringValue());
+                        atts.put(next.getLocalPart(), List.of(next.getStringValue()));
                     }
                 }
             }
             // Index any extra attributes using the provided XPath expressions.
             for (ConfigInlineTag.ConfigExtraAttribute extraAttribute: currentInline.config.getExtraAttributes()) {
-                String value = xpathValue(extraAttribute.getValuePath(), nodeInfo);
-                if (value != null)
-                    atts.put(extraAttribute.getName(), value);
+                String value;
+                if (extraAttribute.getValuePath().isEmpty() && atts.containsKey(extraAttribute.getName())) {
+                    // Actual attribute on tag. Apply any processing steps now.
+                    value = atts.get(extraAttribute.getName()).get(0);
+                } else {
+                    // Extra attribute, not on tag. Evaluate XPath expression.
+                    value = xpathValue(extraAttribute.getValuePath(), nodeInfo);
+                }
+                List<String> values = processStringMultipleValues(value, extraAttribute.getProcess(), null);
+                if (!values.isEmpty()) {
+                    atts.put(extraAttribute.getName(), values);
+                } else if (atts.containsKey(extraAttribute.getName())) {
+                    // Remove attribute if it was already present but now has no values.
+                    atts.remove(extraAttribute.getName());
+                }
             }
             inlineTag(nodeInfo.getDisplayName(), true, atts);
 

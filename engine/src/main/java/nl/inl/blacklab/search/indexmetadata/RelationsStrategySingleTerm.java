@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -77,45 +76,12 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
      *                         not be counted when determining stats. This will be indicated in the term encoding.
      * @return term to index in Lucene
      */
-    public static String indexTerm(String fullRelationType, Map<String, String> attributes,
+    public static String indexTerm(String fullRelationType, Map<String, List<String>> attributes,
             boolean isOptimization) {
         String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
 
         String term;
         if (attributes == null || attributes.isEmpty()) {
-            term = fullRelationType + ATTR_SEPARATOR + isOptSuffix;
-        } else {
-            // Sort and concatenate the attribute names and values
-            String attrPart = attributes.entrySet().stream()
-                    .sorted(Map.Entry.comparingByKey())
-                    .map(e -> tagAttributeIndexValue(e.getKey(), e.getValue(),
-                            BlackLabIndex.IndexType.INTEGRATED))
-                    .collect(Collectors.joining());
-
-            // The term to index consists of the type followed by the (sorted) attributes.
-            term = fullRelationType + ATTR_SEPARATOR + attrPart + isOptSuffix;
-        }
-        return term;
-    }
-
-    /**
-     * Determine the term to index in Lucene for a relation.
-     * <p>
-     * This version can handle relations with multiple values for the same attribute,
-     * which can happen as a result of processing steps during indexing.
-     *
-     * @param fullRelationType full relation type
-     * @param attributes       any attributes for this relation
-     * @param isOptimization   is this an extra index term to help speed up search in some cases? Such terms should
-     *                         not be counted when determining stats. This will be indicated in the term encoding.
-     * @return term to index in Lucene
-     */
-    public static String indexTermMulti(String fullRelationType, Map<String, Collection<String>> attributes,
-            boolean isOptimization) {
-        String isOptSuffix = isOptimization ? IS_OPTIMIZATION_INDICATOR : "";
-
-        String term;
-        if (attributes == null) {
             term = fullRelationType + ATTR_SEPARATOR + isOptSuffix;
         } else {
             // Sort and concatenate the attribute names and values
@@ -277,23 +243,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
     }
 
     @Override
-    public void indexRelationTermsMulti(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
-
-        // Determine the full value to index, e.g. full type and any attributes
-        String valueToIndex = indexTermMulti(fullType, attributes, false);
-
-        // Actually index the value, once without and once with attributes (if any)
-        indexTermFunc.accept(valueToIndex, payload);
-        if (attributes != null && !attributes.isEmpty()) {
-            // Also index a version without attributes. We'll use this for faster search if we don't filter on
-            // attributes.
-            valueToIndex = indexTermMulti(fullType, null, true);
-            indexTermFunc.accept(valueToIndex, payload);
-        }
-    }
-
-    @Override
-    public void indexRelationTerms(String fullType, Map<String, String> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+    public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
 
         // Determine the full value to index, e.g. full type and any attributes
         String valueToIndex = indexTerm(fullType, attributes, false);
@@ -303,13 +253,13 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
         if (attributes != null && !attributes.isEmpty()) {
             // Also index a version without attributes. We'll use this for faster search if we don't filter on
             // attributes.
-            valueToIndex = indexTermMulti(fullType, null, true);
+            valueToIndex = indexTerm(fullType, null, true);
             indexTermFunc.accept(valueToIndex, payload);
         }
     }
 
     @Override
-    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, String> attributes) {
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes) {
         // Only assign a relation id if we know the end position; if not,
         // we'll assign the relation id and create the payload later when we do know the end position.
         return endPos >= 0 ?

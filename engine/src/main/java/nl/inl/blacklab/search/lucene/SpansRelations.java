@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
+import nl.inl.util.CollUtil;
 
 /**
  * Gets spans for relations matches.
@@ -177,7 +179,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     public static void setIndexedTerm(RelationInfo info, String term, int docId, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
         info.setFullRelationType(relStrat.fullTypeFromIndexedTerm(term));
-        Map<String, String> attributes = relStrat.getAllAttributesFromIndexedTerm(term);
+        Map<String, List<String>> attributes = CollUtil.toMapOfLists(relStrat.getAllAttributesFromIndexedTerm(term));
         if (attributes == null && relInfo != null) {
             if (info.mayHaveInfoInRelationIndex()) {
                 // Get them from relation info index

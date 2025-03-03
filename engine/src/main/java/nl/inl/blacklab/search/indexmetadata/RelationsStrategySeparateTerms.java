@@ -4,7 +4,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -38,13 +37,14 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     static final String NAME = "separate-terms";
 
     public static final RelationsStrategy INSTANCE = new RelationsStrategySeparateTerms();
+    public static final String ATTR_MULTIPLE_VALUE_SEP = "\u0001";
 
     private RelationsStrategySeparateTerms() { }
 
     /**
      * Separator between relation type name and attribute name in _relation annotation.
      */
-    private static final String NAME_SEPARATOR = "\u0001";
+    private static final String NAME_SEPARATOR = ATTR_MULTIPLE_VALUE_SEP;
 
     /**
      * Separator between attribute name and its value in _relation annotation.
@@ -63,35 +63,14 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @param attributes       any attributes for this relation
      * @return term to index in Lucene
      */
-    public static List<String> indexTerms(String fullRelationType, Map<String, String> attributes) {
-        if (attributes == null || attributes.isEmpty())
-            return List.of(fullRelationType);
-        List<String> terms = new ArrayList<>();
-        terms.add(fullRelationType);
-        attributes.entrySet().stream()
-                .map(e -> tagAttributeIndexTerm(fullRelationType, e.getKey(), e.getValue()))
-                .forEach(terms::add);
-        return terms;
-    }
-
-    /**
-     * Determine the term to index in Lucene for a relation.
-     * <p>
-     * This version can handle relations with multiple values for the same attribute,
-     * which can happen as a result of processing steps during indexing.
-     *
-     * @param fullRelationType full relation type
-     * @param attributes       any attributes for this relation
-     * @return term to index in Lucene
-     */
-    public static List<String> indexTermsMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
+    public static List<String> indexTerms(String fullRelationType, Map<String, List<String>> attributes) {
         if (attributes == null || attributes.isEmpty())
             return List.of(fullRelationType);
         List<String> terms = new ArrayList<>();
         terms.add(fullRelationType);
         attributes.entrySet().stream()
                 .flatMap(e -> e.getValue().stream()
-                        .map(val -> tagAttributeIndexTerm(fullRelationType, e.getKey(), val)))
+                        .map(v -> tagAttributeIndexTerm(fullRelationType, e.getKey(), v)))
                 .forEach(terms::add);
         return terms;
     }
@@ -219,20 +198,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public void indexRelationTermsMulti(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
-        List<String> terms = indexTermsMulti(fullType, attributes);
-        indexTermFunc.accept(terms.get(0), payload);
-
-        // Extract only the relationId from the payload, and index it with the other terms
-        ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes);
-        int relationId = CODEC.readRelationId(dataInput);
-        BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
-        for (int i = 1; i < terms.size(); i++)
-            indexTermFunc.accept(terms.get(i), relIdOnly);
-    }
-
-    @Override
-    public void indexRelationTerms(String fullType, Map<String, String> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+    public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
         List<String> terms = indexTerms(fullType, attributes);
         indexTermFunc.accept(terms.get(0), payload);
 
@@ -243,11 +209,11 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
             for (int i = 1; i < terms.size(); i++)
                 indexTermFunc.accept(terms.get(i), relIdOnly);
-            }
+        }
     }
 
     @Override
-    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, String> attributes) {
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes) {
         // Always assign a relation id, because we need it to match tags to attributes,
         // even if there's no extra information stored in the relation index (which there should be
         // if there's attributes, but ok).

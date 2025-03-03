@@ -3,6 +3,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -144,7 +146,7 @@ public class HitPropertySpanAttribute extends HitProperty {
             if (!(matchInfo instanceof RelationInfo))
                 return PropertyValueString.NO_VALUE;
             RelationInfo span = (RelationInfo) matchInfo;
-            value = span.getAttributes().get(attributeName);
+            value = StringUtils.join(span.getAttributes().get(attributeName), SEPARATOR_MULTIPLE_VALUES);
         }
         return new PropertyValueString(value);
     }
