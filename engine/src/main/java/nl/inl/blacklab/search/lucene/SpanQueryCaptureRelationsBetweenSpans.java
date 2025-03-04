@@ -304,7 +304,8 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpans targetSpans = hasTargetRestrictions ? target.getSpans(context, requiredPostings) : null;
             if (targetSpans != null)
                 targetSpans = BLSpans.ensureSorted(targetSpans);
-            BLSpans captureTargetOverlapsSpans = captureTargetOverlaps.getSpans(context, requiredPostings);
+            BLSpans captureTargetOverlapsSpans = captureTargetOverlaps == null ? null :
+                    captureTargetOverlaps.getSpans(context, requiredPostings);
             return new SpansCaptureRelationsBetweenSpans.Target(matchRelationsSpans, targetSpans, hasTargetRestrictions,
                     captureRelationsSpans, captureAs, captureTargetAs, targetField, optionalMatch, captureTargetOverlapsSpans, captureTargetOverlapsAs);
         }
