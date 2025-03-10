@@ -258,7 +258,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             spans = new SpansRelations(baseFieldName, relationType, spans, primaryIndicator,
                     direction, spanMode, captureAs, BlackLabIndexIntegrated.relationInfo(context),
                     relationsStrategy);
-            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null)
+            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.equals(field))
                 spans = new SpansOverrideField(spans, targetField);
             return spans;
         }
