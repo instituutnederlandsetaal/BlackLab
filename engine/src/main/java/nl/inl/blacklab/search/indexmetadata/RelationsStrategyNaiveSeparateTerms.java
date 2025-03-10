@@ -68,7 +68,6 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
 
     public static String indexedTermNoAttributes(String fullType) {
         // reinterpret as if it were a single-term indexed term, for stats
-        // (@@@ FIXME probably)
         return RelationsStrategySingleTerm.indexTerm(fullType, null, false);
     }
 

@@ -333,6 +333,10 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         }
     }
 
+    private String attValue(List<String> values) {
+        return values.size() == 1 ? values.get(0) : values.toString();
+    }
+
     @Override
     public String toString(String defaultField) {
         // Inline tag
@@ -340,7 +344,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
             String tagName = fullRelationType == null ? "UNKNOWN" : RelationUtil.typeFromFullType(fullRelationType);
             String attr = attributes == null || attributes.isEmpty() ? "" :
                     " " + attributes.entrySet().stream()
-                            .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")
+                            .map(e -> e.getKey() + "=\"" + attValue(e.getValue()) + "\"")
                             .collect(Collectors.joining(" "));
             return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )" +
                     toStringOptFieldName(defaultField);

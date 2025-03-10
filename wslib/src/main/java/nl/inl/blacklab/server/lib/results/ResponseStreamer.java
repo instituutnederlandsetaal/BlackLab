@@ -21,7 +21,6 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.InputFormatWithConfig;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitPropertySpanAttribute;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLab;
@@ -139,6 +138,11 @@ public class ResponseStreamer {
     public static final String KEY_SAMPLE_PERCENTAGE = "samplePercentage";
     public static final String KEY_SAMPLE_SIZE = "sampleSize";
     public static final String KEY_GROUP_SIZE = "size";
+
+    /** If an attribute has multiple values, they will be joined together in the response using this separator.
+     *  We could make this configurable in the future.
+     */
+    private static final String SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES = "; ";
 
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;
@@ -831,7 +835,11 @@ public class ResponseStreamer {
         if (!inlineTag.getAttributes().isEmpty()) {
             ds.startEntry("attributes").startMap();
             for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
-                ds.elEntry(attr.getKey(), StringUtils.join(attr.getValue(), HitPropertySpanAttribute.SEPARATOR_MULTIPLE_VALUES));
+                // Note that we could make separator configurable in the future, so someone can use something less
+                // likely to interfere with their values.
+                // Flattening multiple values to a single string this way is a bit icky, but further complicating the
+                // response structure for a little-used feature is also not great.
+                ds.elEntry(attr.getKey(), StringUtils.join(attr.getValue(), SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES));
             }
             ds.endMap().endEntry();
         }

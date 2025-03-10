@@ -32,6 +32,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm;
 
 /**
@@ -84,7 +85,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                     plugins.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
                 } else {
                     // This is the current version of the relation info plugin, used for new indexes.
-                    plugins.add(new PWPluginRelationInfo(this, relationsStrategy));
+                    plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms)relationsStrategy));
                 }
             }
         } catch (IOException e) {
