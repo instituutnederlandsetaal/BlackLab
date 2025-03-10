@@ -2,23 +2,16 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
-import java.time.YearMonth;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -28,6 +21,8 @@ import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.indexers.config.process.ProcessingStepIdentity;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -154,7 +149,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     needsPrimaryValuePayloads);
 
             String relAnnotName = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
-            AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(relAnnotName);
+            AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(relAnnotName, config.getVersion());
             AnnotationWriter annotRelation = fieldWriter.addAnnotation(relAnnotName, relAnnotSensitivity, true, false);
             annotRelation.setHasForwardIndex(false);
 
@@ -199,42 +194,33 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     protected List<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
-        List<ConfigProcessStep> processingSteps = annotation.getProcess();
-        boolean hasProcessing = !processingSteps.isEmpty();
+        ProcessingStep processing = annotation.getProcess();
+        boolean hasProcessing = processing != null;
+        boolean processingMultiple = hasProcessing && processing.canProduceMultipleValues();
 
         // Do we have anything to do?
-        boolean nothingToProcess = !hasProcessing || values.isEmpty();
-        boolean noDupesToEliminate = values.size() <= 1 || annotation.isAllowDuplicateValues();
-        if (nothingToProcess && noDupesToEliminate) {
+        if (!hasProcessing || values.isEmpty()) {
             // No processing or deduplication to do; just return the values as-is (but sanitized/normalized)
             return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).collect(Collectors.toList());
         }
 
-        List<String> results = new ArrayList<>();
-
         // Apply processing steps
-        if (annotation.isMultipleValues()) {
+        List<String> results = new ArrayList<>();
+        if (processingMultiple || values.size() > 1) {
             // Could there be multiple values here? (either there already are, or a processing step might create them)
             // (this is to prevent allocating a set if we don't have to)
 
             // If duplicates are not allowed, keep track of values we've already added
-            Set<String> valuesSeen = annotation.isAllowDuplicateValues() ? null : new HashSet<>();
             for (String rawValue: values) {
                 rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
-                for (String processedValue: processStringMultipleValues(rawValue, processingSteps, null)) {
-                    if (annotation.isAllowDuplicateValues() || !valuesSeen.contains(processedValue)) {
-                        // Not a duplicate, or we don't care about duplicates. Add it.
-                        results.add(processedValue);
-                        if (valuesSeen != null)
-                            valuesSeen.add(processedValue);
-                    }
-                }
+                results.addAll(processStringMultipleValues(rawValue, processing));
             }
         } else {
             // Single value (the collection should only contain one entry)
+            results = new ArrayList<>();
             for (String rawValue: values) {
                 rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
-                results.add(processString(rawValue, processingSteps, null));
+                results.add(processing.performSingle(rawValue, this));
                 break; // if multiple were matched, only index the first one
             }
         }
@@ -284,55 +270,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         ensureInitialized();
     }
 
-    protected String processString(String result, List<ConfigProcessStep> process, Map<String, String> mapValues) {
-        for (ConfigProcessStep step : process) {
-            String method = step.getMethod();
-            Map<String, String> param = step.getParam();
-            switch (method) {
-            case "replace":
-                if (param.getOrDefault("keep", "replaced").equals("all"))
-                    warn("'replace' processing step with 'keep: all', but multiple values not allowed");
-                result = opReplace(result, param);
-                break;
-            case "default":
-                result = opDefault(result, param);
-                break;
-            case "append":
-                result = opAppend(result, param);
-                break;
-            case "split":
-                result = opSplit(result, param).get(0);
-                break;
-            case "chatFormatAgeToMonths":
-                result = opChatFormatAgeToMonths(result);
-                break;
-            case "strip":
-                result = opStrip(result, param);
-                break;
-             case "concatDate":
-                result = opConcatDate(param);
-                break;
-            case "parsePos":
-            {
-                // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
-                String field = param.getOrDefault("field", "_");
-                result = opParsePartOfSpeech(result, field);
-                break;
-            }
-            default:
-                // In the future, we'll support user plugins here
-                throw new UnsupportedOperationException("Unknown processing step method " + method);
-            }
-        }
-        if (mapValues != null && !mapValues.isEmpty()) {
-            // Finally, apply any value mappings specified.
-            String mappedResult = mapValues.get(result);
-            if (mappedResult != null)
-                result = mappedResult;
-        }
-        return result;
-    }
-
     /**
      * process linked documents when configured. An xPath processor can be provided,
      * it will retrieve information from the document to construct a path to a linked document.
@@ -361,7 +298,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             List<String> resultAfterProcessing = new ArrayList<>();
             for (String inputValue : results) {
                 inputValue = StringUtil.sanitizeAndNormalizeUnicode(inputValue);
-                resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getProcess(), null));
+                resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getProcess()));
             }
             results = resultAfterProcessing;
         }
@@ -394,288 +331,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }
     }
 
-    protected List<String> processStringMultipleValues(String input, List<ConfigProcessStep> process, Map<String, String> mapValues) {
+    protected List<String> processStringMultipleValues(String input, ProcessingStep process) {
         // If there's no processing to be done (the most common case), skip the list allocation.
-        if (process.isEmpty() && (mapValues == null || mapValues.isEmpty()))
-            return List.of(input);
-
-        List<String> result = new ArrayList<>();
-        result.add(input);
-
-        for (ConfigProcessStep step : process) {
-            String method = step.getMethod();
-            Map<String, String> param = step.getParam();
-
-            switch (method) {
-            case "replace":
-                // keep only replaced strings, or originals as well?
-                boolean keepAll = param.getOrDefault("keep", "replaced").equals("all");
-                for (int i = 0; i < result.size(); ++i) {
-                    String afterReplace = opReplace(result.get(i), param);
-                    if (keepAll) {
-                        // We want to keep the original and add the result as well.
-                        // Note that we insert it after the original to keep things in a nice order.
-                        result.add(i + 1, afterReplace);
-                        i++;
-                    } else {
-                        // Replace the original version with the result.
-                        result.set(i, afterReplace);
-                    }
-                }
-                break;
-            case "default":
-                for (int i = 0; i < result.size(); ++i) {
-                    result.set(i, opDefault(result.get(i), param));
-                }
-                break;
-            case "append":
-                for (int i = 0; i < result.size(); ++i) {
-                    result.set(i, opAppend(result.get(i), param));
-                }
-                break;
-            case "split": {
-                ArrayList<String> r = new ArrayList<>();
-                for (String s : result) {
-                    r.addAll(opSplit(s, param));
-                }
-                result = r;
-                break;
-            }
-            case "chatFormatAgeToMonths":
-                for (int i = 0; i < result.size(); ++i) {
-                    result.set(i, opChatFormatAgeToMonths(result.get(i)));
-                }
-                break;
-            case "strip":
-                for (int i = 0; i < result.size(); ++i) {
-                    result.set(i, opStrip(result.get(i), param));
-                }
-                break;
-            case "parsePos":
-            {
-                // Get individual feature out of a part of speech string like "NOU(gender=f,number=p)"
-                String field = param.getOrDefault("field", "_");
-                for (int i = 0; i < result.size(); ++i) {
-                    result.set(i, opParsePartOfSpeech(result.get(i), field));
-                }
-                break;
-            }
-            case "concatDate":
-                String s = opConcatDate(param);
-                if (!s.isEmpty()) {
-                    result.set(0, s);
-                }
-                break;
-            default:
-                // In the future, we'll support user plugins here
-                throw new UnsupportedOperationException("Unknown processing step method " + method);
-            }
-        }
-        if (mapValues != null && !mapValues.isEmpty()) {
-            // Finally, apply any value mappings specified.
-            for (int i = 0; i < result.size(); ++i) {
-                String mappedResult = mapValues.get(result.get(i));
-                if (mappedResult != null)
-                    result.set(i, mappedResult);
-            }
-        }
-        return result;
-    }
-
-    static final Pattern MAIN_POS_PATTERN = Pattern.compile("^([^(]+)(\\s*\\(.*\\))?$");
-
-    static final Pattern FEATURE_PATTERN = Pattern.compile("^[^(]+(\\s*\\((.*)\\))?$");
-
-    static String opParsePartOfSpeech(String result, String field) {
-        // Trim character/string from beginning and end
-        result = StringUtil.trimWhitespace(result);
-        if (field.equals("_")) {
-            //  Get main pos: A(b=c,d=e) -> A
-            return MAIN_POS_PATTERN.matcher(result).replaceAll("$1");
-        } else {
-            //  Get feature: A(b=c,d=e) -> e  (if field == d)
-            String featuresString = FEATURE_PATTERN.matcher(result).replaceAll("$2");
-            return Arrays.stream(featuresString.split(","))
-                .map(feat -> feat.split("="))
-                .filter(featParts -> StringUtil.trimWhitespace(featParts[0]).equals(field))
-                .map(featParts -> StringUtil.trimWhitespace(featParts[1]))
-                .findFirst()
-                .orElse("");
-        }
-    }
-
-    static String opStrip(String result, Map<String, String> param) {
-        // Trim character/string from beginning and end
-        String stripChars = param.getOrDefault("chars", " ");
-        result = StringUtils.strip(result, stripChars);
-        return result;
-    }
-    
-    /**
-     * Concatenate 3 separate date fields into one. 
-     * E.g. 
-     * Year: 2000
-     * Month: 10
-     * Day: 19
-     * 
-     * Result: "20001019"
-     *  
-     * @param param operation parameters
-     * @return resulting value
-     */
-    protected String opConcatDate(Map<String, String> param) {
-        String yearField = param.get("yearField");
-        String monthField = param.get("monthField");
-        String dayField = param.get("dayField");
-        String mode = param.get("autofill");
-        if (yearField == null || monthField == null || dayField == null || mode == null || !(mode.equalsIgnoreCase("start")||mode.equalsIgnoreCase("end")))
-            throw new InvalidInputFormatConfig("concatDate needs parameters yearField, monthField, dayField, and autoFill ('start' or 'end')");
-        
-        boolean isStart = mode.equalsIgnoreCase("start");
-        Integer y, m, d;
-        try { y = Integer.parseInt(getMetadataField(yearField).get(0)); } catch (Exception e) { y = null; }
-        try { m = Integer.parseInt(getMetadataField(monthField).get(0)); } catch (Exception e) { m = null; }
-        try { d = Integer.parseInt(getMetadataField(dayField).get(0)); } catch (Exception e) { d = null; }
-        
-        if (y == null) return "";
-        if (m == null || m > 12 || m < 1) m = isStart ? 1 : 12;
-        int maxDay = YearMonth.of(y, m).lengthOfMonth();
-        if (d == null || d > maxDay || d < 1) d = isStart ? 1 : maxDay; 
-        
-        return StringUtils.leftPad(y.toString(), 4, '0') + StringUtils.leftPad(m.toString(), 2, '0') + StringUtils.leftPad(d.toString(), 2, '0'); 
-    }
-    
-    protected String opChatFormatAgeToMonths(String result) {
-        // 1;10.30 => 1 jaar, 10 maanden, 30 dagen => afgerond 23 maanden?
-        String[] parts = result.split("[;.]", 3);
-        int years = 0;
-        int months = 0;
-        int days = 0;
-        try {
-            years = Integer.parseInt(parts[0]);
-            months = parts.length <= 1 ? 0 : Integer.parseInt(parts[1]);
-            days = parts.length <= 2 ? 0 : Integer.parseInt(parts[2]);
-        } catch (NumberFormatException e) {
-            warn("action 'opChatFormatAgeToMonths': illegal value " + result);
-        }
-        return Integer.toString(years * 12 + months + (days > 14 ? 1 : 0) );
-    }
-
-    /**
-     * Split the result string on a separator and return one or all parts.
-     *
-     * Note that if multiple values are not allowed, only the first part returned will be used.
-     *
-     * @param result the string to split
-     * @param param
-     * <pre>
-     * - "separator" for the separator (defaults to ;),
-     * - "keep" for the keep index, accepts numbers or the special string "all" (the default)
-     *      if "keep" >= 0 && < number of splits: return only that part
-     *      if "keep" >= number of splits return empty string.
-     *      if "keep" == "all" return all parts (the default)
-     *      if "keep" == "both" return both the original (unsplit) string and all parts
-     * </pre>
-     */
-    private List<String> opSplit(String result, Map<String, String> param) {
-        // Split on a separator regex and keep one or all parts (first part by default)
-        String separator = param.getOrDefault("separator", ";");
-        String keep = param.getOrDefault("keep", "all").toLowerCase();
-        String[] parts = result.split(separator, -1);
-
-        if (keep.equals("all")) {
-            return Arrays.asList(parts);
-        }
-        if (keep.equals("both")) {
-            ArrayList<String> r = new ArrayList<>();
-            r.add(result);
-            Collections.addAll(r, parts);
-            return r;
-        }
-
-        int i = -1;
-        try { i = Integer.parseInt(keep); } catch (NumberFormatException e) { /* handled below */ }
-        if (i < 0) {
-            warn("action 'split', parameter 'keep': must be at least 0");
-            i = 0;
-        }
-
-        return List.of(i < parts.length ? parts[i] : "");
-    }
-
-    /**
-     * Appends a constant value, or the value of a metadata field to the result string.
-     *
-     * @param result the input string
-     * @param param
-     * <pre>
-     * - "separator" for the separator (defaults to " ")
-     * - "field" for the metadata field whose value will be appended
-     * - "value" for a constant value ("field" takes precedence if it exists)
-     * </pre>
-     */
-    private String opAppend(String result, Map<String, String> param) {
-        String separator = param.getOrDefault("separator", " ");
-        String field = param.get("field");
-        String value;
-        if (field != null)
-            value = StringUtils.join(getMetadataField(field), separator);
-        else
-            value = param.get("value");
-        if (value != null && value.length() > 0) {
-            if (result.length() > 0)
-                result += separator;
-            result += value;
-        }
-        return result;
-    }
-
-    /**
-     * Optionally replace an empty result with a constant value, or the value of a metadata field.
-     *
-     * @param result the input string
-     * @param param
-     * <pre>
-     * - "field" for the metadata field whose value will be used
-     * - "separator" to join the metadata field if it contains multiple values (defaults to ;)
-     * - "value" for a constant value ("field" takes precedence if it exists)
-     * </pre>
-     */
-    private String opDefault(String result, Map<String, String> param) {
-        if (result.length() == 0) {
-            String field = param.get("field");
-            String value;
-            String sep = param.getOrDefault("separator", ";");
-            if (field != null)
-                value = StringUtils.join(getMetadataField(field), sep);
-            else
-                value = param.get("value");
-            if (value != null)
-                result = value;
-        }
-        return result;
-    }
-
-    /**
-     * Perform a regex replace on result. Allows group references.
-     *
-     * @param param
-     * <pre>
-     * - "find" for the regex
-     * - "replace" the replacement string
-     * </pre>
-     */
-    private static String opReplace(String result, Map<String, String> param) {
-        String find = param.get("find");
-        String replace = param.get("replace");
-        if (find == null || replace == null)
-            throw new InvalidInputFormatConfig("replace needs parameters find and replace");
-        try {
-            result = result.replaceAll(find, replace);
-        } catch (PatternSyntaxException e) {
-            throw new InvalidInputFormatConfig("Syntax error in replace regex: " + find);
-        }
-        return result;
+        return process instanceof ProcessingStepIdentity ?
+                List.of(input) :
+                process.perform(Stream.of(input), this).collect(Collectors.toList());
     }
 
     /**
@@ -691,9 +351,8 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
      */
     protected String processMetadataValue(String name, String value) {
         ConfigMetadataField f = config.getMetadataField(name);
-        if (f != null) {
-            value = processString(value, f.getProcess(), f.getMapValues());
-        }
+        if (f != null)
+            value = f.getProcess().performSingle(value, this);
         return value;
     }
 

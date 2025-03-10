@@ -51,7 +51,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         }
         if (xmlProcessorName.toLowerCase().matches(REGEX_PROCESSOR_SAXON))
             return new DocIndexerSaxon();
-        return new DocIndexerVTD(); // VTD is still the default for now
+        return new DocIndexerVTD(); // VTD was the original default (v2 will automatically set Saxon as default)
     }
 
     /** Don't issue warnings again if they starts with the same prefix. */
@@ -82,14 +82,11 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected static boolean canReuseParentValues(ConfigAnnotation subannotation, String valuePath,
             ConfigAnnotation parentAnnotation) {
         return valuePath.equals(parentAnnotation.getValuePath()) &&
-                subannotation.isMultipleValues() == parentAnnotation.isMultipleValues() &&
-                subannotation.isAllowDuplicateValues() == parentAnnotation.isAllowDuplicateValues() &&
                 subannotation.isCaptureXml() == parentAnnotation.isCaptureXml();
     }
 
     protected String optSanitizeFieldName(String origFieldName) {
-        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName,
-                disallowDashInname());
+        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName, disallowDashInname());
         if (!origFieldName.equals(fieldName)) {
             warnOnce("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
         }
@@ -372,22 +369,15 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected List<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, T context) {
         // Not the same values as the parent annotation; we have to find our own.
         List<String> values = new ArrayList<>();
-        if (annotation.isMultipleValues()) {
-            // Multiple matches will be indexed at the same position.
-            if (annotation.isCaptureXml()) {
-                xpathForEach(valuePath, context, (value) -> values.add(currentNodeXml(value)));
-            } else {
-                xpathForEachStringValue(valuePath, context, values::add);
-            }
-            // No annotations have been added, the result of the xPath query must have been empty.
-            if (values.isEmpty())
-                values.add("");
+        // Multiple matches will be indexed at the same position.
+        if (annotation.isCaptureXml()) {
+            xpathForEach(valuePath, context, (value) -> values.add(currentNodeXml(value)));
         } else {
-            // Single value expected
-            values.add(annotation.isCaptureXml() ?
-                    xpathXml(valuePath, context) :
-                    xpathValue(valuePath, context));
+            xpathForEachStringValue(valuePath, context, values::add);
         }
+        // No annotations have been added, the result of the xPath query must have been empty.
+        if (values.isEmpty())
+            values.add("");
         return values;
     }
 
@@ -556,14 +546,13 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             ConfigMetadataField indexAsFieldConfig) {
         xpathForEachStringValue(forEachField.getValuePath(), forEach, (unprocessedValue) -> {
             unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
-            for (String value: processStringMultipleValues(unprocessedValue, forEachField.getProcess(),
-                    forEachField.getMapValues())) {
+            for (String value: processStringMultipleValues(unprocessedValue, forEachField.getProcess())) {
                 if (indexAsFieldConfig == null) {
                     addMetadataField(indexAsFieldName, value);
                 } else {
                     // Also execute process defined for named metadata field, if any
                     for (String processedValue: processStringMultipleValues(value,
-                            indexAsFieldConfig.getProcess(), indexAsFieldConfig.getMapValues())) {
+                            indexAsFieldConfig.getProcess())) {
                         addMetadataField(indexAsFieldName, processedValue);
                     }
                 }

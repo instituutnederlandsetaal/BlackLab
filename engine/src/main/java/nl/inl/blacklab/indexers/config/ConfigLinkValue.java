@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 
 /** Configuration for linked document link values. */
 public class ConfigLinkValue {
@@ -58,8 +59,13 @@ public class ConfigLinkValue {
         this.valueField = valueField;
     }
 
-    public List<ConfigProcessStep> getProcess() {
-        return process;
+    ProcessingStep processSteps;
+
+    public synchronized ProcessingStep getProcess() {
+        if (processSteps == null) {
+            processSteps = ProcessingStep.fromConfig(process);
+        }
+        return processSteps;
     }
 
     public void setProcess(List<ConfigProcessStep> p) {

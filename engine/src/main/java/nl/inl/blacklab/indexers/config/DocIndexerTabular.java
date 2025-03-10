@@ -105,8 +105,10 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
                 && opt.get(FT_OPT_ALLOW_SEPARATORS_AFTER_INLINE_TAGS).equalsIgnoreCase("true");
         hasInlineTags = opt.containsKey(FT_OPT_HAS_INLINE_TAGS) && opt.get(FT_OPT_HAS_INLINE_TAGS).equalsIgnoreCase("true");
         hasGlueTags = opt.containsKey(FT_OPT_HAS_GLUE_TAGS) && opt.get(FT_OPT_HAS_GLUE_TAGS).equalsIgnoreCase("true");
-        if (opt.containsKey(FT_OPT_MULTIPLE_VALUES_SEPARATOR))
+        if (opt.containsKey(FT_OPT_MULTIPLE_VALUES_SEPARATOR)) {
+            logger.warn("The option " + FT_OPT_MULTIPLE_VALUES_SEPARATOR + " is deprecated; use a processing step 'split' instead.");
             multipleValuesSeparatorRegex = opt.get(FT_OPT_MULTIPLE_VALUES_SEPARATOR);
+        }
     }
 
     public void setDocument(Reader reader) {

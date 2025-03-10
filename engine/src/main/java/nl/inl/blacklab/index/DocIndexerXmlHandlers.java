@@ -401,7 +401,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean needsPrimaryValuePayloads = docWriter.needsPrimaryValuePayloads();
         contentsField = new AnnotatedFieldWriter(getDocWriter(), DocIndexerLegacy.DEFAULT_CONTENTS_FIELD_NAME,
-                mainPropName, AnnotationSensitivities.defaultForAnnotation(mainPropName),
+                mainPropName, getAnnotationSensitivity(mainPropName),
                 false, needsPrimaryValuePayloads);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);

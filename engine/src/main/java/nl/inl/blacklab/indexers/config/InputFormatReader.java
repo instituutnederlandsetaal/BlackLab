@@ -23,8 +23,8 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument.MissingLinkPathAction;
@@ -41,7 +41,7 @@ public class InputFormatReader extends YamlJsonReader {
 
     private static final Logger logger = LogManager.getLogger(InputFormatReader.class);
 
-    public static final String FT_XML_OPT_PROCESSOR = "processor";
+    public static final String KEY_PROCESSOR = "processor";
 
     interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
         // (intentionally left blank)
@@ -101,10 +101,14 @@ public class InputFormatReader extends YamlJsonReader {
 
     private void read(JsonNode root) {
         obj(root, "root node");
+        String baseFormat = null;
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
+            case "version":
+                cfg.setVersion(integer(e));
+                break;
             case "displayName":
                 cfg.setDisplayName(str(e));
                 break;
@@ -115,22 +119,23 @@ public class InputFormatReader extends YamlJsonReader {
                 cfg.setHelpUrl(str(e));
                 break;
             case "baseFormat": {
-                String formatIdentifier = str(e);
-                logger.warn("Format " + descFormat() + " uses format inheritance (baseFormat: " + formatIdentifier + "), which is deprecated.");
-                Optional<InputFormat> optBaseFormat = DocumentFormats.getFormatOrError(formatIdentifier);
+                // Apply base format
+                baseFormat = str(e);
+                logger.warn("Format " + descFormat() + " uses format inheritance (baseFormat: " + baseFormat + "), which is deprecated.");
+                Optional<InputFormat> optBaseFormat = DocumentFormats.getFormatOrError(baseFormat);
                 if (optBaseFormat.isEmpty())
                     throw new InvalidInputFormatConfig(
-                            "Base format " + formatIdentifier + " not found" + inFormat());
+                            "Base format " + baseFormat + " not found" + inFormat());
                 if (!optBaseFormat.get().isConfigurationBased())
                     throw new InvalidInputFormatConfig(
-                            "Base format " + formatIdentifier + " must be configuration-based" + inFormat());
+                            "Base format " + baseFormat + " must be configuration-based" + inFormat());
                 cfg.setBaseFormat(optBaseFormat.get().getConfig());
                 break;
             }
             case "type":
                 cfg.setType(str(e));
                 break;
-            case FT_XML_OPT_PROCESSOR:
+            case KEY_PROCESSOR:
                 // (we allow this at the top-level now because it's something most users will want to do while VTD
                 //  remains the default)
                 // Set the (XML) file processor to use, VTD or Saxon
@@ -190,6 +195,16 @@ public class InputFormatReader extends YamlJsonReader {
             }
         }
 
+        finalizeConfig(baseFormat);
+    }
+
+    private void finalizeConfig(String baseFormat) {
+        boolean atLeastV2 = cfg.getVersion() >= 2;
+        if (baseFormat != null && atLeastV2) {
+            throw new InvalidInputFormatConfig("baseFormat found. Input format inheritance is no longer supported in " +
+                    "version 2 of the .blf.yaml file format. Copy and customize format instead.");
+        }
+        
         // Ensure that if we have any linked documents we want to store (like metadata), there exists an
         // annotated field where we can store it (even if it has no annotations).
         for (ConfigLinkedDocument ld: cfg.getLinkedDocuments().values()) {
@@ -197,6 +212,12 @@ public class InputFormatReader extends YamlJsonReader {
                 // Field doesn't exit yet. Create a dummy field for it.
                 cfg.addAnnotatedField(ConfigAnnotatedField.createDummyForStoringLinkedDocument(ld.getName()));
             }
+        }
+
+        // If this config is at least v2: default to Saxon if no processor specified
+        if (atLeastV2 && cfg.getFileType() == FileType.XML &&
+                cfg.getFileTypeOptions().get(DocIndexerXPath.FT_OPT_PROCESSOR) == null) {
+            cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, DocIndexerSaxon.PROCESSOR_NAME);
         }
     }
 
@@ -240,6 +261,16 @@ public class InputFormatReader extends YamlJsonReader {
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             cfg.addFileTypeOption(e.getKey(), str(e));
+        }
+    }
+
+    private Object stringOrStringMap(Entry<String, JsonNode> strMapEntry) {
+        if (strMapEntry.getValue().isObject()) {
+            Map<String, String> map = new HashMap<>();
+            readStringMap(strMapEntry, map);
+            return map;
+        } else {
+            return str(strMapEntry);
         }
     }
 
@@ -397,7 +428,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "name":
                 String name = str(e);
                 String fullName = parentAnnot == null ? name : parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
-                annot.setName(warnSanitizeXmlElementName(fullName));
+                annot.setName(warnSanitizeXmlElementName(fullName, cfg.getVersion()));
                 break;
             case "value":
                 annot.setValuePath(fixedStringToXpath(str(e)));
@@ -429,7 +460,8 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setDescription(str(e));
                 break;
             case "basePath":
-                if (parentAnnot != null) throw new InvalidInputFormatConfig("Subannotations may not have their own basePath" + inFormat());
+                if (parentAnnot != null)
+                    throw new InvalidInputFormatConfig("Subannotations may not have their own basePath" + inFormat());
                 annot.setBasePath(str(e));
                 break;
             case "sensitivity":
@@ -449,9 +481,15 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setForwardIndex(bool(e));
                 break;
             case "multipleValues":
-                annot.setMultipleValues(bool(e));
+                // deprecated, ignore.
+                if (cfg.getVersion() >= 2)
+                    throw new InvalidInputFormatConfig("multipleValues not allowed in .blf.yaml version 2 (multiple values work automatically)");
+                logger.warn("Encountered deprecated key 'multipleValues' (this key is now ignored, multiple values work automatically)");
                 break;
             case "allowDuplicateValues":
+                if (cfg.getVersion() >= 2)
+                    throw new InvalidInputFormatConfig("allowDuplicateValues not allowed in .blf.yaml version 2 (replace allowDuplicateValues: false with processing step 'unique')");
+                logger.warn("Encountered deprecated key 'allowDuplicateValues' (replace allowDuplicateValues: false with processing step 'unique')");
                 annot.setAllowDuplicateValues(bool(e));
                 break;
             case "captureXml":
@@ -557,18 +595,27 @@ public class InputFormatReader extends YamlJsonReader {
                 case "tokenIdPath":
                     t.setTokenIdPath(str(e));
                     break;
-                case "includeAttributes":
+                case "includeAttributes": // (removed in v2, use attributes)
+                    if (cfg.getVersion() >= 2)
+                        throw new InvalidInputFormatConfig("includeAttributes not allowed in .blf.yaml version 2 (use 'attributes' instead)");
                     List<String> inclAttr = new ArrayList<>();
                     readStringList(e, inclAttr);
                     t.setIncludeAttributes(inclAttr);
                     break;
-                case "excludeAttributes":
+                case "excludeAttributes": // (removed in v2, use attributes)
+                    if (cfg.getVersion() >= 2)
+                        throw new InvalidInputFormatConfig("excludeAttributes not allowed in .blf.yaml version 2 (use 'attributes' with exclude: true instead)");
                     List<String> exclAttr = new ArrayList<>();
                     readStringList(e, exclAttr);
                     t.setExcludeAttributes(exclAttr);
                     break;
-                case "extraAttributes":
-                    t.setExtraAttributes(readExtraAttributes(e));
+                case "extraAttributes": // (deprecated, renamed to attributes)
+                    if (cfg.getVersion() >= 2)
+                        throw new InvalidInputFormatConfig("extraAttributes not allowed in .blf.yaml version 2 (use 'attributes' instead)");
+                    logger.warn("Encountered deprecated key 'extraAttributes' (use 'attributes' instead)");
+                    t.setAttributes(readExtraAttributes(e));
+                case "attributes":
+                    t.setAttributes(readExtraAttributes(e));
                     break;
                 default:
                     throw new InvalidInputFormatConfig("Unknown key " + e.getKey() + " in inline tag " + t.getPath());
@@ -583,12 +630,12 @@ public class InputFormatReader extends YamlJsonReader {
      *
      * @return
      */
-    private List<ConfigInlineTag.ConfigExtraAttribute> readExtraAttributes(Entry<String, JsonNode> e) {
-        List<ConfigInlineTag.ConfigExtraAttribute> extraAttr = new ArrayList<>();
+    private List<ConfigAttribute> readExtraAttributes(Entry<String, JsonNode> e) {
+        List<ConfigAttribute> extraAttr = new ArrayList<>();
         Iterator<JsonNode> itExtraAttr = array(e).elements();
         while (itExtraAttr.hasNext()) {
             JsonNode ea = itExtraAttr.next();
-            ConfigInlineTag.ConfigExtraAttribute a = new ConfigInlineTag.ConfigExtraAttribute();
+            ConfigAttribute a = new ConfigAttribute();
             Iterator<Entry<String, JsonNode>> itExtraAttrEntry = obj(ea, "extra attribute").fields();
             while (itExtraAttrEntry.hasNext()) {
                 Entry<String, JsonNode> eea = itExtraAttrEntry.next();
@@ -653,10 +700,13 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private String warnSanitizeXmlElementName(String name) {
+    private String warnSanitizeXmlElementName(String name, int version) {
+        boolean allowDashes = version >= 2;
         String sanitizedDashAllowed = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, false);
         String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, true);
         if (sanitizedDashAllowed.equals(name) && name.contains("-")) {
+            if (allowDashes)
+                return sanitizedDashAllowed;
             logger.warn("Name '" + name + "': dash in name is not currently allowed, but this will likely change in a " +
                     "future config format version. Sanitized to '" + sanitized + "' " +
                     inFormat());
@@ -679,7 +729,7 @@ public class InputFormatReader extends YamlJsonReader {
                 // This is mostly because of forward references to fields; the field instance
                 // would be created by the reference, and the field properties will be added when
                 // they are parsed later in the file.
-                f = b.getOrCreateField(warnSanitizeXmlElementName(name));
+                f = b.getOrCreateField(warnSanitizeXmlElementName(name, cfg.getVersion()));
                 existingField = true;
             } else
                 f = new ConfigMetadataField();
@@ -688,7 +738,7 @@ public class InputFormatReader extends YamlJsonReader {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
                 case "name":
-                    f.setName(warnSanitizeXmlElementName(str(e)));
+                    f.setName(warnSanitizeXmlElementName(str(e), cfg.getVersion()));
                     break;
                 case "namePath":
                     f.setName(str(e));
@@ -705,7 +755,10 @@ public class InputFormatReader extends YamlJsonReader {
                 case "process":
                     f.setProcess(readProcess(e));
                     break;
-                case "mapValues":
+                case "mapValues": // deprecated (use "map" processing stap with "table" param)
+                    if (cfg.getVersion() >= 2)
+                        throw new InvalidInputFormatConfig("'mapValues' has been removed in version 2. Use 'map' processing step with 'table' param instead.");
+                    logger.warn("Encountered deprecated key 'mapValues' (replace with processing step 'map' with 'table' param)");
                     Map<String, String> mapValues = new HashMap<>();
                     readStringMap(e, mapValues);
                     f.setMapValues(mapValues);
@@ -845,12 +898,20 @@ public class InputFormatReader extends YamlJsonReader {
                     s.setMethod(str(e));
                     break;
                 default:
-                    s.addParam(e.getKey(), str(e));
+                    s.addParam(e.getKey(), stringOrStringMap(e));
                     break;
                 }
             }
+
+            // append behaviour was different in v1; adjust for that
+            if (cfg.getVersion() < 2 && s.getMethod().equals("append") && !s.getParam().containsKey("prefix")) {
+                // v1 behaviour: separator is used both for prefix and for joining metadata values
+                s.addParam("prefix", s.getParam().getOrDefault("separator", " "));
+            }
+
             p.add(s);
         }
+
         return p;
     }
 

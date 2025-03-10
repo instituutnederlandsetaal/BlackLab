@@ -85,7 +85,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                     punct.append(line, i, m.start());
                     i = m.end();
                     for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
-                        String processedWord = processString(word, annotation.getProcess(), null);
+                        String processedWord = annotation.getProcess().performSingle(word, this);
                         if (annotation.getValuePath().equals(".")) {
                             annotationValueAppend(annotation.getName(), processedWord, 1);
                         } else {

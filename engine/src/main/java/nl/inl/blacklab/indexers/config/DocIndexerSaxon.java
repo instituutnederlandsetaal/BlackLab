@@ -39,6 +39,8 @@ import nl.inl.util.FileReference;
  */
 public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
+    public static final String PROCESSOR_NAME = "saxon";
+
     public static final int INITIAL_LIST_SIZE_INLINE_TAGS = 500;
 
     public static final int INITIAL_CAPACITY_PER_WORD_COLLECTIONS = 3;
@@ -76,12 +78,10 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         }
 
         public boolean indexAttribute(String name) {
-            if (config.getIncludeAttributes() != null) {
-                // If includeAttributes is set, attribute must be in the list and excludeAttributes is ignored.
-                return config.getIncludeAttributes().contains(name);
-            }
-            // Otherwise, index all attributes not in excludeAttributes.
-            return !config.getExcludeAttributes().contains(name);
+            ConfigAttribute attr = config.getAttributes().get(name);
+            if (attr != null)
+                return !attr.isExclude();
+            return config.isDefaultIndexAttributes();
         }
     }
 
@@ -373,21 +373,23 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                 }
             }
             // Index any extra attributes using the provided XPath expressions.
-            for (ConfigInlineTag.ConfigExtraAttribute extraAttribute: currentInline.config.getExtraAttributes()) {
+            for (ConfigAttribute attribute: currentInline.config.getAttributes().values()) {
+                if (attribute.isExclude())
+                    continue;
                 String value;
-                if (extraAttribute.getValuePath().isEmpty() && atts.containsKey(extraAttribute.getName())) {
+                if (atts.containsKey(attribute.getName())) {
                     // Actual attribute on tag. Apply any processing steps now.
-                    value = atts.get(extraAttribute.getName()).get(0);
+                    value = atts.get(attribute.getName()).get(0);
                 } else {
                     // Extra attribute, not on tag. Evaluate XPath expression.
-                    value = xpathValue(extraAttribute.getValuePath(), nodeInfo);
+                    value = xpathValue(attribute.getValuePath(), nodeInfo);
                 }
-                List<String> values = processStringMultipleValues(value, extraAttribute.getProcess(), null);
+                List<String> values = processStringMultipleValues(value, attribute.getProcess());
                 if (!values.isEmpty()) {
-                    atts.put(extraAttribute.getName(), values);
-                } else if (atts.containsKey(extraAttribute.getName())) {
+                    atts.put(attribute.getName(), values);
+                } else {
                     // Remove attribute if it was already present but now has no values.
-                    atts.remove(extraAttribute.getName());
+                    atts.remove(attribute.getName());
                 }
             }
             inlineTag(nodeInfo.getDisplayName(), true, atts);
