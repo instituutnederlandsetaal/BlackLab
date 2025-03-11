@@ -393,15 +393,18 @@
         "clauses": [
           {
             "annotation": "lemma",
+            "bcqlFragment": "[lemma='be']",
             "type": "regex",
             "value": "be"
           },
           {
             "annotation": "word",
+            "bcqlFragment": "[word='are']",
             "type": "regex",
             "value": "are"
           }
         ],
+        "bcqlFragment": "[lemma='be' & word='are']",
         "type": "and"
       }
     },

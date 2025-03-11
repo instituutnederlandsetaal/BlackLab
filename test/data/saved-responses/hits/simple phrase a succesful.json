@@ -95,15 +95,18 @@
       "json": {
         "clauses": [
           {
+            "bcqlFragment": "'a'",
             "type": "regex",
             "value": "a"
           },
           {
             "annotation": "lemma",
+            "bcqlFragment": "[lemma='successful']",
             "type": "regex",
             "value": "successful"
           }
         ],
+        "bcqlFragment": "'a' [lemma='successful']",
         "type": "sequence"
       }
     },

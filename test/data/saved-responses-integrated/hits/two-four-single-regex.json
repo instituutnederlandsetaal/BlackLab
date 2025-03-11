@@ -183,6 +183,7 @@
       "bcql": "'two|four'",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'two|four'",
         "type": "regex",
         "value": "two|four"
       }

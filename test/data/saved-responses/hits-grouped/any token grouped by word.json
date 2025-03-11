@@ -376,9 +376,11 @@
       "json": {
         "clause": {
           "annotation": "word",
+          "bcqlFragment": "[word='abcdefg']",
           "type": "regex",
           "value": "abcdefg"
         },
+        "bcqlFragment": "[word!='abcdefg']",
         "type": "not"
       }
     },

@@ -174,19 +174,23 @@
       "json": {
         "clauses": [
           {
+            "bcqlFragment": "'one'",
             "type": "regex",
             "value": "one"
           },
           {
             "capture": "A",
             "clause": {
+              "bcqlFragment": "[]",
               "max": 1,
               "min": 1,
               "type": "anytoken"
             },
+            "bcqlFragment": "A:[]",
             "type": "capture"
           }
         ],
+        "bcqlFragment": "'one' (A:[])",
         "type": "sequence"
       },
       "matchInfos": {

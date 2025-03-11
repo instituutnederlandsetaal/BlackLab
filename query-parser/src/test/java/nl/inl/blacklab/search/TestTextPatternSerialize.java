@@ -48,7 +48,7 @@ public class TestTextPatternSerialize {
     @Test
     public void testSimple() throws IOException {
         TextPattern pattern = new TextPatternTerm("cow");
-        String expected = "{\"type\":\"term\",\"value\":\"cow\"}";
+        String expected = "{\"bcqlFragment\":\"'cow'\",\"type\":\"term\",\"value\":\"cow\"}";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);
     }
@@ -62,11 +62,11 @@ public class TestTextPatternSerialize {
                         TextPattern.MAX_UNLIMITED
                 ),
                 new TextPatternTerm("cow"));
-        String expected = "{\"type\":\"sequence\",\"clauses\":["+
-                "{\"type\":\"repeat\",\"clause\":"+
-                    "{\"type\":\"term\",\"value\":\"lazy\"},"+
+        String expected = "{\"bcqlFragment\":\"('lazy'+) 'cow'\",\"type\":\"sequence\",\"clauses\":["+
+                "{\"bcqlFragment\":\"'lazy'+\",\"type\":\"repeat\",\"clause\":"+
+                    "{\"bcqlFragment\":\"'lazy'\",\"type\":\"term\",\"value\":\"lazy\"},"+
                     "\"min\":1},"+
-                "{\"type\":\"term\",\"value\":\"cow\"}"+
+                "{\"bcqlFragment\":\"'cow'\",\"type\":\"term\",\"value\":\"cow\"}"+
             "]}";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);

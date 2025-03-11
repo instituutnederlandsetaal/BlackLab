@@ -116,7 +116,9 @@
       "bcql": "('very' 'good') within <u/>",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "('very' 'good') within <u/>",
         "filter": {
+          "bcqlFragment": "<u/>",
           "name": "u",
           "type": "tags"
         },
@@ -124,14 +126,17 @@
         "producer": {
           "clauses": [
             {
+              "bcqlFragment": "'very'",
               "type": "regex",
               "value": "very"
             },
             {
+              "bcqlFragment": "'good'",
               "type": "regex",
               "value": "good"
             }
           ],
+          "bcqlFragment": "'very' 'good'",
           "type": "sequence"
         },
         "type": "posfilter"

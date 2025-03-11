@@ -274,6 +274,7 @@
       "bcql": "'they'",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'they'",
         "type": "regex",
         "value": "they"
       }
