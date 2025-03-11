@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroup;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
@@ -982,6 +983,8 @@ public class ResponseStreamer {
 
         ds.startEntry("annotations").startMap();
         for (Map.Entry<String, ResultAnnotationInfo> annotEntry: annotInfos.entrySet()) {
+            if (annotEntry.getKey().equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME))
+                continue; // don't include _relation, may not be used in queries
             ds.startAttrEntry("annotation", "name", annotEntry.getKey()).startMap();
             ResultAnnotationInfo ai = annotEntry.getValue();
             Annotation annotation = ai.getAnnotation();
