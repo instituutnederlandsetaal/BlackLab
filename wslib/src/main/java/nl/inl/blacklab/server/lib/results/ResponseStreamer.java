@@ -835,11 +835,7 @@ public class ResponseStreamer {
         if (!inlineTag.getAttributes().isEmpty()) {
             ds.startEntry("attributes").startMap();
             for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
-                // Note that we could make separator configurable in the future, so someone can use something less
-                // likely to interfere with their values.
-                // Flattening multiple values to a single string this way is a bit icky, but further complicating the
-                // response structure for a little-used feature is also not great.
-                ds.elEntry(attr.getKey(), StringUtils.join(attr.getValue(), SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES));
+                ds.elEntry(attr.getKey(), attr.getValue());
             }
             ds.endMap().endEntry();
         }
