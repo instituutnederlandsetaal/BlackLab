@@ -421,19 +421,7 @@ public class WebserviceOperations {
         AnnotationSensitivity as = annotation.sensitivity(sensitivity);
         String luceneField = as.luceneField();
         if (annotation.isRelationAnnotation()) {
-            // FIXME doesn't work with _relation annotation
-
-            // TODO: get rid of this weird quirk?
-            //   (getting just the tag names should be a specific operation,
-            //    not a special case in getAnnotationValues(); this method should do what it says
-            //    and return all the annotation values)
-            // Tags. Skip attribute values, only show elements.
-            LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
-                if (!term.startsWith("@")) {
-                    terms.add(term, freq);
-                }
-                return true;
-            });
+            throw new IllegalArgumentException("Use /relations endpoint to find values for spans (tags) and relations");
         } else {
             // Regular annotated field.
             LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
