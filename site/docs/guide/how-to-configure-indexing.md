@@ -1538,7 +1538,7 @@ Version 2 of the format file introduces a few breaking changes to be aware of:
 - processing step `default` was renamed to `ifempty`, to better describe how it's commonly used.
 - `inlineTags` keys `includeAttributes`, `excludeAttributes` and `extraAttributes` have been removed. Instead, use the `attributes` key to specify which attributes to index. Add `valuePath` if this is an extra attribute (that doesn't actually appear on the tag, but should be added based on the XPath expression). Use `exclude: true` to exclude an attribute. If the first entry contains no name, only `exclude: true`, this means "exclude any attribute not in this list".
 - `append` processing step now has a `prefix` parameter in addition to the `separator` parameter. `separator` still defaults to a space, but is now only used to separate multiple metadata field values. `prefix` defaults to the empty string, and is used to prefix the value to be appended. This means you won't get an extra space by default when appending a value. Add `prefix: ' '` (or whatever you set as `separator`) for the old behaviour.
-- The `multipleValues`, `allowDuplicateValues` keys on an annotations have been removed. `multipleValues` works automatically now, and `allowDuplicateValues: false` should be replaced with a processing step `unique`.
+- The `multipleValues`, `allowDuplicateValues` keys on an annotations have been removed. Both work automatically now: if your config produces multiple values for an annotation, they will be indexed, and any duplicates that may arise are automatically removed.
 - The `mapValues` key on metadata fields has been removed. Use the `map` processing step instead, which can be used anywhere where processing steps are allowed.
 
 

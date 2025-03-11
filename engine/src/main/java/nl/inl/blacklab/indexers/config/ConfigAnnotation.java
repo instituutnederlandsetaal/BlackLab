@@ -240,7 +240,8 @@ public class ConfigAnnotation {
         if (processSteps == null) {
             processSteps = ProcessingStep.fromConfig(process);
             if (!allowDuplicateValues) {
-                // If we don't allow duplicate values, add a unique() step to the end of the processing chain
+                // If we don't allow duplicate values (we never do, starting from v2),
+                // add a unique() step to the end of the processing chain
                 processSteps = ProcessingStep.combine(processSteps, new ProcessingStepUnique());
             }
         }

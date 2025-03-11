@@ -488,8 +488,8 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "allowDuplicateValues":
                 if (cfg.getVersion() >= 2)
-                    throw new InvalidInputFormatConfig("allowDuplicateValues not allowed in .blf.yaml version 2 (replace allowDuplicateValues: false with processing step 'unique')");
-                logger.warn("Encountered deprecated key 'allowDuplicateValues' (replace allowDuplicateValues: false with processing step 'unique')");
+                    throw new InvalidInputFormatConfig("allowDuplicateValues not allowed in .blf.yaml version 2 (duplicates are automatically removed)");
+                logger.warn("Encountered deprecated key 'allowDuplicateValues' (remove this, duplicates are automatically removed)");
                 annot.setAllowDuplicateValues(bool(e));
                 break;
             case "captureXml":
