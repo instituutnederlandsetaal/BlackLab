@@ -983,7 +983,7 @@ public class ResponseStreamer {
 
         ds.startEntry("annotations").startMap();
         for (Map.Entry<String, ResultAnnotationInfo> annotEntry: annotInfos.entrySet()) {
-            if (annotEntry.getKey().equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME))
+            if (AnnotatedFieldNameUtil.isRelationAnnotation(annotEntry.getKey()))
                 continue; // don't include _relation, may not be used in queries
             ds.startAttrEntry("annotation", "name", annotEntry.getKey()).startMap();
             ResultAnnotationInfo ai = annotEntry.getValue();

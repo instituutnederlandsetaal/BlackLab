@@ -1,14 +1,5 @@
 {
   "annotations": {
-    "_relation": {
-      "description": "",
-      "displayName": "_relation",
-      "hasForwardIndex": false,
-      "isInternal": true,
-      "offsetsAlternative": "",
-      "sensitivity": "ONLY_INSENSITIVE",
-      "uiType": ""
-    },
     "lemma": {
       "description": "",
       "displayName": "Lemma",
