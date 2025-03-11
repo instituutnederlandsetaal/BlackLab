@@ -55,8 +55,10 @@ public abstract class ProcessingStep {
                 return ProcessingStepSplit.fromConfig(configProcessStep.getParam());
             case "strip":
                 return ProcessingStepStrip.fromConfig(configProcessStep.getParam());
-            case "unique": // (replaces deprecated separate key allowDuplicateValues)
+            case "unique":
                 return new ProcessingStepUnique();
+            case "sort":
+                return new ProcessingStepSort();
             default:
                 throw new IllegalArgumentException("Unknown method: " + configProcessStep.getMethod());
         }

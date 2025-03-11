@@ -1221,14 +1221,7 @@ annotatedFields:
       sensitivity: sensitive_insensitive
 ```
 
-When indexing multiple values at a single position, it is possible to match the same value multiple times, for example when creating an annotation that combines word and lemma (useful for simple search). This would lead to duplicate matches. If this is not what you want, you can use a processing step `unique`:
-
-```yaml
-    - name: word_and_lemma
-      valuePath: word or lemma
-      process:
-      - action: unique
-```
+When indexing multiple values at a single position, it is possible to match the same value multiple times, for example when creating an annotation that combines word and lemma (useful for simple search). This would lead to duplicate matches, so BlackLab will remove any duplicates automatically and only index unique values for the token position.
 
 Multiple value annotations also work for tabular formats like csv, tsv or sketch-wpl. You can use a `process` step (`split`) to split a column value into multiple values. For example to define a `lemma` annotation that can have multiple `|`-separated values:
 
@@ -1509,7 +1502,8 @@ These are all the available generic processing steps:
   `keep` also allows two special values: `all` to keep all splits (instead of one the one at an index), and `both` to keep both the unsplit value as well as all the split parts.
 - `strip(chars)`: strip specified chars from beginning and end. If `chars` is omitted, use space.
 - `map(table)`: map values to other values. The table is a map from input to output values. If the input value is not in the table, it is left unchanged.
-- `unique`: remove duplicate values from the field. This is useful when you have multiple values at the same position and you want to remove duplicates.
+- `sort`: sort values using the default collator. This may help to ensure that the first term (which is the one used for sorting and grouping) is more predictable.
+- `unique`: remove duplicate values from the field. You normally never need to do this as it is done automatically just before actually indexing the final terms.
 
 These processing steps are more specific to certain data formats:
 - `parsePos(posExpr, fieldName)`: parse common part of speech expressions of the form `A(b=c,d=e)` where A is the main part of speech (e.g. 'N' for noun), and b=c is a part of speech feature such as number=plural, etc. If you don't specify field (or specify an underscore _ for field), the main part of speech is extracted. If you specify a feature name (e.g. "number"), that feature is extracted.
