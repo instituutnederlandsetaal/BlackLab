@@ -97,13 +97,18 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         return terms;
     }
 
+    @Override
+    public boolean isOptimizationTerm(String term) {
+        return term.startsWith(RELATION_INFO_TERM_PREFIX);
+    }
+
     /**
      * Parse the special term for writing the relation info index.
      *
      * @return relation type and its attributes
      */
-    public static void parseRelationInfoTerm(String riTerm, BiConsumer<String, List<String>> attrHandler) {
-        if (!riTerm.startsWith(RELATION_INFO_TERM_PREFIX))
+    public void parseRelationInfoTerm(String riTerm, BiConsumer<String, List<String>> attrHandler) {
+        if (!isOptimizationTerm(riTerm))
             return;
         String[] parts = riTerm.split(ATTR_SEPARATOR, -1);
         if (parts.length == 2 && parts[1].isEmpty()) {

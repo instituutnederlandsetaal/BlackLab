@@ -224,7 +224,7 @@ class PWPluginRelationInfo implements PWPlugin {
             log("  startTerm: processing term '" + termStr + "'");
             // Decode the term so we have the attribute(s) index and value offset. We need these for each occurrence.
             this.currentTermAttributes.clear();
-            RelationsStrategySeparateTerms.parseRelationInfoTerm(termStr, (attrName, attrValues) -> {
+            relationsStrategy.parseRelationInfoTerm(termStr, (attrName, attrValues) -> {
                 int attributeIndex = getAttributeIndex(attrName);
                 assert !currentTermAttributes.containsKey(attributeIndex) : "duplicate attribute index";
                 String value = StringUtils.join(attrValues, RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR);

@@ -212,6 +212,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         allExceptContentStoreFields = new HashSet<>();
         boolean fieldsFounds = false; // is this a completely empty index..? (except for the metadata doc)
         for (LeafReaderContext lrc: reader().leaves()) {
+            boolean relStratSet = false;
             for (FieldInfo fi: lrc.reader().getFieldInfos()) {
                 if (!isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
@@ -222,8 +223,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
                 // Also determine the relations strategy used when indexing,
                 // so we can use the same one for searching.
-                if (!createNewIndex && isRelationsField(fi))
+                if (!createNewIndex && isRelationsField(fi) && !relStratSet) {
                     relationsStrategy = getRelationsStrategy(fi);
+                    // We only need to determine the relations strategy once per segment, even if there's multiple annotated fields
+                    relStratSet = true;
+                }
             }
         }
         if (createNewIndex || !fieldsFounds)
