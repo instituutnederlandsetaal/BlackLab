@@ -349,7 +349,7 @@ If your corpus contains relations, you can query those as well. One advantage of
 
 ::: details How to index relations
 
-Indexing relations is explained [here](/guide/how-to-configure-indexing.html#indexing-dependency-relations).
+Indexing relations is explained [here](how-to-configure-indexing.html#indexing-dependency-relations).
 
 :::
 
@@ -583,7 +583,7 @@ For example, you could have a parallel corpus of EU Parliament discussions in th
 
 ::: details How to index a parallel corpus
 
-Indexing parallel corpora is explained [here](/guide/how-to-configure-indexing.html#indexing-parallel-corpora).
+Indexing parallel corpora is explained [here](how-to-configure-indexing.html#indexing-parallel-corpora).
 
 :::
 
