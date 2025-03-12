@@ -115,6 +115,7 @@
         },
         "operation": "within",
         "producer": {
+          "bcqlFragment": "'very' 'good'",
           "clauses": [
             {
               "bcqlFragment": "'very'",
@@ -127,7 +128,6 @@
               "value": "good"
             }
           ],
-          "bcqlFragment": "'very' 'good'",
           "type": "sequence"
         },
         "type": "posfilter"

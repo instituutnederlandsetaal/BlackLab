@@ -167,16 +167,19 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
  * @param actualResponse webservice response we got (parsed JSON)
  */
 function expectUnchanged(category, testName, actualResponse) {
+    if (Buffer.isBuffer(actualResponse))
+        actualResponse = actualResponse.toString();
+    const isJson = typeof actualResponse === 'object';
     const sanCategory = sanitizeFileName(category);
     const sanFileName = sanitizeFileName(testName);
 
     // Remove anything that's variable (e.g. search time) from the response.
-    const sanitized = sanitizeBlsResponse(actualResponse);
+    const sanitized = isJson ? sanitizeBlsResponse(actualResponse) : actualResponse;
 
     // Stringify to JSON if we're saving the response to a file
-    let json = '';
+    let toSave = '';
     if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
-        json = stableStringify(sanitized, { space: 2 });
+        toSave = isJson ? stableStringify(sanitized, { space: 2 }) : sanitized;
 
         // Write to latest test path so we can compare (and easily update) in case of changes.
         if (!fs.existsSync(LATEST_TEST_OUTPUT_PATH))
@@ -186,7 +189,7 @@ function expectUnchanged(category, testName, actualResponse) {
             fs.mkdirSync(categoryDir);
 
         const saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory, `${sanFileName}.json`);
-        fs.writeFileSync(saveTestOutputFile, json, {encoding: 'utf8'});
+        fs.writeFileSync(saveTestOutputFile, toSave, {encoding: 'utf8'});
     }
 
     // Ensure category dir exists
@@ -198,10 +201,23 @@ function expectUnchanged(category, testName, actualResponse) {
     const savedResponseFile = path.resolve(SAVED_RESPONSES_PATH, sanCategory, `${sanFileName}.json`);
     if (fs.existsSync(savedResponseFile)) {
         // Read previously saved response to compare
-        const savedResponse = JSON.parse(fs.readFileSync(savedResponseFile, { encoding: 'utf8' }));
+        const fileContents = fs.readFileSync(savedResponseFile, { encoding: 'utf8' });
+        const savedResponse = isJson ? JSON.parse(fileContents) : fileContents;
 
         // Compare
-        expect(sanitized).to.be.deep.equal(savedResponse);
+
+        if (testName === 'document contents') {
+            console.log('actualResponse:', typeof actualResponse/*, actualResponse*/);
+            console.log('sanitized:', typeof sanitized/*, sanitized*/);
+            console.log('savedResponse:', typeof savedResponse/*, savedResponse*/);
+            console.log('isJson:', isJson);
+        }
+
+        if (isJson) {
+            expect(sanitized).to.be.deep.equal(savedResponse);
+        } else {
+            expect(sanitized.trim()).to.be.equal(savedResponse.trim());
+        }
 
         /*
         // DEBUG. Overwrite our new stable JSON response, which we know is identical.
@@ -213,7 +229,7 @@ function expectUnchanged(category, testName, actualResponse) {
     } else {
         if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
             // Save this response for subsequent tests
-            fs.writeFileSync(savedResponseFile, json, {encoding: 'utf8'});
+            fs.writeFileSync(savedResponseFile, toSave, {encoding: 'utf8'});
         } else {
             expect.fail(`Response for ${category}/${testName} not found. Make sure it exists (use run-local.sh to save responses)`);
         }

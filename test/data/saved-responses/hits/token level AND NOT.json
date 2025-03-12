@@ -1725,6 +1725,7 @@
       "bcql": "[lemma='be' & word!='are']",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "[lemma='be' & word!='are']",
         "clauses": [
           {
             "annotation": "lemma",
@@ -1733,17 +1734,16 @@
             "value": "be"
           },
           {
+            "bcqlFragment": "[word!='are']",
             "clause": {
               "annotation": "word",
               "bcqlFragment": "[word='are']",
               "type": "regex",
               "value": "are"
             },
-            "bcqlFragment": "[word!='are']",
             "type": "not"
           }
         ],
-        "bcqlFragment": "[lemma='be' & word!='are']",
         "type": "and"
       }
     },

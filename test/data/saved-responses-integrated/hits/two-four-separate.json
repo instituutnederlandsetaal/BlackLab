@@ -183,6 +183,7 @@
       "bcql": "'two' | 'four'",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'two' | 'four'",
         "clauses": [
           {
             "bcqlFragment": "'two'",
@@ -195,7 +196,6 @@
             "value": "four"
           }
         ],
-        "bcqlFragment": "'two' | 'four'",
         "type": "or"
       }
     },

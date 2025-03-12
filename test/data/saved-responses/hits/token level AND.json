@@ -390,6 +390,7 @@
       "bcql": "[lemma='be' & word='are']",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "[lemma='be' & word='are']",
         "clauses": [
           {
             "annotation": "lemma",
@@ -404,7 +405,6 @@
             "value": "are"
           }
         ],
-        "bcqlFragment": "[lemma='be' & word='are']",
         "type": "and"
       }
     },

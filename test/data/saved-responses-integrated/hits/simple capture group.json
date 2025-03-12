@@ -172,6 +172,7 @@
       "bcql": "'one' (A:[])",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'one' (A:[])",
         "clauses": [
           {
             "bcqlFragment": "'one'",
@@ -179,6 +180,7 @@
             "value": "one"
           },
           {
+            "bcqlFragment": "A:[]",
             "capture": "A",
             "clause": {
               "bcqlFragment": "[]",
@@ -186,11 +188,9 @@
               "min": 1,
               "type": "anytoken"
             },
-            "bcqlFragment": "A:[]",
             "type": "capture"
           }
         ],
-        "bcqlFragment": "'one' (A:[])",
         "type": "sequence"
       },
       "matchInfos": {

@@ -93,6 +93,7 @@
       "bcql": "'a' [lemma='successful']",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'a' [lemma='successful']",
         "clauses": [
           {
             "bcqlFragment": "'a'",
@@ -106,7 +107,6 @@
             "value": "successful"
           }
         ],
-        "bcqlFragment": "'a' [lemma='successful']",
         "type": "sequence"
       }
     },
