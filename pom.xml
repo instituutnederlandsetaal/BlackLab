@@ -56,8 +56,8 @@
         <servlet.version>4.0.1</servlet.version>
         <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
         <solr.version>8.11.1</solr.version>
-        <log4j.version>2.17.2</log4j.version>
-        <eclipse.collections.version>7.1.0</eclipse.collections.version>
+        <log4j.version>2.24.3</log4j.version>
+        <eclipse.collections.version>12.0.0.M3</eclipse.collections.version>
 
         <!-- servlet, rest, json, xml, yaml -->
         <jackson.version>2.13.4</jackson.version>
@@ -304,12 +304,12 @@
                     <dependency>
                         <groupId>org.apache.maven.wagon</groupId>
                         <artifactId>wagon-ssh</artifactId>
-                        <version>2.12</version>
+                        <version>3.5.3</version>
                     </dependency>
                     <dependency><!-- use external ssh (ssh or putty/pageant on windows) -->
                         <groupId>org.apache.maven.wagon</groupId>
                         <artifactId>wagon-ssh-external</artifactId>
-                        <version>2.12</version>
+                        <version>3.5.3</version>
                     </dependency>
                 </dependencies>
                 <configuration>
@@ -504,7 +504,7 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>4.8.0</version>
+            <version>5.16.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -541,30 +541,36 @@
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
-            <version>2.15.1</version>
+            <version>2.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
-            <version>1.21</version>
+            <version>1.27.1</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.12.0</version>
+            <version>3.17.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
+            <version>1.13.0</version>
         </dependency>
         <!-- For indexing from tabular files: csv, tsv -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
-            <version>1.9.0</version>
+            <version>1.13.0</version>
         </dependency>
 
+        <!-- JCIP annotations -->
+        <dependency>
+            <groupId>net.jcip</groupId>
+            <artifactId>jcip-annotations</artifactId>
+            <version>1.0</version>
+        </dependency>
 
     </dependencies>
 
