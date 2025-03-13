@@ -67,9 +67,11 @@ To run vmtouch in daemon mode, so that it will lock files in the disk cache, use
 
 The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward corpora of our BlackLab corpus locked in disk cache (run from within the corpus directory):
 
-	sudo vmtouch -vtld fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
+	sudo vmtouch -vtld fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat \
+        fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
 
 The daemon will start up and will take a while to load all files into disk cache. You can check its progress by only specifying the -v option:
 
-	sudo vmtouch -v fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
+	sudo vmtouch -v fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat \
+        fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
 

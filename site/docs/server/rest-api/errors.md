@@ -4,7 +4,7 @@ BLS can return these error and status codes. The associated human-readable messa
 
 Operations that do not return status or error codes and messages (which is all succesful retrieval operations) will always set the HTTP status to "200 OK".
 
-<table>
+<table><tbody>
 	<tr>
 		<th style="text-align:left;">HTTP status </th>
 		<th style="text-align:left;">Error code     </th>
@@ -186,4 +186,4 @@ Operations that do not return status or error codes and messages (which is all s
 		<td>SEARCH_TIMED_OUT </td>
 		<td>Search took too long, cancelled.</td>
 	</tr>
-</table>
+</tbody></table>
