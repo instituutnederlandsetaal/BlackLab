@@ -124,7 +124,7 @@ public class HitPropertySpanAttribute extends HitProperty {
                     if (namedGroup.getFullRelationType().equals(relNameInList)) {
                         if (b.length() > 0)
                             b.append(SEPARATOR_MULTIPLE_VALUES);
-                        b.append(namedGroup.getAttributes().get(attributeName));
+                        b.append(listIfMultiple(namedGroup.getAttributes().get(attributeName)));
                         found = true;
                     }
                 }
@@ -134,7 +134,7 @@ public class HitPropertySpanAttribute extends HitProperty {
                     if (namedGroup.getRelationType().equals(relNameInList)) {
                         if (b.length() > 0)
                             b.append(SEPARATOR_MULTIPLE_VALUES);
-                        b.append(namedGroup.getAttributes().get(attributeName));
+                        b.append(listIfMultiple(namedGroup.getAttributes().get(attributeName)));
                         found = true;
                     }
                 }
@@ -149,6 +149,12 @@ public class HitPropertySpanAttribute extends HitProperty {
             value = StringUtils.join(span.getAttributes().get(attributeName), SEPARATOR_MULTIPLE_VALUES);
         }
         return new PropertyValueString(value);
+    }
+
+    private String listIfMultiple(List<String> values) {
+        if (values.size() == 1)
+            return values.get(0);
+        return "[" + StringUtils.join(values, SEPARATOR_MULTIPLE_VALUES) + "]";
     }
 
     @Override
