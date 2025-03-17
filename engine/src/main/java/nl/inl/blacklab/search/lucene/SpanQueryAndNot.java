@@ -411,7 +411,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
 
     private boolean canFlatten(BLSpanQuery child) {
         return child instanceof SpanQueryAndNot &&
-                ((SpanQueryAndNot) child).filterFactory.equals(filterFactory);
+                Objects.equals(((SpanQueryAndNot) child).filterFactory, filterFactory);
     }
 
     @Override
