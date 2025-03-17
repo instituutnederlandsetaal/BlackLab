@@ -21,20 +21,13 @@ import org.apache.lucene.search.spans.FilterSpans;
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
-    /** If we can't find relation(s) to the target field (within a target span),
-     *  does that imply that the candidate (source) hit should be rejected?
-     *  If not, we report all source hits, regardless of whether they have
-     *  targets.
-     */
-    private static final boolean REJECT_IF_NO_TARGET_MATCH = false;
-
     public static class Target {
 
         /** What relations to use to find matches */
-        private final BLSpans matchRelations;
+        private final SpansBuffered matchRelations;
 
         /** What relations to capture (usually all of them, not just the ones matched on) */
-        private final BLSpans captureRelations;
+        private final SpansBuffered captureRelations;
 
         /** Match info name for the list of captured relations */
         private final String captureRelationsAs;
@@ -78,8 +71,8 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
                 BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, String targetField,
                 boolean optionalMatch, BLSpans captureTargetOverlaps, String captureTargetOverlapsAs) {
-            this.matchRelations = matchRelations;
-            this.captureRelations = captureRelations;
+            this.matchRelations = new SpansBuffered(matchRelations);
+            this.captureRelations = new SpansBuffered(captureRelations);
             this.captureRelationsAs = captureRelationsAs;
             this.target = target == null ? null : new SpansInBucketsPerDocument(target);
             this.hasTargetRestrictions = hasTargetRestrictions;
@@ -365,7 +358,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         return targetLimits;
     }
 
-    private PosMinMax findMatchingRelations(List<RelationInfo> results, int targetDocId, BLSpans relations, int sourceStart, int sourceEnd) throws IOException {
+    private PosMinMax findMatchingRelations(List<RelationInfo> results, int targetDocId, SpansBuffered relations, int sourceStart, int sourceEnd) throws IOException {
         results.clear();
         PosMinMax targetPos = new PosMinMax();
         int docId = relations.docID();
@@ -373,12 +366,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             docId = relations.advance(targetDocId);
         if (docId == targetDocId) {
 
-            // @@@ make rewindable Spans view on top of SpansInBucketsPerDocument for this?
-            //           (otherwise we might miss relations if the source spans overlap)
-            //
-            // // Rewind relations if necessary
-            // if (target.relations.endPosition() > sourceStart)
-            //     target.relations.rewindStartPosition(sourceStart);
+            // Relations may have been advanced beyond our start position. If so, reset it
+            // back to the start of the previous hit, which we marked.
+            if (relations.startPosition() > sourceStart)
+                relations.reset(); // rewind to last mark (start of previous source hit)
 
             // Advance relations such that the relation source end position is after the
             // current start position (of the query source), i.e. they may overlap.
@@ -386,6 +377,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 if (relations.nextStartPosition() == NO_MORE_POSITIONS)
                     break;
             }
+
+            // Mark the current relations position so we can rewind to it for the next hit if necessary.
+            relations.mark();
+
             while (relations.startPosition() < sourceEnd) {
                 if (relations.endPosition() > sourceStart) {
                     // Source of this relation overlaps our source hit.

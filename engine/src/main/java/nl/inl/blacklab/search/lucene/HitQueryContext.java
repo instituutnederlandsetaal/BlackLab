@@ -149,7 +149,7 @@ public class HitQueryContext {
     /**
      * Are any of the captures of type INLINE_TAG or RELATION?
      *
-     * If yes, getRelationId() can return non-null values, and we must
+     * If yes, getRelationInfo() can return non-null values, and we must
      * e.g. store these in SpansInBuckets.
      *
      * @return true if any of the captures are of type INLINE_TAG or RELATION
