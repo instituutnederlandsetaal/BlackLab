@@ -4,10 +4,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
@@ -44,17 +45,23 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     /**
      * Separator between relation type name and attribute name in _relation annotation.
      */
-    private static final String NAME_SEPARATOR = "\u0001";
+    private static final String ATTR_SEPARATOR = "\u0001";
 
     /**
      * Separator between attribute name and its value in _relation annotation.
      */
-    private static final String VALUE_SEPARATOR = "\u0002";
+    private static final String KEY_VALUE_SEPARATOR = "\u0002";
+
+    /** Separator between multiple values for an attribute */
+    public static final String ATTR_VALUE_SEPARATOR = "\u0003";
+
+    /** Prefix for special term that's only added so we can write the relation index */
+    public static final String RELATION_INFO_TERM_PREFIX = "\u0004";
 
     /**
      * Character class meaning "any non-special character" (replacement for .)
      */
-    public static final String ANY_NON_SPECIAL_CHAR = "[^" + NAME_SEPARATOR + VALUE_SEPARATOR + "]";
+    public static final String ANY_NON_SPECIAL_CHAR = "[^\u0001-\u0004]";
 
     /**
      * Determine the term to index in Lucene for a relation.
@@ -63,47 +70,74 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @param attributes       any attributes for this relation
      * @return term to index in Lucene
      */
-    public static List<String> indexTerms(String fullRelationType, Map<String, String> attributes) {
-        if (attributes == null || attributes.isEmpty())
-            return List.of(fullRelationType);
-        List<String> terms = new ArrayList<>();
-        terms.add(fullRelationType);
-        attributes.entrySet().stream()
-                .map(e -> tagAttributeIndexTerm(fullRelationType, e.getKey(), e.getValue()))
-                .forEach(terms::add);
-        return terms;
-    }
+    private static List<String> indexTerms(String fullRelationType, Map<String, List<String>> attributes) {
+        // Add a special term not used for searching, only to write the relation index
+        // It consists of the relation type and the attributes and their values, all unprocessed
+        // (i.e. not lowercased, etc.)
+        String attrPart = attributes == null ? "" : attributes.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(e -> {
+                    String attrs = StringUtils.join(e.getValue(), ATTR_VALUE_SEPARATOR);
+                    return e.getKey() + KEY_VALUE_SEPARATOR + attrs;
+                })
+                .collect(Collectors.joining(ATTR_SEPARATOR));
+        String riTerm = RELATION_INFO_TERM_PREFIX + fullRelationType + ATTR_SEPARATOR + attrPart;
 
-    /**
-     * Determine the term to index in Lucene for a relation.
-     * <p>
-     * This version can handle relations with multiple values for the same attribute,
-     * which can happen as a result of processing steps during indexing.
-     *
-     * @param fullRelationType full relation type
-     * @param attributes       any attributes for this relation
-     * @return term to index in Lucene
-     */
-    public static List<String> indexTermsMulti(String fullRelationType, Map<String, Collection<String>> attributes) {
-        if (attributes == null || attributes.isEmpty())
-            return List.of(fullRelationType);
+        if (attrPart.isEmpty())
+            return List.of(fullRelationType, riTerm);
+
         List<String> terms = new ArrayList<>();
         terms.add(fullRelationType);
+        terms.add(riTerm);
         attributes.entrySet().stream()
                 .flatMap(e -> e.getValue().stream()
-                        .map(val -> tagAttributeIndexTerm(fullRelationType, e.getKey(), val)))
+                        .map(v -> tagAttributeIndexTerm(fullRelationType, e.getKey(), v)))
                 .forEach(terms::add);
+
         return terms;
     }
 
     @Override
+    public boolean isOptimizationTerm(String term) {
+        return term.startsWith(RELATION_INFO_TERM_PREFIX);
+    }
+
+    /**
+     * Parse the special term for writing the relation info index.
+     *
+     * @return relation type and its attributes
+     */
+    public void parseRelationInfoTerm(String riTerm, BiConsumer<String, List<String>> attrHandler) {
+        if (!isOptimizationTerm(riTerm))
+            return;
+        String[] parts = riTerm.split(ATTR_SEPARATOR, -1);
+        if (parts.length == 2 && parts[1].isEmpty()) {
+            // No attributes.
+            return;
+        }
+//        Map<String, List<String>> attributes = new HashMap<>();
+        for (int i = 1; i < parts.length; i++) {
+            String attr = parts[i];
+            int p = attr.indexOf(KEY_VALUE_SEPARATOR);
+            if (p < 0)
+                throw new RuntimeException("Malformed attribute in relation info term: " + riTerm);
+            String key = attr.substring(0, p);
+            String[] values = attr.substring(p + 1).split(ATTR_SEPARATOR, -1);
+//            attributes.put(key, Arrays.asList(values));
+            attrHandler.accept(key, Arrays.asList(values));
+        }
+//        String fullType = parts[0].substring(1);
+//        return Pair.of(fullType, attributes);
+    }
+
+    @Override
     public Stream<Map.Entry<String, String>> attributesInTerm(String indexedTerm) {
-        int i = indexedTerm.indexOf(NAME_SEPARATOR); // if <0, this is not an attribute term
+        int i = indexedTerm.indexOf(ATTR_SEPARATOR); // if <0, this is not an attribute term
         if (i < 0)
             return Stream.empty();
-        int j = indexedTerm.indexOf(VALUE_SEPARATOR, i + 1);
+        int j = indexedTerm.indexOf(KEY_VALUE_SEPARATOR, i + 1);
         if (j < 0) {
-            // This is a relation type term, not an attribute term.
+            // This is not an attribute term.
             return Stream.empty();
             //throw new RuntimeException("Malformed attribute term, no value sep: " + indexedTerm);
         }
@@ -130,7 +164,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @return value to index for this attribute
      */
     private static String tagAttributeIndexTerm(String fullRelationType, String name, String value) {
-        return fullRelationType + NAME_SEPARATOR + name + VALUE_SEPARATOR + value;
+        return fullRelationType + ATTR_SEPARATOR + name + KEY_VALUE_SEPARATOR + value;
     }
 
     /**
@@ -145,8 +179,8 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             relTypeRegex = ".+";
         if (StringUtils.isEmpty(nameRegex))
             nameRegex = ".+";
-        return RelationUtil.optParRegex(relTypeRegex) + NAME_SEPARATOR +
-                RelationUtil.optParRegex(nameRegex) + VALUE_SEPARATOR +
+        return RelationUtil.optParRegex(relTypeRegex) + ATTR_SEPARATOR +
+                RelationUtil.optParRegex(nameRegex) + KEY_VALUE_SEPARATOR +
                 RelationUtil.optParRegex(valueRegex);
     }
 
@@ -159,7 +193,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @return the full relation type
      */
     public String fullTypeFromIndexedTerm(String indexedTerm) {
-        int sep = indexedTerm.indexOf(NAME_SEPARATOR);
+        int sep = indexedTerm.indexOf(ATTR_SEPARATOR);
         if (sep < 0)
             return indexedTerm;
         return indexedTerm.substring(0, sep);
@@ -219,20 +253,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public void indexRelationTermsMulti(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
-        List<String> terms = indexTermsMulti(fullType, attributes);
-        indexTermFunc.accept(terms.get(0), payload);
-
-        // Extract only the relationId from the payload, and index it with the other terms
-        ByteArrayDataInput dataInput = new ByteArrayDataInput(payload.bytes);
-        int relationId = CODEC.readRelationId(dataInput);
-        BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
-        for (int i = 1; i < terms.size(); i++)
-            indexTermFunc.accept(terms.get(i), relIdOnly);
-    }
-
-    @Override
-    public void indexRelationTerms(String fullType, Map<String, String> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+    public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
         List<String> terms = indexTerms(fullType, attributes);
         indexTermFunc.accept(terms.get(0), payload);
 
@@ -243,11 +264,11 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             BytesRef relIdOnly = CODEC.relationIdOnlyPayload(relationId);
             for (int i = 1; i < terms.size(); i++)
                 indexTermFunc.accept(terms.get(i), relIdOnly);
-            }
+        }
     }
 
     @Override
-    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, String> attributes) {
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes) {
         // Always assign a relation id, because we need it to match tags to attributes,
         // even if there's no extra information stored in the relation index (which there should be
         // if there's attributes, but ok).

@@ -6,6 +6,7 @@ import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.util.StringUtil;
 
 /**
@@ -41,11 +42,15 @@ public class DesensitizeFilter extends TokenFilter {
     final public boolean incrementToken() throws IOException {
         if (input.incrementToken()) {
             String t = new String(termAtt.buffer(), 0, termAtt.length());
-            if (removeAccents)
-                t = StringUtil.stripAccents(t);
-            if (lowerCase)
-                t = t.toLowerCase();
-            termAtt.copyBuffer(t.toCharArray(), 0, t.length());
+            // SPECIAL CASE: don't desensitize relation info terms, they're not used for searching,
+            //   only to write the special relation info index.
+            if (!t.startsWith(RelationsStrategySeparateTerms.RELATION_INFO_TERM_PREFIX)) {
+                if (removeAccents)
+                    t = StringUtil.stripAccents(t);
+                if (lowerCase)
+                    t = t.toLowerCase();
+                termAtt.copyBuffer(t.toCharArray(), 0, t.length());
+            }
             return true;
         }
         return false;

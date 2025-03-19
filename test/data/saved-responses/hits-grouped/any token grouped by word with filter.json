@@ -374,8 +374,10 @@
       "bcql": "[word!='abcdefg']",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "[word!='abcdefg']",
         "clause": {
           "annotation": "word",
+          "bcqlFragment": "[word='abcdefg']",
           "type": "regex",
           "value": "abcdefg"
         },

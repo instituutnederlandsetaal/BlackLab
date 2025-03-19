@@ -1,5 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
+import java.util.List;
 import java.util.Map;
 
 import net.jcip.annotations.NotThreadSafe;
@@ -20,7 +21,7 @@ public interface RelationInfoSegmentReader {
      * @param relationId relation id
      * @return attributes
      */
-    Map<String, String> getAttributes(String luceneField, int docId, int relationId);
+    Map<String, List<String>> getAttributes(String luceneField, int docId, int relationId);
 
     String relationsField(String baseFieldName);
 }

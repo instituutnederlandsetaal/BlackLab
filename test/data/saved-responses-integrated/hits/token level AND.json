@@ -390,14 +390,17 @@
       "bcql": "[lemma='be' & word='are']",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "[lemma='be' & word='are']",
         "clauses": [
           {
             "annotation": "lemma",
+            "bcqlFragment": "[lemma='be']",
             "type": "regex",
             "value": "be"
           },
           {
             "annotation": "word",
+            "bcqlFragment": "[word='are']",
             "type": "regex",
             "value": "are"
           }

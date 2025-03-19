@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.index.BLIndexWriterProxyLucene;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormat;
@@ -324,8 +324,12 @@ public class IndexTool {
         Indexer indexer = null;
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
-                formatIdentifier, indexTemplateFile, indexType);
+                    formatIdentifier, indexTemplateFile, indexType);
             indexer = Indexer.create(indexWriter, formatIdentifier);
+        } catch (InvalidInputFormatConfig e) {
+            System.err.println("ERROR in input format '" + formatIdentifier + "':");
+            System.err.println(e.getMessage());
+            return;
         } catch (DocumentFormatNotFound e) {
             System.err.println(e.getMessage());
             usage();

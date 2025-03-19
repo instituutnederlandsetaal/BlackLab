@@ -258,7 +258,12 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         // step down 2 levels, global dir > user dir > userformat dir
         File userDir = new File(new File(formatDir, User.fromId(userId).getUserDirName()), FORMATS_SUBDIR_NAME);
 
-        Files.createDirectories(userDir.toPath()); // does nothing if dir already exists, throws if dir is actually file or can't create
+        try {
+            Files.createDirectories(
+                    userDir.toPath()); // does nothing if dir already exists, throws if dir is actually file or can't create
+        } catch (IOException e) {
+            throw new IOException("Could not create user format directory " + userDir, e);
+        }
         if (!Files.isReadable(userDir.toPath()))
             throw new IOException("Could not read user format directory " + userDir);
 

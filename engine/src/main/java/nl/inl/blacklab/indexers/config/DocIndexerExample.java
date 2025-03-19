@@ -297,11 +297,11 @@ public class DocIndexerExample extends DocIndexerBase {
             String spanType = parameters[0];
             int spanStart = Integer.parseInt(parameters[1]);
             int spanEnd = Integer.parseInt(parameters[2]);   // end position (exclusive)
-            Map<String, String> spanAttributes = new HashMap<>();
+            Map<String, List<String>> spanAttributes = new HashMap<>();
             for (int i = 3; i < parameters.length; i += 2) {
                 String attName = parameters[i];
                 String attValue = parameters[i + 1];
-                spanAttributes.put(attValue, attValue);
+                spanAttributes.put(attValue, List.of(attValue));
             }
 
             tagsAnnotation().indexInlineTag(spanType, spanStart, spanEnd,

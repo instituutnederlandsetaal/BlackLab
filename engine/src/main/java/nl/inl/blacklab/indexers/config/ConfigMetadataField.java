@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.indexers.config.process.ProcessingStepMapValues;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 
@@ -208,8 +210,17 @@ public class ConfigMetadataField {
         return sortValues;
     }
 
-    public List<ConfigProcessStep> getProcess() {
-        return process;
+    ProcessingStep processSteps;
+
+    public synchronized ProcessingStep getProcess() {
+        if (processSteps == null) {
+            processSteps = ProcessingStep.fromConfig(process);
+            if (!mapValues.isEmpty()) {
+                // Deprecated separate mapValues specified. Translate to a regular processing step.
+                processSteps = ProcessingStep.combine(processSteps, new ProcessingStepMapValues(mapValues));
+            }
+        }
+        return processSteps;
     }
 
     public void setProcess(List<ConfigProcessStep> process) {

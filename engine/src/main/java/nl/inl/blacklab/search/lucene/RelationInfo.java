@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,11 +21,11 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     public static RelationInfo create() {
-        return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, "", "", false);
+        return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, "", "", false);
     }
 
     public static RelationInfo createWithFields(String sourceField, String targetField) {
-        return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, sourceField, targetField, false);
+        return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, sourceField, targetField, false);
     }
 
     public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, boolean hasExtraInfoStored) {
@@ -33,6 +34,23 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType, boolean hasExtraInfoStored) {
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, "", "", hasExtraInfoStored);
+    }
+
+    /**
+     * Create a relation info object for an inline tag.
+     *
+     * Only used for old external index.
+     *
+     * @param start start position
+     * @param end end position
+     * @param tagName tag name
+     * @param field field this tag is from
+     * @return the relation info object
+     */
+    public static RelationInfo createTag(int start, int end, String tagName, String field) {
+        return new RelationInfo(false, start, start, end, end,
+                RELATION_ID_NO_INFO, tagName, null, field, field,
+                false);
     }
 
     /** If a relation has no info stored in the relation info index, it will get this special relation id.
@@ -132,13 +150,13 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     /** Tag attributes (if any), or empty if not set (set during search by SpansRelations).
      *  If this is empty and indexedTerm is set, attributes have not been determined yet (either from the term, or from relation info index). */
-    private Map<String, String> attributes;
+    private Map<String, List<String>> attributes;
 
-    /** Field this points to, or null if same as source field. */
+    /** Field this points to (for non-parallel corpora, this will always be identical to source field). */
     private final String targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
-            int relationId, String fullRelationType, Map<String, String> attributes, String sourceField, String targetField, boolean hasExtraInfoStored) {
+            int relationId, String fullRelationType, Map<String, List<String>> attributes, String sourceField, String targetField, boolean hasExtraInfoStored) {
         super(sourceField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
@@ -294,7 +312,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     /** (Used by SpansRelations) */
-    public void setAttributes(Map<String, String> attributes) {
+    public void setAttributes(Map<String, List<String>> attributes) {
         this.attributes = attributes;
     }
 
@@ -315,7 +333,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         return fullRelationType;
     }
 
-    public Map<String, String> getAttributes() {
+    public Map<String, List<String>> getAttributes() {
         return attributes;
     }
 
@@ -335,6 +353,10 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         }
     }
 
+    private String attValue(List<String> values) {
+        return values.size() == 1 ? values.get(0) : values.toString();
+    }
+
     @Override
     public String toString(String defaultField) {
         // Inline tag
@@ -342,7 +364,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
             String tagName = fullRelationType == null ? "UNKNOWN" : RelationUtil.typeFromFullType(fullRelationType);
             String attr = attributes == null || attributes.isEmpty() ? "" :
                     " " + attributes.entrySet().stream()
-                            .map(e -> e.getKey() + "=\"" + e.getValue() + "\"")
+                            .map(e -> e.getKey() + "=\"" + attValue(e.getValue()) + "\"")
                             .collect(Collectors.joining(" "));
             return "tag(<" + tagName + attr + "/> at " + getSpanStart() + "-" + getSpanEnd() + " )" +
                     toStringOptFieldName(defaultField);

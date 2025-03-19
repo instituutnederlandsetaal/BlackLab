@@ -134,14 +134,18 @@
       "bcql": "'a|the' (X:[])",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'a|the' (X:[])",
         "clauses": [
           {
+            "bcqlFragment": "'a|the'",
             "type": "regex",
             "value": "a|the"
           },
           {
+            "bcqlFragment": "X:[]",
             "capture": "X",
             "clause": {
+              "bcqlFragment": "[]",
               "max": 1,
               "min": 1,
               "type": "anytoken"

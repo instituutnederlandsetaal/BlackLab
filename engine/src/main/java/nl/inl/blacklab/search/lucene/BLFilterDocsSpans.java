@@ -96,7 +96,12 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        TwoPhaseIterator inner = in instanceof Spans ? ((Spans) in).asTwoPhaseIterator() : null;
+        TwoPhaseIterator inner;
+        if (in instanceof SpansInBuckets) {
+            inner = ((SpansInBuckets) in).asTwoPhaseIterator();
+        } else {
+            inner = in instanceof Spans ? ((Spans) in).asTwoPhaseIterator() : null;
+        }
         if (inner != null) {
             // wrapped instance has an approximation
             return new TwoPhaseIterator(inner.approximation()) {

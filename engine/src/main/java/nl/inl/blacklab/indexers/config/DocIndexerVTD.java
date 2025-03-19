@@ -40,6 +40,8 @@ import nl.inl.util.XmlUtil;
  */
 public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
+    public static final String PROCESSOR_NAME = "vtd";
+
     public static final String FT_OPT_RESOLVE_NAMED_ENTITY_REFERENCES = "resolveNamedEntityReferences";
 
     public enum FragmentPosition {

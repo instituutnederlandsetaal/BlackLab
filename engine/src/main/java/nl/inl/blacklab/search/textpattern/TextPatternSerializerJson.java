@@ -46,6 +46,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             try {
                 gen.writeStartObject();
                 {
+                    gen.writeStringField("bcqlFragment", TextPatternSerializerCql.serialize(pattern));
                     gen.writeStringField("type", type);
                     for (Map.Entry<String, Object> e: map.entrySet()) {
                         Object value = e.getValue();

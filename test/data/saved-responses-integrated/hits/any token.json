@@ -2388,6 +2388,7 @@
       "bcql": "[]",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "[]",
         "max": 1,
         "min": 1,
         "type": "anytoken"

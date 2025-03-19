@@ -626,14 +626,18 @@
       "bcql": "'one' (A:[]{1,2}) []{1,2}",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'one' (A:[]{1,2}) []{1,2}",
         "clauses": [
           {
+            "bcqlFragment": "'one'",
             "type": "regex",
             "value": "one"
           },
           {
+            "bcqlFragment": "A:[]{1,2}",
             "capture": "A",
             "clause": {
+              "bcqlFragment": "[]{1,2}",
               "max": 2,
               "min": 1,
               "type": "anytoken"
@@ -641,6 +645,7 @@
             "type": "capture"
           },
           {
+            "bcqlFragment": "[]{1,2}",
             "max": 2,
             "min": 1,
             "type": "anytoken"

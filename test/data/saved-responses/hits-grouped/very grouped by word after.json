@@ -86,6 +86,7 @@
       "bcql": "'very'",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'very'",
         "type": "regex",
         "value": "very"
       }

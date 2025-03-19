@@ -29,6 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.util.CollUtil;
 import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 
@@ -442,7 +443,8 @@ public class DocIndexerChat extends DocIndexerConfig {
             }
         }
 
-        inlineTag(blockTagName, true, blockMetadata);
+        Map<String, List<String>> atts = CollUtil.toMapOfLists(blockMetadata);
+        inlineTag(blockTagName, true, atts);
     }
 
     private void endBlock() {
@@ -454,7 +456,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         for (String word : words) {
             beginWord();
             for (ConfigAnnotation annot : currentAnnotatedField.getAnnotationsFlattened().values()) {
-                String processed = processString(word, annot.getProcess(), null);
+                String processed = annot.getProcess().performSingle(word, this);
                 annotationValueAppend(annot.getName(), processed, 1);
             }
             endWord();

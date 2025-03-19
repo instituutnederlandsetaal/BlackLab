@@ -67,7 +67,8 @@
         "u": {
           "end": 246,
           "start": 226,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
@@ -107,18 +108,23 @@
       "bcql": "('very' 'good') within <u/>",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "('very' 'good') within <u/>",
         "filter": {
+          "bcqlFragment": "<u/>",
           "name": "u",
           "type": "tags"
         },
         "operation": "within",
         "producer": {
+          "bcqlFragment": "'very' 'good'",
           "clauses": [
             {
+              "bcqlFragment": "'very'",
               "type": "regex",
               "value": "very"
             },
             {
+              "bcqlFragment": "'good'",
               "type": "regex",
               "value": "good"
             }

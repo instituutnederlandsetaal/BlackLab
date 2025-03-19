@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import java.nio.ByteBuffer;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -69,7 +68,6 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
 
     public static String indexedTermNoAttributes(String fullType) {
         // reinterpret as if it were a single-term indexed term, for stats
-        // (@@@ FIXME probably)
         return RelationsStrategySingleTerm.indexTerm(fullType, null, false);
     }
 
@@ -95,17 +93,12 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
     }
 
     @Override
-    public void indexRelationTermsMulti(String fullType, Map<String, Collection<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
+    public void indexRelationTerms(String fullType, Map<String, List<String>> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
         throw new UnsupportedOperationException("not supported for external index");
     }
 
     @Override
-    public void indexRelationTerms(String fullType, Map<String, String> attributes, BytesRef payload, BiConsumer<String, BytesRef> indexTermFunc) {
-        throw new UnsupportedOperationException("not supported for external index");
-    }
-
-    @Override
-    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, String> attributes) {
+    public int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes) {
         return -1;
     }
 

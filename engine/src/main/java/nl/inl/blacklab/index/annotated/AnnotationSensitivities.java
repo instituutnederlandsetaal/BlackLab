@@ -7,7 +7,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
  * What sensitivities are indexed for an annotation.
  */
 public enum AnnotationSensitivities {
-    DEFAULT, // "choose default based on field name"
+    DEFAULT, // "insensitive (except for some internal annotations)"
+    LEGACY_DEFAULT, // "choose default based on field name" (DEPRECATED)
     ONLY_SENSITIVE, // only index case- and diacritics-sensitively
     ONLY_INSENSITIVE, // only index case- and diacritics-insensitively
     SENSITIVE_AND_INSENSITIVE, // case+diac sensitive as well as case+diac insensitive
@@ -18,6 +19,8 @@ public enum AnnotationSensitivities {
         case "default":
         case "":
             return DEFAULT;
+        case "legacy-default":
+            return LEGACY_DEFAULT;
         case "sensitive":
         case "s":
             return ONLY_SENSITIVE;
@@ -40,6 +43,8 @@ public enum AnnotationSensitivities {
         switch (this) {
         case DEFAULT:
             return "default";
+        case LEGACY_DEFAULT:
+            return "legacy_default";
         case ONLY_SENSITIVE:
             return "sensitive";
         case ONLY_INSENSITIVE:
@@ -56,7 +61,8 @@ public enum AnnotationSensitivities {
     public String stringValueForResponse() {
         switch (this) {
         case DEFAULT:
-            return "DEFAULT";
+        case LEGACY_DEFAULT:
+            return getStringValue().toUpperCase();
         case ONLY_SENSITIVE:
             return "ONLY_SENSITIVE";
         case ONLY_INSENSITIVE:
@@ -77,7 +83,7 @@ public enum AnnotationSensitivities {
         return getStringValue();
     }
 
-    public static AnnotationSensitivities defaultForAnnotation(String name) {
+    public static AnnotationSensitivities defaultForAnnotation(String name, int configVersion) {
         if (name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
             // Relations annotation (which includes inline tags) defaults to
             // insensitive nowadays (used to be sensitive), unless configured otherwise.
@@ -87,7 +93,7 @@ public enum AnnotationSensitivities {
         }
 
         // Check for legacy special cases that get sensitive+insensitive by default
-        if (AnnotatedFieldNameUtil.defaultSensitiveInsensitive(name))
+        if (configVersion < 2 && AnnotatedFieldNameUtil.defaultSensitiveInsensitive(name))
             return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
 
         // No special case; default to insensitive unless explicitly set to sensitive

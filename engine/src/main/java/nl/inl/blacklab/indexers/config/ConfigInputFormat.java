@@ -51,6 +51,9 @@ public class ConfigInputFormat {
         }
     }
 
+    /** .blf.yaml config file version */
+    private int version = MIN_VERSION;
+
     /**
      * This format's name, final to ensure consistency within DocIndexerFactories
      */
@@ -145,6 +148,20 @@ public class ConfigInputFormat {
      */
     public ConfigInputFormat(String name) {
         this.name = name;
+    }
+
+    public static final int MIN_VERSION = 1;
+
+    public static final int MAX_VERSION = 2;
+
+    public void setVersion(int version) {
+        if (version < MIN_VERSION || version > MAX_VERSION)
+            throw new InvalidInputFormatConfig("Invalid version number: " + version);
+        this.version = version;
+    }
+
+    public int getVersion() {
+        return version;
     }
 
     public String getOriginalFileContents() {

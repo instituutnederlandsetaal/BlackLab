@@ -15,6 +15,7 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 
 /**
  * Manages read access to relation info indexes for a single segment.
@@ -165,7 +166,7 @@ public class SegmentRelationInfo implements AutoCloseable {
          * @param relationId relation id
          * @return attributes
          */
-        public Map<String, String> getAttributes(String luceneField, int docId, int relationId) {
+        public Map<String, List<String>> getAttributes(String luceneField, int docId, int relationId) {
             assert relationId >= 0 : "negative relation id";
             RelationInfoField f = fieldsByName.get(luceneField);
             long docsOffset = f.getDocsOffset(); // offset in docs file for this field
@@ -182,13 +183,22 @@ public class SegmentRelationInfo implements AutoCloseable {
                 assert attrSetOffset >= 0 : "negative offset in attrSet file";
                 attrSets().seek(attrSetOffset);
                 int nAttr = attrSets().readVInt();
-                Map<String, String> attrMap = new LinkedHashMap<>();
+                Map<String, List<String>> attrMap = new LinkedHashMap<>();
                 for (int i = 0; i < nAttr; i++) {
                     int attrNameIndex = attrSets().readVInt();
                     long attrValueOffset = attrSets().readLong();
                     attrValues().seek(attrValueOffset);
                     String attrValue = attrValues().readString();
-                    attrMap.put(attributeNames.get(attrNameIndex), attrValue);
+                    List<String> values;
+                    if (attrValue.indexOf(RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR) != -1) {
+                        values = new ArrayList<>();
+                        for (String value: attrValue.split(RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR)) {
+                            values.add(value);
+                        }
+                    } else {
+                        values = List.of(attrValue);
+                    }
+                    attrMap.put(attributeNames.get(attrNameIndex), values);
                 }
                 return attrMap;
             } catch (IOException e) {

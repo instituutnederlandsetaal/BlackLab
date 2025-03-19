@@ -46,7 +46,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
         String mainPropName = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
         boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
         contentsField = new AnnotatedFieldWriter(getDocWriter(), DocIndexerLegacy.DEFAULT_CONTENTS_FIELD_NAME,
-                mainPropName, AnnotationSensitivities.defaultForAnnotation(mainPropName),
+                mainPropName, getAnnotationSensitivity(mainPropName),
                 false, needsPrimaryValuePayloads);
         annotMain = contentsField.mainAnnotation();
         String propName = AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME;

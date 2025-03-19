@@ -453,7 +453,7 @@ public class AnnotationWriter {
      *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
-            Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+            Map<String, List<String>> attributes, BlackLabIndex.IndexType indexType) {
 
         // NOTE: for single-term strategy, we only create a relationId if we know the end position. If we don't,
         // the payload will be added later (when the closing tag is encountered) with
@@ -471,7 +471,7 @@ public class AnnotationWriter {
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
-            int targetStart, int targetEnd, Map<String, String> attributes, BlackLabIndex.IndexType indexType) {
+            int targetStart, int targetEnd, Map<String, List<String>> attributes, BlackLabIndex.IndexType indexType) {
         int relationId = relationsStrategy.getRelationId(this, targetStart, attributes);
           //getNextRelationId(attributes != null && !attributes.isEmpty());
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
@@ -486,7 +486,7 @@ public class AnnotationWriter {
         indexRelation(fullRelationType, attributes, indexType, relationInfo);
     }
 
-    private int indexRelation(String fullRelationType, Map<String, String> attributes,
+    private int indexRelation(String fullRelationType, Map<String, List<String>> attributes,
             BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
@@ -503,9 +503,11 @@ public class AnnotationWriter {
                     null;
             addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
             tagIndexInAnnotation = lastValueIndex();
-            for (Map.Entry<String, String> e: attributes.entrySet()) {
-                String term = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(e.getKey(), e.getValue());
-                addValueAtPosition(term, relationInfo.getSourceStart(), null);
+            for (Map.Entry<String, List<String>> e: attributes.entrySet()) {
+                for (String value: e.getValue()) {
+                    String term = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(e.getKey(), value);
+                    addValueAtPosition(term, relationInfo.getSourceStart(), null);
+                }
             }
         } else {
             // integrated index; everything is indexed as a single term

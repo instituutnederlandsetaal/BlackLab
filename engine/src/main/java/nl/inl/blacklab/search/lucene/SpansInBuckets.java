@@ -233,54 +233,6 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
 
     public TwoPhaseIterator asTwoPhaseIterator() {
         assert positionedAtHitIfPositionedInDoc();
-        TwoPhaseIterator twoPhaseIterator = getTwoPhaseIterator(source);
-        assert positionedAtHitIfPositionedInDoc();
-        return twoPhaseIterator;
-    }
-
-    @Override
-    public long cost() {
-        return source.cost();
-    }
-
-    /**
-     * Assert that, if our clause is positioned at a doc, nextStartPosition() has also been called.
-     *
-     * Sanity check to be called from assertions at the start and end of methods that change the internal state.
-     *
-     * We require this because nextBucket() expects the clause to be positioned at a hit. This is because
-     * for certain bucketing operations we can only decide we're done with a bucket if we're at the first hit
-     * that doesn't belong in the bucket.
-     *
-     * If {@link #beforeFirstBucketHit} is set and we're not at a hit, that's fine too: in that case, we've just
-     * started a document and haven't nexted yet (we defer that because of two-phase iterators).
-     *
-     * @return true if positioned at a hit (or at a doc and nextStartPosition() has been called), false if not
-     */
-    protected boolean positionedAtHitIfPositionedInDoc(BLSpans source) {
-        return source.docID() < 0 || source.docID() == NO_MORE_DOCS ||  // not in doc?
-                (beforeFirstBucketHit && source.startPosition() < 0) ||     // just started a doc?
-                source.startPosition() >= 0;                                // positioned at hit in doc
-    }
-
-    protected void prepareForFirstBucketInDocument(BLSpans source) {
-        // Mark that we've just started a new document, and we need to call source.nextStartPosition()
-        // first before gathering hits in the current bucket.
-        // (from the second bucket in a document onwards, we always know we're already at the first hit
-        //  in the bucket)
-        beforeFirstBucketHit = true;
-        assert positionedAtHitIfPositionedInDoc(source);
-    }
-
-    protected void ensureAtFirstHit(BLSpans source) throws IOException {
-        if (beforeFirstBucketHit) {
-            // We've just started a new document, and haven't called nextStartPosition() yet. Do so now.
-            source.nextStartPosition();
-            beforeFirstBucketHit = false;
-        }
-    }
-
-    protected TwoPhaseIterator getTwoPhaseIterator(BLSpans source) {
         TwoPhaseIterator inner = source.asTwoPhaseIterator();
         if (inner != null) {
             return new TwoPhaseIterator(inner.approximation()) {
@@ -322,6 +274,48 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
                     return "SpansInBucketsAbstract@asTwoPhaseIterator(source=" + source + ")";
                 }
             };
+        }
+    }
+
+    @Override
+    public long cost() {
+        return source.cost();
+    }
+
+    /**
+     * Assert that, if our clause is positioned at a doc, nextStartPosition() has also been called.
+     *
+     * Sanity check to be called from assertions at the start and end of methods that change the internal state.
+     *
+     * We require this because nextBucket() expects the clause to be positioned at a hit. This is because
+     * for certain bucketing operations we can only decide we're done with a bucket if we're at the first hit
+     * that doesn't belong in the bucket.
+     *
+     * If {@link #beforeFirstBucketHit} is set and we're not at a hit, that's fine too: in that case, we've just
+     * started a document and haven't nexted yet (we defer that because of two-phase iterators).
+     *
+     * @return true if positioned at a hit (or at a doc and nextStartPosition() has been called), false if not
+     */
+    protected boolean positionedAtHitIfPositionedInDoc(BLSpans source) {
+        return source.docID() < 0 || source.docID() == NO_MORE_DOCS ||  // not in doc?
+                (beforeFirstBucketHit && source.startPosition() < 0) ||     // just started a doc?
+                source.startPosition() >= 0;                                // positioned at hit in doc
+    }
+
+    protected void prepareForFirstBucketInDocument(BLSpans source) {
+        // Mark that we've just started a new document, and we need to call source.nextStartPosition()
+        // first before gathering hits in the current bucket.
+        // (from the second bucket in a document onwards, we always know we're already at the first hit
+        //  in the bucket)
+        beforeFirstBucketHit = true;
+        assert positionedAtHitIfPositionedInDoc(source);
+    }
+
+    protected void ensureAtFirstHit(BLSpans source) throws IOException {
+        if (beforeFirstBucketHit) {
+            // We've just started a new document, and haven't called nextStartPosition() yet. Do so now.
+            source.nextStartPosition();
+            beforeFirstBucketHit = false;
         }
     }
 

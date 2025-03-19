@@ -361,7 +361,8 @@ public final class AnnotatedFieldNameUtil {
     public static String sanitizeXmlElementName(String name, boolean disallowDashes) {
         if (name.isEmpty())
             return "_EMPTY_";
-        name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_"); // can only contain letters, digits, underscores and periods
+        // can only contain letter, digit, dash (used to be disallowed in config v1, but no more), underscore and period
+        name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_");
         if (disallowDashes)
             name = name.replaceAll("-", "_");
         if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"

@@ -10,7 +10,7 @@ public class ConfigProcessStep {
     private String method;
 
     /** Extra parameters to pass */
-    private final Map<String, String> param = new LinkedHashMap<>();
+    private final Map<String, Object> param = new LinkedHashMap<>();
 
     public void validate() {
         String t = "processing step";
@@ -32,11 +32,11 @@ public class ConfigProcessStep {
         this.method = method;
     }
 
-    public Map<String, String> getParam() {
+    public Map<String, Object> getParam() {
         return param;
     }
 
-    public void addParam(String name, String value) {
+    public void addParam(String name, Object value) {
         this.param.put(name, value);
     }
 

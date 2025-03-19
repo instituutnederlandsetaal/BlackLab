@@ -13,7 +13,7 @@ import org.apache.lucene.queries.spans.FilterSpans;
  *
  * This is used to capture cross-field (alignment) relations in a parallel corpus.
  *
- * FIXME ? right now, subsequent spans from the source spans may not overlap!
+ * FIXME ? right now, subsequent spans from the source Spans may not overlap!
  *   If they do overlap, some relations may be skipped over.
  *   We should cache (some) relations from the source span so we can be sure we return all
  *   of them, even if the source spans overlap. Use SpansInBuckets or maybe a rewindable
@@ -21,18 +21,13 @@ import org.apache.lucene.queries.spans.FilterSpans;
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 
-    /** If we can't find relation(s) to the target field (within a target span),
-     *  does that imply that the candidate (source) hit should be rejected?
-     *  If not, we report all source hits, regardless of whether they have
-     *  targets.
-     */
-    private static final boolean REJECT_IF_NO_TARGET_MATCH = false;
-
     public static class Target {
 
-        private final BLSpans matchRelations;
+        /** What relations to use to find matches */
+        private final SpansBuffered matchRelations;
 
-        private final BLSpans captureRelations;
+        /** What relations to capture (usually all of them, not just the ones matched on) */
+        private final SpansBuffered captureRelations;
 
         /** Match info name for the list of captured relations */
         private final String captureRelationsAs;
@@ -53,10 +48,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
          *  In that case, this gives the capture name for that.
          *  (if target is not null, any desired capture operation is included in that,
          *   so we don't need it here) */
-        private final String captureTargetAs;
+        private final List<String> captureTargetAs;
 
         /** Group index of captureTargetAs */
-        private int captureTargetAsIndex = -1;
+        private List<Integer> captureTargetAsIndex = new ArrayList<>();
 
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
         private final String targetField;
@@ -64,17 +59,30 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
 
+        /** Match info index for ==> _with-spans(_) capture */
+        private int capturedTargetOverlapsIndex = -1;
+
+        /** Used for ==> _with-spans(_) capturing */
+        private SpansCaptureOverlappingSpans.OverlappingSpansCapturer capturerTargetOverlaps = null;
+
+        /** Name for target spans captured in case of ==> _with-spans(_) */
+        private String captureTargetOverlapsAs = null;
+
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
-                BLSpans captureRelations, String captureRelationsAs, String captureTargetAs, String targetField,
-                boolean optionalMatch) {
-            this.matchRelations = matchRelations;
-            this.captureRelations = captureRelations;
+                BLSpans captureRelations, String captureRelationsAs, List<String> captureTargetAs, String targetField,
+                boolean optionalMatch, BLSpans captureTargetOverlaps, String captureTargetOverlapsAs) {
+            this.matchRelations = new SpansBuffered(matchRelations);
+            this.captureRelations = new SpansBuffered(captureRelations);
             this.captureRelationsAs = captureRelationsAs;
             this.target = target == null ? null : new SpansInBucketsPerDocument(target);
             this.hasTargetRestrictions = hasTargetRestrictions;
             this.captureTargetAs = captureTargetAs;
             this.targetField = targetField;
             this.optionalMatch = optionalMatch;
+            if (captureTargetOverlaps != null) {
+                capturerTargetOverlaps = new SpansCaptureOverlappingSpans.OverlappingSpansCapturer(captureTargetOverlaps);
+                this.captureTargetOverlapsAs = captureTargetOverlapsAs;
+            }
             assert captureTargetAs != null && !captureTargetAs.isEmpty();
         }
 
@@ -84,9 +92,17 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             captureRelationsIndex = context.registerMatchInfo(captureRelationsAs, MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
 
             HitQueryContext targetContext = context.withField(targetField);
-            captureTargetAsIndex = targetContext.registerMatchInfo(captureTargetAs, MatchInfo.Type.SPAN);
+            for (String captureName: captureTargetAs) {
+                captureTargetAsIndex.add(targetContext.registerMatchInfo(captureName, MatchInfo.Type.SPAN));
+            }
             if (target != null)
                 target.setHitQueryContext(targetContext);
+
+            if (capturerTargetOverlaps != null) {
+                capturerTargetOverlaps.setHitQueryContext(targetContext);
+                capturedTargetOverlapsIndex = targetContext.registerMatchInfo(captureTargetOverlapsAs,
+                        MatchInfo.Type.LIST_OF_RELATIONS, context.getField(), targetField);
+            }
         }
 
         @Override
@@ -126,10 +142,6 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                     ", optionalMatch=" + optionalMatch +
                     '}';
         }
-
-        public boolean isOptionalMatch() {
-            return optionalMatch;
-        }
     }
 
     private final List<Target> targets;
@@ -141,10 +153,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
     private MatchInfo[] matchInfo;
 
     /** List of relations used for matching current hit */
-    private List<RelationInfo> matchingRelations = new ArrayList<>();
+    private final List<RelationInfo> matchingRelations = new ArrayList<>();
 
     /** List of relations captured for current hit */
-    private List<RelationInfo> capturedRelations = new ArrayList<>();
+    private final List<RelationInfo> capturedRelations = new ArrayList<>();
 
     /** Start of current (source) hit (covers all sources of captured relations) */
     private int adjustedStart;
@@ -193,7 +205,6 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         int max = Integer.MIN_VALUE;
     }
 
-
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
         // Prepare matchInfo so we can add captured relations to it
@@ -213,48 +224,37 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         adjustedEnd = sourceEnd;
 
         for (Target target: targets) {
-
             // Capture all relations with source overlapping this span.
-            PosMinMax targetLimits = findMatchingRelations(matchingRelations, candidate.docID(), target.matchRelations,
-                    sourceStart, sourceEnd);
-
-            if (matchingRelations.isEmpty() || // If no relations match, there is no match.
+            // Also update source start/end and capture relations (we capture more than we match with)
+            PosMinMax targetLimits = findRelations(candidate.docID(), target, sourceStart, sourceEnd);
+            if (matchingRelations.isEmpty() || // If no relations matched, there is no match.
                     // If there were target restrictions, but no hits (in this index segment), there is no match
                     target.hasTargetRestrictions && target.target == null) {
-                if (!target.isOptionalMatch())
+                if (!target.optionalMatch)
                     return FilterSpans.AcceptStatus.NO;
-                else
+                continue; // check next target
+            }
+
+            // If there's target restrictions, find the target match.
+            int targetIndex = -1;
+            int targetClauseStart = -1;
+            int targetClauseEnd = -1;
+            if (target.hasTargetRestrictions) {
+                // There are target restrictions.
+                // Find the smallest target span that overlaps the highest number of the relations we just matched.
+                // First, put the target spans in the right document.
+                int targetDocId = target.target.docID();
+                if (targetDocId < candidate.docID()) {
+                    targetDocId = target.target.advance(candidate.docID());
+                    target.target.nextBucket();
+                }
+                if (targetDocId != candidate.docID()) {
+                    // Target document has no matches. Reject this hit.
+                    if (!target.optionalMatch)
+                        return FilterSpans.AcceptStatus.NO;
                     continue; // check next target
-            }
-
-            if (!target.hasTargetRestrictions) {
-                updateSourceStartEndWithMatchingRelations(); // update start/end to cover all matching relations
-
-                // Find relations to capture.
-                // (these may be more than just the relations we matched on, e.g. if we match by
-                //  sentence alignment, we still want to see any word alignments returned in the result)
-                findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, adjustedStart, adjustedEnd);
-                capturedRelations.sort(RelationInfo::compareTo);
-
-                // No target span specified (or e.g. A:[]* ); just accept the relations we captured.
-                matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
-
-                // Capture target span
-                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetLimits.min, targetLimits.max,
-                        target.targetField);
-
-                continue;
-            }
-
-            // Find the smallest target span that overlaps the highest number of the relations we just matched.
-            int targetDocId = target.target.docID();
-            if (targetDocId < candidate.docID()) {
-                targetDocId = target.target.advance(candidate.docID());
-                target.target.nextBucket();
-            }
-            if (targetDocId == candidate.docID()) {
+                }
                 // Target positioned in doc. Find best matching hit.
-                int targetIndex = -1;
                 int targetSpanLength = Integer.MAX_VALUE;
                 int targetRelationsCovered = 0;
                 for (int i = 0; i < target.target.bucketSize(); i++) {
@@ -280,47 +280,85 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 }
                 if (targetRelationsCovered == 0) {
                     // A valid hit must have at least one matching relation in each target.
-                    if (!target.isOptionalMatch())
+                    if (!target.optionalMatch)
                         return FilterSpans.AcceptStatus.NO;
                     else
                         continue; // check next target
                 }
 
-                updateSourceStartEndWithMatchingRelations(); // update start/end to cover all matching relations
-
-                // Find relations to capture.
-                // (these may be more than just the relations we matched on, e.g. if we match by
-                //  sentence alignment, we still want to see any word alignments returned in the result)
-                findMatchingRelations(capturedRelations, candidate.docID(), target.captureRelations, adjustedStart, adjustedEnd);
                 // Only keep the captured relations that overlap the target span we found.
-                final int finalTargetIndex = targetIndex;
-                final int targetClauseStart = target.target.startPosition(finalTargetIndex);
-                final int targetClauseEnd = target.target.endPosition(finalTargetIndex);
-                capturedRelations.removeIf(r -> r.getTargetEnd() <= targetClauseStart
-                        || r.getTargetStart() >= targetClauseEnd);
-                capturedRelations.sort(RelationInfo::compareTo);
+                final int tcs = targetClauseStart = target.target.startPosition(targetIndex);
+                final int tce = targetClauseEnd = target.target.endPosition(targetIndex);
+                capturedRelations.removeIf(r -> r.getTargetEnd() <= tcs || r.getTargetStart() >= tce);
+            }
 
-                matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+            capturedRelations.sort(RelationInfo::compareTo);
 
+            matchInfo[target.captureRelationsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
+
+            int targetStart = targetLimits.min;
+            int targetEnd = targetLimits.max;
+            if (target.hasTargetRestrictions) {
                 // Expand target to cover all relations matched by =type=> operator,
                 // so e.g. "water" =sentence-alignment=>en "water" will return whole sentences for target,
                 // not just the matching words from the query.
-                int targetStart = targetLimits.min < targetClauseStart ? targetLimits.min : targetClauseStart;
-                int targetEnd = targetLimits.max > targetClauseEnd ? targetLimits.max : targetClauseEnd;
-                matchInfo[target.captureTargetAsIndex] = SpanInfo.create(targetStart, targetEnd, target.targetField);
+                if (targetClauseStart < targetStart)
+                    targetStart = targetClauseStart;
+                if (targetClauseEnd > targetEnd)
+                    targetEnd = targetClauseEnd;
+            }
 
-                target.target.getMatchInfo(finalTargetIndex, matchInfo); // also perform captures on the target
+            // Capture target span
+            // (may be captured multiple times, one implicitly with __@target at the end to determine the "foreign hit"
+            // later, and once explicitly specified by the user in the query, e.g. ==> A:"something")
+            for (int index: target.captureTargetAsIndex) {
+                matchInfo[index] = SpanInfo.create(targetStart, targetEnd, target.targetField);
+            }
+
+            if (target.hasTargetRestrictions) {
+                // Get captures from the target match
+                target.target.getMatchInfo(targetIndex, matchInfo);
             } else {
-                // Target document has no matches. Reject this hit.
-                if (!target.isOptionalMatch())
-                    return FilterSpans.AcceptStatus.NO;
+                // If target was _with-spans([]+) or similar, we should capture the spans covering the target
+                // we found now (because we obviously didn't actually find all []+ hits with all their spans,
+                // we took the shortcut of just looking at the targets of the matching relations,
+                // so finding the spans overlapping the target hasn't been done yet)
+                if (target.capturerTargetOverlaps != null) {
+                    List<RelationInfo> capturedSpans = target.capturerTargetOverlaps.processHit(candidate.docID(), targetStart, targetEnd);
+                    matchInfo[target.capturedTargetOverlapsIndex] = RelationListInfo.create(capturedSpans, getOverriddenField());
+                }
             }
         }
 
         return FilterSpans.AcceptStatus.YES;
     }
 
-    private PosMinMax findMatchingRelations(List<RelationInfo> results, int targetDocId, BLSpans relations, int sourceStart, int sourceEnd) throws IOException {
+    private PosMinMax findRelations(int docId, Target target, int sourceStart, int sourceEnd)
+            throws IOException {
+        // Capture all relations with source overlapping this span.
+        PosMinMax targetLimits = findMatchingRelations(matchingRelations, docId, target.matchRelations,
+                sourceStart, sourceEnd);
+        if (!matchingRelations.isEmpty()) {
+            // update source start/end to cover all matching relations
+            // Our final (source) span will cover all captured relations, so that
+            // e.g. "the" =sentence-alignment=>nl "de" will have the aligned sentences as hits, not just single words.
+            for (RelationInfo r: matchingRelations) {
+                if (r.getSourceStart() < adjustedStart)
+                    adjustedStart = r.getSourceStart();
+                if (r.getSourceEnd() > adjustedEnd)
+                    adjustedEnd = r.getSourceEnd();
+            }
+
+            // Find relations to capture.
+            // (these may be more than just the relations we matched on, e.g. if we match by
+            //  sentence alignment, we still want to see any word alignments returned in the result)
+            findMatchingRelations(capturedRelations, docId, target.captureRelations, adjustedStart,
+                    adjustedEnd);
+        }
+        return targetLimits;
+    }
+
+    private PosMinMax findMatchingRelations(List<RelationInfo> results, int targetDocId, SpansBuffered relations, int sourceStart, int sourceEnd) throws IOException {
         results.clear();
         PosMinMax targetPos = new PosMinMax();
         int docId = relations.docID();
@@ -328,12 +366,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             docId = relations.advance(targetDocId);
         if (docId == targetDocId) {
 
-            // @@@ make rewindable Spans view on top of SpansInBucketsPerDocument for this?
-            //           (otherwise we might miss relations if the source spans overlap)
-            //
-            // // Rewind relations if necessary
-            // if (target.relations.endPosition() > sourceStart)
-            //     target.relations.rewindStartPosition(sourceStart);
+            // Relations may have been advanced beyond our start position. If so, reset it
+            // back to the start of the previous hit, which we marked.
+            if (relations.startPosition() > sourceStart)
+                relations.reset(); // rewind to last mark (start of previous source hit)
 
             // Advance relations such that the relation source end position is after the
             // current start position (of the query source), i.e. they may overlap.
@@ -341,6 +377,10 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 if (relations.nextStartPosition() == NO_MORE_POSITIONS)
                     break;
             }
+
+            // Mark the current relations position so we can rewind to it for the next hit if necessary.
+            relations.mark();
+
             while (relations.startPosition() < sourceEnd) {
                 if (relations.endPosition() > sourceStart) {
                     // Source of this relation overlaps our source hit.
@@ -355,17 +395,6 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
             }
         }
         return targetPos;
-    }
-
-    private void updateSourceStartEndWithMatchingRelations() {
-        // Our final (source) span will cover all captured relations, so that
-        // e.g. "the" =sentence-alignment=>nl "de" will have the aligned sentences as hits, not just single words.
-        matchingRelations.forEach(r -> {
-            if (r.getSourceStart() < adjustedStart)
-                adjustedStart = r.getSourceStart();
-            if (r.getSourceEnd() > adjustedEnd)
-                adjustedEnd = r.getSourceEnd();
-        });
     }
 
     @Override

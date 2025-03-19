@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
@@ -52,27 +53,22 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @param fieldName foreign field we're interested in
      * @return array of length 2, containing start and end positions for the hit in this field
      */
-    protected static int[] getForeignHitStartEnd(Hit hit, String fieldName) {
+    protected int[] getForeignHitStartEnd(Hit hit, String fieldName) {
         assert hit != null : "Need a hit";
-        if (hit.matchInfo() == null)
+        MatchInfo[] matchInfos = hit.matchInfo();
+        if (matchInfos == null)
             return new int[] { 0, 0 };
         int[] startEnd = { Integer.MAX_VALUE, Integer.MIN_VALUE };
-        for (MatchInfo mi: hit.matchInfo()) {
+        for (int i = 0; i < matchInfos.length; i++) {
+            MatchInfo mi = matchInfos[i];
             if (mi == null)
                 continue;
-            if (mi.getField().equals(fieldName)) {
-                // Span (or source of relation) is in the correct field. Adjust the hit boundaries.
+            if (mi.getField().equals(fieldName) && mi.getType() == MatchInfo.Type.SPAN &&
+                    hits.matchInfoDefs().get(i).getName().endsWith(
+                    SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)) {
+                // This is the special target field capture. Adjust the hit boundaries.
                 startEnd[0] = Math.min(startEnd[0], mi.getSpanStart());
                 startEnd[1] = Math.max(startEnd[1], mi.getSpanEnd());
-            }
-            if (mi instanceof RelationInfo) {
-                RelationInfo rmi = (RelationInfo) mi;
-                String tfield = rmi.getTargetField() == null ? mi.getField() : rmi.getTargetField();
-                if (tfield.equals(fieldName)) {
-                    // Relation target is in the correct field. Adjust the hit boundaries.
-                    startEnd[0] = Math.min(startEnd[0], rmi.getTargetStart());
-                    startEnd[1] = Math.max(startEnd[1], rmi.getTargetEnd());
-                }
             }
         }
         // Set fallback values if no match info for this target field was found

@@ -93,13 +93,16 @@
       "bcql": "'a' [lemma='successful']",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "'a' [lemma='successful']",
         "clauses": [
           {
+            "bcqlFragment": "'a'",
             "type": "regex",
             "value": "a"
           },
           {
             "annotation": "lemma",
+            "bcqlFragment": "[lemma='successful']",
             "type": "regex",
             "value": "successful"
           }

@@ -59,7 +59,7 @@ See the note about `contentViewable` on the [BlackLab Server overview](/server/)
 
 ## Can I use BlackLab with Solr/ElasticSearch?
 
-We are working on it! Version 4 of BlackLab should work with Solr. 
+We are working on it! A future version of BlackLab should work with Solr. 
 
 Distributed search will follow in a later version. 
 

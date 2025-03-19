@@ -106,7 +106,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *
      * @param context the hit query context, that e.g. keeps track of captured groups
      */
-    public final void setHitQueryContext(HitQueryContext context) {
+    public void setHitQueryContext(HitQueryContext context) {
         childClausesCaptureMatchInfo = hasMatchInfo();
         overriddenField = context.getField(); // will be null unless this is a parallel corpus query
         passHitQueryContextToClauses(context);

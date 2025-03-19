@@ -66,8 +66,12 @@
       "matchInfos": {
         "u": {
           "attributes": {
-            "id": "print602_u_36",
-            "who": "#print602_s3"
+            "id": [
+              "PRint602_u_36"
+            ],
+            "who": [
+              "#PRint602_S3"
+            ]
           },
           "end": 246,
           "start": 226,
@@ -112,18 +116,23 @@
       "bcql": "('very' 'good') within <u/>",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "('very' 'good') within <u/>",
         "filter": {
+          "bcqlFragment": "<u/>",
           "name": "u",
           "type": "tags"
         },
         "operation": "within",
         "producer": {
+          "bcqlFragment": "'very' 'good'",
           "clauses": [
             {
+              "bcqlFragment": "'very'",
               "type": "regex",
               "value": "very"
             },
             {
+              "bcqlFragment": "'good'",
               "type": "regex",
               "value": "good"
             }

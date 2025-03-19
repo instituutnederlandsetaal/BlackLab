@@ -79,7 +79,8 @@
         "u": {
           "end": 158,
           "start": 153,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
@@ -156,7 +157,8 @@
         "u": {
           "end": 164,
           "start": 159,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
@@ -293,7 +295,8 @@
         "u": {
           "end": 246,
           "start": 226,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
@@ -374,7 +377,8 @@
         "u": {
           "end": 253,
           "start": 247,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
@@ -475,7 +479,8 @@
         "u": {
           "end": 264,
           "start": 253,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
@@ -515,12 +520,15 @@
       "bcql": "<u/> containing 'good'",
       "fieldName": "contents",
       "json": {
+        "bcqlFragment": "<u/> containing 'good'",
         "filter": {
+          "bcqlFragment": "'good'",
           "type": "regex",
           "value": "good"
         },
         "operation": "containing",
         "producer": {
+          "bcqlFragment": "<u/>",
           "name": "u",
           "type": "tags"
         },

@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.store.ByteArrayDataInput;
@@ -20,6 +21,7 @@ import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
@@ -115,21 +117,21 @@ public class PWPluginRelationInfo implements PWPlugin {
     // PER DOCUMENT
 
     /** How we should index the relations */
-    private final RelationsStrategy relationsStrategy;
+    private final RelationsStrategySeparateTerms relationsStrategy;
 
     /** How to encode/decode payload for relations */
     private final RelationsStrategy.PayloadCodec relPayloadCodec;
 
-    public PWPluginRelationInfo(BlackLabPostingsWriter postingsWriter, RelationsStrategy relationsStrategy) throws IOException {
+    public PWPluginRelationInfo(BlackLabPostingsWriter postingsWriter, RelationsStrategySeparateTerms relationsStrategy) throws IOException {
         this.relationsStrategy = relationsStrategy;
         this.relPayloadCodec = relationsStrategy.getPayloadCodec();
 
-        outFieldsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_FIELDS_EXT);
-        outDocsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_DOCS_EXT);
-        outRelationsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_RELATIONS_EXT);
-        outAttrSetsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_SETS_EXT);
-        outAttrNamesFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_NAMES_EXT);
-        outAttrValuesFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_VALUES_EXT);
+        outFieldsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_FIELDS_EXT);
+        outDocsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_DOCS_EXT);
+        outRelationsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_RELATIONS_EXT);
+        outAttrSetsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_ATTR_SETS_EXT);
+        outAttrNamesFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_ATTR_NAMES_EXT);
+        outAttrValuesFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_ATTR_VALUES_EXT);
 
         // Open a log file
         if (ENABLE_DEBUG_LOG) {
@@ -217,15 +219,16 @@ public class PWPluginRelationInfo implements PWPlugin {
     @Override
     public void startTerm(BytesRef term) {
         String termStr = term.utf8ToString();
-        this.ignoreCurrentTerm = relationsStrategy.isOptimizationTerm(termStr);
+        this.ignoreCurrentTerm = !termStr.startsWith(RelationsStrategySeparateTerms.RELATION_INFO_TERM_PREFIX);
         if (!ignoreCurrentTerm) {
             log("  startTerm: processing term '" + termStr + "'");
             // Decode the term so we have the attribute(s) index and value offset. We need these for each occurrence.
             this.currentTermAttributes.clear();
-            relationsStrategy.attributesInTerm(termStr).forEach(e -> {
-                int attributeIndex = getAttributeIndex(e.getKey());
+            relationsStrategy.parseRelationInfoTerm(termStr, (attrName, attrValues) -> {
+                int attributeIndex = getAttributeIndex(attrName);
                 assert !currentTermAttributes.containsKey(attributeIndex) : "duplicate attribute index";
-                long attributeValueOffset = getAttributeValueOffset(e.getValue());
+                String value = StringUtils.join(attrValues, RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR);
+                long attributeValueOffset = getAttributeValueOffset(value);
                 assert attributeValueOffset >= 0 : "negative attribute value offset";
                 currentTermAttributes.put(attributeIndex, attributeValueOffset);
             });

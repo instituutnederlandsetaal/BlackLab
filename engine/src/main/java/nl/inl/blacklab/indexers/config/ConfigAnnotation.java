@@ -12,7 +12,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.indexers.config.process.ProcessingStepUnique;
 
 /**
  * Configuration for a single annotation (formerly "property") of an annotated field.
@@ -77,9 +78,6 @@ public class ConfigAnnotation {
 
     /** What UI element to show in the interface (optional) */
     private String uiType = "";
-
-    /** Can this annotation have multiple values at one token position? [false] */
-    private boolean multipleValues = false;
     
     /** Should we allow duplicate values at one token position? (if false, performs extra checking and discards duplicates) */
     private boolean allowDuplicateValues = false;
@@ -131,7 +129,6 @@ public class ConfigAnnotation {
             result.addSubAnnotation(a.copy());
         }
         result.setForwardIndex(forwardIndex);
-        result.setMultipleValues(multipleValues);
         result.setAllowDuplicateValues(allowDuplicateValues);
         result.setCaptureXml(captureXml);
         return result;
@@ -237,8 +234,18 @@ public class ConfigAnnotation {
         this.sensitivity = sensitivity;
     }
 
-    public List<ConfigProcessStep> getProcess() {
-        return process;
+    ProcessingStep processSteps;
+
+    public synchronized ProcessingStep getProcess() {
+        if (processSteps == null) {
+            processSteps = ProcessingStep.fromConfig(process);
+            if (!allowDuplicateValues) {
+                // If we don't allow duplicate values (we never do, starting from v2),
+                // add a unique() step to the end of the processing chain
+                processSteps = ProcessingStep.combine(processSteps, new ProcessingStepUnique());
+            }
+        }
+        return processSteps;
     }
 
     public void setProcess(List<ConfigProcessStep> process) {
@@ -252,18 +259,6 @@ public class ConfigAnnotation {
 
     public void setForwardIndex(boolean forwardIndex) {
         this.forwardIndex = forwardIndex;
-    }
-
-    public boolean isMultipleValues() {
-        return multipleValues;
-    }
-
-    public void setMultipleValues(boolean multipleValues) {
-        this.multipleValues = multipleValues;
-    }
-
-    public boolean isAllowDuplicateValues() {
-        return allowDuplicateValues;
     }
 
     public void setAllowDuplicateValues(boolean allowDuplicateValues) {
@@ -293,9 +288,9 @@ public class ConfigAnnotation {
 
     public AnnotationSensitivities getSensitivitySetting() {
         AnnotationSensitivities sensitivity = getSensitivity();
-        if (sensitivity == AnnotationSensitivities.DEFAULT) {
+        if (sensitivity == AnnotationSensitivities.DEFAULT || sensitivity == AnnotationSensitivities.LEGACY_DEFAULT) {
             String name = getName();
-            sensitivity = AnnotationSensitivities.defaultForAnnotation(name);
+            sensitivity = AnnotationSensitivities.defaultForAnnotation(name, sensitivity == AnnotationSensitivities.LEGACY_DEFAULT ? 1 : 2);
             if (sensitivity != AnnotationSensitivities.ONLY_INSENSITIVE) {
                 // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
                 // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
@@ -304,11 +299,12 @@ public class ConfigAnnotation {
                     if (!warnSensitivity.contains(name)) {
                         warnSensitivity.add(name);
                         logger.warn("Configuration " + getName()
-                                + " relies on special default sensitivity 'sensitive_insensitive' for annotation "
+                                + " relies on special default sensitivity 'sensitive_insensitive' for annotation '"
                                 + name
-                                + "; this behaviour "
-                                + "is deprecated. Please update your config to explicitly declare the sensitivity setting for this annotation. In a future version, all annotations "
-                                + "without explicit sensitivity will default to 'insensitive'.");
+                                + "'; this behaviour is deprecated in .blf.yaml version 1 and removed in version 2. "
+                                + "Please update your config to explicitly declare the sensitivity setting for this "
+                                + "annotation. Starting with .blf.yaml version 2, all annotations without explicit "
+                                + "sensitivity default to 'insensitive'.");
                     }
                 }
             }

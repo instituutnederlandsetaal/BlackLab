@@ -349,7 +349,7 @@ If your corpus contains relations, you can query those as well. One advantage of
 
 ::: details How to index relations
 
-Indexing relations is explained [here](/guide/how-to-configure-indexing.html#indexing-dependency-relations).
+Indexing relations is explained [here](how-to-configure-indexing.html#indexing-dependency-relations).
 
 :::
 
@@ -433,7 +433,7 @@ With our example tree, the above queries will find all subject relations and all
 
 When indexing relations in BlackLab, you assign them a _class_, a short string indicating what family of relations it belongs to. For example, you could assign the class string `dep` to dependency relations. An `obj` relation would become `dep::obj`.
 
-To simplify things, `dep` is the default relation class in BlackLab. If you index relations without a class, they will automatically get the `dep` class. Similarly, when searching, if you don't specify a class, `dep::` will be prepended to the relation type. So if you're not indexing different classes of relations, you can just ignore the classes.
+To simplify things, `rel` is the default relation class in BlackLab. If you index relations without a class, they will automatically get this class. Similarly, when searching, if you don't specify a class, `rel::` will be prepended to the relation type. So if you're not indexing different classes of relations, you can just ignore the classes.
 
 :::
 
@@ -583,7 +583,7 @@ For example, you could have a parallel corpus of EU Parliament discussions in th
 
 ::: details How to index a parallel corpus
 
-Indexing parallel corpora is explained [here](/guide/how-to-configure-indexing.html#indexing-parallel-corpora).
+Indexing parallel corpora is explained [here](how-to-configure-indexing.html#indexing-parallel-corpora).
 
 :::
 

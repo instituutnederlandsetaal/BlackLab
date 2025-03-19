@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroup;
 import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
@@ -138,6 +139,11 @@ public class ResponseStreamer {
     public static final String KEY_SAMPLE_PERCENTAGE = "samplePercentage";
     public static final String KEY_SAMPLE_SIZE = "sampleSize";
     public static final String KEY_GROUP_SIZE = "size";
+
+    /** If an attribute has multiple values, they will be joined together in the response using this separator.
+     *  We could make this configurable in the future.
+     */
+    private static final String SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES = "; ";
 
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;
@@ -829,7 +835,7 @@ public class ResponseStreamer {
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
         if (!inlineTag.getAttributes().isEmpty()) {
             ds.startEntry("attributes").startMap();
-            for (Map.Entry<String, String> attr: inlineTag.getAttributes().entrySet()) {
+            for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
                 ds.elEntry(attr.getKey(), attr.getValue());
             }
             ds.endMap().endEntry();
@@ -977,6 +983,8 @@ public class ResponseStreamer {
 
         ds.startEntry("annotations").startMap();
         for (Map.Entry<String, ResultAnnotationInfo> annotEntry: annotInfos.entrySet()) {
+            if (AnnotatedFieldNameUtil.isRelationAnnotation(annotEntry.getKey()))
+                continue; // don't include _relation, may not be used in queries
             ds.startAttrEntry("annotation", "name", annotEntry.getKey()).startMap();
             ResultAnnotationInfo ai = annotEntry.getValue();
             Annotation annotation = ai.getAnnotation();

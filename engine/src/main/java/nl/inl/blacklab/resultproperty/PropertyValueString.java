@@ -3,6 +3,9 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueString extends PropertyValue {
+    /** Indicates no value was found (i.e. group by capture, but the capture wasn't found for this hit) */
+    public static final PropertyValueString NO_VALUE = new PropertyValueString(NO_VALUE_STR);
+
     final String value;
 
     public PropertyValueString(String value) {

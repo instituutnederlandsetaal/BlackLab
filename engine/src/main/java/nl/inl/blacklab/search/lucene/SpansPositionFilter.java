@@ -3,10 +3,10 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
 
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter.Operation;
 
@@ -20,9 +20,6 @@ class SpansPositionFilter extends BLSpans {
 
     /** The spans we use to filter the producer spans */
     private final SpansInBucketsPerDocument filter;
-
-    /** What start pos is the producer at? */
-    private int producerStart = -1;
 
     /**
      * Which index in the filter bucket did we use? (needed for getting captured
@@ -64,9 +61,6 @@ class SpansPositionFilter extends BLSpans {
     /** Do we need to call filter.nextBucket() before matching? */
     private int nextBucketCalledOnDocId = -1;
 
-    /** Approximation for two-phase iterator */
-    private final DocIdSetIterator conjunction;
-
     /**
      * Find hits from producer, filtered by the filter according to the specified op
      *
@@ -89,14 +83,6 @@ class SpansPositionFilter extends BLSpans {
         this.filterFixedLength = filter.guarantees().hitsAllSameLength();
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
-        if (invert) {
-            // Our best approximation is the producer itself (or its two-phase iter approximation)
-            TwoPhaseIterator twoPhaseIterator = producer.asTwoPhaseIterator();
-            this.conjunction = twoPhaseIterator == null ? producer : TwoPhaseIterator.asDocIdSetIterator(twoPhaseIterator);
-        } else {
-            // We can use conjunction of the producer and filter (both need to occur in document to produce matches)
-            this.conjunction = ConjunctionUtils.intersectIterators(List.of(this.producer, this.filter));
-        }
     }
 
     @Override
@@ -118,7 +104,6 @@ class SpansPositionFilter extends BLSpans {
         atFirstInCurrentDoc = false;
 
         // Advance container
-        producerStart = -1;
         if (producer.nextDoc() == NO_MORE_DOCS)
             return NO_MORE_DOCS; // no more containers; we're done.
 
@@ -133,7 +118,6 @@ class SpansPositionFilter extends BLSpans {
         atFirstInCurrentDoc = false;
 
         // Skip both to doc
-        producerStart = -1;
         if (producer.advance(target) == NO_MORE_DOCS)
             return NO_MORE_DOCS;
 
@@ -181,38 +165,30 @@ class SpansPositionFilter extends BLSpans {
             }
 
             // Are there search results in this document?
-            if (twoPhaseCurrentDocMatches(producerDoc))
+            if (twoPhaseCurrentDocMatches())
                 return producerDoc;
 
             // No search results found in the current container.
             // Advance to the next container.
             producerDoc = producer.nextDoc();
-            producerStart = -1;
         }
         return producerDoc;
     }
 
-    private boolean twoPhaseCurrentDocMatches(int docID) throws IOException {
+    private boolean twoPhaseCurrentDocMatches() throws IOException {
         assert positionedInDoc();
         atFirstInCurrentDoc = false;
         assert producer.startPosition() < 0;
 
-        // Our producer may not have been advanced by our approximation
-        // (because the approximation uses subclauses, not the producer itself)
-        // Do so now if needed.
-        if (producer.docID() < docID) {
-            if (producer.advance(docID) == NO_MORE_DOCS)
-                return false;
-        }
-        producerStart = producer.nextStartPosition(); // position it
+        int producerStart = producer.nextStartPosition(); // position it
+        if (producerStart == NO_MORE_POSITIONS)
+            return false;
 
         // Filter also may not have been advanced by our approximation.
         if (filter.docID() < producer.docID()) {
             // Filter lagging behind producer (because conjunction only advanced producer - inverted filter, see above)
             filter.advance(producer.docID());
-            if (filter.docID() == DocIdSetIterator.NO_MORE_DOCS) {
-                ;
-            }
+            // (NOTE: if we overshot the target, synchronizePos will detect that)
         }
 
         // Now that both clauses are positioned, find an actual match
@@ -228,23 +204,26 @@ class SpansPositionFilter extends BLSpans {
      */
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
-        // Compute the matchCost as the total matchCost/positionsCostant of the sub spans.
-        float totalMatchCost = 0;
-        TwoPhaseIterator tpi = producer.asTwoPhaseIterator();
-        totalMatchCost += tpi != null ? tpi.matchCost() : producer.positionsCost();
-        tpi = filter.asTwoPhaseIterator();
-        totalMatchCost += tpi != null ? tpi.matchCost() : filter.positionsCost();
-        final float matchCost = totalMatchCost;
-
-        return new TwoPhaseIterator(conjunction) {
+        DocIdSetIterator approx;
+        final TwoPhaseIterator twoPhaseIt;
+        if (invert) {
+            // Our best approximation is the producer itself (or its two-phase iter approximation)
+            twoPhaseIt = producer.asTwoPhaseIterator();
+            approx = twoPhaseIt == null ? producer : twoPhaseIt.approximation();
+        } else {
+            // We can use conjunction of the producer and filter (both need to occur in document to produce matches)
+            twoPhaseIt = null;
+            approx = ConjunctionUtils.intersectIterators(List.of(producer, filter));
+        }
+        return new TwoPhaseIterator(approx) {
             @Override
             public boolean matches() throws IOException {
-                return twoPhaseCurrentDocMatches(approximation.docID());
+                return (twoPhaseIt == null || twoPhaseIt.matches()) && twoPhaseCurrentDocMatches();
             }
 
             @Override
             public float matchCost() {
-                return matchCost;
+                return approximation.cost();
             }
         };
     }
@@ -256,15 +235,16 @@ class SpansPositionFilter extends BLSpans {
             // We're already at the first match in the doc. Return it.
             atFirstInCurrentDoc = false;
             assert positionedAtHit();
-            return producerStart;
+            return producer.startPosition();
         }
 
         // Are we done yet?
-        if (producerStart == NO_MORE_POSITIONS)
+        if (producer.startPosition() == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
         // Find first matching producer span from here
-        producerStart = producer.nextStartPosition();
+        if (producer.nextStartPosition() == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
         return synchronizePos();
     }
 
@@ -273,6 +253,7 @@ class SpansPositionFilter extends BLSpans {
         assert target > startPosition();
         if (atFirstInCurrentDoc) {
             atFirstInCurrentDoc = false;
+            int producerStart = producer.startPosition();
             if (producerStart >= target) {
                 assert positionedAtHit();
                 return producerStart;
@@ -280,10 +261,11 @@ class SpansPositionFilter extends BLSpans {
         }
 
         // Are we done yet?
-        if (producerStart == NO_MORE_POSITIONS)
+        if (producer.startPosition() == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
 
-        producerStart = producer.advanceStartPosition(target);
+        if (producer.advanceStartPosition(target) == NO_MORE_POSITIONS)
+            return NO_MORE_POSITIONS;
 
         // Find first matching producer span from here
         return synchronizePos();
@@ -302,6 +284,8 @@ class SpansPositionFilter extends BLSpans {
      */
     private int synchronizePos() throws IOException {
         // Find the next "valid" producer spans, if there is one.
+        int producerStart = producer.startPosition();
+        assert producerStart >= 0 && producerStart != NO_MORE_POSITIONS;
         while (producerStart != NO_MORE_POSITIONS) {
 
             // Are producer and filter in the same doc?
@@ -525,7 +509,7 @@ class SpansPositionFilter extends BLSpans {
     public int startPosition() {
         if (atFirstInCurrentDoc)
             return -1; // nextStartPosition() hasn't been called yet
-        return producerStart;
+        return producer.startPosition();
     }
 
     @Override

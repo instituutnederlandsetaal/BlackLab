@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -128,7 +127,7 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
 
     @Override
     public String getField() {
-        return relations.isEmpty() ? null : relations.get(0).getField();
+        return relations.isEmpty() ? super.getField() : relations.get(0).getField();
     }
 
     @Override

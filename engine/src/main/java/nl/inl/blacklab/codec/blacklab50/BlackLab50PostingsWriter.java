@@ -37,6 +37,7 @@ import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm;
 
 /**
@@ -87,10 +88,11 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
                 if (relationsStrategy instanceof RelationsStrategySingleTerm) {
                     // Older dev versions used this. We need to support it for a while for backwards compatibility.
                     plugins.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
-                } else {
+                } else if (relationsStrategy instanceof RelationsStrategySeparateTerms) {
                     // This is the current version of the relation info plugin, used for new indexes.
-                    plugins.add(new PWPluginRelationInfo(this, relationsStrategy));
-                }
+                    plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms) relationsStrategy));
+                } else
+                    throw new BlackLabRuntimeException("Unsuitable relationsStrategy for BlackLab50 codec: " + relationsStrategy);
             }
         } catch (IOException e) {
             // Something went wrong, e.g. we couldn't create the output files.

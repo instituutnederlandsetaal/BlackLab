@@ -223,10 +223,10 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
 
         // Not in parameter (or unrecognized value), use default based on
         // annotationName
-        if (AnnotationSensitivities.defaultForAnnotation(annotationName) != AnnotationSensitivities.ONLY_INSENSITIVE) {
+        if (getAnnotationSensitivity(annotationName) != AnnotationSensitivities.ONLY_INSENSITIVE) {
             // Word or lemma: default to sensitive/insensitive
             // (deprecated, will be removed eventually)
-            return AnnotationSensitivities.defaultForAnnotation(annotationName);
+            return getAnnotationSensitivity(annotationName);
         }
         if (annotationName.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
             // Punctuation: default to only insensitive
@@ -239,6 +239,10 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
 
         // Unrecognized; default to only insensitive
         return AnnotationSensitivities.ONLY_INSENSITIVE;
+    }
+
+    protected static AnnotationSensitivities getAnnotationSensitivity(String name) {
+        return AnnotationSensitivities.defaultForAnnotation(name, 1);
     }
 
     /**

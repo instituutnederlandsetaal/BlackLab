@@ -121,7 +121,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         boolean inSentence = false;
 
         // For each token position
-        Map<String, String> sentenceAttr = new LinkedHashMap<>();
+        Map<String, List<String>> sentenceAttr = new LinkedHashMap<>();
         int sentenceStartPosition = -1;
         lineNumber = COL_ID;
         while (true) {
@@ -153,7 +153,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                     if (m.matches()) {
                         String attributeName = m.group(1);
                         String attributeValue = m.group(2);
-                        sentenceAttr.put(attributeName, attributeValue);
+                        sentenceAttr.put(attributeName, List.of(attributeValue));
                     }
                 }
                 continue;

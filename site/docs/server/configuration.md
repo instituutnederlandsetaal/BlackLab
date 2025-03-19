@@ -25,7 +25,35 @@ In addition, BlackLab Server will also look for `blacklab-server.yaml` in the di
 
 ## Sections
 
-Here we take a look at individual sections of the configuration file.
+Here we take a look at individual sections of the configuration file. This is a work in progress; see the [complete config file](#complete-config-file) for a full example.
+
+### Search settings
+
+This controls how BlackLab searches your corpora.
+
+```yaml
+# Defaults for searching
+# NOTE: these are BlackLab defaults, not the defaults for the BlackLab Server parameters;
+# see the parameters section for those.
+search:
+
+    # Collator to use for sorting, grouping, etc.
+    collator:
+        language: nl   # required
+        country: NL    # optional
+        #variant: x     # optional
+
+    # Default number of words around hit.
+    contextSize: 5
+
+    # The default maximum number of hits to retrieve (and use for sorting, grouping, etc.).
+    # -1 means no limit, but be careful, this may stress your server.
+    maxHitsToRetrieve: 1000000
+    
+    # The default maximum number of hits to count.
+    # -1 means no limit, but be careful, this may stress your server.
+    maxHitsToCount: -1
+```
 
 ### Authentication and authorization
 

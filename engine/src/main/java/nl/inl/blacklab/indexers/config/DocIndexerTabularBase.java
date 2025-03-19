@@ -1,10 +1,12 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.indexers.config.process.ProcessingStepIdentity;
+import nl.inl.blacklab.indexers.config.process.ProcessingStepSplit;
 import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerTabularBase extends DocIndexerConfig {
@@ -19,23 +21,15 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
     protected void indexValue(ConfigAnnotation annotation, String value) {
         // Remove unwanted unprintable characters and normalize to canonical unicode composition
         value = StringUtil.sanitizeAndNormalizeUnicode(value);
-
-        if (annotation.isMultipleValues()) {
-            // Multiple values possible. Split on multipleValuesSeparator.
-            List<String> values = processStringMultipleValues(value, annotation.getProcess(), null);
-            Stream<String> valueStream = values.stream();
-            if (annotation.getProcess().isEmpty()) {
+        ProcessingStep process = annotation.getProcess();
+        if (process instanceof ProcessingStepIdentity || process.canProduceMultipleValues()) {
+            if (process instanceof ProcessingStepIdentity) {
                 // No explicit processing steps defined.
                 // Perform the split processing step that is implicit for tabular formats.
-                valueStream = valueStream
-                        .map(v -> Arrays.asList(v.split(multipleValuesSeparatorRegex, -1)))
-                        .flatMap(List::stream);
+                process = new ProcessingStepSplit(multipleValuesSeparatorRegex, "", "all");
             }
-            if (!annotation.isAllowDuplicateValues()) {
-                // Discard any duplicate values from the list
-                valueStream = valueStream.distinct();
-            }
-            values = valueStream.collect(Collectors.toList());
+            // Multiple values possible.
+            List<String> values = processStringMultipleValues(value, process);
             boolean first = true;
             for (String v: values) {
                 annotationValueAppend(annotation.getName(), v, first ? 1 : 0);
@@ -43,7 +37,7 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
             }
         } else {
             // Single value.
-            value = processString(value, annotation.getProcess(), null);
+            value = process.performSingle(value, this);
             annotationValueAppend(annotation.getName(), value, 1);
         }
     }

@@ -95,15 +95,18 @@
       "json": {
         "args": [
           {
+            "bcqlFragment": "'a'",
             "type": "regex",
             "value": "a"
           },
           {
             "annotation": "lemma",
+            "bcqlFragment": "[lemma='successful']",
             "type": "regex",
             "value": "successful"
           }
         ],
+        "bcqlFragment": "_FI1('a', [lemma='successful'])",
         "name": "_FI1",
         "type": "callfunc"
       }

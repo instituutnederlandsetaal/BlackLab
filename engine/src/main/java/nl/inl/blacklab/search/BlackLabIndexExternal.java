@@ -190,7 +190,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         if (adjust == TextPatternTags.Adjust.LEADING_EDGE || adjust == TextPatternTags.Adjust.TRAILING_EDGE)
             q = new SpanQueryEdge(q, adjust == TextPatternTags.Adjust.TRAILING_EDGE);
         if (!StringUtils.isEmpty(captureAs))
-            q = new SpanQueryCaptureGroup(q, captureAs, 0, 0);
+            q = new SpanQueryCaptureGroup(q, captureAs, 0, 0, captureAs);
         return q;
     }
 
