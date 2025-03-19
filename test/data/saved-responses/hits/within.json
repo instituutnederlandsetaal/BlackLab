@@ -67,7 +67,8 @@
         "u": {
           "end": 246,
           "start": 226,
-          "type": "span"
+          "tagName": "u",
+          "type": "tag"
         }
       },
       "right": {
