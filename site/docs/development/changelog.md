@@ -2,6 +2,52 @@
 
 ## Improvements in dev
 
+### New
+
+- Major new features:
+    - indexing and searching (dependency) relations. Support for the CoNLL-U format, and configuring your own XML-based format using special standoff annotations.
+    - proper support for multiple annotated fields per document
+    - parallel corpora
+- BCQL:
+    - you can request all relations in a sentence now (`within rcapture(<s/>)`).
+    - new `overlap` operator to e.g. find hits in the overlaps of two tags (`'the' within <heading /> overlap <named-entity/>`). Useful to build a query when you don't know the hierarchy of tags.
+    - integer range query for annotations (`[pos='verb' & pos_confidence=in[50,100]]`) and attribute values (`<verse number=in[1,10]/>`)
+    - lookahead/lookbehind: `(?<=...)` and `(?=...)` for positive lookbehind and lookahead, and `(?<!...)` and `(?!...)` for negative lookbehind and lookahead.
+    - `punctBefore`/`punctAfter` pseudo-annotations: `[word='good' & punctAfter=',']` (translates to `[word='good'] (?= [punct=','])`)
+    - `with-spans(...)` function that will capture all overlapping spans for each hit.
+    - option `omitEmptyCaptures` to omit empty captures
+    - `csvdescription` parameter
+- Matching:
+  - match info includes captures, inline tags and relations. Captured tags are returned with their attributes.
+  - hit uniqueness now considers match info (capture groups etc.) as well, so multiple hits with the same doc, start and end may be reported (with each having different match info)
+  - version 2 of the .blf.yaml format, changing the default processor to Saxon and removing various quirks. See [here](../guide/how-to-configure-indexing.md#differences-between-version-1-and-2).
+  - support for indexing extra attributes with inline tags using XPath; only indexing certain attributes; or excluding all except certain attributes.
+- BlackLab Server:
+  - Evolving the BLS API. See [API versions](../server/rest-api/api-versions.md).
+  - you can pass `context=s` to get a whole sentence as context around a hit.
+  - group by capture, e.g. `capture:word:s:A` to group on the words from the group captured as `A` in your query.
+  - group on a tag in a list of overlapping tags, e.g. `capture:word:s:with-spans[named-entity]` to group on the whole named entity (if the match overlap with one) for a query like `with-spans('baker')`.
+  - group on a span attribute, e.g. `span-attribute:speech:lang:c` for the contents of the span named `speech` (your pattern might be `"test" within <speech />`
+  - new BLS endpoint `/relations` gives a list of all inline tags and relations in the index, including attribute values and frequencies.
+  - new BLS endpoint `/shared-with-me` that returns a list of corpora shared with the currently logged-in user, if any. Also reported on the `/` (server info) page.
+  - new `limitvalues` parameter to control the length of value lists (i.e. field, attribute values)
+  - a JSON form of each query is returned by the API. You can also pass this JSON form to the REST API as an alternative to BCQL. This is useful for e.g. implementing a query builder. There is also an operation (/parse-pattern) that just returns the JSON form of a query.
+  - `userIndexMaxTokenCount` setting to configure limits on user index size
+- Indexing:
+    - integrated index
+    - much improved Saxon indexer
+    - (limited) XInclude support
+    - new DocIndexerExample gives a better example of low-level custom indexing
+    - you can now use a custom DocIndexerConfig subclass by specifying `fileTypeOptions.docIndexerClass` in your .blf.yaml file.
+    - standoff annotations can now be used to index spans and relations as well
+- Misc:
+    - support for Docker
+    - ability to run BlackLab as a Solr plugin (work in progress), and a proxy so Solr with plugin behaves the same as BLS.
+    - much improved unit and CI testing
+    - more warnings are logged if something is wrong, e.g. indexing without a persistent document identifier (pidField) configured.
+    - QueryTool can now be used for performance and correctness testing
+    - BlackLab .war now contains Git commit id in its manifest. BLS will report it on the `/` (info) page.
+
 ### Changed
 
 - annotation setting allowDuplicateValues defaults to false, which is usually what you want.
@@ -9,34 +55,16 @@
 - BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
 - BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
 - Unicode normalization is applied to documents while indexing.
-- If a corpus directory is named `index`, we used to look at the parent directory for the "real" corpus name, but this quirk has been removed. 
+- If a corpus directory is named `index`, we used to look at the parent directory for the "real" corpus name, but this quirk has been removed.
+- There is no longer an arbitrary term length limit.
+- If a group identity is actually no value (i.e. no term), this is now returned as '(no value)' in the BLS response.
+-
 
 ### Fixed
 
 - Querying numeric fields was broken but should work correctly again.
-- 
-
-### New
-
-- integrated index
-- ability to run BlackLab as a Solr plugin (work in progress), and a proxy so Solr with plugin behaves the same as BLS.
-- Evolving the BLS API
-- indexing and searching (dependency) relations. Support for the CoNLL-U format, and configuring your own XML-based format using special standoff annotations.
-- hit uniqueness now considers match info (capture groups etc.) as well, so multiple hits with the same doc, start and end may be reported (with each having different match info)
-- match info includes captures, inline tags and relations.
-- you can request all relations in a sentence now.
-- much improved Saxon indexer
-- much improved unit and CI testing
-- group by capture
-- new DocIndexerExample gives a better example of low-level custom indexing
-- you can now index spans and relations using standoff annotations as well
-- support for Docker
-- a JSON form of each query is returned by the API. You can also pass this JSON form to the REST API as an alternative to BCQL. This is useful for e.g. implementing a query builder. There is also an operation (/parse-pattern) that just returns the JSON form of a query.
-- more warnings are logged if something is wrong, e.g. indexing without a persistent document identifier (pidField) configured.
-- QueryTool can now be used for performance and correctness testing
-
-- userIndexMaxTokenCount setting
-- option to omit empty captures
+- Escaping issues in BCQL. Literal string mode.
+- Many more bug fixes; see [Git commit history](https://github.com/INL/BlackLab/commits/dev/) for details.
 
 ### Removed
 

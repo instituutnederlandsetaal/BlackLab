@@ -1518,7 +1518,7 @@ These processing steps are more specific to certain data formats:
 
 If you would like a new processing step to be added, please let us know.
 
-### Differences between version 1 and 2 (EXPERIMENTAL)
+### Differences between version 1 and 2
 
 There's an experimental version 2 of the `.blf.yaml` format. To try it out,
 add `version: 2` to the top of your format file.
