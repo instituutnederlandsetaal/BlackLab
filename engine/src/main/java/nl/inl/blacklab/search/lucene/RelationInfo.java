@@ -18,11 +18,11 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     public static RelationInfo create() {
-        return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, "", "", false);
+        return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, "", "", false);
     }
 
     public static RelationInfo createWithFields(String sourceField, String targetField) {
-        return new RelationInfo(false, -1, -1, -1, -1, -1, null, null, sourceField, targetField, false);
+        return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, sourceField, targetField, false);
     }
 
     public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, boolean hasExtraInfoStored) {
@@ -31,6 +31,23 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType, boolean hasExtraInfoStored) {
         return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, "", "", hasExtraInfoStored);
+    }
+
+    /**
+     * Create a relation info object for an inline tag.
+     *
+     * Only used for old external index.
+     *
+     * @param start start position
+     * @param end end position
+     * @param tagName tag name
+     * @param field field this tag is from
+     * @return the relation info object
+     */
+    public static RelationInfo createTag(int start, int end, String tagName, String field) {
+        return new RelationInfo(false, start, start, end, end,
+                RELATION_ID_NO_INFO, tagName, null, field, field,
+                false);
     }
 
     /** If a relation has no info stored in the relation info index, it will get this special relation id.
@@ -132,7 +149,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
      *  If this is empty and indexedTerm is set, attributes have not been determined yet (either from the term, or from relation info index). */
     private Map<String, List<String>> attributes;
 
-    /** Field this points to, or null if same as source field. */
+    /** Field this points to (for non-parallel corpora, this will always be identical to source field). */
     private final String targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
