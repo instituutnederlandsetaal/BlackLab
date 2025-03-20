@@ -222,7 +222,7 @@ class SpansNot extends BLSpans {
             return NO_MORE_POSITIONS;
         }
         // Advance us to just before the requested start point, then call nextStartPosition().
-        if (clauseStart < targetPosition)
+        if (clauseDoc == currentDoc && clauseStart < targetPosition)
             clauseStart = clause.advanceStartPosition(targetPosition);
         currentStart = targetPosition - 1;
         currentEnd = targetPosition;
@@ -328,6 +328,6 @@ class SpansNot extends BLSpans {
     public TwoPhaseIterator asTwoPhaseIterator() {
         // An approximation of our clause doesn't help us eliminate documents,
         // because we can only eliminate a document if we know its clause matches all tokens.
-        return super.asTwoPhaseIterator();
+        return null;
     }
 }
