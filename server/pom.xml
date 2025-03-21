@@ -41,5 +41,13 @@
             <version>1.5</version>
         </dependency>
 
+        <!-- (we use IndexTool for testing) -->
+        <dependency>
+            <groupId>${project.parent.groupId}</groupId>
+            <artifactId>blacklab-tools</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>
