@@ -103,6 +103,11 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
     }
 
     @Override
+    public boolean countTermForStats(String term) {
+        return !term.startsWith("@"); // skip attribute terms as we cannot match them to their tag
+    }
+
+    @Override
     public BytesRef getPayload(RelationInfo relationInfo) {
         throw new UnsupportedOperationException(); // external index handles this differently
     }
@@ -151,5 +156,6 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
         public void deserialize(int startPosition, ByteArrayDataInput dataInput, RelationInfo target) {
             throw new UnsupportedOperationException();
         }
+
     }
 }

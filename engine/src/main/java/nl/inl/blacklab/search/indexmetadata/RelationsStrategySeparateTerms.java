@@ -99,6 +99,13 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
 
     @Override
     public boolean isOptimizationTerm(String term) {
+        // only the special relation info term (with undesensitized attribute values) is an optimization term
+        return this.countTermForStats(term);
+    }
+
+    @Override
+    public boolean countTermForStats(String term) {
+        // only count the special relation info term (with undesensitized attribute values)
         return term.startsWith(RELATION_INFO_TERM_PREFIX);
     }
 
@@ -115,7 +122,6 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             // No attributes.
             return;
         }
-//        Map<String, List<String>> attributes = new HashMap<>();
         for (int i = 1; i < parts.length; i++) {
             String attr = parts[i];
             int p = attr.indexOf(KEY_VALUE_SEPARATOR);
@@ -123,27 +129,46 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 throw new RuntimeException("Malformed attribute in relation info term: " + riTerm);
             String key = attr.substring(0, p);
             String[] values = attr.substring(p + 1).split(ATTR_SEPARATOR, -1);
-//            attributes.put(key, Arrays.asList(values));
             attrHandler.accept(key, Arrays.asList(values));
         }
-//        String fullType = parts[0].substring(1);
-//        return Pair.of(fullType, attributes);
     }
 
     @Override
     public Stream<Map.Entry<String, String>> attributesInTerm(String indexedTerm) {
-        int i = indexedTerm.indexOf(ATTR_SEPARATOR); // if <0, this is not an attribute term
-        if (i < 0)
-            return Stream.empty();
-        int j = indexedTerm.indexOf(KEY_VALUE_SEPARATOR, i + 1);
-        if (j < 0) {
-            // This is not an attribute term.
-            return Stream.empty();
-            //throw new RuntimeException("Malformed attribute term, no value sep: " + indexedTerm);
+        if (indexedTerm.startsWith(RELATION_INFO_TERM_PREFIX)) {
+            // Relation info term contains all attributes, undesensitized
+            String[] parts = indexedTerm.split(ATTR_SEPARATOR, -1);
+            List<Map.Entry<String, String>> entries = new ArrayList<>();
+            if (parts.length == 2 && parts[1].isEmpty()) {
+                // No attributes.
+                return Stream.empty();
+            }
+            for (int j = 1; j < parts.length; j++) {
+                String attr = parts[j];
+                int p = attr.indexOf(KEY_VALUE_SEPARATOR);
+                if (p < 0)
+                    throw new RuntimeException("Malformed attribute in relation info term: " + indexedTerm);
+                String name = attr.substring(0, p);
+                String[] values = attr.substring(p + 1).split(ATTR_VALUE_SEPARATOR, -1);
+                for (String value: values)
+                    entries.add(Map.entry(name, value));
+            }
+            return entries.stream();
+        } else {
+            // Regular attribute term contains just 1 attribute
+            int i = indexedTerm.indexOf(ATTR_SEPARATOR); // if <0, this is not an attribute term
+            if (i < 0)
+                return Stream.empty();
+            int j = indexedTerm.indexOf(KEY_VALUE_SEPARATOR, i + 1);
+            if (j < 0) {
+                // This is not an attribute term.
+                return Stream.empty();
+                //throw new RuntimeException("Malformed attribute term, no value sep: " + indexedTerm);
+            }
+            String name = indexedTerm.substring(i + 1, j);
+            String value = indexedTerm.substring(j + 1);
+            return Stream.of(Map.entry(name, value));
         }
-        String name = indexedTerm.substring(i + 1, j);
-        String value = indexedTerm.substring(j + 1);
-        return Stream.of(Map.entry(name, value));
     }
 
     @Override

@@ -188,4 +188,9 @@ public interface RelationsStrategy {
     default boolean isOptimizationTerm(String term) {
         return false;
     }
+
+    /** Should this term be used to determine the relations stats? (/relations) */
+    default boolean countTermForStats(String term) {
+        return !isOptimizationTerm(term);
+    }
 }

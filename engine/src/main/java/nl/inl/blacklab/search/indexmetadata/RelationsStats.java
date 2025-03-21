@@ -13,7 +13,7 @@ public class RelationsStats {
 
     /**
      * Return default class for this index.
-     *
+     * <p>
      * This is the first class alphabetically (except special class "__tag"),
      * or the default value "rel". For parallel corpora, the versions are ignored,
      * so "al__nl" will be returned as "al". This makes sense, because you should specify
@@ -24,7 +24,7 @@ public class RelationsStats {
     public String getDefaultClass() {
         return classes.keySet().stream()
                 .filter(cls -> !cls.equals(RelationUtil.CLASS_INLINE_TAG))
-                .map(cls -> AnnotatedFieldNameUtil.baseFromParallelFieldName(cls))
+                .map(AnnotatedFieldNameUtil::baseFromParallelFieldName)
                 .findFirst()
                 .orElse(RelationUtil.CLASS_DEFAULT);
     }
@@ -110,15 +110,10 @@ public class RelationsStats {
         }
     }
 
-    /**
-     * Is this an old external index that indexes tags differently?
-     */
-    private boolean oldStyleStarttag;
-
     /** How relations were indexed */
-    private RelationsStrategy relationsStrategy;
+    private final RelationsStrategy relationsStrategy;
 
-    private long limitValues;
+    private final long limitValues;
 
     /**
      * What relation classes occur and with what types and attributes
@@ -127,7 +122,6 @@ public class RelationsStats {
 
     RelationsStats(RelationsStrategy relationsStrategy, long limitValues) {
         this.relationsStrategy = relationsStrategy;
-        this.oldStyleStarttag = relationsStrategy instanceof RelationsStrategyNaiveSeparateTerms;
         this.limitValues = limitValues;
     }
 
@@ -155,29 +149,23 @@ public class RelationsStats {
     }
 
     boolean addIndexedTerm(String term, long freq) {
-        if (relationsStrategy.isOptimizationTerm(term)) {
-            // Don't count these; they are extra terms to speed up certain searches.
-            return true;
+        // Count this term?
+        // (NOTE: empty term is added if no relations are found at a position)
+        if (!term.isEmpty() && relationsStrategy.countTermForStats(term)) {
+            String relationClass;
+            if (relationsStrategy instanceof RelationsStrategyNaiveSeparateTerms) {
+                // Old external index. Convert term to new style so we can process it the same way.
+                relationClass = RelationUtil.CLASS_INLINE_TAG;
+                term = RelationsStrategyNaiveSeparateTerms.indexedTermNoAttributes(RelationUtil.fullType(relationClass, term));
+            } else {
+                // New integrated index with spans indexed as relations as well.
+                relationClass = RelationUtil.classFromFullType(relationsStrategy.fullTypeFromIndexedTerm(term));
+                if (relationClass.startsWith(RelationsStrategySeparateTerms.RELATION_INFO_TERM_PREFIX))
+                    relationClass = relationClass.substring(1);
+            }
+            ClassStats relClassStats = classes.computeIfAbsent(relationClass, k -> new ClassStats());
+            relClassStats.add(term, freq);
         }
-        if (term.isEmpty()) {
-            // Empty terms are added if no relations are found at a position
-            return true;
-        }
-        if (oldStyleStarttag && term.startsWith("@")) {
-            // Attribute value in older index; cannot match to its tag, so cannot count
-            return true;
-        }
-        String relationClass;
-        if (oldStyleStarttag) {
-            // Old external index. Convert term to new style so we can process it the same way.
-            relationClass = RelationUtil.CLASS_INLINE_TAG;
-            term = RelationsStrategyNaiveSeparateTerms.indexedTermNoAttributes(RelationUtil.fullType(relationClass, term));
-        } else {
-            // New integrated index with spans indexed as relations as well.
-            relationClass = RelationUtil.classFromFullType(relationsStrategy.fullTypeFromIndexedTerm(term));
-        }
-        ClassStats relClassStats = classes.computeIfAbsent(relationClass, k -> new ClassStats());
-        relClassStats.add(term, freq);
-        return true;
+        return true; // "yes, continue processing terms from field"
     }
 }
