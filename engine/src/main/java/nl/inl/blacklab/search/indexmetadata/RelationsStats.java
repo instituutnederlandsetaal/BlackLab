@@ -29,6 +29,12 @@ public class RelationsStats {
                 .orElse(RelationUtil.CLASS_DEFAULT);
     }
 
+    public boolean isEmpty() {
+        return classes.values().stream()
+                .flatMap(cl -> cl.relationTypes.values().stream())
+                .allMatch(t -> t.count == 0);
+    }
+
     /**
      * Information about a relation type (under a class) and the attributes that occur with it.
      */
@@ -163,6 +169,25 @@ public class RelationsStats {
                 if (relationClass.startsWith(RelationsStrategySeparateTerms.RELATION_INFO_TERM_PREFIX))
                     relationClass = relationClass.substring(1);
             }
+            ClassStats relClassStats = classes.computeIfAbsent(relationClass, k -> new ClassStats());
+            relClassStats.add(term, freq);
+        }
+        return true; // "yes, continue processing terms from field"
+    }
+
+    /** Older dev index, count separate attribute terms instead (these have been lowercased already).
+     *
+     * Provided for convenience so older dev index still work with 4.0 for now;
+     * we should remove this soon after release, as older dev indexes are not officially supported.
+     */
+    boolean addIndexedTerm_OLD(String term, long freq) {
+        // Count this term?
+        // (NOTE: empty term is added if no relations are found at a position)
+        if (!term.isEmpty()) {
+            String relationClass;
+            relationClass = RelationUtil.classFromFullType(relationsStrategy.fullTypeFromIndexedTerm(term));
+            if (relationClass.startsWith(RelationsStrategySeparateTerms.RELATION_INFO_TERM_PREFIX))
+                relationClass = relationClass.substring(1);
             ClassStats relClassStats = classes.computeIfAbsent(relationClass, k -> new ClassStats());
             relClassStats.add(term, freq);
         }

@@ -347,6 +347,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
             LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
                     null, results::addIndexedTerm);
+            if (results.isEmpty() && index.getRelationsStrategy() instanceof RelationsStrategySeparateTerms) {
+                // older dev index without relation info terms, use older version of method
+                LuceneUtil.getFieldTerms(index.reader(), annotationSensitivity.luceneField(),
+                        null, results::addIndexedTerm_OLD);
+            }
         }
         // Should we cache these results?
         synchronized (this) {
