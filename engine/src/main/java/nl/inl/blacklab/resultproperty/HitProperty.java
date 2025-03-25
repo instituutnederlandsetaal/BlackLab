@@ -55,6 +55,9 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         List<String> infos = parts.subList(1, parts.size());
         HitProperty result;
         switch (type) {
+        case HitPropertyAlignments.ID:
+            result = HitPropertyAlignments.deserializeProp(index, field, infos);
+            break;
         case HitPropertyDocumentDecade.ID:
             if (infos.isEmpty())
                 throw new IllegalArgumentException("No decade specified for " + HitPropertyDocumentDecade.ID);

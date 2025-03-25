@@ -607,7 +607,7 @@ This should find aligning English and Dutch sentences, including any word alignm
 
 ::: details Required versus optional alignment
 
-The `==>` operator will _require_ that an alignment exists. If you wish to see all hits on the left side of the `==>nl` regardless of whether any aligments to the right side can be found, use `==>nl?`.
+The `==>` operator will _require_ that an alignment exists. If you wish to see all hits on the left side of the `==>nl` regardless of whether any alignments to the right side can be found, use `==>nl?`.
 
 For example, if you're searching for translations of `cat` to Dutch, with `==>nl` you will _only_ see instances where `cat` is aligned to a Dutch word; on the other hand, with `==>nl?` you will see both English `cat` hits where the translation to Dutch was found, and `cat` hits where it wasn't.
 
