@@ -50,7 +50,7 @@ public class Kwics {
             Map<String, int[]> minMaxPerField = null; // start and end of the "foreign match"
             MatchInfo[] matchInfo = hit.matchInfo();
             if (matchInfo != null) {
-                Iterator<MatchInfo.Def> defIt = hits.matchInfoDefs().iterator();
+                Iterator<MatchInfo.Def> defIt = hits.matchInfoDefs().currentList().iterator();
                 for (MatchInfo mi: matchInfo) {
                     if (mi == null)
                         continue; // not captured for this hit

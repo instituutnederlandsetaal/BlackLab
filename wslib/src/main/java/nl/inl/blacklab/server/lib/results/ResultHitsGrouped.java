@@ -17,6 +17,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -124,9 +125,9 @@ public class ResultHitsGrouped {
 
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
-        List<MatchInfo.Def> matchInfoDefs = hits.matchInfoDefs();
+        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
         Set<String> otherFields = new HashSet<>();
-        for (MatchInfo.Def def : matchInfoDefs) {
+        for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             if (def.getTargetField() != null)
                 otherFields.add(def.getTargetField());
         }

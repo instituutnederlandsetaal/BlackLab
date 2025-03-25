@@ -72,7 +72,7 @@ public class HitPropertySpanAttribute extends HitProperty {
 
         // Determine group index. We don't use the one from prop (if any), because
         // index might be different for different hits object.
-        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
+        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
         if (groupIndex < 0)
             throw new MatchInfoNotFound(groupName);
     }

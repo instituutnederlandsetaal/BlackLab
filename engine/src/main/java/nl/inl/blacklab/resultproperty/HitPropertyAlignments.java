@@ -4,20 +4,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import org.apache.commons.lang3.StringUtils;
-
-import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * A hit property for grouping on an attribute of a matched span.
@@ -44,8 +35,7 @@ public class HitPropertyAlignments extends HitProperty {
 
         // Find indexes of foreign hits in matchInfo
         if (hits != null) {
-            targetHitGroupIndexes = hits.matchInfoDefs().stream()
-                    .filter(MatchInfo.Def::isForeignHit)
+            targetHitGroupIndexes = hits.matchInfoDefs().currentListFiltered(MatchInfo.Def::isForeignHit).stream()
                     .map(MatchInfo.Def::getIndex)
                     .collect(Collectors.toList());
         }

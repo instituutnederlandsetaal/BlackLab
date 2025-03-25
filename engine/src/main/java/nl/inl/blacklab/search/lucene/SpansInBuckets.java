@@ -201,8 +201,9 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
             return;
         MatchInfo[] thisMatchInfo = bucket.matchInfos(indexInBucket);
         if (thisMatchInfo != null) {
-            for (int i = 0; i < matchInfo.length; i++) {
-                if (thisMatchInfo.length > i && thisMatchInfo[i] != null) // don't overwrite other clause's captures!
+            int n = Math.min(matchInfo.length, thisMatchInfo.length);
+            for (int i = 0; i < n; i++) {
+                if (thisMatchInfo[i] != null) // don't overwrite other clause's captures!
                     matchInfo[i] = thisMatchInfo[i];
             }
         }

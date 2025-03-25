@@ -1,10 +1,5 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 /**
  * Provides per-hit query-wide context, such as captured groups.
  *
@@ -20,7 +15,7 @@ public class HitQueryContext {
 
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
-    List<MatchInfo.Def> matchInfoDefs = new ArrayList<>();
+    MatchInfoDefs matchInfoDefs = new MatchInfoDefs();
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
     private final String defaultField;
@@ -75,7 +70,7 @@ public class HitQueryContext {
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
      * @return the group's assigned index
      */
-    public synchronized int registerMatchInfo(String name, MatchInfo.Type type) {
+    public int registerMatchInfo(String name, MatchInfo.Type type) {
         return registerMatchInfo(name, type, getField(), null);
     }
 
@@ -91,18 +86,8 @@ public class HitQueryContext {
      * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public synchronized int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
-        Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
-                .filter(mid -> mid.getName().equals(name))
-                .findFirst();
-        if (mi.isPresent()) {
-            mi.get().updateType(type); // update type (e.g. if group is referred to before we know its type)
-            return mi.get().getIndex(); // already registered, reuse
-        }
-        assert field != null;
-        MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field, targetField);
-        matchInfoDefs.add(newMatchInfo);
-        return newMatchInfo.getIndex(); // index in array
+    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
+        return matchInfoDefs.register(name, type, field, targetField).getIndex();
     }
 
     /**
@@ -111,7 +96,7 @@ public class HitQueryContext {
      * @return number of captured groups
      */
     public synchronized int numberOfMatchInfos() {
-        return matchInfoDefs.size();
+        return matchInfoDefs.currentSize();
     }
 
     /**
@@ -132,8 +117,8 @@ public class HitQueryContext {
      *
      * @return the list of match infos
      */
-    public synchronized List<MatchInfo.Def> getMatchInfoDefs() {
-        return Collections.unmodifiableList(matchInfoDefs);
+    public synchronized MatchInfoDefs getMatchInfoDefs() {
+        return matchInfoDefs;
     }
 
     /**
@@ -160,6 +145,6 @@ public class HitQueryContext {
      * @return true if any of the captures are of type INLINE_TAG or RELATION
      */
     public synchronized boolean hasRelationCaptures() {
-        return matchInfoDefs.stream().anyMatch(mid -> mid.getType() == MatchInfo.Type.INLINE_TAG || mid.getType() == MatchInfo.Type.RELATION);
+        return matchInfoDefs.currentlyHasRelationCaptures();
     }
 }

@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * Some annotation context(s) belonging to a list of hits.
@@ -114,7 +114,7 @@ public class Contexts {
      * @param contextSources forward indices to get context from
      */
     private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end,
-            ContextSize contextSize, List<AnnotationForwardIndex> contextSources, List<MatchInfo.Def> matchInfoDefs) {
+            ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
@@ -184,7 +184,7 @@ public class Contexts {
 
         // Make sure all hits have been read and get access to internal hits
         HitsInternal ha = hits.getInternalHits();
-        List<MatchInfo.Def> matchInfoDefs = hits.matchInfoDefs();
+        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {

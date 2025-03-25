@@ -143,7 +143,8 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
-        for (int i = 0; i < matchInfo.length; i++) {
+        int n = Math.min(matchInfo.length, this.matchInfo.length);
+        for (int i = 0; i < n; i++) {
             // Only pass on the match info for our target field
             if (this.matchInfo[i] != null && this.matchInfo[i].getField().equals(targetField))
                 matchInfo[i] = this.matchInfo[i];

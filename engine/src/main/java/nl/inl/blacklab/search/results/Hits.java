@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.MatchInfo.Def;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A list of hits, optionally with captured groups.
@@ -57,7 +57,7 @@ public interface Hits extends Results<Hit, HitProperty> {
         return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds, null), null);
     }
 
-    static Hits list(QueryInfo queryInfo, HitsInternal hits, List<MatchInfo.Def> matchInfoDefs) {
+    static Hits list(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
         return new HitsList(queryInfo, hits, matchInfoDefs);
     }
 
@@ -69,7 +69,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long hitsCounted,
             long docsRetrieved,
             long docsCounted,
-            List<MatchInfo.Def> matchInfoDefs,
+            MatchInfoDefs matchInfoDefs,
             boolean ascendingLuceneDocIds) {
         return new HitsList(
                 queryInfo,
@@ -303,12 +303,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      *
      * @return list of match info definitions
      */
-    List<MatchInfo.Def> matchInfoDefs();
-
-    default int matchInfoIndex(String name) {
-        return matchInfoDefs().stream().filter(def -> def.getName().equals(name)).map(Def::getIndex)
-                .findFirst().orElse(-1);
-    }
+    MatchInfoDefs matchInfoDefs();
 
     boolean hasMatchInfo();
 

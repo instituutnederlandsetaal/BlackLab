@@ -1,9 +1,7 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.List;
-
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -15,7 +13,7 @@ public class HitGroup extends Group<Hit> {
     }
 
     public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
-            List<MatchInfo.Def> matchInfoDefs, long totalSize) {
+            MatchInfoDefs matchInfoDefs, long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, storedResults, matchInfoDefs, totalSize);
     }
 
@@ -38,7 +36,7 @@ public class HitGroup extends Group<Hit> {
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
-            List<MatchInfo.Def> matchInfoDefs, long totalSize) {
+            MatchInfoDefs matchInfoDefs, long totalSize) {
         super(groupIdentity, Hits.list(queryInfo, storedResults, matchInfoDefs), totalSize);
     }
 

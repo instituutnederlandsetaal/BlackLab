@@ -54,7 +54,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
         // Determine group index. We don't use the one from prop (if any), because
         // index might be different for different hits object.
-        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoIndex(groupName);
+        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
         if (groupIndex < 0)
             throw new MatchInfoNotFound(groupName);
         
@@ -73,9 +73,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @return the field name
      */
     private static String determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
-        List<MatchInfo.Def> defs = hits.matchInfoDefs();
-        return defs.stream()
-                .filter(d -> d.getName().equals(groupName))
+        return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
                 .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
     }
