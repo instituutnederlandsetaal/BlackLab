@@ -18,7 +18,8 @@ public class HitQueryContext {
     /** Root of the BLSpans tree for this query. */
     private BLSpans rootSpans;
 
-    /** Match info names for our query, in index order */
+    /** Match info names for our query, in index order.
+     *  NOTE: shared between multiple Spans that might run in parallel! */
     List<MatchInfo.Def> matchInfoDefs = new ArrayList<>();
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
@@ -68,16 +69,20 @@ public class HitQueryContext {
     /**
      * Register a match info (e.g. captured group), assigning it a unique index number.
      *
+     * Synchronized because it's called from SpansReader.initialize(), which can execute in multiple threads in parallel.
+     *
      * @param name the group's name
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type) {
+    public synchronized int registerMatchInfo(String name, MatchInfo.Type type) {
         return registerMatchInfo(name, type, getField(), null);
     }
 
     /**
      * Register a match info (e.g. captured group), assigning it a unique index number.
+     *
+     * Synchronized because it's called from SpansReader.initialize(), which can execute in multiple threads in parallel.
      *
      * @param name the group's name
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
@@ -86,7 +91,7 @@ public class HitQueryContext {
      * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
+    public synchronized int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
         Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
                 .filter(mid -> mid.getName().equals(name))
                 .findFirst();
@@ -105,7 +110,7 @@ public class HitQueryContext {
      * 
      * @return number of captured groups
      */
-    public int numberOfMatchInfos() {
+    public synchronized int numberOfMatchInfos() {
         return matchInfoDefs.size();
     }
 
@@ -127,7 +132,7 @@ public class HitQueryContext {
      *
      * @return the list of match infos
      */
-    public List<MatchInfo.Def> getMatchInfoDefs() {
+    public synchronized List<MatchInfo.Def> getMatchInfoDefs() {
         return Collections.unmodifiableList(matchInfoDefs);
     }
 
@@ -154,7 +159,7 @@ public class HitQueryContext {
      *
      * @return true if any of the captures are of type INLINE_TAG or RELATION
      */
-    public boolean hasRelationCaptures() {
+    public synchronized boolean hasRelationCaptures() {
         return matchInfoDefs.stream().anyMatch(mid -> mid.getType() == MatchInfo.Type.INLINE_TAG || mid.getType() == MatchInfo.Type.RELATION);
     }
 }

@@ -135,6 +135,7 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
 
     @Override
     protected FilterSpans.AcceptStatus accept(BLSpans candidate) throws IOException {
+        assert captureAsIndex >= 0 : "Negative captureAs index";
         int start = candidate.startPosition();
         int end = candidate.endPosition();
         assert start >= 0;
@@ -164,6 +165,7 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
         capturer.setHitQueryContext(context);
         this.context = context;
         this.captureAsIndex = context.registerMatchInfo(captureAs, MatchInfo.Type.LIST_OF_RELATIONS);
+        assert captureAsIndex >= 0 : "Negative captureAs index";
     }
 
     @Override

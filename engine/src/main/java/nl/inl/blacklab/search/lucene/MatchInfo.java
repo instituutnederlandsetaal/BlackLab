@@ -154,6 +154,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         private final String targetField;
 
         public Def(int index, String name, Type type, String field, String targetField) {
+            assert index >= 0 : "Match info may not have negative index";
             this.index = index;
             this.name = name;
             this.type = type;
@@ -192,6 +193,10 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
             assert this.type == null || type == this.type :
                     "Trying to overwrite match info '" + name + "' type from " + this.type + " to " + type;
             this.type = type;
+        }
+
+        public boolean isForeignHit() {
+            return name.endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
         }
     }
 }
