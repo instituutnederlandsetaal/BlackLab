@@ -213,7 +213,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     public int compare(long indexA, long indexB) {
         PropertyValue hitPropValueA = get(indexA);
         PropertyValue hitPropValueB = get(indexB);
-        return hitPropValueA.compareTo(hitPropValueB);
+        return reverse ? -hitPropValueA.compareTo(hitPropValueB) : hitPropValueA.compareTo(hitPropValueB);
     }
 
     @Override
