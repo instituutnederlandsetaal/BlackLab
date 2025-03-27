@@ -187,14 +187,13 @@ public class Kwics {
         int lastDocId = -1;
         int firstIndexWithCurrentDocId = 0;
         Map<Hit, Kwic> kwics = new HashMap<>();
-        BiConsumer<Hit, Kwic> kwicAdder = (hit, kwic) -> kwics.put(hit, kwic);
         for (int i = 0; i < hits.size(); ++i) {
             int curDocId = hits.doc(i);
             if (lastDocId != -1 && curDocId != lastDocId) {
                 // We've reached a new document, so process the previous one
                 Contexts.makeKwicsSingleDocForwardIndex(
                         hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId),
-                        forwardIndexes, contextSize, kwicAdder);
+                        forwardIndexes, contextSize, kwics::put);
                 firstIndexWithCurrentDocId = i; // remember start of the new document
             }
             lastDocId = curDocId;
@@ -202,7 +201,7 @@ public class Kwics {
         // Last document
         Contexts.makeKwicsSingleDocForwardIndex(
                 hits.window(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId),
-                forwardIndexes, contextSize, kwicAdder);
+                forwardIndexes, contextSize, kwics::put);
 
         return kwics;
     }

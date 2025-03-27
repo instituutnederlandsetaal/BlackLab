@@ -223,10 +223,20 @@ public class WebserviceOperations {
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
     public static List<Annotation> getAnnotationsToWrite(WebserviceParams params) {
+        BlackLabIndex index = params.blIndex();
+        AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = params.getListValuesFor();
-        return params.getSearchField().annotations().stream()
-                .filter(a -> requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name()))
-                .collect(Collectors.toList());
+        // NOTE: we use all fields to make sure this works for parallel corpora too!
+        //       obviously only annotations that are actually from the field(s) searched will be included in the output.
+        List<Annotation> ret = new ArrayList<>();
+        for (AnnotatedField f : fields) {
+            for (Annotation a : f.annotations()) {
+                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
+                    ret.add(a);
+                }
+            }
+        }
+        return ret;
     }
 
     /**
