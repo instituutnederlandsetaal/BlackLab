@@ -223,20 +223,10 @@ public class WebserviceOperations {
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
     public static List<Annotation> getAnnotationsToWrite(WebserviceParams params) {
-        BlackLabIndex index = params.blIndex();
-        AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = params.getListValuesFor();
-
-        List<Annotation> ret = new ArrayList<>();
-        for (AnnotatedField f : fields) {
-            for (Annotation a : f.annotations()) {
-                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
-                    ret.add(a);
-                }
-            }
-        }
-
-        return ret;
+        return params.getSearchField().annotations().stream()
+                .filter(a -> requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name()))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -697,7 +687,7 @@ public class WebserviceOperations {
                         "Could not delete format. The format is still being used by a corpus.");
         }
 
-        formatMan.deleteUserFormat(params.getUser(), formatIdentifier);
+        FinderInputFormatUserFormats.deleteUserFormat(params.getUser(), formatIdentifier);
     }
 
     public static ResultAnnotatedField annotatedField(WebserviceParams params, AnnotatedField fieldDesc, boolean includeIndexName) {

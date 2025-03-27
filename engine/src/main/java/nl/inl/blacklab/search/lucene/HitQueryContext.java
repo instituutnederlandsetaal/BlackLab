@@ -15,7 +15,7 @@ public class HitQueryContext {
 
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
-    MatchInfoDefs matchInfoDefs = new MatchInfoDefs();
+    private MatchInfoDefs matchInfoDefs = new MatchInfoDefs();
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
     private final String defaultField;
