@@ -68,7 +68,7 @@ public class HitPropertyAlignments extends HitProperty {
         if (matchInfos != null) {
             // Count the number of alignments found for this hit
             for (int targetHitGroupIndex: targetHitGroupIndexes) {
-                MatchInfo targetMatchInfo = matchInfos[targetHitGroupIndex];
+                MatchInfo targetMatchInfo = targetHitGroupIndex < matchInfos.length ? matchInfos[targetHitGroupIndex] : null;
                 if (targetMatchInfo != null)
                     n++;
             }

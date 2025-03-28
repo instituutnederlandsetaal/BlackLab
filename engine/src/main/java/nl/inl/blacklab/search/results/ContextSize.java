@@ -192,8 +192,10 @@ public class ContextSize {
         if (matchInfos != null) {
             // Return the match info group with the specified name
             Optional<MatchInfo.Def> mid = matchInfoDefs.currentListFiltered(d -> d.getName().equals(matchInfoName)).stream().findFirst();
-            if (mid.isPresent())
-                return matchInfos[mid.get().getIndex()];
+            if (mid.isPresent()) {
+                int index = mid.get().getIndex();
+                return index < matchInfos.length ? matchInfos[mid.get().getIndex()] : null;
+            }
 
             // Maybe it's a tag name, not a match info capture name? (REMOVE THIS?)
             for (int i = matchInfos.length - 1; i >= 0; i--) { // reverse because we expect it to be the last

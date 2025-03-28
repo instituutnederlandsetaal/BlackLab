@@ -63,7 +63,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     @Override
     public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
-        MatchInfo span = matchInfo[groupIndex];
+        MatchInfo span = groupIndex < matchInfo.length ? matchInfo[groupIndex] : null;
         if (span == null)
             return ConstraintValue.undefined();
         int tokenPosition = span.getSpanStart();
