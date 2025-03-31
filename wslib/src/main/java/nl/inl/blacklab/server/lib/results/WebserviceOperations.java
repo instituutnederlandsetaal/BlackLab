@@ -327,7 +327,17 @@ public class WebserviceOperations {
         Annotation annotation = hits.field().mainAnnotation();
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
+        ensureHasSensitivity(annotation, sensitivity);
         return hits.collocations(annotation, params.getContext(), sensitivity);
+    }
+
+    private static void ensureHasSensitivity(Annotation annotation, MatchSensitivity sensitivity) {
+        if (!annotation.hasSensitivity(sensitivity)) {
+            throw new BadRequest("SENSITIVITY_NOT_FOUND",
+                    "The annotation '" + annotation.name() + "' does not have the requested sensitivity '" + sensitivity
+                            + "'",
+                    Map.of("annotationName", annotation.name(), "sensitivity", sensitivity.toString()));
+        }
     }
 
     /**
@@ -513,15 +523,20 @@ public class WebserviceOperations {
         if (annotName.isEmpty())
             annotName = cfd.mainAnnotation().name();
         Annotation annotation = cfd.annotation(annotName);
+        if (annotation == null)
+            throw new BadRequest("ANNOTATION_NOT_FOUND",
+                    "Annotation '" + annotName + "' not found in field '" + cfd.name() + "'",
+                    Map.of("annotationName", annotName, "fieldName", cfd.name()));
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
-        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
-        AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
+        MatchSensitivity matchSensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
+        ensureHasSensitivity(annotation, matchSensitivity);
+        AnnotationSensitivity annotSensitivity = annotation.sensitivity(matchSensitivity);
 
         // May be null!
         Query q = params.filterQuery();
         // May also null/empty to retrieve all terms!
         Set<String> terms = params.getTerms();
-        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
+        TermFrequencyList tfl = blIndex.termFrequencies(annotSensitivity, q, terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
             long first = params.getFirstResultToShow();
