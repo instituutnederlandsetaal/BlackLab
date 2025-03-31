@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -362,7 +363,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public boolean getExplain() { return getBool(WebserviceParameter.EXPLAIN_QUERY_REWRITE); }
 
     @Override
-    public boolean getSensitive() { return getBool(WebserviceParameter.SENSITIVE); }
+    public boolean getSensitive(boolean defaultValue) {
+        return has(WebserviceParameter.SENSITIVE) ? getBool(WebserviceParameter.SENSITIVE) : defaultValue;
+    }
 
     @Override
     public int getWordStart() { return getInt(WebserviceParameter.WORD_START); }

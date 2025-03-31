@@ -324,8 +324,10 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return hits.collocations(hits.field().mainAnnotation(), params.getContext(), sensitivity);
+        Annotation annotation = hits.field().mainAnnotation();
+        boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
+        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
+        return hits.collocations(annotation, params.getContext(), sensitivity);
     }
 
     /**
@@ -511,7 +513,8 @@ public class WebserviceOperations {
         if (annotName.isEmpty())
             annotName = cfd.mainAnnotation().name();
         Annotation annotation = cfd.annotation(annotName);
-        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
+        boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
+        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
         AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
 
         // May be null!

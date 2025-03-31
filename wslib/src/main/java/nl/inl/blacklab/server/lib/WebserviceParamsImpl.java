@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -763,8 +764,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public boolean getSensitive() {
-        return params.getSensitive();
+    public boolean getSensitive(boolean defaultValue) {
+        return params.getSensitive(defaultValue);
     }
 
     @Override
