@@ -295,6 +295,11 @@ public class HitGroupsTokenFrequencies {
                             final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray, emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
                             globalOccurrences.compute(groupId, (__, groupSizes) -> {
                                 if (groupSizes != null) {
+                                    // Issue #379 (https://github.com/INL/BlackLab/issues/379) discussed the
+                                    // thread safety of the below 2 lines. It should be safe because globalOccurrences
+                                    // is a ConcurrentHashMap, and its compute() operation is atomic according to the
+                                    // documentation:
+                                    // https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html#compute-K-java.util.function.BiFunction-
                                     groupSizes.hits += docLength;
                                     groupSizes.docs += 1;
                                     return groupSizes;
