@@ -11,11 +11,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 import nl.inl.util.Json;
 
 public interface DataStream {
     String XML_PROLOG = "<?xml version=\"1.0\" encoding=\"utf-8\" ?>";
+
+    /** Set the API version. Determines the structure of some responses. */
+    default void setVersion(ApiVersion version) {
+        // do nothing by default (XML overrides)
+    }
 
     /**
      * Construct a simple status response object.

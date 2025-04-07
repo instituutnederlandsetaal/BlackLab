@@ -809,7 +809,6 @@ public class WebserviceOperations {
             afs.add(annotatedField(params, field, false));
         }
         Collections.sort(afs, ResultAnnotatedField::compare);
-        String mainAnnotatedField = metadata.mainAnnotatedField().name();
         logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
@@ -821,7 +820,9 @@ public class WebserviceOperations {
                 params.blIndex());
 
         logger.info("    construct response object");
-        return new ResultIndexMetadata(progress, afs, mainAnnotatedField, mfs, metadataFieldGroups);
+        AnnotatedField mainAnnotatedField = metadata.mainAnnotatedField();
+        String mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
+        return new ResultIndexMetadata(progress, afs, mainAnnotatedFieldName, mfs, metadataFieldGroups);
     }
 
     public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
