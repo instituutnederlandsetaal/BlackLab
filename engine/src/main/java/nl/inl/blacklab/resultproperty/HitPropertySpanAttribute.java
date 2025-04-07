@@ -108,7 +108,12 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public PropertyValue get(long hitIndex) {
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueString.class;
+    }
+
+    @Override
+    public PropertyValueString get(long hitIndex) {
         MatchInfo matchInfo = hits.get(hitIndex).matchInfo()[groupIndex];
         if (matchInfo == null)
             return PropertyValueString.NO_VALUE;

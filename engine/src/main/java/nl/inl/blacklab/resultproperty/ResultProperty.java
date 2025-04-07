@@ -118,4 +118,12 @@ public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.S
 
     /** Dispose of previously fetched context (to free up memory) */
     default void disposeContext() {}
+
+    /** The type of value this property produces.
+     *
+     * Used to optimize sorting (e.g. precalculate CollationKeys).
+     *
+     * @return the type of value this will yield
+     */
+    Class<? extends PropertyValue> getValueType();
 }

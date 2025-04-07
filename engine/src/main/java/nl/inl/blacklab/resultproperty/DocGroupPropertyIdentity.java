@@ -13,7 +13,13 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
     public DocGroupPropertyIdentity() {
         super();
     }
-    
+
+    @Override
+    public Class<? extends PropertyValue> getValueType() {
+        // Varies depending on what was grouped on, so we cannot say in advance.
+        return PropertyValue.class;
+    }
+
     @Override
     public PropertyValue get(DocGroup result) {
         return result.identity();

@@ -27,6 +27,11 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
         this.criteria = mprop.criteria;
     }
 
+    @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueMultiple.class;
+    }
+
     /**
      * Quick way to create group criteria. Just call this method with the
      * GroupCriterium object(s) you want.

@@ -46,6 +46,11 @@ public class HitPropertyAlignments extends HitProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
+    @Override
     protected boolean sortDescendingByDefault() {
         return true; // default to sorting in reverse (most alignments first)
     }

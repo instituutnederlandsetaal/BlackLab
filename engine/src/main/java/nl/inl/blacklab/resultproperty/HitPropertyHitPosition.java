@@ -24,6 +24,11 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
+    @Override
     public PropertyValueInt get(long hitIndex) {
         return new PropertyValueInt(hits.start(hitIndex));
     }

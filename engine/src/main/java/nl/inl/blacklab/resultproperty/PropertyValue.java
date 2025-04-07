@@ -29,7 +29,7 @@ public abstract class PropertyValue implements Comparable<Object> {
     /**
      * Collator to use for string comparison while sorting/grouping
      */
-    static final Collator collator = BlackLab.defaultCollator();
+    public static final Collator collator = BlackLab.defaultCollator();
 
     /**
      * Convert the String representation of a HitPropValue back into the

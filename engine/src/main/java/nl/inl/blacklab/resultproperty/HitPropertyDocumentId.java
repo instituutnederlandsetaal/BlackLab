@@ -21,6 +21,11 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
+    @Override
     public HitProperty copyWith(Hits newHits, boolean invert) {
         return new HitPropertyDocumentId(this, newHits, invert);
     }

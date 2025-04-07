@@ -35,6 +35,11 @@ public class DocPropertyDecade extends DocProperty {
         docPropStoredField = new DocPropertyStoredField(index, fieldName);
     }
 
+    @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
     /** Parses the value, UNKNOWN_VALUE is returned if the string is unparseable */
     public int parse(String strYear) {
         int year;

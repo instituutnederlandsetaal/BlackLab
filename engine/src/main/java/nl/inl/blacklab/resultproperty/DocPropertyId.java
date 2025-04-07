@@ -19,6 +19,11 @@ public class DocPropertyId extends DocProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
+    @Override
     public PropertyValueInt get(DocResult result) {
         return new PropertyValueInt(result.identity().value());
     }

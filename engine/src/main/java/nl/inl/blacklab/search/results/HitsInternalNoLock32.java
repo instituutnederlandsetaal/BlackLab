@@ -1,15 +1,21 @@
 package nl.inl.blacklab.search.results;
 
+import java.text.CollationKey;
 import java.util.function.Consumer;
 
+import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
@@ -243,6 +249,18 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
             indices[i] = i;
 
         IntArrays.quickSort(indices, p::compare);
+
+        // Sort the indices using the given HitProperty
+        if (p.getValueType() == PropertyValueString.class) {
+            // Collator.compare() is synchronized and therefore slow.
+            // It is faster to calculate all the collationkeys first, then parallel sort them.
+            CollationKey[] sortValues = new CollationKey[docs.size()];
+            for (int i = 0; i < sortValues.length; ++i)
+                sortValues[i] = PropertyValue.collator.getCollationKey(p.get(i).toString());
+            IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));
+        } else {
+            IntArrays.parallelQuickSort(indices, p::compare);
+        }
 
         HitsInternalMutable r = HitsInternal.create(docs.size(), false, false);
         if (matchInfos.isEmpty()) {

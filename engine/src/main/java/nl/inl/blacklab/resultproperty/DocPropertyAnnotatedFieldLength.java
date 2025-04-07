@@ -79,6 +79,11 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         this(index, fieldName, fieldName + " length");
     }
 
+    @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
     public long get(int docId) {
         if (docValues != null) {
             // Find the value in the correct segment
