@@ -1360,12 +1360,8 @@ public class ResponseStreamer {
             indexTokenCount(indexMetadata);
             indexDocumentCount(indexMetadata);
             indexProgress(corpusStatus);
-            if (!corpusStatus.getIndex().isUserIndex()) {
-                //ds.entry("owner", "system");
-            } else if (corpusStatus.isOwnedBySomeoneElse()) {
-                ds.entry("owner", "user " + corpusStatus.getIndex().getUserId());
-            } else {
-                //ds.entry("owner", "you");
+            if (corpusStatus.getIndex().isUserIndex()) {
+                ds.entry("owner", /*"user " +*/ corpusStatus.getIndex().getUserId());
             }
         }
         ds.endMap().endElEntry();
