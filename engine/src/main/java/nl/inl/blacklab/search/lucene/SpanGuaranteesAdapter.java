@@ -26,11 +26,6 @@ public abstract class SpanGuaranteesAdapter implements SpanGuarantees {
     }
 
     @Override
-    public boolean producesSingleTokens() {
-        return wrapped.producesSingleTokens();
-    }
-
-    @Override
     public boolean hitsAllSameLength() {
         return wrapped.hitsAllSameLength();
     }
@@ -63,21 +58,6 @@ public abstract class SpanGuaranteesAdapter implements SpanGuarantees {
     @Override
     public boolean hitsHaveUniqueEnd() {
         return wrapped.hitsHaveUniqueEnd();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStartEndAndInfo() {
-        return wrapped.hitsHaveUniqueStartEndAndInfo();
-    }
-
-    @Override
-    public boolean hitsHaveUniqueStartEnd() {
-        return wrapped.hitsHaveUniqueStartEnd();
-    }
-
-    @Override
-    public boolean hitsCanOverlap() {
-        return wrapped.hitsCanOverlap();
     }
 
     @Override

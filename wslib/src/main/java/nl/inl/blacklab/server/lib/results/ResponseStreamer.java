@@ -1361,7 +1361,7 @@ public class ResponseStreamer {
             indexDocumentCount(indexMetadata);
             indexProgress(corpusStatus);
             if (corpusStatus.getIndex().isUserIndex()) {
-                ds.entry("owner", /*"user " +*/ corpusStatus.getIndex().getUserId());
+                ds.entry("owner", corpusStatus.getIndex().getUserId());
             }
         }
         ds.endMap().endElEntry();
