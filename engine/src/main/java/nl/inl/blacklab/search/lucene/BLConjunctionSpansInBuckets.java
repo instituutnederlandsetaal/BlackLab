@@ -30,7 +30,7 @@ import org.apache.lucene.search.spans.SpanCollector;
 /**
  * Common super class for multiple sub spans required in a document.
  * <p>
- * (adapted directly from Lucene)
+ * (adapted directly from Lucene's ConjunctionSpans)
  */
 abstract class BLConjunctionSpansInBuckets extends BLSpans {
     protected final SpansInBuckets[] subSpans; // in query order
