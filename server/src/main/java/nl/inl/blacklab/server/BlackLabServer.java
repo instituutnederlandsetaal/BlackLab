@@ -316,7 +316,8 @@ public class BlackLabServer extends HttpServlet {
         } catch (RuntimeException e) {
             if (errorWriter != null)
                 httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
-            throw e;
+            else
+                throw e;
         } finally {
             if (requestHandler != null)
                 requestHandler.cleanup(); // close logger
