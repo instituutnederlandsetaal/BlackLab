@@ -1,16 +1,16 @@
 # What is BlackLab?
 
-[BlackLab](https://inl.github.io/BlackLab/) is a corpus retrieval engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the [Dutch Language Institute (INT)](https://ivdnt.org/) to provide a fast and feature-rich search interface on our contemporary and historical text corpora.
+[BlackLab](https://blacklab.ivdnt.org/) is a corpus retrieval engine built on top of [Apache Lucene](http://lucene.apache.org/). It allows fast, complex searches with accurate hit highlighting on large, tagged and annotated, bodies of text. It was developed at the [Dutch Language Institute (INT)](https://ivdnt.org/) to provide a fast and feature-rich search interface on our contemporary and historical text corpora.
 
 In addition to the Java library (BlackLab Core), there is also a web service (BlackLab Server), so you can access it from any programming language.
 
 BlackLab is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-To learn how to index and search your data, see the [official project site](http://inl.github.io/BlackLab/guide/getting-started.html).
+To learn how to index and search your data, see the [official project site](https://blacklab.ivdnt.org/guide/getting-started.html).
 
 To learn about BlackLab development, see the [dev docs](doc/#readme). 
 
-If you wish to cite BlackLab, see [Citing BlackLab](https://inl.github.io/BlackLab/guide/about.html#citing-blacklab). Thank you!
+If you wish to cite BlackLab, see [Citing BlackLab](https://blacklab.ivdnt.org/guide/about.html#citing-blacklab). Thank you!
 
 ## Branches
 
@@ -30,7 +30,7 @@ This version uses Lucene 8. This unfortunately means that corpora created with o
 
 ## Roadmap
 
-There is a high-level [roadmap](https://inl.github.io/BlackLab/roadmap.html) page on the documentation site. There are also [BlackLab Archives of Relevant Knowledge (BARKs)](doc/bark/#readme) that go into more detail.
+There is a high-level [roadmap](https://blacklab.ivdnt.org/roadmap.html) page on the documentation site. There are also [BlackLab Archives of Relevant Knowledge (BARKs)](doc/bark/#readme) that go into more detail.
 
 For the next major version (4.0), we are focused on integrating BlackLab with Solr, with the goal of enabling distributed search. We will use this to scale our largest corpus to many billions of tokens. Status and plans for this can be found in the above-mentioned BARKs and in more technical detail [here](doc/technical/design/plan-distributed.md).
 
@@ -56,7 +56,7 @@ Configurations for IDE code formatters can be found in the `build-tools/` direct
 
 ## Building the site
 
-The [BlackLab end-user documentation site](https://inl.github.io/BlackLab) can be built locally if you want:
+The [BlackLab end-user documentation site](https://blacklab.ivdnt.org/) can be built locally if you want:
 
 ```bash
 # Contains the configurations for various checking plugins shared by multiple modules
@@ -78,7 +78,7 @@ See the [Docker README](docker/#readme) for more details.
 
 ### Indexing with Docker 
 
-We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://inl.github.io/BlackLab/indexing-with-blacklab.html) to learn more.
+We assume here that you are familiar with the BlackLab indexing process; see [indexing with BlackLab](https://blacklab.ivdnt.org/indexing-with-blacklab.html) to learn more.
 
 The easiest is to use the [`index-corpus.sh`](./index-corpus.sh) Bash script in the root of the repository. It will download Docker image and run IndexTool in a container, using bind mounts for the input data and writing the indexed corpus. Run the script without arguments for documentation.
 

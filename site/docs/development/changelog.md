@@ -244,7 +244,7 @@
 * Improved experimental Dockerfile.
 * BlackLab Server test suite using Docker, Mocha and Chai.
 * Simplified code for better maintainability.
-* Documented blacklab internals (see https://inl.github.io/BlackLab/blacklab-internals.html)
+* Documented blacklab internals (see https://blacklab.ivdnt.org/blacklab-internals.html)
 * New setting `debug.alwaysAllowDebugInfo`, so each BLS request is considered in debugMode, e.g. /cache-info works, etc.
 * New setting `indexing.maxNumberOfIndicesPerUser` to configure how many private indices each user is allowed.
 * New setting `parameters.writeHitsAndDocsInGroupedHits` and query parameter includegroupcontents to include hits
@@ -706,7 +706,7 @@
 * Switched build from Ant to Maven, and added generating a project site with javadocs, reports, etc.
 * Using less memory by switching some Maps in the forward index to the gs-collections one.
 * Updated to Lucene 5.2.1.
-* Added Maven project site, available at http://inl.github.io/BlackLab/
+* Added Maven project site, available at https://blacklab.ivdnt.org/
 * Removed Lucene query parser for corpus queries.
 * Keep tag end position in payload of start tag, which results in much faster tag searches.
 * Rewrote many slower queries to make them (much) faster. Particularly searches with "not" parts and "containing"/"within" should be faster.

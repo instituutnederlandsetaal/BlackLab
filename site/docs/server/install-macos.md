@@ -187,7 +187,7 @@ where you can replace `dirk` and `dirk` by whatever you like.
 ## Blacklab
 
 To see what Blacklab is, see
-[blacklab intro](http://inl.github.io/BlackLab/index.html).
+[blacklab intro](https://blacklab.ivdnt.org/index.html).
 
 A working blacklab installation consists of a server, a client, and corpus data.
 

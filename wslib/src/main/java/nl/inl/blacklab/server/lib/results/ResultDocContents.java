@@ -122,7 +122,7 @@ public class ResultDocContents {
                     "INTERR_FETCHING_DOCUMENT_CONTENTS");
         if (!index.mayView(document))
             throw new NotAuthorized(
-                    "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://inl.github.io/BlackLab/how-to-configure-indexing.html.");
+                    "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://blacklab.ivdnt.org/how-to-configure-indexing.html.");
 
         Hits hits = null;
         if (params.hasPattern()) {

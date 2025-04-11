@@ -434,7 +434,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         // This is used for standoff annotations, that refer back to the captured ids to add annotations later.
         // Standoff span annotations are also supported.
         // The full documentation is available here:
-        // https://inl.github.io/BlackLab/guide/how-to-configure-indexing.html#standoff-annotations
+        // https://blacklab.ivdnt.org/guide/how-to-configure-indexing.html#standoff-annotations
         Map<String, Span> tokenPositionsMap = new HashMap<>();
 
         // For each configured annotated field...

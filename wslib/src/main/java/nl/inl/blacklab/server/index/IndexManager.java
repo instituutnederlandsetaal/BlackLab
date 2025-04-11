@@ -154,7 +154,7 @@ public class IndexManager {
             throw new ConfigurationException(
                     "Configuration error: no readable indexLocations found. Make sure blacklab-server.yaml contains " +
                             "indexLocations or userIndexes (or both) settings. See "
-                            + "https://inl.github.io/BlackLab/configuration-files.html#minimal-config-file for a "
+                            + "https://blacklab.ivdnt.org/configuration-files.html#minimal-config-file for a "
                             + "minimal configuration file.");
         }
     }
@@ -250,7 +250,7 @@ public class IndexManager {
 
         if (userCollectionsDir == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
-                "Could not create index. The server is not configured with support for user content. See https://inl.github.io/BlackLab/server/howtos.html#let-users-manage-their-own-corpora");
+                "Could not create index. The server is not configured with support for user content. See https://blacklab.ivdnt.org/server/howtos.html#let-users-manage-their-own-corpora");
 
         int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
         if (!canCreateIndex(user))

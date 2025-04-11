@@ -86,8 +86,8 @@ public class BlackLabConfig {
         } else {
             // Old config format
             logger.error("You are using the old configuration file format. This is no longer supported.");
-            logger.error("Please upgrade to the new format. See https://inl.github.io/BlackLab/configuration-files.html");
-            throw new InvalidConfiguration("Your configuration files are in the old, no longer supported format. Please upgrade: https://inl.github.io/BlackLab/configuration-files.html");
+            logger.error("Please upgrade to the new format. See https://blacklab.ivdnt.org/configuration-files.html");
+            throw new InvalidConfiguration("Your configuration files are in the old, no longer supported format. Please upgrade: https://blacklab.ivdnt.org/configuration-files.html");
         }
     }
 

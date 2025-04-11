@@ -6,7 +6,7 @@ import { redirectPlugin } from '@vuepress/plugin-redirect'
 export default defineUserConfig({
     bundler: viteBundler(),
 
-    "base": "/BlackLab/",
+    "base": "/",
     "title": "BlackLab",
     "description": "Documentation for the corpus search engine BlackLab",
 

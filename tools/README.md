@@ -4,11 +4,11 @@ Commandline tools such as `IndexTool` and `QueryTool`, as well as some test/debu
 
 ## IndexTool
 
-See [Indexing with BlackLab](https://inl.github.io/BlackLab/indexing-with-blacklab.html)
+See [Indexing with BlackLab](https://blacklab.ivdnt.org/indexing-with-blacklab.html)
 
 ## Query Tool
 
-See [Using the Query Tool](https://inl.github.io/BlackLab/query-tool.html)
+See [Using the Query Tool](https://blacklab.ivdnt.org/query-tool.html)
 
 ## FrequencyTool
 
