@@ -154,7 +154,7 @@ public class IndexManager {
             throw new ConfigurationException(
                     "Configuration error: no readable indexLocations found. Make sure blacklab-server.yaml contains " +
                             "indexLocations or userIndexes (or both) settings. See "
-                            + "https://blacklab.ivdnt.org/configuration-files.html#minimal-config-file for a "
+                            + "https://blacklab.ivdnt.org/server/configuration.html#minimal-config-file for a "
                             + "minimal configuration file.");
         }
     }
