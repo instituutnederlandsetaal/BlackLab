@@ -10,7 +10,7 @@
     <version>4.0.0-SNAPSHOT</version>
     <name>BlackLab Corpus Search</name>
     <description>The parent project for BlackLab Core and BlackLab Server.</description>
-    <url>https://github.com/INL/BlackLab</url>
+    <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
 
     <modules>
 
@@ -93,13 +93,13 @@
     </organization>
 
     <scm>
-        <url>https://github.com/INL/BlackLab</url>
-        <connection>scm:git:git://github.com/INL/BlackLab.git</connection>
+        <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
+        <connection>scm:git:git://github.com/instituutnederlandsetaal/BlackLab.git</connection>
         <developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
     </scm>
 
     <issueManagement>
-        <url>https://github.com/INL/BlackLab/issues</url>
+        <url>https://github.com/instituutnederlandsetaal/BlackLab/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
 

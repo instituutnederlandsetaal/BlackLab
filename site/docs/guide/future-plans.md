@@ -10,6 +10,6 @@ Broadly speaking, these are our plans for the future:
 - Make the content store optional, and make it easier for applications 
   to provide their own way of accessing the original content (for hits 
   highlighting). (planned)
-- Integrate improvements and suggestions from the community ([issues](https://github.com/INL/BlackLab/issues) and [pull requests](https://github.com/INL/BlackLab/pulls) welcome!)
+- Integrate improvements and suggestions from the community ([issues](https://github.com/instituutnederlandsetaal/BlackLab/issues) and [pull requests](https://github.com/instituutnederlandsetaal/BlackLab/pulls) welcome!)
 
-For more (somewhat technical) details, see the corresponding [BARKs](https://github.com/INL/BlackLab/tree/dev/doc/bark#readme) (short descriptions of planned development and other information).
+For more (somewhat technical) details, see the corresponding [BARKs](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/doc/bark#readme) (short descriptions of planned development and other information).

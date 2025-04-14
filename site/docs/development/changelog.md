@@ -64,7 +64,7 @@
 
 - Querying numeric fields was broken but should work correctly again.
 - Escaping issues in BCQL. Literal string mode.
-- Many more bug fixes; see [Git commit history](https://github.com/INL/BlackLab/commits/dev/) for details.
+- Many more bug fixes; see [Git commit history](https://github.com/instituutnederlandsetaal/BlackLab/commits/dev/) for details.
 
 ### Removed
 
@@ -761,6 +761,6 @@
 * Several other small improvements in performance and memory use.
 
 ### Other
-* Opening the BlackLab index should now be done using Searcher.open() instead of directly through constructor. See the [https://github.com/INL/BlackLab/commit/d1d1b71ca8d5ef2aea25eab5a6e12b7e51cf5f65 commit message] for the rationale.
+* Opening the BlackLab index should now be done using Searcher.open() instead of directly through constructor. See the [https://github.com/instituutnederlandsetaal/BlackLab/commit/d1d1b71ca8d5ef2aea25eab5a6e12b7e51cf5f65 commit message] for the rationale.
 * Several superfluous methods were deprecated to simplify the API. The Javadoc will indicate why a method was deprecated and what alternative you should use. Deprecated methods will be removed in the next major version.
 * Many small bugs fixed, comments added and code structure improved.

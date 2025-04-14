@@ -222,10 +222,10 @@ The `installation` directory receives the downloaded `blacklab-server-2.1.0` war
 
 This file is attached to a release of the Blacklab repo.
 The releases are listed
-[here](https://github.com/INL/BlackLab/releases/)
+[here](https://github.com/instituutnederlandsetaal/BlackLab/releases/)
 and we pick release 2.1.0.
 You see a file
-[blacklab-server-2.1.0.war](https://github.com/INL/BlackLab/releases/download/v2.1.0/blacklab-server-2.1.0.war)
+[blacklab-server-2.1.0.war](https://github.com/instituutnederlandsetaal/BlackLab/releases/download/v2.1.0/blacklab-server-2.1.0.war)
 there, download it and place it in the `installation` directory.
 
 We will unzip it in place, and copy its `WEB-INF/lib` directory to the `program` directory.
@@ -240,12 +240,12 @@ We'll need the blacklab program soon: for indexing the first corpus.
 
 We also need to download a front-end, a.k.a. client.
 This is in the
-[INL/corpus-frontend](https://github.com/INL/corpus-frontend) repo.
+[INL/corpus-frontend](https://github.com/instituutnederlandsetaal/corpus-frontend) repo.
 Again, move to the
-[releases](https://github.com/INL/corpus-frontend/releases)
+[releases](https://github.com/instituutnederlandsetaal/corpus-frontend/releases)
 page and there you find release 2.1.0.
 You see a file
-[corpus-frontend-2.1.0.war](https://github.com/INL/corpus-frontend/releases/download/v2.1.0/corpus-frontend-2.1.0.war)
+[corpus-frontend-2.1.0.war](https://github.com/instituutnederlandsetaal/corpus-frontend/releases/download/v2.1.0/corpus-frontend-2.1.0.war)
 there, download it and place it in the `installation` directory.
 
 ### Server
@@ -293,7 +293,7 @@ So, before we deploy, we create the indexes for an example corpus and put it in 
 #### Example data
 
 We download the
-[Brown corpus](https://github.com/INL/BlackLab/wiki/brownCorpus.lemmatized.xml.zip),
+[Brown corpus](https://github.com/instituutnederlandsetaal/BlackLab/wiki/brownCorpus.lemmatized.xml.zip),
 a single XML file of 66 MB when unzipped, to be put in `data/incoming`.
 
 Run the blacklab index tool by running the blacklab jar:
@@ -387,4 +387,4 @@ dirk:~/local/blacklab/program >
 ### Client
 
 The main front-end for Blacklab is in a separate
-[GitHub repo](https://github.com/INL/corpus-frontend/)
+[GitHub repo](https://github.com/instituutnederlandsetaal/corpus-frontend/)

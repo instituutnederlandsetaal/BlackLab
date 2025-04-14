@@ -358,7 +358,7 @@ Querying relations is essentially done by building a partial tree of relations c
 ::: tip Treebank systems
 
 BlackLab supports limited relations querying, but is not as powerful as a full
-treebank system, which is primarily designed for this style of search. Links to some treebank systems can be found [here](https://github.com/INL/BlackLab/blob/dev/doc/technical/design/design-relations-queries.md#research-into-treebank-systems). For BlackLab's relations querying limitations, see [below](#limitation-descendant-search).
+treebank system, which is primarily designed for this style of search. Links to some treebank systems can be found [here](https://github.com/instituutnederlandsetaal/BlackLab/blob/dev/doc/technical/design/design-relations-queries.md#research-into-treebank-systems). For BlackLab's relations querying limitations, see [below](#limitation-descendant-search).
 
 :::
 

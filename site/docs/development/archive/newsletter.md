@@ -22,7 +22,7 @@ No? No. Back to the drawing board, I guess.
 
 ### It's been six years already
 
-Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/INL/BlackLab/tree/main/core)), but we've since added a REST webservice ([BlackLab Server](https://github.com/INL/BlackLab/tree/main/server)) so you can easily access BlackLab from any programming language. Both projects are now mature, and there's a [project website](https://blacklab.ivdnt.org/) with an overview, documentation and examples, and BlackLab is available from the Maven Central Repository, the industry-standard source for Java libraries.
+Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/instituutnederlandsetaal/BlackLab/tree/main/core)), but we've since added a REST webservice ([BlackLab Server](https://github.com/instituutnederlandsetaal/BlackLab/tree/main/server)) so you can easily access BlackLab from any programming language. Both projects are now mature, and there's a [project website](https://blacklab.ivdnt.org/) with an overview, documentation and examples, and BlackLab is available from the Maven Central Repository, the industry-standard source for Java libraries.
 
 BlackLab's future looks bright. Version 1.5.0 just came out (see the [change log](../changelog.md)). Have a look at our [roadmap](https://blacklab.ivdnt.org/roadmap.html) to get an idea of where it's going next; support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
 

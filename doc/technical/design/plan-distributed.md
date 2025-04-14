@@ -6,7 +6,7 @@ Integrating with Solr will involve the following steps.
 
 ## Solve existing issues
 
-Probably prioritize [issues](https://github.com/INL/BlackLab/issues) that:
+Probably prioritize [issues](https://github.com/instituutnederlandsetaal/BlackLab/issues) that:
 
 - can be done quickly
 - bugs that (are likely to) affect us(ers)
@@ -75,7 +75,7 @@ Because this is a completely new index format, we are free to change its layout 
 - [ ] Use more efficient data structures in the various `*Integrated` classes, e.g. those from fastutil
 - [ ] Investigate if there is a more efficient way to read from Lucene's `IndexInput` than calling `readInt()` etc. repeatedly. How does Lucene read larger blocks of data from its files? (you can read/write blocks of bytes, but then you're responsible for endianness-issues)
 - [ ] Interesting (if old) [article](https://blog.thetaphi.de/2012/07/use-lucenes-mmapdirectory-on-64bit.html) about Lucene and memory-mapping. Recommends 1/4 of physical memory should be Java heap, rest for OS cache. Use `iotop` to check how much I/O swapping is occurring.
-- [ ] [Compress the forward index?](https://github.com/INL/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
+- [ ] [Compress the forward index?](https://github.com/instituutnederlandsetaal/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.<br>(OPTIONAL BUT RECOMMENDED)
 
 
 ## BlackLab Proxy

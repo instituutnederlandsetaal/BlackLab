@@ -1,6 +1,6 @@
 # Relations between words and word groups
 
-(largely completed; see GitHub issue [#405](https://github.com/INL/BlackLab/issues/405))
+(largely completed; see GitHub issue [#405](https://github.com/instituutnederlandsetaal/BlackLab/issues/405))
 
 ## Goal
 
@@ -209,7 +209,7 @@ Examples:
 
 ### Generic syntax for relations
 
-We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in [#396](https://github.com/INL/BlackLab/issues/396), we'll use a simple function call style for now. This will correspond closely to how relations are indexed an will be useful
+We need syntax to incorporate relation searches into Corpus Query Language. For the same reasons as explained in [#396](https://github.com/instituutnederlandsetaal/BlackLab/issues/396), we'll use a simple function call style for now. This will correspond closely to how relations are indexed an will be useful
 for any type of relations. We will provide specific syntax for relations types such as dependency relations.
 
 **TODO:**

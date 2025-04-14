@@ -1,6 +1,6 @@
 displayName: TSV (tab-separated values)
 description: A simple tabular format used by e.g. MS Excel. Column names (word, lemma, pos) are assumed, tab is separator, double quote is (optional) quote character, backslash the escape character.
-helpUrl: https://github.com/INL/BlackLab/blob/dev/core/src/site/markdown/tsv-example.md
+helpUrl: https://github.com/instituutnederlandsetaal/BlackLab/blob/dev/core/src/site/markdown/tsv-example.md
 
 fileType: tabular
 fileTypeOptions:

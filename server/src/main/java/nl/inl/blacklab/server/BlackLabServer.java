@@ -394,7 +394,7 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Provides corpus search services on one or more BlackLab indices.\n"
-                + "Source available at https://github.com/INL/BlackLab\n"
+                + "Source available at https://github.com/instituutnederlandsetaal/BlackLab\n"
                 + "(C) 2013-" + Calendar.getInstance().get(Calendar.YEAR)
                 + " Dutch Language Institute (https://ivdnt.org/)\n"
                 + "Licensed under the Apache License v2.\n";

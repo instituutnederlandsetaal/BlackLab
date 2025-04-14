@@ -38,7 +38,7 @@ If you have questions, contact us (see below)!
 
 BlackLab needs tokenized input files. This means the word boundaries have already been determined so BlackLab can just index words as it parses the file.
 
-In addition to this, the default TEI configuration ([tei.blf.yaml](https://github.com/INL/BlackLab/blob/main/core/src/main/resources/formats/tei.blf.yaml)) may not be suitable for your particular TEI documents. You can derive your own custom configuration from the default one to fix this. See [how to configure indexing](how-to-configure-indexing.md).
+In addition to this, the default TEI configuration ([tei.blf.yaml](https://github.com/instituutnederlandsetaal/BlackLab/blob/main/core/src/main/resources/formats/tei.blf.yaml)) may not be suitable for your particular TEI documents. You can derive your own custom configuration from the default one to fix this. See [how to configure indexing](how-to-configure-indexing.md).
  
 
 ## Why is BlackLab slow / running out of memory / using 100% CPU? 
