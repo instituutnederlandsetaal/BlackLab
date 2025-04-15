@@ -104,6 +104,7 @@ metadata:
     # <metadata/> tag has an id attribute we want to index as docId
   - name: docId
     valuePath: "@id"
+    type: untokenized  # persistent identifier should be untokenized!
 
     # Each <meta/> tag corresponds with a metadata field
   - forEachPath: meta
@@ -113,6 +114,7 @@ metadata:
 corpusConfig:
   specialFields:
     # What metadata field persistently identifies our documents?
+    # (should be configured with type: untokenized)
     pidField: docId
 ```
 
@@ -1133,6 +1135,8 @@ corpusConfig:
     # pidField is important for use with BLS because it guarantees that URLs
     # won't change even if you re-index. The other fields can be nice for
     # displaying document information but are not essential.
+    # (BTW, make sure pidField is configured with "type: untokenized" to 
+    # prevent issues with e.g. PIDs containing spaces)
     specialFields:
       pidField: id         # unique document identifier. Used by BLS for persistent URLs
       titleField: title    # may be used by user interface to display document info
