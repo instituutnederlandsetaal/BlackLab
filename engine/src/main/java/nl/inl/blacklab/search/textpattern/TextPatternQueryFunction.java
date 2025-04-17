@@ -99,6 +99,14 @@ public class TextPatternQueryFunction extends TextPattern {
 
     @Override
     public boolean isRelationsQuery() {
-        return QueryExtensions.isRelationsFunction(name);
+        if (QueryExtensions.isRelationsFunction(name))
+            return true;
+        for (Object arg : args) {
+            if (arg instanceof TextPattern) {
+                if (((TextPattern) arg).isRelationsQuery())
+                    return true;
+            }
+        }
+        return false;
     }
 }
