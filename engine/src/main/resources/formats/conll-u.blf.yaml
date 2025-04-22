@@ -51,7 +51,6 @@ annotatedFields:
     - name: feats
       displayName: Features
       valuePath: 6
-      multipleValues: true
       # Maybe index each feature in a subannotation...?
       #process:
       #  - action: split

@@ -35,7 +35,6 @@ annotatedFields:
       - name: word_or_lemma
         valuePath: .//text()|./@lemma
         displayName: Word or lemma
-        multipleValues: true
         forwardIndex: true
 
     standoffAnnotations:
