@@ -416,6 +416,7 @@ public class AnnotationWriter {
         if (payloads != null) {
             payloads = new ArrayList<>();
         }
+        nextRelationId = 0;
     }
 
     public boolean hasPayload() {
