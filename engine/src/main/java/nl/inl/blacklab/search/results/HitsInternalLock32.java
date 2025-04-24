@@ -12,12 +12,12 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that locks and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
- *
+ * <p>
  * Maximum size is roughly (but not exactly) 2^31 hits.
- *
+ * <p>
  * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about
  * 19% faster than {@link HitsInternalLock}. Iteration is about 10x faster.
- *
+ * <p>
  * Those percentages are not representative of real-world usage of course, but on
  * huge resultsets this will likely save a few seconds.
  */

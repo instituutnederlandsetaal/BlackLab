@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results;
 
 import java.text.CollationKey;
-import java.text.Collator;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.BigArrays;
@@ -17,8 +16,6 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
-import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
@@ -89,8 +86,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(doc);
         starts.add(start);
         ends.add(end);
-        if (matchInfo != null)
+        if (matchInfo != null) {
             matchInfos.add(matchInfo);
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     /**
@@ -101,8 +102,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(hit.doc);
         starts.add(hit.start);
         ends.add(hit.end);
-        if (hit.matchInfo != null)
+        if (hit.matchInfo != null) {
             matchInfos.add(hit.matchInfo);
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     /**
@@ -113,8 +118,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
-        if (hit.matchInfo() != null)
+        if (hit.matchInfo() != null) {
             matchInfos.add(hit.matchInfo());
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     public void addAll(HitsInternalNoLock hits) {
@@ -132,8 +141,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);
-                if (h.matchInfo != null)
+                if (h.matchInfo != null) {
                     matchInfos.add(h.matchInfo);
+                } else {
+                    // Either all hits have matchInfo, or none do.
+                    assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+                }
             }
         });
     }

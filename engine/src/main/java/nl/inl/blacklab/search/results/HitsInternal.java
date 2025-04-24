@@ -165,18 +165,18 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
 
     }
 
-    public static boolean debugCheckAllReasonable(HitsInternal hits) {
+    static boolean debugCheckAllReasonable(HitsInternal hits) {
         for (EphemeralHit h: hits) {
             assert debugCheckReasonableHit(h);
         }
         return true;
     }
 
-    public static boolean debugCheckReasonableHit(Hit h) {
+    static boolean debugCheckReasonableHit(Hit h) {
         return debugCheckReasonableHit(h.doc(), h.start(), h.end());
     }
 
-    public static boolean debugCheckReasonableHit(int doc, int start, int end) {
+    static boolean debugCheckReasonableHit(int doc, int start, int end) {
         assert doc >= 0 : "Hit doc id must be non-negative, is " + doc;
         assert doc != Spans.NO_MORE_DOCS : "Hit doc id must not equal NO_MORE_DOCS";
         assert start >= 0 : "Hit start must be non-negative, is " + start;

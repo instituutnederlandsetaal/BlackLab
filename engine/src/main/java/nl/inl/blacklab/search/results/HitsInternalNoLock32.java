@@ -3,14 +3,11 @@ package nl.inl.blacklab.search.results;
 import java.text.CollationKey;
 import java.util.function.Consumer;
 
-import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -20,15 +17,15 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A HitsInternal implementation that does no locking and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
- *
+ * <p>
  * Maximum size is roughly (but not exactly) 2^31 hits.
- *
+ * <p>
  * This means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
- *
+ * <p>
  * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about 40% faster than
  * {@link HitsInternalLock32}, and also about 40% faster than {@link HitsInternalNoLock}.
- *
+ * <p>
  * These tests are not representative of real-world usage, but on huge result sets this will
  * likely save a few seconds.
  */
@@ -57,17 +54,6 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
             ++pos;
             return hit;
         }
-
-        public int doc() {
-            return hit.doc;
-        }
-        public int start() {
-            return hit.start;
-        }
-        public int end() {
-            return hit.end;
-        }
-        public MatchInfo[] matchInfo() { return hit.matchInfo; }
     }
 
     protected final IntList docs;
@@ -113,8 +99,12 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         docs.add(doc);
         starts.add(start);
         ends.add(end);
-        if (matchInfo != null)
+        if (matchInfo != null) {
             matchInfos.add(matchInfo);
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
@@ -124,8 +114,12 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         docs.add(hit.doc);
         starts.add(hit.start);
         ends.add(hit.end);
-        if (hit.matchInfo != null)
+        if (hit.matchInfo != null) {
             matchInfos.add(hit.matchInfo);
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
@@ -135,8 +129,12 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
-        if (hit.matchInfo() != null)
+        if (hit.matchInfo() != null) {
             matchInfos.add(hit.matchInfo());
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     public void addAll(HitsInternalNoLock32 hits) {
@@ -145,6 +143,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         starts.addAll(hits.starts);
         ends.addAll(hits.ends);
         matchInfos.addAll(hits.matchInfos);
+        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
     }
 
     public void addAll(HitsInternal hits) {
@@ -154,8 +153,12 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);
-                if (h.matchInfo != null)
+                if (h.matchInfo != null) {
                     matchInfos.add(h.matchInfo);
+                } else {
+                    // Either all hits have matchInfo, or none do.
+                    assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+                }
             }
         });
     }
