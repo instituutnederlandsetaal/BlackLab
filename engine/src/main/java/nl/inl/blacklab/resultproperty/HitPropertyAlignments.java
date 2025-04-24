@@ -20,7 +20,7 @@ public class HitPropertyAlignments extends HitProperty {
 
     public static final String ID = "alignments";
 
-    private List<Integer> targetHitGroupIndexes = Collections.emptyList();
+    private List<Integer> targetHitGroupIndexes = null;
 
     static HitPropertyAlignments deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         return new HitPropertyAlignments();
@@ -32,17 +32,25 @@ public class HitPropertyAlignments extends HitProperty {
         super();
         this.hits = hits;
         reverse = prop.reverse ? !invert : invert;
+    }
 
-        // Find indexes of foreign hits in matchInfo
-        if (hits != null) {
-            targetHitGroupIndexes = hits.matchInfoDefs().currentListFiltered(MatchInfo.Def::isForeignHit).stream()
-                    .map(MatchInfo.Def::getIndex)
-                    .collect(Collectors.toList());
+    private synchronized List<Integer> getTargetHitGroupIndexes() {
+        if (targetHitGroupIndexes == null) {
+            // We look this up dynamically, because we can only do this after all hits have been fetched
+            // (actually, after all Spans have been initialized and therefore all capture groups registered)
+            if (this.hits != null) {
+                // Find indexes of foreign hits in matchInfo
+                targetHitGroupIndexes = hits.matchInfoDefs().currentListFiltered(MatchInfo.Def::isForeignHit).stream()
+                        .map(MatchInfo.Def::getIndex)
+                        .collect(Collectors.toList());
+            } else {
+                targetHitGroupIndexes = Collections.emptyList();
+            }
         }
+        return targetHitGroupIndexes;
     }
 
     public HitPropertyAlignments() {
-        targetHitGroupIndexes = Collections.emptyList();
     }
 
     @Override
@@ -71,8 +79,13 @@ public class HitPropertyAlignments extends HitProperty {
         MatchInfo[] matchInfos = hits.get(hitIndex).matchInfo();
         int n = 0;
         if (matchInfos != null) {
+            // NOTE: below conditional should prevent synchronized method call if not necessary.
+            //       should be safe because once this thread sees a non-null value, it will stay that way.
+            List<Integer> targetHitGroupIndexes1 = targetHitGroupIndexes == null ?
+                    getTargetHitGroupIndexes() :
+                    targetHitGroupIndexes;
             // Count the number of alignments found for this hit
-            for (int targetHitGroupIndex: targetHitGroupIndexes) {
+            for (int targetHitGroupIndex: targetHitGroupIndexes1) {
                 MatchInfo targetMatchInfo = targetHitGroupIndex < matchInfos.length ? matchInfos[targetHitGroupIndex] : null;
                 if (targetMatchInfo != null)
                     n++;

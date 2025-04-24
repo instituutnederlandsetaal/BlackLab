@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.CurrentThreadExecutorService;
 
@@ -53,7 +54,7 @@ public class HitsFromQuery extends HitsMutable {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery), HitsInternal.create(-1, true, true), null);
-        hitQueryContext = new HitQueryContext(null, sourceQuery.getField()); // each spans will get a copy
+        hitQueryContext = new HitQueryContext(null, sourceQuery.getField(), new MatchInfoDefs()); // each spans will get a copy
         QueryTimings timings = queryInfo().timings();
         timings.start();
         final BlackLabIndex index = queryInfo.index();

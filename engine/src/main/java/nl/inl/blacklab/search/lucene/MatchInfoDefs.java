@@ -28,7 +28,7 @@ public class MatchInfoDefs {
      * New ones can be added while fetching hits (because different index segments can trigger different parts of the
      * query), but once added, they won't change.
      */
-    List<MatchInfo.Def> defs = new ArrayList<>();
+    private final List<MatchInfo.Def> defs = new ArrayList<>();
 
     public MatchInfoDefs() {
     }

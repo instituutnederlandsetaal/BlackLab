@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 /**
  * Provides per-hit query-wide context, such as captured groups.
- *
+ * <p>
  * This object is passed to the whole BLSpans tree before iterating over the
  * hits. Captured groups will register themselves here and receive an index in
  * the captured group array, and BLSpans objects that need access to captured
@@ -15,7 +15,7 @@ public class HitQueryContext {
 
     /** Match info names for our query, in index order.
      *  NOTE: shared between multiple Spans that might run in parallel! */
-    private MatchInfoDefs matchInfoDefs = new MatchInfoDefs();
+    private final MatchInfoDefs matchInfoDefs;
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
     private final String defaultField;
@@ -23,35 +23,33 @@ public class HitQueryContext {
     /** The field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
     private final String field;
 
-    public HitQueryContext(BLSpans spans, String defaultField) {
-        this(spans, defaultField, defaultField);
+    public HitQueryContext(BLSpans spans, String defaultField, MatchInfoDefs matchInfoDefs) {
+        this(spans, defaultField, defaultField, matchInfoDefs);
     }
 
-    private HitQueryContext(BLSpans spans, String defaultField, String field) {
+    private HitQueryContext(BLSpans spans, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.rootSpans = spans;
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
+        this.matchInfoDefs = matchInfoDefs;
     }
 
     public HitQueryContext withSpans(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans, defaultField, field);
-        result.matchInfoDefs = matchInfoDefs;
-        return result;
+        return new HitQueryContext(spans, defaultField, field, matchInfoDefs);
     }
 
     public HitQueryContext withField(String overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(rootSpans, defaultField, overriddenField);
-            result.matchInfoDefs = matchInfoDefs;
+            result = new HitQueryContext(rootSpans, defaultField, overriddenField, matchInfoDefs);
         }
         return result;
     }
 
     /**
      * Set our Spans object.
-     *
+     * <p>
      * Used when manually iterating through the index segments, because we go
      * through several Spans for a single query.
      *
@@ -63,7 +61,7 @@ public class HitQueryContext {
 
     /**
      * Register a match info (e.g. captured group), assigning it a unique index number.
-     *
+     * <p>
      * Synchronized because it's called from SpansReader.initialize(), which can execute in multiple threads in parallel.
      *
      * @param name the group's name
@@ -76,7 +74,7 @@ public class HitQueryContext {
 
     /**
      * Register a match info (e.g. captured group), assigning it a unique index number.
-     *
+     * <p>
      * Synchronized because it's called from SpansReader.initialize(), which can execute in multiple threads in parallel.
      *
      * @param name the group's name
@@ -101,7 +99,7 @@ public class HitQueryContext {
 
     /**
      * Retrieve all the captured group information.
-     *
+     * <p>
      * Used by Hits.
      *
      * @param matchInfo array to place the captured group information into
@@ -112,7 +110,7 @@ public class HitQueryContext {
 
     /**
      * Get the match infos definitions.
-     *
+     * <p>
      * The list is in index order.
      *
      * @return the list of match infos
@@ -123,7 +121,7 @@ public class HitQueryContext {
 
     /**
      * Get the field for this part of the query.
-     *
+     * <p>
      * Used for parallel corpora.
      *
      * @return the field this part of the query searches
@@ -138,7 +136,7 @@ public class HitQueryContext {
 
     /**
      * Are any of the captures of type INLINE_TAG or RELATION?
-     *
+     * <p>
      * If yes, getRelationInfo() can return non-null values, and we must
      * e.g. store these in SpansInBuckets.
      *
