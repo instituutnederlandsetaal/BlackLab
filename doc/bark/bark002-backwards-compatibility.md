@@ -22,7 +22,7 @@ However, Lucene eventually drops support for older index formats, forcing us to 
 
 We do our best to keep the BlackLab Server REST API stable. We may add a parameter, or a key in a response object in a minor version, but will do our best not to remove anything or make other breaking changes until a major version update.
 
-We've recently introduced a way to deal with minor API changes: the `api` request parameter or `parameters.api` setting. See [API compatibility](https://blacklab.ivdnt.org/server/rest-api/). We will support "old" versions of the API for some time, perhaps a year or so, so users have time to update their software.
+We've introduced a way to deal with minor API changes: the `api` request parameter or `parameters.api` setting. See [API compatibility](https://blacklab.ivdnt.org/server/rest-api/). We will support "old" versions of the API for some time, perhaps a year or so, so users have time to update their software.
 
 If we decide to do a major overhaul of the REST API, we will use this parameter as well to make the transition easier.
 

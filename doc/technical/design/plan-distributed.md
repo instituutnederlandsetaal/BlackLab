@@ -4,16 +4,6 @@ This is where we will keep track of our current goal of enabling BlackLab to int
 
 Integrating with Solr will involve the following steps.
 
-## Solve existing issues
-
-Probably prioritize [issues](https://github.com/instituutnederlandsetaal/BlackLab/issues) that:
-
-- can be done quickly
-- bugs that (are likely to) affect us(ers)
-- features we actually need or were requested by users
- 
-Very complex issues and enhancements that may be of limited use should be tackled later.
-
 ## Incorporate all information into the Lucene index
 
 ### Metadata
@@ -22,7 +12,7 @@ Very complex issues and enhancements that may be of limited use should be tackle
 
 ### Forward index
 
-- [ ] Check how `IndexInput.clone()` is used. This method is NOT threadsafe, so we must do this in a synchronized method!
+- [x] Check how `IndexInput.clone()` is used. This method is NOT threadsafe, so we must do this in a synchronized method!
 - [ ] (maybe) capture tokens codec in a class as well, like `ContentStoreBlockCodec`. Consider pooling encoder/decoder as well if useful.
 
 LATER?
@@ -35,13 +25,24 @@ LATER?
 - [ ] implement custom merge? The problem is that we need to split the `MergeState` we get into two separate ones, one with content store fields (which we must merge) and one with regular stored fields (which must be merged by the delegate), but we cannot instantiate `MergeState`. Probably doable through a hack (placing class in Lucene's package or using reflection), but let's hold off until we're sure this is necessary.
 
 
-## How to phase out the global FI API
+## Improve parallellisation for group/sort
 
-We would like to eventually eliminate the global forward index API. This means forward index related tasks (sort/group/filter on context, produce KWICs, NFA matching) should operate per index segment, followed by a merge step.
+Grouping and sorting is currently not done per segment, but done once we have gathered hits from each segment. When we group/sort/filter on context, we thus have to return to the segment each hit came from, which is expensive.
 
-The merge step would use string comparisons instead of term sort order comparisons, so we don't need to keep track of global term sort orders, which is expensive and difficult to do when dynamically adding/removing documents. Such a merge would work in a similar way as with distributed search.
+It should be faster to perform the operations per segment, then merge the results: this is inheritently parallelizable (because segments are independent of one another), minimizes resource contention, and makes disk reads less disjointed.
 
-Other advantages of this appraoch: makes operations more parallellizable, minimizes resource contention, makes disk reads less disjointed, and stays closer to Lucene's design.
+The merge step would use string comparisons/hashes instead of term sort order comparisons. Such a merge would work in a similar way as with distributed search.
+
+The global forward index API with global term ids and sort order would not be needed anymore after this change. This is good, because it's expensive to keep track of global term ids, especially when dynamically adding/removing documents.
+
+How would we approach this:
+
+- Implement `SpansSorted` (gather and sorts its hits and keeps track of the sort value per hit (CollationKey?), for later merging), `GroupedSpans` (gathers and groups hits into several `Spans`). The first implementations are proofs-of-concept and should just use existing classes like `Hits`, `Kwics` etc. internally. Later versions will be specifically optimized for the new, per-segment situation.
+- Implement the merging steps for `SpansSorted` and `GroupedSpans` based on (string/CollationKey) comparison of the stored sort and group values. Use these in `HitsFromQuery`. (we probably need a separate `GroupedHitsFromQuery` as well to produce the merged grouped hits).
+- `ForwardIndexAccessor` is used in forward index matching (NFAs). The way these are used is already per-segment, so these "just" need to be updated to use the per-segment forward index directly.
+- Also convert "special cases" such as `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`, and calculating the total number of tokens in `IndexMetadataIntegrated`.
+- Eliminate the global `ForwardIndex` and `Terms` objects, which should not be used anymore now.
+
 
 This is how the global forward index is currently used, and what it would take to change these uses, from hardest to easiest:
 

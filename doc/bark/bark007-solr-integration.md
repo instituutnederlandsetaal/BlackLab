@@ -21,7 +21,7 @@ ElasticSearch (ES) could also be an option, if that were found to have advantage
 
 ## When?
 
-Work on this started in 2022. The non-distributed part is mostly finished although in an experimental state. Distributed search will be finished later, likely in 2024.
+Work on this started in 2022. The non-distributed part is mostly finished although in an experimental state. Distributed search will be finished later.
 
 ## Impact on users
 

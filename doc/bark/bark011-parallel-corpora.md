@@ -1,13 +1,17 @@
 # BARK 11 - Parallel corpora
 
 - **type:** change
-- **status:** planned (Q3 of 2023)
+- **status:** finished
 
 Corpora containing multiple languages, with relationships between sentences and word(group)s.
 
 ## How?
 
-We have yet to plan the exact functionality and implementation.
+See the [documentation](https://blacklab.ivdnt.org/guide/corpus-query-language.html#parallel-corpus-querying).
+
+## When?
+
+This feature is available from the development branch and (soon to be released) BlackLab 4.0.
 
 ## Impact on users
 

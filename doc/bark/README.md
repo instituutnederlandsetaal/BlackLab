@@ -22,10 +22,10 @@ Changes also have a status: planned, in development, experimental or production.
 |     3 | [Code style](bark003-code-style.md)                                        | The layout of our code.                                                       | info    |              |
 |     4 | [Performance and resource requirements](bark004-performance-resources.md)  | Why BlackLab has limits, and general ways to improve matters.                 | info    |              |
 |     5 | [Relationship with Lucene](bark005-lucene.md)                              | How BlackLab uses Lucene and why staying up to date is important.             | info    |              |
-|     6 | [Integrated index format](bark006-integrated-index.md)                     | All external files incorporated into the Lucene index.                        | change  | experimental |
+|     6 | [Integrated index format](bark006-integrated-index.md)                     | All external files incorporated into the Lucene index.                        | change  | finished |
 |     7 | [Solr integration](bark007-solr-integration.md)                            | How we'll make use of Solr's feature set.                                     | change  | experimental |
 |     8 | [Distributed search](bark008-distributed-search.md)                        | Better scaling to huge corpora and many users.                                | change  | development  |
 |     9 | [Optional content store](bark009-optional-content-store.md)                | Provide for alternatives to the built-in content store.                       | change  | planned      |
-|    10 | [Searching tree-like structures](bark010-tree-search.md)                   | Enable treebanks-like search.                                                 | change  | planned      |
-|    11 | [Parallel corpora](bark011-parallel-corpora.md)                            | Corpora containing multiple languages.                                        | change  | planned      |
+|    10 | [Searching tree-like structures](bark010-tree-search.md)                   | Search for grammatical structures (treebanks-like search)                     | change  | finished      |
+|    11 | [Parallel corpora](bark011-parallel-corpora.md)                            | Corpora containing multiple languages.                                        | change  | finished     |
 |    12 | [Project goals](bark012-project-goals.md)                                  | High-level goals of the BlackLab project.                                     | info    |              |
