@@ -21,8 +21,3 @@ If you wish to cite BlackLab, you can use the following publication:
 In other contexts, linking to this website or the GitHub repositories is also a good way to refer people to the project.
 
 Thank you!
-
-## Older resources
-
-* [Old BlackLab blog](/development/archive/blog.md)
-* [Old BlackLab newsletter](/development/archive/newsletter.md)

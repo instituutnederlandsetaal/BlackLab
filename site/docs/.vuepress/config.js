@@ -2,6 +2,7 @@ import { viteBundler } from '@vuepress/bundler-vite'
 import { defaultTheme } from '@vuepress/theme-default'
 import { defineUserConfig } from 'vuepress'
 import { redirectPlugin } from '@vuepress/plugin-redirect'
+import { slimsearchPlugin } from '@vuepress/plugin-slimsearch'
 
 export default defineUserConfig({
     bundler: viteBundler(),
@@ -106,6 +107,8 @@ export default defineUserConfig({
     }),
 
     "plugins": [
+        slimsearchPlugin({}),
+
         redirectPlugin({
             config: {
                 '/BlackLab/add-input-format.html': '/BlackLab/guide/how-to-configure-indexing.html',
