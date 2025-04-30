@@ -308,7 +308,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
             return null; // we're doing per-docs stuff, so sort doesn't apply to hits
 
         Optional<String> groupBy = getGroupProps();
-        if (groupBy.isPresent()) {
+        if (groupBy.isPresent() && getViewGroup().isEmpty()) {
             // looking at groups, or results within a group, don't bother sorting the underlying results
             // themselves (sorting is explicitly ignored anyway in ResultsGrouper::init)
             return null;
