@@ -27,9 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
- * Some annotation context(s) belonging to a list of hits.
- *
- * This interface is read-only.
+ * Utility functions for working with annotation context(s) for a list of hits.
  */
 public class Contexts {
 
