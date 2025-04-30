@@ -11,6 +11,7 @@ import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.Json;
 
@@ -35,6 +36,10 @@ public class TestTextPatternSerialize {
     }
 
     private static void assertRoundtrip(String cqlQuery) throws IOException {
+        assertRoundtrip(cqlQuery, false);
+    }
+
+    private static void assertRoundtrip(String cqlQuery, boolean checkSerializeToCql) throws IOException {
         CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
         TextPattern pattern;
         try {
@@ -43,6 +48,8 @@ public class TestTextPatternSerialize {
             throw new RuntimeException(e);
         }
         assertRoundtrip(pattern);
+        if (checkSerializeToCql)
+            Assert.assertEquals(cqlQuery, TextPatternSerializerCql.serialize(pattern));
     }
 
     @Test
@@ -95,7 +102,14 @@ public class TestTextPatternSerialize {
     @Test
     public void testIntRange() throws IOException {
         //assertRoundtrip("[number=in[24,42]]");
-        assertRoundtrip("<s number='1'/>");
+        assertRoundtrip("<s number='1'/>", true);
+        //assertRoundtrip("<s number=in[123,4567]/>");
+    }
+
+    @Test
+    public void testCloseTag() throws IOException {
+        //assertRoundtrip("[number=in[24,42]]");
+        assertRoundtrip("'it' </s>", true);
         //assertRoundtrip("<s number=in[123,4567]/>");
     }
 }

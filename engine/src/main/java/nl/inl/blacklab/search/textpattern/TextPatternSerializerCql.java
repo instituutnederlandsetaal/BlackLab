@@ -276,7 +276,10 @@ public class TextPatternSerializerCql {
             TextPatternTags tp = (TextPatternTags) pattern;
             String optAttr = tp.getAttributes().isEmpty() ? "" : " " + serializeAttributes(tp.getAttributes());
             String optCapture = tp.getCaptureAs().isEmpty() ? "" : tp.getCaptureAs() + ":";
-            b.append(optCapture).append("<").append(tp.getElementNameRegex()).append(optAttr).append("/>");
+            TextPatternTags.Adjust adjust = tp.getAdjust();
+            String slashBefore = adjust == TextPatternTags.Adjust.TRAILING_EDGE ? "/" : "";
+            String slashAfter = adjust == TextPatternTags.Adjust.FULL_TAG ? "/" : "";
+            b.append(optCapture).append("<").append(slashBefore).append(tp.getElementNameRegex()).append(optAttr).append(slashAfter).append(">");
         });
 
         // TERM
