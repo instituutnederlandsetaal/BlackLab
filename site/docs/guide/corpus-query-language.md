@@ -329,11 +329,11 @@ Because spaces are also indexed with the `punct` annotation, you need to include
 
 BlackLab supports _pseudo-annotations_ that can help with this. You can pretend that every corpus has a `punctBefore` and `punctAfter` annotation. So you can write the above query as:
 
-    [word='dog' punctAfter=',']
+    [word='dog' & punctAfter=',']
 
 Note that in special cases where more than one punctuation mark is indexed with a word, you may still need to tweak your regular expression. For example, if your input data contained the fragment "(white) dog, (black) cat", the above query would not work because the `punct` annotation for the word after `dog` would have the value `, (`. You'd have to use a more general regular expression:
 
-    [word='dog' punctAfter=',.*']
+    [word='dog' & punctAfter=',.*']
 
 Note that `punctBefore` and `punctAfter` look like annotations when used in the query, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index.
 
