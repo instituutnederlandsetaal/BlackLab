@@ -6,8 +6,9 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
-import java.text.ParseException;
 import java.text.RuleBasedCollator;
+
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -90,7 +91,7 @@ public final class BlackLab {
     /** Force a merge after every document? Can be useful when debugging Lucene codec issues. */
     public static final String FEATURE_DEBUG_FORCE_MERGE = "debugForceMerge";
 
-    private static RuleBasedCollator fieldValueSortCollator = null;
+    private static Collator fieldValueSortCollator = null;
 
     /**
      * Create a new engine instance.
@@ -486,16 +487,18 @@ public final class BlackLab {
      */
     public static Collator getFieldValueSortCollator() {
         if (fieldValueSortCollator == null) {
-            fieldValueSortCollator = (RuleBasedCollator) defaultCollator();
-            try {
-                // Make sure it ignores parentheses when comparing
-                String rules = fieldValueSortCollator.getRules();
-                // Set parentheses equal to NULL, which is ignored.
-                rules += "&\u0000='('=')'";
-                fieldValueSortCollator = new RuleBasedCollator(rules);
-            } catch (ParseException e) {
-                // Oh well, we'll use the collator as-is
-                //throw new RuntimeException();//DEBUG
+            fieldValueSortCollator = defaultCollator();
+            if (fieldValueSortCollator instanceof RuleBasedCollator) {
+                try {
+                    // Make sure it ignores parentheses when comparing
+                    String rules = ((RuleBasedCollator)fieldValueSortCollator).getRules();
+                    // Set parentheses equal to NULL, which is ignored.
+                    rules += "&\u0000='('=')'";
+                    fieldValueSortCollator = new RuleBasedCollator(rules);
+                } catch (Exception e) {
+                    // Oh well, we'll use the collator as-is
+                    //throw new RuntimeException();//DEBUG
+                }
             }
         }
         return fieldValueSortCollator;

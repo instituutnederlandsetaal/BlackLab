@@ -10,37 +10,37 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 public class BLConfigCollator {
     String language = "en";
     
-    String country = null;
+    String country = "";
     
-    String variant = null;
+    String variant = "";
+
+    private Collator collator = null;
 
     @SuppressWarnings("unused")
-    public void setLanguage(String language) {
+    public synchronized void setLanguage(String language) {
         this.language = language;
+        collator = null;
     }
 
     @SuppressWarnings("unused")
-    public void setCountry(String country) {
+    public synchronized void setCountry(String country) {
         this.country = country;
+        collator = null;
     }
 
     @SuppressWarnings("unused")
-    public void setVariant(String variant) {
+    public synchronized void setVariant(String variant) {
         this.variant = variant;
+        collator = null;
     }
 
-    public Collator get() {
-        if (language == null || country == null && variant != null)
-            throw new InvalidConfiguration(
-                    "Collator must have language, language+country or language+country+variant");
-        if (StringUtils.isEmpty(variant)) {
-            if (StringUtils.isEmpty(country)) {
-                return Collator.getInstance(new Locale(language));
-            } else {
-                return Collator.getInstance(new Locale(language, country));
-            }
-        } else {
-            return Collator.getInstance(new Locale(language, country, variant));
+    public synchronized Collator get() {
+        if (collator == null) {
+            if (StringUtils.isEmpty(language))
+                throw new InvalidConfiguration(
+                        "If you wish to customize the collator, you must at least set collator.language in blacklab-server.yaml.");
+            collator = Collator.getInstance(new Locale(language, country, variant));
         }
+        return collator;
     }
 }
