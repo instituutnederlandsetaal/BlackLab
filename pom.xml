@@ -32,15 +32,15 @@
         <module>core</module>
         <module>server</module>
 
-        <!-- Solr integration (experimental) -->
-        <module>solr</module>
-
-        <!-- BlackLab Proxy (experimental) -->
-        <module>proxy</module>
-
         <!-- Optional instrumentation modules -->
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
+
+        <!-- Solr integration (experimental) -->
+        <module>solr</module>
+
+        <!-- BlackLab Proxy (experimental)
+        <module>proxy</module> -->
 
         <!-- Older DocIndexers -->
         <module>contrib/legacy-docindexers</module>
@@ -73,7 +73,7 @@
         <checkstyle.version>3.1.2</checkstyle.version>
         <pmd.version>3.16.0</pmd.version>
         <findbugs.version>3.0.5</findbugs.version>
-        <javadoc.version>3.4.0</javadoc.version>
+        <javadoc.version>3.5.0</javadoc.version>
 
 
     </properties>
@@ -154,18 +154,6 @@
             <timezone>Europe/Amsterdam</timezone>
         </contributor>
     </contributors>
-
-    <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <build>
 
@@ -399,16 +387,17 @@
                 </configuration>
             </plugin>
 
-            <!-- Deploy a release to the OSSRH Nexus Repository Manager (for deploying to Maven Central) -->
             <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.13</version>
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <version>0.7.0</version>
                 <extensions>true</extensions>
                 <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>false</autoReleaseAfterClose>
+                    <publishingServerId>central</publishingServerId>
+                    <!--
+                        <autoPublish>true</autoPublish>
+                        <waitUntil>published</waitUntil>
+                    -->
                 </configuration>
             </plugin>
 
@@ -446,7 +435,6 @@
                             <execution>
                                 <id>attach-sources</id>
                                 <goals>
-
                                     <goal>jar</goal>
                                 </goals>
                             </execution>
@@ -467,6 +455,9 @@
                                 <goals>
                                     <goal>jar</goal>
                                 </goals>
+                                <!-- Generate before package, not deploy (otherwise deploy will produce
+                                     package/class not found errors) -->
+                                <phase>prepare-package</phase>
                             </execution>
                         </executions>
                     </plugin>
@@ -558,6 +549,7 @@
             <artifactId>commons-text</artifactId>
             <version>1.13.0</version>
         </dependency>
+
         <!-- For indexing from tabular files: csv, tsv -->
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -565,7 +557,7 @@
             <version>1.13.0</version>
         </dependency>
 
-        <!-- JCIP annotations -->
+        <!-- JCIP annotations (@ThreadSafe, @NotThreadSafe) -->
         <dependency>
             <groupId>net.jcip</groupId>
             <artifactId>jcip-annotations</artifactId>
