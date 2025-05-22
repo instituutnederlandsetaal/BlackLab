@@ -1,6 +1,6 @@
 # Stage "builder": build the WAR file
 #--------------------------------------
-FROM maven:3.6-jdk-11 AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 # Copy source
 WORKDIR /app

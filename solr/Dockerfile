@@ -1,6 +1,6 @@
 ## Stage 0: Build Solr plugin
 #=============================
-FROM maven:3.6-jdk-11 AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 WORKDIR /app
 
 # Copy source
