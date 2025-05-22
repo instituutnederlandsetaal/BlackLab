@@ -1,12 +1,12 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
@@ -159,7 +159,7 @@ public class ContextSize {
      * @param endArr array to write end position to
      * @param endIndex index in endArr to write end position to
      */
-    public void getSnippetStartEnd(Hit hit, List<MatchInfo.Def> matchInfoDefs, boolean lastWordInclusive,
+    public void getSnippetStartEnd(Hit hit, MatchInfoDefs matchInfoDefs, boolean lastWordInclusive,
             int[] startArr, int startIndex, int[] endArr, int endIndex) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         int start, end;
@@ -187,13 +187,15 @@ public class ContextSize {
         endArr[endIndex] = end;
     }
 
-    private static MatchInfo findTag(Hit hit, String matchInfoName, List<MatchInfo.Def> matchInfoDefs) {
+    private static MatchInfo findTag(Hit hit, String matchInfoName, MatchInfoDefs matchInfoDefs) {
         MatchInfo[] matchInfos = hit.matchInfo();
         if (matchInfos != null) {
             // Return the match info group with the specified name
-            Optional<MatchInfo.Def> mid = matchInfoDefs.stream().filter(d -> d.getName().equals(matchInfoName)).findFirst();
-            if (mid.isPresent())
-                return matchInfos[mid.get().getIndex()];
+            Optional<MatchInfo.Def> mid = matchInfoDefs.currentListFiltered(d -> d.getName().equals(matchInfoName)).stream().findFirst();
+            if (mid.isPresent()) {
+                int index = mid.get().getIndex();
+                return index < matchInfos.length ? matchInfos[mid.get().getIndex()] : null;
+            }
 
             // Maybe it's a tag name, not a match info capture name? (REMOVE THIS?)
             for (int i = matchInfos.length - 1; i >= 0; i--) { // reverse because we expect it to be the last

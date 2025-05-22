@@ -39,8 +39,8 @@ public class TextPatternRelationMatch extends TextPattern {
         }
 
         // All children should either use alignment operators ==> or regular ones -->, but not a mix
-        long numAligment = children.stream().filter(c -> c.getOperatorInfo().isAlignment()).count();
-        if (numAligment > 0 && numAligment < children.size()) {
+        long numAlignment = children.stream().filter(c -> c.getOperatorInfo().isAlignment()).count();
+        if (numAlignment > 0 && numAlignment < children.size()) {
             throw new IllegalArgumentException("Relation match has both alignment and regular operators");
         }
     }

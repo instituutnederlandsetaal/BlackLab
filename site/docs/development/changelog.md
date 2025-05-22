@@ -64,7 +64,7 @@
 
 - Querying numeric fields was broken but should work correctly again.
 - Escaping issues in BCQL. Literal string mode.
-- Many more bug fixes; see [Git commit history](https://github.com/INL/BlackLab/commits/dev/) for details.
+- Many more bug fixes; see [Git commit history](https://github.com/instituutnederlandsetaal/BlackLab/commits/dev/) for details.
 
 ### Removed
 
@@ -244,7 +244,7 @@
 * Improved experimental Dockerfile.
 * BlackLab Server test suite using Docker, Mocha and Chai.
 * Simplified code for better maintainability.
-* Documented blacklab internals (see https://inl.github.io/BlackLab/blacklab-internals.html)
+* Documented blacklab internals (see https://blacklab.ivdnt.org/blacklab-internals.html)
 * New setting `debug.alwaysAllowDebugInfo`, so each BLS request is considered in debugMode, e.g. /cache-info works, etc.
 * New setting `indexing.maxNumberOfIndicesPerUser` to configure how many private indices each user is allowed.
 * New setting `parameters.writeHitsAndDocsInGroupedHits` and query parameter includegroupcontents to include hits
@@ -706,7 +706,7 @@
 * Switched build from Ant to Maven, and added generating a project site with javadocs, reports, etc.
 * Using less memory by switching some Maps in the forward index to the gs-collections one.
 * Updated to Lucene 5.2.1.
-* Added Maven project site, available at http://inl.github.io/BlackLab/
+* Added Maven project site, available at https://blacklab.ivdnt.org/
 * Removed Lucene query parser for corpus queries.
 * Keep tag end position in payload of start tag, which results in much faster tag searches.
 * Rewrote many slower queries to make them (much) faster. Particularly searches with "not" parts and "containing"/"within" should be faster.
@@ -761,6 +761,6 @@
 * Several other small improvements in performance and memory use.
 
 ### Other
-* Opening the BlackLab index should now be done using Searcher.open() instead of directly through constructor. See the [https://github.com/INL/BlackLab/commit/d1d1b71ca8d5ef2aea25eab5a6e12b7e51cf5f65 commit message] for the rationale.
+* Opening the BlackLab index should now be done using Searcher.open() instead of directly through constructor. See the [https://github.com/instituutnederlandsetaal/BlackLab/commit/d1d1b71ca8d5ef2aea25eab5a6e12b7e51cf5f65 commit message] for the rationale.
 * Several superfluous methods were deprecated to simplify the API. The Javadoc will indicate why a method was deprecated and what alternative you should use. Deprecated methods will be removed in the next major version.
 * Many small bugs fixed, comments added and code structure improved.

@@ -29,7 +29,7 @@ If you're not sure what version to use, see the [downloads](downloads.html) or [
 
 ### Downloading a prebuilt binary
 
-BlackLab Core consists of a JAR and a set of required libraries. See the [GitHub releases page](https://github.com/INL/BlackLab/releases/) and choose a jar-with-libs download. The latter one may also contain development versions you can try out.
+BlackLab Core consists of a JAR and a set of required libraries. See the [GitHub releases page](https://github.com/instituutnederlandsetaal/BlackLab/releases/) and choose a jar-with-libs download. The latter one may also contain development versions you can try out.
 
 BlackLab Server only consists of a WAR file that includes everything. You could even unzip this WAR file to obtain the included BlackLab JAR and zip files if you needed to for some reason.
 
@@ -39,7 +39,7 @@ If you want the very latest version (the "dev" branch) of BlackLab, you can easi
 
 First, you need to download the source code from GitHub. You can download it from there in a .zip file (be sure to select the dev branch before doing so), but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
 
-	git clone git://github.com/INL/BlackLab.git
+	git clone git://github.com/instituutnederlandsetaal/BlackLab.git
 
 Git will download the project and place it in a subdirectory "BlackLab". Now switch to the dev branch:
 
@@ -131,4 +131,4 @@ See also:
 
 ## Internals
 
-The more in-depth information about BlackLab's internals, such as the structure of the code, and details about file formats, is available in [the GitHub repository](https://github.com/INL/BlackLab/tree/dev/doc/#readme), along with other documentation related to development.
+The more in-depth information about BlackLab's internals, such as the structure of the code, and details about file formats, is available in [the GitHub repository](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/doc/#readme), along with other documentation related to development.

@@ -684,12 +684,12 @@ public class QueryToolImpl {
         } catch (InvalidQuery e) {
             // Parse error
             output.error(e.getMessage());
-            output.error("(Type 'help' for examples or see https://inl.github.io/BlackLab/development/query-tool.html)");
+            output.error("(Type 'help' for examples or see https://blacklab.ivdnt.org/development/query-tool.html)");
         } catch (UnsupportedOperationException e) {
             // Unimplemented part of query language used
             e.printStackTrace(); // DEBUG createWeight bug
             output.error("Cannot execute query; " + e.getMessage());
-            output.error("(Type 'help' for examples or see https://inl.github.io/BlackLab/development/query-tool.html)");
+            output.error("(Type 'help' for examples or see https://blacklab.ivdnt.org/development/query-tool.html)");
         }
     }
 

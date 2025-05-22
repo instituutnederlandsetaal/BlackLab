@@ -311,6 +311,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueContext.class;
+    }
+
+    @Override
     public PropertyValueContext get(long hitIndex) {
         if (contextTermId == null)
             fetchContext();

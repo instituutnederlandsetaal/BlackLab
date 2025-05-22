@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.indexmetadata;
 import static nl.inl.blacklab.search.indexmetadata.MetadataFields.SPECIAL_FIELD_SETTING_PID;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -169,8 +170,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     @Override
     public Map<String, ? extends MetadataFieldGroup> groups() {
-        List<Map<String, Object>> metadataFieldGroups = (List<Map<String, Object>>)topLevelCustom
+        Object value = topLevelCustom
                 .get("metadataFieldGroups", new ArrayList<Map<String, Object>>());
+        List<Map<String, Object>> metadataFieldGroups = value instanceof List ?
+                (List<Map<String, Object>>) value : Collections.emptyList();
         Map<String, MetadataFieldGroupImpl> result = metadataFieldGroups.stream()
                 .map( MetadataFieldGroupImpl::fromCustom)
                 .collect(Collectors.toMap(MetadataFieldGroupImpl::name, Function.identity(),

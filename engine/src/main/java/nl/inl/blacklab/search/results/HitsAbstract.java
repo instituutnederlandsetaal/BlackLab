@@ -1,8 +1,6 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -20,7 +18,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A collection of matches being fetched as they are needed.
@@ -46,7 +44,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     /**
      * Our match info (e.g. captured groups, relations), or null if we have none.
      */
-    protected List<MatchInfo.Def> matchInfoDefs = null;
+    protected MatchInfoDefs matchInfoDefs = null;
 
     /**
      * The number of hits we've seen and counted so far. May be more than the number
@@ -130,7 +128,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, List<MatchInfo.Def> matchInfoDefs) {
+    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo);
         this.hitsInternal = hits == null ? HitsInternal.create(-1, true, true) : hits;
         this.matchInfoDefs = matchInfoDefs;
@@ -563,8 +561,8 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
     //--------------------------------------------------------------------
 
     @Override
-    public List<MatchInfo.Def> matchInfoDefs() {
-        return matchInfoDefs == null ? Collections.emptyList() : matchInfoDefs;
+    public MatchInfoDefs matchInfoDefs() {
+        return matchInfoDefs == null ? MatchInfoDefs.EMPTY : matchInfoDefs;
     }
 
     @Override

@@ -4,7 +4,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
  * A mutable list of simple hits, used internally.
- *
+ * <p>
  * Contrary to {@link Hits}, this only contains doc, start and end
  * for each hit, so no captured groups information, and no other
  * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).

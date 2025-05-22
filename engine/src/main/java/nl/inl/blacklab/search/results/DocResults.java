@@ -33,7 +33,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A list of DocResult objects (document-level query results).
@@ -182,7 +182,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      */
     private CorpusSize corpusSize = null;
 
-    private List<MatchInfo.Def> matchInfoDefs = null;
+    private MatchInfoDefs matchInfoDefs = null;
 
     /**
      * Construct an empty DocResults.

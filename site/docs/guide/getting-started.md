@@ -69,7 +69,7 @@ indexLocations:
 - /data/blacklab-corpora
 ```
 
-On the [GitHub releases page](https://github.com/INL/BlackLab/releases/), find the latest stable version (usually at the top) and download the attached file named `blacklab-server-VERSION.war`. Place this file in Tomcat's `webapps` directory. Tomcat should automatically recognize the file and initialize the application (usually, it will extract it to a subdirectory).
+On the [GitHub releases page](https://github.com/instituutnederlandsetaal/BlackLab/releases/), find the latest stable version (usually at the top) and download the attached file named `blacklab-server-VERSION.war`. Place this file in Tomcat's `webapps` directory. Tomcat should automatically recognize the file and initialize the application (usually, it will extract it to a subdirectory).
 
 Now go to [https://localhost:8080/blacklab-server/](https://localhost:8080/blacklab-server/) (or substitute the hostname of the server you've installed it on if not running locally) and you should see an XML response from BlackLab.
 
@@ -91,14 +91,14 @@ BlackLab needs *tokenized* data files as input. That means the word boundaries h
 It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/development/customization/plugins.md).
 :::
 
-One way to convert your data is using our tool [OpenConvert](https://github.com/INL/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as [Frog](http://ilk.uvt.nl/frog/).
+One way to convert your data is using our tool [OpenConvert](https://github.com/instituutnederlandsetaal/OpenConvert), which can generate TEI or FoLiA from txt, doc(x) or html files, among others. After conversion, you can tag the files using a tool such as [Frog](http://ilk.uvt.nl/frog/).
 
 A [web-based user interface](http://openconvert.clarin.inl.nl/) for converting and tagging (Dutch) input files is available. You will need a [CLARIN.eu account](https://user.clarin.eu/user) ([more information](https://www.clarin.eu/content/clarin-identity-provider)).
 
 
 ### Testing with the Brown corpus
 
-If you can't use your own data yet, we've provided a [tokenized, annotated TEI version of the Brown corpus](https://github.com/INL/BlackLab/wiki/brownCorpus.lemmatized.xml.zip) for you to test with. 
+If you can't use your own data yet, we've provided a [tokenized, annotated TEI version of the Brown corpus](https://github.com/instituutnederlandsetaal/BlackLab/wiki/brownCorpus.lemmatized.xml.zip) for you to test with. 
 
 **NOTE:** to index this version of the Brown corpus, use the `tei-p5-legacy` input format.
 
@@ -109,7 +109,7 @@ The [Brown corpus](http://en.wikipedia.org/wiki/Brown_Corpus "http://en.wikipedi
 
 ### Index the data
 
-There's a commandline tool to create a corpus called `IndexTool`. To use it, also download the blacklab-core-VERSION.jar from the [GitHub releases page](https://github.com/INL/BlackLab/releases/) and extract it somewhere convenient.
+There's a commandline tool to create a corpus called `IndexTool`. To use it, also download the blacklab-core-VERSION.jar from the [GitHub releases page](https://github.com/instituutnederlandsetaal/BlackLab/releases/) and extract it somewhere convenient.
 
 From this directory, run the IndexTool without parameters for help information:
 
@@ -179,7 +179,7 @@ See also:
 
 ## Corpus search application
 
-BlackLab Frontend is our corpus search application. It is easy to install; see its ([GitHub page](https://github.com/INL/corpus-frontend/)) for instructions.
+BlackLab Frontend is our corpus search application. It is easy to install; see its ([GitHub page](https://github.com/instituutnederlandsetaal/corpus-frontend/)) for instructions.
 
 **TODO:** quick install info here.
 

@@ -1,8 +1,6 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.List;
-
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A collection of matches being fetched as they are needed.
@@ -31,7 +29,7 @@ public abstract class HitsMutable extends HitsAbstract {
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      * @param matchInfoDefs names of match info to store
      */
-    public HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits, List<MatchInfo.Def> matchInfoDefs) {
+    public HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo, hits, matchInfoDefs);
         hitsInternalMutable = hits == null ? HitsInternal.create(-1, true, true) : hits;
     }

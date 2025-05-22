@@ -15,6 +15,11 @@ public class HitGroupPropertySize extends HitGroupProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
+    }
+
+    @Override
     protected boolean sortDescendingByDefault() {
         return true;
     }

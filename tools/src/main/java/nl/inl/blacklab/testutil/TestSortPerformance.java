@@ -40,7 +40,7 @@ public class TestSortPerformance {
         int[] testSizes = { 1000, 10000, 100_000, 150_000, 250_000,
                 500_000, 750_000, 1_000_000, 2_500_000, 5_000_000, 7_500_000, 10_000_000 };
         for (int size: testSizes) {
-            ComparatorFactory f = indirectCollationKeyComparator;
+            ComparatorFactory f = indirectStringComparator;
             test(size, f);
         }
     }

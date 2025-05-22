@@ -76,7 +76,6 @@ public class SpanQueryAnyToken extends BLSpanQuery {
             public boolean isSingleAnyToken() {
                 return min == 1 && max == 1;
             }
-
         };
     }
 

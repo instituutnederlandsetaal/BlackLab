@@ -2,7 +2,7 @@
 
 ::: warning WORK IN PROGRESS
 
-This is a work in progress. For now, see the [GitHub repo](https://github.com/INL/corpus-frontend/#readme) for documentation.
+This is a work in progress. For now, see the [GitHub repo](https://github.com/instituutnederlandsetaal/corpus-frontend/#readme) for documentation.
 
 :::
 

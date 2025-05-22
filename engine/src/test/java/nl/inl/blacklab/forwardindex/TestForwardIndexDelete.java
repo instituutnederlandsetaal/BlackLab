@@ -27,7 +27,7 @@ public class TestForwardIndexDelete {
         // Create new test dir
         testDir = UtilsForTesting.createBlackLabTestDir("ForwardIndexDelete");
 
-        fi = new AnnotationForwardIndexExternalWriter(null, null, testDir.file(), Collators.defaultCollator(), true);
+        fi = new AnnotationForwardIndexExternalWriter(null, null, testDir.file(), Collators.getDefault(), true);
         // Store strings
         List<Integer> toDelete = new ArrayList<>();
         for (int j = 0; j < docLengths.length; j++) {

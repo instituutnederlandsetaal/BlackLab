@@ -45,7 +45,7 @@ docker compose up -d
 Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
 
 
-See the [Docker README](https://github.com/INL/BlackLab/tree/dev/docker#readme) for more details.
+See the [Docker README](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/docker#readme) for more details.
 
 ### Java JRE
 
@@ -92,8 +92,8 @@ Your corpora would be in directories `/data/index/corpus1`, `/data/index/corpus2
 ### BlackLab Server WAR
 
 Download the BlackLab Server WAR (Java web application archive). You can either:
-- download the binary attached to the [latest release](https://github.com/INL/BlackLab/releases) (the file should be called `blacklab-server-<VERSION>.war`) or
-- clone the [repository](https://github.com/INL/BlackLab) and build it using Maven (`mvn package`; WAR file will be in `server/target/blacklab-server-<VERSION>.war` ).
+- download the binary attached to the [latest release](https://github.com/instituutnederlandsetaal/BlackLab/releases) (the file should be called `blacklab-server-<VERSION>.war`) or
+- clone the [repository](https://github.com/instituutnederlandsetaal/BlackLab) and build it using Maven (`mvn package`; WAR file will be in `server/target/blacklab-server-<VERSION>.war` ).
 
 Place `blacklab-server.war` in Tomcat’s `webapps` directory (`$TOMCAT/webapps/`, where `$TOMCAT` is the directory where Tomcat is installed). Tomcat should automatically discover and deploy it, and you should be able to go to [http://servername:8080/blacklab-server/](http://servername:8080/blacklab-server/ "http://servername:8080/blacklab-server/") and see the BlackLab Server information page, which includes a list of available corpora.
 

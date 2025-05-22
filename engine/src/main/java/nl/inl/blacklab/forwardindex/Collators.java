@@ -1,10 +1,10 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
-import java.text.ParseException;
 import java.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -30,8 +30,8 @@ public class Collators {
         this.version = version;
         sensitive = (Collator) base.clone();
         sensitive.setStrength(Collator.TERTIARY); // NOTE: TERTIARY considers differently-normalized characters to be,
-             // identical which can cause problems if the input data is not consistently normalized the same way.
-        insensitive = desensitize((RuleBasedCollator) base.clone(), version);
+        // identical which can cause problems if the input data is not consistently normalized the same way.
+        insensitive = desensitize(base, version);
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -53,7 +53,7 @@ public class Collators {
      * @param collatorVersion version of the insensitive collator we want
      * @return insensitive collator
      */
-    private static Collator desensitize(RuleBasedCollator coll, CollatorVersion collatorVersion) {
+    private static Collator desensitize(Collator coll, CollatorVersion collatorVersion) {
         switch (collatorVersion) {
         case V1:
             // Basic case- and accent-insensitive collator
@@ -65,22 +65,31 @@ public class Collators {
             return cl;
         case V2:
         default:
-            // Case- and accent-insensitive collator that doesn't
-            // ignore dash and space like the regular insensitive collator (V1) does.
-            String rules = coll.getRules().replaceAll(",'-'", ""); // don't ignore dash
-            rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
-            try {
-                coll = new RuleBasedCollator(rules);
-                coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
-                return coll;
-            } catch (ParseException e) {
-                throw BlackLabRuntimeException.wrap(e);
+            if (coll instanceof RuleBasedCollator) {
+                // Case- and accent-insensitive collator that doesn't
+                // ignore dash and space like the regular insensitive collator (V1) does.
+                String rules = ((RuleBasedCollator)coll).getRules().replaceAll(",'-'", ""); // don't ignore dash
+                rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
+                try {
+                    coll = new RuleBasedCollator(rules);
+                } catch (Exception e) {
+                    throw BlackLabRuntimeException.wrap(e);
+                }
+            } else {
+                coll = (Collator)coll.clone();
             }
+            coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
+            return coll;
         }
     }
 
-    public static Collators defaultCollator() {
-        return new Collators(Collator.getInstance(), CollatorVersion.V2);
+    private static Collators defaultInstance;
+
+    public synchronized static Collators getDefault() {
+        if (defaultInstance == null) {
+            defaultInstance = new Collators(BlackLab.defaultCollator(), CollatorVersion.V2);
+        }
+        return defaultInstance;
     }
 
     public CollatorVersion version() {

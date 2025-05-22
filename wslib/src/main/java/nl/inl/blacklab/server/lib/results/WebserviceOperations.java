@@ -51,7 +51,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -226,7 +226,8 @@ public class WebserviceOperations {
         BlackLabIndex index = params.blIndex();
         AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = params.getListValuesFor();
-
+        // NOTE: we use all fields to make sure this works for parallel corpora too!
+        //       obviously only annotations that are actually from the field(s) searched will be included in the output.
         List<Annotation> ret = new ArrayList<>();
         for (AnnotatedField f : fields) {
             for (Annotation a : f.annotations()) {
@@ -235,7 +236,6 @@ public class WebserviceOperations {
                 }
             }
         }
-
         return ret;
     }
 
@@ -324,8 +324,20 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        return hits.collocations(hits.field().mainAnnotation(), params.getContext(), sensitivity);
+        Annotation annotation = hits.field().mainAnnotation();
+        boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
+        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
+        ensureHasSensitivity(annotation, sensitivity);
+        return hits.collocations(annotation, params.getContext(), sensitivity);
+    }
+
+    private static void ensureHasSensitivity(Annotation annotation, MatchSensitivity sensitivity) {
+        if (!annotation.hasSensitivity(sensitivity)) {
+            throw new BadRequest("SENSITIVITY_NOT_FOUND",
+                    "The annotation '" + annotation.name() + "' does not have the requested sensitivity '" + sensitivity
+                            + "'",
+                    Map.of("annotationName", annotation.name(), "sensitivity", sensitivity.toString()));
+        }
     }
 
     /**
@@ -511,14 +523,20 @@ public class WebserviceOperations {
         if (annotName.isEmpty())
             annotName = cfd.mainAnnotation().name();
         Annotation annotation = cfd.annotation(annotName);
-        MatchSensitivity sensitive = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive());
-        AnnotationSensitivity sensitivity = annotation.sensitivity(sensitive);
+        if (annotation == null)
+            throw new BadRequest("ANNOTATION_NOT_FOUND",
+                    "Annotation '" + annotName + "' not found in field '" + cfd.name() + "'",
+                    Map.of("annotationName", annotName, "fieldName", cfd.name()));
+        boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
+        MatchSensitivity matchSensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
+        ensureHasSensitivity(annotation, matchSensitivity);
+        AnnotationSensitivity annotSensitivity = annotation.sensitivity(matchSensitivity);
 
         // May be null!
         Query q = params.filterQuery();
         // May also null/empty to retrieve all terms!
         Set<String> terms = params.getTerms();
-        TermFrequencyList tfl = blIndex.termFrequencies(sensitivity, q, terms);
+        TermFrequencyList tfl = blIndex.termFrequencies(annotSensitivity, q, terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
             long first = params.getFirstResultToShow();
@@ -697,7 +715,7 @@ public class WebserviceOperations {
                         "Could not delete format. The format is still being used by a corpus.");
         }
 
-        formatMan.deleteUserFormat(params.getUser(), formatIdentifier);
+        FinderInputFormatUserFormats.deleteUserFormat(params.getUser(), formatIdentifier);
     }
 
     public static ResultAnnotatedField annotatedField(WebserviceParams params, AnnotatedField fieldDesc, boolean includeIndexName) {
@@ -761,7 +779,7 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
-            SearchTimings timings, List<MatchInfo.Def> matchInfoDefs, ResultGroups<?> groups, WindowStats window,
+            SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups<?> groups, WindowStats window,
             String searchField, Collection<String> otherFields) {
         return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoDefs,groups, window,
                 searchField, otherFields);
@@ -791,7 +809,6 @@ public class WebserviceOperations {
             afs.add(annotatedField(params, field, false));
         }
         Collections.sort(afs, ResultAnnotatedField::compare);
-        String mainAnnotatedField = metadata.mainAnnotatedField().name();
         logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
@@ -803,7 +820,9 @@ public class WebserviceOperations {
                 params.blIndex());
 
         logger.info("    construct response object");
-        return new ResultIndexMetadata(progress, afs, mainAnnotatedField, mfs, metadataFieldGroups);
+        AnnotatedField mainAnnotatedField = metadata.mainAnnotatedField();
+        String mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
+        return new ResultIndexMetadata(progress, afs, mainAnnotatedFieldName, mfs, metadataFieldGroups);
     }
 
     public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {

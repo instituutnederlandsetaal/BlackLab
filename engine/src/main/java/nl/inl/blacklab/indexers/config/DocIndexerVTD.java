@@ -381,8 +381,8 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
      * its XPath expression should evaluate to "person", obviously).
      *
      * @param annotation   annotation to process.
-     * @param position     position to index at
-     * @param spanEndPos   if >= 0, index as a span annotation with this end position (exclusive)
+     * @param positionSpanEndOrSource     position to index at
+     * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
     protected void processAnnotation(ConfigAnnotation annotation, VTDNav word,

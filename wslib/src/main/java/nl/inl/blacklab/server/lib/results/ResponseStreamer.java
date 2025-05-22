@@ -46,6 +46,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationLikeInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
@@ -381,14 +382,13 @@ public class ResponseStreamer {
                 }
                 ds.endList().endEntry();
             }
-            List<MatchInfo.Def> matchInfoDefs = summaryFields.getMatchInfoDefs().stream()
-                    .filter(d -> !d.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT))
-                    .collect(Collectors.toList());
-            if (!matchInfoDefs.isEmpty()) {
+            MatchInfoDefs matchInfoDefs = new MatchInfoDefs(summaryFields.getMatchInfoDefs()
+                    .currentListFiltered(d -> !d.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)));
+            if (matchInfoDefs.currentSize() > 0) {
                 // Report the match infos in the query, their types, and the field they apply to (if different from
                 // main field, i.e. for parallel corpora)
                 ds.startEntry(KEY_MATCH_INFOS).startMap();
-                for (MatchInfo.Def def: matchInfoDefs) {
+                for (MatchInfo.Def def: matchInfoDefs.currentList()) {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
@@ -1360,12 +1360,8 @@ public class ResponseStreamer {
             indexTokenCount(indexMetadata);
             indexDocumentCount(indexMetadata);
             indexProgress(corpusStatus);
-            if (!corpusStatus.getIndex().isUserIndex()) {
-                //ds.entry("owner", "system");
-            } else if (corpusStatus.isOwnedBySomeoneElse()) {
-                ds.entry("owner", "user " + corpusStatus.getIndex().getUserId());
-            } else {
-                //ds.entry("owner", "you");
+            if (corpusStatus.getIndex().isUserIndex()) {
+                ds.entry("owner", corpusStatus.getIndex().getUserId());
             }
         }
         ds.endMap().endElEntry();
@@ -1474,7 +1470,7 @@ public class ResponseStreamer {
                         .endMap().endEntry();
             }
 
-            ds.entry("mainAnnotatedField", result.getMainAnnotatedField());
+            ds.entry("mainAnnotatedField", result.getMainAnnotatedField() == null ? "" : result.getMainAnnotatedField());
             ds.startEntry("annotatedFields").startMap();
             for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
                 // internal fields.

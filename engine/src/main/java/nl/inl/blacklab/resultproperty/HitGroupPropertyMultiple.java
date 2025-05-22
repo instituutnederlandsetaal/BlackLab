@@ -33,6 +33,11 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
         this.criteria = mprop.criteria;
     }
 
+    @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueMultiple.class;
+    }
+
     /**
      * Quick way to create group criteria. Just call this method with the
      * GroupCriterium object(s) you want.

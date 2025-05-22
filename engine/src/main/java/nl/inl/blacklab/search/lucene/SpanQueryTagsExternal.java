@@ -86,8 +86,9 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
             filter = attrFilters.get(0);
         else
             filter = new SpanQueryAnd(attrFilters);
-        BLSpanQuery r = new SpanQueryPositionFilter(new SpanQueryTagsExternal(queryInfo, startTagFieldName,
-                tagNameRegex, null), filter,
+        BLSpanQuery tags = new SpanQueryTagsExternal(queryInfo, startTagFieldName, tagNameRegex, null);
+        tags = tags.rewrite(reader);
+        BLSpanQuery r = new SpanQueryPositionFilter(tags, filter,
                 SpanQueryPositionFilter.Operation.STARTS_AT, false);
         r.setQueryInfo(queryInfo);
         return r;

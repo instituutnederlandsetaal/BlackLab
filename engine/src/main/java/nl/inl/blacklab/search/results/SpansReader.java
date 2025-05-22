@@ -80,8 +80,8 @@ class SpansReader implements Runnable {
      * <p>
      * TODO: update this comment (CapturedGroups doesn't exist anymore, match info was integrated into hits)
      * <p>
-     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext and
-     * CapturedGroups objects are set) and leave the other ones to self-initialize when needed.
+     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext
+     * are set) and leave the other ones to self-initialize when needed.
      * <p>
      * It is done this way because of an initialization order issue with capture groups.
      * <p>

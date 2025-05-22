@@ -95,6 +95,16 @@ public class TestProcessingSteps {
     }
 
     @Test
+    public void testConcatDate() {
+        testConcatDate("test", "start", "test20251101");
+        testConcatDate("test", "end", "test20251130");
+    }
+
+    private void testConcatDate(String input, String autofill, String expected) {
+        test(input, new ProcessingStepConcatDate("year", "month", "day", autofill), expected);
+    }
+
+    @Test
     public void testReplace() {
         testReplace("NOU-C()", "\\(", "{", "", "NOU-C{)");
         testReplace("NOU-C()", "c", "x", "i", "NOU-x()");
@@ -145,6 +155,12 @@ public class TestProcessingSteps {
                 return List.of("testValue");
             case "testMulti":
                 return List.of("testValue1", "testValue2");
+            case "year":
+                return List.of("2025");
+            case "month":
+                return List.of("11");
+            case "day":
+                return null;
             }
             return null;
         }

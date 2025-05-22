@@ -329,11 +329,11 @@ Because spaces are also indexed with the `punct` annotation, you need to include
 
 BlackLab supports _pseudo-annotations_ that can help with this. You can pretend that every corpus has a `punctBefore` and `punctAfter` annotation. So you can write the above query as:
 
-    [word='dog' punctAfter=',']
+    [word='dog' & punctAfter=',']
 
 Note that in special cases where more than one punctuation mark is indexed with a word, you may still need to tweak your regular expression. For example, if your input data contained the fragment "(white) dog, (black) cat", the above query would not work because the `punct` annotation for the word after `dog` would have the value `, (`. You'd have to use a more general regular expression:
 
-    [word='dog' punctAfter=',.*']
+    [word='dog' & punctAfter=',.*']
 
 Note that `punctBefore` and `punctAfter` look like annotations when used in the query, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index.
 
@@ -358,7 +358,7 @@ Querying relations is essentially done by building a partial tree of relations c
 ::: tip Treebank systems
 
 BlackLab supports limited relations querying, but is not as powerful as a full
-treebank system, which is primarily designed for this style of search. Links to some treebank systems can be found [here](https://github.com/INL/BlackLab/blob/dev/doc/technical/design/design-relations-queries.md#research-into-treebank-systems). For BlackLab's relations querying limitations, see [below](#limitation-descendant-search).
+treebank system, which is primarily designed for this style of search. Links to some treebank systems can be found [here](https://github.com/instituutnederlandsetaal/BlackLab/blob/dev/doc/technical/design/design-relations-queries.md#research-into-treebank-systems). For BlackLab's relations querying limitations, see [below](#limitation-descendant-search).
 
 :::
 
@@ -607,7 +607,7 @@ This should find aligning English and Dutch sentences, including any word alignm
 
 ::: details Required versus optional alignment
 
-The `==>` operator will _require_ that an alignment exists. If you wish to see all hits on the left side of the `==>nl` regardless of whether any aligments to the right side can be found, use `==>nl?`.
+The `==>` operator will _require_ that an alignment exists. If you wish to see all hits on the left side of the `==>nl` regardless of whether any alignments to the right side can be found, use `==>nl?`.
 
 For example, if you're searching for translations of `cat` to Dutch, with `==>nl` you will _only_ see instances where `cat` is aligned to a Dutch word; on the other hand, with `==>nl?` you will see both English `cat` hits where the translation to Dutch was found, and `cat` hits where it wasn't.
 

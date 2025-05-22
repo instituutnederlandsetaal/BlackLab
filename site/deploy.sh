@@ -11,6 +11,9 @@ npm run build
 # navigate into the build output directory
 cd docs/.vuepress/dist
 
+# Configure GitHub Pages to server the site at blacklab.ivdnt.org
+echo blacklab.ivdnt.org > CNAME
+
 # create new git repo from scratch with a single commit containing the generated files
 git init
 git add -A

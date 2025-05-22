@@ -2,11 +2,12 @@ import { viteBundler } from '@vuepress/bundler-vite'
 import { defaultTheme } from '@vuepress/theme-default'
 import { defineUserConfig } from 'vuepress'
 import { redirectPlugin } from '@vuepress/plugin-redirect'
+import { slimsearchPlugin } from '@vuepress/plugin-slimsearch'
 
 export default defineUserConfig({
     bundler: viteBundler(),
 
-    "base": "/BlackLab/",
+    "base": "/",
     "title": "BlackLab",
     "description": "Documentation for the corpus search engine BlackLab",
 
@@ -106,6 +107,8 @@ export default defineUserConfig({
     }),
 
     "plugins": [
+        slimsearchPlugin({}),
+
         redirectPlugin({
             config: {
                 '/BlackLab/add-input-format.html': '/BlackLab/guide/how-to-configure-indexing.html',

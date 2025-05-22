@@ -328,7 +328,7 @@ public class PWPluginForwardIndex implements PWPlugin {
 
     public void endField() throws IOException {
         // begin writing term IDs and sort orders
-        Collators collators = Collators.defaultCollator();
+        Collators collators = Collators.getDefault();
         int[] sensitivePos2TermID = getTermSortOrder(termsList,
                 collators.get(MatchSensitivity.SENSITIVE));
         int[] insensitivePos2TermID = getTermSortOrder(termsList,

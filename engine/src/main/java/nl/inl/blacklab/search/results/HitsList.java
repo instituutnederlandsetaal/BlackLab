@@ -1,9 +1,7 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.List;
-
 import it.unimi.dsi.fastutil.ints.IntIterator;
-import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * An immutable list of hits.
@@ -27,7 +25,7 @@ public class HitsList extends HitsAbstract {
      * @param hits the list of hits to wrap, or null for a new list
      * @param matchInfoDefs names of our match infos (e.g. capture groups)
      */
-    protected HitsList(QueryInfo queryInfo, HitsInternal hits, List<MatchInfo.Def> matchInfoDefs) {
+    protected HitsList(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo, hits, matchInfoDefs);
 
         hitsCounted = this.hitsInternal.size();
@@ -61,7 +59,7 @@ public class HitsList extends HitsAbstract {
                        long hitsCounted,
                        long docsRetrieved,
                        long docsCounted,
-                       List<MatchInfo.Def> matchInfoDefs,
+            MatchInfoDefs matchInfoDefs,
                        boolean ascendingLuceneDocIds
                        ) {
         super(queryInfo, hits, matchInfoDefs);

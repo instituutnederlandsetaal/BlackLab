@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.IndexFormatTooOldException;
 
 import com.fasterxml.jackson.core.JacksonException;
 
@@ -28,6 +29,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.MetricsProvider;
@@ -255,22 +257,11 @@ public class BlackLabServer extends HttpServlet {
         // Note that only some requests support CSV output (hits/docs); requesting it should return an error on
         // requests that don't support it.
         UserRequestBls userRequest = new UserRequestBls(this, request, responseObject);
-        RequestHandler requestHandler = RequestHandler.create(userRequest, outputType);
-        if (outputType == null)
-            outputType = requestHandler.getOverrideType();
-        if (outputType == null)
-            outputType = defaultOutputType;
-
-        // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
-        searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
-
-        int cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
-
-        String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
-
-        // === Handle the request
+        int httpCode;
+        RequestHandler requestHandler = null;
+        int cacheTime = 0;
+        ApiVersion api = ApiVersion.CURRENT;
         boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, userRequest.isDebugMode());
-        ApiVersion api = requestHandler.apiCompatibility();
         DataStream ds = DataStreamAbstract.create(outputType, prettyPrint, api);
         ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
         if (request.getParameterMap().containsKey(PARAM_ESCAPE_XML_FRAGMENT)) {
@@ -279,15 +270,38 @@ public class BlackLabServer extends HttpServlet {
             boolean escapeXmlFragment = ServletUtil.getParameter(request, PARAM_ESCAPE_XML_FRAGMENT, true);
             ds.setEscapeXmlFragment(escapeXmlFragment);
         }
-        ds.startDocument(rootEl);
-        ResponseStreamer dstream = ResponseStreamer.get(ds, api);
         DataStream es = DataStreamAbstract.create(outputType, prettyPrint, api);
         es.outputProlog();
         ResponseStreamer errorWriter = ResponseStreamer.get(es, api);
         int errorBufLengthBefore = es.length();
-        int httpCode;
         try {
+            requestHandler = RequestHandler.create(userRequest, outputType);
+            if (outputType == null)
+                outputType = requestHandler.getOverrideType();
+            if (outputType == null)
+                outputType = defaultOutputType;
+
+            // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
+            searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
+
+            cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
+
+            String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
+            ds.startDocument(rootEl);
+
+            // === Handle the request
+            if (!api.equals(requestHandler.apiCompatibility())) {
+                api = requestHandler.apiCompatibility();
+                ds.setVersion(api);
+                es.setVersion(api);
+            }
+            ResponseStreamer dstream = ResponseStreamer.get(ds, api);
             httpCode = requestHandler.handle(dstream);
+        } catch (IndexVersionMismatch e) {
+            if (e.getCause() instanceof IndexFormatTooOldException)
+                httpCode = Response.error(errorWriter, "INDEX_TOO_OLD", "Index too old for this BlackLab version: " + e.getCause().getMessage(), null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            else
+                httpCode = Response.error(errorWriter, "INDEX_TOO_NEW", "Index was created with a newer BlackLab version: " + e.getCause().getMessage(), null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         } catch (ErrorOpeningIndex e) {
             httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "ERROR_OPENING_INDEX");
         } catch (InvalidQuery e) {
@@ -300,9 +314,13 @@ public class BlackLabServer extends HttpServlet {
         } catch (InterruptedSearch e) {
             httpCode = Response.error(errorWriter, "INTERRUPTED", e.getMessage(), null, HttpServletResponse.SC_SERVICE_UNAVAILABLE, e);
         } catch (RuntimeException e) {
-            httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
+            if (errorWriter != null)
+                httpCode = Response.internalError(errorWriter, e, userRequest.isDebugMode(), "INTERR_HANDLING_REQUEST");
+            else
+                throw e;
         } finally {
-            requestHandler.cleanup(); // close logger
+            if (requestHandler != null)
+                requestHandler.cleanup(); // close logger
         }
         ds.endDocument();
 
@@ -376,7 +394,7 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public String getServletInfo() {
         return "Provides corpus search services on one or more BlackLab indices.\n"
-                + "Source available at https://github.com/INL/BlackLab\n"
+                + "Source available at https://github.com/instituutnederlandsetaal/BlackLab\n"
                 + "(C) 2013-" + Calendar.getInstance().get(Calendar.YEAR)
                 + " Dutch Language Institute (https://ivdnt.org/)\n"
                 + "Licensed under the Apache License v2.\n";

@@ -205,14 +205,6 @@ function expectUnchanged(category, testName, actualResponse) {
         const savedResponse = isJson ? JSON.parse(fileContents) : fileContents;
 
         // Compare
-
-        if (testName === 'document contents') {
-            console.log('actualResponse:', typeof actualResponse/*, actualResponse*/);
-            console.log('sanitized:', typeof sanitized/*, sanitized*/);
-            console.log('savedResponse:', typeof savedResponse/*, savedResponse*/);
-            console.log('isJson:', isJson);
-        }
-
         if (isJson) {
             expect(sanitized).to.be.deep.equal(savedResponse);
         } else {

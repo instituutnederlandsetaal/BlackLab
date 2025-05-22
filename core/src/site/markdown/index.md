@@ -20,7 +20,7 @@ BlackLab was designed primarily for linguists who want to search for (potentiall
 If you want to use BlackLab in your own projects, it's available both as a web service (BlackLab Server) and a Java library (BlackLab Core). It's easy to use BlackLab from your favourite programming language.
 
 * [Getting started](getting-started.html)
-* Project on GitHub: [BlackLab (Core and Server)](https://github.com/INL/BlackLab) 
+* Project on GitHub: [BlackLab (Core and Server)](https://github.com/instituutnederlandsetaal/BlackLab) 
 * [BlackLab Server overview](blacklab-server-overview.html)
 * [Using BlackLab Server from different language](blacklab-server-different-languages.html) 
 * [API reference](apidocs/index.html)

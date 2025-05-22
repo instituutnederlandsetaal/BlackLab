@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import nl.inl.blacklab.search.ConcordanceType;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.server.config.BLSConfigParameters;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -124,7 +125,7 @@ public interface QueryParams {
 
     boolean getExplain();
 
-    boolean getSensitive();
+    boolean getSensitive(boolean defaultValue);
 
     int getWordStart();
 

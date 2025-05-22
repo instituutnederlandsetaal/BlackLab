@@ -118,7 +118,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         try {
             formats = getUserFormatDir(userFormatParentDir, userId).listFiles();
         } catch (IOException e) {
-            logger.warn("Could not load formats for user " + userId + ": " + e.getMessage());
+            logger.warn("Could not load formats for user " + userId, e);
             return null;
         }
 
@@ -132,7 +132,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
                 if (formatIdentifier.equals(formatToReturn))
                     returnValue = inputFormat;
             } catch (IllegalUserFormatIdentifier e) {
-                logger.warn("Skipping file " + formatFile + "in user format directory; " + e.getMessage());
+                logger.warn("Skipping file " + formatFile + " in user format directory", e);
             }
         }
         return returnValue;

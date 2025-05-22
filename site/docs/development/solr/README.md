@@ -52,7 +52,7 @@ solr/server/solr/
 ### 5. Creating the solrconfig and schema
 
 A default Solrconfig will probably work.
-Tested using an edited version of [the solr-xslt-plugin config](https://github.com/INL/solr-xslt-plugin/blob/0ee8901ba7cc215cebdf6372d9b9df8126fad59b/src/test/resources/solrDir/conf/solrconfig.xml), with all xslt related code removed.
+Tested using an edited version of [the solr-xslt-plugin config](https://github.com/instituutnederlandsetaal/solr-xslt-plugin/blob/0ee8901ba7cc215cebdf6372d9b9df8126fad59b/src/test/resources/solrDir/conf/solrconfig.xml), with all xslt related code removed.
 
 #### (Optional) inspect the Index created using Luke
 - Get a copy of `luke` from the correct lucene version (downloads [here](https://archive.apache.org/dist/lucene/java/))

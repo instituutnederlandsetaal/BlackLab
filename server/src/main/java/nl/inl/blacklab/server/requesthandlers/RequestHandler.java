@@ -36,6 +36,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Base class for request handlers, to handle the different types of requests.
@@ -283,13 +284,12 @@ public abstract class RequestHandler {
                             }
                         } else if (handlerName.equals(ENDPOINT_HITS) || handlerName.equals(
                                 ENDPOINT_DOCS)) {
+                            boolean hasViewgroup = !StringUtils.isEmpty(request.getParameter(WebserviceParameter.VIEW_GROUP.value()));
                             if (!StringUtils.isBlank(request.getParameter("group"))) {
-                                String viewgroup = request.getParameter("viewgroup");
-                                if (StringUtils.isEmpty(viewgroup))
+                                if (!hasViewgroup)
                                     handlerName += "-grouped"; // list of groups instead of contents
-                            } else if (!StringUtils.isEmpty(request.getParameter("viewgroup"))) {
+                            } else if (hasViewgroup) {
                                 // "viewgroup" parameter without "group" parameter; error.
-
                                 return errorObj.badRequest("ERROR_IN_GROUP_VALUE",
                                         "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
                             }

@@ -98,7 +98,7 @@ Find corresponding sentences:
 
 There seem to be three obvious options, of which option 2 seems like the most viable at the moment:
 
-1. everything in one annotated field, e.g. Dutch annotations and German annotations, with aligment relations between the two versions. Easy to do, but that would mean a single annotated field would have two very different tokenizations (i.e. the 3rd word in Dutch need not correspond to the 3rd word in German at all). Throughout BlackLab, it is generally assumed that an annotated field has a single tokenization, so annotations are all automatically aligned.
+1. everything in one annotated field, e.g. Dutch annotations and German annotations, with alignment relations between the two versions. Easy to do, but that would mean a single annotated field would have two very different tokenizations (i.e. the 3rd word in Dutch need not correspond to the 3rd word in German at all). Throughout BlackLab, it is generally assumed that an annotated field has a single tokenization, so annotations are all automatically aligned.
 2. one annotated field per version, so e.g. one field for Dutch and one for German. Alignment relations between the two versions. Seems better to keep the two tokenizations in separate fields.
 3. one Lucene document per version of an input document. This seems more difficult to implement because we would have to combine hits from different documents to resolve a single query.
 

@@ -57,6 +57,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
             startAdjusted = endAdjusted = -1;
         } else {
             // We need all match info because we want to expand the current span to include all matched relations
+            MatchInfoDefs defs = context.getMatchInfoDefs();
             if (matchInfo == null)
                 matchInfo = new MatchInfo[context.numberOfMatchInfos()];
             else
@@ -65,21 +66,15 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
             startAdjusted = Integer.MAX_VALUE;
             endAdjusted = Integer.MIN_VALUE;
             for (int i = 0; i < matchInfo.length; i++) {
-                MatchInfo info = matchInfo[i];
-                if (info != null) {
-                    if (targetField.equals(info.getField())) {
-                        // This match info's (source) span is in our target field
-                        startAdjusted = Math.min(startAdjusted, info.getSpanStart());
-                        endAdjusted = Math.max(endAdjusted, info.getSpanEnd());
-                    }
-                    if (info.getType() == MatchInfo.Type.RELATION) {
-                        RelationInfo rel = (RelationInfo) info;
-                        if (rel.isCrossFieldRelation() && rel.getTargetField().equals(targetField)) {
-                            // Target of cross-field relation to our targetField.
-                            startAdjusted = Math.min(startAdjusted, rel.getTargetStart());
-                            endAdjusted = Math.max(endAdjusted, rel.getTargetEnd());
-                        }
-                    }
+                MatchInfo mi = matchInfo[i];
+                if (mi == null)
+                    continue;
+                if (mi.getField().equals(targetField) && mi.getType() == MatchInfo.Type.SPAN &&
+                        defs.get(i).getName().endsWith(
+                                SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)) {
+                    // This is the special target field capture. Adjust the hit boundaries.
+                    startAdjusted = Math.min(startAdjusted, mi.getSpanStart());
+                    endAdjusted = Math.max(endAdjusted, mi.getSpanEnd());
                 }
             }
         }
@@ -143,7 +138,8 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
 
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
-        for (int i = 0; i < matchInfo.length; i++) {
+        int n = Math.min(matchInfo.length, this.matchInfo.length);
+        for (int i = 0; i < n; i++) {
             // Only pass on the match info for our target field
             if (this.matchInfo[i] != null && this.matchInfo[i].getField().equals(targetField))
                 matchInfo[i] = this.matchInfo[i];

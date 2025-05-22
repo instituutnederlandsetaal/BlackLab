@@ -47,6 +47,11 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return docPropertyDocumentDecade.getValueType();
+    }
+
+    @Override
     public HitProperty copyWith(Hits newHits, boolean invert) {
         return new HitPropertyDocumentDecade(this, newHits, invert);
     }

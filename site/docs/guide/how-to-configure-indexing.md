@@ -104,6 +104,7 @@ metadata:
     # <metadata/> tag has an id attribute we want to index as docId
   - name: docId
     valuePath: "@id"
+    type: untokenized  # persistent identifier should be untokenized!
 
     # Each <meta/> tag corresponds with a metadata field
   - forEachPath: meta
@@ -113,6 +114,7 @@ metadata:
 corpusConfig:
   specialFields:
     # What metadata field persistently identifies our documents?
+    # (should be configured with type: untokenized)
     pidField: docId
 ```
 
@@ -133,7 +135,7 @@ BlackLab supports two different XML processors: VTD and Saxon. While currently V
 
 VTD only supports XPath 1.0 and has some slight quirks (see below). Saxon uses more memory, but is often faster and supports XPath 3.1, which can make writing indexing configurations much easier.
 
-Certain [advanced indexing features](https://github.com/INL/BlackLab/issues/447) added in the past can be avoided when using Saxon; many things can be done in XPath directly. See [XPath examples](xpath-examples.md) to get an idea of the wide range of possibilities.
+Certain [advanced indexing features](https://github.com/instituutnederlandsetaal/BlackLab/issues/447) added in the past can be avoided when using Saxon; many things can be done in XPath directly. See [XPath examples](xpath-examples.md) to get an idea of the wide range of possibilities.
 
 To use Saxon, place this in your input format config (.blf.yaml) file (at the top level):
 
@@ -657,7 +659,7 @@ annotatedFields:
 
 The above would allow you to search for `_ -nsubj-> "I"` to find "I support", with the relation information captured. [Learn more about how to query relations](corpus-query-language.md#relations-querying)
 
-A note about the `relationClass` setting: you should declare the type of relation you're indexing here, using a short (i.e. 3-letter) code. By convention, dependency relations should use `dep`. Clients such as [BlackLab Frontend](https://github.com/INL/corpus-frontend) can use this information to display relations in a more user-friendly way, i.e. referring to the _head_ and _dependent_ of the dependency relation instead of the more generic _source_ and _target_.
+A note about the `relationClass` setting: you should declare the type of relation you're indexing here, using a short (i.e. 3-letter) code. By convention, dependency relations should use `dep`. Clients such as [BlackLab Frontend](https://github.com/instituutnederlandsetaal/corpus-frontend) can use this information to display relations in a more user-friendly way, i.e. referring to the _head_ and _dependent_ of the dependency relation instead of the more generic _source_ and _target_.
 
 ### Indexing parallel corpora
 
@@ -1133,6 +1135,8 @@ corpusConfig:
     # pidField is important for use with BLS because it guarantees that URLs
     # won't change even if you re-index. The other fields can be nice for
     # displaying document information but are not essential.
+    # (BTW, make sure pidField is configured with "type: untokenized" to 
+    # prevent issues with e.g. PIDs containing spaces)
     specialFields:
       pidField: id         # unique document identifier. Used by BLS for persistent URLs
       titleField: title    # may be used by user interface to display document info

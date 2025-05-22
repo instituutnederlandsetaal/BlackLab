@@ -22,9 +22,9 @@ No? No. Back to the drawing board, I guess.
 
 ### It's been six years already
 
-Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/INL/BlackLab/tree/main/core)), but we've since added a REST webservice ([BlackLab Server](https://github.com/INL/BlackLab/tree/main/server)) so you can easily access BlackLab from any programming language. Both projects are now mature, and there's a [project website](https://inl.github.io/BlackLab) with an overview, documentation and examples, and BlackLab is available from the Maven Central Repository, the industry-standard source for Java libraries.
+Yes, we started BlackLab in 2010. First there was just a Java library ([BlackLab Core](https://github.com/instituutnederlandsetaal/BlackLab/tree/main/core)), but we've since added a REST webservice ([BlackLab Server](https://github.com/instituutnederlandsetaal/BlackLab/tree/main/server)) so you can easily access BlackLab from any programming language. Both projects are now mature, and there's a [project website](https://blacklab.ivdnt.org/) with an overview, documentation and examples, and BlackLab is available from the Maven Central Repository, the industry-standard source for Java libraries.
 
-BlackLab's future looks bright. Version 1.5.0 just came out (see the [change log](../changelog.md)). Have a look at our [roadmap](http://inl.github.io/BlackLab/roadmap.html) to get an idea of where it's going next; support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
+BlackLab's future looks bright. Version 1.5.0 just came out (see the [change log](../changelog.md)). Have a look at our [roadmap](https://blacklab.ivdnt.org/roadmap.html) to get an idea of where it's going next; support for distributed search and integration with Solr and/or ElasticSearch are high on the list. I'd love to hear from you what you would like to see.
 
 <a id="whitelab"></a>
 
@@ -61,7 +61,7 @@ BlackLab allows you to index and search on as many annotation layers as you want
 
 A new addition is random hit sampling. Just let BlackLab select 1% of your results at random. Useful when you don't want to wade through millions of individual results, but you do want to get a sense of what you might find if you did.
 
-BlackLab supports a large and growing [subset of the Corpus Query Language](http://inl.github.io/BlackLab/corpus-query-language.html) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
+BlackLab supports a large and growing [subset of the Corpus Query Language](https://blacklab.ivdnt.org/corpus-query-language.html) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
 
 You can even capture groups of words in the matched text (just like you can with regular expressions), allowing you to analyse the structure of each of your matches in more detail. The IKE knowledge extraction tool developed by the Allen Institute (see above) uses this feature. You could also implement features like the [Sketch Engine](https://www.sketchengine.co.uk/)'s Word Sketch feature with this.
 

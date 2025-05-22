@@ -20,6 +20,12 @@ public class HitGroupPropertyIdentity extends HitGroupProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        // Varies depending on what was grouped on, so we cannot say in advance.
+        return PropertyValue.class;
+    }
+
+    @Override
     public int compare(HitGroup a, HitGroup b) {
         if (reverse)
             return b.identity().compareTo(a.identity());

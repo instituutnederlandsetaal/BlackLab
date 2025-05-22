@@ -1,13 +1,8 @@
 package nl.inl.blacklab.search.lucene;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
 /**
  * Provides per-hit query-wide context, such as captured groups.
- *
+ * <p>
  * This object is passed to the whole BLSpans tree before iterating over the
  * hits. Captured groups will register themselves here and receive an index in
  * the captured group array, and BLSpans objects that need access to captured
@@ -18,8 +13,9 @@ public class HitQueryContext {
     /** Root of the BLSpans tree for this query. */
     private BLSpans rootSpans;
 
-    /** Match info names for our query, in index order */
-    List<MatchInfo.Def> matchInfoDefs = new ArrayList<>();
+    /** Match info names for our query, in index order.
+     *  NOTE: shared between multiple Spans that might run in parallel! */
+    private final MatchInfoDefs matchInfoDefs;
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
     private final String defaultField;
@@ -27,35 +23,33 @@ public class HitQueryContext {
     /** The field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
     private final String field;
 
-    public HitQueryContext(BLSpans spans, String defaultField) {
-        this(spans, defaultField, defaultField);
+    public HitQueryContext(BLSpans spans, String defaultField, MatchInfoDefs matchInfoDefs) {
+        this(spans, defaultField, defaultField, matchInfoDefs);
     }
 
-    private HitQueryContext(BLSpans spans, String defaultField, String field) {
+    private HitQueryContext(BLSpans spans, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
         this.rootSpans = spans;
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
+        this.matchInfoDefs = matchInfoDefs;
     }
 
     public HitQueryContext withSpans(BLSpans spans) {
-        HitQueryContext result = new HitQueryContext(spans, defaultField, field);
-        result.matchInfoDefs = matchInfoDefs;
-        return result;
+        return new HitQueryContext(spans, defaultField, field, matchInfoDefs);
     }
 
     public HitQueryContext withField(String overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(rootSpans, defaultField, overriddenField);
-            result.matchInfoDefs = matchInfoDefs;
+            result = new HitQueryContext(rootSpans, defaultField, overriddenField, matchInfoDefs);
         }
         return result;
     }
 
     /**
      * Set our Spans object.
-     *
+     * <p>
      * Used when manually iterating through the index segments, because we go
      * through several Spans for a single query.
      *
@@ -67,6 +61,8 @@ public class HitQueryContext {
 
     /**
      * Register a match info (e.g. captured group), assigning it a unique index number.
+     * <p>
+     * Synchronized because it's called from SpansReader.initialize(), which can execute in multiple threads in parallel.
      *
      * @param name the group's name
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
@@ -78,6 +74,8 @@ public class HitQueryContext {
 
     /**
      * Register a match info (e.g. captured group), assigning it a unique index number.
+     * <p>
+     * Synchronized because it's called from SpansReader.initialize(), which can execute in multiple threads in parallel.
      *
      * @param name the group's name
      * @param type the group's type, or null if we don't know here (i.e. when referring to the group as a span)
@@ -87,17 +85,7 @@ public class HitQueryContext {
      * @return the group's assigned index
      */
     public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
-        Optional<MatchInfo.Def> mi = matchInfoDefs.stream()
-                .filter(mid -> mid.getName().equals(name))
-                .findFirst();
-        if (mi.isPresent()) {
-            mi.get().updateType(type); // update type (e.g. if group is referred to before we know its type)
-            return mi.get().getIndex(); // already registered, reuse
-        }
-        assert field != null;
-        MatchInfo.Def newMatchInfo = new MatchInfo.Def(matchInfoDefs.size(), name, type, field, targetField);
-        matchInfoDefs.add(newMatchInfo);
-        return newMatchInfo.getIndex(); // index in array
+        return matchInfoDefs.register(name, type, field, targetField).getIndex();
     }
 
     /**
@@ -105,13 +93,13 @@ public class HitQueryContext {
      * 
      * @return number of captured groups
      */
-    public int numberOfMatchInfos() {
-        return matchInfoDefs.size();
+    public synchronized int numberOfMatchInfos() {
+        return matchInfoDefs.currentSize();
     }
 
     /**
      * Retrieve all the captured group information.
-     *
+     * <p>
      * Used by Hits.
      *
      * @param matchInfo array to place the captured group information into
@@ -122,18 +110,18 @@ public class HitQueryContext {
 
     /**
      * Get the match infos definitions.
-     *
+     * <p>
      * The list is in index order.
      *
      * @return the list of match infos
      */
-    public List<MatchInfo.Def> getMatchInfoDefs() {
-        return Collections.unmodifiableList(matchInfoDefs);
+    public synchronized MatchInfoDefs getMatchInfoDefs() {
+        return matchInfoDefs;
     }
 
     /**
      * Get the field for this part of the query.
-     *
+     * <p>
      * Used for parallel corpora.
      *
      * @return the field this part of the query searches
@@ -148,13 +136,13 @@ public class HitQueryContext {
 
     /**
      * Are any of the captures of type INLINE_TAG or RELATION?
-     *
+     * <p>
      * If yes, getRelationInfo() can return non-null values, and we must
      * e.g. store these in SpansInBuckets.
      *
      * @return true if any of the captures are of type INLINE_TAG or RELATION
      */
-    public boolean hasRelationCaptures() {
-        return matchInfoDefs.stream().anyMatch(mid -> mid.getType() == MatchInfo.Type.INLINE_TAG || mid.getType() == MatchInfo.Type.RELATION);
+    public synchronized boolean hasRelationCaptures() {
+        return matchInfoDefs.currentlyHasRelationCaptures();
     }
 }

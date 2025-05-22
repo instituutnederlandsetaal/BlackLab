@@ -56,14 +56,14 @@ public class ProcessingStepConcatDate extends ProcessingStep {
         if (d == null || d > maxDay || d < 1)
             d = autoFillStart ? 1 : maxDay;
 
-        return StringUtils.leftPad(y.toString(), 4, '0') +
+        return value + StringUtils.leftPad(y.toString(), 4, '0') +
                 StringUtils.leftPad(m.toString(), 2, '0') +
                 StringUtils.leftPad(d.toString(), 2, '0');
     }
 
     private Integer getIntFieldValue(DocIndexer docIndexer, String fieldName) {
         try {
-            return Integer.parseInt(docIndexer.getMetadataField(yearField).get(0));
+            return Integer.parseInt(docIndexer.getMetadataField(fieldName).get(0));
         } catch (Exception e) {
             return null;
         }

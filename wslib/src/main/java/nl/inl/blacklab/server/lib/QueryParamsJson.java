@@ -68,13 +68,9 @@ public class QueryParamsJson extends QueryParamsAbstract {
     private String jsonValueToString(String name, JsonNode jsonNode) {
         if (jsonNode.isArray()) {
             // group or viewgroup with a list of properties
-            switch (name) {
-            case "group":
-            case "viewgroup":
+            if (name.equals(WebserviceParameter.GROUP_BY.value()) || name.equals(WebserviceParameter.VIEW_GROUP.value()))
                 return arrayOfArraysToString((ArrayNode)jsonNode);
-            default:
-                throw new IllegalArgumentException("Didn't expect array for key: " + name);
-            }
+            throw new IllegalArgumentException("Didn't expect array for key: " + name);
         } else if (jsonNode.isValueNode()) {
             return jsonNode.asText();
         } else {

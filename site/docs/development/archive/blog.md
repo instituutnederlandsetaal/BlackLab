@@ -35,7 +35,7 @@ This searches for apple preceded by two arbitrary words. The match all operator 
 
 There's plenty of stuff we haven't covered yet, such as how BlackLab enables fast sorting and grouping on matched text or the words around it, but that's a subject for another post. I'm also working on several other improvements, like a generic way to index and search for XML tags in the text, so you can search for words at the beginning of a sentence, or search for tagged named entities (like the names of people or places). The basic functionality for this is in BlackLab now, and should mature over the next few months.
 
-Hopefully, now you've got a better idea of how BlackLab builds on the many features Lucene already provides to enable new ways of searching for patterns in annotated texts. As always, questions, suggestions and code contributions are more than welcome. See the [README](https://github.com/INL/BlackLab#readme "https://github.com/INL/BlackLab#readme") for contact information.
+Hopefully, now you've got a better idea of how BlackLab builds on the many features Lucene already provides to enable new ways of searching for patterns in annotated texts. As always, questions, suggestions and code contributions are more than welcome. See the [README](https://github.com/instituutnederlandsetaal/BlackLab#readme "https://github.com/instituutnederlandsetaal/BlackLab#readme") for contact information.
 
 2 - BlackLab's niche
 --------------------
@@ -62,7 +62,7 @@ For example, recently Lucene 4.0 came out, and it appears to speed up several im
 
 That, for me, defines BlackLab's niche in the ecosystem of text search. It's fully written in Java and has a mature, actively developed open source project as its basis. It's a great position to start from and allows us to add advanced features to BlackLab without ever having to worry about the low-level side of things.
 
-We believe this niche needed filling, so we went ahead and gave it a shot. We invite you to [try it out](https://github.com/INL/BlackLab/wiki "https://github.com/INL/BlackLab/wiki"). See for yourself if this is just a short-lived evolutionary oddity, or a viable new species. If you have any questions or comments, let us know. Together we can make BlackLab thrive!
+We believe this niche needed filling, so we went ahead and gave it a shot. We invite you to [try it out](https://github.com/instituutnederlandsetaal/BlackLab/wiki "https://github.com/instituutnederlandsetaal/BlackLab/wiki"). See for yourself if this is just a short-lived evolutionary oddity, or a viable new species. If you have any questions or comments, let us know. Together we can make BlackLab thrive!
 
 1 - Introducing BlackLab
 ------------------------

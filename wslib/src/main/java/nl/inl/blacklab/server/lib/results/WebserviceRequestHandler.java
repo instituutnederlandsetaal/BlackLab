@@ -55,11 +55,14 @@ public class WebserviceRequestHandler {
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
             ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(params, fieldDesc, true);
             rs.annotatedField(resultAnnotatedField, includeCustomInfo);
-        } else {
+        } else if (indexMetadata.metadataFields().exists(fieldName)) {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
             ResultMetadataField metadataField = WebserviceOperations.metadataField(params, fieldDesc, params.getCorpusName());
             rs.metadataField(metadataField, includeCustomInfo);
+        } else {
+            // Unknown field
+            throw new BadRequest("UNKNOWN_FIELD", "Field '" + fieldName + "' not found in index.");
         }
     }
 

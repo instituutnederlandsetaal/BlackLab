@@ -96,6 +96,11 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueMultiple.class;
+    }
+
+    @Override
     public HitProperty copyWith(Hits newHits, boolean invert) {
         return new HitPropertyMultiple(this, newHits, invert);
     }

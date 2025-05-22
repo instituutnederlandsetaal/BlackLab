@@ -47,7 +47,12 @@ public class DataStreamXml extends DataStreamAbstract {
 
     public DataStreamXml(boolean prettyPrint, ApiVersion api) {
         super(prettyPrint);
-        this.api = api;
+        setVersion(api);
+    }
+
+    @Override
+    public void setVersion(ApiVersion version) {
+        this.api = version;
         escapeXmlFragment = api.getMajor() >= 5;
     }
 

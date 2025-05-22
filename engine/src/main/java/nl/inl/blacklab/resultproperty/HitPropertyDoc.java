@@ -28,6 +28,11 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueDoc.class;
+    }
+
+    @Override
     public PropertyValueDoc get(long hitIndex) {
         return new PropertyValueDoc(index, hits.doc(hitIndex));
     }

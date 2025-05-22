@@ -68,6 +68,11 @@ public class DocPropertyStoredField extends DocProperty {
         this.friendlyName = prop.friendlyName;
     }
 
+    @Override
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueString.class;
+    }
+
     public DocPropertyStoredField(BlackLabIndex index, String fieldName) {
         this(index, fieldName, fieldName);
     }

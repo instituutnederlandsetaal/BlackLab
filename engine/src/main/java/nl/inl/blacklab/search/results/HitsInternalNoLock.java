@@ -1,16 +1,21 @@
 package nl.inl.blacklab.search.results;
 
+import java.text.CollationKey;
 import java.util.function.Consumer;
 
+import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
+import it.unimi.dsi.fastutil.objects.ObjectBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
@@ -81,8 +86,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(doc);
         starts.add(start);
         ends.add(end);
-        if (matchInfo != null)
+        if (matchInfo != null) {
             matchInfos.add(matchInfo);
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     /**
@@ -93,8 +102,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(hit.doc);
         starts.add(hit.start);
         ends.add(hit.end);
-        if (hit.matchInfo != null)
+        if (hit.matchInfo != null) {
             matchInfos.add(hit.matchInfo);
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     /**
@@ -105,8 +118,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
-        if (hit.matchInfo() != null)
+        if (hit.matchInfo() != null) {
             matchInfos.add(hit.matchInfo());
+        } else {
+            // Either all hits have matchInfo, or none do.
+            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+        }
     }
 
     public void addAll(HitsInternalNoLock hits) {
@@ -124,8 +141,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
                 docs.add(h.doc);
                 starts.add(h.start);
                 ends.add(h.end);
-                if (h.matchInfo != null)
+                if (h.matchInfo != null) {
                     matchInfos.add(h.matchInfo);
+                } else {
+                    // Either all hits have matchInfo, or none do.
+                    assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
+                }
             }
         });
     }
@@ -217,16 +238,34 @@ class HitsInternalNoLock implements HitsInternalMutable {
         if (size > Constants.JAVA_MAX_ARRAY_SIZE) {
             // Fill an indices BigArray with 0 ... size
             long[][] indices = LongBigArrays.newBigArray(size);
-            int i = 0;
+            long hitIndex = 0;
             for (final long[] segment : indices) {
                 for (int displacement = 0; displacement < segment.length; displacement++) {
-                    segment[displacement] = i;
-                    i++;
+                    segment[displacement] = hitIndex;
+                    hitIndex++;
                 }
             }
 
             // Sort the indices using the given HitProperty
-            LongBigArrays.quickSort(indices, p);
+            if (p.getValueType() == PropertyValueString.class) {
+                // Collator.compare() is synchronized and therefore slow.
+                // It is faster to calculate all the collationkeys first, then parallel sort them.
+                CollationKey[][] sortValues = (CollationKey[][])ObjectBigArrays.newBigArray(size);
+                hitIndex = 0;
+                for (final CollationKey[] segment: sortValues) {
+                    for (int displacement = 0; displacement < segment.length; displacement++) {
+                        segment[displacement] = PropertyValue.collator.getCollationKey(p.get(hitIndex).toString());
+                        hitIndex++;
+                    }
+                }
+                LongBigArrays.parallelQuickSort(indices, (a, b) -> {
+                    CollationKey o1 = BigArrays.get(sortValues, a);
+                    CollationKey o2 = BigArrays.get(sortValues, b);
+                    return o1.compareTo(o2);
+                });
+            } else {
+                LongBigArrays.parallelQuickSort(indices, p);
+            }
 
             // Now use the sorted indices to fill a new HitsInternal with the actual hits
             r = HitsInternal.create(size, true, false);

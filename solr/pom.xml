@@ -59,7 +59,6 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-<!--                    <finalName>${project.artifactId}</finalName>-->
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
                 <executions>
@@ -159,7 +158,7 @@
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-core</artifactId>
             <version>${solr.version}</version>
-            <scope>provided</scope><!-- probably not necessary to include this, right? -->
+            <scope>provided</scope>
 
         </dependency>
 
