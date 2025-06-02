@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 
@@ -77,35 +78,16 @@ public class DownloadCache {
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((file == null) ? 0 : file.hashCode());
-            result = prime * result + ((key == null) ? 0 : key.hashCode());
-            result = prime * result + (int) (lastUsed ^ (lastUsed >>> 32));
-            return result;
+        public boolean equals(Object o) {
+            if (!(o instanceof Download download))
+                return false;
+            return lastUsed == download.lastUsed && Objects.equals(key, download.key) && Objects.equals(
+                    file, download.file);
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            Download other = (Download) obj;
-            if (file == null) {
-                if (other.file != null)
-                    return false;
-            } else if (!file.equals(other.file))
-                return false;
-            if (key == null) {
-                if (other.key != null)
-                    return false;
-            } else if (!key.equals(other.key))
-                return false;
-            return lastUsed == other.lastUsed;
+        public int hashCode() {
+            return Objects.hash(key, file, lastUsed);
         }
 
         public long timeSinceLastUsed() {

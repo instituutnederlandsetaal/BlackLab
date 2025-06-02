@@ -808,7 +808,7 @@ public class WebserviceOperations {
         for (AnnotatedField field: metadata.annotatedFields()) {
             afs.add(annotatedField(params, field, false));
         }
-        Collections.sort(afs, ResultAnnotatedField::compare);
+        afs.sort(ResultAnnotatedField::compare);
         logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {

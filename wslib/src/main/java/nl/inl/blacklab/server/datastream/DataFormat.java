@@ -12,14 +12,11 @@ public enum DataFormat {
      * @return the MIME content type
      */
     public String getContentType() {
-        switch (this) {
-        case XML:
-            return "application/xml";
-        case CSV:
-            return "text/csv";
-        default:
-            return "application/json";
-        }
+        return switch (this) {
+            case XML -> "application/xml";
+            case CSV -> "text/csv";
+            default -> "application/json";
+        };
     }
 
     /**

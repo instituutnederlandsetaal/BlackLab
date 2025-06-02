@@ -60,11 +60,10 @@ public class DocValuesUtil {
             List<String> key = null;
             if (dv instanceof NumericDocValues)
                 key = List.of(Long.toString(((NumericDocValues) dv).longValue()));
-            else if (dv instanceof SortedSetDocValues) {
-                if (((SortedSetDocValues) dv).getValueCount() > 0) {
+            else if (dv instanceof SortedSetDocValues ssdv) {
+                if (ssdv.getValueCount() > 0) {
                     // NOTE: we only count the first value stored (for backward compatibility)
                     // TODO: pros/cons of changing this?
-                    SortedSetDocValues ssdv = (SortedSetDocValues) dv;
                     while (true) {
                         long ord = ssdv.nextOrd();
                         if (ord == SortedSetDocValues.NO_MORE_ORDS)

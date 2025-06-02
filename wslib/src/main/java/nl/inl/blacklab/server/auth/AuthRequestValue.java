@@ -81,17 +81,11 @@ public class AuthRequestValue implements AuthMethod {
         }
 
         if (userId == null) {
-            switch (this.type) {
-                case ATTRIBUTE:
-                    userId = request.getAttribute(valueKey).toString();
-                    break;
-                case HEADER:
-                    userId = request.getHeader(valueKey);
-                    break;
-                case PARAMETER:
-                    userId = request.getParameter(valueKey);
-                    break;
-            }
+            userId = switch (this.type) {
+                case ATTRIBUTE -> request.getAttribute(valueKey).toString();
+                case HEADER -> request.getHeader(valueKey);
+                case PARAMETER -> request.getParameter(valueKey);
+            };
         }
 
         return userId;

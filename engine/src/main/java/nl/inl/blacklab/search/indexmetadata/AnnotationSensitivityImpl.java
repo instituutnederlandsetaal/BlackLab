@@ -33,9 +33,8 @@ public class AnnotationSensitivityImpl implements AnnotationSensitivity {
     @Override public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof AnnotationSensitivityImpl))
+        if (!(o instanceof AnnotationSensitivityImpl that))
             return false;
-        AnnotationSensitivityImpl that = (AnnotationSensitivityImpl) o;
         return annotation.equals(that.annotation) && sensitivity == that.sensitivity;
     }
 

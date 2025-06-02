@@ -38,8 +38,7 @@ public class TextPatternSensitive extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternSensitive) {
-            TextPatternSensitive tp = ((TextPatternSensitive) obj);
+        if (obj instanceof TextPatternSensitive tp) {
             return sensitivity == tp.sensitivity &&
                     clause.equals(tp.clause);
         }

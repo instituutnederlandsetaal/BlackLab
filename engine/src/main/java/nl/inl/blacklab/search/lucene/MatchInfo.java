@@ -18,13 +18,13 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         INLINE_TAG;
 
         public String jsonName() {
-            switch (this) {
-            case SPAN: return "span";
-            case RELATION: return "relation";
-            case LIST_OF_RELATIONS: return "list";
-            case INLINE_TAG: return "tag";
-            default: throw new RuntimeException("Unknown match info type: " + this);
-            }
+            return switch (this) {
+                case SPAN -> "span";
+                case RELATION -> "relation";
+                case LIST_OF_RELATIONS -> "list";
+                case INLINE_TAG -> "tag";
+                default -> throw new RuntimeException("Unknown match info type: " + this);
+            };
         }
     }
 

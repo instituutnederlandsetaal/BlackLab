@@ -241,14 +241,10 @@ public class DocIndexerExample extends DocIndexerBase {
             executeDocumentCommand(command, parameters);
         } else {
             // Top-level. Look for documents.
-            switch (command) {
-            case "DOC_START":
-                // Start a document.
+            if (command.equals("DOC_START")) {// Start a document.
                 startDocument();
                 inDoc = true;
-                break;
-
-            default:
+            } else {
                 throw new RuntimeException("Command " + command + " cannot appear at top level");
             }
         }

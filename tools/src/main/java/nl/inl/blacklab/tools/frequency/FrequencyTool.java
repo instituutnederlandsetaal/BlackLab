@@ -52,7 +52,6 @@ import nl.inl.util.Timer;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 
 /**
  * Determine frequency lists over annotation(s) and
@@ -69,13 +68,20 @@ public class FrequencyTool {
         if (!StringUtils.isEmpty(msg)) {
             System.out.println(msg + "\n");
         }
-        exit("Calculate term frequencies over annotation(s) and metadata field(s).\n\n" +
-                "Usage:\n\n  FrequencyTool [--gzip] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]\n\n" +
-                "  --gzip       write directly to .gz file\n" +
-                "  --no-merge   don't merge chunk files, write separate tsvs instead\n" +
-                "  INDEX_DIR    index to generate frequency lists for\n" +
-                "  CONFIG_FILE  YAML file specifying what frequency lists to generate. See README.md.\n" +
-                "  OUTPUT_DIR   where to write TSV output files (defaults to current dir)\n\n");
+        exit("""
+                Calculate term frequencies over annotation(s) and metadata field(s).
+                
+                Usage:
+                
+                  FrequencyTool [--gzip] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]
+                
+                  --gzip       write directly to .gz file
+                  --no-merge   don't merge chunk files, write separate tsvs instead
+                  INDEX_DIR    index to generate frequency lists for
+                  CONFIG_FILE  YAML file specifying what frequency lists to generate. See README.md.
+                  OUTPUT_DIR   where to write TSV output files (defaults to current dir)
+                
+                """);
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex {

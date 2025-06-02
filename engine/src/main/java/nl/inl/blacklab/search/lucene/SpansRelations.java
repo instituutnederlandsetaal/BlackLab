@@ -267,23 +267,13 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         }
 
         // See if it's the correct direction
-        boolean acc;
-        switch (direction) {
-        case ROOT:
-            acc = getRelationInfo().isRoot();
-            break;
-        case FORWARD:
-            acc = getRelationInfo().getSourceStart() <= getRelationInfo().getTargetStart();
-            break;
-        case BACKWARD:
-            acc = getRelationInfo().getSourceStart() >= getRelationInfo().getTargetStart();
-            break;
-        case BOTH_DIRECTIONS:
-            acc = true;
-            break;
-        default:
-            throw new IllegalArgumentException("Unknown filter: " + direction);
-        }
+        boolean acc = switch (direction) {
+            case ROOT -> getRelationInfo().isRoot();
+            case FORWARD -> getRelationInfo().getSourceStart() <= getRelationInfo().getTargetStart();
+            case BACKWARD -> getRelationInfo().getSourceStart() >= getRelationInfo().getTargetStart();
+            case BOTH_DIRECTIONS -> true;
+            default -> throw new IllegalArgumentException("Unknown filter: " + direction);
+        };
         if (acc) {
             // We have a match. Set the start position.
             // (if span mode is SOURCE, we don't need to decode the payload)

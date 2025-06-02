@@ -34,7 +34,7 @@ public final class PropertySerializeUtil {
     }
 
     public static String combineParts(String... parts) {
-        return Arrays.stream(parts).map(part -> escapePart(part)).collect(Collectors.joining(PART_SEPARATOR));
+        return Arrays.stream(parts).map(PropertySerializeUtil::escapePart).collect(Collectors.joining(PART_SEPARATOR));
     }
 
     public static String combineParts(List<String> parts) {

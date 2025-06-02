@@ -43,8 +43,7 @@ public class TextPatternAnyToken extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternAnyToken) {
-            TextPatternAnyToken tp = ((TextPatternAnyToken) obj);
+        if (obj instanceof TextPatternAnyToken tp) {
             return min == tp.min && max == tp.max;
         }
         return false;

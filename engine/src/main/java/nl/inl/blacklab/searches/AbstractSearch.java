@@ -1,5 +1,6 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 
@@ -124,28 +125,15 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + ((queryInfo == null) ? 0 : queryInfo.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (!(o instanceof AbstractSearch<?> that))
+            return false;
+        return Objects.equals(queryInfo, that.queryInfo);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        AbstractSearch<?> other = (AbstractSearch<?>) obj;
-        if (queryInfo == null) {
-            if (other.queryInfo != null)
-                return false;
-        } else if (!queryInfo.equals(other.queryInfo))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hashCode(queryInfo);
     }
 
     protected static String toString(String operation, Object... param) {

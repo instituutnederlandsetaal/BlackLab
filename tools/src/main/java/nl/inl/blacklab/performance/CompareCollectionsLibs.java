@@ -31,18 +31,8 @@ public class CompareCollectionsLibs {
             testHitLists();
         }
     }
-    
-    static class Hit implements Comparable<Hit> {
-        public final int doc;
-        public final int start;
-        public final int end;
-        
-        public Hit(int doc, int start, int end) {
-            this.doc = doc;
-            this.start = start;
-            this.end = end;
-        }
 
+    record Hit(int doc, int start, int end) implements Comparable<Hit> {
         @Override
         public int compareTo(Hit o) {
             int c = Integer.compare(doc, o.doc);

@@ -269,10 +269,9 @@ public class SpanQueryAndNot extends BLSpanQuery {
             // If there's more than one positive clause, remove the super general "match all n-grams" clause.
             // Also replace any "match n-grams" clauses with a more efficient filter on hit length.
             List<BLSpanQuery> rewrClNew = rewrCl.stream().filter(cl -> {
-                if (cl instanceof SpanQueryAnyToken) {
+                if (cl instanceof SpanQueryAnyToken any) {
                     // Any token repetition clause. Filter it out and keep track
                     // of min/max, so we can filter hits on those lengths later if needed.
-                    SpanQueryAnyToken any = (SpanQueryAnyToken) cl;
                     if (any.getMin() > minMax[0])
                         minMax[0] = any.getMin();
                     if (any.getMax() < minMax[1])

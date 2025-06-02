@@ -82,8 +82,8 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
      */
     private static List<SpansInBuckets> bucketizeSameStartEnd(List<BLSpans> subSpans, SpansAndFilterFactory factory) {
         List<SpansInBuckets> bucketized = new ArrayList<>();
-        for (int i = 0; i < subSpans.size(); i++) {
-            bucketized.add(factory.bucketize(ensureSorted(subSpans.get(i))));
+        for (BLSpans subSpan: subSpans) {
+            bucketized.add(factory.bucketize(ensureSorted(subSpan)));
             //bucketized.add(new SpansInBucketsSameStartEnd(ensureSorted(subSpans.get(i))));
         }
         return bucketized;

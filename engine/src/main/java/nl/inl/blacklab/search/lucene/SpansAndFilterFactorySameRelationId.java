@@ -44,12 +44,11 @@ public class SpansAndFilterFactorySameRelationId implements SpansAndFilterFactor
 
             @Override
             public void collect(SpanCollector collector) {
-                if (collector instanceof SpansRelations.SpansInBucketsPayloadAndTermCollector) {
+                if (collector instanceof SpansRelations.SpansInBucketsPayloadAndTermCollector myCollector) {
                     // HACK ALERT! We're trying to find relations/tags and using the separate terms indexing/searching strategy.
                     // This class is being used to combine the tag term (clause 0) with the attribute terms (other clauses)
                     // We only need the payload from the tag term, which contains all the info, whereas the others only contain
                     // the relationId.
-                    SpansRelations.SpansInBucketsPayloadAndTermCollector myCollector = (SpansRelations.SpansInBucketsPayloadAndTermCollector) collector;
                     SpansInBucketsSameStartEnd spans = (SpansInBucketsSameStartEnd)subSpans[0];
                     myCollector.setPayload(spans.payload(indexInBucket[0]));
                     myCollector.setTerm(spans.term(indexInBucket[0]));

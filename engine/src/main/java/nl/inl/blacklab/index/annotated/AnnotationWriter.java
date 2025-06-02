@@ -173,8 +173,7 @@ public class AnnotationWriter {
             if (debugMode) {
                 // In debug mode, ensure that we've seen each relationId.
                 SortedSet<Integer> relIdsSeen = new TreeSet<>();
-                for (int i = 0; i < payloads.size(); i++) {
-                    BytesRef payload = payloads.get(i);
+                for (BytesRef payload: payloads) {
                     assert payload != null;
                     int relationId = relationsStrategy.getPayloadCodec()
                             .readRelationId(new ByteArrayDataInput(payload.bytes));

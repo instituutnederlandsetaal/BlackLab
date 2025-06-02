@@ -67,7 +67,7 @@ public final class BlackLabEngine implements AutoCloseable {
 
     static {
         // On program exit, make sure all the engines (and their threads) have been closed, or we might hang.
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> closeAll()));
+        Runtime.getRuntime().addShutdownHook(new Thread(BlackLabEngine::closeAll));
     }
 
     /**

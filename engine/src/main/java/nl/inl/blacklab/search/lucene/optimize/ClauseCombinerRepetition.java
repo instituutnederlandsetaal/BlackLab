@@ -28,14 +28,12 @@ class ClauseCombinerRepetition extends ClauseCombiner {
         BLSpanQuery leftCl = left;
         int leftMin = 1, leftMax = 1;
         int rightMin = 1, rightMax = 1;
-        if (left instanceof SpanQueryRepetition) {
-            SpanQueryRepetition l = ((SpanQueryRepetition) left);
+        if (left instanceof SpanQueryRepetition l) {
             leftCl = l.getClause();
             leftMin = l.getMinRep();
             leftMax = l.getMaxRep();
         }
-        if (right instanceof SpanQueryRepetition) {
-            SpanQueryRepetition r = ((SpanQueryRepetition) right);
+        if (right instanceof SpanQueryRepetition r) {
             rightMin = r.getMinRep();
             rightMax = r.getMaxRep();
         }

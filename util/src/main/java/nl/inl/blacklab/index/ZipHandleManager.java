@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.zip.ZipFile;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -57,37 +58,16 @@ public class ZipHandleManager {
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + ((key == null) ? 0 : key.hashCode());
-            result = prime * result + (int) (lastUsed ^ (lastUsed >>> 32));
-            result = prime * result + ((zipFile == null) ? 0 : zipFile.hashCode());
-            return result;
+        public boolean equals(Object o) {
+            if (!(o instanceof ZipHandle zipHandle))
+                return false;
+            return lastUsed == zipHandle.lastUsed && Objects.equals(key, zipHandle.key) && Objects.equals(
+                    zipFile, zipHandle.zipFile);
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            ZipHandle other = (ZipHandle) obj;
-            if (key == null) {
-                if (other.key != null)
-                    return false;
-            } else if (!key.equals(other.key))
-                return false;
-            if (lastUsed != other.lastUsed)
-                return false;
-            if (zipFile == null) {
-                if (other.zipFile != null)
-                    return false;
-            } else if (!zipFile.equals(other.zipFile))
-                return false;
-            return true;
+        public int hashCode() {
+            return Objects.hash(key, zipFile, lastUsed);
         }
 
         public long timeSinceLastUsed() {

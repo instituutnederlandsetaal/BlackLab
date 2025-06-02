@@ -7,14 +7,10 @@ import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
-public class MockForwardIndex implements AnnotationForwardIndex {
-
-    /** The unique terms in our index */
-    private final Terms terms;
-
-    public MockForwardIndex(Terms terms) {
-        this.terms = terms;
-    }
+/**
+ * @param terms The unique terms in our index
+ */
+public record MockForwardIndex(Terms terms) implements AnnotationForwardIndex {
 
     @Override
     public void initialize() {
@@ -25,12 +21,6 @@ public class MockForwardIndex implements AnnotationForwardIndex {
     public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
         //
         return null;
-    }
-
-    @Override
-    public Terms terms() {
-        //
-        return terms;
     }
 
     @Override

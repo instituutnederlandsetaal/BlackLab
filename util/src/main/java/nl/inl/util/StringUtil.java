@@ -248,16 +248,12 @@ public final class StringUtil {
 
     public static String ord(int pass) {
         pass++;
-        switch(pass) {
-        case 1:
-            return "1st";
-        case 2:
-            return "2nd";
-        case 3:
-            return "3rd";
-        default:
-            return pass + "th";
-        }
+        return switch (pass) {
+            case 1 -> "1st";
+            case 2 -> "2nd";
+            case 3 -> "3rd";
+            default -> pass + "th";
+        };
     }
 
     private static final String REGEX_REMOVE_UNPRINTABLES = "[" + CHAR_ZERO_WIDTH_SPACE + CHAR_SOFT_HYPHEN + "]";

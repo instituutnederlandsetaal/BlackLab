@@ -204,9 +204,8 @@ public class ResultHits {
 
         int i = 0;
         for (HitProperty p: props) {
-            if (p instanceof HitPropertyHitText) {
+            if (p instanceof HitPropertyHitText prop) {
                 String valueForAnnotation = vals.get(i).toString();
-                HitPropertyHitText prop = ((HitPropertyHitText) p);
                 Annotation annot = prop.getAnnotation();
                 MatchSensitivity sensitivity = prop.getSensitivity();
 

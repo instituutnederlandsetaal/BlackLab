@@ -8,7 +8,6 @@ import java.net.URLConnection;
 import java.text.Collator;
 import java.text.RuleBasedCollator;
 
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

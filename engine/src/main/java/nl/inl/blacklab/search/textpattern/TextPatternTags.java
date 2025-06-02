@@ -24,16 +24,12 @@ public class TextPatternTags extends TextPattern {
         public static Adjust fromString(String s) {
             if (s == null || s.isEmpty())
                 return FULL_TAG;
-            switch (s.toLowerCase()) {
-            case "full_tag":
-                return FULL_TAG;
-            case "leading_edge":
-                return LEADING_EDGE;
-            case "trailing_edge":
-                return TRAILING_EDGE;
-            default:
-                throw new IllegalArgumentException("Unknown adjust value: " + s);
-            }
+            return switch (s.toLowerCase()) {
+                case "full_tag" -> FULL_TAG;
+                case "leading_edge" -> LEADING_EDGE;
+                case "trailing_edge" -> TRAILING_EDGE;
+                default -> throw new IllegalArgumentException("Unknown adjust value: " + s);
+            };
         }
 
         @Override
@@ -72,7 +68,7 @@ public class TextPatternTags extends TextPattern {
         String optDesensitizedElNameRegex = optInsensitive(context, elementNameRegex);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, MatchValue> e : attributes.entrySet()) {
-            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue().getRegex()));
+            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue().regex()));
         }
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.

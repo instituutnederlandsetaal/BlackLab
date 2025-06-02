@@ -81,8 +81,8 @@ public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
      */
     private static List<SpansInBuckets> bucketizeSameStartEnd(List<BLSpans> subSpans) {
         List<SpansInBuckets> bucketized = new ArrayList<>();
-        for (int i = 0; i < subSpans.size(); i++) {
-            bucketized.add(new SpansInBucketsSameStartEnd(ensureSorted(subSpans.get(i))));
+        for (BLSpans subSpan: subSpans) {
+            bucketized.add(new SpansInBucketsSameStartEnd(ensureSorted(subSpan)));
         }
         return bucketized;
     }

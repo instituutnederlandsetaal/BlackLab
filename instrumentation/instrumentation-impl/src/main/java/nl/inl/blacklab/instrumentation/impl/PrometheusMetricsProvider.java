@@ -63,17 +63,14 @@ public class PrometheusMetricsProvider implements MetricsProvider {
             return false;
         }
         Optional<MeterRegistry> aRegistry = Optional.of(registry);
-        if (registry instanceof CompositeMeterRegistry) {
-            CompositeMeterRegistry composite = (CompositeMeterRegistry) registry;
-             aRegistry = composite.getRegistries().stream().filter(r -> r instanceof PrometheusMeterRegistry).findFirst();
+        if (registry instanceof CompositeMeterRegistry composite) {
+            aRegistry = composite.getRegistries().stream().filter(r -> r instanceof PrometheusMeterRegistry).findFirst();
         }
-        if (!aRegistry.isPresent() || !(aRegistry.get() instanceof PrometheusMeterRegistry)) {
+        if (!aRegistry.isPresent() || !(aRegistry.get() instanceof PrometheusMeterRegistry prometheusMeterRegistry)) {
             logger.warn("Can not respond to /metrics without a PrometheusRegistry");
             responseObject.setStatus(HttpServletResponse.SC_NOT_FOUND);
             return true;
         }
-
-        PrometheusMeterRegistry prometheusMeterRegistry = (PrometheusMeterRegistry) aRegistry.get();
 
         try {
             prometheusMeterRegistry.scrape(responseObject.getWriter());

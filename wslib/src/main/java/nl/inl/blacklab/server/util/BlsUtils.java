@@ -21,13 +21,11 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.util.Json;
@@ -257,7 +255,7 @@ public class BlsUtils {
             return ip.matches(wildcardIpExpr);
         }
         return wildcardIpExpr.equals(ip);
-    };
+    }
 
     public static boolean wildcardIpsContain(List<String> addresses, String ip) {
         return addresses.stream().anyMatch(adr -> wildcardIpMatches(adr, ip));

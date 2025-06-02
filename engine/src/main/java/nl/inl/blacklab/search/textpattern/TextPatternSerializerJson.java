@@ -62,16 +62,15 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                                 Map<String, MatchValue> attributes = (Map<String, MatchValue>) value;
                                 for (Map.Entry<String, MatchValue> attr: attributes.entrySet()) {
                                     gen.writeFieldName(attr.getKey());
-                                    if (attr.getValue() instanceof MatchValueIntRange) {
+                                    if (attr.getValue() instanceof MatchValueIntRange range) {
                                         // Int range; serialize as an object with min and max fields
-                                        MatchValueIntRange range = (MatchValueIntRange) attr.getValue();
                                         gen.writeStartObject();
-                                        gen.writeNumberField(KEY_MIN, range.getMin());
-                                        gen.writeNumberField(KEY_MAX, range.getMax());
+                                        gen.writeNumberField(KEY_MIN, range.min());
+                                        gen.writeNumberField(KEY_MAX, range.max());
                                         gen.writeEndObject();
                                     } else {
                                         // Regex; serialize as a simple string (as we have always done)
-                                        gen.writeString(attr.getValue().getRegex());
+                                        gen.writeString(attr.getValue().regex());
                                     }
                                 }
                                 gen.writeEndObject();

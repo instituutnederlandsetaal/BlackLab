@@ -42,8 +42,7 @@ public class TextPatternExpansion extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternExpansion) {
-            TextPatternExpansion tp = ((TextPatternExpansion) obj);
+        if (obj instanceof TextPatternExpansion tp) {
             return clause.equals(tp.clause) && direction == tp.direction && min == tp.min && max == tp.max;
         }
         return false;

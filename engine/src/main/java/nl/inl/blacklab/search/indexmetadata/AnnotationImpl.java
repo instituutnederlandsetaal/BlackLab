@@ -299,9 +299,8 @@ public class AnnotationImpl implements Annotation, Freezable {
     @Override public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof AnnotationImpl))
+        if (!(o instanceof AnnotationImpl that))
             return false;
-        AnnotationImpl that = (AnnotationImpl) o;
         return field.equals(that.field) && name.equals(that.name);
     }
 

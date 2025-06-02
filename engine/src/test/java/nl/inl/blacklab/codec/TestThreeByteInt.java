@@ -13,9 +13,9 @@ public class TestThreeByteInt {
         ByteBuffer buf = ByteBuffer.allocate(3);
         for (int i = ThreeByteInt.MIN_VALUE; i <= ThreeByteInt.MAX_VALUE; i++) {
             buf.rewind();
-            ThreeByteInt.write(b -> buf.put(b), i);
+            ThreeByteInt.write(buf::put, i);
             buf.rewind();
-            int j = ThreeByteInt.read(() -> buf.get());
+            int j = ThreeByteInt.read(buf::get);
             Assert.assertEquals(j, i);
         }
     }

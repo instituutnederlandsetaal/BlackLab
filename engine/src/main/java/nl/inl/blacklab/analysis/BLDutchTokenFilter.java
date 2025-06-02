@@ -1,6 +1,7 @@
 package nl.inl.blacklab.analysis;
 
 import java.io.IOException;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 import org.apache.lucene.analysis.TokenFilter;
@@ -58,28 +59,16 @@ public class BLDutchTokenFilter extends TokenFilter {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((termAtt == null) ? 0 : termAtt.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (!(o instanceof BLDutchTokenFilter that))
+            return false;
+        if (!super.equals(o))
+            return false;
+        return Objects.equals(termAtt, that.termAtt);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        BLDutchTokenFilter other = (BLDutchTokenFilter) obj;
-        if (termAtt == null) {
-            if (other.termAtt != null)
-                return false;
-        } else if (!termAtt.equals(other.termAtt))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), termAtt);
     }
-
 }

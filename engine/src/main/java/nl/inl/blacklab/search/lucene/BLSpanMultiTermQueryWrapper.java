@@ -89,8 +89,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
                     "You can only use BLSpanMultiTermQueryWrapper with a suitable SpanRewriteMethod.");
         BLSpanQuery result = BLSpanQuery.wrap(queryInfo, (SpanQuery) q);
         if (result.getField() == null) {
-            if (result instanceof BLSpanOrQuery) {
-                BLSpanOrQuery or = (BLSpanOrQuery) result;
+            if (result instanceof BLSpanOrQuery or) {
                 or.setHitsAreFixedLength(1);
                 or.setClausesAreSimpleTermsInSameAnnotation(true);
                 or.setField(getRealField());
@@ -195,21 +194,17 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
         // many likely aren't slowed down a lot by using NFAs. Also, people tend to
         // ask common pre- and suffixes more often than rare ones.
         // All in all, it's really a wild guess, but it's all we have right now.
-        switch (numberOfChars) {
-        case 1:
-            return n / 2; // e.g. d.*
-        case 2:
-            return n / 3; // e.g. de.*
-        case 3:
-            return n / 20; // e.g. der.*
-        case 4:
-            return n / 100; // e.g. dera.*
-        default:
-            // 5 or more characters given.
-            // We have no idea how many hits we're likely to get from this.
-            // Let's assume not too many, so we will likely use regular reverse matching.
-            return n > 1_000_000 ? n / 1_000_000 : 1;
-        }
+        return switch (numberOfChars) {
+            case 1 -> n / 2; // e.g. d.*
+            case 2 -> n / 3; // e.g. de.*
+            case 3 -> n / 20; // e.g. der.*
+            case 4 -> n / 100; // e.g. dera.*
+            default ->
+                // 5 or more characters given.
+                // We have no idea how many hits we're likely to get from this.
+                // Let's assume not too many, so we will likely use regular reverse matching.
+                    n > 1_000_000 ? n / 1_000_000 : 1;
+        };
     }
 
     /**

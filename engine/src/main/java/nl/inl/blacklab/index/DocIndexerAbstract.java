@@ -102,16 +102,12 @@ public abstract class DocIndexerAbstract implements DocIndexer {
     }
 
    protected BLFieldType luceneTypeFromIndexMetadataType(FieldType type) {
-       switch (type) {
-       case NUMERIC:
-           throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
-       case TOKENIZED:
-           return getDocWriter().metadataFieldType(true);
-       case UNTOKENIZED:
-           return getDocWriter().metadataFieldType(false);
-       default:
-           throw new IllegalArgumentException("Unknown field type: " + type);
-       }
+       return switch (type) {
+           case NUMERIC -> throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
+           case TOKENIZED -> getDocWriter().metadataFieldType(true);
+           case UNTOKENIZED -> getDocWriter().metadataFieldType(false);
+           default -> throw new IllegalArgumentException("Unknown field type: " + type);
+       };
    }
 
     @Override

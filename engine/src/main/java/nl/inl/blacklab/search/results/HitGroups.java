@@ -112,8 +112,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
-        for (Iterator<Hit> it = hits.iterator(); it.hasNext(); ) {
-            Hit hit = it.next();
+        for (Hit hit: hits) {
             PropertyValue identity = criteria.get(i);
             HitsInternalMutable group = groupLists.get(identity);
             if (group == null) {

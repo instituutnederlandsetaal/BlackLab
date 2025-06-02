@@ -43,20 +43,15 @@ public class ContextualQueryLanguageParser {
         if (annotation == null)
             annotation = defaultAnnotation;
 
-        if (relation.equals("=")) {
-            return contains(index, annotation, term);
-        } else if (relation.equals("any")) {
-            throw new UnsupportedOperationException("any not yet supported");
-        } else if (relation.equals("all")) {
-            throw new UnsupportedOperationException("all not yet supported");
-        } else if (relation.equals("exact")) {
-            throw new UnsupportedOperationException("exact not supported");
-        } else if (relation.equals("<") || relation.equals(">") || relation.equals("<=") || relation.equals(">=")
-                || relation.equals("<>")) {
-            throw new UnsupportedOperationException("Only contains (=) relation is supported!");
-        } else {
-            throw new UnsupportedOperationException("Unknown relation operator: " + relation);
-        }
+        return switch (relation) {
+            case "=" -> contains(index, annotation, term);
+            case "any" -> throw new UnsupportedOperationException("any not yet supported");
+            case "all" -> throw new UnsupportedOperationException("all not yet supported");
+            case "exact" -> throw new UnsupportedOperationException("exact not supported");
+            case "<", ">", "<=", ">=", "<>" ->
+                    throw new UnsupportedOperationException("Only contains (=) relation is supported!");
+            default -> throw new UnsupportedOperationException("Unknown relation operator: " + relation);
+        };
     }
 
     CompleteQuery combineClauses(CompleteQuery a, String op, CompleteQuery b) {

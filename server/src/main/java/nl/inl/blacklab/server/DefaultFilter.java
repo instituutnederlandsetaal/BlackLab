@@ -25,12 +25,10 @@ public class DefaultFilter implements Filter {
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
             throws IOException, ServletException {
 
-        if (request instanceof HttpServletRequest) {
-            HttpServletRequest req = (HttpServletRequest) request;
+        if (request instanceof HttpServletRequest req) {
             String url = req.getPathInfo();
             if (url.equals("/search-test/")) {
-                if (response instanceof HttpServletResponse) {
-                    HttpServletResponse resp = (HttpServletResponse)response;
+                if (response instanceof HttpServletResponse resp) {
                     resp.setStatus(302); // 302 Found
                     resp.setHeader("Location", req.getRequestURL() + "index.html");
                     return;

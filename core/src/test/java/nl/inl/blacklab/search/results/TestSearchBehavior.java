@@ -81,8 +81,9 @@ public class TestSearchBehavior {
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
         h.spansReaders.clear();
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null) {
-            public synchronized void run() { throw exceptionToThrow; };
-            void initialize() {};
+            public synchronized void run() { throw exceptionToThrow; }
+
+            void initialize() {}
         });
 
         Throwable thrownException = null;

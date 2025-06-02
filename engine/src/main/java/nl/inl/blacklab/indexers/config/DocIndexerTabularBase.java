@@ -1,8 +1,6 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.indexers.config.process.ProcessingStepIdentity;

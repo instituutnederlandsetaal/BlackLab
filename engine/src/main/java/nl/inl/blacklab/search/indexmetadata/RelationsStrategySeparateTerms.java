@@ -231,8 +231,8 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         List<String> regexes = searchRegexes(queryInfo.index(), relationTypeRegex, attributes);
         assert regexes.size() == (attributes == null ? 0 : attributes.size()) + 1;
         List<BLSpanQuery> queries = new ArrayList<>();
-        for (int i = 0; i < regexes.size(); i++) {
-            RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regexes.get(i)), RegExp.COMPLEMENT);
+        for (String regex: regexes) {
+            RegexpQuery regexpQuery = new RegexpQuery(new Term(relationFieldName, regex), RegExp.COMPLEMENT);
             queries.add(new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery));
         }
         SpanQueryAnd q =  new SpanQueryAnd(queries);

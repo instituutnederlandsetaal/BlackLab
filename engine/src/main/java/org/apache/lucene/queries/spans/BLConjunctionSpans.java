@@ -205,8 +205,8 @@ public abstract class BLConjunctionSpans extends BLSpans {
 
     @Override
     public RelationInfo getRelationInfo() {
-        for (int i = 0; i < subSpans.length; i++) {
-            RelationInfo info = subSpans[i].getRelationInfo();
+        for (BLSpans subSpan: subSpans) {
+            RelationInfo info = subSpan.getRelationInfo();
             if (info != null)
                 return info;
         }

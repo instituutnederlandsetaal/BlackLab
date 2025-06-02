@@ -15,65 +15,39 @@ public enum AnnotationSensitivities {
     CASE_AND_DIACRITICS_SEPARATE; // all four combinations (sens, insens, case-insens, diac-insens)
 
     public static AnnotationSensitivities fromStringValue(String v) {
-        switch (v.toLowerCase()) {
-        case "default":
-        case "":
-            return DEFAULT;
-        case "legacy-default":
-            return LEGACY_DEFAULT;
-        case "sensitive":
-        case "s":
-            return ONLY_SENSITIVE;
-        case "insensitive":
-        case "i":
-            return ONLY_INSENSITIVE;
-        case "sensitive_insensitive":
-        case "si":
-            return SENSITIVE_AND_INSENSITIVE;
-        case "case_diacritics_separate":
-        case "all":
-            return CASE_AND_DIACRITICS_SEPARATE;
-        default:
-            throw new IllegalArgumentException("Unknown string value for SensitivitySetting: " + v
+        return switch (v.toLowerCase()) {
+            case "default", "" -> DEFAULT;
+            case "legacy-default" -> LEGACY_DEFAULT;
+            case "sensitive", "s" -> ONLY_SENSITIVE;
+            case "insensitive", "i" -> ONLY_INSENSITIVE;
+            case "sensitive_insensitive", "si" -> SENSITIVE_AND_INSENSITIVE;
+            case "case_diacritics_separate", "all" -> CASE_AND_DIACRITICS_SEPARATE;
+            default -> throw new IllegalArgumentException("Unknown string value for SensitivitySetting: " + v
                     + " (should be default|sensitive|insensitive|sensitive_insensitive|case_diacritics_separate or s|i|si|all)");
-        }
+        };
     }
 
     public String getStringValue() {
-        switch (this) {
-        case DEFAULT:
-            return "default";
-        case LEGACY_DEFAULT:
-            return "legacy_default";
-        case ONLY_SENSITIVE:
-            return "sensitive";
-        case ONLY_INSENSITIVE:
-            return "insensitive";
-        case SENSITIVE_AND_INSENSITIVE:
-            return "sensitive_insensitive";
-        case CASE_AND_DIACRITICS_SEPARATE:
-            return "case_diacritics_separate";
-        default:
-            throw new IllegalArgumentException("Unknown AnnotationSensitivities: " + this);
-        }
+        return switch (this) {
+            case DEFAULT -> "default";
+            case LEGACY_DEFAULT -> "legacy_default";
+            case ONLY_SENSITIVE -> "sensitive";
+            case ONLY_INSENSITIVE -> "insensitive";
+            case SENSITIVE_AND_INSENSITIVE -> "sensitive_insensitive";
+            case CASE_AND_DIACRITICS_SEPARATE -> "case_diacritics_separate";
+            default -> throw new IllegalArgumentException("Unknown AnnotationSensitivities: " + this);
+        };
     }
 
     public String stringValueForResponse() {
-        switch (this) {
-        case DEFAULT:
-        case LEGACY_DEFAULT:
-            return getStringValue().toUpperCase();
-        case ONLY_SENSITIVE:
-            return "ONLY_SENSITIVE";
-        case ONLY_INSENSITIVE:
-            return "ONLY_INSENSITIVE";
-        case SENSITIVE_AND_INSENSITIVE:
-            return "SENSITIVE_AND_INSENSITIVE";
-        case CASE_AND_DIACRITICS_SEPARATE:
-            return "CASE_AND_DIACRITICS_SEPARATE";
-        default:
-            throw new IllegalArgumentException("Unknown AnnotationSensitivities: " + this);
-        }
+        return switch (this) {
+            case DEFAULT, LEGACY_DEFAULT -> getStringValue().toUpperCase();
+            case ONLY_SENSITIVE -> "ONLY_SENSITIVE";
+            case ONLY_INSENSITIVE -> "ONLY_INSENSITIVE";
+            case SENSITIVE_AND_INSENSITIVE -> "SENSITIVE_AND_INSENSITIVE";
+            case CASE_AND_DIACRITICS_SEPARATE -> "CASE_AND_DIACRITICS_SEPARATE";
+            default -> throw new IllegalArgumentException("Unknown AnnotationSensitivities: " + this);
+        };
     }
 
     @Override

@@ -60,26 +60,15 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 throw new RuntimeException("Custom docIndexerClass not found: " + docIndexerClass, e);
             }
         } else {
-            switch (config.getFileType()) {
-            case XML:
-                docIndexer = DocIndexerXPath.create(config.getFileTypeOptions());
-                break;
-            case TABULAR:
-                docIndexer = new DocIndexerTabular();
-                break;
-            case TEXT:
-                docIndexer = new DocIndexerPlainText();
-                break;
-            case CHAT:
-                docIndexer = new DocIndexerChat();
-                break;
-            case CONLL_U:
-                docIndexer = new DocIndexerCoNLLU();
-                break;
-            default:
-                throw new InvalidInputFormatConfig(
+            docIndexer = switch (config.getFileType()) {
+                case XML -> DocIndexerXPath.create(config.getFileTypeOptions());
+                case TABULAR -> new DocIndexerTabular();
+                case TEXT -> new DocIndexerPlainText();
+                case CHAT -> new DocIndexerChat();
+                case CONLL_U -> new DocIndexerCoNLLU();
+                default -> throw new InvalidInputFormatConfig(
                         "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
-            }
+            };
         }
 
         docIndexer.setConfigInputFormat(config);

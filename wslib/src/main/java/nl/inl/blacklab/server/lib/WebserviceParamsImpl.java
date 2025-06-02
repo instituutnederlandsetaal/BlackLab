@@ -22,7 +22,6 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -297,9 +296,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         if (isDocsOperation)
             return null; // we're doing per-hits stuff, so sort doesn't apply to docs
         Optional<String> groupBy = getGroupProps();
-        if (groupBy.isEmpty())
-            return null;
-        return new HitGroupSettings(groupBy.get());
+        return groupBy.isEmpty() ? null : new HitGroupSettings(groupBy.get());
     }
 
     @Override

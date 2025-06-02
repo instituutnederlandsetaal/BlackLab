@@ -256,9 +256,8 @@ public class ContextSize {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof ContextSize))
+        if (!(o instanceof ContextSize that))
             return false;
-        ContextSize that = (ContextSize) o;
         return before == that.before && after == that.after && includeHit == that.includeHit
                 && Objects.equals(matchInfoName, that.matchInfoName);
     }

@@ -33,8 +33,7 @@ public class TextPatternDefaultValue extends TextPattern {
         if (parent instanceof TextPatternDefaultValue) {
             // e.g. [...] --> _
             return TextPatternAnyToken.anyNGram();
-        } else if (parent instanceof TextPatternCaptureGroup) {
-            TextPatternCaptureGroup cg = (TextPatternCaptureGroup) parent;
+        } else if (parent instanceof TextPatternCaptureGroup cg) {
             TextPattern clause = replaceWithAnyToken(cg.getClause());
             if (clause != cg.getClause()) { // if default value was replaced...
                 // e.g. [...] --> A:_

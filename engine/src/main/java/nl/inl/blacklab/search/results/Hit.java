@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.results;
 import java.util.Arrays;
 
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * Interface for a hit. Normally, hits are iterated over in a Lucene Spans object,

@@ -59,14 +59,11 @@ public interface ContentStoreBlockCodec {
     }
 
     static ContentStoreBlockCodec fromCode(byte code) {
-        switch (code) {
-        case 0:
-            return ContentStoreBlockCodecUncompressed.INSTANCE;
-        case 1:
-            return ContentStoreBlockCodecZlib.INSTANCE;
-        default:
-            throw new IllegalArgumentException("Unknown block codec with code " + code);
-        }
+        return switch (code) {
+            case 0 -> ContentStoreBlockCodecUncompressed.INSTANCE;
+            case 1 -> ContentStoreBlockCodecZlib.INSTANCE;
+            default -> throw new IllegalArgumentException("Unknown block codec with code " + code);
+        };
     }
 
     Encoder getEncoder();

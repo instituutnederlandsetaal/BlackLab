@@ -56,9 +56,6 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     /** Name of the postings format we've adapted. */
     private final String delegatePostingsFormatName;
 
-    /** How to index relations */
-    private final RelationsStrategy relationsStrategy;
-
     /** Extensions to our PostingsWriter (write the forward index and relation index) */
     private final List<PWPlugin> plugins;
 
@@ -75,7 +72,8 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
-        this.relationsStrategy = RelationsStrategy.forNewIndex();
+        /** How to index relations */
+        RelationsStrategy relationsStrategy = RelationsStrategy.forNewIndex();
 
         plugins = new ArrayList<>();
         try {
@@ -86,7 +84,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                     plugins.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
                 } else {
                     // This is the current version of the relation info plugin, used for new indexes.
-                    plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms)relationsStrategy));
+                    plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms) relationsStrategy));
                 }
             }
         } catch (IOException e) {

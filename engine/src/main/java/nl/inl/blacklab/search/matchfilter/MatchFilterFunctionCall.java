@@ -51,13 +51,11 @@ public class MatchFilterFunctionCall extends MatchFilter {
         MatchInfo span = groupIndex < matchInfo.length ? matchInfo[groupIndex] : null;
         if (span == null)
             return ConstraintValue.undefined();
-        switch (functionName) {
-        case "start":
-            return ConstraintValue.get(span.getSpanStart());
-        case "end":
-            return ConstraintValue.get(span.getSpanEnd());
-        }
-        throw new UnsupportedOperationException("Unknown function: " + functionName);
+        return switch (functionName) {
+            case "start" -> ConstraintValue.get(span.getSpanStart());
+            case "end" -> ConstraintValue.get(span.getSpanEnd());
+            default -> throw new UnsupportedOperationException("Unknown function: " + functionName);
+        };
     }
 
     @Override

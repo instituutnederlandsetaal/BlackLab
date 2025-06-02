@@ -108,12 +108,11 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
                 in.getMatchInfo(matchInfo);
                 startAdjusted = in.startPosition();
                 endAdjusted = in.endPosition();
-                for (int i = 0; i < matchInfo.length; i++) {
-                    MatchInfo info = matchInfo[i];
+                for (MatchInfo info: matchInfo) {
                     if (info != null && info.getType() == MatchInfo.Type.RELATION) {
 
                         // skip relations to other fields (parallel corpora)
-                        RelationInfo rel = (RelationInfo)info;
+                        RelationInfo rel = (RelationInfo) info;
                         if (rel.isCrossFieldRelation())
                             continue;
 

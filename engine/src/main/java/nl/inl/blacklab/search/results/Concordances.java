@@ -109,8 +109,8 @@ public class Concordances {
         // Make all the concordances
         List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
         int i = 0;
-        for (Iterator<Hit> it = hits.iterator(); it.hasNext(); ) {
-            conc.put(it.next(), newConcs.get(i));
+        for (Hit hit: hits) {
+            conc.put(hit, newConcs.get(i));
             ++i;
         }
     }
@@ -129,8 +129,7 @@ public class Concordances {
         // Group hits per document
         MutableIntObjectMap<HitsInternalMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();
-        for (Iterator<Hit> it = hits.iterator(); it.hasNext(); ) {
-            Hit key = it.next();
+        for (Hit key: hits) {
             HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
                 hitsInDoc = HitsInternal.create(-1, totalHits, false);

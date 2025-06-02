@@ -56,9 +56,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (!(o instanceof TermInIndex))
+            if (!(o instanceof TermInIndex that))
                 return false;
-            TermInIndex that = (TermInIndex) o;
             return globalTermId == that.globalTermId;
         }
 
@@ -100,7 +99,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": determineSort and invert")) {
                 sortedInverted = List.of(true, false).parallelStream()
                         .map(sensitive -> {
-                            Comparator<TermInIndex> cmp = sensitive ? CMP_TERM_SENSITIVE : CMP_TERM_INSENSITIVE;;
+                            Comparator<TermInIndex> cmp = sensitive ? CMP_TERM_SENSITIVE : CMP_TERM_INSENSITIVE;
 
                             // Get a sorted term index array (sort position > term id)
                             // Note that multiple terms may be equal according to the comparator,
@@ -120,16 +119,16 @@ public class TermsIntegrated extends TermsReaderAbstract {
             if (DEBUGGING && DEBUG_VALIDATE_SORT) {
                 // Make sure all sort positions are in the arrays
                 boolean[] found = new boolean[termId2SensitivePosition.length];
-                for (int i = 0; i < termId2SensitivePosition.length; i++) {
-                    assert termId2SensitivePosition[i] >= 0;
-                    found[termId2SensitivePosition[i]] = true;
+                for (int k: termId2SensitivePosition) {
+                    assert k >= 0;
+                    found[k] = true;
                 }
-                for (int i = 0; i < found.length; i++)
-                    assert found[i];
+                for (boolean b: found)
+                    assert b;
                 // Insensitive doesn't have all sort positions because some terms are lumped together,
                 // creating gaps, but they still have to be non-negative.
-                for (int i = 0; i < termId2InsensitivePosition.length; i++) {
-                    assert termId2InsensitivePosition[i] >= 0;
+                for (int j: termId2InsensitivePosition) {
+                    assert j >= 0;
                 }
             }
 

@@ -263,38 +263,27 @@ public class HookableSaxHandler extends DefaultHandler {
 
     /**
      * Evaluates the condition and calls the handler if if matches
+     *
+     * @param expression                The path to check for
+     * @param handler                   The handler for this hook
+     * @param callHandlerForDescendants Whether or not to call the handler for all descendants of the matched element
      */
-    private static class SaxParserHook {
-        /** The path to check for */
-        private final SaxPathExpressionChecker expression;
-
-        /** The handler for this hook */
-        private final ElementHandler handler;
-
-        /**
-         * Whether or not to call the handler for all descendants of the matched element
-         */
-        private final boolean callHandlerForDescendants;
-
+    private record SaxParserHook(SaxPathExpressionChecker expression, ElementHandler handler,
+                                 boolean callHandlerForDescendants) {
         /**
          * Constructs the object.
-         * 
-         * @param expression the expression to check for
-         * @param handler the handler to call for matches
+         *
+         * @param expression                the expression to check for
+         * @param handler                   the handler to call for matches
          * @param callHandlerForDescendants whether or not to call handler for all
-         *            descendants of a matched element
+         *                                  descendants of a matched element
          */
-        public SaxParserHook(SaxPathExpressionChecker expression, ElementHandler handler,
-                boolean callHandlerForDescendants) {
-            super();
-            this.expression = expression;
-            this.handler = handler;
-            this.callHandlerForDescendants = callHandlerForDescendants;
+        private SaxParserHook {
         }
 
         /**
          * Should we call the handler for our current place in the document?
-         * 
+         *
          * @return true iff we should
          */
         private boolean shouldCallHandler() {
@@ -306,10 +295,10 @@ public class HookableSaxHandler extends DefaultHandler {
         /**
          * Open tag: pass on to expression checked, and call handler if the element
          * matches or any of the attributes match.
-         * 
-         * @param uri namespace uri
-         * @param localName element local name
-         * @param qName element qualified name
+         *
+         * @param uri        namespace uri
+         * @param localName  element local name
+         * @param qName      element qualified name
          * @param attributes element attributes
          */
         public void startElement(String uri, String localName, String qName, Attributes attributes) {
@@ -323,10 +312,10 @@ public class HookableSaxHandler extends DefaultHandler {
         /**
          * Close tag: call handler if the element matched, and pass the tag on to the
          * expression checker.
-         * 
-         * @param uri namespace uri
+         *
+         * @param uri       namespace uri
          * @param localName element local name
-         * @param qName element qualified name
+         * @param qName     element qualified name
          */
         public void endElement(String uri, String localName, String qName) {
             if (shouldCallHandler()) {
@@ -338,9 +327,9 @@ public class HookableSaxHandler extends DefaultHandler {
 
         /**
          * Character content: call handler if the expression is currently matched.
-         * 
-         * @param ch character buffer
-         * @param start start of content in buffer
+         *
+         * @param ch     character buffer
+         * @param start  start of content in buffer
          * @param length length of content in buffer
          */
         public void characters(char[] ch, int start, int length) {

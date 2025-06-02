@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -124,9 +123,8 @@ public class Kwics {
                         (k) -> new int[] { mi.getSpanStart(), mi.getSpanEnd() });
             }
         }
-        if (mi instanceof RelationInfo && !isTag) {
+        if (mi instanceof RelationInfo rmi && !isTag) {
             // Relation targets (not just sources) should influence field context
-            RelationInfo rmi = (RelationInfo) mi;
             String targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
             if (!targetField.equals(defaultField)) { // foreign KWICs only
                 afisPerField.computeIfAbsent(targetField, k ->

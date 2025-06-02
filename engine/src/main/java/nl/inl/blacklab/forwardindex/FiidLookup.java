@@ -1,9 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
-import org.apache.lucene.index.IndexReader;
-
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Class for looking up forward index id, using DocValues or stored fields.

@@ -188,9 +188,9 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             // For separate terms: always assign relationId even if no attributes, because it is needed for matching
             boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
             BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);
-            relationsStrategy.indexRelationTerms(fullType, attributes, payload, (String valueToIndex, BytesRef payloadThisToken) -> {
-                annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken);
-            });
+            relationsStrategy.indexRelationTerms(fullType, attributes, payload,
+                    (String valueToIndex, BytesRef payloadThisToken) ->
+                            annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken));
         }
     }
 

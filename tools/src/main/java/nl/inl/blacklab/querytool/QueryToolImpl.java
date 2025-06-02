@@ -179,7 +179,7 @@ public class QueryToolImpl {
         Config config = Config.fromCommandline(args, output); // configure Output and get Config object
         if (config.getError() != null) {
             output.error(config.getError());
-            output.usage();
+            Output.usage();
             return;
         }
 
@@ -429,24 +429,12 @@ public class QueryToolImpl {
             stripXML = parseBoolean(arguments);
             break;
         case "sensitive":
-            MatchSensitivity sensitivity;
-            switch (arguments) {
-            case "on":
-            case "yes":
-            case "true":
-                sensitivity = MatchSensitivity.SENSITIVE;
-                break;
-            case "case":
-                sensitivity = MatchSensitivity.DIACRITICS_INSENSITIVE;
-                break;
-            case "diac":
-            case "diacritics":
-                sensitivity = MatchSensitivity.CASE_INSENSITIVE;
-                break;
-            default:
-                sensitivity = MatchSensitivity.INSENSITIVE;
-                break;
-            }
+            MatchSensitivity sensitivity = switch (arguments) {
+                case "on", "yes", "true" -> MatchSensitivity.SENSITIVE;
+                case "case" -> MatchSensitivity.DIACRITICS_INSENSITIVE;
+                case "diac", "diacritics" -> MatchSensitivity.CASE_INSENSITIVE;
+                default -> MatchSensitivity.INSENSITIVE;
+            };
             index.setDefaultMatchSensitivity(sensitivity);
             output.line("Search defaults to "
                     + (sensitivity.isCaseSensitive() ? "case-sensitive" : "case-insensitive") + " and "
@@ -723,18 +711,11 @@ public class QueryToolImpl {
 
             if (determineTotalNumberOfHits) {
                 // Clamp page number of total number of hits
-                long totalResults;
-                switch (showSetting) {
-                case COLLOC:
-                    totalResults = collocations.size();
-                    break;
-                case GROUPS:
-                    totalResults = groups.size();
-                    break;
-                default:
-                    totalResults = hits.size();
-                    break;
-                }
+                long totalResults = switch (showSetting) {
+                    case COLLOC -> collocations.size();
+                    case GROUPS -> groups.size();
+                    default -> hits.size();
+                };
 
                 long totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
                 if (pageNumber < 0)

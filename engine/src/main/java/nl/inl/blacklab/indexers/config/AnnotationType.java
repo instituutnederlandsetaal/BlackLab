@@ -6,15 +6,12 @@ public enum AnnotationType {
     RELATION;
 
     public static AnnotationType fromStringValue(String t) {
-        switch (t.toLowerCase()) {
-        case "token":
-            return TOKEN;
-        case "span":
-            return SPAN;
-        case "relation":
-            return RELATION;
-        }
-        throw new IllegalArgumentException("Unknown standoff annotation type: " + t);
+        return switch (t.toLowerCase()) {
+            case "token" -> TOKEN;
+            case "span" -> SPAN;
+            case "relation" -> RELATION;
+            default -> throw new IllegalArgumentException("Unknown standoff annotation type: " + t);
+        };
     }
 
     @Override

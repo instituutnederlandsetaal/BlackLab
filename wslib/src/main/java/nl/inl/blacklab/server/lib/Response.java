@@ -6,7 +6,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 
 import java.util.Map;
@@ -59,8 +58,7 @@ public class Response {
     // Highest internal error code so far: 32
 
     public static int internalError(ResponseStreamer rs, Exception e, boolean debugMode, String code) {
-        if (e.getCause() instanceof BlsException) {
-            BlsException cause = (BlsException) e.getCause();
+        if (e.getCause() instanceof BlsException cause) {
             logger.warn("BLACKLAB EXCEPTION " + cause.getBlsErrorCode(), e);
             return Response.error(rs, cause.getBlsErrorCode(), cause.getMessage(), cause.getInfo(), cause.getHttpStatusCode());
         }

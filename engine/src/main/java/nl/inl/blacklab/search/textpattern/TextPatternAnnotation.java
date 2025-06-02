@@ -43,8 +43,7 @@ public class TextPatternAnnotation extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternAnnotation) {
-            TextPatternAnnotation tp = ((TextPatternAnnotation) obj);
+        if (obj instanceof TextPatternAnnotation tp) {
             return clause.equals(tp.clause) && annotationName.equals(tp.annotationName);
         }
         return false;

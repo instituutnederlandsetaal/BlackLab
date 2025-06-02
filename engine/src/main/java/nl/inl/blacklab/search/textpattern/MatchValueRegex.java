@@ -4,16 +4,7 @@ import java.util.Objects;
 
 import nl.inl.util.StringUtil;
 
-class MatchValueRegex implements MatchValue {
-    private final String regex;
-
-    public MatchValueRegex(String regex) {
-        this.regex = regex;
-    }
-
-    public String getRegex() {
-        return regex;
-    }
+record MatchValueRegex(String regex) implements MatchValue {
 
     public String getBcql() {
         return "'" + regex.replaceAll("[\\\\']", "\\\\$0") + "'";
@@ -21,7 +12,7 @@ class MatchValueRegex implements MatchValue {
 
     @Override
     public TextPatternTerm textPattern() {
-        return new TextPatternRegex(getRegex());
+        return new TextPatternRegex(regex());
     }
 
     @Override
@@ -32,11 +23,6 @@ class MatchValueRegex implements MatchValue {
             return false;
         MatchValueRegex that = (MatchValueRegex) o;
         return Objects.equals(regex, that.regex);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(regex);
     }
 
     @Override

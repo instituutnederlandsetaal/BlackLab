@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.QueryExecutionContext;
@@ -243,8 +244,7 @@ public class QueryExtensions {
             if (i >= funcInfo.argTypes.size())
                 continue; // either vararg or too many param (will be caught later)
             ArgType type = funcInfo.getExpectedParameterType(i);
-            switch (type) {
-            case STRING:
+            if (Objects.requireNonNull(type) == ArgType.STRING) {
                 if (arg instanceof TextPatternRegex) {
                     // Interpret as regular string, not as a query
                     // kind of a hack, but should work
@@ -258,7 +258,6 @@ public class QueryExtensions {
                     // Interpret as regular string, not as a query
                     newArgs.set(i, ((TextPatternTerm) arg).getValue());
                 }
-                break;
             }
         }
         return newArgs;
@@ -306,14 +305,11 @@ public class QueryExtensions {
 
             // Check argument type
             ArgType expectedType = funcInfo.getExpectedParameterType(i);
-            boolean wrongType = true;
-            switch (expectedType) {
-            case QUERY:
-                wrongType = !(newArgs.get(i) instanceof BLSpanQuery);
-                break;
-            case STRING:
-                wrongType = !(newArgs.get(i) instanceof String);
-            }
+            boolean wrongType = switch (expectedType) {
+                case QUERY -> !(newArgs.get(i) instanceof BLSpanQuery);
+                case STRING -> !(newArgs.get(i) instanceof String);
+                default -> true;
+            };
             if (wrongType)
                 throw new BlackLabRuntimeException("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
                         + ", got " + ArgType.typeOf(newArgs.get(i)));

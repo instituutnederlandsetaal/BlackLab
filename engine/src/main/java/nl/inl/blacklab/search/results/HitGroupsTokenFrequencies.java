@@ -116,32 +116,15 @@ public class HitGroupsTokenFrequencies {
         }
     }
 
-    /** Info about doc and hit properties while grouping. */
-    private static final class PropInfo {
-
+    /**
+     * Info about doc and hit properties while grouping.
+     */
+    private record PropInfo(boolean docProperty, int indexInList) {
         public static PropInfo doc(int index) {
             return new PropInfo(true, index);
         }
-
         public static PropInfo hit(int index) {
             return new PropInfo(false, index);
-        }
-
-        private final boolean docProperty;
-
-        private final int indexInList;
-
-        public boolean isDocProperty() {
-            return docProperty;
-        }
-
-        public int getIndexInList() {
-            return indexInList;
-        }
-
-        private PropInfo(boolean docProperty, int indexInList) {
-            this.docProperty = docProperty;
-            this.indexInList = indexInList;
         }
     }
 
@@ -463,8 +446,8 @@ public class HitGroupsTokenFrequencies {
                     // Taking care to preserve the order of the resultant PropertyValues with the order of the input HitProperties
                     int indexInOutput = 0;
                     for (PropInfo p : originalOrderOfUnpackedProperties) {
-                        final int indexInInput = p.getIndexInList();
-                        if (p.isDocProperty()) {
+                        final int indexInInput = p.indexInList();
+                        if (p.docProperty()) {
                             // is docprop, add PropertyValue as-is
                             groupIdAsList[indexInOutput++] = metadataValues[indexInInput];
                         } else {

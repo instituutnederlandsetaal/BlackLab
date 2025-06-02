@@ -57,35 +57,21 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     /**
      * A stretch of words from the (surroundings of) the matched text.
+     *
+     * @param fromHitEnd   Do we start counting from the end of the hit instead of the start?
+     *                     This determines what token corresponds to index 0: if false, the first
+     *                     token of the hit. If true, the first token AFTER the hit.
+     * @param direction    Direction: 1 = forward, -1 = backward.
+     * @param first        What's the first token we're interested in?
+     * @param last         What's the last token we're interested in?
+     * @param confineToHit Can we only take context from the hit itself, or outside of it as well?
      */
-    private static class ContextPart {
+    private record ContextPart(boolean fromHitEnd, int direction, int first, int last, boolean confineToHit) {
 
-        /** Do we start counting from the end of the hit instead of the start?
-         * This determines what token corresponds to index 0: if false, the first
-         * token of the hit. If true, the first token AFTER the hit. */
-        final boolean fromHitEnd;
-
-        /** Direction: 1 = forward, -1 = backward. */
-        final int direction;
-
-        /** What's the first token we're interested in? */
-        final int first;
-
-        /** What's the last token we're interested in? */
-        final int last;
-
-        /** Can we only take context from the hit itself, or outside of it as well? */
-        final boolean confineToHit;
-
-        private ContextPart(boolean fromHitEnd, int direction, int first, int last, boolean confineToHit) {
+        private ContextPart {
             assert Math.abs(direction) == 1;
             assert first >= 0;
             assert last >= 0;
-            this.fromHitEnd = fromHitEnd;
-            this.direction = direction;
-            this.first = first;
-            this.last = last;
-            this.confineToHit = confineToHit;
         }
 
         private static ContextPart forString(String param, ContextSize defaultContextSize) {
@@ -152,30 +138,15 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             return "" + anchor + from + "-" + (to == -1 ? "" : to);
         }
 
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (!(o instanceof ContextPart))
-                return false;
-            ContextPart that = (ContextPart) o;
-            return fromHitEnd == that.fromHitEnd && direction == that.direction && first == that.first
-                    && last == that.last
-                    && confineToHit == that.confineToHit;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(fromHitEnd, direction, first, last, confineToHit);
-        }
-
-        /** When we get the fragment of context, do we compare it from the start to the end (normal, false) or the
-         *  end to the start (in reverse, true)?
+        /**
+         * When we get the fragment of context, do we compare it from the start to the end (normal, false) or the
+         * end to the start (in reverse, true)?
+         *
          * @return true if we need to start comparing from the end of the context fragment, false otherwise
          */
         public boolean compareInReverse() {
-            return direction == 1 ? first > last : first < last;
-        }
+                return direction == 1 ? first > last : first < last;
+            }
     }
 
     /** Description of the context to use (starting point, direction, start/end index) */

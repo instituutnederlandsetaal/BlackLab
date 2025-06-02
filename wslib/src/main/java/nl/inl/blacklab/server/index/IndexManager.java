@@ -447,8 +447,8 @@ public class IndexManager {
 
             // Sort own indexes before other's
             if (ownPrefix != null) {
-                boolean isOwn1 = o1.getUserId() == null ? false : o1.getUserId().startsWith(ownPrefix);
-                boolean isOwn2 = o2.getUserId() == null ? false : o2.getUserId().startsWith(ownPrefix);
+                boolean isOwn1 = o1.getUserId() != null && o1.getUserId().startsWith(ownPrefix);
+                boolean isOwn2 = o2.getUserId() != null && o2.getUserId().startsWith(ownPrefix);
                 if (isOwn1 != isOwn2)
                     return isOwn1 ? -1 : 1;
             }
@@ -609,7 +609,7 @@ public class IndexManager {
      * to the {@link IndexManager#indices} list. Indices that are already loaded are
      * skipped.
      *
-     * @param userId the user for which to load indices
+     * @param user the user for which to load indices
      */
     private synchronized void loadUserIndices(User user) {
         File userDir = getUserCollectionDir(user);

@@ -45,32 +45,15 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
     public static final int INITIAL_CAPACITY_PER_WORD_COLLECTIONS = 3;
 
-    /** How we collect inline tags and (optionally) their token ids (for standoff annotations) */
-    private static class InlineInfo implements Comparable<InlineInfo> {
-
-        private final NodeInfo nodeInfo;
-
-        private final String tokenId;
-
-        private final ConfigInlineTag config;
-
-        public InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config) {
-            this.nodeInfo = nodeInfo;
-            this.tokenId = tokenId;
-            this.config = config;
-        }
+    /**
+     * How we collect inline tags and (optionally) their token ids (for standoff annotations)
+     */
+    private record InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config)
+        implements Comparable<InlineInfo> {
 
         @Override
         public int compareTo(InlineInfo o) {
             return nodeInfo.compareOrder(o.nodeInfo);
-        }
-
-        public NodeInfo getNodeInfo() {
-            return nodeInfo;
-        }
-
-        public String getTokenId() {
-            return tokenId;
         }
 
         public int compareOrder(NodeInfo word) {
@@ -349,7 +332,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
         // Check if this word is within the inline, if so this word will always be the first word in
         // the inline because we only process each inline once.
-        NodeInfo nodeInfo = currentInline.getNodeInfo();
+        NodeInfo nodeInfo = currentInline.nodeInfo();
         boolean isDescendant = false;
         NodeInfo next;
         try (AxisIterator descendants = nodeInfo.iterateAxis(Axis.DESCENDANT.getAxisNumber())) {
@@ -409,8 +392,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             firstWordOutsideInline = position.start();
         }
 
-        if (currentInline.getTokenId() != null)
-            tokenPositionsMap.put(currentInline.getTokenId(), Span.between(position.start(), firstWordOutsideInline));
+        if (currentInline.tokenId() != null)
+            tokenPositionsMap.put(currentInline.tokenId(), Span.between(position.start(), firstWordOutsideInline));
     }
 
 

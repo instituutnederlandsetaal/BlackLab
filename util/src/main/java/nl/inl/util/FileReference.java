@@ -76,7 +76,7 @@ public interface FileReference {
     /**
      * If we know this is a small file, read in into memory.
      *
-     * @param fileSizeInBytes threshold for reading into memory
+     * @param maxFileSizeBytes threshold for reading into memory
      * @return this or a new FileReference
      */
     default FileReference inMemoryIfSmallerThan(int maxFileSizeBytes) {
