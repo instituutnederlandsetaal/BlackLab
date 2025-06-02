@@ -110,8 +110,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
             MatchInfo group = hit.matchInfo()[groupIndex];
             
-            if (relNameInList != null && group instanceof RelationListInfo) {
-                RelationListInfo relList = (RelationListInfo) group;
+            if (relNameInList != null && group instanceof RelationListInfo relList) {
                 if (relNameIsFullRelType) {
                     // Look for the first full-type match in the list
                     for (RelationInfo namedGroup: relList.getRelations()) {

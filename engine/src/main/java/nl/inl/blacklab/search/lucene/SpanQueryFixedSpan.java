@@ -29,7 +29,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * can get the entire sentence around the span, and can fetch relations
  * within the sentence. There is currently no CQL syntax for this operation.
  */
-public class SpanQueryFixedSpan extends BLSpanQuery { ;
+public class SpanQueryFixedSpan extends BLSpanQuery {
 
     public SpanGuarantees createGuarantees() {
         return new SpanGuaranteesAdapter(SpanGuarantees.TERM) {
@@ -264,11 +264,6 @@ public class SpanQueryFixedSpan extends BLSpanQuery { ;
     @Override
     public BLSpanQuery inverted() {
         return new SpanQueryAnyToken(queryInfo, 1, 1, luceneField);
-    }
-
-    @Override
-    public boolean canMakeNfa() {
-        return false;
     }
 
     @Override

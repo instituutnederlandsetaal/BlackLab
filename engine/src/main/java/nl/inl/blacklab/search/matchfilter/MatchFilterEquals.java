@@ -95,9 +95,7 @@ public class MatchFilterEquals extends MatchFilter {
             return ((MatchFilterTokenAnnotation) x).matchTokenString(termString, sensitivity);
         }
 
-        if (x instanceof MatchFilterTokenAnnotation && y instanceof MatchFilterTokenAnnotation) {
-            MatchFilterTokenAnnotation xtp = ((MatchFilterTokenAnnotation) x);
-            MatchFilterTokenAnnotation ytp = ((MatchFilterTokenAnnotation) y);
+        if (x instanceof MatchFilterTokenAnnotation xtp && y instanceof MatchFilterTokenAnnotation ytp) {
             if (xtp.getAnnotationName().equals(ytp.getAnnotationName())) {
                 // Expression of the form a.word = b.word;
                 // This can be done more efficiently without string comparisons

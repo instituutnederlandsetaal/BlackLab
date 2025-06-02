@@ -861,7 +861,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public String getIndexMetadataAsString() {
         try {
-            return metadataDocument.getMetadataJson(index.reader(), metadataDocId());
+            return MetadataDocument.getMetadataJson(index.reader(), metadataDocId());
         } catch (IOException e) {
             throw BlackLabRuntimeException.wrap(e);
         }

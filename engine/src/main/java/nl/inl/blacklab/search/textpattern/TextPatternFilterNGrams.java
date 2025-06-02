@@ -41,8 +41,7 @@ public class TextPatternFilterNGrams extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternFilterNGrams) {
-            TextPatternFilterNGrams tp = ((TextPatternFilterNGrams) obj);
+        if (obj instanceof TextPatternFilterNGrams tp) {
             return clause.equals(tp.clause) && operation == tp.operation && min == tp.min && max == tp.max;
         }
         return false;

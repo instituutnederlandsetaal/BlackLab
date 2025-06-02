@@ -51,11 +51,6 @@ public class QueryParamsJson extends QueryParamsAbstract {
     }
 
     @Override
-    public String getCorpusName() {
-        return corpusName;
-    }
-
-    @Override
     protected boolean has(WebserviceParameter par) {
         return params.containsKey(par);
     }

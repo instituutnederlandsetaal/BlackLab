@@ -16,7 +16,7 @@ public interface MatchValue {
     /**
      * Return the Lucene regex.
      */
-    String getRegex();
+    String regex();
 
     /**
      * Return the BCQL syntax, for serialization.

@@ -40,8 +40,7 @@ public class TextPatternFuzzy extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternFuzzy) {
-            TextPatternFuzzy tp = ((TextPatternFuzzy) obj);
+        if (obj instanceof TextPatternFuzzy tp) {
             return value.equals(tp.value) && maxEdits == tp.maxEdits && prefixLength == tp.prefixLength;
         }
         return false;

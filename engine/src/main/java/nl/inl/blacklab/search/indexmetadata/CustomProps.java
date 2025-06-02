@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.util.Collections;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Interface for getting custom metadata properties (not used by BlackLab itself)

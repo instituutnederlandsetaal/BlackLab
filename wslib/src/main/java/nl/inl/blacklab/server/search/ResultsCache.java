@@ -65,11 +65,6 @@ public class ResultsCache implements SearchCache {
         }
 
         @Override
-        public boolean threwException() {
-            return false;
-        }
-
-        @Override
         public boolean cancel(boolean mayInterruptIfRunning) {
             return false;
         }
@@ -101,29 +96,14 @@ public class ResultsCache implements SearchCache {
 
     }
 
-    private static final class SearchInfoWrapper {
-        private final Search<? extends SearchResult>  search;
-        private final String requestId;
-
-        public SearchInfoWrapper(Search<? extends SearchResult> search, String requestId) {
-            this.search = search;
-            this.requestId = requestId;
-        }
-
-        public Search<? extends SearchResult> getSearch() {
-            return search;
-        }
-
-        public String getRequestId() {
-            return requestId;
-        }
+    private record SearchInfoWrapper(Search<? extends SearchResult> search, String requestId) {
 
         @Override
         public boolean equals(Object o) {
             if (this == o) {
                 return true;
             }
-            if (o == null || getClass() != o.getClass()){
+            if (o == null || getClass() != o.getClass()) {
                 return false;
             }
             SearchInfoWrapper that = (SearchInfoWrapper) o;
@@ -140,9 +120,9 @@ public class ResultsCache implements SearchCache {
         this.threadPool = threadPool;
 
         CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = searchWrapper -> {
-            final String requestId = searchWrapper.getRequestId();
+            final String requestId = searchWrapper.requestId();
             ThreadContext.put("requestId", requestId);
-            Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.getSearch(), (search) -> ResultsCache.this.threadPool.submit(() -> {
+            Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.search(), (search) -> ResultsCache.this.threadPool.submit(() -> {
                 ThreadContext.put("requestId", requestId);
                 final long startTime = System.currentTimeMillis();
                 SearchResult results = search.executeInternal(null);
@@ -154,7 +134,7 @@ public class ResultsCache implements SearchCache {
                 logger.warn("Internal search time is: {}", searchResult.timeUserWaitedMs());
                 return searchResult.getResults();
             } finally {
-                runningJobs.remove(searchWrapper.getSearch());
+                runningJobs.remove(searchWrapper.search());
             }
         };
 
@@ -191,7 +171,7 @@ public class ResultsCache implements SearchCache {
     @Override
     public void removeSearchesForIndex(BlackLabIndex index) {
         logger.info("Removing searches for index: {}", index.name());
-        searchCache.asMap().keySet().removeIf(s -> s.getSearch().queryInfo().index() == index);
+        searchCache.asMap().keySet().removeIf(s -> s.search().queryInfo().index() == index);
     }
 
     @Override
@@ -204,13 +184,4 @@ public class ResultsCache implements SearchCache {
         clear(true);
     }
 
-    @Override
-    public Map<String, Object> getStatus() {
-        return null;
-    }
-
-    @Override
-    public List<Map<String, Object>> getContents(boolean includeDebugInfo) {
-        return null;
-    }
 }

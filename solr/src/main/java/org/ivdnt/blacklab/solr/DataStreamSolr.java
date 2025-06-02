@@ -66,9 +66,7 @@ public class DataStreamSolr implements DataStream {
             ensureMap();
             endStructure();
             NamedList<Object> nl = (NamedList<Object>)v;
-            nl.forEach((name, value) -> {
-                rsp.add(name, value);
-            });
+            nl.forEach(rsp::add);
         }
         return this;
     }

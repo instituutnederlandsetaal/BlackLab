@@ -104,11 +104,6 @@ public class SpanQueryNoHits extends BLSpanQuery {
     }
 
     @Override
-    public boolean canMakeNfa() {
-        return false;
-    }
-
-    @Override
     public long reverseMatchingCost(IndexReader reader) {
         return 0; // no hits, no cost
     }

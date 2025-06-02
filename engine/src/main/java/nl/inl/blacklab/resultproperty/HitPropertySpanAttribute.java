@@ -119,8 +119,7 @@ public class HitPropertySpanAttribute extends HitProperty {
             return PropertyValueString.NO_VALUE;
 
         String value;
-        if (relNameInList != null && matchInfo instanceof RelationListInfo) {
-            RelationListInfo relList = (RelationListInfo) matchInfo;
+        if (relNameInList != null && matchInfo instanceof RelationListInfo relList) {
             StringBuilder b = new StringBuilder();
             boolean found = false;
             if (relNameIsFullRelType) {
@@ -148,9 +147,8 @@ public class HitPropertySpanAttribute extends HitProperty {
                 return PropertyValueString.NO_VALUE;
             value = b.toString();
         } else {
-            if (!(matchInfo instanceof RelationInfo))
+            if (!(matchInfo instanceof RelationInfo span))
                 return PropertyValueString.NO_VALUE;
-            RelationInfo span = (RelationInfo) matchInfo;
             value = StringUtils.join(span.getAttributes().get(attributeName), SEPARATOR_MULTIPLE_VALUES);
         }
         return new PropertyValueString(value);

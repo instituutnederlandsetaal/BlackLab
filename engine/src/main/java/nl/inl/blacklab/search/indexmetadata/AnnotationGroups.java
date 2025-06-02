@@ -7,26 +7,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-/** Groups of annotations for a single field */
-public class AnnotationGroups implements Iterable<AnnotationGroup> {
-    
-    private final String fieldName;
-    
-    private final List<AnnotationGroup> groups;
-    
+/**
+ * Groups of annotations for a single field
+ */
+public record AnnotationGroups(String fieldName, List<AnnotationGroup> groups) implements Iterable<AnnotationGroup> {
+
     public AnnotationGroups(String fieldName, List<AnnotationGroup> groups) {
         this.fieldName = fieldName;
         this.groups = new ArrayList<>(groups);
     }
 
-    public String fieldName() {
-        return fieldName;
-    }
-
-    public List<AnnotationGroup> groups() {
-        return groups;
-    }
-    
     @Override
     public Iterator<AnnotationGroup> iterator() {
         return groups.iterator();

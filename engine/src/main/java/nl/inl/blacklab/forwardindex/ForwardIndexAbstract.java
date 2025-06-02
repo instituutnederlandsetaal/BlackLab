@@ -79,7 +79,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
             });
         }
 
-        canDoNfaMatching = fis.values().stream().allMatch(fi -> fi.canDoNfaMatching());
+        canDoNfaMatching = fis.values().stream().allMatch(AnnotationForwardIndex::canDoNfaMatching);
         initialized = true;
     }
 

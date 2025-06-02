@@ -43,13 +43,11 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
         TSV;
 
         public static Type fromStringValue(String str) {
-            switch (str.toUpperCase()) {
-            case "TDF":
-                return TSV;
-            case "EXCEL":
-                return CSV;
-            }
-            return valueOf(str.toUpperCase());
+            return switch (str.toUpperCase()) {
+                case "TDF" -> TSV;
+                case "EXCEL" -> CSV;
+                default -> valueOf(str.toUpperCase());
+            };
         }
     }
 

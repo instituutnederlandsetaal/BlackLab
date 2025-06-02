@@ -276,13 +276,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
-        RelationInfo.SpanMode spanMode;
-        switch (adjust) {
-        case LEADING_EDGE:  spanMode = RelationInfo.SpanMode.SOURCE;    break;
-        case TRAILING_EDGE: spanMode = RelationInfo.SpanMode.TARGET;    break;
-        default:
-        case FULL_TAG:      spanMode = RelationInfo.SpanMode.FULL_SPAN; break;
-        }
+        RelationInfo.SpanMode spanMode = switch (adjust) {
+            case LEADING_EDGE -> RelationInfo.SpanMode.SOURCE;
+            case TRAILING_EDGE -> RelationInfo.SpanMode.TARGET;
+            default -> RelationInfo.SpanMode.FULL_SPAN;
+        };
 
         return new SpanQueryRelations(queryInfo, luceneField,
                 RelationUtil.fullTypeRegex(RelationUtil.CLASS_INLINE_TAG, tagNameRegex),

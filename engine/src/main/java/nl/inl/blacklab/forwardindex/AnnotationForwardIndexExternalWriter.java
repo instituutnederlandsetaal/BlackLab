@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -67,25 +68,15 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
         }
 
         @Override
-        public int hashCode() {
-            final int prime = 31;
-            int result = 1;
-            result = prime * result + (deleted ? 1231 : 1237);
-            result = prime * result + length;
-            result = prime * result + (int) (offset ^ (offset >>> 32));
-            return result;
+        public boolean equals(Object o) {
+            if (!(o instanceof TocEntry tocEntry))
+                return false;
+            return offset == tocEntry.offset && length == tocEntry.length && deleted == tocEntry.deleted;
         }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj)
-                return true;
-            if (obj == null)
-                return false;
-            if (getClass() != obj.getClass())
-                return false;
-            TocEntry other = (TocEntry) obj;
-            return deleted == other.deleted && length == other.length && offset == other.offset;
+        public int hashCode() {
+            return Objects.hash(offset, length, deleted);
         }
     }
 

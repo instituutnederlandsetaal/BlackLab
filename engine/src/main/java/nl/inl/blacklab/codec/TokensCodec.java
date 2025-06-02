@@ -18,7 +18,7 @@ public enum TokensCodec {
     ALL_TOKENS_THE_SAME((byte) 2);
 
     /** How we'll write this encoding to the tokens index file. */
-    public byte code;
+    public final byte code;
 
     TokensCodec(byte code) {
         this.code = code;

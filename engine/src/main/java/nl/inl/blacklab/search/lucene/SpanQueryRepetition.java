@@ -108,9 +108,8 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
         BLSpanQuery baseRewritten = base.rewrite(reader);
         if (min == 1 && max == 1)
             return baseRewritten;
-        if (baseRewritten instanceof SpanQueryAnyToken) {
+        if (baseRewritten instanceof SpanQueryAnyToken tp) {
             // Repeating anytoken clause can sometimes be expressed as simple anytoken clause
-            SpanQueryAnyToken tp = (SpanQueryAnyToken) baseRewritten;
             if (tp.min == 1 && tp.max == 1) {
                 // Repeat of a single any token
                 return new SpanQueryAnyToken(queryInfo, min, max, base.getRealField());
@@ -129,8 +128,7 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
             container = container.rewrite(reader);
             return new SpanQueryPositionFilter(container, baseRewritten.inverted(),
                     SpanQueryPositionFilter.Operation.CONTAINING, true);
-        } else if (baseRewritten instanceof SpanQueryRepetition) {
-            SpanQueryRepetition tp = (SpanQueryRepetition) baseRewritten;
+        } else if (baseRewritten instanceof SpanQueryRepetition tp) {
             if (max == MAX_UNLIMITED && tp.max == MAX_UNLIMITED) {
                 if (min >= 0 && min <= 1 && tp.min >= 0 && tp.min <= 1) {
                     // A++, A+*, A*+, A**. Rewrite to single repetition.

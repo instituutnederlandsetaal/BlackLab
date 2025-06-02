@@ -40,7 +40,7 @@ public interface Hits extends Results<Hit, HitProperty> {
      * Make a wrapper Hits object for a list of Hit objects.
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #list(QueryInfo, HitsInternal, List<String>)} }
+     * Prefer using @link { {@link #list(QueryInfo, HitsInternal, MatchInfoDefs)} }
      *
      * @param queryInfo information about the original query
      * @param docs      doc ids

@@ -302,9 +302,8 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             // Collect the occurrences of this inline tag
             String tokenIdXPath = inlineTag.getTokenIdPath();
             // We want to capture token ids for this inline tag. Create the AutoPilot.
-            xpathForEach(inlineTag.getPath(), null, (tag) -> {
-                collectInlineTag(inlineObjects, tokenIdXPath);
-            });
+            xpathForEach(inlineTag.getPath(), null,
+                    (tag) -> collectInlineTag(inlineObjects, tokenIdXPath));
             i++;
         }
     }

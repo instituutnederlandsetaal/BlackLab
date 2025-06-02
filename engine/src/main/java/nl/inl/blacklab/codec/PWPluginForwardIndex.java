@@ -257,7 +257,7 @@ class PWPluginForwardIndex implements PWPlugin {
                     break;
                 case THREE_BYTES:
                     for (int token : tokensInDoc) {
-                        ThreeByteInt.write((b) -> outTokensFile.writeByte(b), token);
+                        ThreeByteInt.write(outTokensFile::writeByte, token);
                     }
                     break;
                 case INT:

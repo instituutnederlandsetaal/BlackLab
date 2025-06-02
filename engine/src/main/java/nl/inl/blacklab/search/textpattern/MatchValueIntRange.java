@@ -1,32 +1,13 @@
 package nl.inl.blacklab.search.textpattern;
 
-import java.util.Objects;
-
 import nl.inl.util.RangeRegex;
 
-class MatchValueIntRange implements MatchValue {
+record MatchValueIntRange(int min, int max) implements MatchValue {
 
-    private final int min;
-
-    private final int max;
-
-    public MatchValueIntRange(int min, int max) {
-        this.min = min;
-        this.max = max;
-    }
-
-    public String getRegex() {
+    public String regex() {
         if (min > max)
             return RangeRegex.REGEX_WITHOUT_MATCHES; // a regex that will never match anything
         return RangeRegex.forRange(min, max);
-    }
-
-    public int getMin() {
-        return min;
-    }
-
-    public int getMax() {
-        return max;
     }
 
     public String getBcql() {
@@ -36,21 +17,6 @@ class MatchValueIntRange implements MatchValue {
     @Override
     public TextPatternTerm textPattern() {
         return new TextPatternIntRange(min, max);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        MatchValueIntRange that = (MatchValueIntRange) o;
-        return min == that.min && max == that.max;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(min, max);
     }
 
     @Override

@@ -211,14 +211,15 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         // See if it's specified in a parameter
         String strSensitivity = getParameter(annotationName + "_sensitivity");
         if (strSensitivity != null) {
-            if (strSensitivity.equals("i"))
-                return AnnotationSensitivities.ONLY_INSENSITIVE;
-            if (strSensitivity.equals("s"))
-                return AnnotationSensitivities.ONLY_SENSITIVE;
-            if (strSensitivity.equals("si") || strSensitivity.equals("is"))
-                return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
-            if (strSensitivity.equals("all"))
-                return AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
+            AnnotationSensitivities s = switch (strSensitivity) {
+                case "i" -> AnnotationSensitivities.ONLY_INSENSITIVE;
+                case "s" -> AnnotationSensitivities.ONLY_SENSITIVE;
+                case "si", "is" -> AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
+                case "all" -> AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
+                default -> null;
+            };
+            if (s != null)
+                return s;
         }
 
         // Not in parameter (or unrecognized value), use default based on

@@ -244,33 +244,23 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     public int spanStart(SpanMode mode) {
-        switch (mode) {
-        case SOURCE:
-            return getSourceStart();
-        case TARGET:
-            return getTargetStart();
-        case FULL_SPAN:
-            return getSpanStart();
-        case ALL_SPANS:
-            throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
-        default:
-            throw new IllegalArgumentException("Unknown mode: " + mode);
-        }
+        return switch (mode) {
+            case SOURCE -> getSourceStart();
+            case TARGET -> getTargetStart();
+            case FULL_SPAN -> getSpanStart();
+            case ALL_SPANS -> throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
+            default -> throw new IllegalArgumentException("Unknown mode: " + mode);
+        };
     }
 
     public int spanEnd(SpanMode mode) {
-        switch (mode) {
-        case SOURCE:
-            return getSourceEnd();
-        case TARGET:
-            return getTargetEnd();
-        case FULL_SPAN:
-            return getSpanEnd();
-        case ALL_SPANS:
-            throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
-        default:
-            throw new IllegalArgumentException("Unknown mode: " + mode);
-        }
+        return switch (mode) {
+            case SOURCE -> getSourceEnd();
+            case TARGET -> getTargetEnd();
+            case FULL_SPAN -> getSpanEnd();
+            case ALL_SPANS -> throw new IllegalArgumentException("ALL_SPANS should have been handled elsewhere");
+            default -> throw new IllegalArgumentException("Unknown mode: " + mode);
+        };
     }
 
     @Override

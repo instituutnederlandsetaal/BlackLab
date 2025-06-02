@@ -28,7 +28,7 @@ public class MatchFilterCompare extends MatchFilter {
             throw new IllegalArgumentException("Unknown operator: " + s);
         }
 
-        private String symbol;
+        private final String symbol;
 
         Operator(String symbol) {
             this.symbol = symbol;
@@ -40,15 +40,14 @@ public class MatchFilterCompare extends MatchFilter {
         }
 
         public boolean perform(int cmp) {
-            switch (this) {
-            case EQUAL: return cmp == 0;
-            case NOT_EQUAL: return cmp != 0;
-            case LESS_THAN: return cmp < 0;
-            case GREATER_THAN: return cmp > 0;
-            case LESS_OR_EQUAL: return cmp <= 0;
-            case GREATER_OR_EQUAL: return cmp >= 0;
-            }
-            throw new IllegalArgumentException("Unknown operator: " + this);
+            return switch (this) {
+                case EQUAL -> cmp == 0;
+                case NOT_EQUAL -> cmp != 0;
+                case LESS_THAN -> cmp < 0;
+                case GREATER_THAN -> cmp > 0;
+                case LESS_OR_EQUAL -> cmp <= 0;
+                case GREATER_OR_EQUAL -> cmp >= 0;
+            };
         }
     }
 
@@ -74,9 +73,8 @@ public class MatchFilterCompare extends MatchFilter {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof MatchFilterCompare))
+        if (!(o instanceof MatchFilterCompare that))
             return false;
-        MatchFilterCompare that = (MatchFilterCompare) o;
         return a.equals(that.a) && b.equals(that.b) && operator == that.operator && sensitivity == that.sensitivity;
     }
 
@@ -127,9 +125,7 @@ public class MatchFilterCompare extends MatchFilter {
                 return ((MatchFilterTokenAnnotation) x).matchTokenString(termString, sensitivity);
             }
 
-            if (x instanceof MatchFilterTokenAnnotation && y instanceof MatchFilterTokenAnnotation) {
-                MatchFilterTokenAnnotation xtp = ((MatchFilterTokenAnnotation) x);
-                MatchFilterTokenAnnotation ytp = ((MatchFilterTokenAnnotation) y);
+            if (x instanceof MatchFilterTokenAnnotation xtp && y instanceof MatchFilterTokenAnnotation ytp) {
                 if (xtp.getAnnotationName().equals(ytp.getAnnotationName())) {
                     // Expression of the form a.word = b.word;
                     // This can be done more efficiently without string comparisons

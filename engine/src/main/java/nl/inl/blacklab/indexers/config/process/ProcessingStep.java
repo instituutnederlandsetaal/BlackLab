@@ -35,33 +35,20 @@ public abstract class ProcessingStep {
     }
 
     private static ProcessingStep fromConfig(ConfigProcessStep configProcessStep) {
-        switch(configProcessStep.getMethod()) {
-            case "append":
-                return ProcessingStepAppend.fromConfig(configProcessStep.getParam());
-            case "chatFormatAgeToMonths":
-                return new ProcessingStepChatAge();
-            case "concatDate":
-                return ProcessingStepConcatDate.fromConfig(configProcessStep.getParam());
-            case "default": // (deprecated)
-            case "ifempty":
-                return ProcessingStepIfEmpty.fromConfig(configProcessStep.getParam());
-            case "map":
-                return ProcessingStepMapValues.fromConfig(configProcessStep.getParam());
-            case "parsePos":
-                return ProcessingStepParsePos.fromConfig(configProcessStep.getParam());
-            case "replace":
-                return ProcessingStepReplace.fromConfig(configProcessStep.getParam());
-            case "split":
-                return ProcessingStepSplit.fromConfig(configProcessStep.getParam());
-            case "strip":
-                return ProcessingStepStrip.fromConfig(configProcessStep.getParam());
-            case "unique":
-                return new ProcessingStepUnique();
-            case "sort":
-                return new ProcessingStepSort();
-            default:
-                throw new IllegalArgumentException("Unknown method: " + configProcessStep.getMethod());
-        }
+        return switch (configProcessStep.getMethod()) {
+            case "append" -> ProcessingStepAppend.fromConfig(configProcessStep.getParam());
+            case "chatFormatAgeToMonths" -> new ProcessingStepChatAge();
+            case "concatDate" -> ProcessingStepConcatDate.fromConfig(configProcessStep.getParam()); // (deprecated)
+            case "default", "ifempty" -> ProcessingStepIfEmpty.fromConfig(configProcessStep.getParam());
+            case "map" -> ProcessingStepMapValues.fromConfig(configProcessStep.getParam());
+            case "parsePos" -> ProcessingStepParsePos.fromConfig(configProcessStep.getParam());
+            case "replace" -> ProcessingStepReplace.fromConfig(configProcessStep.getParam());
+            case "split" -> ProcessingStepSplit.fromConfig(configProcessStep.getParam());
+            case "strip" -> ProcessingStepStrip.fromConfig(configProcessStep.getParam());
+            case "unique" -> new ProcessingStepUnique();
+            case "sort" -> new ProcessingStepSort();
+            default -> throw new IllegalArgumentException("Unknown method: " + configProcessStep.getMethod());
+        };
     }
 
     /**

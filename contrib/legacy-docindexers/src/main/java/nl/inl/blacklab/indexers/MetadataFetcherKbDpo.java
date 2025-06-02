@@ -56,23 +56,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
      */
     public static class GetKbMetadata {
 
-        public static class Metadata {
-            public final String title;
-
-            public final String author;
-
-            public final String date;
-
-            public final String ppn;
-
-            public Metadata(String title, String author, String date, String ppn) {
-                super();
-                this.title = title;
-                this.author = author;
-                this.date = date;
-                this.ppn = ppn;
-            }
-        }
+        public record Metadata(String title, String author, String date, String ppn) {}
 
         /** Has the HTTP client been initialized? */
         static boolean initialised = false;
@@ -119,17 +103,14 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 public String getNamespaceURI(String prefix) {
                     if (prefix == null)
                         throw new IllegalArgumentException("Null prefix");
-                    if (prefix.equals("xsi"))
-                        return "http://www.w3.org/2001/XMLSchema-instance";
-                    if (prefix.equals("dc"))
-                        return "http://purl.org/dc/elements/1.1/";
-                    if (prefix.equals("dcx"))
-                        return "http://krait.kb.nl/coop/tel/handbook/telterms.html";
-                    if (prefix.equals(""))
-                        return "http://www.openarchives.org/OAI/2.0/";
-                    if (prefix.equals("xml"))
-                        return XMLConstants.XML_NS_URI;
-                    return XMLConstants.NULL_NS_URI;
+                    return switch (prefix) {
+                        case "xsi" -> "http://www.w3.org/2001/XMLSchema-instance";
+                        case "dc" -> "http://purl.org/dc/elements/1.1/";
+                        case "dcx" -> "http://krait.kb.nl/coop/tel/handbook/telterms.html";
+                        case "" -> "http://www.openarchives.org/OAI/2.0/";
+                        case "xml" -> XMLConstants.XML_NS_URI;
+                        default -> XMLConstants.NULL_NS_URI;
+                    };
                 }
             });
 

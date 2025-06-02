@@ -128,11 +128,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     }
 
     @Override
-    public String toString() {
-        return fieldName;
-    }
-    
-    @Override
     public Annotations annotations() {
         return annotations;
     }

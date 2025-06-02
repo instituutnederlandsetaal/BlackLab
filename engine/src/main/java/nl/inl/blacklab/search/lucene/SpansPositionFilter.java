@@ -516,20 +516,14 @@ class SpansPositionFilter extends BLSpans {
     public String toString() {
         String not = invert ? "not " : "";
         String ign = (leftAdjust != 0 || rightAdjust != 0) ? ", " + leftAdjust + ", " + rightAdjust : "";
-        switch (op) {
-        case CONTAINING:
-            return "POSFILTER(" + producer + " " + not + "containing " + filter + ign + ")";
-        case WITHIN:
-            return "POSFILTER(" + producer + " " + not + "within " + filter + ign + ")";
-        case STARTS_AT:
-            return "POSFILTER(" + producer + " " + not + "starts at " + filter + ign + ")";
-        case ENDS_AT:
-            return "POSFILTER(" + producer + " " + not + "ends at " + filter + ign + ")";
-        case MATCHES:
-            return "POSFILTER(" + producer + " " + not + "matches " + filter + ign + ")";
-        default:
-            throw new IllegalArgumentException("Unknown filter operation " + op);
-        }
+        return switch (op) {
+            case CONTAINING -> "POSFILTER(" + producer + " " + not + "containing " + filter + ign + ")";
+            case WITHIN -> "POSFILTER(" + producer + " " + not + "within " + filter + ign + ")";
+            case STARTS_AT -> "POSFILTER(" + producer + " " + not + "starts at " + filter + ign + ")";
+            case ENDS_AT -> "POSFILTER(" + producer + " " + not + "ends at " + filter + ign + ")";
+            case MATCHES -> "POSFILTER(" + producer + " " + not + "matches " + filter + ign + ")";
+            default -> throw new IllegalArgumentException("Unknown filter operation " + op);
+        };
     }
 
     @Override

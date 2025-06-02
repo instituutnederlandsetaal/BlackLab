@@ -28,17 +28,13 @@ public enum MatchSensitivity {
     }
 
     public static MatchSensitivity fromLuceneFieldSuffix(String code) {
-        switch(code) {
-        case "s":
-            return SENSITIVE;
-        case "i":
-            return INSENSITIVE;
-        case "ci":
-            return CASE_INSENSITIVE;
-        case "di":
-            return DIACRITICS_INSENSITIVE;
-        }
-        throw new IllegalArgumentException("Unknown sensitivity field code: " + code);
+        return switch (code) {
+            case "s" -> SENSITIVE;
+            case "i" -> INSENSITIVE;
+            case "ci" -> CASE_INSENSITIVE;
+            case "di" -> DIACRITICS_INSENSITIVE;
+            default -> throw new IllegalArgumentException("Unknown sensitivity field code: " + code);
+        };
     }
 
     public static MatchSensitivity fromName(String value) {
@@ -80,17 +76,14 @@ public enum MatchSensitivity {
 	}
 	
     public String desensitize(String input) {
-        switch (this) {
-        case CASE_INSENSITIVE:
-            return input.toLowerCase();
-        case DIACRITICS_INSENSITIVE:
-            return StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input));
-        case INSENSITIVE:
-            return StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase());
-        case SENSITIVE:
-            return input;
-        default:
-            throw new UnsupportedOperationException("Unknown sensitivity " + this);
-        }
+        return switch (this) {
+            case CASE_INSENSITIVE -> input.toLowerCase();
+            case DIACRITICS_INSENSITIVE ->
+                    StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input));
+            case INSENSITIVE ->
+                    StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase());
+            case SENSITIVE -> input;
+            default -> throw new UnsupportedOperationException("Unknown sensitivity " + this);
+        };
     }
 }

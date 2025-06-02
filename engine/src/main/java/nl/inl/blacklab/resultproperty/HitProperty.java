@@ -6,7 +6,6 @@ import java.util.Objects;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -185,7 +184,6 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      * 
      * @param prop property to copy
      * @param hits new hits to use, or null to inherit
-     * @param contexts new contexts to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
     HitProperty(HitProperty prop, Hits hits, boolean invert) {

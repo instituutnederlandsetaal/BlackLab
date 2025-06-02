@@ -102,7 +102,7 @@ public class SpanQueryAnyToken extends BLSpanQuery {
      * Actually executing this query will generate a very large number of hits.
      *
      * @param queryInfo query info
-     * @param context query execution context
+     * @param luceneField the field to search
      * @return the query
      */
     public static SpanQueryAnyToken anyNGram(QueryInfo queryInfo, String luceneField) {

@@ -127,8 +127,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     public static boolean isAnyNGram(BLSpanQuery matchTarget, int atLeastLength) {
         boolean isAnyNGram = false;
-        if (matchTarget instanceof SpanQueryAnyToken) {
-            SpanQueryAnyToken any = (SpanQueryAnyToken) matchTarget;
+        if (matchTarget instanceof SpanQueryAnyToken any) {
             if (any.getMin() <= atLeastLength && any.getMax() == MAX_UNLIMITED) {
                 // No restrictions on target.
                 isAnyNGram = true;

@@ -49,16 +49,16 @@ public class BLSolrPreAnalyzedFieldParser implements PreAnalyzedField.PreAnalyze
     @Override
     public PreAnalyzedField.ParseResult parse(Reader reader, AttributeSource parent) throws IOException {
         PreAnalyzedField.ParseResult r = new PreAnalyzedField.ParseResult();
-        ReaderInputStream is = new ReaderInputStream(reader, new ByteStringCharset());
-        GZIPInputStream iz = new GZIPInputStream(is);
-        var in = new InputStreamDataInputWithChar(iz);
-
-        var token = in.readByte() != 0 ? parent.addAttribute(CharTermAttribute.class) : null;
-        var increment = in.readByte() != 0 ? parent.addAttribute(PositionIncrementAttribute.class) : null; // optional?
-        var offsets = in.readByte() != 0 ? parent.addAttribute(OffsetAttribute.class) : null; // optional?
-        var payloads = in.readByte() != 0 ? parent.addAttribute(PayloadAttribute.class) : null; // optional?
-
-        try {
+        try (var in = new InputStreamDataInputWithChar(new GZIPInputStream(
+                new ReaderInputStream(reader, new ByteStringCharset())))) {
+            var token = in.readByte() != 0 ?
+                    parent.addAttribute(CharTermAttribute.class) : null;
+            var increment = in.readByte() != 0 ?
+                    parent.addAttribute(PositionIncrementAttribute.class) : null; // optional?
+            var offsets = in.readByte() != 0 ?
+                    parent.addAttribute(OffsetAttribute.class) : null; // optional?
+            var payloads = in.readByte() != 0 ?
+                    parent.addAttribute(PayloadAttribute.class) : null; // optional?
             while (true) {
                 readCharTermAttribute(in, token);
                 readPositionIncrementAttribute(in, increment);
@@ -71,8 +71,6 @@ public class BLSolrPreAnalyzedFieldParser implements PreAnalyzedField.PreAnalyze
         } catch (EOFException e) {
             // There is no other way to detect all input has been read :(
             // ignore.
-        } finally {
-            in.close();
         }
         return r;
     }
@@ -295,8 +293,8 @@ public class BLSolrPreAnalyzedFieldParser implements PreAnalyzedField.PreAnalyze
                         }
                         out.put(second);
                     }
-                };
+                }
             };
         }
-    };
+    }
 }

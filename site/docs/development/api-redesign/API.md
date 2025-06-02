@@ -370,7 +370,7 @@ Response:
       },
       "retrieved": {
         "hits": 553766,
-        "docs": 281822
+        "docs": 281822,
         "limitReached": false // == stoppedRetrievingHits
       }
     }

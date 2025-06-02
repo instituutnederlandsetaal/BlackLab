@@ -61,8 +61,7 @@ public class WebserviceParamsUtils {
         boolean addRspanAll = false;
         if (pattern.isRelationsQuery()) {
             addRspanAll = true;
-            if (pattern instanceof TextPatternQueryFunction) {
-                TextPatternQueryFunction qf = (TextPatternQueryFunction) pattern;
+            if (pattern instanceof TextPatternQueryFunction qf) {
                 // Only add rspan if not already doing it explicitly
                 if (qf.getName().equals(XFRelations.FUNC_RSPAN) || qf.getName().equals(XFRelations.FUNC_REL)) {
                     addRspanAll = false;

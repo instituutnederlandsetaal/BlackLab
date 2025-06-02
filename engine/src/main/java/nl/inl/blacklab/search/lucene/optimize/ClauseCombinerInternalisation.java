@@ -32,14 +32,11 @@ class ClauseCombinerInternalisation extends ClauseCombiner {
 
     @Override
     public BLSpanQuery combine(BLSpanQuery left, BLSpanQuery right, IndexReader reader) {
-        switch (getType(left, right)) {
-        case INTERNALIZE_LEFT_NEIGHBOUR:
-            return right.internalizeNeighbour(left, false);
-        case INTERNALIZE_RIGHT_NEIGHBOUR:
-            return left.internalizeNeighbour(right, true);
-        default:
-            throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
-        }
+        return switch (getType(left, right)) {
+            case INTERNALIZE_LEFT_NEIGHBOUR -> right.internalizeNeighbour(left, false);
+            case INTERNALIZE_RIGHT_NEIGHBOUR -> left.internalizeNeighbour(right, true);
+            default -> throw new UnsupportedOperationException("Cannot combine " + left + " and " + right);
+        };
     }
 
     @Override

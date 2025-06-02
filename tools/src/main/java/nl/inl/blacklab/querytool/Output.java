@@ -133,10 +133,9 @@ class Output {
                 addMatchInfoIndicator(annotatedField, pos, rel, name, open, close, i);
                 i++;
             }
-        } else if (mi instanceof RelationInfo && mi.getType() == MatchInfo.Type.RELATION) { // (rel, not tag)
+        } else if (mi instanceof RelationInfo rel && mi.getType() == MatchInfo.Type.RELATION) { // (rel, not tag)
             // For relations, we have to either highlight the source or the target, which may be in different
             // fields.
-            RelationInfo rel = (RelationInfo) mi;
 
             boolean isSourceField = rel.getField().equals(annotatedField.name());
             if ((pos == rel.getSourceStart() || pos + 1 == rel.getSourceEnd()) && isSourceField) {

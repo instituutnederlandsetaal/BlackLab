@@ -1,15 +1,7 @@
 package nl.inl.blacklab.analysis;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 import org.apache.lucene.store.ByteArrayDataInput;
-import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
-
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.lucene.RelationInfo;
 
 /**
  * Utilities for dealing with payloads in BlackLab.

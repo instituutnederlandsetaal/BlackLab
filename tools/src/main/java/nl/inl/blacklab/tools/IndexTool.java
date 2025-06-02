@@ -427,23 +427,23 @@ public class IndexTool {
     private static void usage() {
         System.err.flush();
         System.out.flush();
-        System.out
-                .println("Usage:\n"
-                        + "  IndexTool {add|create} [options] <indexdir> <inputdir> <format>\n"
-                        + "  IndexTool delete <indexdir> <filterQuery>\n"
-                        + "  IndexTool indexinfo <indexdir>         # export indexmetadata.json from index\n"
-                        + "  IndexTool import-indexinfo <indexdir>  # imports indexmetadata.json into index\n"
-                        + "\n"
-                        + "Options:\n"
-                        + "  --maxdocs <n>                  Stop after indexing <n> documents\n"
-                        + "  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files\n"
-                        + "  --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)\n"
-                        + "  --nothreads                    Disable multithreaded indexing (enabled by default)\n"
-                        + "  --threads <n>                  Number of threads to use\n"
-                        + "  --index-type <t>               Set the index type, integrated (new, default) or external (legacy)\n"
-                        + "  --create-empty                 Create an empty index (ignore inputdir param)\n"
-                        + "\n"
-                        + "Available input format configurations:");
+        System.out.println("""
+                Usage:
+                  IndexTool {add|create} [options] <indexdir> <inputdir> <format>
+                  IndexTool delete <indexdir> <filterQuery>
+                  IndexTool indexinfo <indexdir>         # export indexmetadata.json from index
+                  IndexTool import-indexinfo <indexdir>  # imports indexmetadata.json into index
+                
+                Options:
+                  --maxdocs <n>                  Stop after indexing <n> documents
+                  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files
+                  --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)
+                  --nothreads                    Disable multithreaded indexing (enabled by default)
+                  --threads <n>                  Number of threads to use
+                  --index-type <t>               Set the index type, integrated (new, default) or external (legacy)
+                  --create-empty                 Create an empty index (ignore inputdir param)
+                
+                Available input format configurations:""");
         for (InputFormat inputFormat: DocumentFormats.getFormats()) {
             String name = inputFormat.getIdentifier();
             String displayName = inputFormat.getDisplayName();

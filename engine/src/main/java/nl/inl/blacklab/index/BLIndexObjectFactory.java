@@ -26,15 +26,11 @@ public interface BLIndexObjectFactory {
     BLIndexWriterProxy indexWriterProxy(IndexWriter luceneIndexWriter, BlackLabIndexWriter indexWriter);
 
     default BLFieldType blFieldTypeFromMetadataFieldType(FieldType type) {
-        switch (type) {
-        case NUMERIC:
-           throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
-        case TOKENIZED:
-           return fieldTypeMetadata(true);
-        case UNTOKENIZED:
-           return fieldTypeMetadata(false);
-        default:
-           throw new IllegalArgumentException("Unknown field type: " + type);
-        }
+        return switch (type) {
+            case NUMERIC -> throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
+            case TOKENIZED -> fieldTypeMetadata(true);
+            case UNTOKENIZED -> fieldTypeMetadata(false);
+            default -> throw new IllegalArgumentException("Unknown field type: " + type);
+        };
     }
 }

@@ -182,8 +182,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
             // Start tag found. Is there a matching end tag?
             for (int j = startTagIndex + 1; j < clauses.size(); j++) {
                 BLSpanQuery clause2 = clauses.get(j);
-                if (clause2 instanceof SpanQueryRelations) {
-                    SpanQueryRelations end = (SpanQueryRelations) clause2;
+                if (clause2 instanceof SpanQueryRelations end) {
                     if (end.isTagQuery() && end.getSpanMode() == RelationInfo.SpanMode.TARGET && end.getElementNameRegex().equals(tagName)) {
                         BLSpanQuery producer = start.withSpanMode(RelationInfo.SpanMode.FULL_SPAN);
                         // Found start and end tags in sequence. Convert to containing
@@ -205,8 +204,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 // Start tag found. Is there a matching end tag?
                 for (int j = startTagIndex + 1; j < clauses.size(); j++) {
                     BLSpanQuery clause2 = clauses.get(j);
-                    if (clause2 instanceof SpanQueryEdge) {
-                        SpanQueryEdge end = (SpanQueryEdge) clause2;
+                    if (clause2 instanceof SpanQueryEdge end) {
                         if (end.isTrailingEdge() && end.getElementNameRegex().equals(tagNameRegex)) {
                             BLSpanQuery producer = start.getClause();
                             // Found start and end tags in sequence. Convert to containing
@@ -230,8 +228,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         clauses.remove(startTagIndex); // end tag
         boolean startAny = false;
-        if (search.get(0) instanceof SpanQueryAnyToken) {
-            SpanQueryAnyToken any1 = (SpanQueryAnyToken) search.get(0);
+        if (search.get(0) instanceof SpanQueryAnyToken any1) {
             if (any1.guarantees().hitsLengthMin() == 0 &&
                     any1.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                 startAny = true;
@@ -240,8 +237,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         boolean endAny = false;
         int last = search.size() - 1;
-        if (search.get(last) instanceof SpanQueryAnyToken) {
-            SpanQueryAnyToken any2 = (SpanQueryAnyToken) search.get(last);
+        if (search.get(last) instanceof SpanQueryAnyToken any2) {
             if (any2.guarantees().hitsLengthMin() == 0 &&
                     any2.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                 endAny = true;
@@ -676,11 +672,10 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                 if (first instanceof SpansExpansionRaw && ((SpansExpansionRaw)first).direction() == Direction.RIGHT) {
                     // First is a forward expansion. Make a SpansSequenceWithGap.
                     BLSpans newSpans;
-                    if (second instanceof SpansExpansionRaw && ((SpansExpansionRaw)second).direction() == Direction.RIGHT) {
+                    if (second instanceof SpansExpansionRaw expSecond && expSecond.direction() == Direction.RIGHT) {
                         // Second is a forward expansion too. Make the whole resulting clause a forward expansion
                         //   instead, so we can repeat the sequence-with-gaps trick.
                         SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
-                        SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
                         // Note that the first clause is startpoint-sorted
                         BLSpans spans = expSecond.clause();
                         BLSpans gapped = new SpansSequenceWithGap(expFirst.clause(),
@@ -695,14 +690,12 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                     }
                     i--;
                     replaceCombiParts(parts, i, newSpans);
-                } else if (second instanceof SpansExpansionRaw && ((SpansExpansionRaw)second).direction() == Direction.LEFT) {
+                } else if (second instanceof SpansExpansionRaw expSecond && expSecond.direction() == Direction.LEFT) {
                     // Second is a backward expansion (much less common, but can probably occur sometimes)
                     BLSpans newSpans;
-                    if (first instanceof SpansExpansionRaw && ((SpansExpansionRaw)first).direction() == Direction.LEFT) {
+                    if (first instanceof SpansExpansionRaw expFirst && expFirst.direction() == Direction.LEFT) {
                         // First is a backward expansion too. Make the whole resulting clause a backward expansion
                         //   instead, so we can repeat the sequence-with-gaps trick.
-                        SpansExpansionRaw expFirst = (SpansExpansionRaw)first;
-                        SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
                         BLSpans spans = expSecond.clause();
                         BLSpans spans1 = expFirst.clause();
                         BLSpans gapped = new SpansSequenceWithGap(spans1,
@@ -711,7 +704,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
                                 Direction.LEFT, expFirst.gap().minSize(), expFirst.gap().maxSize());
                     } else {
                         // Only second is a backward expansion
-                        SpansExpansionRaw expSecond = (SpansExpansionRaw)second;
                         BLSpans spans = expSecond.clause();
                         newSpans = new SpansSequenceWithGap(first, expSecond.gap(), spans);
                     }

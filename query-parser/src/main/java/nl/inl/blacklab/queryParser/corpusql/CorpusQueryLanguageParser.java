@@ -11,7 +11,6 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
@@ -120,20 +119,7 @@ public class CorpusQueryLanguageParser {
         return value.withAnnotationAndSensitivity(annot, null);
     }
 
-    static class ChildRelationStruct {
-
-        public final RelationOperatorInfo type;
-
-        public final TextPattern target;
-
-        public final String captureAs;
-
-        public ChildRelationStruct(RelationOperatorInfo type, TextPattern target, String captureAs) {
-            this.type = type;
-            this.target = target;
-            this.captureAs = captureAs;
-        }
-    }
+    record ChildRelationStruct(RelationOperatorInfo type, TextPattern target, String captureAs) {}
 
     TextPattern relationQuery(TextPattern parent, List<ChildRelationStruct> childRels) {
         List<RelationTarget> children = new ArrayList<>();

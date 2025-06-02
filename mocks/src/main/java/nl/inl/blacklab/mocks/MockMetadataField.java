@@ -10,18 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 
-public final class MockMetadataField implements MetadataField {
-    
-    private final String name;
-
-    public MockMetadataField(String name) {
-        this.name = name;
-    }
-    
-    @Override
-    public String name() {
-        return name;
-    }
+public record MockMetadataField(String name) implements MetadataField {
 
     @Override
     public String displayName() {

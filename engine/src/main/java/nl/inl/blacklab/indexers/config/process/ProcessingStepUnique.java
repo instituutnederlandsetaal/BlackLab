@@ -1,9 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
-import java.util.Map;
 import java.util.stream.Stream;
-
-import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.index.DocIndexer;
 

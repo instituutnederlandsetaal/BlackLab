@@ -18,12 +18,9 @@ class SpansOverlapping extends BLSpans {
     /** Operation to perform on spans to get resulting spans */
     public interface Operation {
         static Operation fromStringValue(String value) {
-            switch (value.toUpperCase()) {
-            case "OVERLAP":
+            if (value.equalsIgnoreCase("OVERLAP"))
                 return OVERLAP;
-            default:
-                throw new IllegalArgumentException("Unknown operation: " + value);
-            }
+            throw new IllegalArgumentException("Unknown operation: " + value);
         }
 
         /** Start position of resulting hit, or -1 to reject. */

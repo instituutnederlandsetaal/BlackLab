@@ -451,10 +451,7 @@ public abstract class RequestHandler {
     }
 
     protected BlackLabIndex blIndex() throws BlsException {
-        Optional<Index> index = index();
-        if (index.isPresent())
-            return index.get().blIndex();
-        return null;
+        return index().map(Index::blIndex).orElse(null);
     }
 
     public User getUser() {

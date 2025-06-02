@@ -67,26 +67,6 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
     public abstract String serialize();
 
     /**
-     * Used by subclasses to add a dash for reverse when serializing
-     * 
-     * @return either a dash or the empty string
-     */
-    @Override
-    public String serializeReverse() {
-        return reverse ? "-" : "";
-    }
-
-    /**
-     * Is the comparison reversed?
-     * 
-     * @return true if it is, false if not
-     */
-    @Override
-    public boolean isReverse() {
-        return reverse;
-    }
-
-    /**
      * Reverse the comparison.
      * 
      * @return doc group property with reversed comparison 

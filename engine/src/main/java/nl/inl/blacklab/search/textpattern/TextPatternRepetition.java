@@ -63,8 +63,7 @@ public class TextPatternRepetition extends TextPattern {
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof TextPatternRepetition) {
-            TextPatternRepetition tp = ((TextPatternRepetition) obj);
+        if (obj instanceof TextPatternRepetition tp) {
             return clause.equals(tp.clause) && min == tp.min && max == tp.max;
         }
         return false;

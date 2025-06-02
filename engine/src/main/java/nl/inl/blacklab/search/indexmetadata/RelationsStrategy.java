@@ -43,15 +43,12 @@ public interface RelationsStrategy {
 
     /** Instantiate strategy with given name */
     static RelationsStrategy fromName(String name) {
-        switch (name) {
-        case RelationsStrategySingleTerm.NAME:
-            return RelationsStrategySingleTerm.INSTANCE;
-        case RelationsStrategyNaiveSeparateTerms.NAME:
-            return RelationsStrategyNaiveSeparateTerms.INSTANCE;
-        case RelationsStrategySeparateTerms.NAME:
-            return RelationsStrategySeparateTerms.INSTANCE;
-        }
-        throw new IllegalArgumentException("Unknown relation strategy: " + name);
+        return switch (name) {
+            case RelationsStrategySingleTerm.NAME -> RelationsStrategySingleTerm.INSTANCE;
+            case RelationsStrategyNaiveSeparateTerms.NAME -> RelationsStrategyNaiveSeparateTerms.INSTANCE;
+            case RelationsStrategySeparateTerms.NAME -> RelationsStrategySeparateTerms.INSTANCE;
+            default -> throw new IllegalArgumentException("Unknown relation strategy: " + name);
+        };
     }
 
     int getRelationId(AnnotationWriter writer, int endPos, Map<String, List<String>> attributes);

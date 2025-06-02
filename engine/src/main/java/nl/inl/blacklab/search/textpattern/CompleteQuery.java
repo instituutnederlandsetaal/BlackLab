@@ -7,43 +7,35 @@ import org.apache.lucene.search.Query;
 /**
  * Represents a combination of a contents query (a TextPattern) and a metadata
  * "filter query" (a regular Lucene Query).
- *
  * This kind of query is produced by parsing SRU CQL, for example.
+ *
+ * @param pattern The query to find a structure in the contents
+ * @param filter  The query that determines what documents to search for the structure
  */
-public class CompleteQuery {
-
-    /** The query to find a structure in the contents */
-    private final TextPattern pattern;
-
-    /** The query that determines what documents to search for the structure */
-    private final Query filter;
+public record CompleteQuery(TextPattern pattern, Query filter) {
 
     /**
      * Get the query to find a structure in the contents
-     * 
+     *
      * @return the structural contents query
      */
+    @Override
     public TextPattern pattern() {
         return pattern;
     }
 
     /**
      * Get the query that determines what documents to search for the structure
-     * 
+     *
      * @return the metadata filter query
      */
+    @Override
     public Query filter() {
         return filter;
     }
 
-    public CompleteQuery(TextPattern pattern, Query filter) {
-        this.pattern = pattern;
-        this.filter = filter;
-    }
-
     /**
      * Combine this query with another query using the and operator.
-     *
      * NOTE: contents queries will be combined using token-level and, filter queries
      * will be combined using BooleanQuery (so, at the document level).
      *
@@ -76,7 +68,6 @@ public class CompleteQuery {
 
     /**
      * Combine this query with another query using the or operator.
-     *
      * NOTE: you can combine two content queries or two filter queries, or both, but
      * you can't combine one content query and one filter query.
      *
@@ -90,12 +81,12 @@ public class CompleteQuery {
         Query e = other.filter;
 
         if (a == null && b != null || a != null && b == null ||
-            d == null && e != null || d != null && e == null) {
+                d == null && e != null || d != null && e == null) {
             throw new UnsupportedOperationException(
                     "or can only be used to combine contents clauses or metadata clauses; " +
                             "you can't combine the two with eachother with or");
         }
-        
+
         TextPattern c;
         if (a != null && b != null)
             c = new TextPatternOr(a, b);
@@ -116,7 +107,6 @@ public class CompleteQuery {
 
     /**
      * Combine this query with another query using the and-not operator.
-     *
      * NOTE: contents queries will be combined using token-level and-not, filter
      * queries will be combined using BooleanQuery (so, at the document level).
      *

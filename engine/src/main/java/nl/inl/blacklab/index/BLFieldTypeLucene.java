@@ -9,7 +9,6 @@ import org.apache.lucene.index.IndexableFieldType;
 
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 
 /** Represents Lucene field types. */
 public class BLFieldTypeLucene implements BLFieldType {

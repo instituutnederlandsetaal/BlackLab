@@ -74,26 +74,21 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             RelationInfo.SpanMode spanMode) {
         if (!clause.hitsStartPointSorted())
             return clause;
-        boolean sorted;
-        switch (spanMode) {
-        case SOURCE:
-            // All relations are indexed at the source.
-            // Root relations don't have a source and are indexed at the target, therefore also sorted.
-            sorted = true;
-            break;
-        case FULL_SPAN:
-            // All relations are indexed at the source.
-            // Only forward relations will be sorted.
-            // Root relations only have target and are indexed there, therefore also sorted.
-            sorted = direction == Direction.FORWARD || direction == Direction.ROOT;
-            break;
-        case TARGET:
-        default:
-            // Target may be anywhere before or after source, so we don't know if these will be sorted.
-            // Exception: root relations only have target and are indexed there, so they will be sorted.
-            sorted = direction == Direction.ROOT;
-            break;
-        }
+        boolean sorted = switch (spanMode) {
+            case SOURCE ->
+                // All relations are indexed at the source.
+                // Root relations don't have a source and are indexed at the target, therefore also sorted.
+                    true;
+            case FULL_SPAN ->
+                // All relations are indexed at the source.
+                // Only forward relations will be sorted.
+                // Root relations only have target and are indexed there, therefore also sorted.
+                    direction == Direction.FORWARD || direction == Direction.ROOT;
+            default ->
+                // Target may be anywhere before or after source, so we don't know if these will be sorted.
+                // Exception: root relations only have target and are indexed there, so they will be sorted.
+                    direction == Direction.ROOT;
+        };
         return new SpanGuaranteesAdapter(clause) {
             @Override
             public boolean hitsStartPointSorted() {

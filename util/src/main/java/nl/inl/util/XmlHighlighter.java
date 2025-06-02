@@ -307,35 +307,16 @@ public class XmlHighlighter {
             b.append(startHighlightTag);
     }
 
-    /**
-     * The start and end character position of a hit, used for highlighting the
-     * content.
-     */
-    public static class HitCharSpan {
-        private final int startChar;
-        private final int endChar;
-
-        public int getStartChar() {
-            return startChar;
-        }
-
-        public int getEndChar() {
-            return endChar;
-        }
-
-        public HitCharSpan(int startChar, int endChar) {
-            this.startChar = startChar;
-            this.endChar = endChar;
-        }
-    }
+    /** The start and end character position of a hit, used for highlighting the content. */
+    public record HitCharSpan(int startChar, int endChar) {}
 
     private static void addHitPositionsToTagList(List<TagLocation> tags, List<HitCharSpan> hitSpans, int offset,
             int length) {
-        for (HitCharSpan hit : hitSpans) {
-            final int a = hit.getStartChar() - offset;
+        for (HitCharSpan hit: hitSpans) {
+            final int a = hit.startChar() - offset;
             if (a < 0)
                 continue; // outside highlighting range, or non-highlighting element (e.g. searching for example date range)
-            final int b = hit.getEndChar() - offset;
+            final int b = hit.endChar() - offset;
             if (b > length)
                 continue; // outside highlighting range
             assert b >= a;

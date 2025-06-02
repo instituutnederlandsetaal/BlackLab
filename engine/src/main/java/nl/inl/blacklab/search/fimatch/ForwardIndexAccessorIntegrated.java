@@ -55,8 +55,8 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
             forwardIndexSegmentReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
-            for (int i = 0; i < luceneFields.size(); i++) {
-                termsSegmentReaders.add(forwardIndexSegmentReader.terms(luceneFields.get(i)));
+            for (String luceneField: luceneFields) {
+                termsSegmentReaders.add(forwardIndexSegmentReader.terms(luceneField));
             }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
@@ -110,14 +110,9 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof ForwardIndexAccessorIntegrated))
+        if (!(o instanceof ForwardIndexAccessorIntegrated that))
             return false;
-        ForwardIndexAccessorIntegrated that = (ForwardIndexAccessorIntegrated) o;
         return index.equals(that.index) && annotatedField.equals(that.annotatedField);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(index, annotatedField);
-    }
 }

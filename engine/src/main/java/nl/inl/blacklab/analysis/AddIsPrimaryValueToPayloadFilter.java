@@ -64,11 +64,10 @@ public class AddIsPrimaryValueToPayloadFilter extends TokenFilter {
     @Override public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof AddIsPrimaryValueToPayloadFilter))
+        if (!(o instanceof AddIsPrimaryValueToPayloadFilter that))
             return false;
         if (!super.equals(o))
             return false;
-        AddIsPrimaryValueToPayloadFilter that = (AddIsPrimaryValueToPayloadFilter) o;
         return first == that.first && posIncAtt.equals(that.posIncAtt) && payloadAtt.equals(that.payloadAtt);
     }
 

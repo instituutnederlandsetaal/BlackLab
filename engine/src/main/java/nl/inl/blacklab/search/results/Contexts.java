@@ -74,10 +74,10 @@ public class Contexts {
                 contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
-                .map(afi -> afi.annotation())
+                .map(AnnotationForwardIndex::annotation)
                 .collect(Collectors.toList());
         List<Terms> annotationTerms = forwardIndexes.stream()
-                .map(afi -> afi.terms())
+                .map(AnnotationForwardIndex::terms)
                 .collect(Collectors.toList());
         int hitIndex = 0;
         for (Hit h: hits) {

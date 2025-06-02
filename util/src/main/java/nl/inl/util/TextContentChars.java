@@ -1,8 +1,5 @@
 package nl.inl.util;
 
-import java.io.CharArrayReader;
-import java.io.Reader;
-
 /**
  * Text content, either as bytes or as a String.
  */

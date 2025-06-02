@@ -341,9 +341,6 @@ class SpansReader implements Runnable {
         } catch (InterruptedException e) {
             e.printStackTrace();
             throw new InterruptedSearch(e);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw BlackLabRuntimeException.wrap(e);
         } catch (Exception e) {
             e.printStackTrace();
             throw BlackLabRuntimeException.wrap(e);

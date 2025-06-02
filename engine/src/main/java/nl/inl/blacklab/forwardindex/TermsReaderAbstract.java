@@ -394,8 +394,7 @@ public abstract class TermsReaderAbstract implements Terms {
     private void debugVerifySorts(String[] terms) {
         // Verify sorts
         String prev = null;
-        for (int i = 0; i < sensitivePosition2GroupOffset.length; i++) {
-            int groupOffset = sensitivePosition2GroupOffset[i];
+        for (int groupOffset: sensitivePosition2GroupOffset) {
             assert groupOffset >= 0;
             assert groupTermIds[groupOffset] == 1;
             int termId = groupTermIds[groupOffset + 1];
@@ -407,8 +406,7 @@ public abstract class TermsReaderAbstract implements Terms {
         }
         prev = null;
         int prevTermId = -1;
-        for (int i = 0; i < insensitivePosition2GroupOffset.length; i++) {
-            int groupOffset = insensitivePosition2GroupOffset[i];
+        for (int groupOffset: insensitivePosition2GroupOffset) {
             assert groupOffset >= 0;
             int termId = groupTermIds[groupOffset + 1];
             if (prevTermId != -1 && termId != prevTermId) {

@@ -12,8 +12,6 @@ public class TestTextPatternRegex {
     public void testEmptyPattern() {
         TextPatternTerm r = new TextPatternRegex("");
         Assert.assertEquals("", r.getValue());
-
-        Assert.assertTrue(r instanceof TextPatternTerm);
         Assert.assertEquals("", r.getValue());
     }
 

@@ -130,8 +130,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpanQuery realTarget = target;
             String captureTargetOverlapsAs = null;
             BLSpanWeight captureTargetOverlapsWeight = null;
-            if (target instanceof SpanQueryCaptureOverlappingSpans) {
-                SpanQueryCaptureOverlappingSpans overl = (SpanQueryCaptureOverlappingSpans) target;
+            if (target instanceof SpanQueryCaptureOverlappingSpans overl) {
                 realTarget = overl.clauses.get(0);
                 BLSpanQuery captureTargetOverlaps = overl.clauses.get(1); // spans to capture
                 captureTargetOverlapsAs = overl.captureAs;

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -150,19 +149,14 @@ public class TestProcessingSteps {
 
         @Override
         public List<String> getMetadataField(String name) {
-            switch (name) {
-            case "test":
-                return List.of("testValue");
-            case "testMulti":
-                return List.of("testValue1", "testValue2");
-            case "year":
-                return List.of("2025");
-            case "month":
-                return List.of("11");
-            case "day":
-                return null;
-            }
-            return null;
+            return switch (name) {
+                case "test" -> List.of("testValue");
+                case "testMulti" -> List.of("testValue1", "testValue2");
+                case "year" -> List.of("2025");
+                case "month" -> List.of("11");
+                case "day" -> null;
+                default -> null;
+            };
         }
 
         @Override

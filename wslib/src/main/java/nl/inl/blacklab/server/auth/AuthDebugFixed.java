@@ -1,13 +1,11 @@
 package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 
 /**

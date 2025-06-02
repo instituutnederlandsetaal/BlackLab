@@ -103,8 +103,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
     protected int goToNextMatch(boolean nextImmediately) throws IOException {
         if (in.startPosition() == NO_MORE_POSITIONS)
             return NO_MORE_POSITIONS;
-        if (!nextImmediately)
-            assert in.startPosition() >= 0;
+        assert nextImmediately || in.startPosition() >= 0;
         boolean next = nextImmediately;
         for (;;) {
             if (next)

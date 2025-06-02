@@ -40,26 +40,8 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * Position of start tags and their index in the annotation arrays, so we can add
      * payload when we find the end tags
      */
-    private static final class OpenTagInfo {
-
-        public final String name;
-
-        public final int index;
-
-        private final int position;
-
-        private final int relationId;
-
-        private final Map<String, List<String>> attributes;
-
-        public OpenTagInfo(String name, int index, int position, int relationId, Map<String, List<String>> attributes) {
-            this.name = name;
-            this.index = index;
-            this.position = position;
-            this.relationId = relationId;
-            this.attributes = attributes;
-        }
-    }
+    private record OpenTagInfo(String name, int index, int position, int relationId,
+                               Map<String, List<String>> attributes) {}
 
     /** Annotated fields we're indexing. */
     private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
@@ -248,8 +230,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         // Index the data
         InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
         try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), data)) {
-            if (docIndexer instanceof DocIndexerBase) {
-                DocIndexerBase ldi = (DocIndexerBase) docIndexer;
+            if (docIndexer instanceof DocIndexerBase ldi) {
                 ldi.indexingIntoExistingDoc = true;
                 ldi.currentDoc = currentDoc;
                 ldi.linkingIndexer = this;
