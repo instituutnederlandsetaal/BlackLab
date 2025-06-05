@@ -129,8 +129,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Optional<TextPattern> pattern() throws BlsException {
         if (pattern == null) {
-            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData(),
-                    getAdjustRelationHits());
+            pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
         }
         return pattern == null ? Optional.empty() : Optional.of(pattern);
     }
@@ -138,6 +137,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public boolean getAdjustRelationHits() {
         return params.getAdjustRelationHits();
+    }
+
+    @Override
+    public boolean getWithSpans() {
+        return params.getWithSpans();
     }
 
     /** Pattern, optionally within s if context=s was specified. */
@@ -443,7 +447,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
                 throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
 
             SearchSettings searchSettings = searchSettings();
-            return search.find(pattern.get().toQuery(search.queryInfo(), filter), searchSettings);
+            return search.find(pattern.get().toQuery(search.queryInfo(), filter,
+                    params.getAdjustRelationHits(), params.getWithSpans()), searchSettings);
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }

@@ -82,10 +82,10 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
 
-        /** Used for ==> _with-spans(_) capturing */
+        /** Used for ==> with-spans(_) capturing */
         private final BLSpanQuery captureTargetOverlaps;
 
-        /** Name for target spans captured in case of ==> _with-spans(_) */
+        /** Name for target spans captured in case of ==> with-spans(_) */
         private final String captureTargetOverlapsAs;
 
         private Target(BLSpanQuery matchRelations, BLSpanQuery captureRelations, BLSpanQuery target, String targetField,
@@ -126,7 +126,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             BLSpanWeight matchRelationsWeight = matchRelations.createWeight(searcher, scoreMode, boost);
             BLSpanWeight captureRelationsWeight = captureRelations.createWeight(searcher, scoreMode, boost);
 
-            // Are we using _with-spans() on target?
+            // Are we using with-spans() on target?
             BLSpanQuery realTarget = target;
             String captureTargetOverlapsAs = null;
             BLSpanWeight captureTargetOverlapsWeight = null;
@@ -156,7 +156,7 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             } else {
                 // Normal case: target is a real query. Create a weight for it.
                 captureTargetAs.clear(); // no A:[]* capturing
-                captureTargetOverlapsWeight = null; // no _with-spans(_) capturing
+                captureTargetOverlapsWeight = null; // no with-spans(_) capturing
                 captureTargetOverlapsAs = null;
                 targetWeight = target.createWeight(searcher, scoreMode, boost);
             }
@@ -233,10 +233,10 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
 
-        /** Used for ==> _with-spans(_) capturing */
+        /** Used for ==> with-spans(_) capturing */
         private final BLSpanWeight captureTargetOverlaps;
 
-        /** Name for target spans captured in case of ==> _with-spans(_) */
+        /** Name for target spans captured in case of ==> with-spans(_) */
         private final String captureTargetOverlapsAs;
 
         public TargetWeight(BLSpanWeight matchRelations, BLSpanWeight captureRelations, BLSpanWeight target,

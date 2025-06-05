@@ -15,6 +15,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.DocValuesTermsQuery;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -230,8 +231,8 @@ public class ResultHits {
         // All specifiers merged!
         // Construct the query that will get us our hits.
         SearchEmpty search = index.search(params.getAnnotatedField(), params.useCache());
-        QueryInfo queryInfo = search.queryInfo();
-        BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
+        Query filter = usedFilter ? fqb.build() : null;
+        BLSpanQuery query = tp.toQuery(search.queryInfo(), filter, params.getAdjustRelationHits(), params.getWithSpans());
         SearchHits hits = search.find(query, params.searchSettings());
         if (params.hitsSortSettings() != null) {
             hits = hits.sort(params.hitsSortSettings().sortBy());

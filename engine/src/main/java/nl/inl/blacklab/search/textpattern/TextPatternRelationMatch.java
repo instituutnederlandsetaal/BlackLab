@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
+import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
@@ -156,5 +157,36 @@ public class TextPatternRelationMatch extends TextPattern {
     @Override
     public boolean isRelationsQuery() {
         return true;
+    }
+
+    @Override
+    protected boolean hasWithSpans() {
+        return parent.hasWithSpans() || children.stream()
+                .anyMatch(ch -> ch.getTarget().hasWithSpans());
+    }
+
+    @Override
+    public TextPattern applyWithSpans() {
+        // Apply with-spans() to the parent and all children
+        TextPattern newParent = parent.applyWithSpans();
+        List<RelationTarget> newChildren = children.stream()
+                .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyWithSpans(), ch.getSpanMode(), ch.getCaptureAs()))
+                .collect(Collectors.toList());
+        return new TextPatternRelationMatch(newParent, newChildren);
+    }
+
+    @Override
+    protected boolean hasRspanAll() {
+        return parent.hasRspanAll() || children.stream()
+                .anyMatch(ch -> ch.getTarget().hasRspanAll());
+    }
+
+    @Override
+    public TextPattern applyRspanAll() {
+        TextPattern newParent = parent.applyRspanAll();
+        List<RelationTarget> newChildren = children.stream()
+                .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyRspanAll(), ch.getSpanMode(), ch.getCaptureAs()))
+                .collect(Collectors.toList());
+        return new TextPatternRelationMatch(newParent, newChildren);
     }
 }

@@ -59,13 +59,13 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         /** Should we include the hit on the left side of the relation even if there's no hit on the right side? */
         private final boolean optionalMatch;
 
-        /** Match info index for ==> _with-spans(_) capture */
+        /** Match info index for ==> with-spans(_) capture */
         private int capturedTargetOverlapsIndex = -1;
 
-        /** Used for ==> _with-spans(_) capturing */
+        /** Used for ==> with-spans(_) capturing */
         private SpansCaptureOverlappingSpans.OverlappingSpansCapturer capturerTargetOverlaps = null;
 
-        /** Name for target spans captured in case of ==> _with-spans(_) */
+        /** Name for target spans captured in case of ==> with-spans(_) */
         private String captureTargetOverlapsAs = null;
 
         public Target(BLSpans matchRelations, BLSpans target, boolean hasTargetRestrictions,
@@ -319,7 +319,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
                 // Get captures from the target match
                 target.target.getMatchInfo(targetIndex, matchInfo);
             } else {
-                // If target was _with-spans([]+) or similar, we should capture the spans covering the target
+                // If target was with-spans([]+) or similar, we should capture the spans covering the target
                 // we found now (because we obviously didn't actually find all []+ hits with all their spans,
                 // we took the shortcut of just looking at the targets of the matching relations,
                 // so finding the spans overlapping the target hasn't been done yet)

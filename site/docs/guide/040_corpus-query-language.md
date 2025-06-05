@@ -185,8 +185,11 @@ To match all spans in the corpus, use:
     <'.+' />
 :::
 
-::: tip Capturing all surrounding spans
-If you want to know all spans that surround (or actually overlap with) each of your hits, use::
+::: tip Capturing all overlapping spans
+If you want to know all spans that overlap each of your hits (for example, the sentence, paragraph and chapter it occurs 
+in, if you've indexed those as spans), pass `withspans=true` as a parameter.
+
+Alternatively, you can adjust your query directly:
 
     with-spans('baker')
 

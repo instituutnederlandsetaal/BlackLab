@@ -29,7 +29,7 @@ public class WebserviceParamsUtils {
      * @param adjustRelationHits if true, automatically add rspan(..., 'all') so hit encompasses all matched relations
      * @return text pattern
      */
-    public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattLang, String pattGapData, boolean adjustRelationHits) {
+    public static TextPattern parsePattern(BlackLabIndex index, String patt, String pattLang, String pattGapData) {
         TextPattern pattern = null;
         if (!StringUtils.isBlank(patt)) {
             if (pattLang.matches("default|corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
@@ -44,32 +44,8 @@ public class WebserviceParamsUtils {
                 String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
                 pattern = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang);
             }
-
-            if (adjustRelationHits) {
-                // Automatically add rspan(..., 'all') so hit encompasses all matched relations.
-                pattern = ensureHitSpansMatchedRelations(pattern);
-            }
         }
         return pattern;
-    }
-
-    /** Automatically add rspan so hit encompasses all matched relations.
-     *
-     * Only does this if this is a relations query and if setting enabled.
-     */
-    private static TextPattern ensureHitSpansMatchedRelations(TextPattern pattern) {
-        boolean addRspanAll = false;
-        if (pattern.isRelationsQuery()) {
-            addRspanAll = true;
-            if (pattern instanceof TextPatternQueryFunction qf) {
-                // Only add rspan if not already doing it explicitly
-                if (qf.getName().equals(XFRelations.FUNC_RSPAN) || qf.getName().equals(XFRelations.FUNC_REL)) {
-                    addRspanAll = false;
-                }
-            }
-        }
-        return addRspanAll ? new TextPatternQueryFunction(XFRelations.FUNC_RSPAN,
-                List.of(pattern, "all")) : pattern;
     }
 
     /**

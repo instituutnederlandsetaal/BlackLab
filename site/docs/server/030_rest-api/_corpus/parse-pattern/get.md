@@ -20,7 +20,6 @@ The `patt` parameter is required.
 |--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `patt`       | [BlackLab Corpus Query Language](/guide/corpus-query-language.md) (BCQL) pattern to search for                                                                                                                                                  |
 | `pattlang`   | pattern language to use for `patt`. Defaults to `bcql` (BlackLab Corpus Query Language). The other values (`contextql` and `luceneql`) have very limited support at the moment.  Other, more useful query languages may be added in the future. |
-| `adjusthits` | (relations queries only) should query hits be adjusted so all matched relations are inside the hit? Default: `no`                                                                                                                                                                                                                                                                                                                                                                               |
 
 **NOTE:** `pattgapdata` is not supported for this endpoint! (this is a rarely-used feature that might be removed in the future)
 

@@ -8,6 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
+import nl.inl.blacklab.search.extensions.XFRelations;
+import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
@@ -107,5 +109,22 @@ public class TextPatternQueryFunction extends TextPattern {
             }
         }
         return false;
+    }
+
+    /** Is this a call to with-spans()? */
+    @Override
+    protected boolean hasWithSpans() {
+        String n = name;
+        if (n.charAt(0) == '_') {
+            n = n.substring(1); // remove leading underscore
+        }
+        return n.equals(XFSpans.FUNC_WITH_SPANS);
+    }
+
+    @Override
+    protected boolean hasRspanAll() {
+        // See if we're already doing explicit rspan or rel call (if so, don't add rspan(..., 'all'),
+        // even if adjusthits=true)
+        return getName().equals(XFRelations.FUNC_RSPAN) || getName().equals(XFRelations.FUNC_REL);
     }
 }
