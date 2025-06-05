@@ -1,3 +1,9 @@
+---
+excludeFromSidebar: true # see vitepress sidebar config
+description: Contains examples that we link to sometimes, but aren't in the main doc navs
+---
+
+
 # Working with YAML
 
 While YAML ([yaml.org](https://yaml.org/)) is a human-friendly format compared to XML and JSON, and is the recommended format for configuration files in BlackLab, there are a few things you should be aware of.

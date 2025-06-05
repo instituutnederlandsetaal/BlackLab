@@ -1,3 +1,8 @@
+---
+excludeFromSidebar: true # see vitepress sidebar config
+description: Contains examples that we link to sometimes, but aren't in the main doc navs
+---
+
 # Example XPaths
 
 [When using Saxon](/guide/how-to-configure-indexing.md#xpath-support-level) you have extensive possibilities using XPath in BlackLab configuration. Some noteworthy examples are shown below.

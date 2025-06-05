@@ -2,7 +2,7 @@
 
 Over the years, BlackLab's indexing code has become messy. We'd like to clean it up and refactor it and make it easier to improve and maintain, and especially make it easier for users to implement their own `DocIndexer`s (or equivalent) if needed.
 
-The first step would be to get rid of the old external index format, which will allow us to delete a lot of code. This will probably be done when we start developing 5.x, at least if we make the integrated index format the default in 4.0. (corpus-frontend needs to use the `/relations` endpoint to enable this)
+The first step would be to get rid of the old external index format, which will allow us to delete a lot of code. This will probably be done when we start developing 5.x, at least if we make the integrated index format the default in 4.0. (BlackLab Frontend needs to use the `/relations` endpoint to enable this)
 
 After that, we can start refactoring the indexing code:
 - probably most important is a cleaner API for configuring a new index, i.e. the fields with their settings. Currently this is quite messy, requiring several manual steps to do some things. This should be abstracted away so the code just reads like an index structure definition.

@@ -1,0 +1,7 @@
+{
+	"include": ["*.vue", "*.ts", "*.js"],
+	"compilerOptions": {
+		"lib": ["ESNext"],
+		"strict": true,
+	}
+}
