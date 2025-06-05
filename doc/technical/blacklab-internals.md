@@ -65,7 +65,7 @@ The index metadata contains information that BlackLab needs, such as:
 - whether or not the full content of a document may be retrieved
 - metadata field type (tokenized, untokenized, text, numeric)
 
-It also contains extra information that may be useful for applications using BlackLab, such as the "official" [corpus-frontend](https://gibhub.com/INL/corpus-frontend):
+It also contains extra information that may be useful for applications using BlackLab, such as the "official" [BlackLab Frontend](https://github.com/instituutnederlandsetaal/blacklab-frontend):
 
 - name and description of the index and its fields
 - document format name
@@ -77,7 +77,7 @@ It also contains extra information that may be useful for applications using Bla
 - display order for metadata and annotated fields
 - how metadata fields should logically be grouped
 
-It could be argued that the second group of properties don't really belong in BlackLab and should perhaps be moved to the application using BlackLab. This might be the direction we take in the future. We estimate that beside our own corpus-frontend, not many other applications use these properties.
+It could be argued that the second group of properties don't really belong in BlackLab and should perhaps be moved to the application using BlackLab. This might be the direction we take in the future. We estimate that beside our own BlackLab Frontend, not many other applications use these properties.
 
 
 ### Files needed for indexing

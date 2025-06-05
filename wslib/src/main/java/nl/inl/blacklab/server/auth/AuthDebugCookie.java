@@ -11,8 +11,8 @@ import nl.inl.blacklab.server.search.UserRequest;
 /**
  * Set a cookie to simulate a logged-in user.
  * 
- * NOTE: this doesn't work properly with corpus-frontend at the moment, because
- * corpus-frontend performs requests to BLS from both the client and the server.
+ * NOTE: this doesn't work properly with BlackLab Frontend at the moment, because
+ * BlackLab Frontend performs requests to BLS from both the client and the server.
  * Both of these get assigned different cookies, causing problems. One way to
  * fix this would be to only use BLS from the client, but that would require
  * significant changes to the application.

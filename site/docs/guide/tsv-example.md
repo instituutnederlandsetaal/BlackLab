@@ -1,3 +1,8 @@
+---
+excludeFromSidebar: true # see vitepress sidebar config
+description: Contains examples that we link to sometimes, but aren't in the main doc navs
+---
+
 Below is an example of a TSV file that will be parsed correctly by the builtin 'tsv' input format.
 
 **NOTE:** the whitespace between words **MUST** be tab characters.
