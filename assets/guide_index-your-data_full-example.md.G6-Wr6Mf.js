@@ -1,0 +1,290 @@
+import{_ as i,c as a,o as n,al as l}from"./chunks/framework.B3j7FRen.js";const o=JSON.parse('{"title":"Full configuration example","description":"","frontmatter":{},"headers":[],"relativePath":"guide/index-your-data/full-example.md","filePath":"guide/030_index-your-data/100_full-example.md","lastUpdated":1749639304000}'),t={name:"guide/index-your-data/full-example.md"};function e(h,s,p,k,r,d){return n(),a("div",null,s[0]||(s[0]=[l(`<h1 id="full-configuration-example" tabindex="-1">Full configuration example <a class="header-anchor" href="#full-configuration-example" aria-label="Permalink to &quot;Full configuration example&quot;">​</a></h1> <p>Here&#39;s a more-or-less complete overview of what settings can occur in an input format configuration file, with explanatory comments.</p> <p>Input format configuration files should be named <code>&lt;formatIdentifier&gt;.blf.yaml</code> or <code>.blf.json</code> (depending on the format chosen). By default, BlackLab looks in <code>$BLACKLAB_CONFIG_DIR/formats/</code> (if the environment variable is defined), <code>$HOME/.blacklab/formats/</code> and <code>/etc/blacklab/formats/</code>. IndexTool searches a few more directories, including the current directory and the parent of the input and index directories.</p> <div class="language-yaml vp-adaptive-theme"><button title="Copy Code" class="copy"></button><span class="lang">yaml</span><pre class="shiki shiki-themes github-light github-dark vp-code" tabindex="0"><code><span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## For displaying in user interface (optional, recommended)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">displayName</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">OpenSonar FoLiA content format</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## For describing input format in user interface (optional, recommended)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">description</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">The file format used by OpenSonar for document contents.</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## What type of input files does this handle? (content, metadata?)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (optional; not used by BlackLab; could be used in user interface)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">type</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">content</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## What XML processor to use</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (optional; current default is VTD, but Saxon is recommended because it supports </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  XPath 3.1 and is faster. Future format file versions will probably default to Saxon)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (omit this setting when parsing CSV/TSV or some other file type)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">processor</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">saxon</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Each file type may have options associated with it (for now, only &quot;tabular&quot; does)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## We&#39;ve shown the options for tabular he&#39;re but commented them out as we&#39;re describing</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## an xml format here.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##fileTypeOptions:</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  type: tsv         # type of tabular format (tsv or csv)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  delimiter: &quot;\\t&quot;   # delimiter, if different from default (determined by &quot;type&quot;, tab or comma)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  quote: &quot;\\&quot;&quot;       # quote character, if different from default (double quote)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  inlineTags: false # are there inline tags in the file like in the Sketch Engine WPL format?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  glueTags: false   # are there glue tags in the file like in the Sketch Engine WPL format?</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## What namespaces do we use in our XPaths?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (if omitted: ignore namespaces)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">namespaces</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">  &#39;&#39;</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">http://ilk.uvt.nl/folia</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (&#39;&#39; -&gt; default namespace)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## What element starts a new document?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (the only absolute XPath; the rest is relative)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">documentPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">//FoLiA</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Should documents be stores in the content store?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## This defaults to true, but you can turn it off if you don&#39;t need this.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">store</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">false</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Annotated, CQL-searchable fields.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## We usually have just one, named &quot;contents&quot;.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">annotatedFields</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # Configuration for the &quot;contents&quot; field</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  contents</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # How to display the field in the interface (optional)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    displayName</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Contents</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # How to describe the field in the interface (optional)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    description</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Contents of the documents.</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # What element (relative to document) contains this field&#39;s contents?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (if omitted, entire document is used)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    containerPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">text</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # What are our word tags? (relative to container)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    wordPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">.//w</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # If specified, a mapping from this id to token position will be saved, so we </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # can refer back to it for standoff annotations later. (relative to wordPath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    tokenIdPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;@xml:id&quot;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # What annotation can each word have? How do we index them?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (annotations are also called &quot;(word) properties&quot; in BlackLab)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (valuePaths relative to word path)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    annotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # First annotation is the main annotation</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">word</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      displayName</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Words in the text</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      description</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">The word forms occurring in the document text.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">t</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      sensitivity</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">sensitive_insensitive</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # sensitive|s|insensitive|i|sensitive_insensitive|si|all</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">                                          # (please explicitly declare this for at least &quot;word&quot; and </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">                                          #  &quot;lemma&quot;; all other annotations will default to insensitive)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      uiType</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">text</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">                        # (optional) hint for use interface</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      forwardIndex</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">                  # should this annotation get a forward index [true]</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">lemma</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">lemma/@class</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # An annotation can have subannotations. This may be useful for e.g.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # part-of-speech features.</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">pos</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      basePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">pos</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">          # subsequent XPaths are relative to this</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;@class&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (relative to basePath)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # Subannotations</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      subannotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # A single subannotation</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">head</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;@head&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">   # (relative to basePath)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # Multiple subannotations defined at once:</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # visits all elements matched by forEachPath and</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # indexes subannotations based on namePath and valuePath </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # for each. Note that all subannotations MUST be declared</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # here as well, they just don&#39;t need a valuePath. If you</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # don&#39;t declare a subannotation, it will generate errors.</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">forEachPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;feat&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # (relative to basePath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        namePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;@subset&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # (relative to forEachPath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;@class&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # (relative to forEachPath)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Standoff annotations are annotations that are defined separately from the word</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # elements, elsewhere in the same document. To use standoff annotations, you must</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # define a tokenIdPath (see above). This will make sure you can refer back</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # to token positions so BlackLab knows at what position to index a standoff annotation.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    standoffAnnotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">path</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">//timesegment</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">               # Element containing the values to index</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      tokenRefPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">wref/@id</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # What token position(s) to index these values at</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">                                        # (these refer back to the tokenIdPath values)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      annotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:                      </span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"># Annotation(s) to index there</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">begintime</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">../@begintime</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # relative to path</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">endtime</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">../@endtime</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # XML tags within the content we&#39;d like to index</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (paths relative to container)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    inlineTags</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">path</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">.//s</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      attributes</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;xml:id&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;"> # Skip unique ids (slower, bigger index)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        exclude</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">path</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">.//p</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      attributes</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">exclude</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;type&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">   # Only index the &quot;type&quot; attribute</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">path</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">.//ne</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      displayAs</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">named-entity</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # what CSS class to use (when using autogenerated XSLT)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (optional)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Analyzer to use for metadata fields if not overridden</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (default|standard|whitespace|your own analyzer)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">metadataDefaultAnalyzer</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">default</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Embedded metadata</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (NOTE: shown here is a simple configuration with a single &quot;metadata block&quot;;</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  however, the value for the &quot;metadata&quot; key may also be a list of such blocks.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  this can be useful if your document contains multiple areas with metadata </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">##  you want to index)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">metadata</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # Where the embedded metadata is found (relative to documentPath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  containerPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">metadata[@type=&#39;native&#39;]</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # How each of the metadata fields can be found (relative to containerPath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  fields</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Single metadata field</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">author</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">author</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (relative to containerPath)</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Multiple metadata fields defined at once:</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # visits all elements matched by forEachPath and</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # adds a metadata entry based on namePath and </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # valuePath for each)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">  - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">forEachPath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">meta</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (relative to containerPath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    namePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;@id&quot;</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # (relative to forEachPath)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    valuePath</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">.</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">         # (relative to forEachPath)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    </span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## (optional)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## It is possible to specify a mapping to change the name of</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## metadata fields. This can be useful if you capture a lot of</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## metadata fields using forEachPath and want control over how they</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## are indexed.    </span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">indexFieldAs</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  lessThanIdealName</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">muchBetterName</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  alsoNotAGreatName</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">butThisIsExcellent</span></span>
+<span class="line"></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Linked metadata (or other linked document)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">linkedDocuments</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # What does the linked document represent?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # (this is used internally to determine the name of the field to store content store id in)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">  metadata</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Should we store the linked document?</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    store</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Values we need to locate the linked document</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (matching values will be substituted for $1-$9 below - the first linkValue is $1, etc.)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    linkValues</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">valueField</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">fromInputFile</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">       # fetch the &quot;fromInputFile&quot; field from the Lucene doc</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # We process the raw value:</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # - we replace backslashes with forward slashes</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # - we keep only the last two path parts (e.g. /a/b/c/d --&gt; c/d)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # - we replace .folia. with .cmdi.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      # (processing steps like these can also be used with metadata fields and annotations!</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">      #  see elsewhere for a list of available processing steps)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      process</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # Normalize slashes</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">action</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">replace</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        find</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">\\\\\\\\</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        replace</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;/&quot;</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">        # Keep only the last two path parts (which indicate location inside metadata zip file)</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">action</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">replace</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        find</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;^.*/([^/]+/[^/]+)/?$&quot;</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        replace</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;$1&quot;</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">action</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">replace</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        find</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">\\\\</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">.folia</span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">\\\\</span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">.&quot;</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        replace</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">&quot;.cmdi.&quot;</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # How to fetch the linked input file containing the linked document</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (file or http(s) reference)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # May contain $x (x = 1-9), which will be replaced with (processed) linkValue</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    inputFile</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">/molechaser/data/opensonar/metadata/SONAR500NEW.zip</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (Optional)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # If the linked input file is an archive, this is the path inside the archive where the file can be found</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # May contain $x (x = 1-9), which will be replaced with (processed) linkValue</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    pathInsideArchive</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">SONAR500/DATA/$1</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (Optional)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # XPath to the (single) linked document to process.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # If omitted, the entire file is processed, and must contain only one document.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # May contain $x (x = 1-9), which will be replaced with (processed) linkValue</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    #documentPath: /CMD/Components/SoNaRcorpus/Text[@ComponentId = $2]</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Format identifier of the linked input file</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    inputFormat</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">OpenSonarCmdi</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## Configuration to be copied into indexmetadata.yaml when a new index is created</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## from this format. These settings do not influence indexing but are for </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">## BlackLab Server and search user interfaces. All settings are optional.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">corpusConfig</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Display name for the corpus</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    displayName</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">My Amazing Corpus</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Short description for the corpus </span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    description</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Quite an amazing corpus, if I do say so myself.</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Is the user allowed to view whole documents in the search interface?</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (used by BLS to either allow or disallow fetching full document content)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (defaults to false because this is not allowed for some datasets)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    contentViewable</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Text direction of this corpus (e.g. &quot;LTR&quot;, &quot;left-to-right&quot;, &quot;RTL&quot;, etc.).</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (default: LTR)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    textDirection</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">LTR</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # You can divide annotations for an annotated field into groups, which can</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # be useful if you want to display them in a tabbed interface.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Our corpus frontend uses this setting.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    annotationGroups</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      contents</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Basic</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        annotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">        - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">word</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">        - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">lemma</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Advanced</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        annotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">        - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">pos</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">        addRemainingAnnotations</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span></span>
+<span class="line"></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # You can divide your metadata fields into groups, which can</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # be useful if you want to display them in a tabbed interface.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # Our corpus frontend uses this setting.</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    metadataFieldGroups</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Tab1</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      fields</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Field1</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Field2</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Tab2</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      fields</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Field3</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">      - </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">Field4</span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    - </span><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">name</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">OtherFields</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      addRemainingFields</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#005CC5;--shiki-dark:#79B8FF;">true</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # BLS will add any field not yet in </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">                                # any group to this group   </span></span>
+<span class="line"><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">    </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (optional, but pidField is highly recommended)</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # You can specify metadata fields that have special significance here.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # pidField is important for use with BLS because it guarantees that URLs</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # won&#39;t change even if you re-index. The other fields can be nice for</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # displaying document information but are not essential.</span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # (BTW, make sure pidField is configured with &quot;type: untokenized&quot; to </span></span>
+<span class="line"><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # prevent issues with e.g. PIDs containing spaces)</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">    specialFields</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">:</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      pidField</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">id</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">         # unique document identifier. Used by BLS for persistent URLs</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      titleField</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">title</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">    # may be used by user interface to display document info</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      authorField</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">author</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">  # may be used by user interface to display document info</span></span>
+<span class="line"><span style="--shiki-light:#22863A;--shiki-dark:#85E89D;">      dateField</span><span style="--shiki-light:#24292E;--shiki-dark:#E1E4E8;">: </span><span style="--shiki-light:#032F62;--shiki-dark:#9ECBFF;">pubDate</span><span style="--shiki-light:#6A737D;--shiki-dark:#6A737D;">   # may be used by user interface to display document info</span></span></code></pre></div>`,7)]))}const y=i(t,[["render",e]]);export{o as __pageData,y as default};
