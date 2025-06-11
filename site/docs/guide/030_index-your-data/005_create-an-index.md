@@ -58,7 +58,7 @@ Here, `FILTER_QUERY` is a metadata filter query in [Lucene query language](https
 
 BlackLab supports a number of input formats that are common in corpus linguistics:
 
-* `tei` ([Text Encoding Initiative](http://www.tei-c.org/), a popular XML format for linguistic resources, including corpora. indexes content inside the 'body' element; assumes part of speech is found in an attribute called 'type')
+* `tei` ([Text Encoding Initiative](http://www.tei-c.org/), a popular XML format for linguistic resources, including corpora. Will index content inside the 'body' element; assumes part of speech is found in an attribute called 'type')
 * `sketch-wpl` (the TSV/XML hybrid "word per line" input format [the Sketch Engine/CWB use](https://www.sketchengine.co.uk/documentation/preparing-corpus-text/))
 * `chat` ([Codes for the Human Analysis of Transcripts](https://en.wikipedia.org/wiki/CHILDES#Database_Format), the format used by the CHILDES project)
 * `folia` (a [corpus XML format](https://proycon.github.io/folia/) popular in the Netherlands)

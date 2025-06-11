@@ -57,8 +57,8 @@ Now, edit the file `/etc/blacklab/blacklab-server.yaml` using a text editor:
 ---
 configVersion: 2
 
-# Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single corpus)
+# Where corpora can be found
+# (list directories whose subdirectories are corpora, or directories containing a single corpus)
 indexLocations:
 - /data/blacklab-corpora
 ```

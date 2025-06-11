@@ -219,5 +219,5 @@ If you add `addRemainingFields: true` to one of the groups, any field that wasn'
 
 There's also a complete [annotated index metadata file](full-example.md) if you want to know more details about that.
 
-There are also (hacky) ways to make changes to the corpus metadata after it was indexed: you can export the metadata to a file and re-import it later (older indexes had an external `indexmetadata.yaml` file that could be edited directly). Start the `IndexTool` with `--help` to learn more, but be careful, as it is easy to make the index unusable this way. 
+There are also (hacky) ways to make changes to the corpus metadata after it was indexed: you can export the metadata to a file and re-import it later (older corpora had an external `indexmetadata.yaml` file that could be edited directly). Start the `IndexTool` with `--help` to learn more, but be careful, as it is easy to make the index unusable this way. 
 

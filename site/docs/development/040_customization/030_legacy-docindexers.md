@@ -49,10 +49,10 @@ By default, all properties get a forward index. The forward index is the complem
 quickly answer the question "what value appears in position X of document Y?". This functionality is used to generate
 snippets (such as for keyword-in-context (KWIC) views), to sort and group based on context words (such as sorting on the word left of the hit) and will in the future be used to speed up certain query types.
 
-However, forward indices take up a lot of disk space and can take up a lot of memory, and they are not always needed for every 
+However, forward indexes take up a lot of disk space and can take up a lot of memory, and they are not always needed for every 
 annotation. You should probably have a forward index for at least the word and punct annotations, and for any annotation you'd like to sort/group on or that you use heavily in searching, or that you'd like to display in KWIC views. But if you add an annotation that is only used in certain special cases, you can decide to disable the forward index for that annotation. You can do this by adding the annotation name to the "noForwardIndexProps" space-separated list in the indextemplate.json file shown above.
 
-A note about forward indices and indexing multiple values at a single corpus position: as of right now, the forward index will only store the first value indexed at any position. We would like to expand this so that it is possible to quickly retrieve all values indexed at a corpus position, but that is not the case now.
+A note about forward indexes and indexing multiple values at a single corpus position: as of right now, the forward index will only store the first value indexed at any position. We would like to expand this so that it is possible to quickly retrieve all values indexed at a corpus position, but that is not the case now.
 
 Note that if you want KWICs or snippets that include annotations without a forward index (as well the rest of the original XML), you can switch to using the original XML to generate KWICs and snippets, at the cost of speed. To do this, pass `usecontent=orig` to BlackLab Server, or call `Hits.settings().setConcordanceType(ConcordanceType.CONTENT_STORE)`.
 

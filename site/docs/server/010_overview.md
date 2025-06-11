@@ -76,9 +76,9 @@ Part of the document (embedded in a `<blacklabResponse>` root element; BlackLab 
     http://blacklab.ivdnt.org/blacklab-server/opensonar/docs/0345391802/contents?wordstart=1000&wordend=2000
 
 
-#### Information about indices
+#### Information about corpora
 
-Information about the webservice; list of available indices
+Information about the webservice; list of available corpora
 
     http://blacklab.ivdnt.org/blacklab-server/ (trailing slash optional)
 

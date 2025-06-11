@@ -91,7 +91,7 @@ This is the intended structure of the new BlackLab documentation:
   - REST API reference
   - Detailed configuration
   - Tutorials / howtos
-    - User authentication, creating indices and adding data
+    - User authentication, creating corpora and adding data
     - Convert/Tag plugins
 
 - BlackLab Frontend, a web application

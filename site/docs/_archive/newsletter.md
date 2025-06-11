@@ -128,9 +128,9 @@ Performance: search in a snap
 
 I'm happy to report that BlackLab performance has improved in several areas.
 
-Large BlackLab indices used to take a long time to open. This has been much improved. In addition, there’s now an option to automatically “warm up” the forward indices (i.e. prime the disk cache) in a background thread on startup. Enable this by calling Searcher.setAutoWarmForwardIndices(true); before constructing a Searcher object.
+Large BlackLab corpora used to take a long time to open. This has been much improved. In addition, there’s now an option to automatically “warm up” the forward indexes (i.e. prime the disk cache) in a background thread on startup. Enable this by calling Searcher.setAutoWarmForwardIndices(true); before constructing a Searcher object.
 
-Generating concordances (hits in context, for showing KWIC (keyword in context) views) has become much faster, because we generate them from the forward indices now instead of the content store. For this to work, we’ve added a new forward index called “punct” containing whitespace and punctuation – all characters that occur between two words. So if you want the improved speed, you should recreate your index to make sure you have this new forward index available. BlackLab automatically switches over to the fast way of making concordances when it detects this forward index.
+Generating concordances (hits in context, for showing KWIC (keyword in context) views) has become much faster, because we generate them from the forward indexes now instead of the content store. For this to work, we’ve added a new forward index called “punct” containing whitespace and punctuation – all characters that occur between two words. So if you want the improved speed, you should recreate your index to make sure you have this new forward index available. BlackLab automatically switches over to the fast way of making concordances when it detects this forward index.
 
 Several types of queries (notably, phrase searches) have been sped up. Significant improvements were achieved by remembering properties of the resultsets of subqueries, such as whether or not the results are all of the same length. We use these extra properties to determine when certain operations (such as sorting) can be skipped.
 
