@@ -1,7 +1,6 @@
 # Custom DocIndexer
 
-In most cases, you won't need to write Java code to add support for your input format. See [How to configure indexing](/guide/how-to-configure-indexing.md) to learn how. 
-For more information about indexing in general, see [Indexing with BlackLab](/guide/indexing-with-blacklab.md).
+In most cases, you won't need to write Java code to add support for your input format. See [How to configure indexing](/guide/index-your-data/simple-example.md) to learn how. 
 
 In rare cases, you may want to implement your own DocIndexer. This page provides a simple tutorial for getting started with that.
 

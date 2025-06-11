@@ -23,9 +23,9 @@ There are additional branches related to in-development features. These are inte
 
 ## Compatibility: Java, Lucene
 
-This version of BlackLab required Java 11 or higher. It has been tested up to Java 17.
+The current version of BlackLab requires Java 17 or higher. It has been tested up to and including Java 21.
 
-This version uses Lucene 8. This unfortunately means that corpora created with older BlackLab versions (up to 2.3) cannot be read and will need to be re-indexed. If this is a problem for you, you can stick with the 2.3 version for now. We would like to eventually provide a conversion tool, but there is no date planned for this.
+This version uses Lucene 8. This unfortunately means that corpora created with older BlackLab versions (up to 2.3) cannot be read and will need to be re-indexed.
 
 
 ## Roadmap

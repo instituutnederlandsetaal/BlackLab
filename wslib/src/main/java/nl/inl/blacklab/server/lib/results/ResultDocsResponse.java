@@ -142,7 +142,7 @@ public class ResultDocsResponse {
             throw WebserviceOperations.translateSearchException(e);
         }
 
-        // If "waitfortotal=yes" was passed, block until all results have been fetched
+        // If "waitfortotal=true" was passed, block until all results have been fetched
         boolean waitForTotal = params.getWaitForTotal();
         if (waitForTotal)
             totalDocResults.size();

@@ -21,7 +21,7 @@ Even if your corpus does not include annotations, you can still benefit from oth
 
 BlackLab was designed primarily for linguists, but is also used for other purposes, like historical research and knowledge extraction.
 
-It is available as a REST API (web service), so you can use it from any programming language.
+It is available as a web service, allowing you to use it from any programming language.
 
 BlackLab was developed at the [Dutch Language Institute](https://ivdnt.org). It is free and open source software (Apache License 2.0).
 
@@ -34,12 +34,12 @@ BlackLab's features include:
 - **Easy to use**, well-documented REST API.
 - **Fast and scalable**: search very large corpora in seconds.
 - **Index your data** using a built-in format or by writing a configuration file.
-- **Search for complex patterns** using the powerful [BlackLab Corpus Query Language](corpus-query-language.md)
+- **Search for complex patterns** using the powerful [BlackLab Corpus Query Language](query-language/)
 - **Search within spans** to e.g. find named entities containing _tower_ at the end of a sentence.
 - **Search (dependency) relations**, to find specific (tree) structures in your text. **(NEW in v4)**
+- **Search parallel corpora**, so you can find alignments between different languages or historical versions. **(NEW in v4)**
 - **Capture** parts of matches.
 - **Group and sort** result sets on many criteria, such as the text preceding the match.
-- **Supports parallel corpora**, so you can find alignments between different languages or historical versions.
 - **Highlight** hits in a document and keyword-in-context (KWIC) view of hits.
 - **Mature and actively developed** since 2010, with many [plans for the future](future-plans.md).
 

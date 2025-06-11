@@ -61,7 +61,7 @@ BlackLab allows you to index and search on as many annotation layers as you want
 
 A new addition is random hit sampling. Just let BlackLab select 1% of your results at random. Useful when you don't want to wade through millions of individual results, but you do want to get a sense of what you might find if you did.
 
-BlackLab supports a large and growing [subset of the Corpus Query Language](https://blacklab.ivdnt.org/corpus-query-language.html) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
+BlackLab supports a large and growing [subset of the Corpus Query Language](https://blacklab.ivdnt.org/guide/query-language/) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
 
 You can even capture groups of words in the matched text (just like you can with regular expressions), allowing you to analyse the structure of each of your matches in more detail. The IKE knowledge extraction tool developed by the Allen Institute (see above) uses this feature. You could also implement features like the [Sketch Engine](https://www.sketchengine.co.uk/)'s Word Sketch feature with this.
 
@@ -116,7 +116,7 @@ Input formats: TEI, FoLiA, Alto or add your own?
 
 We've also had code for indexing formats like TEI and FoLiA, but it wasn't yet part of BlackLab. Now this code has been restructured and added to the project. Both TEI P4 and P5 are supported. Please note that these indexers are relatively simple, so if you want to make use of the more advanced features of these formats, those may not be supported yet.
 
-However, adding or improving support for input formats has become much easier. Before, you had to really dive into the inner workings of BlackLab to fully grasp how to index a new file format. Now, you just have to write a few simple handlers for element types and you’re good to go. Default handlers are supplied and you can look at the supplied indexers to see how to achieve specific things. The [introductory guide](/guide/how-to-configure-indexing "Add a new input format") to writing an indexer should also be helpful. If you have any questions, contact me (see below).
+However, adding or improving support for input formats has become much easier. Before, you had to really dive into the inner workings of BlackLab to fully grasp how to index a new file format. Now, you just have to write a few simple handlers for element types and you’re good to go. Default handlers are supplied and you can look at the supplied indexers to see how to achieve specific things. The [introductory guide](/guide/index-your-data/simple-example.md) to writing an indexer should also be helpful. If you have any questions, contact me (see below).
 
 OpenSoNaR & WhiteLab
 --------------------

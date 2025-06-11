@@ -7,7 +7,7 @@ Corpora containing multiple languages, with relationships between sentences and 
 
 ## How?
 
-See the [documentation](https://blacklab.ivdnt.org/guide/corpus-query-language.html#parallel-corpus-querying).
+See the [documentation](https://blacklab.ivdnt.org/guide/query-language/parallel.html).
 
 ## When?
 

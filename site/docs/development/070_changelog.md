@@ -10,17 +10,17 @@
     - parallel corpora
 - BCQL:
     - you can request all relations in a sentence now (`within rcapture(<s/>)`).
-    - new `overlap` operator to e.g. find hits in the overlaps of two tags (`'the' within <heading /> overlap <named-entity/>`). Useful to build a query when you don't know the hierarchy of tags.
-    - integer range query for annotations (`[pos='verb' & pos_confidence=in[50,100]]`) and attribute values (`<verse number=in[1,10]/>`)
+    - new `overlap` operator to e.g. find hits in the overlaps of two tags (`"the" within <heading /> overlap <named-entity/>`). Useful to build a query when you don't know the hierarchy of tags.
+    - integer range query for annotations (`[pos="verb" & pos_confidence=in[50,100]]`) and attribute values (`<verse number=in[1,10]/>`)
     - lookahead/lookbehind: `(?<=...)` and `(?=...)` for positive lookbehind and lookahead, and `(?<!...)` and `(?!...)` for negative lookbehind and lookahead.
-    - `punctBefore`/`punctAfter` pseudo-annotations: `[word='good' & punctAfter=',']` (translates to `[word='good'] (?= [punct=','])`)
+    - `punctBefore`/`punctAfter` pseudo-annotations: `[word="good" & punctAfter=","]` (translates to `[word="good"] (?= [punct=","])`)
     - `withspans=true` parameter will capture all overlapping spans for each hit (`with-spans(...)` function does the same).
     - option `omitEmptyCaptures` to omit empty captures
     - `csvdescription` parameter
 - Matching:
   - match info includes captures, inline tags and relations. Captured tags are returned with their attributes.
   - hit uniqueness now considers match info (capture groups etc.) as well, so multiple hits with the same doc, start and end may be reported (with each having different match info)
-  - version 2 of the .blf.yaml format, changing the default processor to Saxon and removing various quirks. See [here](../guide/how-to-configure-indexing.md#differences-between-version-1-and-2).
+  - version 2 of the .blf.yaml format, changing the default processor to Saxon and removing various quirks. See [here](../guide/index-your-data/miscellaneous.md#differences-between-version-1-and-2).
   - support for indexing extra attributes with inline tags using XPath; only indexing certain attributes; or excluding all except certain attributes.
 - BlackLab Server:
   - Evolving the BLS API. See [API versions](../server/rest-api/api-versions.md).
@@ -50,6 +50,7 @@
 
 ### Changed
 
+- minimum Java version is now 17.
 - annotation setting allowDuplicateValues defaults to false, which is usually what you want.
 - various performance improvements, e.g. when opening huge indexes. Also Lucene's two-phase iterators are used where possible.
 - BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.

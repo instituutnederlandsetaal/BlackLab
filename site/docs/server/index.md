@@ -53,7 +53,7 @@ See the [Docker README](https://github.com/instituutnederlandsetaal/BlackLab/tre
 
 ### Java JRE
 
-Install a JRE (Java runtime environment). BlackLab requires at least version 11, but version 17 or newer versions should work as well.
+Install a JRE (Java runtime environment). BlackLab requires at least version 17, but version 21 or newer versions should work as well.
 
 ### Tomcat
 
@@ -62,7 +62,7 @@ BlackLab Server needs a Java application server to run. We will use Apache Tomca
 Install Tomcat on your machine. See the [official docs](https://tomcat.apache.org/tomcat-9.0-doc/setup.html) or an OS-specific guide like [this one for Ubuntu](https://linuxize.com/post/how-to-install-tomcat-9-on-ubuntu-20-04/).
 
 ::: warning Tomcat 10 not yet supported
-BlackLab currently uses Java EE and therefore runs in Tomcat 8 and 9, but not in Tomcat 10 (which migrated to [Jakarta EE](https://eclipse-foundation.blog/2020/06/23/jakarta-ee-is-taking-off/)). If you try to run BlackLab Server on Tomcat 10, you will get a [ClassNotFoundException](https://stackoverflow.com/questions/66711660/tomcat-10-x-throws-java-lang-noclassdeffounderror-on-javax-servlet-servletreques/66712199#66712199). A future release of BlackLab will migrate to Jakarta EE.
+BlackLab currently uses Java EE and therefore runs in Tomcat 8 and 9, but not in Tomcat 10 (which migrated to [Jakarta EE](https://eclipse-foundation.blog/2020/06/23/jakarta-ee-is-taking-off/)). If you try to run BlackLab Server on Tomcat 10, you will get a [ClassNotFoundException](https://stackoverflow.com/questions/66711660/tomcat-10-x-throws-java-lang-noclassdeffounderror-on-javax-servlet-servletreques/66712199#66712199). A future release of BlackLab will migrate to Jakarta EE. There is an experimental branch `experiment/fa-tomcat-10` that you can try if you want.
 :::
 
 ### Configuration file
@@ -108,7 +108,7 @@ Of course, make sure that URLs you send to BlackLab are URL-encoded using UTF-8 
 :::
 
 ::: details <b>TIP:</b> Memory usage
-For larger indices, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.) If you are indexing unique ids for each word, you may also be able to save memory by [disabling the forward](/guide/how-to-configure-indexing.md#disable-fi) index for that 'unique id' annotation.
+For larger indices, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.) If you are indexing unique ids for each word, you may also be able to save memory by [disabling the forward index](/guide/index-your-data/annotations.md#disable-the-forward-index) for that 'unique id' annotation.
 
 We used to also recommend locking the forward index in memory using the `vmtouch` utility, but we now believe it's better to leave disk cache management to the operating system.
 

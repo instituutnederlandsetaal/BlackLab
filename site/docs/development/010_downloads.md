@@ -13,15 +13,16 @@ the corpora they support.
 
 The reason for not all older corpora being usable with a newer BlackLab version is mostly that Lucene drops support for older index formats.
 
-| BlackLab            | 1st release | Java      | Lucene   | Solr     | Supports corpora...     |
-|---------------------|:------------|-----------|----------|----------|-------------------------|
-| 4.x (future)        | future      | likely 11 | likely 9 | likely 9 | created with BL 3-4     |
-| 3.x                 | Jul 2022    | 11        | 8        | -        | created with BL 3       |
-| 2.x                 | Jan 2020    | 8         | 5        | -        | created with BL 1.2-2.x |
-| 1.7-1.9 (obsolete)  | Jun 2018    | 8         | 5        | -        | created with BL 1.2-2.x |
-| 1.0-1.2 (obsolete)  | Apr 2014    | 6         | 3/5      | -        | created with BL 1.x     |
+| BlackLab           | 1st release | Java  | Lucene | Solr | Supports corpora...     |
+|--------------------|:------------|-------|--------|------|-------------------------|
+| 5.x (future)       | future      | 17/21 | 9/10   | 9    | created with BL 5       |
+| dev / 4.x (future) | future      | 17    | 8      | 8    | created with BL 4       |
+| 3.x                | Jul 2022    | 11    | 8      | -    | created with BL 3       |
+| 2.x                | Jan 2020    | 8     | 5      | -    | created with BL 1.2-2.x |
+| 1.7-1.9 (obsolete) | Jun 2018    | 8     | 5      | -    | created with BL 1.2-2.x |
+| 1.0-1.2 (obsolete) | Apr 2014    | 6     | 3/5    | -    | created with BL 1.x     |
 
-You can stay on 2.x for now to avoid reindexing your corpora, but you'll miss out on performance improvements and new features. We do appreciate any help backporting bugfixes to this version.
+You can stay on an older version to avoid reindexing your corpora, but you'll miss out on performance improvements and new features.
 
 
 ## Build your own
