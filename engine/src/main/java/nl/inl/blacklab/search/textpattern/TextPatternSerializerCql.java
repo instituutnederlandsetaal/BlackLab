@@ -82,7 +82,7 @@ public class TextPatternSerializerCql {
                 // We're looking for an exact value, which may include regex characters.
                 value = StringUtil.escapeLuceneRegexCharacters(value);
             }
-            serializeToSingleQuotedString(b, value);
+            serializeToQuotedString(b, value);
         }
         if (annotation != null)
             b.append(optCloseBracket);
@@ -332,7 +332,7 @@ public class TextPatternSerializerCql {
         // MatchFilter string
         cqlSerializers.put(MatchFilterString.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             MatchFilterString tp = (MatchFilterString) pattern;
-            serializeToSingleQuotedString(b, tp.getValue());
+            serializeToQuotedString(b, tp.getValue());
         });
 
         // MatchFilter token annotation
@@ -409,7 +409,7 @@ public class TextPatternSerializerCql {
             if (arg instanceof TextPattern) {
                 serialize((TextPattern) arg, b, false, insideTokenBrackets);
             } else if (arg instanceof String) {
-                serializeToSingleQuotedString(b, (String) arg);
+                serializeToQuotedString(b, (String) arg);
             } else if (arg instanceof Integer) {
                 b.append((int) arg);
             } else {
@@ -455,8 +455,11 @@ public class TextPatternSerializerCql {
         }
     }
 
-    private static StringBuilder serializeToSingleQuotedString(StringBuilder b, String value) {
-        return b.append("'").append(StringUtil.escapeQuote(value, "'")).append("'");
+    /** Use double quotes for CQL */
+    private final static String USE_QUOTE = "\"";
+
+    private static StringBuilder serializeToQuotedString(StringBuilder b, String value) {
+        return b.append(USE_QUOTE).append(StringUtil.escapeQuote(value, USE_QUOTE)).append(USE_QUOTE);
     }
 
     private static String serializeAttributes(Map<String, MatchValue> attr) {

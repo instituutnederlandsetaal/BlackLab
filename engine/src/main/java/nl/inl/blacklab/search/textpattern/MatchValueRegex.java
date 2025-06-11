@@ -7,7 +7,7 @@ import nl.inl.util.StringUtil;
 record MatchValueRegex(String regex) implements MatchValue {
 
     public String getBcql() {
-        return "'" + regex.replaceAll("[\\\\']", "\\\\$0") + "'";
+        return "\"" + regex.replaceAll("[\\\\\"]", "\\\\$0") + "\"";
     }
 
     @Override

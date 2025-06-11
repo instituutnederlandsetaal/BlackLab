@@ -557,12 +557,12 @@
     "numberOfHits": 5,
     "numberOfHitsRetrieved": 5,
     "pattern": {
-      "bcql": "<u/> containing 'good'",
+      "bcql": "<u/> containing \"good\"",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "<u/> containing 'good'",
+        "bcqlFragment": "<u/> containing \"good\"",
         "filter": {
-          "bcqlFragment": "'good'",
+          "bcqlFragment": "\"good\"",
           "type": "regex",
           "value": "good"
         },

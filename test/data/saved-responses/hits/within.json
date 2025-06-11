@@ -105,10 +105,10 @@
     "numberOfHits": 1,
     "numberOfHitsRetrieved": 1,
     "pattern": {
-      "bcql": "('very' 'good') within <u/>",
+      "bcql": "(\"very\" \"good\") within <u/>",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "('very' 'good') within <u/>",
+        "bcqlFragment": "(\"very\" \"good\") within <u/>",
         "filter": {
           "bcqlFragment": "<u/>",
           "name": "u",
@@ -116,15 +116,15 @@
         },
         "operation": "within",
         "producer": {
-          "bcqlFragment": "'very' 'good'",
+          "bcqlFragment": "\"very\" \"good\"",
           "clauses": [
             {
-              "bcqlFragment": "'very'",
+              "bcqlFragment": "\"very\"",
               "type": "regex",
               "value": "very"
             },
             {
-              "bcqlFragment": "'good'",
+              "bcqlFragment": "\"good\"",
               "type": "regex",
               "value": "good"
             }
