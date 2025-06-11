@@ -62,7 +62,7 @@ from the root of your system to the directory where your blacklab config dir is:
 <span class="line"><span>configVersion: 2</span></span>
 <span class="line"><span></span></span>
 <span class="line"><span># Where indexes can be found</span></span>
-<span class="line"><span># (list directories whose subdirectories are indexes, or directories containing a single index)</span></span>
+<span class="line"><span># (list directories whose subdirectories are indexes, or directories containing a single corpus)</span></span>
 <span class="line"><span>indexLocations:</span></span>
 <span class="line"><span>- /Users/dirk/local/blacklab/data/indexes</span></span></code></pre></div><p><strong>N.B.</strong>
 Note that in this config file you can not use the <code>~</code> abbreviation.</p> <p>Deploying the blacklab war now leads to a friendly message from blacklab that there are no indexes.
