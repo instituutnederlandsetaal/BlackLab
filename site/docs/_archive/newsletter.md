@@ -137,7 +137,7 @@ Several types of queries (notably, phrase searches) have been sped up. Significa
 IndexTool: add and update documents
 -----------------------------------
 
-Before, BlackLab included a test program with each of the included indexers. This was messy and didn’t allow for a lot of customization. Now, we’ve included a single, generic indexing tool for indexing data: the IndexTool. [Here's](/guide/indexing-with-blacklab.html#indextool "Building and testing BlackLab") how to use it. You can also pass it "--help" to see more information. For example, it is possible to pass parameters to indexer classes to customize how you want to index your documents.
+Before, BlackLab included a test program with each of the included indexers. This was messy and didn’t allow for a lot of customization. Now, we’ve included a single, generic indexing tool for indexing data: the IndexTool. [Here's](/guide/index-your-data/create-an-index.md#indextool "Building and testing BlackLab") how to use it. You can also pass it "--help" to see more information. For example, it is possible to pass parameters to indexer classes to customize how you want to index your documents.
 
 We’re working on making the BlackLab index fully updateable. It is already possible to delete documents and then add new versions of them, effectively updating the documents. The forward index is smart about reusing free space. (The content store may still get fragmented if you do a lot of deletions, but this will be improved in the future.) All this means that you don't have to reindex your whole dataset every time a few documents change.
 

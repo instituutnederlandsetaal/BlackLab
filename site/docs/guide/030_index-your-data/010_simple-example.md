@@ -2,10 +2,10 @@
 
 An input format configuration file describes the structure of your documents so that BlackLab can index them.
 
-They can be used to index data from the commandline using the [IndexTool](index.md) or using BlackLab Frontend (if configured 
+They can be used to index data from the commandline using the [IndexTool](create-an-index.md) or using BlackLab Frontend (if configured 
 to allow a logged-in user to upload and index their own corpora).
 
-BlackLab already [supports](index.md#supported-formats) a number of common input formats out of the box. Your data may differ slightly of 
+BlackLab already [supports](create-an-index.md#supported-formats) a number of common input formats out of the box. Your data may differ slightly of 
 course, so you may use the [predefined formats](@github:/engine/src/main/resources/formats) as a starting point and customize them to fit your data. But here 
 we will look at writing a simple configuration file from scratch.
 

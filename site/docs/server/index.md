@@ -22,7 +22,7 @@ Suggestions for improving the image (and this guide) are welcome.
 
 A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher.
 
-We assume here that you are familiar with the BlackLab indexing process; see [Indexing with BlackLab](/guide/indexing-with-blacklab.md) to learn more.
+We assume here that you are familiar with the BlackLab indexing process; see [Indexing with BlackLab](/guide/index-your-data/create-an-index.md) to learn more.
 
 Create a file named `test.env` with your indexing configuration:
 
@@ -116,7 +116,7 @@ We used to also recommend locking the forward index in memory using the `vmtouch
 
 ## Indexing data
 
-You can index your data using the provided commandline tool IndexTool. See [Indexing with BlackLab](/guide/indexing-with-blacklab.md).
+You can index your data using the provided commandline tool IndexTool. See [Indexing with BlackLab](/guide/index-your-data/create-an-index.md).
 
 Another option is to configure user authentication to allow users to create corpora and add their data using BlackLab Server. See [here](/server/howtos) to get started.
 
