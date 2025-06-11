@@ -58,7 +58,7 @@ Now, edit the file `/etc/blacklab/blacklab-server.yaml` using a text editor:
 configVersion: 2
 
 # Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single index)
+# (list directories whose subdirectories are indexes, or directories containing a single corpus)
 indexLocations:
 - /data/blacklab-corpora
 ```
@@ -111,7 +111,7 @@ java -cp "blacklab-VERSION.jar:lib" nl.inl.blacklab.tools.IndexTool
 
 (if you're on Windows, replace the classpath separator colon `:` with a semicolon `;`)
 
-We want to create a new index, so we need to supply an index directory, input file(s) and an input format:
+We want to create a new corpus, so we need to supply a corpus (index) directory, input file(s) and an input format:
 
 ```bash
 java -cp "blacklab-VERSION.jar:lib" nl.inl.blacklab.tools.IndexTool create INDEX_DIR INPUT_FILES FORMAT
@@ -119,7 +119,7 @@ java -cp "blacklab-VERSION.jar:lib" nl.inl.blacklab.tools.IndexTool create INDEX
 
 If you specify a directory as the `INPUT_FILES`, it will be scanned recursively. You can also specify a file glob (such as \*.xml) or a single file. If you specify a .zip or .tar.gz file, BlackLab will automatically index its contents.
 
-For example, if you have TEI-P5 data in `/tmp/my-tei/` and want to create an index `/data/blacklab-corpora/my-corpus`, run the following command:
+For example, if you have TEI-P5 data in `/tmp/my-tei/` and want to create a corpus in `/data/blacklab-corpora/my-corpus`, run the following command:
 
 ```bash
 java -cp "blacklab-VERSION.jar" nl.inl.blacklab.tools.IndexTool create /data/blacklab-corpora/my-corpus /tmp/my-tei/ tei-p5
@@ -140,13 +140,13 @@ See also:
 - [Adding a new input format](/guide/index-your-data/simple-example.md) (if your format isn't supported yet and you don't want to convert)
 - [Indexing with BlackLab](/guide/index-your-data/create-an-index.md)
 
-### Testing your index
+### Testing your corpus
 
 #### BlackLab Server
 
 If your corpus was created as a subdirectory of the `indexLocation` you configured above (`/data/blacklab-corpora` in the above example), BlackLab Server should pick it up automatically. You can test this by going to http://localhost:8080/blacklab-server/my-corpus. If it worked, you should see metadata about your corpus.
 
-If you encounter problems, or you just prefer to test your index using a simple command line tool, you can try the [QueryTool](/development/query-tool.md).
+If you encounter problems, or you just prefer to test your corpus using a simple command line tool, you can try the [QueryTool](/development/query-tool.md).
 
 ## Corpus search application
 

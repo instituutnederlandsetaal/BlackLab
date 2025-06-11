@@ -80,7 +80,7 @@ Here’s the basic structure of a BlackLab search application, to give you an id
 The above in code:
 
 ```java
-	// Open your index
+	// Open your corpus
 	try (BlackLabIndex index = BlackLab.open(new File("/home/zwets/testindex"))) {
 	    String corpusQlQuery = " \"the\" [pos=\"adj.*\"] \"brown\" \"fox\" ";
 	

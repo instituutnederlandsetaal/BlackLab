@@ -279,7 +279,7 @@ and add the contents
 configVersion: 2
 
 # Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single index)
+# (list directories whose subdirectories are indexes, or directories containing a single corpus)
 indexLocations:
 - /Users/dirk/local/blacklab/data/indexes
 ```

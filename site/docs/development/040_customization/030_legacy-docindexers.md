@@ -14,7 +14,7 @@ To pass parameters via a property file, use the --indexparam option:
 
     java -cp "blacklab.jar:lib/*" nl.inl.blacklab.tools.IndexTool create --indexparam PROPERTYFILE ...
 
-**NOTE:** in addition to the --indexparam parameter, IndexTool will always look for a file named indexer.properties in the current directory, the input directory, the parent of the input directory, or the index directory. If the file is found in any of these locations, it is read and the values are used as indexing parameters. 
+**NOTE:** in addition to the --indexparam parameter, IndexTool will always look for a file named indexer.properties in the current directory, the input directory, the parent of the input directory, or the corpus (i.e. output) directory. If the file is found in any of these locations, it is read and the values are used as indexing parameters. 
 
 Use the DocIndexer.getParameter(name[, defaultValue]) method to retrieve parameters inside your DocIndexer. For an example of using DocIndexer parameters, see the DocIndexerTeiBase and MetadataFetcherSonarCmdi in the nl.inl.blacklab.indexers package. They use parameters to configure annotation names and where to fetch metadata from, respectively.
 
@@ -26,14 +26,14 @@ You can also configure what "sensitivity alternatives" (case/diacritics sensitiv
 
 If you don't configure these, BlackLab will pick (hopefully) sane defaults (i.e. word/lemma get "si", punct gets "i", _relation/starttag gets "s", others get "i"). (CAUTION: the special behaviour for word/lemma is deprecated. Please explictly configure the sensitivity for these annotations. Eventually they too will default to "i")
 
-## Configuring the index structure
+## Configuring the corpus structure
 
-What we call the "index structure" consists of some top-level index information (name, description, etc.), what word-level annotations 
+What we call the "corpus structure" consists of some top-level corpus information (name, description, etc.), what word-level annotations 
 (formerly called "properties") you want to index, what metadata fields there are and how they should be indexed, and more.
 
-By default, a default index structure is determined by BlackLab and the DocIndexer you're using. However, you can influence exactly 
-how your index is created using a customized index structure file. If you specify such an index structure file when creating the 
-index, it will be used as a template for the index metadata file, and so you won't have to specify the index structure file again 
+By default, a default corpus structure is determined by BlackLab and the DocIndexer you're using. However, you can influence exactly 
+how your corpus is created using a customized corpus structure file. If you specify such an corpus structure file when creating the
+corpus, it will be used as a template for the corpus metadata file, and so you won't have to specify the index structure file again 
 when updating your index later; all the information is now in the index metadata file. It is possible to edit the index metadata 
 file manually as well, but use caution, because it might break something.
 

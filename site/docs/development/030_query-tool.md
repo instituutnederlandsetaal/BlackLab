@@ -2,7 +2,7 @@
 
 ## What is it?
 
-QueryTool is a simple command-driven search tool that provides a demonstration of the querying features of BlackLab. It allows you to search an index, for example to test that indexing was succesful.
+QueryTool is a simple command-driven search tool that provides a demonstration of the querying features of BlackLab. It allows you to search a corpus, for example to test that indexing was succesful.
 
 ## Starting the QueryTool
 
@@ -20,7 +20,7 @@ Here's a few things to try:
 - For a simple query, just enclose each word between double quotes: `"the" "egg"` searches for "the" followed by "egg"
 - You can user regular expressions: `".*g"` searches for words ending with 'g'
 - If you want to get more of a feel for what kinds of matches were found, try grouping by matched text using the command "group match". Then, if you want to view one of the groups, use `group *n*`.
-- Type `struct` to see the structure of the index, including available annotations and metadata fields.
+- Type `struct` to see the structure of the corpus, including available annotations and metadata fields.
 - If you have a `lemma` annotation, you can use `[lemma="work"]` to find forms of the verb "work". Similarly, if you have a `pos` annotation, you can use `[pos="NOU-C"]` to find common nouns.
 
 ## Paging, sorting and grouping
@@ -223,7 +223,7 @@ filter author.level1:"sterkenburg" author.level2:"sterkenburg"
 filter (Filter weer leegmaken)
 ```
 
-Show index structure:
+Show corpus structure:
 
 ```
 struct

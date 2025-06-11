@@ -11,13 +11,13 @@ Specifically, it is not yet possible to find patterns in text using Corpus Query
 Language, which is the whole point of BlackLab.
 
 Eventually, all BlackLab features will be made available through Solr, and distributed
-index and search will be enabled.
+corpus and search will be enabled.
 
 :::
 
-## Querying a BlackLab index
+## Querying a BlackLab corpus
 
-You can load an existing BlackLab index as a Solr core. For now, this only allows you to search for documents matching metadata fields.
+You can load an existing BlackLab corpus as a Solr core. For now, this only allows you to search for documents matching metadata fields.
 
 ### 1. Download a Solr release
 Releases can be found [here](https://archive.apache.org/dist/lucene/solr/) for versions `<=8` and [here](https://archive.apache.org/dist/solr/solr/) for `>=9`.
@@ -33,18 +33,18 @@ Normally you'd copy the jars to the `lib` directory in the Solr core (as describ
 During debugging, I noticed that the `BlackLab40Codec` was loaded using a different classloader from the `LuceneCodec`, which may explain things.  
 The exception went away when moving the BlackLab jars into the webapp directly.
 
-### 3.Create a BlackLab index
+### 3. Create a BlackLab corpus
 This must be done using the integrated format (using --integrate-external-files true)
 
 ### 4. Prepare the Solr core
-- Create a directory for the core: `solr/server/solr/${index-name}`
+- Create a directory for the core: `solr/server/solr/${corpus-name}`
 - Create the following directory structure:
 ```
 solr/server/solr/
     ${index-name}/
         data/
             index/
-                contents of the BlackLab Index created in step 3
+                contents of the BlackLab Corpus created in step 3
         schema.xml
         solrconfig.xml
 ```
@@ -66,7 +66,7 @@ Tested using an edited version of [the solr-xslt-plugin config](https://github.c
 
 #### Add the fields
 Add the fields you're interested in to the solr schema.
-Below is the template schema used for testing, modify the metadata and annotations according to the current index.
+Below is the template schema used for testing, modify the metadata and annotations according to the current corpus.
 > NOTE:
 > Searching in terms doesn't work yet. Probably because of prohibited characters in the field names.
 

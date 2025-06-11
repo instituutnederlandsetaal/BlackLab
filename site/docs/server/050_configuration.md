@@ -117,7 +117,7 @@ You don't need all these sections! Just use the ones you want to specifically in
 :::
 
 ::: tip
-You can also use a file called `blacklab.yaml` if you want to configure details about running `IndexTool` and `QueryTool` as well. It can only contain the `log`, `search`, `indexing` and `plugin` sections (located at the end of this example config). This file may be useful if you want to increase the number of metadata values stored in the index metadata file, for example. If you're not sure, you probably don't need this.
+You can also use a file called `blacklab.yaml` if you want to configure details about running `IndexTool` and `QueryTool` as well. It can only contain the `log`, `search`, `indexing` and `plugin` sections (located at the end of this example config). This file may be useful in some cases. If you're not sure, you probably don't need this.
 :::
 
 ```yaml
@@ -125,11 +125,11 @@ You can also use a file called `blacklab.yaml` if you want to configure details 
 # BlackLab Server config file
 # ===============================================================
 
-# This indicates we're using the new index format.
+# This indicates we're using the new configuration format.
 configVersion: 2
 
 # Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single index)
+# (list directories whose subdirectories are indexes, or directories containing a single corpus)
 indexLocations:
 - /data/index
 

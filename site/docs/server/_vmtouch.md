@@ -35,7 +35,7 @@ To run vmtouch in daemon mode, so that it will lock files in the disk cache, use
 
 	sudo vmtouch -vtld <list_of_files>
 
-The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward indices of our BlackLab index locked in disk cache (run from within the index directory):
+The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward indices of our BlackLab corpus locked in disk cache (run from within the index directory):
 
 	sudo vmtouch -vtld fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
 

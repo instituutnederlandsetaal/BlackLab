@@ -46,7 +46,7 @@ Now start the server:
 docker compose up -d
 ```
 
-Your index should now be accessible at http://localhost:8080/blacklab-server/my-index.
+Your corpus should now be accessible at http://localhost:8080/blacklab-server/my-index.
 
 
 See the [Docker README](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/docker#readme) for more details.
