@@ -247,7 +247,7 @@ class IndexerImpl implements DocWriter, Indexer {
                 // Index default doesn't work either, error
                 throw new DocumentFormatNotFound(
                         "Could not determine documentFormat for index " + indexName + " (" + formatIdentifier
-                                + (fallbackFormat == null ? "" : " / " + fallbackFormat) + "): " + formatError(formatIdentifier));
+                                + (fallbackFormat == null ? "" : " / " + fallbackFormat) + "): " + formatError(fallbackFormat));
             }
             formatIdentifier = fallbackFormat;
         }
