@@ -14,7 +14,7 @@ This task is part of the CLARIAH-NL project.
 
 It's now possible to index relationships between (groups of) words, such as dependency relations, and query on them. Querying is limited to explicit parent-child relationships; that is, restrictions on descendants are not supported (yet). We've extended Corpus Query Language to enable relations search. Performance seems to be decent, but certain dedicated solutions may be faster and/or provide more features.
 
-See the [documentation](https://blacklab.ivdnt.org/guide/corpus-query-language.html#relations-querying) for more details.
+See the [documentation](https://blacklab.ivdnt.org/guide/query-language/relations.html) for more details.
 
 ## When?
 

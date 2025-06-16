@@ -105,6 +105,7 @@ public enum WebserviceParameter {
 
     // relations querying options
     REL_ADJUST_HITS("adjusthits", "adjust-hits"),  // adjust hits to cover all tokens involved in relation [no]
+    WITH_SPANS("withspans", "with-spans"), // include all overlapping spans in the response? [no]
 
     DEBUG("debug"), // include debug info (cache)
 

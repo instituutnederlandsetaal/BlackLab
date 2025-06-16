@@ -18,6 +18,12 @@ function stripNumbersFromText(text: string | undefined): string | undefined {
 
 function capitalizeFirstLetterAndRemoveUndercores(str: string | undefined): string | undefined {
   str = str?.replace(/^_+/, '').replace(/_+/g, ' ');
+
+  // replace dash with space for display
+  // e.g. "index-your-data" -> "Index your data"
+  // Exceptions: e.g. "token-based" and "Non-XML" won't be affected
+  str = str?.replace(/-(?!based|XML)/g, ' ');
+
   return str && (str.charAt(0).toUpperCase() + str.slice(1));
 }
 

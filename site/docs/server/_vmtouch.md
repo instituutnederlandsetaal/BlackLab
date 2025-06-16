@@ -7,7 +7,7 @@ These days, we don't recommend using vmtouch unless you are certain you need it.
 :::
 
 
-At the Dutch Language Institute, we used to use a tool called [vmtouch](http://hoytech.com/vmtouch/) written by Doug Hoyte to 'lock' our forward indices in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
+At the Dutch Language Institute, we used to use a tool called [vmtouch](http://hoytech.com/vmtouch/) written by Doug Hoyte to 'lock' our forward indexes in the operating system's disk cache, keeping them in memory at all times. This speeds up sorting and grouping operations, as well as generating (large amounts of) KWICs (keyword-in-context results).
 
 vmtouch is a tool that can "lock" a file in disk cache. It benefits applications that need to perform fast random access to large files (i.e. several gigabytes). Corpus search applications fall into this domain: they need random access to the "forward index" component of the index to do fast sorting and grouping.
 
@@ -35,7 +35,7 @@ To run vmtouch in daemon mode, so that it will lock files in the disk cache, use
 
 	sudo vmtouch -vtld <list_of_files>
 
-The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward indices of our BlackLab index locked in disk cache (run from within the index directory):
+The switches: v=verbose, t=touch (load into disk cache), l=lock (lock in disk cache), d=daemon (keep the program running). For example, we use the following command line to keep all four forward indexes of our BlackLab corpus locked in disk cache (run from within the index directory):
 
 	sudo vmtouch -vtld fi_contents%word/tokens.dat fi_contents%lemma/tokens.dat fi_contents%pos/tokens.dat fi_contents%punct/tokens.dat
 
@@ -53,7 +53,7 @@ The first shell script activates the vmtouch daemon for a number of corpora unde
 
 ```bash
 #!/bin/bash
-# This script will read specific large files in BlackLab indices into the
+# This script will read specific large files in BlackLab corpora into the
 # disk cache and lock them there. This improves performance for
 # applications needing random access on those files.
 

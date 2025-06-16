@@ -180,10 +180,10 @@
     "numberOfHits": 3,
     "numberOfHitsRetrieved": 3,
     "pattern": {
-      "bcql": "'two|four'",
+      "bcql": "\"two|four\"",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'two|four'",
+        "bcqlFragment": "\"two|four\"",
         "type": "regex",
         "value": "two|four"
       }

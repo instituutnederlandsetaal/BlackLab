@@ -423,10 +423,10 @@
     "numberOfHits": 5,
     "numberOfHitsRetrieved": 5,
     "pattern": {
-      "bcql": "'she'",
+      "bcql": "\"she\"",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'she'",
+        "bcqlFragment": "\"she\"",
         "type": "regex",
         "value": "she"
       }

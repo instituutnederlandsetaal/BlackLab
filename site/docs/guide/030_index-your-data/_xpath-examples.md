@@ -5,7 +5,8 @@ description: Contains examples that we link to sometimes, but aren't in the main
 
 # Example XPaths
 
-[When using Saxon](/guide/how-to-configure-indexing.md#xpath-support-level) you have extensive possibilities using XPath in BlackLab configuration. Some noteworthy examples are shown below.
+[When using `processor: saxon`](miscellaneous.md#xpath-support-level), 
+you have extensive possibilities using XPath in BlackLab input format configurations. Some noteworthy examples are shown below.
 
 To learn more about modern XPath, [Altova's XPath 3 training](https://www.altova.com/training/xpath3) is a good resource, and there are many others.
 

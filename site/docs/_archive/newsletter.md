@@ -61,7 +61,7 @@ BlackLab allows you to index and search on as many annotation layers as you want
 
 A new addition is random hit sampling. Just let BlackLab select 1% of your results at random. Useful when you don't want to wade through millions of individual results, but you do want to get a sense of what you might find if you did.
 
-BlackLab supports a large and growing [subset of the Corpus Query Language](https://blacklab.ivdnt.org/corpus-query-language.html) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
+BlackLab supports a large and growing [subset of the Corpus Query Language](https://blacklab.ivdnt.org/guide/query-language/) and you can sort and group your results on different properties, for example "the second word to the left of the matched text".
 
 You can even capture groups of words in the matched text (just like you can with regular expressions), allowing you to analyse the structure of each of your matches in more detail. The IKE knowledge extraction tool developed by the Allen Institute (see above) uses this feature. You could also implement features like the [Sketch Engine](https://www.sketchengine.co.uk/)'s Word Sketch feature with this.
 
@@ -116,7 +116,7 @@ Input formats: TEI, FoLiA, Alto or add your own?
 
 We've also had code for indexing formats like TEI and FoLiA, but it wasn't yet part of BlackLab. Now this code has been restructured and added to the project. Both TEI P4 and P5 are supported. Please note that these indexers are relatively simple, so if you want to make use of the more advanced features of these formats, those may not be supported yet.
 
-However, adding or improving support for input formats has become much easier. Before, you had to really dive into the inner workings of BlackLab to fully grasp how to index a new file format. Now, you just have to write a few simple handlers for element types and you’re good to go. Default handlers are supplied and you can look at the supplied indexers to see how to achieve specific things. The [introductory guide](/guide/how-to-configure-indexing "Add a new input format") to writing an indexer should also be helpful. If you have any questions, contact me (see below).
+However, adding or improving support for input formats has become much easier. Before, you had to really dive into the inner workings of BlackLab to fully grasp how to index a new file format. Now, you just have to write a few simple handlers for element types and you’re good to go. Default handlers are supplied and you can look at the supplied indexers to see how to achieve specific things. The [introductory guide](/guide/index-your-data/simple-example.md) to writing an indexer should also be helpful. If you have any questions, contact me (see below).
 
 OpenSoNaR & WhiteLab
 --------------------
@@ -128,16 +128,16 @@ Performance: search in a snap
 
 I'm happy to report that BlackLab performance has improved in several areas.
 
-Large BlackLab indices used to take a long time to open. This has been much improved. In addition, there’s now an option to automatically “warm up” the forward indices (i.e. prime the disk cache) in a background thread on startup. Enable this by calling Searcher.setAutoWarmForwardIndices(true); before constructing a Searcher object.
+Large BlackLab corpora used to take a long time to open. This has been much improved. In addition, there’s now an option to automatically “warm up” the forward indexes (i.e. prime the disk cache) in a background thread on startup. Enable this by calling Searcher.setAutoWarmForwardIndices(true); before constructing a Searcher object.
 
-Generating concordances (hits in context, for showing KWIC (keyword in context) views) has become much faster, because we generate them from the forward indices now instead of the content store. For this to work, we’ve added a new forward index called “punct” containing whitespace and punctuation – all characters that occur between two words. So if you want the improved speed, you should recreate your index to make sure you have this new forward index available. BlackLab automatically switches over to the fast way of making concordances when it detects this forward index.
+Generating concordances (hits in context, for showing KWIC (keyword in context) views) has become much faster, because we generate them from the forward indexes now instead of the content store. For this to work, we’ve added a new forward index called “punct” containing whitespace and punctuation – all characters that occur between two words. So if you want the improved speed, you should recreate your index to make sure you have this new forward index available. BlackLab automatically switches over to the fast way of making concordances when it detects this forward index.
 
 Several types of queries (notably, phrase searches) have been sped up. Significant improvements were achieved by remembering properties of the resultsets of subqueries, such as whether or not the results are all of the same length. We use these extra properties to determine when certain operations (such as sorting) can be skipped.
 
 IndexTool: add and update documents
 -----------------------------------
 
-Before, BlackLab included a test program with each of the included indexers. This was messy and didn’t allow for a lot of customization. Now, we’ve included a single, generic indexing tool for indexing data: the IndexTool. [Here's](/guide/indexing-with-blacklab.html#indextool "Building and testing BlackLab") how to use it. You can also pass it "--help" to see more information. For example, it is possible to pass parameters to indexer classes to customize how you want to index your documents.
+Before, BlackLab included a test program with each of the included indexers. This was messy and didn’t allow for a lot of customization. Now, we’ve included a single, generic indexing tool for indexing data: the IndexTool. [Here's](/guide/index-your-data/create-an-index.md#indextool "Building and testing BlackLab") how to use it. You can also pass it "--help" to see more information. For example, it is possible to pass parameters to indexer classes to customize how you want to index your documents.
 
 We’re working on making the BlackLab index fully updateable. It is already possible to delete documents and then add new versions of them, effectively updating the documents. The forward index is smart about reusing free space. (The content store may still get fragmented if you do a lot of deletions, but this will be improved in the future.) All this means that you don't have to reindex your whole dataset every time a few documents change.
 

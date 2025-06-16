@@ -90,19 +90,19 @@
     "numberOfHits": 1,
     "numberOfHitsRetrieved": 1,
     "pattern": {
-      "bcql": "'a' [lemma='successful']",
+      "bcql": "\"a\" [lemma=\"successful\"]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'a' [lemma='successful']",
+        "bcqlFragment": "\"a\" [lemma=\"successful\"]",
         "clauses": [
           {
-            "bcqlFragment": "'a'",
+            "bcqlFragment": "\"a\"",
             "type": "regex",
             "value": "a"
           },
           {
             "annotation": "lemma",
-            "bcqlFragment": "[lemma='successful']",
+            "bcqlFragment": "[lemma=\"successful\"]",
             "type": "regex",
             "value": "successful"
           }

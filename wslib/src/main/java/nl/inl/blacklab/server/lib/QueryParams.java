@@ -185,4 +185,11 @@ public interface QueryParams {
      * @return should we auto-adjust relations?
      */
     boolean getAdjustRelationHits();
+
+    /**
+     * Should we include all overlapping spans in the response?
+     *
+     * @return true if we should include all overlapping spans
+     */
+    boolean getWithSpans();
 }

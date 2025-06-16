@@ -15,6 +15,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
@@ -142,7 +143,7 @@ public class ResultDocsResponse {
             throw WebserviceOperations.translateSearchException(e);
         }
 
-        // If "waitfortotal=yes" was passed, block until all results have been fetched
+        // If "waitfortotal=true" was passed, block until all results have been fetched
         boolean waitForTotal = params.getWaitForTotal();
         if (waitForTotal)
             totalDocResults.size();
@@ -169,10 +170,10 @@ public class ResultDocsResponse {
         Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
 
                 BlackLabIndex index = params.blIndex();
-        long totalTokens = -1;
+        CorpusSize subcorpusSize = null;
         if (params.getIncludeTokenCount()) {
             // Determine total number of tokens in result set
-            totalTokens = totalDocResults.subcorpusSize().getTokens();
+            subcorpusSize = totalDocResults.subcorpusSize();
         }
 
         ResultsStats hitsStats, docsStats;
@@ -187,13 +188,14 @@ public class ResultDocsResponse {
         ResultSummaryNumHits numResultHits = null;
         if (hitsStats == null) {
             numResultDocs = WebserviceOperations.numResultsSummaryDocs(isViewGroup,
-                    docResults, timings, null);
+                    docResults, timings, subcorpusSize);
         } else {
             numResultHits = WebserviceOperations.numResultsSummaryHits(
-                    hitsStats, docsStats, waitForTotal, timings, null, totalTokens);
+                    hitsStats, docsStats, waitForTotal, timings, subcorpusSize);
         }
 
         // Search is done; construct the results object
+        long totalTokens = subcorpusSize == null ? -1 : subcorpusSize.getTotalCount().getTokens();
         return new ResultDocsResponse(annotationsToList, metadataFieldsToList, index,
                 totalTokens, summaryFields, numResultDocs, numResultHits, window, params);
     }

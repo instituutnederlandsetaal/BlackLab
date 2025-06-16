@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 
 import nl.inl.blacklab.indexers.config.TextDirection;
+import nl.inl.blacklab.search.results.CorpusSize;
 
 /**
  * Runtime information about the shape of a BlackLab index, such as its fields structure.
@@ -147,7 +148,7 @@ public interface IndexMetadata extends Freezable {
      *
      * @return number of tokens per field
      */
-    Map<String, Long> tokenCountPerField();
+    Map<String, CorpusSize.Count> countPerField();
 
     /**
      * How many documents are in the index?
@@ -161,6 +162,21 @@ public interface IndexMetadata extends Freezable {
      * @return number of documents
      */
     int documentCount();
+
+    /**
+     * How many documents are in the index?
+     *
+     * This reports the number of live documents in the index
+     * that have a value for the main annotated field.
+     *
+     * This does therefore not include the index metadata document
+     * (if using integrated index format).
+     *
+     * @return number of documents
+     */
+    default int documentVersionCount() {
+        return -1;
+    }
 
 	/**
 	 * Is this a new, empty index?

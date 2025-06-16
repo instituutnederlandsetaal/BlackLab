@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -20,14 +21,10 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  */
 public class QueryExecutionContext {
 
-    public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation, MatchSensitivity matchSensitivity) {
+    public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation,
+            MatchSensitivity matchSensitivity) {
         return new QueryExecutionContext(index, annotation.field().name(), null, annotation.name(),
                 matchSensitivity, null, null);
-    }
-
-    public static QueryExecutionContext get(BlackLabIndex index, String field, String version, String annotation,
-            MatchSensitivity sensitivity, String defaultRelationClass) {
-        return new QueryExecutionContext(index, field, version, annotation, sensitivity, defaultRelationClass, null);
     }
 
     /** The index object, representing the BlackLab index */
@@ -76,6 +73,7 @@ public class QueryExecutionContext {
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
      * @param defaultRelationClass default relation class to search (or null to use global default)
      * @param captures unique capture names assigned so far
+     * @param withSpans whether to include overlapping spans in the results
      */
     private QueryExecutionContext(BlackLabIndex index, String fieldName, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures) {
@@ -135,7 +133,7 @@ public class QueryExecutionContext {
      * @return new context object
      */
     public QueryExecutionContext withDocVersion(String version) {
-        if (version == null && this.version == null || version.equals(this.version))
+        if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
         return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures);
@@ -148,6 +146,8 @@ public class QueryExecutionContext {
      * @return new context object
      */
     public QueryExecutionContext withDefaultRelationClass(String relClass) {
+        if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
+            return this;
         return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
                 relClass, captures);
     }

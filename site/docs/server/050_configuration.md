@@ -99,12 +99,12 @@ Here's a minimal configuration file for BlackLab Server. Name it `blacklab-serve
 configVersion: 2
 
 # Where corpora (indexes) can be found
-# (list directories whose subdirectories are cocpora, or directories containing a single corpus)
+# (list directories whose subdirectories are corpora, or directories containing a single corpus)
 indexLocations:
 - /data/index
 ```
 
-This simply tells BlackLab Server where to find its indexes.
+This simply tells BlackLab Server where to find its corpora.
 
 A minimal example of `blacklab.yaml` would be no file at all, as no setting in `blacklab.yaml` is required for IndexTool or QueryTool to run.
 
@@ -117,7 +117,7 @@ You don't need all these sections! Just use the ones you want to specifically in
 :::
 
 ::: tip
-You can also use a file called `blacklab.yaml` if you want to configure details about running `IndexTool` and `QueryTool` as well. It can only contain the `log`, `search`, `indexing` and `plugin` sections (located at the end of this example config). This file may be useful if you want to increase the number of metadata values stored in the index metadata file, for example. If you're not sure, you probably don't need this.
+You can also use a file called `blacklab.yaml` if you want to configure details about running `IndexTool` and `QueryTool` as well. It can only contain the `log`, `search`, `indexing` and `plugin` sections (located at the end of this example config). This file may be useful in some cases. If you're not sure, you probably don't need this.
 :::
 
 ```yaml
@@ -125,15 +125,15 @@ You can also use a file called `blacklab.yaml` if you want to configure details 
 # BlackLab Server config file
 # ===============================================================
 
-# This indicates we're using the new index format.
+# This indicates we're using the new configuration format.
 configVersion: 2
 
-# Where indexes can be found
-# (list directories whose subdirectories are indexes, or directories containing a single index)
+# Where corpora can be found
+# (list directories whose subdirectories are corpora, or directories containing a single corpus)
 indexLocations:
 - /data/index
 
-# Directory containing each users' private indexes
+# Directory containing each users' private corpora
 # (only works if you've configured an authentication system, see below)
 userIndexes: /data/user-index
 
@@ -263,7 +263,7 @@ cache:
     # (FQDN or class name (in package nl.inl.blacklab.server.search) of
     # SearchCache subclass to instantiate)
     # The default is BlsCache. An alternative is ResultsCache, which is more
-    # efficient if you have a large number of small, short-lived indexes.
+    # efficient if you have a large number of small, short-lived corpora.
     implementation: BlsCache
 
 
@@ -306,7 +306,7 @@ debug:
 
 
 # How to determine current user
-# (you only need this if you want per-user private indices or authorization)
+# (you only need this if you want per-user private corpora or authorization)
 authentication:
     system:
         class: AuthDebugFixed
@@ -385,7 +385,7 @@ search:
     # How eagerly to apply "forward index matching" to certain queries
     # [advanced technical setting; don't worry about this unless you want to experiment]
     # [if you want to disable forward index matching, which may be beneficial
-    #  if you indexes are small and your query volume is high, set this to 0]
+    #  if you corpora are small and your query volume is high, set this to 0]
     fiMatchFactor: 900
     
     # Enable result sets larger than 2^31?
@@ -421,8 +421,8 @@ indexing:
     # Max. number of values to store per metadata field
     maxMetadataValuesToStore: 100
     
-    # Max. number of indices per user
-    # (only relevant if you've configured private indices and authorization)
+    # Max. number of corpora per user
+    # (only relevant if you've configured private corpora and authorization)
     maxNumberOfIndicesPerUser: 10
 
     # Should inline tags and relations be indexed case- and accent-sensitive?

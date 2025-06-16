@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultSummaryNumHits {
@@ -10,20 +11,18 @@ public class ResultSummaryNumHits {
     private boolean waitForTotal;
     private SearchTimings timings;
     private CorpusSize subcorpusSize;
-    private long totalTokens;
 
     ResultSummaryNumHits(ResultsStats hitsStats, ResultsStats docsStats,
-            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize, long totalTokens) {
+            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize) {
         this.hitsStats = hitsStats;
         this.docsStats = docsStats;
         this.waitForTotal = waitForTotal;
         this.timings = timings;
         this.subcorpusSize = subcorpusSize;
-        this.totalTokens = totalTokens;
     }
 
     public ResultsStats getHitsStats() {
-        return hitsStats;
+        return hitsStats == null ? ResultsStatsStatic.INVALID : hitsStats;
     }
 
     public ResultsStats getDocsStats() {
@@ -44,9 +43,5 @@ public class ResultSummaryNumHits {
 
     public CorpusSize getSubcorpusSize() {
         return subcorpusSize;
-    }
-
-    public long getTotalTokens() {
-        return totalTokens;
     }
 }

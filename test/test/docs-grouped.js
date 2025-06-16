@@ -22,7 +22,7 @@ function expectDocsGroupedUnchanged(testName, params) {
             .get('/test/docs')
             .query({
                 api: constants.TEST_API_VERSION,
-                sort: "size,identity",
+                sort: "field:pid",
                 wordsaroundhit: 1,
                 number: 30,
                 ...params,

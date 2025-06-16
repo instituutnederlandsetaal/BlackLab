@@ -8,6 +8,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
+import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
@@ -69,10 +70,12 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return the filtered pattern, where relations within the tag will be captured
      */
     public static TextPatternPositionFilter createRelationCapturingWithinQuery(TextPattern pattern, String tagNameRegex, String captureRelsAs) {
-        TextPattern tags = new TextPatternTags(tagNameRegex, null, TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
+        TextPattern tags = new TextPatternTags(tagNameRegex, null,
+                TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
         // Also capture any relations that are in the tag
         tags = new TextPatternQueryFunction(XFRelations.FUNC_RCAPTURE, List.of(tags, captureRelsAs));
-        return new TextPatternPositionFilter(pattern, tags, SpanQueryPositionFilter.Operation.WITHIN);
+        return new TextPatternPositionFilter(pattern, tags,
+                SpanQueryPositionFilter.Operation.WITHIN);
     }
 
     /**
@@ -109,12 +112,58 @@ public abstract class TextPattern implements TextPatternStruct {
     }
 
     public BLSpanQuery toQuery(QueryInfo queryInfo) throws InvalidQuery {
-        return toQuery(queryInfo, null);
+        return toQuery(queryInfo, null, false, false);
     }
 
-    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
+    public BLSpanQuery toQuery(QueryInfo queryInfo, boolean adjustHits, boolean withSpans) throws InvalidQuery {
+        return toQuery(queryInfo, null, adjustHits, withSpans);
+    }
+
+    /** Has with-spans() been applied to this query? (so we will capture all overlapping spans) */
+    protected boolean hasWithSpans() {
+        return false;
+    }
+
+    /** Apply with-spans to this TextPattern.
+     * <p>
+     * Either surrounds the whole query with a with-spans() call, or
+     * applies it to the relation source and all relation targets (see {@link TextPatternRelationMatch}).
+     */
+    protected TextPattern applyWithSpans() {
+        return new TextPatternQueryFunction(XFSpans.FUNC_WITH_SPANS, List.of(this));
+    }
+
+    protected boolean hasRspanAll() {
+        return false;
+    }
+
+    protected TextPattern applyRspanAll() {
+        return new TextPatternQueryFunction(XFRelations.FUNC_RSPAN, List.of(this, "all"));
+    }
+
+    /** Automatically add rspan so hit encompasses all matched relations.
+     *
+     * Only does this if this is a relations query and we don't already have
+     * explicit calls to rspan or rel.
+     */
+    private static TextPattern ensureHitSpansMatchedRelations(TextPattern pattern) {
+        if (pattern.isRelationsQuery() && !pattern.hasRspanAll())
+            return pattern.applyRspanAll();
+        return pattern;
+    }
+
+    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter, boolean adjustHits, boolean withSpans) throws InvalidQuery {
+        TextPattern tp = this;
+        if (adjustHits) {
+            // Add rspan(..., 'all') so hit encompasses all matched relations
+            tp = ensureHitSpansMatchedRelations(tp);
+        }
+        if (withSpans && !hasWithSpans()) {
+            // Make sure we capture all overlapping spans
+            tp = tp.applyWithSpans();
+        }
         QueryExecutionContext context = queryInfo.index().defaultExecutionContext(queryInfo.field());
-        BLSpanQuery spanQuery = translate(context);
+        BLSpanQuery spanQuery = tp.translate(context);
         if (filter != null)
             spanQuery = new SpanQueryFiltered(spanQuery, filter);
         return spanQuery;

@@ -90,23 +90,23 @@
     "numberOfHits": 1,
     "numberOfHitsRetrieved": 1,
     "pattern": {
-      "bcql": "_FI2('a', [lemma='successful'])",
+      "bcql": "_FI2(\"a\", [lemma=\"successful\"])",
       "fieldName": "contents",
       "json": {
         "args": [
           {
-            "bcqlFragment": "'a'",
+            "bcqlFragment": "\"a\"",
             "type": "regex",
             "value": "a"
           },
           {
             "annotation": "lemma",
-            "bcqlFragment": "[lemma='successful']",
+            "bcqlFragment": "[lemma=\"successful\"]",
             "type": "regex",
             "value": "successful"
           }
         ],
-        "bcqlFragment": "_FI2('a', [lemma='successful'])",
+        "bcqlFragment": "_FI2(\"a\", [lemma=\"successful\"])",
         "name": "_FI2",
         "type": "callfunc"
       }

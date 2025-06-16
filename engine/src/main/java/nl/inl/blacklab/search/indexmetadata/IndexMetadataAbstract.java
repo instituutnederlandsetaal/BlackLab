@@ -36,6 +36,7 @@ import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
 import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
 import nl.inl.util.TimeUtil;
 
@@ -337,8 +338,8 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     }
 
     @Override
-    public Map<String, Long> tokenCountPerField() {
-        return Map.of(mainAnnotatedField().name(), tokenCount);
+    public Map<String, CorpusSize.Count> countPerField() {
+        return Map.of(mainAnnotatedField().name(), CorpusSize.Count.get(documentCount(), tokenCount));
     }
 
     // Methods that mutate data

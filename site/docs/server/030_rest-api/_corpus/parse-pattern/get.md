@@ -18,9 +18,8 @@ The `patt` parameter is required.
 
 | Parameter    | Description                                                                                                                                                                                                                                     |
 |--------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `patt`       | [BlackLab Corpus Query Language](/guide/corpus-query-language.md) (BCQL) pattern to search for                                                                                                                                                  |
+| `patt`       | [BlackLab Corpus Query Language](/guide/query-language/) (BCQL) pattern to search for                                                                                                                                                           |
 | `pattlang`   | pattern language to use for `patt`. Defaults to `bcql` (BlackLab Corpus Query Language). The other values (`contextql` and `luceneql`) have very limited support at the moment.  Other, more useful query languages may be added in the future. |
-| `adjusthits` | (relations queries only) should query hits be adjusted so all matched relations are inside the hit? Default: `no`                                                                                                                                                                                                                                                                                                                                                                               |
 
 **NOTE:** `pattgapdata` is not supported for this endpoint! (this is a rarely-used feature that might be removed in the future)
 
@@ -41,11 +40,11 @@ Result for `/parse-pattern?patt=%27de%27`:
 ```json
 {
     "params": {
-        "patt": "[word='de']",
+        "patt": "[word=\"de\"]",
         "pattlang": "default"
     },
     "parsed": {
-        "bcql": "[word='de']",
+        "bcql": "[word=\"de\"]",
         "json": {
             "type": "regex",
             "value": "de",
@@ -92,7 +91,7 @@ Result for `/parse-pattern?outputformat=json&patt=%7B"type"%3A"posfilter"%2C"pro
 | `and`         | `clauses`                                                      | `clauses[0] & ...`                                                                                 |                                                                                                                                                                                                               |
 | `anytoken`    | `min`[,`max`]                                                  | `[]{min,max}`<br>`[]{min,`}<br>`[]{*\|+\|?}`                                                       | `max` omitted if there is no limit                                                                                                                                                                            |
 | `capture`     | `clause`,`capture`                                             | `capture:(clause)`                                                                                 | `clause` will be captured using name `capture`                                                                                                                                                                |
-| `constrained` | `clause`,`constraint`                                          | `clause :: constraint`                                                                             | e.g. `A:[] 'and' B:[] :: A.word = B.word`                                                                                                                                                                     |
+| `constrained` | `clause`,`constraint`                                          | `clause :: constraint`                                                                             | e.g. `A:[] "and" B:[] :: A.word = B.word`                                                                                                                                                                     |
 | `defval`      |                                                                | `_`                                                                                                | used in relations queries ("don't care" value) and function calls ("use default value")                                                                                                                       |
 | `not`         | `clause`                                                       | `!clause`                                                                                          |                                                                                                                                                                                                               |
 | `or`          | `clauses`                                                      | `clauses[0] \| ...`                                                                                |                                                                                                                                                                                                               |

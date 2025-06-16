@@ -1,7 +1,6 @@
 # Custom DocIndexer
 
-In most cases, you won't need to write Java code to add support for your input format. See [How to configure indexing](/guide/how-to-configure-indexing.md) to learn how. 
-For more information about indexing in general, see [Indexing with BlackLab](/guide/indexing-with-blacklab.md).
+In most cases, you won't need to write Java code to add support for your input format. See [How to configure indexing](/guide/index-your-data/simple-example.md) to learn how. 
 
 In rare cases, you may want to implement your own DocIndexer. This page provides a simple tutorial for getting started with that.
 
@@ -26,9 +25,9 @@ Here's the first version of our TEI indexer:
 
 We create a DocumentElementHandler (an inner class defined in DocIndexerXmlHandlers) and add it as a handler for the &lt;TEI\&gt; and &lt;TEI.2\&gt; elements. Why two different elements? Because we want to support both TEI P4 (which uses &lt;TEI.2\&gt;) and P5 (which uses &lt;TEI\&gt;). The handler will get triggered every time one of these elements is found.
 
-Note that, if we want, we can customize the handler. We'll see an example of this later. But for this document element handler, we don't need any customization. The default DocumentElementHandler will make sure BlackLab knows where our documents start and end and get added to the index in the correct way. It will also automatically add any attributes of the element as metadata fields, but the TEI document elements don't have attributes, so that doesn't apply here.
+Note that, if we want, we can customize the handler. We'll see an example of this later. But for this document element handler, we don't need any customization. The default DocumentElementHandler will make sure BlackLab knows where our documents start and end and get added to the corpus in the correct way. It will also automatically add any attributes of the element as metadata fields, but the TEI document elements don't have attributes, so that doesn't apply here.
 
-Let's say you TEI files are part of speech tagged and lemmatized, and you want to add these annotations to your index as well. To do so, you will need to add these lines at the top of your constructor, just after calling the superclass constructor:
+Let's say you TEI files are part of speech tagged and lemmatized, and you want to add these annotations to your corpus as well. To do so, you will need to add these lines at the top of your constructor, just after calling the superclass constructor:
 
 	// Add some extra annotations
 	final AnnotationWriter annotLemma = addAnnotation("lemma");
@@ -106,7 +105,7 @@ If we also want to capture sentence tags, so we can search for sentences contain
 
 We only customize this handler because we want to make sure we don't capture sentence tags outside body elements.
 
-We're almost done, but there's one subtle thing to take care of. What happens to the bit of punctuation after the last word? The way we have our indexer now, it would never get added to the index. We should customize the body handler a little bit to take care of that:
+We're almost done, but there's one subtle thing to take care of. What happens to the bit of punctuation after the last word? The way we have our indexer now, it would never get added to the corpus. We should customize the body handler a little bit to take care of that:
 
 		final ElementHandler body = addHandler("body", new ElementHandler() {
 			@Override

@@ -653,7 +653,7 @@ public class WebserviceOperations {
             throw new NotAuthorized("You (" + user.getId() + ") may not add data to " + params.getCorpusName() + "; you are not the owner.");
 
         long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
-        if (indexMetadata.tokenCountPerField().values().stream().anyMatch(count -> count > maxTokenCount)) {
+        if (indexMetadata.countPerField().values().stream().anyMatch(count -> count.getTokens() > maxTokenCount)) {
             throw new NotAuthorized("Sorry, this index is already larger than the maximum of " + maxTokenCount
                     + " tokens allowed in a user index. Cannot add any more data to it.");
         }
@@ -774,8 +774,8 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats,
-            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize, long totalTokens) {
-        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, timings, subcorpusSize, totalTokens);
+            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize) {
+        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, timings, subcorpusSize);
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,

@@ -43,7 +43,7 @@ While it can make certain queries faster, deciding whether or not to use the for
 
 The combined forward indexes also contain most of the contents of the documents, but missing are the tags around an in between the words (bold and italic tags, paragraph and sentence tags, header and body tags, metadata tags, etc.).
 
-All annotations get a forward index by default, but you can [disable this if you want](https://blacklab.ivdnt.org/guide/how-to-configure-indexing.html#reducing-index-size).
+All annotations get a forward index by default, but you can [disable this if you want](https://blacklab.ivdnt.org/guide/index%20your%20data/annotations.html#disable-the-forward-index).
 
 In the older external indexes, each annotation has its own forward index directory. These directories are named `fi_contents%word`, `fi_contents%word`, etc. (again, assuming your annotated field is `contents`). The `version.dat` file in each forward index directory should contain either `fi||4` or `fi||5`. (these versions differ only in the collators used for sorting terms)
 
@@ -86,8 +86,7 @@ TODO
 
 index configuration file (`.blf.yaml`) / DocIndexer
 
-A complete, documented example of an input format configuration file can be
-found [here](https://blacklab.ivdnt.org/guide/how-to-configure-indexing.html#full-example-of-a-configuration-file).
+See [here](https://blacklab.ivdnt.org/guide/index%20your%20data/).
 
 ### Performance optimizations
 

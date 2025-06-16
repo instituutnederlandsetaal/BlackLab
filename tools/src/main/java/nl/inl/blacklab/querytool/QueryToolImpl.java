@@ -640,7 +640,7 @@ public class QueryToolImpl {
                 filter = filterQuery;
 
             // Execute search
-            BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter);
+            BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter, false, false);
             output.verbose("SpanQuery: " + spanQuery.toString(contentsField.name()));
             try {
                 output.verbose("Rewritten: " + spanQuery.rewrite(index.reader()).toString(contentsField.name()));

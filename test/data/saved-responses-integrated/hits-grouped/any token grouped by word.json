@@ -371,13 +371,13 @@
     "numberOfHits": 766,
     "numberOfHitsRetrieved": 766,
     "pattern": {
-      "bcql": "[word!='abcdefg']",
+      "bcql": "[word!=\"abcdefg\"]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "[word!='abcdefg']",
+        "bcqlFragment": "[word!=\"abcdefg\"]",
         "clause": {
           "annotation": "word",
-          "bcqlFragment": "[word='abcdefg']",
+          "bcqlFragment": "[word=\"abcdefg\"]",
           "type": "regex",
           "value": "abcdefg"
         },
@@ -402,6 +402,7 @@
       "documents": 3,
       "tokens": 766
     },
+    "tokensInMatchingDocuments": 766,
     "windowFirstResult": 0,
     "windowHasNext": true,
     "windowHasPrevious": false

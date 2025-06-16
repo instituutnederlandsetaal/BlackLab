@@ -18,6 +18,7 @@ import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -36,6 +37,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
@@ -234,8 +236,8 @@ public class ResultHits {
         // All specifiers merged!
         // Construct the query that will get us our hits.
         SearchEmpty search = index.search(params.getAnnotatedField(), params.useCache());
-        QueryInfo queryInfo = search.queryInfo();
-        BLSpanQuery query = usedFilter ? tp.toQuery(queryInfo, fqb.build()) : tp.toQuery(queryInfo);
+        Query filter = usedFilter ? fqb.build() : null;
+        BLSpanQuery query = tp.toQuery(search.queryInfo(), filter, params.getAdjustRelationHits(), params.getWithSpans());
         SearchHits hits = search.find(query, params.searchSettings());
         if (params.hitsSortSettings() != null) {
             hits = hits.sort(params.hitsSortSettings().sortBy());
@@ -344,10 +346,12 @@ public class ResultHits {
         }
 
         totalTokens = -1;
+        CorpusSize subcorpusSize = null;
         if (params.getIncludeTokenCount()) {
-            DocResults perDocResults = hits.perDocResults(Results.NO_LIMIT);
+            subcorpusSize = hits.perDocResults(Results.NO_LIMIT)
+                    .subcorpusSize();
             // Determine total number of tokens in result set
-            totalTokens = perDocResults.subcorpusSize().getTokens();
+            totalTokens = subcorpusSize.getTotalCount().getTokens();
         }
 
         // Find KWICs/concordances from forward index or original XML
@@ -369,7 +373,7 @@ public class ResultHits {
         SearchTimings searchTimings = getSearchTimings();
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(),
-                params.getWaitForTotal(), searchTimings, null, totalTokens);
+                params.getWaitForTotal(), searchTimings, subcorpusSize);
         MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
         Set<String> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {

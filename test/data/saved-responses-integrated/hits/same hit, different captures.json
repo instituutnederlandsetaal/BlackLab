@@ -623,13 +623,13 @@
     "numberOfHits": 8,
     "numberOfHitsRetrieved": 8,
     "pattern": {
-      "bcql": "'one' (A:[]{1,2}) []{1,2}",
+      "bcql": "\"one\" (A:[]{1,2}) []{1,2}",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'one' (A:[]{1,2}) []{1,2}",
+        "bcqlFragment": "\"one\" (A:[]{1,2}) []{1,2}",
         "clauses": [
           {
-            "bcqlFragment": "'one'",
+            "bcqlFragment": "\"one\"",
             "type": "regex",
             "value": "one"
           },

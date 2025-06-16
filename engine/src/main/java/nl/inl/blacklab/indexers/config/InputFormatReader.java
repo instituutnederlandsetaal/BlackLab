@@ -393,6 +393,7 @@ public class InputFormatReader extends YamlJsonReader {
                 case "standoffAnnotations":
                     readStandoffAnnotations(e, af);
                     break;
+                case "spans":
                 case "inlineTags":
                     readInlineTags(e, af);
                     break;

@@ -1722,22 +1722,22 @@
     "numberOfHits": 35,
     "numberOfHitsRetrieved": 35,
     "pattern": {
-      "bcql": "[lemma='be' & word!='are']",
+      "bcql": "[lemma=\"be\" & word!=\"are\"]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "[lemma='be' & word!='are']",
+        "bcqlFragment": "[lemma=\"be\" & word!=\"are\"]",
         "clauses": [
           {
             "annotation": "lemma",
-            "bcqlFragment": "[lemma='be']",
+            "bcqlFragment": "[lemma=\"be\"]",
             "type": "regex",
             "value": "be"
           },
           {
-            "bcqlFragment": "[word!='are']",
+            "bcqlFragment": "[word!=\"are\"]",
             "clause": {
               "annotation": "word",
-              "bcqlFragment": "[word='are']",
+              "bcqlFragment": "[word=\"are\"]",
               "type": "regex",
               "value": "are"
             },

@@ -14,6 +14,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
+import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.util.LuceneUtil;
 
@@ -47,7 +48,10 @@ public class TokensPerMetaValue {
                         Query filter = LuceneUtil.parseLuceneQuery(index, "\"" + entry.getKey().toLowerCase() + "\"",
                                 BuiltinAnalyzers.DUTCH.getAnalyzer(), field.name());
                         DocResults docs = index.queryDocuments(filter);
-                        int totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(index, annotatedFieldName));
+                        long totalNumberOfTokens = docs.intSum(new DocPropertyAnnotatedFieldLength(index, annotatedFieldName));
+                        for (DocResult doc: docs) {
+
+                        }
                         System.out.println(field.name() + "\t" + entry.getKey() + "\t" + entry.getValue() + "\t"
                                 + totalNumberOfTokens);
                     }

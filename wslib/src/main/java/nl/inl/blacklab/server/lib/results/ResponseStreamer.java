@@ -106,17 +106,21 @@ public class ResponseStreamer {
     public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
     public static final String KEY_STATS_COUNT_ONLY = "countOnly";
     public static final String KEY_STATS_NUMBER_OF_HITS = "hits";
-    public static final String KEY_STATS_NUMBER_OF_DOCS = "docs";
+    public static final String KEY_STATS_NUMBER_OF_DOCS = "documents";
     public static final String KEY_STATS_TIME_MS = "timeMs";
+
     public static final String STATS_STATUS_WORKING = "working";
     public static final String STATS_STATUS_FINISHED = "finished";
+
+    /** E.g. index size, document size, field size */
+    public static final String KEY_COUNT = "count";
 
     // Docs
     public static final String KEY_DOC_INFO = "docInfo";
     public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens"; // v3/4: main field token count (docInfo)
-    public static final String KEY_TOKEN_COUNT = "tokenCount";           // v3/4: main field token count (index info)
     public static final String KEY_TOKEN_COUNTS = "tokenCounts";         // v4/5: per-field token counts (both)
-    public static final String KEY_DOCUMENT_COUNT = "documentCount";     // v3/4/5: was added to aggregate index response in v4
+    public static final String KEY_TOKEN_COUNT_ITEM = "tokenCount"; // XML element name for item in tokenCounts list
+    public static final String KEY_DOCUMENT_VERSION_COUNT = "docVersions"; // v3/4/5: was added to aggregate index response in v4
     public static final String KEY_DOC_MAY_VIEW = "mayView";
     public static final String KEY_DOC_PID = "docPid";
     public static final String KEY_DOC_SNIPPET = "snippet";
@@ -129,6 +133,8 @@ public class ResponseStreamer {
     private static final String KEY_MATCH_INFO_TYPE = "type";
 
     // Fields
+    public static final String KEY_ANNOTATED_FIELD = "annotatedField";
+    public static final String KEY_ANNOTATED_FIELDS = "annotatedFields";
     public static final String KEY_FIELD_NAME = "fieldName";
     public static final String KEY_TARGET_FIELD = "targetField";
     public static final String KEY_OTHER_FIELDS = "otherFields";
@@ -146,6 +152,7 @@ public class ResponseStreamer {
      */
     private static final String SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES = "; ";
 
+
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;
 
@@ -154,6 +161,12 @@ public class ResponseStreamer {
 
     /** Key to use for context after hit (right/after) */
     public final String KEY_AFTER;
+
+    /** counts for index, field, doc, etc. (tokenCount / tokens) */
+    public final String KEY_TOKEN_COUNT;
+
+    /** counts for index, field, doc, etc. (documentCount / documents) */
+    public final String KEY_DOCUMENT_COUNT;     // v3/4/5: was added to aggregate index response in v4
 
     /** Key to use for subcorpus size #docs (documents/numberOfDocs) */
     public final String KEY_SUBCORPUS_SIZE_DOCUMENTS;
@@ -199,15 +212,19 @@ public class ResponseStreamer {
             KEY_SUBCORPUS_SIZE_DOCUMENTS = KEY_STATS_NUMBER_OF_DOCS;
             KEY_HIT_GROUP = "hitGroup";
             KEY_DOC_GROUP = "docGroup";
+            KEY_TOKEN_COUNT = "tokens";
+            KEY_DOCUMENT_COUNT = KEY_STATS_NUMBER_OF_DOCS;
             KEY_NUMBER_OF_TOKENS = KEY_SUBCORPUS_SIZE_TOKENS = "tokens";
             KEY_PARAMS = "params";
         } else {
             KEY_BEFORE = "left";
             KEY_AFTER = "right";
             KEY_CORPUS_NAME = "indexName";
-            KEY_SUBCORPUS_SIZE_DOCUMENTS = "documents";
+            KEY_SUBCORPUS_SIZE_DOCUMENTS = KEY_STATS_NUMBER_OF_DOCS;
             KEY_HIT_GROUP = "hitgroup";
             KEY_DOC_GROUP = "docgroup";
+            KEY_TOKEN_COUNT = "tokenCount";
+            KEY_DOCUMENT_COUNT = "documentCount";
             KEY_NUMBER_OF_TOKENS = KEY_SUBCORPUS_SIZE_TOKENS = "numberOfTokens";
             KEY_PARAMS = "searchParam";
         }
@@ -273,7 +290,7 @@ public class ResponseStreamer {
             if (modernizeApi) {
                 ds.startEntry(KEY_TOKEN_COUNTS).startList();
                 for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
-                    ds.startItem(KEY_TOKEN_COUNT).startMap();
+                    ds.startItem(KEY_TOKEN_COUNT_ITEM).startMap();
                     ds.entry(KEY_FIELD_NAME, entry.getKey());
                     ds.entry(KEY_TOKEN_COUNT, entry.getValue());
                     ds.endMap().endItem();
@@ -460,11 +477,9 @@ public class ResponseStreamer {
         }
     }
 
-    public void summaryNumHits(ResultSummaryNumHits result, ResultGroups<?> groups) {
+    private void summaryResultsStats(ResultSummaryNumHits result, ResultGroups<?> groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ResultsStats hitsStats = result.getHitsStats();
-        if (hitsStats == null)
-            hitsStats = ResultsStatsStatic.INVALID;
         long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.countedTotal() : hitsStats.countedSoFar());
         long hitsProcessed = result.isWaitForTotal() ? hitsStats.processedTotal() : hitsStats.processedSoFar();
         ResultsStats docsStats = result.getDocsStats();
@@ -473,12 +488,7 @@ public class ResponseStreamer {
         long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.countedTotal() : docsStats.countedSoFar());
         long docsProcessed = result.isWaitForTotal() ? docsStats.processedTotal() : docsStats.processedSoFar();
 
-        summaryResultsStats(groups, result.getTimings(), hitsStats, hitsCounted, hitsProcessed, docsCounted,
-                docsProcessed, result.getSubcorpusSize(), result.getTotalTokens());
-    }
-
-    private void summaryResultsStats(ResultGroups<?> groups, SearchTimings timings, ResultsStats hitsStats, long hitsCounted,
-            long hitsProcessed, long docsCounted, long docsProcessed, CorpusSize subcorpusSize, long totalTokens) {
+        CorpusSize subcorpusSize = result.getSubcorpusSize();
         if (isNewApi) {
             // New API v5+: group related values
             boolean limitReached = hitsStats.maxStats().hitsProcessedExceededMaximum();
@@ -488,7 +498,7 @@ public class ResponseStreamer {
                         STATS_STATUS_FINISHED);
                 ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsProcessed);
                 ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsProcessed);
-                ds.entry(KEY_STATS_TIME_MS, timings.getProcessingTime());
+                ds.entry(KEY_STATS_TIME_MS, result.getTimings().getProcessingTime());
                 if (limitReached) {
                     ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
                     ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
@@ -496,14 +506,12 @@ public class ResponseStreamer {
                         ds.entry(KEY_STATS_STATUS, !hitsStats.done() ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
                         ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsCounted);
                         ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsCounted);
-                        ds.entry(KEY_STATS_TIME_MS, timings.getCountTime());
+                        ds.entry(KEY_STATS_TIME_MS, result.getTimings().getCountTime());
                     }
                     ds.endMap().endEntry();
                 }
                 summaryGroupStats(groups);
                 subcorpusSizeStats(subcorpusSize);
-                if (totalTokens >= 0)
-                    ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
             }
             ds.endMap().endEntry();
         } else {
@@ -516,7 +524,14 @@ public class ResponseStreamer {
             ds.entry(KEY_NUMBER_OF_DOCS, docsCounted)
                     .entry("numberOfDocsRetrieved", docsProcessed);
             subcorpusSizeStats(subcorpusSize);
+            if (subcorpusSize != null && subcorpusSize.getTotalCount().getTokens() >= 0)
+                ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, subcorpusSize.getTotalCount().getTokens());
         }
+    }
+
+    private void summaryTotalTokens(long totalTokens) {
+        if (totalTokens >= 0)
+            ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
     }
 
     public void summaryNumDocs(ResultSummaryNumDocs result, ResultGroups<?> groups) {
@@ -564,16 +579,31 @@ public class ResponseStreamer {
                 numberOfDocsCounted = -1;
             ds.entry(KEY_NUMBER_OF_DOCS, numberOfDocsCounted);
             ds.entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
+            subcorpusSizeStats(result.getSubcorpusSize());
         }
-        subcorpusSizeStats(result.getSubcorpusSize());
     }
 
     public void subcorpusSizeStats(CorpusSize subcorpusSize) {
         if (subcorpusSize != null) {
-            ds.startEntry(KEY_SUBCORPUS_SIZE).startMap()
-                    .entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, subcorpusSize.getDocuments());
-            if (subcorpusSize.hasTokenCount())
-                ds.entry("tokens", subcorpusSize.getTokens());
+            CorpusSize.Count totalCount = subcorpusSize.getTotalCount();
+            ds.startEntry(KEY_SUBCORPUS_SIZE).startMap();
+            ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, totalCount.getDocuments());
+            if (subcorpusSize.getDocumentVersions() > totalCount.getDocuments())
+                ds.entry(KEY_DOCUMENT_VERSION_COUNT, subcorpusSize.getDocumentVersions());
+            if (totalCount.hasTokenCount())
+                ds.entry("tokens", totalCount.getTokens()); // always use "tokens" here
+            if (subcorpusSize.getTokensPerField().size() > 1) {
+                // Multiple annotated fields. Show size per field.
+                ds.startEntry(KEY_ANNOTATED_FIELDS).startList();
+                for (Map.Entry<String, CorpusSize.Count> entry : subcorpusSize.getTokensPerField().entrySet()) {
+                    ds.startItem(KEY_ANNOTATED_FIELD).startMap();
+                    ds.entry(KEY_FIELD_NAME, entry.getKey());
+                    ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, entry.getValue().getDocuments());
+                    ds.entry("tokens", entry.getValue().getTokens()); // always use "tokens" here
+                    ds.endMap().endItem();
+                }
+                ds.endList().endEntry();
+            }
             ds.endMap().endEntry();
         }
     }
@@ -957,7 +987,7 @@ public class ResponseStreamer {
                 .entry(KEY_FIELD_NAME, fieldDesc.name())
                 .entry(KEY_FIELD_IS_ANNOTATED, true);
         if (modernizeApi)
-            ds.entry(KEY_TOKEN_COUNT, annotatedField.getTokenCount());
+            fieldCount(annotatedField.getCount());
         if (isNewApi) {
             if (includeCustom)
                 customInfoEntry(fieldDesc.custom());
@@ -1043,6 +1073,15 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
+    private void fieldCount(CorpusSize.Count count) {
+        if (isNewApi)
+            ds.startEntry(KEY_COUNT).startMap();
+        ds.entry(KEY_TOKEN_COUNT, count.getTokens());
+        ds.entry(KEY_DOCUMENT_COUNT, count.getDocuments());
+        if (isNewApi)
+            ds.endMap().endEntry();
+    }
+
     public void collocationsResponse(TermFrequencyList tfl) {
         ds.startMap().startEntry("tokenFrequencies").startMap();
         for (TermFrequency tf : tfl) {
@@ -1065,9 +1104,10 @@ public class ResponseStreamer {
         ds.startEntry(KEY_SUMMARY).startMap();
         {
             summaryCommonFields(summaryFields);
-            summaryNumHits(resultHits.getSummaryNumHits(), null);
-            if (!isNewApi && resultHits.getTotalTokens() >= 0)
-                ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, resultHits.getTotalTokens());
+            ResultSummaryNumHits result = resultHits.getSummaryNumHits();
+            summaryResultsStats(result, null);
+            if (!isNewApi)
+                summaryTotalTokens(resultHits.getTotalTokens());
 
             // Write docField (pidField, titleField, etc.) and metadata display names
             // (this information is not specific to this request and can be found elsewhere,
@@ -1118,7 +1158,8 @@ public class ResponseStreamer {
             ds.startEntry(KEY_SUMMARY).startMap();
             {
                 summaryCommonFields(hitsGrouped.getSummaryFields());
-                summaryNumHits(hitsGrouped.getSummaryNumHits(), hitsGrouped.getGroups());
+                ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
+                summaryResultsStats(result, hitsGrouped.getGroups());
             }
             ds.endMap().endEntry();
 
@@ -1175,8 +1216,10 @@ public class ResponseStreamer {
                 summaryCommonFields(result.getSummaryFields());
                 if (result.getNumResultDocs() != null)
                     summaryNumDocs(result.getNumResultDocs(), groups);
-                else
-                    summaryNumHits(result.getNumResultHits(), groups);
+                else {
+                    ResultSummaryNumHits result1 = result.getNumResultHits();
+                    summaryResultsStats(result1, groups);
+                }
             }
             ds.endMap().endEntry();
 
@@ -1215,10 +1258,11 @@ public class ResponseStreamer {
                 if (result.getNumResultDocs() != null) {
                     summaryNumDocs(result.getNumResultDocs(), null);
                 } else {
-                    summaryNumHits(result.getNumResultHits(), null);
+                    ResultSummaryNumHits result1 = result.getNumResultHits();
+                    summaryResultsStats(result1, null);
                 }
-                if (result.getTotalTokens() >= 0)
-                    ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, result.getTotalTokens());
+                if (!isNewApi)
+                    summaryTotalTokens(result.getTotalTokens());
 
                 boolean includeDeprecatedFieldInfo = !isNewApi;
                 if (includeDeprecatedFieldInfo) {
@@ -1357,24 +1401,13 @@ public class ResponseStreamer {
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
             ds.entry("timeModified", indexMetadata.timeModified());
-            indexTokenCount(indexMetadata);
-            indexDocumentCount(indexMetadata);
+            indexSize(indexMetadata);
             indexProgress(corpusStatus);
             if (corpusStatus.getIndex().isUserIndex()) {
                 ds.entry("owner", corpusStatus.getIndex().getUserId());
             }
         }
         ds.endMap().endElEntry();
-    }
-
-    private void indexDocumentCount(IndexMetadata indexMetadata) {
-        if (modernizeApi)
-            ds.entry(KEY_DOCUMENT_COUNT, indexMetadata.documentCount());
-    }
-
-    private void indexTokenCount(IndexMetadata indexMetadata) {
-        if (!isNewApi)
-            ds.entry(KEY_TOKEN_COUNT, indexMetadata.tokenCount());
     }
 
     private void customInfoEntry(CustomProps custom) {
@@ -1409,7 +1442,7 @@ public class ResponseStreamer {
                 if (formatIdentifier != null && !formatIdentifier.isEmpty())
                     ds.entry("documentFormat", formatIdentifier);
                 ds.entry("timeModified", indexMetadata.timeModified());
-                indexTokenCount(indexMetadata);
+                ds.entry(KEY_TOKEN_COUNT, indexMetadata.tokenCount());
                 indexProgress(progress);
             }
             ds.endMap();
@@ -1438,8 +1471,7 @@ public class ResponseStreamer {
             String formatIdentifier = metadata.documentFormat();
             if (formatIdentifier != null && !formatIdentifier.isEmpty())
                 ds.entry("documentFormat", formatIdentifier);
-            indexTokenCount(metadata);
-            indexDocumentCount(metadata);
+            indexSize(metadata);
             indexProgress(result.getProgress());
 
             boolean inconsistentKeyNaming = !modernizeApi;
@@ -1471,14 +1503,14 @@ public class ResponseStreamer {
             }
 
             ds.entry("mainAnnotatedField", result.getMainAnnotatedField() == null ? "" : result.getMainAnnotatedField());
-            ds.startEntry("annotatedFields").startMap();
+            ds.startEntry(KEY_ANNOTATED_FIELDS).startMap();
             for (ResultAnnotatedField annotatedField: result.getAnnotatedFields()) {
                 // internal fields.
                 // TODO figure out how to prevent this.
                 // This happens when we have linked metadata, a dummy annotatedField is written, but it's required for the contentstore (apparently?).
                 if (annotatedField.getAnnotInfos().isEmpty())
                     continue;
-                ds.startAttrEntry("annotatedField", "name", annotatedField.getFieldDesc().name());
+                ds.startAttrEntry(KEY_ANNOTATED_FIELD, "name", annotatedField.getFieldDesc().name());
                 {
                     annotatedField(annotatedField, includeCustom);
                 }
@@ -1519,7 +1551,7 @@ public class ResponseStreamer {
                         annotationsNotInGroups.remove(annotation);
                     }
                 }
-                ds.startAttrEntry("annotatedField", "name", f.name()).startList();
+                ds.startAttrEntry(KEY_ANNOTATED_FIELD, "name", f.name()).startList();
                 boolean addedRemainingAnnots = false;
                 for (AnnotationGroup group: groups) {
                     ds.startItem("annotationGroup").startMap();
@@ -1559,14 +1591,26 @@ public class ResponseStreamer {
             }
             ds.entry(KEY_STATS_STATUS, progress.getIndexStatus());
             ds.entry("timeModified", metadata.timeModified());
-            indexTokenCount(metadata);
-            indexDocumentCount(metadata);
+            indexSize(metadata);
             String formatIdentifier = metadata.documentFormat();
             if (!StringUtils.isEmpty(formatIdentifier))
                 ds.entry("documentFormat", formatIdentifier);
             indexProgress(progress);
         }
         ds.endMap();
+    }
+
+    private void indexSize(IndexMetadata metadata) {
+        if (isNewApi)
+            ds.startEntry(KEY_COUNT).startMap();
+        ds.entry(KEY_TOKEN_COUNT, metadata.tokenCount());
+        if (modernizeApi) {
+            ds.entry(isNewApi ? KEY_SUBCORPUS_SIZE_DOCUMENTS : KEY_DOCUMENT_COUNT, metadata.documentCount());
+            if (metadata.documentVersionCount() > metadata.documentCount())
+                ds.entry(KEY_DOCUMENT_VERSION_COUNT, metadata.documentVersionCount());
+        }
+        if (isNewApi)
+            ds.endMap().endEntry();
     }
 
     public String getDocContentsResponsePlain(ResultDocContents resultDocContents) {

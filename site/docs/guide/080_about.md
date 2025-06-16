@@ -6,11 +6,10 @@ BlackLab was developed at the [Dutch Language Institute (INT)](http://www.ivdnt.
 
 * GitHub repositories: [BlackLab Server and Core](https://github.com/instituutnederlandsetaal/BlackLab) and [BlackLab Frontend](https://github.com/instituutnederlandsetaal/blacklab-frontend)
 * [Release history](/development/changelog.md)
-* Follow [@BlackLab_IvdNT](https://twitter.com/BlackLab_IvdNT) on Twitter (very low activity)
 
 ## Contact us
 
-For technical questions, contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org).
+For technical questions, please file a [GitHub issue](https://github.com/instituutnederlandsetaal/BlackLab/issues) or contact [Jan Niestadt](mailto:jan.niestadt@ivdnt.org) directly.
 
 ## Citing BlackLab
 

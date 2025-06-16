@@ -180,18 +180,18 @@
     "numberOfHits": 3,
     "numberOfHitsRetrieved": 3,
     "pattern": {
-      "bcql": "'two' | 'four'",
+      "bcql": "\"two\" | \"four\"",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'two' | 'four'",
+        "bcqlFragment": "\"two\" | \"four\"",
         "clauses": [
           {
-            "bcqlFragment": "'two'",
+            "bcqlFragment": "\"two\"",
             "type": "regex",
             "value": "two"
           },
           {
-            "bcqlFragment": "'four'",
+            "bcqlFragment": "\"four\"",
             "type": "regex",
             "value": "four"
           }

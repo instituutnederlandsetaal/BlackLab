@@ -59,10 +59,10 @@
     "numberOfHits": 17,
     "numberOfHitsRetrieved": 17,
     "pattern": {
-      "bcql": "'a'",
+      "bcql": "\"a\"",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'a'",
+        "bcqlFragment": "\"a\"",
         "type": "regex",
         "value": "a"
       }
@@ -74,7 +74,7 @@
       "number": "30",
       "op": "docs-grouped",
       "patt": "\"a\"",
-      "sort": "size,identity",
+      "sort": "field:pid",
       "wordsaroundhit": "1"
     },
     "searchTime": "VALUE_REMOVED",
@@ -85,6 +85,7 @@
       "documents": 3,
       "tokens": 766
     },
+    "tokensInMatchingDocuments": 766,
     "windowFirstResult": 0,
     "windowHasNext": false,
     "windowHasPrevious": false

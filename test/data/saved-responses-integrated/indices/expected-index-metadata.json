@@ -33,6 +33,7 @@
       "hasXmlTags": true,
       "mainAnnotation": "word",
       "tokenCount": 334,
+      "documentCount": 1,
       "displayOrder": [
         "word",
         "lemma",

@@ -55,7 +55,7 @@ public class TestTextPatternSerialize {
     @Test
     public void testSimple() throws IOException {
         TextPattern pattern = new TextPatternTerm("cow");
-        String expected = "{\"bcqlFragment\":\"'cow'\",\"type\":\"term\",\"value\":\"cow\"}";
+        String expected = "{\"bcqlFragment\":\"\\\"cow\\\"\",\"type\":\"term\",\"value\":\"cow\"}";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);
     }
@@ -69,11 +69,11 @@ public class TestTextPatternSerialize {
                         TextPattern.MAX_UNLIMITED
                 ),
                 new TextPatternTerm("cow"));
-        String expected = "{\"bcqlFragment\":\"('lazy'+) 'cow'\",\"type\":\"sequence\",\"clauses\":["+
-                "{\"bcqlFragment\":\"'lazy'+\",\"type\":\"repeat\",\"clause\":"+
-                    "{\"bcqlFragment\":\"'lazy'\",\"type\":\"term\",\"value\":\"lazy\"},"+
+        String expected = "{\"bcqlFragment\":\"(\\\"lazy\\\"+) \\\"cow\\\"\",\"type\":\"sequence\",\"clauses\":["+
+                "{\"bcqlFragment\":\"\\\"lazy\\\"+\",\"type\":\"repeat\",\"clause\":"+
+                    "{\"bcqlFragment\":\"\\\"lazy\\\"\",\"type\":\"term\",\"value\":\"lazy\"},"+
                     "\"min\":1},"+
-                "{\"bcqlFragment\":\"'cow'\",\"type\":\"term\",\"value\":\"cow\"}"+
+                "{\"bcqlFragment\":\"\\\"cow\\\"\",\"type\":\"term\",\"value\":\"cow\"}"+
             "]}";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);
@@ -81,35 +81,35 @@ public class TestTextPatternSerialize {
 
     @Test
     public void testComplexCql() throws IOException {
-        String pattern = "A:('the' [lemma='quick']+) ([pos='adj' & word!='yellow'] ('fox' 'jumps') 'over') within B:</s>";
+        String pattern = "A:(\"the\" [lemma=\"quick\"]+) ([pos=\"adj\" & word!=\"yellow\"] (\"fox\" \"jumps\") \"over\") within B:</s>";
         assertRoundtrip(pattern);
     }
 
     @Test
     public void testRelationsCql() throws IOException {
-        String pattern = "[pos='VERB' & xpos = '.*tgw.*mv.*'  & deprel='root'] "+
-                "-nsubj-> ([pos='NOUN'] !-(det|nmod:poss)-> []); "+
-                "-obj-> ([pos='NOUN'] !-(det|nmod:poss)->[])";
+        String pattern = "[pos=\"VERB\" & xpos = \".*tgw.*mv.*\"  & deprel=\"root\"] "+
+                "-nsubj-> ([pos=\"NOUN\"] !-(det|nmod:poss)-> []); "+
+                "-obj-> ([pos=\"NOUN\"] !-(det|nmod:poss)->[])";
         assertRoundtrip(pattern);
     }
 
     @Test
     public void testConstraints() throws IOException {
-        String pattern = "A:[] 'or' B:[] :: A.lemma = B.lemma & start(A) > end(B) & A.word = 'koe'";
+        String pattern = "A:[] \"or\" B:[] :: A.lemma = B.lemma & start(A) > end(B) & A.word = \"koe\"";
         assertRoundtrip(pattern);
     }
 
     @Test
     public void testIntRange() throws IOException {
         //assertRoundtrip("[number=in[24,42]]");
-        assertRoundtrip("<s number='1'/>", true);
+        assertRoundtrip("<s number=\"1\"/>", true);
         //assertRoundtrip("<s number=in[123,4567]/>");
     }
 
     @Test
     public void testCloseTag() throws IOException {
         //assertRoundtrip("[number=in[24,42]]");
-        assertRoundtrip("'it' </s>", true);
+        assertRoundtrip("\"it\" </s>", true);
         //assertRoundtrip("<s number=in[123,4567]/>");
     }
 }

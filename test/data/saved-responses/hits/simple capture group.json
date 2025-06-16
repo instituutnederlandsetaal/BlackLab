@@ -169,13 +169,13 @@
     "numberOfHits": 2,
     "numberOfHitsRetrieved": 2,
     "pattern": {
-      "bcql": "'one' (A:[])",
+      "bcql": "\"one\" (A:[])",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "'one' (A:[])",
+        "bcqlFragment": "\"one\" (A:[])",
         "clauses": [
           {
-            "bcqlFragment": "'one'",
+            "bcqlFragment": "\"one\"",
             "type": "regex",
             "value": "one"
           },
