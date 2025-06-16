@@ -180,6 +180,7 @@
       "documents": 1,
       "tokens": 334
     },
+    "tokensInMatchingDocuments": 334,
     "windowFirstResult": 0,
     "windowHasNext": false,
     "windowHasPrevious": false

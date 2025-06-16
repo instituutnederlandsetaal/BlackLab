@@ -377,6 +377,7 @@
     "lemma",
     "pos"
   ],
+  "documentCount": 3,
   "fieldName": "contents",
   "hasContentStore": true,
   "hasXmlTags": true,

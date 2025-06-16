@@ -4,6 +4,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.results.CorpusSize;
 
 public class ResultAnnotatedField {
 
@@ -15,7 +16,7 @@ public class ResultAnnotatedField {
 
     private Map<String, ResultAnnotationInfo> annotInfos;
 
-    private long tokenCount;
+    private CorpusSize.Count count;
 
     ResultAnnotatedField(BlackLabIndex index, String indexName, AnnotatedField fieldDesc,
             Map<String, ResultAnnotationInfo> annotInfos) {
@@ -23,8 +24,9 @@ public class ResultAnnotatedField {
         this.indexName = indexName;
         this.fieldDesc = fieldDesc;
         this.annotInfos = annotInfos;
-        Long tokenCount = index.metadata().tokenCountPerField().get(fieldDesc.name());
-        this.tokenCount = tokenCount == null ? 0 : tokenCount;
+        count = index.metadata().countPerField().get(fieldDesc.name());
+        if (count == null)
+            count = CorpusSize.Count.create();
     }
 
     public String getIndexName() {
@@ -48,7 +50,7 @@ public class ResultAnnotatedField {
         return fieldDesc.name().compareTo(resultAnnotatedField.fieldDesc.name());
     }
 
-    public long getTokenCount() {
-        return tokenCount;
+    public CorpusSize.Count getCount() {
+        return count;
     }
 }

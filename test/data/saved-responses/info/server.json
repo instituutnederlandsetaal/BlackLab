@@ -5,11 +5,14 @@
   "blacklabVersion": "VALUE_REMOVED",
   "corpora": {
     "test": {
+      "count": {
+        "documents": 3,
+        "tokens": 766
+      },
       "custom": {
         "description": "",
         "displayName": "test"
       },
-      "documentCount": 3,
       "documentFormat": "voice-tei",
       "status": "available",
       "timeModified": "VALUE_REMOVED"

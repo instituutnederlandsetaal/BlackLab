@@ -88,7 +88,7 @@ public class ResultDocsGrouped {
                     subcorpusSize);
         } else {
             numResultHits = WebserviceOperations.numResultsSummaryHits(
-                    hitsStats, docsStats, true, timings, subcorpusSize, -1);
+                    hitsStats, docsStats, true, timings, subcorpusSize);
         }
 
         corpusSizes = new ArrayList<>();

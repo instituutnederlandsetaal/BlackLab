@@ -136,8 +136,7 @@ public class ResultHitsGrouped {
                 timings, matchInfoDefs, getGroups(), getWindow(), groups.field().name(),
                 otherFields);
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
-                getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize(), -1);
-
+                getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize());
     }
 
     public HitGroups getGroups() {

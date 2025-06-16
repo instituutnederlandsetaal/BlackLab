@@ -438,7 +438,7 @@
       "number": "30",
       "op": "docs",
       "patt": "\"a\"",
-      "sort": "size,identity",
+      "sort": "field:pid",
       "viewgroup": "str:interview about conference experience and impressions of city",
       "wordsaroundhit": "1"
     },

@@ -93,9 +93,12 @@ public class WriteCsv {
                     long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
-                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) :
+                    CorpusSize.Count totalCount = groupSubcorpusSize.getTotalCount();
+                    row.add(totalCount.hasDocumentCount() ?
+                            Long.toString(totalCount.getDocuments()) :
                             CSV_VALUE_UNKNOWN);
-                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) :
+                    row.add(totalCount.hasTokenCount() ?
+                            Long.toString(totalCount.getTokens()) :
                             CSV_VALUE_UNKNOWN);
                 }
 
@@ -279,8 +282,8 @@ public class WriteCsv {
         }
 
         String subcorpSize = summ + ResponseStreamer.KEY_SUBCORPUS_SIZE + ".";
-        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS, subcorpusSize.getDocuments());
-        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_TOKENS, subcorpusSize.getTokens());
+        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS, subcorpusSize.getTotalCount().getDocuments());
+        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_TOKENS, subcorpusSize.getTotalCount().getTokens());
 
         if (groups != null) {
             writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_GROUPS, groups.size());
@@ -364,13 +367,15 @@ public class WriteCsv {
                 if (params.hasPattern()) {
                     PropertyValue docPropValues = group.identity();
                     CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpusResults.query(), groups.groupCriteria(), docPropValues);
-                    row.add(groupSubcorpusSize.hasTokenCount() ? Long.toString(groupSubcorpusSize.getTokens()) :
+                    CorpusSize.Count totalCount = groupSubcorpusSize.getTotalCount();
+                    row.add(totalCount.hasTokenCount() ? Long.toString(totalCount.getTokens()) :
                             CSV_VALUE_UNKNOWN);
-                    row.add(groupSubcorpusSize.hasDocumentCount() ? Long.toString(groupSubcorpusSize.getDocuments()) :
+                    row.add(totalCount.hasDocumentCount() ? Long.toString(totalCount.getDocuments()) :
                             CSV_VALUE_UNKNOWN);
                 } else {
-                    row.add(Long.toString(group.storedResults().subcorpusSize().getTokens()));
-                    row.add(Long.toString(group.storedResults().subcorpusSize().getDocuments()));
+                    CorpusSize.Count totalCount = group.storedResults().subcorpusSize().getTotalCount();
+                    row.add(Long.toString(totalCount.getTokens()));
+                    row.add(Long.toString(totalCount.getDocuments()));
                 }
 
                 printer.printRecord(row);

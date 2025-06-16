@@ -54,6 +54,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 - Search (hits) operations:
   - The `patt` parameter may also be specified as a JSON query structure. This will be detected automatically, or you can set `pattlang` to `json` to make it explicit.
   - In the JSON response, `summary` will now include a `pattern` object containing: a `json` key that giving the JSON query structure; a `bcql` key giving the (re-)serialized pattern in BlackLab Corpus Query Language; a `fieldName` key giving the search field, e.g. `"contents"`; and a `matchInfos` key giving the match info groups from the query with their types (span, tag, relation, list). You can use this to convert between the two representations, e.g. for query builders (or use the new `/parse-pattern` endpoint, see below). The XML response does not contain the `json` object.
+  - If you specify `includetokencount=true`, `summary` will include a `subcorpusSize` key that gives the number of docs, docVersions (for parallel corpora) and tokens in the subcorpus matching the search pattern. For parallel corpora, numbers of docs and tokens will also be specified per version under the `annotatedFields` subkey.
   - In addition to `captureGroups`, `matchInfos` will be reported that includes the same information as well as any inline tags and relations matched. You should use this instead of `captureGroups` for future compatibility.
   - `before`/`after` are the new, preferred alternatives to `left`/`right`,e.g. when sorting/grouping on context. Not all languages are LTR, so this makes more sense. Existing endpoints still use `left`/`right` in the response for compatibility, but new endpoints have been updated as well. These properties can now get a number of tokens as an extra parameter, e.g. `before:lemma:i:2`.
   - For grouping on context, `wordleft`/`wordright` have been deprecated. Use `before`/`after` with 1 token instead.
@@ -95,6 +96,7 @@ All these were deprecated in API v4.0, and v5.0 removes them:
 - Server info page removed `indices`. Use `corpora` instead.
 - Document info page (`/docs/DOC_PID`) and results pages no longer include `metadataFieldDisplayNames`, `metadataFieldGroups` or `docFields`. This information can be found on the corpus info page and need not be sent with each document info request.
 - Results pages don't include `captureGroups` anymore. Use `matchInfos` instead.
+- If you specify `includetokencount=true`, `summary` doesn't include the `tokensInMatchingDocuments` key anymore. This information is available under the `subcorpusSize` key.
 
 ### Changed
 
@@ -106,8 +108,9 @@ These are breaking changes compared to v4.0. Make sure you update your client ac
 - server, corpus, field info:
     - `indexName` in responses has been replaced with `corpusName`.
     - Corpora, metadata and annotated field and annotations report certain properties (such as `displayName`, `description`) inside a `custom` block now etc. These are all ignored by BlackLab but may be useful for client applications such as BlackLab Frontend. They are only included in responses if you specify `custom=true`.
+    - Document and token count have been grouped under a `count` key. A parallel corpus will also include a `docVersions` key that gives the total number of document versions. `annotatedFields` will also include a `count` key that gives the number of docs/tokens for that field.
 - Results pages:
-    - `summary` has been restructured to group related values together. Keys have been renamed for clarity.
+    - `summary` has been restructured to group related values together under `params`, `resultWindow` and `resultStats`. Subkeys have been renamed for clarity.
     - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
     - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
     - When using `usecontent=orig`, the value of `escapexmlfragment` now defaults to `true`, so XML fragments from the document will be escaped as CDATA. Set it to `false` to include them as part of the XML structure instead (the old default).

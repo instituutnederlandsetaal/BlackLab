@@ -48,6 +48,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.TimeUtil;
@@ -268,7 +269,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     protected long tokenCount = 0;
 
     @XmlTransient
-    protected Map<String, Long> tokenCountPerField = new LinkedHashMap<>();
+    protected Map<String, CorpusSize.Count> countPerField = new LinkedHashMap<>();
 
     /** Have we determined our tokenCount from the index? (done lazily) */
     @XmlTransient
@@ -280,9 +281,14 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     /** Our annotated fields */
     protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
 
-    /** How many documents with values for the main annotated field are in our index */
+    /** How many documents are in our index? */
     @XmlTransient
     private int documentCount;
+
+    /** How many annotated field values are in our index? (will count documents multiple times if there's multiple
+        annotated fields) */
+    @XmlTransient
+    private int documentVersionCount;
 
     /** Contents of the documentFormat config file at index creation time. */
     @SuppressWarnings("unused")
@@ -759,9 +765,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     @Override
-    public synchronized Map<String, Long> tokenCountPerField() {
+    public synchronized Map<String, CorpusSize.Count> countPerField() {
         ensureDocsAndTokensCounted();
-        return Collections.unmodifiableMap(tokenCountPerField);
+        return Collections.unmodifiableMap(countPerField);
     }
 
     @Override
@@ -770,31 +776,40 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         return documentCount;
     }
 
+    @Override
+    public synchronized int documentVersionCount() {
+        ensureDocsAndTokensCounted();
+        return documentVersionCount;
+    }
+
     private synchronized void ensureDocsAndTokensCounted() {
         if (!tokenCountCalculated) {
             tokenCountCalculated = true;
             tokenCount = 0;
-            tokenCountPerField.clear();
+            countPerField.clear();
             if (!isNewIndex()) {
                 // Count tokens for each field (and documents while we're at it)
+                documentVersionCount = 0;
                 for (AnnotatedField field: annotatedFields()) {
                     documentCount = 0;
-                    long[] fieldTokenCount = new long[] { 0 };
+                    index.forEachDocument( (__, ___) -> documentCount++); // count documents
+                    CorpusSize.Count fieldCount = CorpusSize.Count.create(); // [0] = token count, [1] = document count
                     // Add up token counts for all the documents
                     Annotation annot = field.mainAnnotation();
                     AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
                     index.forEachDocument((__, docId) -> {
                         int docLength = afi.docLength(docId);
-                        if (docLength >= 1) {
+                        if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)
-                            fieldTokenCount[0] += docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                            documentCount++; // NOTE: we dont use afi.size() because that includes deleted docs.
+                            fieldCount.add(1, docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                            documentVersionCount++;
                         }
                     });
-                    tokenCountPerField.put(field.name(), fieldTokenCount[0]);
+                    countPerField.put(field.name(), fieldCount);
                 }
-                tokenCount = tokenCountPerField.get(mainAnnotatedField().name());
+                tokenCount = countPerField.values().stream().map(CorpusSize.Count::getTokens)
+                        .mapToLong(Long::longValue).sum();
             }
         }
     }

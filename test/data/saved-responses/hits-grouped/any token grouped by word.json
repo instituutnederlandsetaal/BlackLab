@@ -402,6 +402,7 @@
       "documents": 3,
       "tokens": 766
     },
+    "tokensInMatchingDocuments": 766,
     "windowFirstResult": 0,
     "windowHasNext": true,
     "windowHasPrevious": false

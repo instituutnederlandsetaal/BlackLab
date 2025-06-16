@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationGroups;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.blacklab.search.results.CorpusSize;
 
 public class MockIndexMetadata implements IndexMetadata {
     
@@ -140,8 +141,8 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
-    public Map<String, Long> tokenCountPerField() {
-        return Map.of(mainAnnotatedField().name(), tokenCount());
+    public Map<String, CorpusSize.Count> countPerField() {
+        return Map.of(mainAnnotatedField().name(), CorpusSize.Count.get(documentCount(), tokenCount()));
     }
 
     @Override

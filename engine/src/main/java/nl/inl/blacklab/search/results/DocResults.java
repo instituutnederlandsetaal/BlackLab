@@ -4,12 +4,15 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -33,6 +36,8 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
@@ -419,12 +424,27 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @param numProp a numeric property to sum
      * @return the sum
      */
-    public int intSum(DocProperty numProp) {
+    public long intSum(DocProperty numProp) {
+        return intSum(docResult -> ((PropertyValueInt)numProp.get(docResult)).value());
+    }
+
+    /**
+     * Sum a property for all the documents.
+     *
+     * Can be used to calculate the total number of tokens in a subcorpus, for
+     * example. Note that this does retrieve all results, so it may be slow for
+     * large sets. In particular, you should try to call this method only for
+     * DocResults created with BlackLabIndex.queryDocuments() (and not ones created with
+     * Hits.perDocResults()) to avoid the overhead of fetching hits.
+     *
+     * @param numProp a numeric property to sum
+     * @return the sum
+     */
+    public long intSum(Function<DocResult, Long> f) {
         ensureAllResultsRead();
         int sum = 0;
-        for (DocResult result : results) {
-            sum += ((PropertyValueInt) numProp.get(result)).value();
-        }
+        for (DocResult result : results)
+            sum += f.apply(result);
         return sum;
     }
 
@@ -520,9 +540,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
      * @return subcorpus size
      */
     public CorpusSize subcorpusSize(boolean countTokens) {
-        if (corpusSize == null || countTokens && !corpusSize.hasTokenCount()) {
+        if (corpusSize == null || countTokens && !corpusSize.getTotalCount().hasTokenCount()) {
             long numberOfTokens;
             long numberOfDocuments;
+            Map<String, CorpusSize.Count> tokensPerField = new LinkedHashMap<>();
             if (query != null) {
 
                 // Rewrite query (we store the original query, not the rewritten one)
@@ -533,19 +554,28 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 }
 
                 // Fast approach: use the DocValues for the token length field
-//                logger.debug("## DocResults.tokensInMatchingDocs: fast path");
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                    String tokenLengthField = queryInfo().field().tokenLengthField();
+                    String queryField = queryInfo().field().name();
+                    List<AnnotatedField> tokenLengthFields = index().annotatedFields().stream().toList();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         LeafReader reader = r.reader();
                         Bits liveDocs = reader.getLiveDocs();
                         Scorer scorer = weight.scorer(r);
                         if (scorer != null) {
                             DocIdSetIterator it = scorer.iterator();
-                            NumericDocValues tokenLengthValues = countTokens ? DocValues.getNumeric(reader, tokenLengthField) : null;
+                            //NumericDocValues tokenLengthValues = countTokens ? DocValues.getNumeric(reader, tokenLengthField) : null;
+                            Map<String, NumericDocValues> tokenLengthValuesPerField = new LinkedHashMap<>();
+                            tokenLengthFields.forEach(field -> {
+                                try {
+                                    tokenLengthValuesPerField.put(field.name(), countTokens ? DocValues.getNumeric(reader, field.tokenLengthField()) : null);
+                                    tokensPerField.put(field.name(), CorpusSize.Count.create());
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
                             while (true) {
                                 int docId = it.nextDoc();
                                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
@@ -553,9 +583,22 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                 if (liveDocs == null || liveDocs.get(docId)) {
                                     numberOfDocuments++;
                                     if (countTokens) {
-                                        tokenLengthValues.advanceExact(docId);
-                                        numberOfTokens += tokenLengthValues.longValue()
-                                                - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                        for (Map.Entry<String, NumericDocValues> entry : tokenLengthValuesPerField.entrySet()) {
+                                            String fieldName = entry.getKey();
+                                            NumericDocValues tokenLengthValuesForField = entry.getValue();
+                                            if (tokenLengthValuesForField != null) {
+                                                tokenLengthValuesForField.advanceExact(docId);
+                                                long tokens = tokenLengthValuesForField.longValue()
+                                                        - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                                if (tokens > 0) {
+                                                    numberOfTokens += tokens;
+                                                    tokensPerField.compute(fieldName, (k, v) -> {
+                                                        v.add(1, tokens);
+                                                        return v;
+                                                    });
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -568,13 +611,24 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 // Slow approach: get the stored field value from each Document
                 // (note that DocPropertyAnnotatedFieldLength already excludes the dummy closing token)
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
-//                logger.debug("## DocResults.tokensInMatchingDocs: SLOW PATH");
-                String fieldName = queryInfo().field().name();
-                DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), fieldName);
-                numberOfTokens = countTokens ? intSum(propTokens) : -1;
+                String queryFieldName = queryInfo().field().name();
+                numberOfTokens = 0;
+                for (AnnotatedField field: index().annotatedFields()) {
+                    DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), field.name());
+                    CorpusSize.Count thisFieldCount = CorpusSize.Count.create();
+                    stream().forEach(fieldValue -> {
+                        PropertyValueInt tokens = (PropertyValueInt) propTokens.get(fieldValue);
+                        if (tokens != null && tokens.value() > 0) {
+                            thisFieldCount.add(1, tokens.value());
+                        }
+                    });
+                    //long thisFieldNumberOfTokens = countTokens ? intSum(propTokens) : -1;
+                    numberOfTokens += thisFieldCount.tokens;
+                    tokensPerField.put(field.name(), thisFieldCount);
+                }
                 numberOfDocuments = size();
             }
-            corpusSize = CorpusSize.get(numberOfDocuments, numberOfTokens);
+            corpusSize = CorpusSize.get(numberOfDocuments, numberOfTokens, tokensPerField);
         }
         return corpusSize;
     }
