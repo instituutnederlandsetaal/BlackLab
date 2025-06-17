@@ -36,7 +36,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
@@ -343,7 +342,7 @@ public class ResultHits {
 
         totalTokens = -1;
         CorpusSize subcorpusSize = null;
-        if (params.getIncludeTokenCount()) {
+        if (params.getIncludeSubcorpusSize()) {
             subcorpusSize = hits.perDocResults(Results.NO_LIMIT)
                     .subcorpusSize();
             // Determine total number of tokens in result set

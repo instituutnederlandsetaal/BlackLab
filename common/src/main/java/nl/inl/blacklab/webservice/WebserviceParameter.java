@@ -67,7 +67,7 @@ public enum WebserviceParameter {
 
     // How to process results
     INCLUDE_FACETS("facets"), // include facet information?
-    INCLUDE_TOKEN_COUNT("includetokencount"), // count tokens in all matched documents?
+    SUBCORPUS_SIZE("subcorpussize", "includetokencount"), // include subcorpus size?
     INCLUDE_CUSTOM_INFO("custom"), // include custom metadata?
     MAX_HITS_TO_RETRIEVE("maxretrieve"),
     MAX_HITS_TO_COUNT("maxcount"), // limits to numbers of hits to process
@@ -151,7 +151,7 @@ public enum WebserviceParameter {
         defaultValues.put(HIT_END, "1");
         defaultValues.put(HIT_START, "0");
         defaultValues.put(INCLUDE_GROUP_CONTENTS, "no");
-        defaultValues.put(INCLUDE_TOKEN_COUNT, "no");
+        defaultValues.put(SUBCORPUS_SIZE, "no");
         defaultValues.put(INCLUDE_CUSTOM_INFO, "no");
         defaultValues.put(MAX_HITS_TO_COUNT, "10000000");
         defaultValues.put(MAX_HITS_TO_RETRIEVE, "1000000");

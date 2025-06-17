@@ -171,7 +171,7 @@ public class ResultDocsResponse {
 
                 BlackLabIndex index = params.blIndex();
         CorpusSize subcorpusSize = null;
-        if (params.getIncludeTokenCount()) {
+        if (params.getIncludeSubcorpusSize()) {
             // Determine total number of tokens in result set
             subcorpusSize = totalDocResults.subcorpusSize();
         }
