@@ -25,6 +25,9 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
+import de.siegmar.fastcsv.writer.CsvWriter;
+import de.siegmar.fastcsv.writer.QuoteStrategies;
+import de.siegmar.fastcsv.writer.QuoteStrategy;
 import nl.inl.util.LuceneUtil;
 
 import org.apache.commons.csv.CSVPrinter;
@@ -315,7 +318,7 @@ public class FrequencyTool {
 
     private static void writeTsvFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, Terms[] terms) {
         boolean gzip = true;
-        try (CSVPrinter csv = prepareCSVPrinter(chunkFile, gzip)) {
+        try (CsvWriter csv = prepareCSVPrinter(chunkFile, gzip)) {
             for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
                 GroupIdHash key = entry.getKey();
                 OccurrenceCounts value = entry.getValue();
@@ -332,7 +335,7 @@ public class FrequencyTool {
             Terms[] terms, MatchSensitivity[] sensitivity, boolean chunksCompressed) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
-        try (CSVPrinter csv = prepareCSVPrinter(outputFile, gzip)) {
+        try (CsvWriter csv = prepareCSVPrinter(outputFile, gzip)) {
             int n = chunkFiles.size();
             InputStream[] inputStreams = new InputStream[n];
             InputStream[] gzipInputStreams = new InputStream[n];
@@ -461,9 +464,9 @@ public class FrequencyTool {
         return gzip ? new GZIPOutputStream(fos) : fos;
     }
 
-    public static CSVPrinter prepareCSVPrinter(File file, boolean gzip) throws IOException {
+    public static CsvWriter prepareCSVPrinter(File file, boolean gzip) throws IOException {
         OutputStream stream = prepareStream(file, gzip);
         Writer w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
-        return new CSVPrinter(w, FreqListOutputTsv.TAB_SEPARATED_FORMAT);
+        return CsvWriter.builder().fieldSeparator('\t').quoteStrategy(QuoteStrategies.EMPTY).build(w);
     }
 }

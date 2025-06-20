@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPOutputStream;
 
+import de.siegmar.fastcsv.writer.CsvWriter;
+
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
@@ -36,7 +38,7 @@ class FreqListOutputTsv implements FreqListOutput {
                     .withEscape('\\')
                     .withQuoteMode(QuoteMode.NONE);
 
-    static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CSVPrinter csv, GroupIdHash groupId, int hits) throws IOException {
+    static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CsvWriter csv, GroupIdHash groupId, int hits) throws IOException {
         List<String> record = new ArrayList<>();
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
@@ -61,7 +63,7 @@ class FreqListOutputTsv implements FreqListOutput {
             Collections.addAll(record, metadataValues);
         // - group size (hits/docs)
         record.add(Long.toString(hits));
-        csv.printRecord(record);
+        csv.writeRecord(record);
     }
 
     /**
@@ -115,7 +117,7 @@ class FreqListOutputTsv implements FreqListOutput {
                       File outputDir, boolean gzip) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Writing " + outputFile);
-        try (CSVPrinter csv = FrequencyTool.prepareCSVPrinter(outputFile, gzip)) {
+        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, gzip)) {
             Terms[] terms = annotationNames.stream()
                     .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                     .toArray(Terms[]::new);

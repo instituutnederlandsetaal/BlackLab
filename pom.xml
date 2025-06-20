@@ -552,6 +552,12 @@
             <version>1.13.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>de.siegmar</groupId>
+            <artifactId>fastcsv</artifactId>
+            <version>3.7.0</version>
+        </dependency>
+
         <!-- JCIP annotations (@ThreadSafe, @NotThreadSafe) -->
         <dependency>
             <groupId>net.jcip</groupId>
