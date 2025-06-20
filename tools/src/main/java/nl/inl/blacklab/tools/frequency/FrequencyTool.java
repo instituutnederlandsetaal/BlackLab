@@ -301,8 +301,9 @@ public class FrequencyTool {
                      objectOutputStream.writeInt(occurrences.size()); // start with number of groups
                      occurrences.forEach((key, value) -> {
                          try {
-                             objectOutputStream.writeObject(key);
-                             objectOutputStream.writeObject(value);
+                             objectOutputStream.writeUnshared(key);
+                             objectOutputStream.writeUnshared(value);
+                             objectOutputStream.reset(); // make sure we don't keep references to the objects
                          } catch (IOException e) {
                              throw new RuntimeException();
                          }
@@ -376,8 +377,8 @@ public class FrequencyTool {
                         chunks[i] = ois;
                         // Initialize index, key and value with first group from each file
                         index[i] = 0;
-                        key[i] = numGroups[i] > 0 ? (GroupIdHash) ois.readObject() : null;
-                        value[i] = numGroups[i] > 0 ? (OccurrenceCounts) ois.readObject() : null;
+                        key[i] = numGroups[i] > 0 ? (GroupIdHash) ois.readUnshared() : null;
+                        value[i] = numGroups[i] > 0 ? (OccurrenceCounts) ois.readUnshared() : null;
                         if (numGroups[i] == 0)
                             chunksExhausted++;
                     }
@@ -403,8 +404,8 @@ public class FrequencyTool {
                                 // Advance to next group in this chunk
                                 index[j]++;
                                 boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
-                                key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) chunks[j].readObject();
-                                value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) chunks[j].readObject();
+                                key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) chunks[j].readUnshared();
+                                value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) chunks[j].readUnshared();
                                 if (noMoreGroupsInChunk)
                                     chunksExhausted++;
                             }
