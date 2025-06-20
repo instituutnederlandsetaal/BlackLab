@@ -115,22 +115,16 @@ class FreqListOutputTsv implements FreqListOutput {
                       File outputDir, boolean gzip) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Writing " + outputFile);
-        try (OutputStream outputStream = new FileOutputStream(outputFile)) {
-            OutputStream stream = outputStream;
-            if (gzip)
-                stream = new GZIPOutputStream(stream);
-            try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
-                 CSVPrinter printer = new CSVPrinter(out, TAB_SEPARATED_FORMAT)) {
-                Terms[] terms = annotationNames.stream()
-                        .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
-                        .toArray(Terms[]::new);
-                MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
-                Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
-                for (Map.Entry<GroupIdHash,
-                        OccurrenceCounts> e : occurrences.entrySet()) {
-                    OccurrenceCounts occ = e.getValue();
-                    writeGroupRecord(sensitivity, terms, printer, e.getKey(), occ.hits);
-                }
+        try (CSVPrinter csv = FrequencyTool.prepareCSVPrinter(outputFile, gzip)) {
+            Terms[] terms = annotationNames.stream()
+                    .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                    .toArray(Terms[]::new);
+            MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
+            Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
+            for (Map.Entry<GroupIdHash,
+                    OccurrenceCounts> e : occurrences.entrySet()) {
+                OccurrenceCounts occ = e.getValue();
+                writeGroupRecord(sensitivity, terms, csv, e.getKey(), occ.hits);
             }
             return outputFile;
         } catch (IOException e) {

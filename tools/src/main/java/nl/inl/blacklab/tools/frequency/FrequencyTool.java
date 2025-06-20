@@ -1,5 +1,7 @@
 package nl.inl.blacklab.tools.frequency;
 
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -292,49 +294,32 @@ public class FrequencyTool {
     }
 
     private static void writeChunkFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, boolean compress) {
-        try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile)) {
-             OutputStream outputStream = compress ? new GZIPOutputStream(fileOutputStream) : fileOutputStream;
-             try {
-                 try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream)) {
-
-                     // Write keys and values in sorted order, so we can merge later
-                     objectOutputStream.writeInt(occurrences.size()); // start with number of groups
-                     occurrences.forEach((key, value) -> {
-                         try {
-                             objectOutputStream.writeUnshared(key);
-                             objectOutputStream.writeUnshared(value);
-                             objectOutputStream.reset(); // make sure we don't keep references to the objects
-                         } catch (IOException e) {
-                             throw new RuntimeException();
-                         }
-                     });
-                 }
-             } finally {
-                 if (compress)
-                     outputStream.close();
+        try (OutputStream stream = prepareStream(chunkFile, compress)) {
+             try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(stream)) {
+                 // Write keys and values in sorted order, so we can merge later
+                 objectOutputStream.writeInt(occurrences.size()); // start with number of groups
+                 occurrences.forEach((key, value) -> {
+                     try {
+                         objectOutputStream.writeUnshared(key);
+                         objectOutputStream.writeUnshared(value);
+                         objectOutputStream.reset(); // make sure we don't keep references to the objects
+                     } catch (IOException e) {
+                         throw new RuntimeException();
+                     }
+                 });
              }
-
         } catch (IOException e) {
             throw new RuntimeException();
         }
     }
 
     private static void writeTsvFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, Terms[] terms) {
-        boolean compress = true;
-        try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile)) {
-            OutputStream outputStream = compress ? new GZIPOutputStream(fileOutputStream) : fileOutputStream;
-            try {
-                try (Writer w = new OutputStreamWriter(outputStream, StandardCharsets.UTF_8);
-                        CSVPrinter csv = new CSVPrinter(w, FreqListOutputTsv.TAB_SEPARATED_FORMAT)) {
-                    for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
-                        GroupIdHash key = entry.getKey();
-                        OccurrenceCounts value = entry.getValue();
-                        FreqListOutputTsv.writeGroupRecord(null, terms, csv, key, value.hits);
-                    }
-                }
-            } finally {
-                if (compress)
-                    outputStream.close();
+        boolean gzip = true;
+        try (CSVPrinter csv = prepareCSVPrinter(chunkFile, gzip)) {
+            for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
+                GroupIdHash key = entry.getKey();
+                OccurrenceCounts value = entry.getValue();
+                FreqListOutputTsv.writeGroupRecord(null, terms, csv, key, value.hits);
             }
         } catch (IOException e) {
             throw new RuntimeException();
@@ -347,87 +332,81 @@ public class FrequencyTool {
             Terms[] terms, MatchSensitivity[] sensitivity, boolean chunksCompressed) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
-        try (OutputStream outputStream = new FileOutputStream(outputFile)) {
-            OutputStream stream = outputStream;
-            if (gzip)
-                stream = new GZIPOutputStream(stream);
-            try (Writer w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
-                 CSVPrinter csv = new CSVPrinter(w, FreqListOutputTsv.TAB_SEPARATED_FORMAT)) {
-                int n = chunkFiles.size();
-                InputStream[] inputStreams = new InputStream[n];
-                InputStream[] gzipInputStreams = new InputStream[n];
-                ObjectInputStream[] chunks = new ObjectInputStream[n];
-                int[] numGroups = new int[n]; // groups per chunk file
+        try (CSVPrinter csv = prepareCSVPrinter(outputFile, gzip)) {
+            int n = chunkFiles.size();
+            InputStream[] inputStreams = new InputStream[n];
+            InputStream[] gzipInputStreams = new InputStream[n];
+            ObjectInputStream[] chunks = new ObjectInputStream[n];
+            int[] numGroups = new int[n]; // groups per chunk file
 
-                // These hold the index, key and value for the current group from every chunk file
-                int[] index = new int[n];
-                GroupIdHash[] key = new GroupIdHash[n];
-                OccurrenceCounts[] value = new OccurrenceCounts[n];
+            // These hold the index, key and value for the current group from every chunk file
+            int[] index = new int[n];
+            GroupIdHash[] key = new GroupIdHash[n];
+            OccurrenceCounts[] value = new OccurrenceCounts[n];
 
-                try {
-                    int chunksExhausted = 0;
-                    for (int i = 0; i < n; i++) {
-                        File chunkFile = chunkFiles.get(i);
-                        InputStream fis = new FileInputStream(chunkFile);
-                        inputStreams[i] = fis;
-                        InputStream gis = chunksCompressed ? new GZIPInputStream(fis) : fis;
-                        gzipInputStreams[i] = gis;
-                        ObjectInputStream ois = new ObjectInputStream(gis);
-                        numGroups[i] = ois.readInt();
-                        chunks[i] = ois;
-                        // Initialize index, key and value with first group from each file
-                        index[i] = 0;
-                        key[i] = numGroups[i] > 0 ? (GroupIdHash) ois.readUnshared() : null;
-                        value[i] = numGroups[i] > 0 ? (OccurrenceCounts) ois.readUnshared() : null;
-                        if (numGroups[i] == 0)
-                            chunksExhausted++;
-                    }
-
-                    // Now, keep merging the "lowest" keys together and advance them,
-                    // until we run out of groups.
-                    while (chunksExhausted < n) {
-                        // Find lowest key value; we will merge that group next
-                        GroupIdHash nextGroupToMerge = null;
-                        for (int j = 0; j < n; j++) {
-                            if (nextGroupToMerge == null || key[j] != null && key[j].compareTo(nextGroupToMerge) < 0)
-                                nextGroupToMerge = key[j];
-                        }
-
-                        // Merge all groups with the lowest value,
-                        // and advance those chunk files to the next group
-                        int hits = 0, docs = 0;
-                        for (int j = 0; j < n; j++) {
-                            if (key[j] != null && key[j].equals(nextGroupToMerge)) {
-                                // Add to merged counts
-                                hits += value[j].hits;
-                                docs += value[j].docs;
-                                // Advance to next group in this chunk
-                                index[j]++;
-                                boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
-                                key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) chunks[j].readUnshared();
-                                value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) chunks[j].readUnshared();
-                                if (noMoreGroupsInChunk)
-                                    chunksExhausted++;
-                            }
-                        }
-
-                        // Finally, write the merged group to the output file.
-                        if (nextGroupToMerge != null)
-                            FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits);
-                    }
-
-                } catch (ClassNotFoundException e) {
-                    throw new RuntimeException();
-                } finally {
-                    for (ObjectInputStream chunk: chunks)
-                        chunk.close();
-                    if (chunksCompressed) {
-                        for (InputStream gis : gzipInputStreams)
-                            gis.close();
-                    }
-                    for (InputStream fis: inputStreams)
-                        fis.close();
+            try {
+                int chunksExhausted = 0;
+                for (int i = 0; i < n; i++) {
+                    File chunkFile = chunkFiles.get(i);
+                    InputStream fis = new FileInputStream(chunkFile);
+                    inputStreams[i] = fis;
+                    InputStream gis = chunksCompressed ? new GZIPInputStream(fis) : fis;
+                    gzipInputStreams[i] = gis;
+                    ObjectInputStream ois = new ObjectInputStream(gis);
+                    numGroups[i] = ois.readInt();
+                    chunks[i] = ois;
+                    // Initialize index, key and value with first group from each file
+                    index[i] = 0;
+                    key[i] = numGroups[i] > 0 ? (GroupIdHash) ois.readUnshared() : null;
+                    value[i] = numGroups[i] > 0 ? (OccurrenceCounts) ois.readUnshared() : null;
+                    if (numGroups[i] == 0)
+                        chunksExhausted++;
                 }
+
+                // Now, keep merging the "lowest" keys together and advance them,
+                // until we run out of groups.
+                while (chunksExhausted < n) {
+                    // Find lowest key value; we will merge that group next
+                    GroupIdHash nextGroupToMerge = null;
+                    for (int j = 0; j < n; j++) {
+                        if (nextGroupToMerge == null || key[j] != null && key[j].compareTo(nextGroupToMerge) < 0)
+                            nextGroupToMerge = key[j];
+                    }
+
+                    // Merge all groups with the lowest value,
+                    // and advance those chunk files to the next group
+                    int hits = 0, docs = 0;
+                    for (int j = 0; j < n; j++) {
+                        if (key[j] != null && key[j].equals(nextGroupToMerge)) {
+                            // Add to merged counts
+                            hits += value[j].hits;
+                            docs += value[j].docs;
+                            // Advance to next group in this chunk
+                            index[j]++;
+                            boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
+                            key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) chunks[j].readUnshared();
+                            value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) chunks[j].readUnshared();
+                            if (noMoreGroupsInChunk)
+                                chunksExhausted++;
+                        }
+                    }
+
+                    // Finally, write the merged group to the output file.
+                    if (nextGroupToMerge != null)
+                        FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits);
+                }
+
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException();
+            } finally {
+                for (ObjectInputStream chunk: chunks)
+                    chunk.close();
+                if (chunksCompressed) {
+                    for (InputStream gis : gzipInputStreams)
+                        gis.close();
+                }
+                for (InputStream fis: inputStreams)
+                    fis.close();
             }
         } catch (IOException e) {
             throw new RuntimeException();
@@ -475,5 +454,16 @@ public class FrequencyTool {
             groupProps.add(new HitPropertyDocumentStoredField(index, name));
         }
         return new HitPropertyMultiple(groupProps.toArray(new HitProperty[0]));
+    }
+
+    private static OutputStream prepareStream(File file, boolean gzip) throws IOException {
+        FileOutputStream fos = new FileOutputStream(file);
+        return gzip ? new GZIPOutputStream(fos) : fos;
+    }
+
+    public static CSVPrinter prepareCSVPrinter(File file, boolean gzip) throws IOException {
+        OutputStream stream = prepareStream(file, gzip);
+        Writer w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
+        return new CSVPrinter(w, FreqListOutputTsv.TAB_SEPARATED_FORMAT);
     }
 }
