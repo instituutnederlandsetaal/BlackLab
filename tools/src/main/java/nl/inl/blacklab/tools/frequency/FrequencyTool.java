@@ -22,6 +22,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+import java.util.zip.Deflater;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -461,7 +462,7 @@ public class FrequencyTool {
 
     private static OutputStream prepareStream(File file, boolean gzip) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
-        return gzip ? new GZIPOutputStream(fos) : fos;
+        return gzip ? new GZIPOutputStream(fos) {{ def.setLevel(Deflater.BEST_SPEED); }} : fos;
     }
 
     public static CsvWriter prepareCSVPrinter(File file, boolean gzip) throws IOException {
