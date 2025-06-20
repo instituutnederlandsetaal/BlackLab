@@ -145,6 +145,7 @@ class Config {
         return "Config{" +
                 "docsToProcessInParallel=" + docsToProcessInParallel +
                 ", groupsPerChunk=" + groupsPerChunk +
+                ", compressTempFiles=" + compressTempFiles +
                 ", useRegularSearch=" + useRegularSearch +
                 ", repetitions=" + repetitions +
                 ", annotatedField='" + annotatedField + '\'' +
@@ -155,6 +156,7 @@ class Config {
     public String show() {
         return "docsToProcessInParallel: " + docsToProcessInParallel + "\n" +
                 "groupsPerChunk: " + groupsPerChunk + "\n" +
+                "compressTempFiles: " + compressTempFiles + "\n" +
                 "useRegularSearch: " + useRegularSearch + "\n" +
                 "repetitions: " + repetitions + "\n" +
                 "annotatedField: '" + annotatedField + "\n" +
