@@ -9,7 +9,15 @@ public class TestStringUtil {
 
     @Test
     public void testRemoveAccents() {
+        // remove accents on letters
         Assert.assertEquals("He, jij!", StringUtil.stripAccents("Hé, jij!"));
+        // special case for Ł and ł
+        Assert.assertEquals("Ll", StringUtil.stripAccents("Łł"));
+        // remove bare accents
+        // asserts that stripAccents takes index (i.e. i--) into account when removing accents.
+        // If it didn't, the second accent would remain.
+        final String twoBareAccentsInARow = CHAR_COMBINING_ACCENT_ACUTE + "" + CHAR_COMBINING_ACCENT_ACUTE; // force cast to string
+        Assert.assertEquals("", StringUtil.stripAccents(twoBareAccentsInARow));
     }
 
     @Test
