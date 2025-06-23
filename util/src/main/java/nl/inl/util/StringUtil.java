@@ -100,9 +100,6 @@ public final class StringUtil {
      *
      * For instance, '&agrave;' will be replaced by 'a'. Note that ligatures will be left as is.
      *
-     * Also strips out 0xAD (also known as soft hyphen or &amp;shy;), which frequently causes
-     * issues when comparing insensitively (and Collator ignores it as well).
-     *
      * <pre>
      * StringUtils.stripAccents(null)                = null
      * StringUtils.stripAccents("")                  = ""
@@ -120,35 +117,39 @@ public final class StringUtil {
      */
     // See also Lucene's ASCIIFoldingFilter (Lucene 2.9) that replaces accented characters by their unaccented equivalent (and uncommitted bug fix: https://issues.apache.org/jira/browse/LUCENE-1343?focusedCommentId=12858907&page=com.atlassian.jira.plugin.system.issuetabpanels%3Acomment-tabpanel#action_12858907).
     public static String stripAccents(final String input) {
-        return stripAccents(input, false);
-    }
-
-    public static String stripAccents(final String input, boolean removeEmSpace) {
         if (input == null) {
             return null;
         }
         final StringBuilder decomposed = new StringBuilder(Normalizer.normalize(input, Normalizer.Form.NFD));
-        convertRemainingAccentCharacters(decomposed);
+
         // Note that this doesn't correctly remove ligatures...
-        Pattern patt = removeEmSpace ? PATT_DIACRITICAL_MARKS_AND_EM_SPACE : PATT_DIACRITICAL_MARKS;
-        return patt.matcher(decomposed).replaceAll("");
-    }
-
-    private static final char CHAR_LATIN_UPPER_L_WITH_STROKE = '\u0141'; // Ł
-
-    private static final char CHAR_LATIN_LOWER_L_WITH_STROKE = '\u0142'; // ł
-
-    private static void convertRemainingAccentCharacters(StringBuilder decomposed) {
-        for (int i = 0; i < decomposed.length(); i++) {
-            if (decomposed.charAt(i) == CHAR_LATIN_UPPER_L_WITH_STROKE) {
+        for (int i = 0; i < decomposed.length(); i++) { // Loop is much faster than regex.
+            char c = decomposed.charAt(i);
+            if (c >= BEGIN_COMBINING_DIACRITICAL_MARKS && c <= END_COMBINING_DIACRITICAL_MARKS) {
+                decomposed.deleteCharAt(i);
+                // Adjust index. Otherwise, a string like "\u0301\u0301"
+                // (i.e. 2 bare accents in a row) would skip processing the second accent.
+                i--;
+            } else if (c == CHAR_LATIN_UPPER_L_WITH_STROKE) {
                 decomposed.deleteCharAt(i);
                 decomposed.insert(i, 'L');
-            } else if (decomposed.charAt(i) == CHAR_LATIN_LOWER_L_WITH_STROKE) {
+            } else if (c == CHAR_LATIN_LOWER_L_WITH_STROKE) {
                 decomposed.deleteCharAt(i);
                 decomposed.insert(i, 'l');
             }
         }
+
+        return decomposed.toString();
     }
+
+    // "Combining Diacritical Marks" Unicode block:
+    // https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
+    private static final char BEGIN_COMBINING_DIACRITICAL_MARKS = '\u0300';
+    private static final char END_COMBINING_DIACRITICAL_MARKS = '\u036F';
+
+    private static final char CHAR_LATIN_UPPER_L_WITH_STROKE = '\u0141'; // Ł
+
+    private static final char CHAR_LATIN_LOWER_L_WITH_STROKE = '\u0142'; // ł
 
     /**
      * A lowercase letter followed by an uppercase one, both matched in groups.
