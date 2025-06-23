@@ -29,6 +29,9 @@ import java.util.zip.GZIPOutputStream;
 import de.siegmar.fastcsv.writer.CsvWriter;
 import de.siegmar.fastcsv.writer.QuoteStrategies;
 import de.siegmar.fastcsv.writer.QuoteStrategy;
+import net.jpountz.lz4.LZ4Compressor;
+import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.lz4.LZ4FrameOutputStream;
 import nl.inl.util.LuceneUtil;
 
 import org.apache.commons.csv.CSVPrinter;
@@ -462,7 +465,7 @@ public class FrequencyTool {
 
     private static OutputStream prepareStream(File file, boolean gzip) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
-        return gzip ? new GZIPOutputStream(fos) {{ def.setLevel(Deflater.BEST_SPEED); }} : fos;
+        return gzip ? new LZ4FrameOutputStream(fos) : fos;
     }
 
     public static CsvWriter prepareCSVPrinter(File file, boolean gzip) throws IOException {
