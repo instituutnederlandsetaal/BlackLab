@@ -271,10 +271,18 @@ public final class StringUtil {
         return Normalizer.normalize(value, Normalizer.Form.NFC);
     }
 
-    public static Pattern insensitiveCollatorPattern = Pattern.compile("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]");
-
     public static String removeCharsIgnoredByInsensitiveCollator(String s) {
-        return insensitiveCollatorPattern.matcher(s).replaceAll("");
+        StringBuilder sb = new StringBuilder(s);
+        for (int i = 0; i < sb.length(); i++) {
+            char c = sb.charAt(i);
+            boolean shouldDelete = c == '\t' || c == '\n' || c == '\r'
+                    || c == CHAR_EM_SPACE || c == CHAR_NON_BREAKING_SPACE || c == CHAR_DELETE;
+            if (shouldDelete) {
+                sb.deleteCharAt(i);
+                i--; // adjust index, otherwise we skip the next character
+            }
+        }
+        return sb.toString();
     }
 
     /** A backslash followed by any other character (which will be captured). */

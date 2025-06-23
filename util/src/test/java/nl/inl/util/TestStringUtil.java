@@ -21,6 +21,11 @@ public class TestStringUtil {
     }
 
     @Test
+    public void testRemoveCharsIgnoredByInsensitiveCollator() {
+        Assert.assertEquals("", StringUtil.removeCharsIgnoredByInsensitiveCollator("\t\r\n"));
+    }
+
+    @Test
     public void testEscapeLuceneRegexCharacters() {
         Assert.assertEquals("^the\\*\\.quick\\?brown\\(fox\\)jumps\\@over\\#the\\&lazy$", StringUtil.escapeLuceneRegexCharacters("^the*.quick?brown(fox)jumps@over#the&lazy$"));
         String charsToEscape = "|\\?*+()<[]{}.\"#@&";
