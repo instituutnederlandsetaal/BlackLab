@@ -18,9 +18,10 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
- * A span/relation strategy where the type (span name) and any attributes are all combined
- * into a single term, with special optimization terms to speed up certain queries.
- * In practice, this turned out to be too slow for large corpora.
+ * The span/relation strategy used by the old external index format.
+ * Indexes the span name separately from the attributes.
+ * The problem with this is that it doesn't know what attributes
+ * belong to which tag (if there's multiple start tags at the same token position).
  */
 public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
 
@@ -89,6 +90,8 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
 
     @Override
     public String fullTypeFromIndexedTerm(String term) {
+        if (term.endsWith(RelationsStrategySingleTerm.ATTR_SEPARATOR))
+            term = term.substring(0, term.length() - RelationsStrategySingleTerm.ATTR_SEPARATOR.length());
         return RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, term);
     }
 
