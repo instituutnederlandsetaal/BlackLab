@@ -1,7 +1,6 @@
 package nl.inl.blacklab.tools.frequency;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -22,19 +21,13 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
-import java.util.zip.Deflater;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
 import de.siegmar.fastcsv.writer.QuoteStrategies;
-import de.siegmar.fastcsv.writer.QuoteStrategy;
-import net.jpountz.lz4.LZ4Compressor;
-import net.jpountz.lz4.LZ4Factory;
+import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
 import nl.inl.util.LuceneUtil;
 
-import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -357,7 +350,7 @@ public class FrequencyTool {
                     File chunkFile = chunkFiles.get(i);
                     InputStream fis = new FileInputStream(chunkFile);
                     inputStreams[i] = fis;
-                    InputStream gis = chunksCompressed ? new GZIPInputStream(fis) : fis;
+                    InputStream gis = chunksCompressed ? new LZ4FrameInputStream(fis) : fis;
                     gzipInputStreams[i] = gis;
                     ObjectInputStream ois = new ObjectInputStream(gis);
                     numGroups[i] = ois.readInt();
