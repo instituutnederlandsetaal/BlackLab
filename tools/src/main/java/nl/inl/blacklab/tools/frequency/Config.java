@@ -148,7 +148,7 @@ class Config {
                 ", compressTempFiles=" + compressTempFiles +
                 ", useRegularSearch=" + useRegularSearch +
                 ", repetitions=" + repetitions +
-                ", annotatedField='" + annotatedField + '\'' +
+                ", annotatedField=" + annotatedField +
                 ", frequencyLists=" + frequencyLists +
                 '}';
     }
@@ -159,7 +159,7 @@ class Config {
                 "compressTempFiles: " + compressTempFiles + "\n" +
                 "useRegularSearch: " + useRegularSearch + "\n" +
                 "repetitions: " + repetitions + "\n" +
-                "annotatedField: '" + annotatedField + "\n" +
+                "annotatedField: " + annotatedField + "\n" +
                 "frequencyLists:\n" +
                 frequencyLists.stream().map(ConfigFreqList::show).collect(Collectors.joining("\n"));
     }
