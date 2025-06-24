@@ -1,24 +1,14 @@
 package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.zip.GZIPOutputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
-
-import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVPrinter;
-import org.apache.commons.csv.QuoteMode;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -32,11 +22,6 @@ import nl.inl.blacklab.search.results.HitGroups;
  * Writes frequency results to a TSV file.
  */
 class FreqListOutputTsv implements FreqListOutput {
-
-    public static final CSVFormat TAB_SEPARATED_FORMAT =
-            CSVFormat.TDF
-                    .withEscape('\\')
-                    .withQuoteMode(QuoteMode.NONE);
 
     static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CsvWriter csv, GroupIdHash groupId, int hits) throws IOException {
         List<String> record = new ArrayList<>();
@@ -74,26 +59,20 @@ class FreqListOutputTsv implements FreqListOutput {
      * @param freqList       configuration
      * @param result         grouping result
      * @param outputDir      where to write output file
-     * @param gzip           whether to gzip output file
+     * @param compress           whether to compress output file
      */
     @Override
     public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                      HitGroups result, File outputDir, boolean gzip) {
-        File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (gzip ? ".gz" : ""));
-        try (OutputStream outputStream = new FileOutputStream(outputFile)) {
-            OutputStream stream = outputStream;
-            if (gzip)
-                stream = new GZIPOutputStream(stream);
-            try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
-                 CSVPrinter printer = new CSVPrinter(out, TAB_SEPARATED_FORMAT)) {
-                for (HitGroup group : result) {
-                    List<String> record = new ArrayList<>();
-                    PropertyValue identity = group.identity();
-                    for (PropertyValue value : identity.valuesList())
-                        record.add(value.toString());
-                    record.add(Long.toString(group.size()));
-                    printer.printRecord(record);
-                }
+                      HitGroups result, File outputDir, boolean compress) {
+        File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (compress ? ".lz4" : ""));
+        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, compress)) {
+            for (HitGroup group : result) {
+                List<String> record = new ArrayList<>();
+                PropertyValue identity = group.identity();
+                for (PropertyValue value : identity.valuesList())
+                    record.add(value.toString());
+                record.add(Long.toString(group.size()));
+                csv.writeRecord(record);
             }
         } catch (IOException e) {
             throw new RuntimeException("Error writing output for " + freqList.getReportName(), e);
@@ -109,15 +88,15 @@ class FreqListOutputTsv implements FreqListOutput {
      * @param annotationNames annotations to group on
      * @param occurrences    grouping result
      * @param outputDir      where to write output file
-     * @param gzip           whether to gzip output file
+     * @param compress           whether to compress output file
      */
     @Override
     public File write(BlackLabIndex index, AnnotatedField annotatedField, String reportName,
                       List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
-                      File outputDir, boolean gzip) {
-        File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
+                      File outputDir, boolean compress) {
+        File outputFile = new File(outputDir, reportName + ".tsv" + (compress ? ".lz4" : ""));
         System.out.println("  Writing " + outputFile);
-        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, gzip)) {
+        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, compress)) {
             Terms[] terms = annotationNames.stream()
                     .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                     .toArray(Terms[]::new);

@@ -12,8 +12,8 @@ interface FreqListOutput {
 
     enum Type {
         TSV,           // TSV file
-        TSV_GZIP,      // gzipped TSV file
-        UNMERGED_TSV_GZ   // separate TSV files for each chunk (to avoid crash when merging)
+        ZIPPED_TSV,      // zipped TSV file
+        UNMERGED_ZIPPED_TSV   // separate TSV files for each chunk (to avoid crash when merging)
     }
 
     FreqListOutput TSV = new FreqListOutputTsv();
@@ -30,7 +30,7 @@ interface FreqListOutput {
      * @param outputDir      directory to write output file
      */
     void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-               HitGroups result, File outputDir, boolean gzip);
+               HitGroups result, File outputDir, boolean compress);
 
     /**
      * Write a frequency list file.
@@ -44,6 +44,6 @@ interface FreqListOutput {
      */
     File write(BlackLabIndex index, AnnotatedField annotatedField, String reportName,
                List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
-               File outputDir, boolean gzip);
+               File outputDir, boolean compress);
 
 }

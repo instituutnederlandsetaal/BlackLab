@@ -73,9 +73,9 @@ public class FrequencyTool {
                 
                 Usage:
                 
-                  FrequencyTool [--gzip] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]
+                  FrequencyTool [--compress] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]
                 
-                  --gzip       write directly to .gz file
+                  --compress       write directly to .lz4 file
                   --no-merge   don't merge chunk files, write separate tsvs instead
                   INDEX_DIR    index to generate frequency lists for
                   CONFIG_FILE  YAML file specifying what frequency lists to generate. See README.md.
@@ -95,11 +95,11 @@ public class FrequencyTool {
             if (arg.startsWith("--")) {
                 numOpts++;
                 switch (arg) {
-                case "--gzip":
-                    outputType = FreqListOutput.Type.TSV_GZIP;
+                case "--compress":
+                    outputType = FreqListOutput.Type.ZIPPED_TSV;
                     break;
                 case "--no-merge":
-                    outputType = FreqListOutput.Type.UNMERGED_TSV_GZ;
+                    outputType = FreqListOutput.Type.UNMERGED_ZIPPED_TSV;
                     break;
                 case "--help":
                     exitUsage("");
@@ -228,7 +228,7 @@ public class FrequencyTool {
                     if (isFinalRun && chunkNumber == 0) {
                         // There's only one chunk. We can skip writing intermediate file and write result directly.
                         FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, occurrences,
-                                outputDir, outputType == FreqListOutput.Type.TSV_GZIP);
+                                outputDir, outputType == FreqListOutput.Type.ZIPPED_TSV);
                         occurrences = null;
                     } else if (groupingTooLarge || isFinalRun) {
                         // Sort our map now.
@@ -237,8 +237,8 @@ public class FrequencyTool {
                         // Write next chunk file.
                         chunkNumber++;
                         String chunkName = reportName + chunkNumber;
-                        boolean tsv = outputType == FreqListOutput.Type.UNMERGED_TSV_GZ;
-                        File chunkFile = new File(tmpDir, chunkName + (tsv ? ".tsv.gz" : ".chunk"));
+                        boolean tsv = outputType == FreqListOutput.Type.UNMERGED_ZIPPED_TSV;
+                        File chunkFile = new File(tmpDir, chunkName + (tsv ? ".tsv.lz4" : ".chunk.lz4"));
                         System.out.println("  Writing " + chunkFile);
                         if (!tsv) {
                             // Write chunk files, to be merged at the end
@@ -260,7 +260,7 @@ public class FrequencyTool {
             // even if the final output file is huge.
             MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
             Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
-            mergeChunkFiles(chunkFiles, outputDir, reportName, outputType == FreqListOutput.Type.TSV_GZIP,
+            mergeChunkFiles(chunkFiles, outputDir, reportName, outputType == FreqListOutput.Type.ZIPPED_TSV,
                     terms, sensitivity, config.isCompressTempFiles());
 
             // Remove chunk files
@@ -307,8 +307,8 @@ public class FrequencyTool {
     }
 
     private static void writeTsvFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, Terms[] terms) {
-        boolean gzip = true;
-        try (CsvWriter csv = prepareCSVPrinter(chunkFile, gzip)) {
+        boolean compress = true;
+        try (CsvWriter csv = prepareCSVPrinter(chunkFile, compress)) {
             for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
                 GroupIdHash key = entry.getKey();
                 OccurrenceCounts value = entry.getValue();
@@ -321,14 +321,14 @@ public class FrequencyTool {
 
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
     // This takes very little memory even if the final output file is huge.
-    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip,
+    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean compress,
             Terms[] terms, MatchSensitivity[] sensitivity, boolean chunksCompressed) {
-        File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
+        File outputFile = new File(outputDir, reportName + ".tsv" + (compress ? ".lz4" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
-        try (CsvWriter csv = prepareCSVPrinter(outputFile, gzip)) {
+        try (CsvWriter csv = prepareCSVPrinter(outputFile, compress)) {
             int n = chunkFiles.size();
             InputStream[] inputStreams = new InputStream[n];
-            InputStream[] gzipInputStreams = new InputStream[n];
+            InputStream[] zipInputStreams = new InputStream[n];
             ForyInputStream[] chunks = new ForyInputStream[n];
             int[] numGroups = new int[n]; // groups per chunk file
 
@@ -343,9 +343,9 @@ public class FrequencyTool {
                     File chunkFile = chunkFiles.get(i);
                     InputStream fis = new FileInputStream(chunkFile);
                     inputStreams[i] = fis;
-                    InputStream gis = chunksCompressed ? new LZ4FrameInputStream(fis) : fis;
-                    gzipInputStreams[i] = gis;
-                    ForyInputStream ois = new ForyInputStream(gis);
+                    InputStream zis = chunksCompressed ? new LZ4FrameInputStream(fis) : fis;
+                    zipInputStreams[i] = zis;
+                    ForyInputStream ois = new ForyInputStream(zis);
                     numGroups[i] = (int) fory.deserialize(ois);
                     chunks[i] = ois;
                     // Initialize index, key and value with first group from each file
@@ -393,8 +393,8 @@ public class FrequencyTool {
                 for (ForyInputStream chunk: chunks)
                     chunk.close();
                 if (chunksCompressed) {
-                    for (InputStream gis : gzipInputStreams)
-                        gis.close();
+                    for (InputStream zis : zipInputStreams)
+                        zis.close();
                 }
                 for (InputStream fis: inputStreams)
                     fis.close();
@@ -417,7 +417,7 @@ public class FrequencyTool {
                 result = search.execute();
             }
             FreqListOutput.TSV.write(index, annotatedField, freqList, result, outputDir,
-                    outputType == FreqListOutput.Type.TSV_GZIP);
+                    outputType == FreqListOutput.Type.ZIPPED_TSV);
         } catch (InvalidQuery e) {
             throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
         }
@@ -447,13 +447,13 @@ public class FrequencyTool {
         return new HitPropertyMultiple(groupProps.toArray(new HitProperty[0]));
     }
 
-    private static OutputStream prepareStream(File file, boolean gzip) throws IOException {
+    private static OutputStream prepareStream(File file, boolean compress) throws IOException {
         FileOutputStream fos = new FileOutputStream(file);
-        return gzip ? new LZ4FrameOutputStream(fos) : fos;
+        return compress ? new LZ4FrameOutputStream(fos) : fos;
     }
 
-    public static CsvWriter prepareCSVPrinter(File file, boolean gzip) throws IOException {
-        OutputStream stream = prepareStream(file, gzip);
+    public static CsvWriter prepareCSVPrinter(File file, boolean compress) throws IOException {
+        OutputStream stream = prepareStream(file, compress);
         Writer w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
         return CsvWriter.builder().fieldSeparator('\t').quoteStrategy(QuoteStrategies.EMPTY).build(w);
     }
