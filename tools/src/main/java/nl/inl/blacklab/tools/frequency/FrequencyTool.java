@@ -1,13 +1,10 @@
 package nl.inl.blacklab.tools.frequency;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -22,14 +19,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.fory.Fory;
+import org.apache.fory.config.Language;
+import org.apache.fory.io.ForyInputStream;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
+
 import de.siegmar.fastcsv.writer.CsvWriter;
 import de.siegmar.fastcsv.writer.QuoteStrategies;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
-import nl.inl.util.LuceneUtil;
-
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -50,10 +50,8 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
-
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.Query;
 
 /**
  * Determine frequency lists over annotation(s) and
@@ -294,20 +292,15 @@ public class FrequencyTool {
     }
 
     private static void writeChunkFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, boolean compress) {
-        try (OutputStream stream = prepareStream(chunkFile, compress)) {
-             try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(stream)) {
-                 // Write keys and values in sorted order, so we can merge later
-                 objectOutputStream.writeInt(occurrences.size()); // start with number of groups
-                 occurrences.forEach((key, value) -> {
-                     try {
-                         objectOutputStream.writeUnshared(key);
-                         objectOutputStream.writeUnshared(value);
-                         objectOutputStream.reset(); // make sure we don't keep references to the objects
-                     } catch (IOException e) {
-                         throw new RuntimeException();
-                     }
-                 });
-             }
+        try (OutputStream os = prepareStream(chunkFile, compress)) {
+            // Write keys and values in sorted order, so we can merge later
+            os.write(fory.serialize(occurrences.size())); // start with number of groups
+            for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
+                GroupIdHash key = entry.getKey();
+                OccurrenceCounts value = entry.getValue();
+                os.write(fory.serialize(key));
+                os.write(fory.serialize(value));
+            }
         } catch (IOException e) {
             throw new RuntimeException();
         }
@@ -336,7 +329,7 @@ public class FrequencyTool {
             int n = chunkFiles.size();
             InputStream[] inputStreams = new InputStream[n];
             InputStream[] gzipInputStreams = new InputStream[n];
-            ObjectInputStream[] chunks = new ObjectInputStream[n];
+            ForyInputStream[] chunks = new ForyInputStream[n];
             int[] numGroups = new int[n]; // groups per chunk file
 
             // These hold the index, key and value for the current group from every chunk file
@@ -352,13 +345,13 @@ public class FrequencyTool {
                     inputStreams[i] = fis;
                     InputStream gis = chunksCompressed ? new LZ4FrameInputStream(fis) : fis;
                     gzipInputStreams[i] = gis;
-                    ObjectInputStream ois = new ObjectInputStream(gis);
-                    numGroups[i] = ois.readInt();
+                    ForyInputStream ois = new ForyInputStream(gis);
+                    numGroups[i] = (int) fory.deserialize(ois);
                     chunks[i] = ois;
                     // Initialize index, key and value with first group from each file
                     index[i] = 0;
-                    key[i] = numGroups[i] > 0 ? (GroupIdHash) ois.readUnshared() : null;
-                    value[i] = numGroups[i] > 0 ? (OccurrenceCounts) ois.readUnshared() : null;
+                    key[i] = numGroups[i] > 0 ? (GroupIdHash) fory.deserialize(ois) : null;
+                    value[i] = numGroups[i] > 0 ? (OccurrenceCounts) fory.deserialize(ois) : null;
                     if (numGroups[i] == 0)
                         chunksExhausted++;
                 }
@@ -384,8 +377,8 @@ public class FrequencyTool {
                             // Advance to next group in this chunk
                             index[j]++;
                             boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
-                            key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) chunks[j].readUnshared();
-                            value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) chunks[j].readUnshared();
+                            key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) fory.deserialize(chunks[j]);
+                            value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) fory.deserialize(chunks[j]);
                             if (noMoreGroupsInChunk)
                                 chunksExhausted++;
                         }
@@ -396,10 +389,8 @@ public class FrequencyTool {
                         FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits);
                 }
 
-            } catch (ClassNotFoundException e) {
-                throw new RuntimeException();
             } finally {
-                for (ObjectInputStream chunk: chunks)
+                for (ForyInputStream chunk: chunks)
                     chunk.close();
                 if (chunksCompressed) {
                     for (InputStream gis : gzipInputStreams)
@@ -465,5 +456,15 @@ public class FrequencyTool {
         OutputStream stream = prepareStream(file, gzip);
         Writer w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
         return CsvWriter.builder().fieldSeparator('\t').quoteStrategy(QuoteStrategies.EMPTY).build(w);
+    }
+
+    private static final Fory fory = getFory();
+
+    private static Fory getFory() {
+        Fory fory = Fory.builder().withLanguage(Language.JAVA).requireClassRegistration(true).withAsyncCompilation(true)
+                .withStringCompressed(true).build();
+        fory.register(GroupIdHash.class);
+        fory.register(OccurrenceCounts.class);
+        return fory;
     }
 }
