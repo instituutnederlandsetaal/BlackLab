@@ -1,15 +1,12 @@
 package nl.inl.blacklab.tools.frequency.writers;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
-import net.jpountz.lz4.LZ4FrameInputStream;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
@@ -25,10 +22,8 @@ public class ChunkedTsvWriter extends FreqListWriter {
         File outputFile = new File(bCfg.getOutputDir(),
                 fCfg.getReportName() + ".tsv" + (bCfg.isCompressed() ? ".lz4" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
-        try (CsvWriter csv = prepareCSVPrinter(outputFile, bCfg.isCompressed())) {
+        try (CsvWriter csv = getCsvWriter(outputFile, bCfg.isCompressed())) {
             int n = chunkFiles.size();
-            InputStream[] inputStreams = new InputStream[n];
-            InputStream[] zipInputStreams = new InputStream[n];
             ForyInputStream[] chunks = new ForyInputStream[n];
             int[] numGroups = new int[n]; // groups per chunk file
 
@@ -41,17 +36,13 @@ public class ChunkedTsvWriter extends FreqListWriter {
                 int chunksExhausted = 0;
                 for (int i = 0; i < n; i++) {
                     File chunkFile = chunkFiles.get(i);
-                    InputStream fis = new FileInputStream(chunkFile);
-                    inputStreams[i] = fis;
-                    InputStream zis = bCfg.isCompressed() ? new LZ4FrameInputStream(fis) : fis;
-                    zipInputStreams[i] = zis;
-                    ForyInputStream ois = new ForyInputStream(zis);
-                    numGroups[i] = (int) fory.deserialize(ois);
-                    chunks[i] = ois;
+                    ForyInputStream fis = getForyInputStream(chunkFile, bCfg.isCompressed());
+                    chunks[i] = fis;
+                    numGroups[i] = (int) fory.deserialize(fis);
                     // Initialize index, key and value with first group from each file
                     index[i] = 0;
-                    key[i] = numGroups[i] > 0 ? (GroupIdHash) fory.deserialize(ois) : null;
-                    value[i] = numGroups[i] > 0 ? (OccurrenceCounts) fory.deserialize(ois) : null;
+                    key[i] = numGroups[i] > 0 ? (GroupIdHash) fory.deserialize(fis) : null;
+                    value[i] = numGroups[i] > 0 ? (OccurrenceCounts) fory.deserialize(fis) : null;
                     if (numGroups[i] == 0)
                         chunksExhausted++;
                 }
@@ -92,16 +83,9 @@ public class ChunkedTsvWriter extends FreqListWriter {
             } finally {
                 for (ForyInputStream chunk: chunks)
                     chunk.close();
-                if (bCfg.isCompressed()) {
-                    for (InputStream zis: zipInputStreams)
-                        zis.close();
-                }
-                for (InputStream fis: inputStreams)
-                    fis.close();
             }
         } catch (IOException e) {
             throw new RuntimeException();
         }
     }
-
 }

@@ -11,7 +11,7 @@ import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
 public class ChunkWriter extends FreqListWriter {
 
     public static void write(File file, Map<GroupIdHash, OccurrenceCounts> occurrences, boolean compress) {
-        try (OutputStream os = prepareStream(file, compress)) {
+        try (OutputStream os = getOutputStream(file, compress)) {
             // Write keys and values in sorted order, so we can merge later
             os.write(fory.serialize(occurrences.size())); // start with number of groups
             for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {

@@ -65,7 +65,7 @@ public class TsvWriter extends FreqListWriter {
     public static void write(FreqListConfig fCfg, HitGroups result, BuilderConfig config) {
         File outputFile = new File(config.getOutputDir(),
                 fCfg.getReportName() + ".tsv" + (config.isCompressed() ? ".lz4" : ""));
-        try (CsvWriter csv = prepareCSVPrinter(outputFile, config.isCompressed())) {
+        try (CsvWriter csv = getCsvWriter(outputFile, config.isCompressed())) {
             for (HitGroup group: result) {
                 List<String> record = new ArrayList<>();
                 PropertyValue identity = group.identity();
@@ -94,7 +94,7 @@ public class TsvWriter extends FreqListWriter {
         File outputFile = new File(config.getOutputDir(),
                 fCfg.getReportName() + ".tsv" + (config.isCompressed() ? ".lz4" : ""));
         System.out.println("  Writing " + outputFile);
-        try (CsvWriter csv = prepareCSVPrinter(outputFile, config.isCompressed())) {
+        try (CsvWriter csv = getCsvWriter(outputFile, config.isCompressed())) {
             Terms[] terms = annotationNames.stream()
                     .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                     .toArray(Terms[]::new);
