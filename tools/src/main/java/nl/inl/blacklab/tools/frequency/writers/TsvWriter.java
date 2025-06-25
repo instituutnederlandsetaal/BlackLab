@@ -27,23 +27,22 @@ import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
 public class TsvWriter extends FreqListWriter {
 
     static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CsvWriter csv, GroupIdHash groupId,
-            int hits) throws IOException {
+            int hits, BuilderConfig bCfg) throws IOException {
         List<String> record = new ArrayList<>();
         // - annotation values
         int[] tokenIds = groupId.getTokenIds();
         // for each annotation construct a string for the ngram
         int ngramSize = groupId.getNgramSize();
         for (int i = 0, tokenArrIndex = 0; tokenArrIndex < tokenIds.length; i++, tokenArrIndex += ngramSize) {
-            // get respective sensitivity and term index for the annotation
-            MatchSensitivity matchSensitivity = sensitivity == null ? MatchSensitivity.INSENSITIVE : sensitivity[i];
-            Terms termIndex = terms[i]; // contains id to string mapping
-            // map token int ids to their string values
-            String[] tokenList = new String[ngramSize];
-            for (int j = 0; j < ngramSize; j++) {
-                tokenList[j] = matchSensitivity.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
+            String token;
+            if (bCfg.isDatabaseFormat()) {
+                token = writeIdRecord(ngramSize, tokenIds, tokenArrIndex);
+            } else {
+                // get respective sensitivity and term index for the annotation
+                Terms termIndex = terms[i]; // contains id to string mapping
+                MatchSensitivity matchSensitivity = sensitivity == null ? MatchSensitivity.INSENSITIVE : sensitivity[i];
+                token = writeStringRecord(matchSensitivity, terms, ngramSize, tokenIds, tokenArrIndex, termIndex);
             }
-            // join with a space
-            String token = String.join(" ", tokenList);
             record.add(token);
         }
         // - metadata values
@@ -53,6 +52,47 @@ public class TsvWriter extends FreqListWriter {
         // - group size (hits/docs)
         record.add(Long.toString(hits));
         csv.writeRecord(record);
+    }
+
+    private static String writeStringRecord(MatchSensitivity matchSensitivity, Terms[] terms, int ngramSize, int[] tokenIds, int tokenArrIndex, Terms termIndex) {
+        // map token int ids to their string values
+        String[] tokenList = new String[ngramSize];
+        for (int j = 0; j < ngramSize; j++) {
+            tokenList[j] = matchSensitivity.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
+        }
+        // join with a space
+        return String.join(" ", tokenList);
+    }
+
+    /**
+     * Write in a database suitable format using IDs instead of strings.
+     */
+    private static String writeIdRecord(int ngramSize, int[] tokenIds, int tokenArrIndex) {
+        int[] tokenList = new int[ngramSize];
+        System.arraycopy(tokenIds, tokenArrIndex, tokenList, 0, ngramSize);
+
+        if (ngramSize == 1) {
+            return Integer.toString(tokenList[0]);
+        } else {
+            return formatNGram(tokenList);
+        }
+    }
+
+    /**
+     * Format n-gram tokens as a array string. E.g. "{1,2,3}"
+     *
+     * @param tokens the token list
+     * @return formatted n-gram
+     */
+    private static String formatNGram(int[] tokens) {
+        StringBuilder sb = new StringBuilder("{");
+        for (int token : tokens) {
+            sb.append(token);
+            sb.append(",");
+        }
+        // replace last comma with closing brace
+        sb.setCharAt(sb.length() - 1, '}');
+        return sb.toString();
     }
 
     /**
@@ -86,15 +126,15 @@ public class TsvWriter extends FreqListWriter {
      * @param annotatedField  annotated field
      * @param annotationNames annotations to group on
      * @param occurrences     grouping result
-     * @param config          global configuration
+     * @param bCfg          global configuration
      */
     public static void write(BlackLabIndex index, AnnotatedField annotatedField,
             List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
-            BuilderConfig config, FreqListConfig fCfg) {
-        File outputFile = new File(config.getOutputDir(),
-                fCfg.getReportName() + ".tsv" + (config.isCompressed() ? ".lz4" : ""));
+            BuilderConfig bCfg, FreqListConfig fCfg) {
+        File outputFile = new File(bCfg.getOutputDir(),
+                fCfg.getReportName() + ".tsv" + (bCfg.isCompressed() ? ".lz4" : ""));
         System.out.println("  Writing " + outputFile);
-        try (CsvWriter csv = getCsvWriter(outputFile, config.isCompressed())) {
+        try (CsvWriter csv = getCsvWriter(outputFile, bCfg.isCompressed())) {
             Terms[] terms = annotationNames.stream()
                     .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                     .toArray(Terms[]::new);
@@ -103,7 +143,7 @@ public class TsvWriter extends FreqListWriter {
             for (Map.Entry<GroupIdHash,
                     OccurrenceCounts> e: occurrences.entrySet()) {
                 OccurrenceCounts occ = e.getValue();
-                writeGroupRecord(sensitivity, terms, csv, e.getKey(), occ.hits);
+                writeGroupRecord(sensitivity, terms, csv, e.getKey(), occ.hits, bCfg);
             }
         } catch (IOException e) {
             throw new RuntimeException("Error writing output for " + fCfg.getReportName(), e);

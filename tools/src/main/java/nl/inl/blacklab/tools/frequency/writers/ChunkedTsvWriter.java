@@ -77,7 +77,7 @@ public class ChunkedTsvWriter extends FreqListWriter {
 
                     // Finally, write the merged group to the output file.
                     if (nextGroupToMerge != null)
-                        TsvWriter.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits);
+                        TsvWriter.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits, bCfg);
                 }
 
             } finally {

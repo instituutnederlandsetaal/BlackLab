@@ -54,6 +54,13 @@ public class BuilderConfig {
     private int repetitions = 1;
 
     /**
+     * Whether to output in database format.
+     * Results in outputting ID's instead of string values for the annotations. (Metadata is left as is.)
+     * Also outputs a 'lookup table' for each annotation, mapping the ID's to the string values.
+     */
+    private boolean databaseFormat = false;
+
+    /**
      * Output directory for frequency lists.
      */
     private File outputDir = new File(".");
@@ -143,6 +150,7 @@ public class BuilderConfig {
                 ", compressed=" + compressed +
                 ", useRegularSearch=" + useRegularSearch +
                 ", repetitions=" + repetitions +
+                ", databaseFormat=" + databaseFormat +
                 ", outputDir=" + outputDir +
                 ", annotatedField=" + annotatedField +
                 ", frequencyLists=" + frequencyLists +
@@ -155,6 +163,7 @@ public class BuilderConfig {
                 "compressed: " + compressed + "\n" +
                 "useRegularSearch: " + useRegularSearch + "\n" +
                 "repetitions: " + repetitions + "\n" +
+                "databaseFormat: " + databaseFormat + "\n" +
                 "outputDir: " + outputDir + "\n" +
                 "annotatedField: " + annotatedField + "\n" +
                 "frequencyLists:\n" +
@@ -195,6 +204,14 @@ public class BuilderConfig {
     @SuppressWarnings("unused")
     public void setRepetitions(int repetitions) {
         this.repetitions = repetitions;
+    }
+
+    public boolean isDatabaseFormat() {
+        return databaseFormat;
+    }
+
+    public void setDatabaseFormat(boolean databaseFormat) {
+        this.databaseFormat = databaseFormat;
     }
 
     public File getOutputDir() {
