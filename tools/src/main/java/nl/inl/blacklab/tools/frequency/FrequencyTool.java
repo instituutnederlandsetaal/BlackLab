@@ -90,16 +90,13 @@ public class FrequencyTool {
 
         // Check for options
         int numOpts = 0;
-        FreqListOutput.Type outputType = FreqListOutput.Type.TSV;
+        boolean compressed = false;
         for (String arg: args) {
             if (arg.startsWith("--")) {
                 numOpts++;
                 switch (arg) {
                 case "--compress":
-                    outputType = FreqListOutput.Type.ZIPPED_TSV;
-                    break;
-                case "--no-merge":
-                    outputType = FreqListOutput.Type.UNMERGED_ZIPPED_TSV;
+                    compressed = true;
                     break;
                 case "--help":
                     exitUsage("");
@@ -115,51 +112,54 @@ public class FrequencyTool {
             exitUsage("Incorrect number of arguments.");
         }
 
+        // Read config file
+        File configFile = new File(args[numOpts + 1]);
+        if (!configFile.canRead()) {
+            exit("Can't read config file " + configFile);
+        }
+        Config config = Config.fromFile(configFile);
+        config.setCompressed(compressed);
+
+        // Set output directory
+        File outputDir = new File(System.getProperty("user.dir")); // current dir
+        if (numArgs > 2) {
+            outputDir = new File(args[numOpts + 2]);
+        }
+        if (!outputDir.isDirectory() || !outputDir.canWrite()) {
+            exit("Not a directory or cannot write to output dir " + outputDir);
+        }
+        config.setOutputDir(outputDir);
+
+        System.out.println("CONFIGURATION:\n" + config.show());
+
         // Open index
         File indexDir = new File(args[numOpts]);
         if (!indexDir.isDirectory() || !indexDir.canRead()) {
             exit("Can't read or not a directory " + indexDir);
         }
+
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
-            // Read config
-            File configFile = new File(args[numOpts + 1]);
-            if (!configFile.canRead()) {
-                exit("Can't read config file " + configFile);
-            }
-            Config config = Config.fromFile(configFile);
-            System.out.println("CONFIGURATION:\n" + config.show());
-
-            // Output dir
-            File outputDir = new File(System.getProperty("user.dir")); // current dir
-            if (numArgs > 2) {
-                outputDir = new File(args[numOpts + 2]);
-            }
-            if (!outputDir.isDirectory() || !outputDir.canWrite()) {
-                exit("Not a directory or cannot write to output dir " + outputDir);
-            }
-
             Timer t = new Timer();
 
             // Generate the frequency lists
-            makeFrequencyLists(index, config, outputDir, outputType);
+            makeFrequencyLists(index, config);
 
             System.out.println("TOTAL TIME: " + t.elapsedDescription(true));
         }
     }
 
-    private static void makeFrequencyLists(BlackLabIndex index, Config config, File outputDir, FreqListOutput.Type outputType) {
+    private static void makeFrequencyLists(BlackLabIndex index, Config config) {
         AnnotatedField annotatedField = index.annotatedField(config.getAnnotatedField());
         config.check(index);
         index.setCache(new SearchCacheDummy()); // don't cache results
         for (ConfigFreqList freqList: config.getFrequencyLists()) {
             Timer t = new Timer();
-            makeFrequencyList(index, annotatedField, freqList, outputDir, outputType, config);
+            makeFrequencyList(index, annotatedField, freqList, config);
             System.out.println("  Time: " + t.elapsedDescription());
         }
     }
 
-    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                                          File outputDir, FreqListOutput.Type outputType, Config config) {
+    private static void makeFrequencyList(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList, Config config) {
         String reportName = freqList.getReportName();
 
         List<String> extraInfo = new ArrayList<>();
@@ -172,7 +172,7 @@ public class FrequencyTool {
 
         if (config.isUseRegularSearch()) {
             // Skip optimizations (debug)
-            makeFrequencyListUnoptimized(index, annotatedField, freqList, outputDir, outputType, config);
+            makeFrequencyListUnoptimized(index, annotatedField, freqList, config);
             return;
         }
 
@@ -186,7 +186,7 @@ public class FrequencyTool {
         final List<Integer> docIds = getDocIds(index, freqList);
 
         // Create tmp dir for the chunk files
-        File tmpDir = new File(outputDir, "tmp");
+        File tmpDir = new File(config.getOutputDir(), "tmp");
         if (!tmpDir.exists() && !tmpDir.mkdir())
             throw new RuntimeException("Could not create tmp dir: " + tmpDir);
 
@@ -227,27 +227,19 @@ public class FrequencyTool {
 
                     if (isFinalRun && chunkNumber == 0) {
                         // There's only one chunk. We can skip writing intermediate file and write result directly.
-                        FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, occurrences,
-                                outputDir, outputType == FreqListOutput.Type.ZIPPED_TSV);
+                        FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, occurrences, config);
                         occurrences = null;
                     } else if (groupingTooLarge || isFinalRun) {
                         // Sort our map now.
                         SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(occurrences);
-
                         // Write next chunk file.
                         chunkNumber++;
                         String chunkName = reportName + chunkNumber;
-                        boolean tsv = outputType == FreqListOutput.Type.UNMERGED_ZIPPED_TSV;
-                        File chunkFile = new File(tmpDir, chunkName + (tsv ? ".tsv.lz4" : ".chunk.lz4"));
+                        File chunkFile = new File(tmpDir, chunkName + ".chunk" + (config.isCompressed() ? ".lz4" : ""));
                         System.out.println("  Writing " + chunkFile);
-                        if (!tsv) {
-                            // Write chunk files, to be merged at the end
-                            writeChunkFile(chunkFile, sorted, config.isCompressTempFiles());
-                            chunkFiles.add(chunkFile);
-                        } else {
-                            // Write separate TSV file per chunk; don't merge at the end
-                            writeTsvFile(chunkFile, sorted, terms);
-                        }
+                        // Write chunk files, to be merged at the end
+                        writeChunkFile(chunkFile, sorted, config.isCompressed());
+                        chunkFiles.add(chunkFile);
                         occurrences = null; // free memory, allocate new on next iteration
                     }
                 }
@@ -260,8 +252,7 @@ public class FrequencyTool {
             // even if the final output file is huge.
             MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
             Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
-            mergeChunkFiles(chunkFiles, outputDir, reportName, outputType == FreqListOutput.Type.ZIPPED_TSV,
-                    terms, sensitivity, config.isCompressTempFiles());
+            mergeChunkFiles(chunkFiles, reportName, terms, sensitivity, config);
 
             // Remove chunk files
             for (File chunkFile: chunkFiles) {
@@ -306,26 +297,12 @@ public class FrequencyTool {
         }
     }
 
-    private static void writeTsvFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, Terms[] terms) {
-        boolean compress = true;
-        try (CsvWriter csv = prepareCSVPrinter(chunkFile, compress)) {
-            for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
-                GroupIdHash key = entry.getKey();
-                OccurrenceCounts value = entry.getValue();
-                FreqListOutputTsv.writeGroupRecord(null, terms, csv, key, value.hits);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException();
-        }
-    }
-
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
     // This takes very little memory even if the final output file is huge.
-    private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean compress,
-            Terms[] terms, MatchSensitivity[] sensitivity, boolean chunksCompressed) {
-        File outputFile = new File(outputDir, reportName + ".tsv" + (compress ? ".lz4" : ""));
+    private static void mergeChunkFiles(List<File> chunkFiles, String reportName, Terms[] terms, MatchSensitivity[] sensitivity, Config config) {
+        File outputFile = new File(config.getOutputDir(), reportName + ".tsv" + (config.isCompressed() ? ".lz4" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
-        try (CsvWriter csv = prepareCSVPrinter(outputFile, compress)) {
+        try (CsvWriter csv = prepareCSVPrinter(outputFile, config.isCompressed())) {
             int n = chunkFiles.size();
             InputStream[] inputStreams = new InputStream[n];
             InputStream[] zipInputStreams = new InputStream[n];
@@ -343,7 +320,7 @@ public class FrequencyTool {
                     File chunkFile = chunkFiles.get(i);
                     InputStream fis = new FileInputStream(chunkFile);
                     inputStreams[i] = fis;
-                    InputStream zis = chunksCompressed ? new LZ4FrameInputStream(fis) : fis;
+                    InputStream zis = config.isCompressed() ? new LZ4FrameInputStream(fis) : fis;
                     zipInputStreams[i] = zis;
                     ForyInputStream ois = new ForyInputStream(zis);
                     numGroups[i] = (int) fory.deserialize(ois);
@@ -392,7 +369,7 @@ public class FrequencyTool {
             } finally {
                 for (ForyInputStream chunk: chunks)
                     chunk.close();
-                if (chunksCompressed) {
+                if (config.isCompressed()) {
                     for (InputStream zis : zipInputStreams)
                         zis.close();
                 }
@@ -406,7 +383,7 @@ public class FrequencyTool {
 
     // Non memory-optimized version
     private static void makeFrequencyListUnoptimized(BlackLabIndex index, AnnotatedField annotatedField,
-            ConfigFreqList freqList, File outputDir, FreqListOutput.Type outputType, Config config) {
+            ConfigFreqList freqList, Config config) {
 
         // Create our search
         try {
@@ -416,8 +393,7 @@ public class FrequencyTool {
             for (int i = 0; i < Math.max(1, config.getRepetitions()); i++) {
                 result = search.execute();
             }
-            FreqListOutput.TSV.write(index, annotatedField, freqList, result, outputDir,
-                    outputType == FreqListOutput.Type.ZIPPED_TSV);
+            FreqListOutput.TSV.write(index, annotatedField, freqList, result, config);
         } catch (InvalidQuery e) {
             throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
         }

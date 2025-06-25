@@ -58,14 +58,13 @@ class FreqListOutputTsv implements FreqListOutput {
      * @param annotatedField annotated field
      * @param freqList       configuration
      * @param result         grouping result
-     * @param outputDir      where to write output file
-     * @param compress           whether to compress output file
+     * @param config         global configuration
      */
     @Override
     public void write(BlackLabIndex index, AnnotatedField annotatedField, ConfigFreqList freqList,
-                      HitGroups result, File outputDir, boolean compress) {
-        File outputFile = new File(outputDir, freqList.getReportName() + ".tsv" + (compress ? ".lz4" : ""));
-        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, compress)) {
+                      HitGroups result, Config config) {
+        File outputFile = new File(config.getOutputDir(), freqList.getReportName() + ".tsv" + (config.isCompressed() ? ".lz4" : ""));
+        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, config.isCompressed())) {
             for (HitGroup group : result) {
                 List<String> record = new ArrayList<>();
                 PropertyValue identity = group.identity();
@@ -87,16 +86,15 @@ class FreqListOutputTsv implements FreqListOutput {
      * @param reportName     report name (file name without extensions)
      * @param annotationNames annotations to group on
      * @param occurrences    grouping result
-     * @param outputDir      where to write output file
-     * @param compress           whether to compress output file
+     * @param config         global configuration
      */
     @Override
     public File write(BlackLabIndex index, AnnotatedField annotatedField, String reportName,
                       List<String> annotationNames, Map<GroupIdHash, OccurrenceCounts> occurrences,
-                      File outputDir, boolean compress) {
-        File outputFile = new File(outputDir, reportName + ".tsv" + (compress ? ".lz4" : ""));
+                      Config config) {
+        File outputFile = new File(config.getOutputDir(), reportName + ".tsv" + (config.isCompressed() ? ".lz4" : ""));
         System.out.println("  Writing " + outputFile);
-        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, compress)) {
+        try (CsvWriter csv = FrequencyTool.prepareCSVPrinter(outputFile, config.isCompressed())) {
             Terms[] terms = annotationNames.stream()
                     .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                     .toArray(Terms[]::new);

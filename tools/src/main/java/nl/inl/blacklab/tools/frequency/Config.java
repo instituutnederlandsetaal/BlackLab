@@ -40,12 +40,10 @@ class Config {
     private int groupsPerChunk = 10_000_000;
 
     /**
-     * Compress temporary ("chunk") files?
-     *
-     * Optional. Takes less disk space but requires more processing time.
+     * Whether to compress any files written to disk, including intermediate chunk files.
      * Default: false.
      */
-    private boolean compressTempFiles = false;
+    private boolean compressed = false;
 
     /**
      * Use regular search instead of specifically optimized one?
@@ -60,6 +58,12 @@ class Config {
      * Optional, for debugging.
      */
     private int repetitions = 1;
+
+
+    /**
+     * Output directory for frequency lists.
+     */
+    private File outputDir = new File(".");
 
     /**
      * Read config from file.
@@ -131,13 +135,13 @@ class Config {
         this.useRegularSearch = useRegularSearch;
     }
 
-    public boolean isCompressTempFiles() {
-        return compressTempFiles;
+    public boolean isCompressed() {
+        return compressed;
     }
 
     @SuppressWarnings("unused")
-    public void setCompressTempFiles(boolean compressTempFiles) {
-        this.compressTempFiles = compressTempFiles;
+    public void setCompressed(boolean compressed) {
+        this.compressed = compressed;
     }
 
     @Override
@@ -145,9 +149,10 @@ class Config {
         return "Config{" +
                 "docsToProcessInParallel=" + docsToProcessInParallel +
                 ", groupsPerChunk=" + groupsPerChunk +
-                ", compressTempFiles=" + compressTempFiles +
+                ", compressed=" + compressed +
                 ", useRegularSearch=" + useRegularSearch +
                 ", repetitions=" + repetitions +
+                ", outputDir=" + outputDir +
                 ", annotatedField=" + annotatedField +
                 ", frequencyLists=" + frequencyLists +
                 '}';
@@ -156,9 +161,10 @@ class Config {
     public String show() {
         return "docsToProcessInParallel: " + docsToProcessInParallel + "\n" +
                 "groupsPerChunk: " + groupsPerChunk + "\n" +
-                "compressTempFiles: " + compressTempFiles + "\n" +
+                "compressed: " + compressed + "\n" +
                 "useRegularSearch: " + useRegularSearch + "\n" +
                 "repetitions: " + repetitions + "\n" +
+                "outputDir: " + outputDir + "\n" +
                 "annotatedField: " + annotatedField + "\n" +
                 "frequencyLists:\n" +
                 frequencyLists.stream().map(ConfigFreqList::show).collect(Collectors.joining("\n"));
@@ -201,4 +207,6 @@ class Config {
     }
 
 
+    public File getOutputDir() { return outputDir; }
+    public void setOutputDir(File outputDir) { this.outputDir = outputDir; }
 }
