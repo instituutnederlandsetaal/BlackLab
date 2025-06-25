@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency;
+package nl.inl.blacklab.tools.frequency.config;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 /**
  * Configuration for making frequency lists
  */
-class ConfigFreqList {
+public class FreqListConfig {
 
     /**
      * A unique name that will be used as output file name
@@ -70,15 +70,23 @@ class ConfigFreqList {
         this.metadataFields = metadataFields;
     }
 
-    public int getNgramSize() { return ngramSize; }
+    public int getNgramSize() {
+        return ngramSize;
+    }
 
     @SuppressWarnings("unused")
-    public void setNgramSize(int ngramSize) { this.ngramSize = ngramSize; }
+    public void setNgramSize(int ngramSize) {
+        this.ngramSize = ngramSize;
+    }
 
-    public String getFilter() { return filter; }
+    public String getFilter() {
+        return filter;
+    }
 
     @SuppressWarnings("unused")
-    public void setFilter(String filter) { this.filter = filter; }
+    public void setFilter(String filter) {
+        this.filter = filter;
+    }
 
     @Override
     public String toString() {

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency;
+package nl.inl.blacklab.tools.frequency.config;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,24 +17,20 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 /**
  * Configuration for making frequency lists
  */
-class Config {
+public class BuilderConfig {
 
     /**
      * Number of docs to process in parallel per run. After each run,
      * we check if we need to write to chunk file.
-     *
      * Larger values allow more parallellism but risk overshooting the
      * chunk file size target.
-     *
      * Optional, for advanced performance tuning.
      */
     private int docsToProcessInParallel = 500_000;
 
     /**
      * How large to grow the grouping until we write the intermediate result to disk.
-     *
      * Higher values decrease processing overhead but increase memory requirements.
-     *
      * Optional, for advanced performance tuning.
      */
     private int groupsPerChunk = 10_000_000;
@@ -47,23 +43,28 @@ class Config {
 
     /**
      * Use regular search instead of specifically optimized one?
-     *
      * Optional, for debugging.
      */
     private boolean useRegularSearch = false;
 
     /**
      * How often to count each document.
-     *
      * Optional, for debugging.
      */
     private int repetitions = 1;
-
 
     /**
      * Output directory for frequency lists.
      */
     private File outputDir = new File(".");
+    /**
+     * Annotated field to analyze
+     */
+    private String annotatedField;
+    /**
+     * Frequency lists to make
+     */
+    private List<FreqListConfig> frequencyLists;
 
     /**
      * Read config from file.
@@ -71,24 +72,14 @@ class Config {
      * @param f config file
      * @return config object
      */
-    static Config fromFile(File f) {
+    public static BuilderConfig fromFile(File f) {
         try {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            return mapper.readValue(f, Config.class);
+            return mapper.readValue(f, BuilderConfig.class);
         } catch (IOException e) {
             throw new BlackLabRuntimeException("Error reading config file " + f, e);
         }
     }
-
-    /**
-     * Annotated field to analyze
-     */
-    private String annotatedField;
-
-    /**
-     * Frequency lists to make
-     */
-    private List<ConfigFreqList> frequencyLists;
 
     public String getAnnotatedField() {
         return annotatedField;
@@ -99,22 +90,22 @@ class Config {
         this.annotatedField = annotatedField;
     }
 
-    public List<ConfigFreqList> getFrequencyLists() {
+    public List<FreqListConfig> getFrequencyLists() {
         return frequencyLists;
     }
 
     @SuppressWarnings("unused")
-    public void setFrequencyLists(List<ConfigFreqList> frequencyLists) {
+    public void setFrequencyLists(List<FreqListConfig> frequencyLists) {
         this.frequencyLists = frequencyLists;
+    }
+
+    public int getGroupsPerChunk() {
+        return this.groupsPerChunk;
     }
 
     @SuppressWarnings("unused")
     public void setGroupsPerChunk(int groupsPerChunk) {
         this.groupsPerChunk = groupsPerChunk;
-    }
-
-    public int getGroupsPerChunk() {
-        return this.groupsPerChunk;
     }
 
     public int getDocsToProcessInParallel() {
@@ -167,7 +158,7 @@ class Config {
                 "outputDir: " + outputDir + "\n" +
                 "annotatedField: " + annotatedField + "\n" +
                 "frequencyLists:\n" +
-                frequencyLists.stream().map(ConfigFreqList::show).collect(Collectors.joining("\n"));
+                frequencyLists.stream().map(FreqListConfig::show).collect(Collectors.joining("\n"));
     }
 
     /**
@@ -180,17 +171,17 @@ class Config {
             throw new IllegalArgumentException("Annotated field not found: " + annotatedField);
         AnnotatedField af = index.annotatedField(annotatedField);
         Set<String> reportNames = new HashSet<>();
-        for (ConfigFreqList l : frequencyLists) {
+        for (FreqListConfig l: frequencyLists) {
             String name = l.getReportName();
             if (reportNames.contains(name))
                 throw new IllegalArgumentException("Report occurs twice: " + name);
             reportNames.add(name);
 
-            for (String a : l.getAnnotations()) {
+            for (String a: l.getAnnotations()) {
                 if (!af.annotations().exists(a))
                     throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a);
             }
-            for (String m : l.getMetadataFields()) {
+            for (String m: l.getMetadataFields()) {
                 if (!index.metadataFields().exists(m))
                     throw new IllegalArgumentException("Metadata field not found: " + m);
             }
@@ -206,7 +197,11 @@ class Config {
         this.repetitions = repetitions;
     }
 
+    public File getOutputDir() {
+        return outputDir;
+    }
 
-    public File getOutputDir() { return outputDir; }
-    public void setOutputDir(File outputDir) { this.outputDir = outputDir; }
+    public void setOutputDir(File outputDir) {
+        this.outputDir = outputDir;
+    }
 }

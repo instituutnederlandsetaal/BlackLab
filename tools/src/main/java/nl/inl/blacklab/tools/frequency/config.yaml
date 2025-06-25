@@ -1,0 +1,30 @@
+---
+
+# Number of docs to process in parallel per run. After each run,
+# we check if we need to write to chunk file.
+# Larger values allow more parallellism but risk overshooting the
+# chunk file size target.
+# Default: 100_000
+docsToProcessInParallel: 50_000
+
+# How large to grow the grouping until we write the intermediate result to disk.
+# Higher values decrease processing overhead but increase memory requirements.
+# Default: 5_000_000
+groupsPerChunk: 1
+
+# The annotated field to make frequency lists for
+annotatedField: contents
+
+# The frequency lists we want to make
+frequencyLists:
+
+    -   annotations:
+            - word
+            - lemma
+            - grouping_pos_full
+        metadataFields:
+            - witnessDateLevel1_from
+            - titleLevel2
+            - settingLocation_country
+        ngramSize: 1
+        name: "unigram"

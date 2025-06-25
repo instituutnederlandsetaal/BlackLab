@@ -2,14 +2,13 @@ Calculate term frequencies over annotation(s) and metadata field(s).
 
 Usage:
 
-    FrequencyTool [--json] [--gzip] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]
+    FrequencyTool [--compress] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]
 
-- `--json`:       write JSON instead of TSV
-- `--gzip`:       write directly to .gz file
+- `--compress`:   compress output files (using lz4)
 - `INDEX_DIR`:    index to generate frequency lists for
 - `CONFIG_FILE`:  YAML file specifying what frequency lists to generate
 - `OUTPUT_DIR`:   where to write output files (defaults to current dir)
-  
+
 Example config file:
 
 ```yaml

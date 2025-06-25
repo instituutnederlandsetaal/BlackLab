@@ -1,11 +1,11 @@
-package nl.inl.blacklab.tools.frequency;
+package nl.inl.blacklab.tools.frequency.data;
 
 import java.io.Serializable;
 
 /**
  * Counts of hits and docs while grouping.
  */
-final class OccurrenceCounts implements Serializable {
+public final class OccurrenceCounts implements Serializable {
     public int hits;
     public int docs;
 

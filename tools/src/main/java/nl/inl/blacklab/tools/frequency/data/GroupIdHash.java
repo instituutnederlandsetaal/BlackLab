@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency;
+package nl.inl.blacklab.tools.frequency.data;
 
 import java.io.Serializable;
 import java.util.Arrays;
@@ -6,7 +6,7 @@ import java.util.Arrays;
 /**
  * Precalculated hashcode for group id, to save time while grouping and sorting.
  */
-class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
+public class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
     private final int ngramSize;
     private final int[] tokenIds;
     private final int[] tokenSortPositions;
@@ -18,7 +18,8 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
      * @param metadataValues     relevant metadatavalues
      * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
      */
-    public GroupIdHash(int ngramSize, int[] tokenIds, int[] tokenSortPositions, String[] metadataValues, int metadataValuesHash) {
+    public GroupIdHash(int ngramSize, int[] tokenIds, int[] tokenSortPositions, String[] metadataValues,
+            int metadataValuesHash) {
         this.ngramSize = ngramSize;
         this.tokenIds = tokenIds;
         this.tokenSortPositions = tokenSortPositions;
@@ -50,13 +51,7 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
 
     @Override
     public int compareTo(GroupIdHash other) {
-        int cmp = Integer.compare(hash, other.hash);
-        if (cmp == 0)
-            // flatmap for comparison
-            cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
-        if (cmp == 0)
-            cmp = Arrays.compare(metadataValues, other.metadataValues);
-        return cmp;
+        return Integer.compare(hash, other.hash);
     }
 
     public int getNgramSize() {
