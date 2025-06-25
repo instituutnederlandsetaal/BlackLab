@@ -2,6 +2,8 @@ package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
 
+import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
+
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -130,6 +132,10 @@ public class FrequencyTool {
             }
             builder.makeFrequencyList();
             System.out.println("  Time: " + t.elapsedDescription());
+            // if database format, write lookup tables
+            if (config.isDatabaseFormat()) {
+                LookupTableWriter.write(index, config, freqList);
+            }
         }
     }
 }
