@@ -1,6 +1,8 @@
 # BCQL debug functions
 
-NOTE: BCQL functions don't support integer arguments yet. Wherever a number is expected, you must enclose it in quotes.
+These functions can be useful when debugging BCQL queries. They allow you to create queries that might not be easily expressible in regular BCQL.
+
+NOTE: BCQL functions currently only support query and string arguments. Wherever e.g. a number or boolean is expected, you must enclose it in quotes.
 
 # `_adjust`
 
@@ -60,3 +62,27 @@ Example:
     _indoc('water', '0')
 
 Find _water_ in the document with docId 0.
+
+# `_lenfilter`
+
+    _lenfilter(query, minLength, maxLength)
+
+will filter `query` hits by length. `minLength` and `maxLength` are inclusive.
+
+Example:
+
+    _lenfilter(<s/>, '1', '3')
+
+will find sentences with lengths between 1 and 3 tokens.
+# `_posfilter`
+
+    _posfilter(producer, filter, operation, invert)
+
+will filter `producer` hits using the `filter` query. `operation` may be `matches`, `contains`, `within`, `starts_at`, `ends_at`, `containing_at_start`, or `containing_at_end`. If `invert` is set to `true`, the filter will be inverted.
+
+Example:
+
+    _posfilter([lemma='water'], [pos='NOU'], 'matches', 'false')
+
+will return hits `[lemma='water]` that DON'T match a hit from `[pos='NOU']`.
+
