@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import nl.inl.util.Timer;
-
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
@@ -14,6 +12,7 @@ import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
 import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.util.Timer;
 
 public final class ChunkedTsvWriter extends FreqListWriter {
     private final TsvWriter tsvWriter;

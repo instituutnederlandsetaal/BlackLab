@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -14,11 +15,10 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import nl.inl.util.Timer;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
@@ -35,6 +35,7 @@ import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
 import nl.inl.util.BlockTimer;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.Timer;
 
 /**
  * More optimized version of HitGroupsTokenFrequencies.
@@ -54,12 +55,24 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     private final ChunkWriter chunkWriter;
     private final ChunkedTsvWriter chunkedTsvWriter;
     private final TsvWriter tsvWriter;
+    private final Map<String, Integer> termFrequencies; // used for cutoff
 
     public IndexBasedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
         this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
         this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
         this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
+
+        if (fCfg.cutoff() != null) {
+            final var t = new Timer();
+            final var sensitivity = aInfo.getCutoffAnnotation().sensitivity(MatchSensitivity.SENSITIVE);
+            final var searcher = new IndexSearcher(index.reader());
+            termFrequencies = LuceneUtil.termFrequencies(searcher, null, sensitivity, Collections.emptySet());
+            System.out.println("  Retrieved " + termFrequencies.size() + " term frequencies for cutoff annotation '"
+                    + fCfg.cutoff().annotation() + "' in " + t.elapsedDescription(true));
+        } else {
+            termFrequencies = Collections.emptyMap(); // no cutoff
+        }
     }
 
     @Override
@@ -77,7 +90,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // Process the documents in parallel runs. After each run, check the size of the grouping,
         // and write it as a sorted chunk file if it exceeds the configured size.
         // At the end we will merge all the chunks to get the final result.
-        List<File> chunkFiles = generateChunks(docIds, tmpDir);
+        List<File> chunkFiles = generateChunks(docIds);
 
         // Did we write intermediate chunk files that have to be merged?
         if (!chunkFiles.isEmpty()) {
@@ -95,7 +108,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             System.err.println("Could not delete: " + tmpDir);
     }
 
-    private List<File> generateChunks(List<Integer> docIds, File tmpDir) {
+    private List<File> generateChunks(List<Integer> docIds) {
         // This is where we store our groups while we're computing/gathering them.
         // Maps from group Id to number of hits and number of docs
         // ConcurrentMap because we're counting in parallel.
@@ -119,7 +132,8 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                 // Process current run of documents and add to grouping
                 final var t = new Timer();
                 processDocsParallel(docIdsInChunk, occurrences);
-                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries in " + t.elapsedDescription(true));
+                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries in "
+                        + t.elapsedDescription(true));
 
                 // If the grouping has gotten too large, write it to file so we don't run out of memory.
                 boolean groupingTooLarge = occurrences.size() > bCfg.getGroupsPerChunk();
@@ -278,6 +292,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
         Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
         int ngramSize = fCfg.ngramSize();
+        final var cutoffTerms = aInfo.getTermsFor(aInfo.getCutoffAnnotation());
         // We can't get an ngram for the last ngramSize-1 tokens
         for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
             int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
@@ -300,6 +315,23 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             }
             final GroupIdHash groupId = new GroupIdHash(ngramSize, annotationValuesForThisToken,
                     sortPositions, metadataValuesForGroup, metadataValuesHash);
+
+            // Only add if it is above the cutoff
+            if (fCfg.cutoff() != null) {
+                // Check if any of the ngrams tokens is below the cutoff
+                boolean skipGroup = false;
+                for (int j = 0; j < ngramSize; j++) {
+                    final int tokenID = groupId.getTokenIds()[j];
+                    final String token = cutoffTerms.get(tokenID);
+                    final int hits = termFrequencies.getOrDefault(token, 0);
+                    if (hits < fCfg.cutoff().count()) {
+                        skipGroup = true;
+                        break; // no need to check the rest of the ngram
+                    }
+                }
+                if (skipGroup)
+                    continue; // skip this group, it is below the cutoff
+            }
 
             // Count occurrence in this doc
             final var occ = occsInDoc.get(groupId);

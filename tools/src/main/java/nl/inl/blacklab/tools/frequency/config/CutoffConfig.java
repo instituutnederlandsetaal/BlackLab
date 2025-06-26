@@ -1,4 +1,4 @@
 package nl.inl.blacklab.tools.frequency.config;
 
-record CutoffConfig(String annotation, int count) {
+public record CutoffConfig(String annotation, int count) {
 }
