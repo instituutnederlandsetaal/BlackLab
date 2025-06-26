@@ -7,22 +7,31 @@ import java.util.List;
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
-import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
 import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
 
-public class ChunkedTsvWriter extends FreqListWriter {
+public final class ChunkedTsvWriter extends FreqListWriter {
+    private final TsvWriter tsvWriter;
+
+    public ChunkedTsvWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
+        super(bCfg, fCfg, aInfo);
+        this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
+    }
+
+    private File getFile() {
+        final String fileName = fCfg.getReportName() + getExt();
+        return new File(bCfg.getOutputDir(), fileName);
+    }
+
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
     // This takes very little memory even if the final output file is huge.
-    public static void write(List<File> chunkFiles, Terms[] terms, MatchSensitivity[] sensitivity,
-            BuilderConfig bCfg, FreqListConfig fCfg) {
-        File outputFile = new File(bCfg.getOutputDir(),
-                fCfg.getReportName() + ".tsv" + (bCfg.isCompressed() ? ".lz4" : ""));
-        System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
-        try (CsvWriter csv = getCsvWriter(outputFile, bCfg.isCompressed())) {
+    public void write(final List<File> chunkFiles) {
+        File file = getFile();
+        System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + file);
+        try (CsvWriter csv = getCsvWriter(file)) {
             int n = chunkFiles.size();
             ForyInputStream[] chunks = new ForyInputStream[n];
             int[] numGroups = new int[n]; // groups per chunk file
@@ -36,7 +45,7 @@ public class ChunkedTsvWriter extends FreqListWriter {
                 int chunksExhausted = 0;
                 for (int i = 0; i < n; i++) {
                     File chunkFile = chunkFiles.get(i);
-                    ForyInputStream fis = getForyInputStream(chunkFile, bCfg.isCompressed());
+                    ForyInputStream fis = getForyInputStream(chunkFile);
                     chunks[i] = fis;
                     numGroups[i] = (int) fory.deserialize(fis);
                     // Initialize index, key and value with first group from each file
@@ -77,7 +86,7 @@ public class ChunkedTsvWriter extends FreqListWriter {
 
                     // Finally, write the merged group to the output file.
                     if (nextGroupToMerge != null)
-                        TsvWriter.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits, bCfg);
+                        tsvWriter.writeGroupRecord(csv, nextGroupToMerge, hits);
                 }
 
             } finally {
@@ -85,7 +94,7 @@ public class ChunkedTsvWriter extends FreqListWriter {
                     chunk.close();
             }
         } catch (IOException e) {
-            throw new RuntimeException();
+            throw reportIOException(e);
         }
     }
 }

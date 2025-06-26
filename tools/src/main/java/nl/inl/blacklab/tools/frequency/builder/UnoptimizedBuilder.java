@@ -1,7 +1,6 @@
 package nl.inl.blacklab.tools.frequency.builder;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -11,7 +10,6 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -22,34 +20,36 @@ import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
 
 // Non memory-optimized version
-public class UnoptimizedBuilder extends FreqListBuilder {
+public final class UnoptimizedBuilder extends FreqListBuilder {
+    private final TsvWriter tsvWriter;
 
-    public UnoptimizedBuilder(BlackLabIndex index, BuilderConfig bCfg, FreqListConfig fCfg) {
+    public UnoptimizedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
+        this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
     }
 
     @Override
     public void makeFrequencyList() {
         super.makeFrequencyList(); // prints debug info
-
-        // Create our search
         try {
-            // Execute search and write output file
-            SearchHitGroups search = getSearch();
+            // Create our search
+            final var search = getSearch();
+            // Execute search
             HitGroups result = null;
             for (int i = 0; i < Math.max(1, bCfg.getRepetitions()); i++) {
                 result = search.execute();
             }
-            TsvWriter.write(fCfg, result, bCfg);
+            // write output file
+            tsvWriter.write(result);
         } catch (InvalidQuery e) {
-            throw new BlackLabRuntimeException("Error creating fCfg " + fCfg.getReportName(), e);
+            throw new BlackLabRuntimeException("Error creating frequency list: " + fCfg.getReportName(), e);
         }
     }
 
     private SearchHitGroups getSearch() {
-        QueryInfo queryInfo = QueryInfo.create(index);
-        BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, annotatedField.name());
-        HitProperty groupBy = getGroupBy();
+        final var queryInfo = QueryInfo.create(index);
+        BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, aInfo.getAnnotatedField().name());
+        final var groupBy = getGroupBy();
         return index.search()
                 .find(anyToken)
                 .groupStats(groupBy, 0)
@@ -57,16 +57,15 @@ public class UnoptimizedBuilder extends FreqListBuilder {
     }
 
     private HitProperty getGroupBy() {
-        List<HitProperty> groupProps = new ArrayList<>();
+        final var groupProps = new ArrayList<HitProperty>();
         // Add annotations to group by
-        for (String name: fCfg.getAnnotations()) {
-            Annotation annotation = annotatedField.annotation(name);
+        for (final var annotation: aInfo.getAnnotations()) {
             groupProps.add(new HitPropertyHitText(index, annotation));
         }
         // Add metadata fields to group by
-        for (String name: fCfg.getMetadataFields()) {
+        for (final String name: fCfg.getMetadataFields()) {
             groupProps.add(new HitPropertyDocumentStoredField(index, name));
         }
-        return new HitPropertyMultiple(groupProps.toArray(new HitProperty[0]));
+        return new HitPropertyMultiple(groupProps);
     }
 }

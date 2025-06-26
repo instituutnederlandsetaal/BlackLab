@@ -6,7 +6,7 @@ import java.util.Arrays;
 /**
  * Precalculated hashcode for group id, to save time while grouping and sorting.
  */
-public class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
+public final class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
     private final int ngramSize;
     private final int[] tokenIds;
     private final int[] tokenSortPositions;

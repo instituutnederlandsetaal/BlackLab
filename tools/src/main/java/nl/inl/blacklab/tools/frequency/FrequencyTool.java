@@ -2,8 +2,6 @@ package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
 
-import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
-
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -15,6 +13,7 @@ import nl.inl.blacklab.tools.frequency.builder.OptimizedBuilder;
 import nl.inl.blacklab.tools.frequency.builder.UnoptimizedBuilder;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
 import nl.inl.util.Timer;
 
 /**
@@ -110,6 +109,9 @@ public class FrequencyTool {
         }
 
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
+            config.check(index);
+            index.setCache(new SearchCacheDummy()); // don't cache results
+
             Timer t = new Timer();
 
             // Generate the frequency lists
@@ -119,23 +121,18 @@ public class FrequencyTool {
         }
     }
 
-    private static void makeFrequencyLists(BlackLabIndex index, BuilderConfig config) {
-        config.check(index);
-        index.setCache(new SearchCacheDummy()); // don't cache results
-        for (FreqListConfig freqList: config.getFrequencyLists()) {
-            Timer t = new Timer();
-            FreqListBuilder builder;
-            if (config.isUseRegularSearch()) {
-                builder = new UnoptimizedBuilder(index, config, freqList);
-            } else {
-                builder = new OptimizedBuilder(index, config, freqList);
-            }
+    private static void makeFrequencyLists(final BlackLabIndex index, final BuilderConfig bCfg) {
+        for (final FreqListConfig fCfg: bCfg.getFrequencyLists()) {
+            final Timer t = new Timer();
+            final FreqListBuilder builder = bCfg.useRegularSearch() ?
+                    new UnoptimizedBuilder(index, bCfg, fCfg) :
+                    new OptimizedBuilder(index, bCfg, fCfg);
             builder.makeFrequencyList();
-            System.out.println("  Time: " + t.elapsedDescription());
             // if database format, write lookup tables
-            if (config.isDatabaseFormat()) {
-                LookupTableWriter.write(index, config, freqList);
+            if (bCfg.isDatabaseFormat()) {
+                new LookupTableWriter(index, bCfg, fCfg).write();
             }
+            System.out.println("  Time: " + t.elapsedDescription());
         }
     }
 }

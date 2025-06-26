@@ -14,7 +14,7 @@ public class FreqListConfig {
     /**
      * A unique name that will be used as output file name
      */
-    String name = "";
+    private String name = "";
 
     /**
      * Annotations to make frequency lists for
@@ -30,6 +30,13 @@ public class FreqListConfig {
      * The size of the n-grams to use for the frequency list. Defaults to 1.
      */
     private int ngramSize = 1;
+
+    /**
+     * Cutoff configuration for the frequency list.
+     * Defines a certain annotation and a minimum count.
+     * If null, no cutoff is applied.
+     */
+    private CutoffConfig cutoff = null;
 
     /**
      * Lucene query to filter documents for the frequency list. Optional.
@@ -79,6 +86,14 @@ public class FreqListConfig {
         this.ngramSize = ngramSize;
     }
 
+    public CutoffConfig getCutoff() {
+        return cutoff;
+    }
+
+    public void setCutoff(CutoffConfig cutoff) {
+        this.cutoff = cutoff;
+    }
+
     public String getFilter() {
         return filter;
     }
@@ -95,6 +110,7 @@ public class FreqListConfig {
                 ", annotations=" + annotations +
                 ", metadataFields=" + metadataFields +
                 ", ngramSize=" + ngramSize +
+                ", cutoff=" + cutoff +
                 ", filter=" + filter +
                 '}';
     }
@@ -104,6 +120,7 @@ public class FreqListConfig {
                 "  annotations: " + annotations + "\n" +
                 "  metadataFields: " + metadataFields + "\n" +
                 "  ngramSize: " + ngramSize + "\n" +
+                "  cutoff: " + cutoff + "\n" +
                 "  filter: " + filter;
 
     }

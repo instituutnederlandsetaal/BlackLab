@@ -1,35 +1,24 @@
 package nl.inl.blacklab.tools.frequency.builder;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 
 public abstract class FreqListBuilder {
-    protected BlackLabIndex index;
-    protected AnnotatedField annotatedField;
-    BuilderConfig bCfg;
-    FreqListConfig fCfg;
+    final BlackLabIndex index;
+    final BuilderConfig bCfg;
+    final FreqListConfig fCfg;
+    final AnnotationInfo aInfo;
 
-    FreqListBuilder(BlackLabIndex index, BuilderConfig bCfg, FreqListConfig fCfg) {
+    FreqListBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         this.index = index;
         this.bCfg = bCfg;
         this.fCfg = fCfg;
-        this.annotatedField = index.annotatedField(bCfg.getAnnotatedField());
+        this.aInfo = new AnnotationInfo(index, bCfg, fCfg);
     }
 
     public void makeFrequencyList() {
-        List<String> extraInfo = new ArrayList<>();
-        if (bCfg.getRepetitions() > 1)
-            extraInfo.add(bCfg.getRepetitions() + " repetitions");
-        if (bCfg.isUseRegularSearch())
-            extraInfo.add("regular search");
-        String strExtraInfo = extraInfo.isEmpty() ? "" : " (" + StringUtils.join(extraInfo, ", ") + ")";
-        System.out.println("Generate frequency list" + strExtraInfo + ": " + fCfg.getReportName());
+        System.out.println("Generate frequency list: " + fCfg.getReportName());
     }
 }

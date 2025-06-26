@@ -9,7 +9,7 @@ public final class OccurrenceCounts implements Serializable {
     public int hits;
     public int docs;
 
-    public OccurrenceCounts(int hits, int docs) {
+    public OccurrenceCounts(final int hits, final int docs) {
         this.hits = hits;
         this.docs = docs;
     }

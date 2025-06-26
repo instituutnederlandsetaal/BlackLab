@@ -124,7 +124,7 @@ public class BuilderConfig {
         this.docsToProcessInParallel = docsToProcessInParallel;
     }
 
-    public boolean isUseRegularSearch() {
+    public boolean useRegularSearch() {
         return useRegularSearch;
     }
 
@@ -175,7 +175,7 @@ public class BuilderConfig {
      *
      * @param index our index
      */
-    public void check(BlackLabIndex index) {
+    public void check(final BlackLabIndex index) {
         if (!index.annotatedFields().exists(annotatedField))
             throw new IllegalArgumentException("Annotated field not found: " + annotatedField);
         AnnotatedField af = index.annotatedField(annotatedField);

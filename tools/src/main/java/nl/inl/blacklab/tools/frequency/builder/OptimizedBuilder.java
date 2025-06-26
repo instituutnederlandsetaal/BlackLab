@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -22,16 +21,12 @@ import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
 import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
@@ -55,8 +50,15 @@ import nl.inl.util.LuceneUtil;
  * note that using ConcurrentSkipListMap has consequences for the compute() method, see there)
  */
 public class OptimizedBuilder extends FreqListBuilder {
-    public OptimizedBuilder(BlackLabIndex index, BuilderConfig bCfg, FreqListConfig fCfg) {
+    private final ChunkWriter chunkWriter;
+    private final ChunkedTsvWriter chunkedTsvWriter;
+    private final TsvWriter tsvWriter;
+
+    public OptimizedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
+        this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
+        this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
+        this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
     }
 
     @Override
@@ -64,13 +66,6 @@ public class OptimizedBuilder extends FreqListBuilder {
         super.makeFrequencyList(); // prints debug info
 
         // Use specifically optimized CalcTokenFrequencies
-        List<String> annotationNames = fCfg.getAnnotations();
-        Terms[] terms = annotationNames.stream()
-                .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
-                .toArray(Terms[]::new);
-        List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation)
-                .collect(Collectors.toList());
-        List<String> metadataFields = fCfg.getMetadataFields();
         final List<Integer> docIds = getDocIds();
 
         // Create tmp dir for the chunk files
@@ -81,14 +76,32 @@ public class OptimizedBuilder extends FreqListBuilder {
         // Process the documents in parallel runs. After each run, check the size of the grouping,
         // and write it as a sorted chunk file if it exceeds the configured size.
         // At the end we will merge all the chunks to get the final result.
-        List<File> chunkFiles = new ArrayList<>();
-        final int docsToProcessInParallel = bCfg.getDocsToProcessInParallel();
-        int chunkNumber = 0;
+        List<File> chunkFiles = generateChunks(docIds, tmpDir);
 
+        // Did we write intermediate chunk files that have to be merged?
+        if (!chunkFiles.isEmpty()) {
+            // Yes, merge all the chunk files. Because they are sorted, this will consume very little memory,
+            // even if the final output file is huge.
+            chunkedTsvWriter.write(chunkFiles);
+
+            // Remove chunk files
+            for (File chunkFile: chunkFiles) {
+                if (!chunkFile.delete())
+                    System.err.println("Could not delete: " + chunkFile);
+            }
+        }
+        if (!tmpDir.delete())
+            System.err.println("Could not delete: " + tmpDir);
+    }
+
+    private List<File> generateChunks(List<Integer> docIds, File tmpDir) {
         // This is where we store our groups while we're computing/gathering them.
         // Maps from group Id to number of hits and number of docs
         // ConcurrentMap because we're counting in parallel.
         ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences = null;
+
+        int docsToProcessInParallel = bCfg.getDocsToProcessInParallel();
+        List<File> chunkFiles = new ArrayList<>();
 
         for (int rep = 0; rep < bCfg.getRepetitions(); rep++) { // FOR DEBUGGING
 
@@ -104,7 +117,7 @@ public class OptimizedBuilder extends FreqListBuilder {
                 }
 
                 // Process current run of documents and add to grouping
-                processDocsParallel(annotations, metadataFields, docIdsInChunk, occurrences);
+                processDocsParallel(docIdsInChunk, occurrences);
 
                 System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries");
 
@@ -112,42 +125,25 @@ public class OptimizedBuilder extends FreqListBuilder {
                 boolean groupingTooLarge = occurrences.size() > bCfg.getGroupsPerChunk();
                 boolean isFinalRun = rep == bCfg.getRepetitions() - 1 && runEnd >= docIds.size();
 
-                if (isFinalRun && chunkNumber == 0) {
+                if (isFinalRun && chunkFiles.isEmpty()) {
                     // There's only one chunk. We can skip writing intermediate file and write result directly.
-                    TsvWriter.write(index, annotatedField, annotationNames, occurrences, bCfg, fCfg);
+                    tsvWriter.write(occurrences);
                     occurrences = null;
                 } else if (groupingTooLarge || isFinalRun) {
                     // Sort our map now.
                     SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(occurrences);
                     // Write next chunk file.
-                    chunkNumber++;
-                    String chunkName = fCfg.getReportName() + chunkNumber;
+                    String chunkName = fCfg.getReportName() + chunkFiles.size();
                     File chunkFile = new File(tmpDir, chunkName + ".chunk" + (bCfg.isCompressed() ? ".lz4" : ""));
                     System.out.println("  Writing " + chunkFile);
                     // Write chunk files, to be merged at the end
-                    ChunkWriter.write(chunkFile, sorted, bCfg.isCompressed());
+                    chunkWriter.write(chunkFile, sorted);
                     chunkFiles.add(chunkFile);
                     occurrences = null; // free memory, allocate new on next iteration
                 }
             }
         }
-
-        // Did we write intermediate chunk files that have to be merged?
-        if (!chunkFiles.isEmpty()) {
-            // Yes, merge all the chunk files. Because they are sorted, this will consume very little memory,
-            // even if the final output file is huge.
-            MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
-            Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
-            ChunkedTsvWriter.write(chunkFiles, terms, sensitivity, bCfg, fCfg);
-
-            // Remove chunk files
-            for (File chunkFile: chunkFiles) {
-                if (!chunkFile.delete())
-                    System.err.println("Could not delete: " + chunkFile);
-            }
-        }
-        if (!tmpDir.delete())
-            System.err.println("Could not delete: " + tmpDir);
+        return chunkFiles;
     }
 
     private List<Integer> getDocIds() {
@@ -171,14 +167,10 @@ public class OptimizedBuilder extends FreqListBuilder {
     /**
      * Get the token frequencies for the given query and hit property.
      *
-     * @param annotations    annotations to group on
-     * @param metadataFields metadata fields to group on
-     * @param occurrences    grouping to add to
+     * @param occurrences grouping to add to
      */
     @SuppressWarnings("DuplicatedCode")
     private void processDocsParallel(
-            List<Annotation> annotations,
-            List<String> metadataFields,
             List<Integer> docIds,
             ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences
     ) {
@@ -189,13 +181,9 @@ public class OptimizedBuilder extends FreqListBuilder {
          */
 
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        final List<AnnotInfo> hitProperties = annotations.stream().map(ann -> {
-            AnnotationForwardIndex afi = index.annotationForwardIndex(ann);
-            return new AnnotInfo(afi, MatchSensitivity.INSENSITIVE);
-        }).toList();
-        final List<String> docProperties = new ArrayList<>(metadataFields);
+        final List<String> docProperties = fCfg.getMetadataFields();
 
-        final int numAnnotations = hitProperties.size();
+        final int numAnnotations = aInfo.getAnnotations().size();
 
         try (final BlockTimer c = BlockTimer.create("Top Level")) {
 
@@ -204,20 +192,19 @@ public class OptimizedBuilder extends FreqListBuilder {
             // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
             // calculate the frequencies.
             //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
-            final String fieldName = annotations.get(0).field().name();
+            final String fieldName = aInfo.getAnnotations().get(0).field().name();
             final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
             // Determine all the fields we want to be able to load, so we don't need to load the entire document
             final Set<String> fieldsToLoad = new HashSet<>();
             fieldsToLoad.add(lengthTokensFieldName);
-            fieldsToLoad.addAll(metadataFields);
+            fieldsToLoad.addAll(docProperties);
 
             final IndexReader reader = index.reader();
 
             docIds.parallelStream().forEach(docId -> {
 
                 try {
-
                     // Step 1: read all values for the to-be-grouped annotations for this document
                     // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
@@ -226,8 +213,8 @@ public class OptimizedBuilder extends FreqListBuilder {
                     final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                     try (BlockTimer ignored = c.child("Read annotations from forward index")) {
-                        for (AnnotInfo annot: hitProperties) {
-                            final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
+                        for (final var annotation: aInfo.getAnnotations()) {
+                            final var afi = index.annotationForwardIndex(annotation);
                             final int[] tokenValues = afi.getDocument(docId);
                             tokenValuesPerAnnotation.add(tokenValues);
 
@@ -238,8 +225,8 @@ public class OptimizedBuilder extends FreqListBuilder {
                             int[] sortValues = new int[docLength];
                             for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
                                 final int termId = tokenValues[tokenIndex];
-                                sortValues[tokenIndex] = annot.getTerms()
-                                        .idToSortPosition(termId, annot.getMatchSensitivity());
+                                sortValues[tokenIndex] = aInfo.getTermsFor(annotation)
+                                        .idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
                             }
                             sortValuesPerAnnotation.add(sortValues);
                         }
