@@ -22,7 +22,7 @@ public final class AnnotationInfo {
 
     public AnnotationInfo(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         this.annotatedField = index.annotatedField(bCfg.getAnnotatedField());
-        this.annotations = fCfg.getAnnotations().stream().map(annotatedField::annotation).toList();
+        this.annotations = fCfg.annotations().stream().map(annotatedField::annotation).toList();
         this.terms = annotations.stream().map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
                 .toList();
     }

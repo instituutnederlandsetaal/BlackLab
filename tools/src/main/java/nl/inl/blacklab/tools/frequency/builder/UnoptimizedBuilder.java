@@ -63,7 +63,7 @@ public final class UnoptimizedBuilder extends FreqListBuilder {
             groupProps.add(new HitPropertyHitText(index, annotation));
         }
         // Add metadata fields to group by
-        for (final String name: fCfg.getMetadataFields()) {
+        for (final String name: fCfg.metadataFields()) {
             groupProps.add(new HitPropertyDocumentStoredField(index, name));
         }
         return new HitPropertyMultiple(groupProps);

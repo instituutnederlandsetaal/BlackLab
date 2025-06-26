@@ -167,7 +167,7 @@ public class BuilderConfig {
                 "outputDir: " + outputDir + "\n" +
                 "annotatedField: " + annotatedField + "\n" +
                 "frequencyLists:\n" +
-                frequencyLists.stream().map(FreqListConfig::show).collect(Collectors.joining("\n"));
+                frequencyLists.stream().map(FreqListConfig::toString).collect(Collectors.joining("\n"));
     }
 
     /**
@@ -186,11 +186,11 @@ public class BuilderConfig {
                 throw new IllegalArgumentException("Report occurs twice: " + name);
             reportNames.add(name);
 
-            for (String a: l.getAnnotations()) {
+            for (String a: l.annotations()) {
                 if (!af.annotations().exists(a))
                     throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a);
             }
-            for (String m: l.getMetadataFields()) {
+            for (String m: l.metadataFields()) {
                 if (!index.metadataFields().exists(m))
                     throw new IllegalArgumentException("Metadata field not found: " + m);
             }

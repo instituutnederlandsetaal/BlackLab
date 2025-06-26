@@ -149,7 +149,7 @@ public class OptimizedBuilder extends FreqListBuilder {
     private List<Integer> getDocIds() {
         final List<Integer> docIds = new ArrayList<>();
 
-        String filter = fCfg.getFilter();
+        String filter = fCfg.filter();
         if (filter != null) {
             try {
                 Query q = LuceneUtil.parseLuceneQuery(index, filter, index.analyzer(), "");
@@ -181,7 +181,7 @@ public class OptimizedBuilder extends FreqListBuilder {
          */
 
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        final List<String> docProperties = fCfg.getMetadataFields();
+        final List<String> docProperties = fCfg.metadataFields();
 
         final int numAnnotations = aInfo.getAnnotations().size();
 
@@ -250,7 +250,7 @@ public class OptimizedBuilder extends FreqListBuilder {
 
                     // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
                     Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
-                    int ngramSize = fCfg.getNgramSize();
+                    int ngramSize = fCfg.ngramSize();
 
                     try (BlockTimer ignored = c.child("Group tokens")) {
                         // We can't get an ngram for the last ngramSize-1 tokens
