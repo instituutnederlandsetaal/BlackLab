@@ -7,7 +7,6 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 
@@ -17,7 +16,6 @@ import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 public final class AnnotationInfo {
     private final AnnotatedField annotatedField;
     private final List<Annotation> annotations;
-    private final MatchSensitivity matchSensitivity = MatchSensitivity.INSENSITIVE;
     private final List<Terms> terms;
 
     public AnnotationInfo(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
@@ -25,10 +23,6 @@ public final class AnnotationInfo {
         this.annotations = fCfg.annotations().stream().map(annotatedField::annotation).toList();
         this.terms = annotations.stream().map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
                 .toList();
-    }
-
-    public MatchSensitivity getMatchSensitivity() {
-        return matchSensitivity;
     }
 
     public List<Terms> getTerms() {

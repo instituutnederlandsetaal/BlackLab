@@ -20,10 +20,10 @@ import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
 
 // Non memory-optimized version
-public final class UnoptimizedBuilder extends FreqListBuilder {
+public final class SearchBasedBuilder extends FreqListBuilder {
     private final TsvWriter tsvWriter;
 
-    public UnoptimizedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
+    public SearchBasedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
         this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
     }

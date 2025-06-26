@@ -9,8 +9,8 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.tools.frequency.builder.FreqListBuilder;
-import nl.inl.blacklab.tools.frequency.builder.OptimizedBuilder;
-import nl.inl.blacklab.tools.frequency.builder.UnoptimizedBuilder;
+import nl.inl.blacklab.tools.frequency.builder.IndexBasedBuilder;
+import nl.inl.blacklab.tools.frequency.builder.SearchBasedBuilder;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
@@ -125,8 +125,8 @@ public class FrequencyTool {
         for (final FreqListConfig fCfg: bCfg.getFrequencyLists()) {
             final Timer t = new Timer();
             final FreqListBuilder builder = bCfg.useRegularSearch() ?
-                    new UnoptimizedBuilder(index, bCfg, fCfg) :
-                    new OptimizedBuilder(index, bCfg, fCfg);
+                    new SearchBasedBuilder(index, bCfg, fCfg) :
+                    new IndexBasedBuilder(index, bCfg, fCfg);
             builder.makeFrequencyList();
             // if database format, write lookup tables
             if (bCfg.isDatabaseFormat()) {

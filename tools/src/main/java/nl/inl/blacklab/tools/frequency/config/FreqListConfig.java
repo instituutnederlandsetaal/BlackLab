@@ -10,15 +10,14 @@ import org.apache.commons.lang3.StringUtils;
  * Configuration for making frequency lists
  */
 public record FreqListConfig(
-        String name, List<String> annotations, List<String> metadataFields, int ngramSize, CutoffConfig cutoff, String filter
+        String name, List<String> annotations, List<String> metadataFields, int ngramSize, CutoffConfig cutoff,
+        String filter
 ) {
     public FreqListConfig {
-        name = name;
+        // override some null defaults
         annotations = annotations == null ? Collections.emptyList() : annotations;
         metadataFields = metadataFields == null ? Collections.emptyList() : metadataFields;
         ngramSize = Math.max(ngramSize, 1); // Ensure ngramSize is at least 1
-        cutoff = cutoff;
-        filter = filter;
     }
 
     public String getReportName() {

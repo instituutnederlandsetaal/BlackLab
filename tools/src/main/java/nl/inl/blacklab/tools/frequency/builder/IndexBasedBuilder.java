@@ -13,7 +13,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -49,12 +48,12 @@ import nl.inl.util.LuceneUtil;
  * (uses ConcurrentSkipListMap, or alternatively wraps a TreeMap at the end;
  * note that using ConcurrentSkipListMap has consequences for the compute() method, see there)
  */
-public class OptimizedBuilder extends FreqListBuilder {
+public final class IndexBasedBuilder extends FreqListBuilder {
     private final ChunkWriter chunkWriter;
     private final ChunkedTsvWriter chunkedTsvWriter;
     private final TsvWriter tsvWriter;
 
-    public OptimizedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
+    public IndexBasedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
         this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
         this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
@@ -146,13 +145,15 @@ public class OptimizedBuilder extends FreqListBuilder {
         return chunkFiles;
     }
 
+    /**
+     * Get all document IDs matching the filter.
+     * If no filter is defined, return all document IDs.
+     */
     private List<Integer> getDocIds() {
-        final List<Integer> docIds = new ArrayList<>();
-
-        String filter = fCfg.filter();
-        if (filter != null) {
+        final var docIds = new ArrayList<Integer>();
+        if (fCfg.filter() != null) {
             try {
-                Query q = LuceneUtil.parseLuceneQuery(index, filter, index.analyzer(), "");
+                Query q = LuceneUtil.parseLuceneQuery(index, fCfg.filter(), index.analyzer(), "");
                 index.queryDocuments(q).forEach(d -> docIds.add(d.docId()));
             } catch (ParseException e) {
                 throw new RuntimeException(e);
@@ -247,80 +248,68 @@ public class OptimizedBuilder extends FreqListBuilder {
 
                     // now we have all values for all relevant annotations for this document
                     // iterate again and pair up the nth entries for all annotations, then store that as a group.
-
-                    // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-                    Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
-                    int ngramSize = fCfg.ngramSize();
-
                     try (BlockTimer ignored = c.child("Group tokens")) {
-                        // We can't get an ngram for the last ngramSize-1 tokens
-                        for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
-                            int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
-                            int[] sortPositions = new int[numAnnotations * ngramSize];
-
-                            // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
-                            // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
-                            // so in essence it's also an "id", but a case-insensitive one.
-                            // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
-                            // that hashes the token ids instead of the sortpositions in that case.
-                            for (int annotationIndex = 0, arrIndex = 0;
-                                 annotationIndex < numAnnotations; ++annotationIndex, arrIndex += ngramSize) {
-                                // get array slices of ngramSize
-                                int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
-                                System.arraycopy(tokenValues, tokenIndex, annotationValuesForThisToken, arrIndex,
-                                        ngramSize);
-                                int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
-                                System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex,
-                                        ngramSize);
-                            }
-                            final GroupIdHash groupId = new GroupIdHash(ngramSize, annotationValuesForThisToken,
-                                    sortPositions, metadataValuesForGroup, metadataValuesHash);
-
-                            // Count occurrence in this doc
-                            OccurrenceCounts occ = occsInDoc.get(groupId);
-                            if (occ == null) {
-                                occ = new OccurrenceCounts(1, 1);
-                                occsInDoc.put(groupId, occ);
-                            } else {
-                                occ.hits++;
-                            }
-
-                        }
-
+                        final var occsInDoc = getDocumentFrequencies(docLength, numAnnotations,
+                                tokenValuesPerAnnotation,
+                                sortValuesPerAnnotation, metadataValuesForGroup, metadataValuesHash);
                         // Merge occurrences in this doc with global occurrences
-                        if (occurrences instanceof ConcurrentSkipListMap) {
+                        occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
                             // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
                             //       because we use ConcurrentSkipListMap, which may call the remapping function
                             //       multiple times if there's potential concurrency issues.
-                            occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
-                                if (groupSize == null)
-                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                                else
-                                    return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
-                            }));
-                        } else {
-                            // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
-                            // because our remapping function will only be called once.
-                            occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
-                                // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
-                                //       because we use ConcurrentSkipListMap, which may call the remapping function
-                                //       multiple times if there's potential concurrency issues.
-                                if (groupSize != null) {
-                                    // Group existed already
-                                    // Count hits and doc
-                                    occ.hits += groupSize.hits;
-                                    occ.docs += groupSize.docs;
-                                }
-                                return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                            }));
-                        }
-
+                            if (groupSize != null) {
+                                // Group existed already
+                                // Count hits and doc
+                                occ.hits += groupSize.hits;
+                                occ.docs += groupSize.docs;
+                            }
+                            return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                        }));
                     }
                 } catch (IOException e) {
                     throw BlackLabRuntimeException.wrap(e);
                 }
             });
         }
+    }
 
+    private Map<GroupIdHash, OccurrenceCounts> getDocumentFrequencies(int docLength, int numAnnotations,
+            List<int[]> tokenValuesPerAnnotation, List<int[]> sortValuesPerAnnotation, String[] metadataValuesForGroup,
+            int metadataValuesHash) {
+        // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
+        Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
+        int ngramSize = fCfg.ngramSize();
+        // We can't get an ngram for the last ngramSize-1 tokens
+        for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
+            int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
+            int[] sortPositions = new int[numAnnotations * ngramSize];
+
+            // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
+            // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
+            // so in essence it's also an "id", but a case-insensitive one.
+            // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
+            // that hashes the token ids instead of the sortpositions in that case.
+            for (int annotationIndex = 0, arrIndex = 0;
+                 annotationIndex < numAnnotations; ++annotationIndex, arrIndex += ngramSize) {
+                // get array slices of ngramSize
+                int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
+                System.arraycopy(tokenValues, tokenIndex, annotationValuesForThisToken, arrIndex,
+                        ngramSize);
+                int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
+                System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex,
+                        ngramSize);
+            }
+            final GroupIdHash groupId = new GroupIdHash(ngramSize, annotationValuesForThisToken,
+                    sortPositions, metadataValuesForGroup, metadataValuesHash);
+
+            // Count occurrence in this doc
+            final var occ = occsInDoc.get(groupId);
+            if (occ == null) {
+                occsInDoc.put(groupId, new OccurrenceCounts(1, 1));
+            } else {
+                occ.hits++;
+            }
+        }
+        return occsInDoc;
     }
 }
