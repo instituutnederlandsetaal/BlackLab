@@ -132,7 +132,7 @@ public class FrequencyTool {
             if (bCfg.isDatabaseFormat()) {
                 new LookupTableWriter(index, bCfg, fCfg).write();
             }
-            System.out.println("  Time: " + t.elapsedDescription());
+            System.out.println("  Generating frequency list " + fCfg.getReportName() + " took " + t.elapsedDescription());
         }
     }
 }

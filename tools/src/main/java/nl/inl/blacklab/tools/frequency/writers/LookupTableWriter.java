@@ -22,7 +22,7 @@ public final class LookupTableWriter extends FreqListWriter {
     }
 
     public void write() {
-        System.out.println("Writing annotation id lookup tables");
+        System.out.println("  Writing annotation id lookup tables");
         final var t = new Timer();
         for (final var annotation: aInfo.getAnnotations()) {
             // write individual lookup table for each annotation to a separate file
@@ -38,6 +38,6 @@ public final class LookupTableWriter extends FreqListWriter {
                 throw new RuntimeException();
             }
         }
-        System.out.println("Time: " + t.elapsedDescription());
+        System.out.println("  Wrote annotation id lookup tables in " + t.elapsedDescription(true));
     }
 }

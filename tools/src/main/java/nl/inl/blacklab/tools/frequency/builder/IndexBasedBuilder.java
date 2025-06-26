@@ -14,6 +14,8 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import nl.inl.util.Timer;
+
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -114,11 +116,10 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                     //       but it was faster to use a HashMap and sort it afterwards.
                     occurrences = new ConcurrentHashMap<>();
                 }
-
                 // Process current run of documents and add to grouping
+                final var t = new Timer();
                 processDocsParallel(docIdsInChunk, occurrences);
-
-                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries");
+                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries in " + t.elapsedDescription(true));
 
                 // If the grouping has gotten too large, write it to file so we don't run out of memory.
                 boolean groupingTooLarge = occurrences.size() > bCfg.getGroupsPerChunk();
@@ -131,12 +132,8 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                 } else if (groupingTooLarge || isFinalRun) {
                     // Sort our map now.
                     SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(occurrences);
-                    // Write next chunk file.
-                    String chunkName = fCfg.getReportName() + chunkFiles.size();
-                    File chunkFile = new File(tmpDir, chunkName + ".chunk" + (bCfg.isCompressed() ? ".lz4" : ""));
-                    System.out.println("  Writing " + chunkFile);
                     // Write chunk files, to be merged at the end
-                    chunkWriter.write(chunkFile, sorted);
+                    var chunkFile = chunkWriter.write(sorted);
                     chunkFiles.add(chunkFile);
                     occurrences = null; // free memory, allocate new on next iteration
                 }
@@ -150,6 +147,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
      * If no filter is defined, return all document IDs.
      */
     private List<Integer> getDocIds() {
+        final var t = new Timer();
         final var docIds = new ArrayList<Integer>();
         if (fCfg.filter() != null) {
             try {
@@ -162,6 +160,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             // No filter: include all documents.
             index.forEachDocument((__, id) -> docIds.add(id));
         }
+        System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + fCfg.filter()+ "' in " + t.elapsedDescription(true));
         return docIds;
     }
 

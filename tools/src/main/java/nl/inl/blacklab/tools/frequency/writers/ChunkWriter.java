@@ -3,12 +3,14 @@ package nl.inl.blacklab.tools.frequency.writers;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.UUID;
 
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
 import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.util.Timer;
 
 public final class ChunkWriter extends FreqListWriter {
 
@@ -16,7 +18,9 @@ public final class ChunkWriter extends FreqListWriter {
         super(bCfg, fCfg, aInfo);
     }
 
-    public void write(final File file, final Map<GroupIdHash, OccurrenceCounts> occurrences) {
+    public File write(final Map<GroupIdHash, OccurrenceCounts> occurrences) {
+        final var t = new Timer();
+        final var file = getFile();
         try (final var os = getOutputStream(file)) {
             // Write keys and values in sorted order, so we can merge later
             os.write(fory.serialize(occurrences.size())); // start with number of groups
@@ -27,5 +31,12 @@ public final class ChunkWriter extends FreqListWriter {
         } catch (IOException e) {
             throw reportIOException(e);
         }
+        System.out.println("  Wrote chunk file in " + t.elapsedDescription(true));
+        return file;
+    }
+
+    private File getFile() {
+        final String chunkName = fCfg.getReportName() + "-" + UUID.randomUUID() + getExt();
+        return new File(bCfg.getOutputDir() + "/tmp", chunkName);
     }
 }

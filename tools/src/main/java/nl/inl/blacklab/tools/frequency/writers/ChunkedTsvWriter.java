@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import nl.inl.util.Timer;
+
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
@@ -29,7 +31,8 @@ public final class ChunkedTsvWriter extends FreqListWriter {
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
     // This takes very little memory even if the final output file is huge.
     public void write(final List<File> chunkFiles) {
-        File file = getFile();
+        final var t = new Timer();
+        final var file = getFile();
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + file);
         try (CsvWriter csv = getCsvWriter(file)) {
             int n = chunkFiles.size();
@@ -96,5 +99,6 @@ public final class ChunkedTsvWriter extends FreqListWriter {
         } catch (IOException e) {
             throw reportIOException(e);
         }
+        System.out.println("  Merged chunk files in " + t.elapsedDescription(true));
     }
 }

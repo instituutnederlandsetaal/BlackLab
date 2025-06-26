@@ -17,6 +17,7 @@ import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
 import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.util.Timer;
 
 /**
  * Writes frequency results to a TSV file.
@@ -102,8 +103,8 @@ public final class TsvWriter extends FreqListWriter {
      * @param occurrences grouping result
      */
     public void write(final Map<GroupIdHash, OccurrenceCounts> occurrences) {
+        final var t = new Timer();
         final var file = getFile();
-        System.out.println("  Writing " + file);
         try (final var csv = getCsvWriter(file)) {
             for (final var entry: occurrences.entrySet()) {
                 writeGroupRecord(csv, entry.getKey(), entry.getValue().hits);
@@ -111,6 +112,7 @@ public final class TsvWriter extends FreqListWriter {
         } catch (IOException e) {
             throw reportIOException(e);
         }
+        System.out.println("  Wrote " + file + " in " + t.elapsedDescription(true));
     }
 
     void writeGroupRecord(final CsvWriter csv, final GroupIdHash groupId, final int hits) throws IOException {
