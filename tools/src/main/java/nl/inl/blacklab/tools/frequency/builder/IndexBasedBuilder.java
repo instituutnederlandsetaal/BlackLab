@@ -55,24 +55,33 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     private final ChunkWriter chunkWriter;
     private final ChunkedTsvWriter chunkedTsvWriter;
     private final TsvWriter tsvWriter;
-    private final Map<String, Integer> termFrequencies; // used for cutoff
+    private final Set<String> termFrequencies; // used for cutoff
 
     public IndexBasedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
         this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
         this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
         this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
+        this.termFrequencies = getTermFrequencies(index, fCfg);
+    }
 
+    private Set<String> getTermFrequencies(BlackLabIndex index, FreqListConfig fCfg) {
+        Set<String> termFrequencies = new HashSet<>();
         if (fCfg.cutoff() != null) {
             final var t = new Timer();
             final var sensitivity = aInfo.getCutoffAnnotation().sensitivity(MatchSensitivity.SENSITIVE);
             final var searcher = new IndexSearcher(index.reader());
-            termFrequencies = LuceneUtil.termFrequencies(searcher, null, sensitivity, Collections.emptySet());
-            System.out.println("  Retrieved " + termFrequencies.size() + " term frequencies for cutoff annotation '"
+            Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null, sensitivity, Collections.emptySet());
+            System.out.println("  Retrieved " + termFrequenciesMap.size() + " term frequencies for cutoff annotation '"
                     + fCfg.cutoff().annotation() + "' in " + t.elapsedDescription(true));
-        } else {
-            termFrequencies = Collections.emptyMap(); // no cutoff
+            // Only save the strings when the frequency is above the cutoff
+            for (Map.Entry<String, Integer> entry : termFrequenciesMap.entrySet()) {
+                if (entry.getValue() >= fCfg.cutoff().count()) {
+                    termFrequencies.add(entry.getKey());
+                }
+            }
         }
+        return termFrequencies;
     }
 
     @Override
@@ -323,8 +332,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                 for (int j = 0; j < ngramSize; j++) {
                     final int tokenID = groupId.getTokenIds()[j];
                     final String token = cutoffTerms.get(tokenID);
-                    final int hits = termFrequencies.getOrDefault(token, 0);
-                    if (hits < fCfg.cutoff().count()) {
+                    if (!termFrequencies.contains(token)) {
                         skipGroup = true;
                         break; // no need to check the rest of the ngram
                     }
