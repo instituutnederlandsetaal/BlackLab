@@ -36,7 +36,8 @@ public final class ChunkWriter extends FreqListWriter {
     }
 
     private File getFile() {
-        final String chunkName = fCfg.getReportName() + "-" + UUID.randomUUID() + getExt();
+        final String ext = bCfg.isCompressed() ? ".chunk.lz4" : ".chunk";
+        final String chunkName = fCfg.getReportName() + "-" + UUID.randomUUID() + ext;
         return new File(bCfg.getOutputDir() + "/tmp", chunkName);
     }
 }

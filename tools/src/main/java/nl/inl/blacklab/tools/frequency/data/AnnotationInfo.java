@@ -24,7 +24,7 @@ public final class AnnotationInfo {
         this.annotations = fCfg.annotations().stream().map(annotatedField::annotation).toList();
         this.terms = annotations.stream().map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
                 .toList();
-        this.cutoffAnnotation = annotatedField.annotation(fCfg.cutoff().annotation());
+        this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
     }
 
     public List<Terms> getTerms() {

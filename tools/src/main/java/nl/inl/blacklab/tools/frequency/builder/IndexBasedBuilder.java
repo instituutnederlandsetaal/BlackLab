@@ -301,7 +301,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
         Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
         int ngramSize = fCfg.ngramSize();
-        final var cutoffTerms = aInfo.getTermsFor(aInfo.getCutoffAnnotation());
+        final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTermsFor(aInfo.getCutoffAnnotation()) : null;
         // We can't get an ngram for the last ngramSize-1 tokens
         for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
             int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
