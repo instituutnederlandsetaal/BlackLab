@@ -3,6 +3,7 @@ package nl.inl.blacklab.tools.frequency.writers;
 import java.io.File;
 import java.io.IOException;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -31,7 +32,7 @@ public final class LookupTableWriter extends FreqListWriter {
                 final var terms = aInfo.getTermsFor(annotation);
                 // id is simply the index in the terms list
                 for (int id = 0; id < terms.numberOfTerms(); id++) {
-                    final String token = MatchSensitivity.INSENSITIVE.desensitize(terms.get(id));
+                    final String token = getToken(terms, id);
                     csv.writeRecord(String.valueOf(id), token);
                 }
             } catch (IOException e) {
@@ -40,4 +41,17 @@ public final class LookupTableWriter extends FreqListWriter {
         }
         System.out.println("  Wrote annotation id lookup tables in " + t.elapsedDescription(true));
     }
+
+    private static String getToken(Terms terms, int id) {
+        final var sb = new StringBuilder(MatchSensitivity.INSENSITIVE.desensitize(terms.get(id)));
+        // Escape any \ with \\
+        for (int i = 0; i < sb.length(); i++) {
+            if (sb.charAt(i) == '\\') {
+                sb.replace(i, i + 1, "\\\\");
+                i++; // skip the next char, which is now escaped
+            }
+        }
+        return sb.toString();
+    }
+
 }
