@@ -29,54 +29,6 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     /**
-     * Write in a database suitable format using IDs instead of strings.
-     */
-    private static String writeIdRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex) {
-        int[] tokenList = new int[ngramSize];
-        System.arraycopy(tokenIds, tokenArrIndex, tokenList, 0, ngramSize);
-
-        if (ngramSize == 1) {
-            return Integer.toString(tokenList[0]);
-        } else {
-            return formatNGram(tokenList);
-        }
-    }
-
-    /**
-     * Format n-gram tokens as a array string. E.g. "{1,2,3}"
-     *
-     * @param tokens the token list
-     * @return formatted n-gram
-     */
-    private static String formatNGram(final int[] tokens) {
-        StringBuilder sb = new StringBuilder("{");
-        for (int token: tokens) {
-            sb.append(token);
-            sb.append(",");
-        }
-        // replace last comma with closing brace
-        sb.setCharAt(sb.length() - 1, '}');
-        return sb.toString();
-    }
-
-    private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
-            final Terms termIndex) {
-        // map token int ids to their string values
-        String[] tokenList = new String[ngramSize];
-        for (int j = 0; j < ngramSize; j++) {
-            tokenList[j] = MatchSensitivity.INSENSITIVE.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
-        }
-        // join with a space
-        return String.join(" ", tokenList);
-    }
-
-    private static void addMetadataToRecord(final GroupIdHash groupId, final List<String> record) {
-        String[] metadataValues = groupId.getMetadataValues();
-        if (metadataValues != null)
-            Collections.addAll(record, metadataValues);
-    }
-
-    /**
      * Write HitGroups result.
      *
      * @param result grouping result
@@ -115,7 +67,7 @@ public final class TsvWriter extends FreqListWriter {
         System.out.println("  Wrote " + file + " in " + t.elapsedDescription(true));
     }
 
-    void writeGroupRecord(final CsvWriter csv, final GroupIdHash groupId, final int hits) throws IOException {
+     void writeGroupRecord(final CsvWriter csv, final GroupIdHash groupId, final int hits) throws IOException {
         final List<String> record = new ArrayList<>();
         // - annotation values
         addAnnotationsToRecord(groupId, record);
@@ -141,6 +93,49 @@ public final class TsvWriter extends FreqListWriter {
             }
             record.add(token);
         }
+    }
+
+    /**
+     * Write in a database suitable format using IDs instead of strings.
+     */
+    private static String writeIdRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex) {
+        int[] tokenList = new int[ngramSize];
+        System.arraycopy(tokenIds, tokenArrIndex, tokenList, 0, ngramSize);
+        return formatToArray(tokenList);
+    }
+
+    /**
+     * Format n-gram tokens as a array string. E.g. "{1,2,3}"
+     *
+     * @param tokens the token list
+     * @return formatted n-gram
+     */
+    private static String formatToArray(final int[] tokens) {
+        StringBuilder sb = new StringBuilder("{");
+        for (int token: tokens) {
+            sb.append(token);
+            sb.append(",");
+        }
+        // replace last comma with closing brace
+        sb.setCharAt(sb.length() - 1, '}');
+        return sb.toString();
+    }
+
+    private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
+            final Terms termIndex) {
+        // map token int ids to their string values
+        String[] tokenList = new String[ngramSize];
+        for (int j = 0; j < ngramSize; j++) {
+            tokenList[j] = MatchSensitivity.INSENSITIVE.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
+        }
+        // join with a space
+        return String.join(" ", tokenList);
+    }
+
+    private static void addMetadataToRecord(final GroupIdHash groupId, final List<String> record) {
+        String[] metadataValues = groupId.getMetadataValues();
+        if (metadataValues != null)
+            Collections.addAll(record, metadataValues);
     }
 
     private File getFile() {
