@@ -58,17 +58,13 @@ public class HitPropertySpanAttribute extends HitProperty {
     /** The sensitivity of the match */
     private MatchSensitivity sensitivity;
 
-    private Hits hits;
-
     HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, boolean invert) {
-        super();
+        super(prop, hits, invert);
         groupName = prop.groupName;
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
         attributeName = prop.attributeName;
         sensitivity = prop.sensitivity;
-        this.hits = hits;
-        reverse = prop.reverse ? !invert : invert;
 
         // Determine group index. We don't use the one from prop (if any), because
         // index might be different for different hits object.
@@ -179,12 +175,12 @@ public class HitPropertySpanAttribute extends HitProperty {
         HitPropertySpanAttribute that = (HitPropertySpanAttribute) o;
         return Objects.equals(groupName, that.groupName) && Objects.equals(relNameInList,
                 that.relNameInList) && Objects.equals(attributeName, that.attributeName)
-                && sensitivity == that.sensitivity && Objects.equals(hits, that.hits);
+                && sensitivity == that.sensitivity;
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), groupName, relNameInList, attributeName,
-                sensitivity, hits);
+                sensitivity);
     }
 }

@@ -12,7 +12,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;

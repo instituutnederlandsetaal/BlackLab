@@ -254,7 +254,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         // Rewrite clauses, and again flatten/invert if necessary.
         List<BLSpanQuery> rewrCl = new ArrayList<>();
         List<BLSpanQuery> rewrNotCl = new ArrayList<>();
-        anyRewritten = anyRewritten | rewriteFlattenInvert(reader, flatCl, flatNotCl, rewrCl, rewrNotCl);
+        anyRewritten |= rewriteFlattenInvert(reader, flatCl, flatNotCl, rewrCl, rewrNotCl);
 
         if (rewrCl.isEmpty()) {
             // All-negative; node should be rewritten to OR.

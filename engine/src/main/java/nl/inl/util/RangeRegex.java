@@ -80,7 +80,7 @@ public class RangeRegex {
     private static int smallestOfLength(int l) {
         if (l == 1)
             return 0; // zero is a special case
-        return (int)Math.pow(10, l - 1);
+        return (int)Math.pow(10, (double)l - 1);
     }
 
     /** Largest number of length l; i.e. 9 for l == 1; 99 for l == 2; 999 for l == 3; etc. */

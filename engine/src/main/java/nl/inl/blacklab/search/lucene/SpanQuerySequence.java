@@ -165,9 +165,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         for (int i = 0; i < clauses.size(); i++) {
             BLSpanQuery clause = clauses.get(i);
             if (clause instanceof SpanQueryEdge) {
-                anyRewritten = anyRewritten || matchingTagsWithEdge(clauses, i);
+                anyRewritten |= matchingTagsWithEdge(clauses, i);
             } else if (clause instanceof SpanQueryRelations) {
-                anyRewritten = anyRewritten || matchingTagsWithRelations(clauses, i);
+                anyRewritten |= matchingTagsWithRelations(clauses, i);
             }
         }
         return anyRewritten;

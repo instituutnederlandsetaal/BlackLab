@@ -26,12 +26,8 @@ public class HitPropertyAlignments extends HitProperty {
         return new HitPropertyAlignments();
     }
 
-    private Hits hits;
-
     HitPropertyAlignments(HitPropertyAlignments prop, Hits hits, boolean invert) {
-        super();
-        this.hits = hits;
-        reverse = prop.reverse ? !invert : invert;
+        super(prop, hits, invert);
     }
 
     private synchronized List<Integer> getTargetHitGroupIndexes() {
@@ -111,12 +107,11 @@ public class HitPropertyAlignments extends HitProperty {
         if (!super.equals(o))
             return false;
         HitPropertyAlignments that = (HitPropertyAlignments) o;
-        return Objects.equals(targetHitGroupIndexes, that.targetHitGroupIndexes) && Objects.equals(hits,
-                that.hits);
+        return Objects.equals(targetHitGroupIndexes, that.targetHitGroupIndexes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), targetHitGroupIndexes, hits);
+        return Objects.hash(super.hashCode(), targetHitGroupIndexes);
     }
 }

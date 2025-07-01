@@ -53,7 +53,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     /** Fallback locale in case we can't parse the date */
     private final Locale usLocale = new Locale("en", "US");
 
-    private ConfigAnnotatedField currentAnnotatedField;
+    private ConfigAnnotatedField currentAnnotatedFieldConfig;
 
     @Override
     public void indexSpecificDocument(String documentExpr) {
@@ -125,7 +125,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
         // For the configured annotated field...
         for (ConfigAnnotatedField annotatedField : config.getAnnotatedFields().values()) {
-            currentAnnotatedField = annotatedField;
+            currentAnnotatedFieldConfig = annotatedField;
             setCurrentAnnotatedFieldName(annotatedField.getName());
 
             log("processing " + documentName + "...");
@@ -455,7 +455,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         String[] words = line.trim().split(StringUtil.REGEX_WHITESPACE);
         for (String word : words) {
             beginWord();
-            for (ConfigAnnotation annot : currentAnnotatedField.getAnnotationsFlattened().values()) {
+            for (ConfigAnnotation annot : currentAnnotatedFieldConfig.getAnnotationsFlattened().values()) {
                 String processed = annot.getProcess().performSingle(word, this);
                 annotationValueAppend(annot.getName(), processed, 1);
             }
