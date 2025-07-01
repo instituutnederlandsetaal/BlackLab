@@ -13,6 +13,7 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -67,7 +68,7 @@ public class TestSearchHitGroups {
         HitProperty groupBy = new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE);
         SearchHits searchHits = index.search(contents, false).find(query);
         SearchHitGroups searchHitGroups = fastPath ? searchHits.groupStats(groupBy, 0) : searchHits.groupWithStoredHits(groupBy, 1);
-        SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupProperty.identity());
+        SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupPropertyIdentity.get());
         HitGroups groups = sortedGroups.execute();
         Assert.assertEquals(title + " # groups", 25, groups.size());
         Iterator<HitGroup> it = groups.iterator();

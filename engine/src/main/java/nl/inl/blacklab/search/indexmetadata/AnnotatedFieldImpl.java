@@ -145,7 +145,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     /**
      * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
      */
-    List<String> getDisplayOrder() {
+    synchronized List<String> getDisplayOrder() {
         return custom().get("displayOrder", Collections.emptyList());
     }
     

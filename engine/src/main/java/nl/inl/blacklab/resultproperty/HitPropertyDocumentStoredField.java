@@ -52,8 +52,9 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     public int compare(long a, long b) {
         final int docA = hits.doc(a);
         final int docB = hits.doc(b);
-        int result = docPropStoredField.compare(docA, docB);
-        return reverse ? -result : result;
+        return reverse ?
+                docPropStoredField.compare(docB, docA) :
+                docPropStoredField.compare(docA, docB);
     }
 
     @Override

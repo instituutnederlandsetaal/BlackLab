@@ -173,11 +173,11 @@ public class SegmentRelationInfo implements AutoCloseable {
             try {
                 // Determine where the relations for this doc start
                 assert docsOffset >= 0 : "negative offset in docs file";
-                docs().seek(docsOffset + docId * Long.BYTES);
+                docs().seek(docsOffset + (long) docId * Long.BYTES);
                 long relationsOffset = _docs.readLong();
                 assert relationsOffset >= 0 : "negative offset in relations file";
                 // Find the attribute set offset for this relation
-                relations().seek(relationsOffset + relationId * Long.BYTES);
+                relations().seek(relationsOffset + (long) relationId * Long.BYTES);
                 long attrSetOffset = _relations.readLong();
                 // Find the attribute set
                 assert attrSetOffset >= 0 : "negative offset in attrSet file";

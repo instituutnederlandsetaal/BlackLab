@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 public class MatchInfoDefs {
     public static final MatchInfoDefs EMPTY = new MatchInfoDefs() {
         @Override
-        MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
+        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
             throw new UnsupportedOperationException("Cannot add to DUMMY MatchInfoDefs");
         }
     };

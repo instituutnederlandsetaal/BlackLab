@@ -34,7 +34,7 @@ import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.resultproperty.DocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
@@ -274,7 +274,7 @@ public class WebserviceOperations {
         for (Map.Entry<DocProperty, DocGroups> e : counts.entrySet()) {
             DocProperty facetBy = e.getKey();
             DocGroups facetCounts = e.getValue();
-            facetCounts = facetCounts.sort(DocGroupProperty.size());
+            facetCounts = facetCounts.sort(DocGroupPropertySize.get());
             String facetName = facetBy.name();
             List<Pair<String,  Long>> facetItems = new ArrayList<>();
             int n = 0, maxFacetValues = 10;

@@ -69,7 +69,6 @@ public class InputFormatWithConfig implements InputFormat {
                 config.setReadFromFile(formatFile);
                 InputFormatReader.read(formatFile, config);
                 config.validate();
-                return config;
             } catch (InvalidInputFormatConfig e) {
                 errorMessage = e.getMessage();
                 throw e;

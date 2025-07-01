@@ -15,6 +15,7 @@ import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupPropertySize;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -291,7 +292,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         }
         if (sortProp == null) {
             // By default, show largest group first
-            sortProp = HitGroupProperty.size();
+            sortProp = HitGroupPropertySize.get();
         }
         return new HitGroupSortSettings(sortProp);
     }

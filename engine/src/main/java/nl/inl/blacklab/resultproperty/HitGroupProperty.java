@@ -12,18 +12,6 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
 
-    static final HitGroupPropertyIdentity propIdentity = new HitGroupPropertyIdentity();
-
-    static final HitGroupPropertySize propSize = new HitGroupPropertySize();
-
-    public static HitGroupPropertyIdentity identity() {
-        return propIdentity;
-    }
-
-    public static HitGroupPropertySize size() {
-        return propSize;
-    }
-
     HitGroupProperty(HitGroupProperty prop, boolean invert) {
         super(prop, invert);
     }
@@ -79,9 +67,9 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
         String propName = ResultProperty.ignoreSensitivity(serialized);
         HitGroupProperty result;
         if (propName.equalsIgnoreCase(HitGroupPropertyIdentity.ID))
-            result = propIdentity;
+            result = HitGroupPropertyIdentity.get();
         else
-            result = propSize;
+            result = HitGroupPropertySize.get();
         if (reverse)
             result = result.reverse();
         return result;

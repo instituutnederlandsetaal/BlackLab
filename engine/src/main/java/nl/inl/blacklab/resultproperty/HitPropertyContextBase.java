@@ -328,8 +328,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
             fetchContext();
         int[] ca = contextSortOrder.get(indexA);
         int[] cb = contextSortOrder.get(indexB);
-        int cmp = Arrays.compare(ca, cb);
-        return reverse ? -cmp : cmp;
+        return reverse ?
+                Arrays.compare(cb, ca) :
+                Arrays.compare(ca, cb);
     }
 
     @Override

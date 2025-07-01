@@ -810,9 +810,9 @@ public class QueryToolImpl {
     private void sortGroups(String sortBy) {
         HitGroupProperty crit = null;
         if (sortBy.equals(HitGroupPropertyIdentity.ID) || sortBy.equals("id"))
-            crit = HitGroupProperty.identity();
+            crit = HitGroupPropertyIdentity.get();
         else if (sortBy.startsWith(HitGroupPropertySize.ID))
-            crit = HitGroupProperty.size();
+            crit = HitGroupPropertySize.get();
         if (crit == null) {
             output.error("Invalid group sort criterium: " + sortBy
                     + " (valid are: id(entity), size)");

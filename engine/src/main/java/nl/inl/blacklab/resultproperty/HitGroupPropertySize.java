@@ -6,6 +6,12 @@ public class HitGroupPropertySize extends HitGroupProperty {
 
     public static final String ID = "size";
 
+    private static final HitGroupPropertySize instance = new HitGroupPropertySize();
+
+    public static HitGroupPropertySize get() {
+        return instance;
+    }
+
     HitGroupPropertySize(HitGroupPropertySize prop, boolean invert) {
         super(prop, invert);
     }
@@ -31,8 +37,9 @@ public class HitGroupPropertySize extends HitGroupProperty {
 
     @Override
     public int compare(HitGroup a, HitGroup b) {
-        int cmpResult = Long.compare(a.size(), b.size());
-        return reverse ? -cmpResult : cmpResult;
+        return reverse ?
+                Long.compare(b.size(), a.size()) :
+                Long.compare(a.size(), b.size());
     }
 
     @Override

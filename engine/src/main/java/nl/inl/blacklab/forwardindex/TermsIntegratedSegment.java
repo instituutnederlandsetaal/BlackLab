@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
@@ -171,7 +172,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
         public TermInSegment next() {
             try {
                 if (i >= n)
-                    return null;
+                    throw new NoSuchElementException();
                 this.t.term = termStringFile.readString();
                 this.t.id = i++;
                 return this.t;

@@ -45,8 +45,9 @@ public class DocPropertyNumberOfHits extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        int cmpResult = Long.compare(a.size(), b.size());
-        return reverse ? -cmpResult : cmpResult;
+        return reverse ?
+                Long.compare(b.size(), a.size()) :
+                Long.compare(a.size(), b.size());
     }
 
     @Override

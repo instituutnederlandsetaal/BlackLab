@@ -2,6 +2,10 @@ package nl.inl.blacklab.search.matchfilter;
 
 public class ConstraintValueBoolean extends ConstraintValue {
 
+    static final ConstraintValue FALSE = new ConstraintValueBoolean(false);
+
+    static final ConstraintValue TRUE = new ConstraintValueBoolean(true);
+
     private final boolean b;
 
     public ConstraintValueBoolean(boolean b) {

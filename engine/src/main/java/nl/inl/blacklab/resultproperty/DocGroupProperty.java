@@ -11,32 +11,20 @@ import nl.inl.blacklab.search.results.DocResult;
  */
 public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup> {
 
-    static final DocGroupPropertyIdentity propIdentity = new DocGroupPropertyIdentity();
-
-    static final DocGroupPropertySize propSize = new DocGroupPropertySize();
-
-    public static DocGroupPropertyIdentity identity() {
-        return propIdentity;
-    }
-
-    public static DocGroupPropertySize size() {
-        return propSize;
-    }
-    
     public static DocGroupProperty deserialize(String serialized) {
         if (serialized == null || serialized.isEmpty())
             return null;
         boolean reverse = false;
-        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
+        if (serialized.charAt(0) == '-') {
             reverse = true;
             serialized = serialized.substring(1);
         }
         String propName = ResultProperty.ignoreSensitivity(serialized);
         DocGroupProperty result;
         if (propName.equalsIgnoreCase(DocGroupPropertyIdentity.ID))
-            result = propIdentity;
+            result = DocGroupPropertyIdentity.get();
         else
-            result = propSize;
+            result = DocGroupPropertySize.get();
         if (reverse)
             result = result.reverse();
         return result;

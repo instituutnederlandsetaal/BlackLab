@@ -70,7 +70,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
     }
 
     @Override
-    public TermFrequency get(long index) {
+    public synchronized TermFrequency get(long index) {
         return results.get((int)index);
     }
 
