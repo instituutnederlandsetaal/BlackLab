@@ -174,7 +174,7 @@ public class ContextSize {
             end = tag == null ? hit.start() : tag.getSpanEnd();
         }
         start = Math.max(0, start - before());
-        end = (int)Math.min(end + after, (long)start + maxSnippetLength); // make sure snippet doesn't get longer than allowed
+        end = (int)Math.min((long)end + after, (long)start + maxSnippetLength); // make sure snippet doesn't get longer than allowed
         if (lastWordInclusive) {
             // End should point to the last word of the snippet, not to the first word after the snippet
             end--;

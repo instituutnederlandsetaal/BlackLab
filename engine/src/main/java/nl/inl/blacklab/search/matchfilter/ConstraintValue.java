@@ -9,12 +9,6 @@ package nl.inl.blacklab.search.matchfilter;
  */
 public abstract class ConstraintValue implements Comparable<ConstraintValue> {
 
-    private static final ConstraintValue FALSE = new ConstraintValueBoolean(false);
-
-    private static final ConstraintValue TRUE = new ConstraintValueBoolean(true);
-
-    private static final ConstraintValue UNDEFINED = new ConstraintValueUndefined();
-
     public static ConstraintValue get(int i) {
         return new ConstraintValueInt(i);
     }
@@ -24,11 +18,11 @@ public abstract class ConstraintValue implements Comparable<ConstraintValue> {
     }
 
     public static ConstraintValue get(boolean b) {
-        return b ? TRUE : FALSE;
+        return b ? ConstraintValueBoolean.TRUE : ConstraintValueBoolean.FALSE;
     }
 
     public static ConstraintValue undefined() {
-        return UNDEFINED;
+        return ConstraintValueUndefined.INSTANCE;
     }
 
     @Override

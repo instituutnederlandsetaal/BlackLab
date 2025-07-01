@@ -206,12 +206,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             }
         } else {
             // Single value (the collection should only contain one entry)
+            // (if multiple were matched, we only index the first one)
+            String rawValue = values.iterator().next();
+            rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
             results = new ArrayList<>();
-            for (String rawValue: values) {
-                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
-                results.add(processing.performSingle(rawValue, this));
-                break; // if multiple were matched, only index the first one
-            }
+            results.add(processing.performSingle(rawValue, this));
         }
         return results;
     }

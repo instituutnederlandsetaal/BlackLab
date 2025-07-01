@@ -92,6 +92,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                 Integer docBase = e.getKey();
                 if (docBase > docId) {
                     // Previous segment (the highest docBase lower than docId) is the right one
+                    assert prev != null;
                     Integer prevDocBase = prev.getKey();
                     NumericDocValuesCacher prevDocValues = prev.getValue();
                     return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
@@ -99,6 +100,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
                 prev = e;
             }
             // Last segment is the right one
+            assert prev != null;
             Integer prevDocBase = prev.getKey();
             NumericDocValuesCacher prevDocValues = prev.getValue();
             return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;

@@ -802,7 +802,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                         if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)
-                            fieldCount.add(1, docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                            fieldCount.add(1, (long)docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
                             documentVersionCount++;
                         }
                     });

@@ -302,7 +302,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
                     int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
 
                     // Try to make sure we have a large enough buffer available
-                    long decodeBufferLengthLong = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
+                    long decodeBufferLengthLong = (long) valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
                     if (decodeBufferLengthLong > Constants.JAVA_MAX_ARRAY_SIZE)
                         decodeBufferLengthLong = Constants.JAVA_MAX_ARRAY_SIZE;
                     final int decodeBufferLength = (int) decodeBufferLengthLong;

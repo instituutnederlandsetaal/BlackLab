@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.text.CollationKey;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -46,13 +47,17 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
 
         @Override
         public EphemeralHit next() {
-            hit.doc = HitsInternalNoLock32.this.docs.getInt(pos);
-            hit.start = HitsInternalNoLock32.this.starts.getInt(pos);
-            hit.end = HitsInternalNoLock32.this.ends.getInt(pos);
-            hit.matchInfo = HitsInternalNoLock32.this.matchInfos.isEmpty() ? null :
-                    HitsInternalNoLock32.this.matchInfos.get(pos);
-            ++pos;
-            return hit;
+            try {
+                hit.doc = HitsInternalNoLock32.this.docs.getInt(pos);
+                hit.start = HitsInternalNoLock32.this.starts.getInt(pos);
+                hit.end = HitsInternalNoLock32.this.ends.getInt(pos);
+                hit.matchInfo = HitsInternalNoLock32.this.matchInfos.isEmpty() ? null :
+                        HitsInternalNoLock32.this.matchInfos.get(pos);
+                ++pos;
+                return hit;
+            } catch (IndexOutOfBoundsException e) {
+                throw new NoSuchElementException();
+            }
         }
     }
 

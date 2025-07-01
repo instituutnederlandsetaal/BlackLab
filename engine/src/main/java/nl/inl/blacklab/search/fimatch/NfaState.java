@@ -17,9 +17,6 @@ import java.util.TreeSet;
  */
 public abstract class NfaState {
 
-    /** Singleton instance of the match final state */
-    private static final NfaState THE_MATCH_STATE = new NfaStateMatch();
-
     /**
      * Build a token state.
      *
@@ -80,7 +77,7 @@ public abstract class NfaState {
     }
 
     public static NfaState match() {
-        return THE_MATCH_STATE;
+        return NfaStateMatch.get();
     }
 
     /**

@@ -373,45 +373,42 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
     @Override
     public int compareTo(MatchInfo o) {
-        if (o instanceof RelationInfo)
-            return compareTo((RelationInfo) o);
+        if (o instanceof RelationInfo ri) {
+            int n;
+            n = -Boolean.compare(onlyHasTarget, ri.onlyHasTarget);
+            if (n != 0)
+                return n;
+            if (!onlyHasTarget && !ri.onlyHasTarget) {
+                n = Integer.compare(sourceStart, ri.sourceStart);
+                if (n != 0)
+                    return n;
+                n = Integer.compare(sourceEnd, ri.sourceEnd);
+                if (n != 0)
+                    return n;
+            }
+            n = Integer.compare(targetStart, ri.targetStart);
+            if (n != 0)
+                return n;
+            n = Integer.compare(targetEnd, ri.targetEnd);
+            if (n != 0)
+                return n;
+            n = fullRelationType.compareTo(ri.fullRelationType);
+            if (n != 0)
+                return n;
+            if (attributes == null) {
+                if (ri.attributes != null)
+                    return -1;
+                return 0;
+            } else {
+                if (ri.attributes == null)
+                    return 1;
+                n = Integer.compare(attributes.hashCode(), ri.attributes.hashCode());
+            }
+            return n;
+        }
         return super.compareTo(o);
     }
-
-    public int compareTo(RelationInfo o) {
-        int n;
-        n = -Boolean.compare(onlyHasTarget, o.onlyHasTarget);
-        if (n != 0)
-            return n;
-        if (!onlyHasTarget && !o.onlyHasTarget) {
-            n = Integer.compare(sourceStart, o.sourceStart);
-            if (n != 0)
-                return n;
-            n = Integer.compare(sourceEnd, o.sourceEnd);
-            if (n != 0)
-                return n;
-        }
-        n = Integer.compare(targetStart, o.targetStart);
-        if (n != 0)
-            return n;
-        n = Integer.compare(targetEnd, o.targetEnd);
-        if (n != 0)
-            return n;
-        n = fullRelationType.compareTo(o.fullRelationType);
-        if (n != 0)
-            return n;
-        if (attributes == null) {
-            if (o.attributes != null)
-                return -1;
-            return 0;
-        } else {
-            if (o.attributes == null)
-                return 1;
-            n = Integer.compare(attributes.hashCode(), o.attributes.hashCode());
-        }
-        return n;
-    }
-
+    
     @Override
     public boolean equals(Object o) {
         if (this == o)

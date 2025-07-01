@@ -37,7 +37,7 @@ public class CompareHitsInternalImpls {
 
     static void testIterateGet(HitsInternal hits) {
         long n = -1;
-        for (int i = 0; i < hits.size(); i++) {
+        for (long i = 0; i < hits.size(); i++) {
             int d = hits.doc(i);
             if (d > n)
                 n = d;
