@@ -60,7 +60,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
      *
      * @param a first doc
      * @param b second doc
-     * @return 0 if equal, negative if a < b, positive if a > b.
+     * @return 0 if equal, negative if a &lt; b, positive if a &gt; b.
      */
     @Override
     public int compare(DocResult a, DocResult b) {

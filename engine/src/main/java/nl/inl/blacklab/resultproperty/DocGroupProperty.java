@@ -58,7 +58,7 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
      * 
      * @param a first group
      * @param b second group
-     * @return 0 if equal, negative if a < b, positive if a > b.
+     * @return 0 if equal, negative if a &lt; b, positive if a &gt; b.
      */
     @Override
     public abstract int compare(DocGroup a, DocGroup b);

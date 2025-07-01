@@ -40,7 +40,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
      *
      * @param a first group
      * @param b second group
-     * @return 0 if equal, negative if a < b, positive if a > b.
+     * @return 0 if equal, negative if a &lt; b, positive if a &gt; b.
      */
     @Override
     public abstract int compare(HitGroup a, HitGroup b);
