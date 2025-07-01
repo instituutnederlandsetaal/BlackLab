@@ -381,6 +381,8 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "tokenPositionIdPath": // old name, DEPRECATED
                     logger.warn("Encountered deprecated key 'tokenPositionIdPath' (rename to 'tokenIdPath') in annotated field " + fieldName + inFormat());
+                    af.setTokenIdPath(str(e));
+                    break;
                 case "tokenIdPath":
                     af.setTokenIdPath(str(e));
                     break;
@@ -540,6 +542,8 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "refTokenPositionIdPath": // old name, DEPRECATED
                     logger.warn("Encountered deprecated key 'refTokenPositionIdPath' (rename to 'tokenRefPath')");
+                    s.setTokenRefPath(str(e));
+                    break;
                 case "tokenRefPath":
                 case "spanStartPath":   // synonym, used for span annotation
                 case "sourcePath":      // synonym, used for relation annotation
@@ -554,6 +558,8 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "spanNamePath": // DEPRECATED
                     logger.warn("Encountered deprecated key 'spanNamePath' (rename to 'valuePath')");
+                    s.setValuePath(str(e));
+                    break;
                 case "valuePath":
                     s.setValuePath(str(e));
                     break;
@@ -615,6 +621,7 @@ public class InputFormatReader extends YamlJsonReader {
                         throw new InvalidInputFormatConfig("extraAttributes not allowed in .blf.yaml version 2 (use 'attributes' instead)");
                     logger.warn("Encountered deprecated key 'extraAttributes' (use 'attributes' instead)");
                     t.setAttributes(readExtraAttributes(e));
+                    break;
                 case "attributes":
                     t.setAttributes(readExtraAttributes(e));
                     break;

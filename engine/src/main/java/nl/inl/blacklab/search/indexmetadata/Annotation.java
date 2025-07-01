@@ -141,7 +141,7 @@ public interface Annotation {
 
         if (s && i && ci && di)
             return AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
-        else if (s & i)
+        else if (s && i)
             return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
         else if (i)
             return AnnotationSensitivities.ONLY_INSENSITIVE;
