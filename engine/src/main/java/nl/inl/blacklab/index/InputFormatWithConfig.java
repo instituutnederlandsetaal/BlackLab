@@ -62,10 +62,9 @@ public class InputFormatWithConfig implements InputFormat {
 
     public synchronized ConfigInputFormat getConfig() {
         if (config == null) {
-            assert formatFile != null;
-
             try {
                 config = new ConfigInputFormat(formatIdentifier);
+                assert formatFile != null;
                 config.setReadFromFile(formatFile);
                 InputFormatReader.read(formatFile, config);
                 config.validate();
@@ -77,6 +76,7 @@ public class InputFormatWithConfig implements InputFormat {
                 throw new InvalidInputFormatConfig(errorMessage, e);
             }
         }
+        assert config != null; // should never trigger, but SonarQube seems to believe it can
         return config;
     }
 
