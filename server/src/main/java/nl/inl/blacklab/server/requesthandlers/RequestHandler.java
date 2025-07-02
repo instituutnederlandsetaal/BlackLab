@@ -538,4 +538,15 @@ public abstract class RequestHandler {
     public WebserviceParams getParams() {
         return params;
     }
+
+    /** Get a parameter value without newlines or carriage returns.
+     *
+     * This is to prevent issues when logging the parameter value.
+     *
+     * @return the parameter value, or null if not set
+     */
+    protected String getParameterNoLineEndings(String name) {
+        String value = request.getParameter(name);
+        return value == null ? null : value.replaceAll("[\n\r]", "_");
+    }
 }

@@ -19,11 +19,11 @@ public class RequestHandlerCreateIndex extends RequestHandler {
     public int handle(ResponseStreamer rs) throws BlsException {
         // Create index and return success
         try {
-            String newIndexName = request.getParameter("name");
-            if (newIndexName == null || newIndexName.length() == 0)
+            String newIndexName = getParameterNoLineEndings("name");
+            if (newIndexName == null || newIndexName.isEmpty())
                 return Response.badRequest(rs, "ILLEGAL_INDEX_NAME", "You didn't specify the required name parameter.");
-            String displayName = request.getParameter("display");
-            String formatIdentifier = request.getParameter("format");
+            String displayName = getParameterNoLineEndings("display");
+            String formatIdentifier = getParameterNoLineEndings("format");
 
             debug(logger, "REQ create index: " + newIndexName + ", " + displayName + ", " + formatIdentifier);
             if (!user.isLoggedIn() || !newIndexName.startsWith(user.getId() + ":")) {
@@ -40,4 +40,5 @@ public class RequestHandlerCreateIndex extends RequestHandler {
             return Response.internalError(rs, e, debugMode, "INTERR_CREATING_INDEX");
         }
     }
+
 }
