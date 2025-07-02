@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.list.primitive.IntList;
@@ -27,6 +28,8 @@ public class CollUtil {
 
                     @Override
                     public Integer next() {
+                        if (!hasNext())
+                            throw new NoSuchElementException();
                         return it.next();
                     }
 
