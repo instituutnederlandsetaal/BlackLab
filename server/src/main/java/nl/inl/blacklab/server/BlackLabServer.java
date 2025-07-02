@@ -204,13 +204,33 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    protected void doOptions(HttpServletRequest request, HttpServletResponse responseObject)
-            throws ServletException, IOException {
-        super.doOptions(request, responseObject);
-        String allowOrigin = optAddAllowOriginHeader(responseObject);
+    protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        try {
+            super.doOptions(request, response);
+        } catch (ServletException|IOException e) {
+            DataFormat outputType = ServletUtil.getOutputType(request);
+            if (outputType == null)
+                outputType = defaultOutputType;
+            ApiVersion api = ApiVersion.CURRENT;
+            DataStream es = DataStreamAbstract.create(outputType, true, api);
+            es.outputProlog();
+            ResponseStreamer errorWriter = ResponseStreamer.get(es, api);
+            int httpCode = Response.error(errorWriter, "INTERNAL_ERROR",
+                    e.getMessage(), null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+            response.setStatus(httpCode);
+            response.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
+            response.setContentType(outputType.getContentType());
+            optAddAllowOriginHeader(response);
+            Writer out = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING);
+            out.write(es.getOutput());
+            out.flush();
+            return;
+        }
+        String allowOrigin = optAddAllowOriginHeader(response);
         if (allowOrigin != null) {
-            responseObject.addHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
-        	responseObject.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
+            response.addHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+        	response.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
         }
     }
 
