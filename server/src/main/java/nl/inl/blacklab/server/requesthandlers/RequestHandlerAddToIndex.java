@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -15,7 +14,6 @@ import org.apache.commons.fileupload2.core.FileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -23,6 +21,7 @@ import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.util.FileUtil;
 
 /**
  * Add document(s) to a user index.
@@ -51,7 +50,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                 case "linkeddata":
                 case "linkeddata[]":
                     String fileNameOnly = FilenameUtils.getName(f.getName());
-                    File tempFile = createTempFileSafe(fileNameOnly); // Check that the temp file is actually in the temp dir.
+                    File tempFile = FileUtil.createTempFileSafe(fileNameOnly); // Check that the temp file is actually in the temp dir.
                     tempFile.deleteOnExit();
                     try (OutputStream tempOut = new FileOutputStream(tempFile)) {
                         IOUtils.copy(f.getInputStream(), tempOut);
@@ -85,31 +84,6 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         if (indexError != null)
             throw new BadRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");
         return Response.success(rs, "Data added succesfully.");
-    }
-
-    /**
-     * Create a temporary file in the java.io.tmpdir and ensure it is
-     * actually in that directory.
-     *
-     * @param fileName (part of) name of temp file
-     * @return the temporary file
-     * @throws IOException if an error occurs while creating the file
-     */
-    private static File createTempFileSafe(String fileName) throws IOException {
-        File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File tempFile = Files.createTempFile(tempDir.toPath(), "", fileName).toFile();
-        File parent = tempFile.getParentFile();
-        boolean ok = false;
-        while (parent != null) {
-            if (parent.equals(tempDir)) {
-                ok = true;
-                break;
-            }
-            parent = parent.getParentFile();
-        }
-        if (!ok)
-            throw new BlackLabRuntimeException("Uploaded file not in temp dir: " + tempFile.getName());
-        return tempFile;
     }
 
 }
