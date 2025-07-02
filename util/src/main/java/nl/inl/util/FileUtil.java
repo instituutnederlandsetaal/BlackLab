@@ -170,16 +170,7 @@ public class FileUtil {
      * @return true if the file is in the directory or one of its subdirectories, false otherwise
      */
     public static boolean isFileInDirectory(File file, File directory) {
-        File parent = file.getParentFile();
-        boolean ok = false;
-        while (parent != null) {
-            if (parent.equals(directory)) {
-                ok = true;
-                break;
-            }
-            parent = parent.getParentFile();
-        }
-        return ok;
+        return file.toPath().normalize().startsWith(directory.toPath().normalize());
     }
 
     /**
