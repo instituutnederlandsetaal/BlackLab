@@ -171,7 +171,7 @@ class TermsWriter implements Terms {
                         // Calculate byte offsets for all the terms and fill data array
                         int currentOffset = 0;
                         byte[] termStrings = new byte[blockSize];
-                        long blockSizeBytes = 2 * Integer.BYTES;
+                        long blockSizeBytes = (long)2 * Integer.BYTES;
                         while (currentTerm < n) {
                             termStringOffsets[currentTerm] = currentOffset;
                             byte[] termBytes = terms[currentTerm].getBytes(TERMS_CHARSET);

@@ -30,7 +30,7 @@ public class SegmentForwardIndex implements AutoCloseable {
      * - tokens codec scheme (byte),
      * - tokens codec parameter (byte)
      */
-    private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
+    private static final long TOKENS_INDEX_RECORD_SIZE = (long)Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
 
     /** Our fields producer */
     private final BlackLabPostingsReader fieldsProducer;
