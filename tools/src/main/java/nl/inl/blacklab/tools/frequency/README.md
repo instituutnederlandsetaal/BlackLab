@@ -30,7 +30,7 @@ frequencyLists:
     -   annotations:
             - lemma
         metadataFields:
-            - year
+            - name: year
         ngramSize: 2
 
     # lemma+pos+word trigram frequencies per year+medium+language
@@ -39,9 +39,11 @@ frequencyLists:
             - pos
             - word
         metadataFields:
-            - year
-            - medium
-            - language
+            - name: year
+              required: true # discards documents without a year (i.e. year == null)
+            - name: medium
+            - name: language
+              nullValue: "Dutch" # Replace null values with "Dutch"
         ngramSize: 3
         name: "trigrams" # custom name
         cutoff:

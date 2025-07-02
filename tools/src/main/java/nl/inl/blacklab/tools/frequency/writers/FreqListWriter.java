@@ -19,8 +19,8 @@ import net.jpountz.lz4.LZ4FrameOutputStream;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
-import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 
 abstract class FreqListWriter {
     static final Fory fory = getFory();
@@ -41,8 +41,8 @@ abstract class FreqListWriter {
         final var fory = Fory.builder().withLanguage(Language.JAVA).requireClassRegistration(true)
                 .withAsyncCompilation(true)
                 .withStringCompressed(true).build();
-        fory.register(GroupIdHash.class);
-        fory.register(OccurrenceCounts.class);
+        fory.register(GroupId.class);
+        fory.register(GroupCounts.class);
         return fory;
     }
 

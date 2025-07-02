@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
 
 // Non memory-optimized version
@@ -63,7 +64,7 @@ public final class SearchBasedBuilder extends FreqListBuilder {
             groupProps.add(new HitPropertyHitText(index, annotation));
         }
         // Add metadata fields to group by
-        for (final String name: fCfg.metadataFields()) {
+        for (final String name: fCfg.metadataFields().stream().map(MetadataConfig::name).toList()) {
             groupProps.add(new HitPropertyDocumentStoredField(index, name));
         }
         return new HitPropertyMultiple(groupProps);

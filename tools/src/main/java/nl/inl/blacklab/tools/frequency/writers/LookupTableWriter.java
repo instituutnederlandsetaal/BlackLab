@@ -29,7 +29,7 @@ public final class LookupTableWriter extends FreqListWriter {
             // write individual lookup table for each annotation to a separate file
             final var file = getFile(annotation);
             try (final var csv = getCsvWriter(file)) {
-                final var terms = aInfo.getTermsFor(annotation);
+                final var terms = aInfo.getTermsOf(annotation);
                 // id is simply the index in the terms list
                 for (int id = 0; id < terms.numberOfTerms(); id++) {
                     final String token = getToken(terms, id);

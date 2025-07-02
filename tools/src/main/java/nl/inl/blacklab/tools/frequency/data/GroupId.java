@@ -4,9 +4,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 /**
- * Precalculated hashcode for group id, to save time while grouping and sorting.
+ * Group id, with a precalculated hashcode to save time while grouping and sorting.
  */
-public final class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
+public final class GroupId implements Comparable<GroupId>, Serializable {
     private final int ngramSize;
     private final int[] tokenIds;
     private final int[] tokenSortPositions;
@@ -15,16 +15,13 @@ public final class GroupIdHash implements Comparable<GroupIdHash>, Serializable 
 
     /**
      * @param tokenSortPositions sort position for each token in the group id
-     * @param metadataValues     relevant metadatavalues
-     * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
      */
-    public GroupIdHash(int ngramSize, int[] tokenIds, int[] tokenSortPositions, String[] metadataValues,
-            int metadataValuesHash) {
+    public GroupId(int ngramSize, int[] tokenIds, int[] tokenSortPositions, DocumentMetadata meta) {
         this.ngramSize = ngramSize;
         this.tokenIds = tokenIds;
         this.tokenSortPositions = tokenSortPositions;
-        this.metadataValues = metadataValues;
-        hash = Arrays.hashCode(tokenSortPositions) ^ metadataValuesHash;
+        this.metadataValues = meta.values();
+        hash = Arrays.hashCode(tokenSortPositions) ^ meta.hash();
     }
 
     public int[] getTokenIds() {
@@ -44,13 +41,13 @@ public final class GroupIdHash implements Comparable<GroupIdHash>, Serializable 
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object obj) {
-        return ((GroupIdHash) obj).hash == this.hash &&
-                Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions) &&
-                Arrays.equals(((GroupIdHash) obj).metadataValues, this.metadataValues);
+        return ((GroupId) obj).hash == this.hash &&
+                Arrays.equals(((GroupId) obj).tokenSortPositions, this.tokenSortPositions) &&
+                Arrays.equals(((GroupId) obj).metadataValues, this.metadataValues);
     }
 
     @Override
-    public int compareTo(GroupIdHash other) {
+    public int compareTo(GroupId other) {
         return Integer.compare(hash, other.hash);
     }
 

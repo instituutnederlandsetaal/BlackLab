@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
  * Configuration for making frequency lists
  */
 public record FreqListConfig(
-        String name, List<String> annotations, List<String> metadataFields, int ngramSize, CutoffConfig cutoff,
+        String name, List<String> annotations, List<MetadataConfig> metadataFields, int ngramSize, CutoffConfig cutoff,
         String filter
 ) {
     public FreqListConfig {
@@ -27,7 +27,7 @@ public record FreqListConfig(
     private String generateName() {
         List<String> parts = new ArrayList<>();
         parts.addAll(annotations);
-        parts.addAll(metadataFields);
+        parts.addAll(metadataFields.stream().map(MetadataConfig::name).toList());
         return StringUtils.join(parts, "-");
     }
 }

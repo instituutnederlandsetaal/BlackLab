@@ -36,15 +36,12 @@ public class FrequencyTool {
                 
                 Usage:
                 
-                  FrequencyTool [--compress] [--db-fmt] INDEX_DIR CONFIG_FILE [OUTPUT_DIR]
+                  FrequencyTool INDEX_DIR [CONFIG_FILE] [OUTPUT_DIR]
                 
-                  --compress   write directly to .lz4 file
-                  --db-fmt     write in a format ideal for databases. Outputs ID's instead of strings values per annotation.
-                               A 'lookup table' file is created with the ID's and string values per annotation for reference.
                   INDEX_DIR    index to generate frequency lists for
                   CONFIG_FILE  YAML file specifying what frequency lists to generate. See README.md.
+                               (Defaults to "config.yaml")
                   OUTPUT_DIR   where to write TSV output files (defaults to current dir)
-                
                 """);
     }
 
@@ -54,20 +51,12 @@ public class FrequencyTool {
 
         // Check for options
         int numOpts = 0;
-        boolean compressed = false;
-        boolean databaseFormat = false;
         for (String arg: args) {
             if (arg.startsWith("--")) {
                 numOpts++;
                 switch (arg) {
-                case "--compress":
-                    compressed = true;
-                    break;
                 case "--help":
                     exitUsage("");
-                    break;
-                case "--db-fmt":
-                    databaseFormat = true;
                     break;
                 }
             } else
@@ -97,8 +86,6 @@ public class FrequencyTool {
         }
 
         // Set config options
-        config.setDatabaseFormat(databaseFormat);
-        config.setCompressed(compressed);
         config.setOutputDir(outputDir);
         System.out.println("CONFIGURATION:\n" + config.show());
 

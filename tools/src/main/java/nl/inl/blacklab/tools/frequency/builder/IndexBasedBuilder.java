@@ -3,9 +3,7 @@ package nl.inl.blacklab.tools.frequency.builder;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -15,25 +13,20 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
-import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
-import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
-import nl.inl.util.BlockTimer;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
 
@@ -121,7 +114,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // This is where we store our groups while we're computing/gathering them.
         // Maps from group Id to number of hits and number of docs
         // ConcurrentMap because we're counting in parallel.
-        ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences = null;
+        ConcurrentMap<GroupId, GroupCounts> occurrences = new ConcurrentHashMap<>();
 
         int docsToProcessInParallel = bCfg.getDocsToProcessInParallel();
         List<File> chunkFiles = new ArrayList<>();
@@ -132,37 +125,40 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                 int runEnd = Math.min(i + docsToProcessInParallel, docIds.size());
                 List<Integer> docIdsInChunk = docIds.subList(i, runEnd);
 
-                // Make sure we have a map
-                if (occurrences == null) {
-                    // NOTE: we looked at ConcurrentSkipListMap which keeps entries in sorted order,
-                    //       but it was faster to use a HashMap and sort it afterwards.
-                    occurrences = new ConcurrentHashMap<>();
-                }
                 // Process current run of documents and add to grouping
                 final var t = new Timer();
                 processDocsParallel(docIdsInChunk, occurrences);
                 System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries in "
                         + t.elapsedDescription(true));
-
-                // If the grouping has gotten too large, write it to file so we don't run out of memory.
-                boolean groupingTooLarge = occurrences.size() > bCfg.getGroupsPerChunk();
-                boolean isFinalRun = rep == bCfg.getRepetitions() - 1 && runEnd >= docIds.size();
-
-                if (isFinalRun && chunkFiles.isEmpty()) {
-                    // There's only one chunk. We can skip writing intermediate file and write result directly.
-                    tsvWriter.write(occurrences);
-                    occurrences = null;
-                } else if (groupingTooLarge || isFinalRun) {
-                    // Sort our map now.
-                    SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(occurrences);
-                    // Write chunk files, to be merged at the end
-                    var chunkFile = chunkWriter.write(sorted);
-                    chunkFiles.add(chunkFile);
-                    occurrences = null; // free memory, allocate new on next iteration
-                }
+                writeOccurences(docIds, occurrences, rep, runEnd, chunkFiles);
             }
         }
         return chunkFiles;
+    }
+
+    /**
+     * Write the occurrences to a file. Either a chunk file, or the final output file.
+     */
+    private void writeOccurences(
+            List<Integer> docIds, ConcurrentMap<GroupId, GroupCounts> occurrences, int rep, int runEnd,
+            List<File> chunkFiles) {
+        // If the grouping has gotten too large, write it to file so we don't run out of memory.
+        boolean groupingTooLarge = occurrences.size() > bCfg.getGroupsPerChunk();
+        boolean isFinalRun = rep == bCfg.getRepetitions() - 1 && runEnd >= docIds.size();
+
+        if (isFinalRun && chunkFiles.isEmpty()) {
+            // There's only one chunk. We can skip writing intermediate file and write result directly.
+            tsvWriter.write(occurrences);
+            occurrences.clear();
+        } else if (groupingTooLarge || isFinalRun) {
+            // Sort our map now.
+            SortedMap<GroupId, GroupCounts> sorted = new TreeMap<>(occurrences);
+            // Write chunk files, to be merged at the end
+            var chunkFile = chunkWriter.write(sorted);
+            chunkFiles.add(chunkFile);
+            // free memory, allocate new on next iteration
+            occurrences.clear();
+        }
     }
 
     /**
@@ -195,160 +191,15 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     @SuppressWarnings("DuplicatedCode")
     private void processDocsParallel(
             List<Integer> docIds,
-            ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences
+            ConcurrentMap<GroupId, GroupCounts> occurrences
     ) {
-
-        /*
-         * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
-         * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
-         */
-
-        // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        final List<String> docProperties = fCfg.metadataFields();
-
-        final int numAnnotations = aInfo.getAnnotations().size();
-
-        try (final BlockTimer c = BlockTimer.create("Top Level")) {
-
-            // Start actually calculating the requests frequencies.
-
-            // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
-            // calculate the frequencies.
-            //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
-            final String fieldName = aInfo.getAnnotations().get(0).field().name();
-            final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
-
-            // Determine all the fields we want to be able to load, so we don't need to load the entire document
-            final Set<String> fieldsToLoad = new HashSet<>();
-            fieldsToLoad.add(lengthTokensFieldName);
-            fieldsToLoad.addAll(docProperties);
-
-            final IndexReader reader = index.reader();
-
-            docIds.parallelStream().forEach(docId -> {
-
-                try {
-                    // Step 1: read all values for the to-be-grouped annotations for this document
-                    // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
-
-                    final Document doc = reader.document(docId, fieldsToLoad);
-                    final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
-                    final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
-
-                    try (BlockTimer ignored = c.child("Read annotations from forward index")) {
-                        for (final var annotation: aInfo.getAnnotations()) {
-                            final var afi = index.annotationForwardIndex(annotation);
-                            final int[] tokenValues = afi.getDocument(docId);
-                            tokenValuesPerAnnotation.add(tokenValues);
-
-                            // Look up sort values
-                            // NOTE: tried moving this to a TermsReader.arrayOfIdsToSortPosition() method,
-                            //       but that was slower...
-                            int docLength = tokenValues.length;
-                            int[] sortValues = new int[docLength];
-                            for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
-                                final int termId = tokenValues[tokenIndex];
-                                sortValues[tokenIndex] = aInfo.getTermsFor(annotation)
-                                        .idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
-                            }
-                            sortValuesPerAnnotation.add(sortValues);
-                        }
-
-                    }
-
-                    // Step 2: retrieve the to-be-grouped metadata for this document
-                    int docLength = Integer.parseInt(doc.get(lengthTokensFieldName))
-                            - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                    //final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), docId), 0, docLength);
-                    final String[] metadataValuesForGroup = !docProperties.isEmpty() ?
-                            new String[docProperties.size()] :
-                            null;
-                    for (int i = 0; i < docProperties.size(); ++i)
-                        metadataValuesForGroup[i] = doc.get(docProperties.get(i));
-                    final int metadataValuesHash = Arrays.hashCode(
-                            metadataValuesForGroup); // precompute, it's the same for all hits in document
-
-                    // now we have all values for all relevant annotations for this document
-                    // iterate again and pair up the nth entries for all annotations, then store that as a group.
-                    try (BlockTimer ignored = c.child("Group tokens")) {
-                        final var occsInDoc = getDocumentFrequencies(docLength, numAnnotations,
-                                tokenValuesPerAnnotation,
-                                sortValuesPerAnnotation, metadataValuesForGroup, metadataValuesHash);
-                        // Merge occurrences in this doc with global occurrences
-                        occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
-                            // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
-                            //       because we use ConcurrentSkipListMap, which may call the remapping function
-                            //       multiple times if there's potential concurrency issues.
-                            if (groupSize != null) {
-                                // Group existed already
-                                // Count hits and doc
-                                occ.hits += groupSize.hits;
-                                occ.docs += groupSize.docs;
-                            }
-                            return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                        }));
-                    }
-                } catch (IOException e) {
-                    throw BlackLabRuntimeException.wrap(e);
-                }
-            });
-        }
-    }
-
-    private Map<GroupIdHash, OccurrenceCounts> getDocumentFrequencies(int docLength, int numAnnotations,
-            List<int[]> tokenValuesPerAnnotation, List<int[]> sortValuesPerAnnotation, String[] metadataValuesForGroup,
-            int metadataValuesHash) {
-        // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-        Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
-        int ngramSize = fCfg.ngramSize();
-        final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTermsFor(aInfo.getCutoffAnnotation()) : null;
-        // We can't get an ngram for the last ngramSize-1 tokens
-        for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
-            int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
-            int[] sortPositions = new int[numAnnotations * ngramSize];
-
-            // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
-            // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
-            // so in essence it's also an "id", but a case-insensitive one.
-            // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
-            // that hashes the token ids instead of the sortpositions in that case.
-            for (int annotationIndex = 0, arrIndex = 0;
-                 annotationIndex < numAnnotations; ++annotationIndex, arrIndex += ngramSize) {
-                // get array slices of ngramSize
-                int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
-                System.arraycopy(tokenValues, tokenIndex, annotationValuesForThisToken, arrIndex,
-                        ngramSize);
-                int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
-                System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex,
-                        ngramSize);
+        docIds.parallelStream().forEach(docId -> {
+            try {
+                final var doc = new DocumentIndexBasedBuilder(docId, index, bCfg, fCfg, aInfo);
+                doc.process(occurrences, termFrequencies);
+            } catch (IOException e) {
+                throw BlackLabRuntimeException.wrap(e);
             }
-            final GroupIdHash groupId = new GroupIdHash(ngramSize, annotationValuesForThisToken,
-                    sortPositions, metadataValuesForGroup, metadataValuesHash);
-
-            // Only add if it is above the cutoff
-            if (fCfg.cutoff() != null) {
-                // Check if any of the ngrams tokens is below the cutoff
-                boolean skipGroup = false;
-                for (int j = 0; j < ngramSize; j++) {
-                    final int tokenID = groupId.getTokenIds()[j];
-                    final String token = cutoffTerms.get(tokenID);
-                    if (!termFrequencies.contains(token)) {
-                        skipGroup = true;
-                        break; // no need to check the rest of the ngram
-                    }
-                }
-                if (skipGroup)
-                    continue; // skip this group, it is below the cutoff
-            }
-
-            // Count occurrence in this doc
-            final var occ = occsInDoc.get(groupId);
-            if (occ == null) {
-                occsInDoc.put(groupId, new OccurrenceCounts(1, 1));
-            } else {
-                occ.hits++;
-            }
-        }
-        return occsInDoc;
+        });
     }
 }

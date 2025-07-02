@@ -18,8 +18,10 @@ public final class AnnotationInfo {
     private final List<Annotation> annotations;
     private final List<Terms> terms;
     private final Annotation cutoffAnnotation;
+    private final BlackLabIndex index;
 
     public AnnotationInfo(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
+        this.index = index;
         this.annotatedField = index.annotatedField(bCfg.getAnnotatedField());
         this.annotations = fCfg.annotations().stream().map(annotatedField::annotation).toList();
         this.terms = annotations.stream().map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
@@ -39,7 +41,11 @@ public final class AnnotationInfo {
         return annotations;
     }
 
-    public Terms getTermsFor(final Annotation annotation) {
+    public AnnotationForwardIndex getForwardIndexOf(final Annotation annotation) {
+        return index.annotationForwardIndex(annotation);
+    }
+
+    public Terms getTermsOf(final Annotation annotation) {
         return terms.get(annotations.indexOf(annotation));
     }
 

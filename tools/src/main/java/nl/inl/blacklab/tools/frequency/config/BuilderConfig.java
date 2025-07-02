@@ -190,7 +190,7 @@ public class BuilderConfig {
                 if (!af.annotations().exists(a))
                     throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a);
             }
-            for (String m: l.metadataFields()) {
+            for (String m: l.metadataFields().stream().map(MetadataConfig::name).toList()) {
                 if (!index.metadataFields().exists(m))
                     throw new IllegalArgumentException("Metadata field not found: " + m);
             }

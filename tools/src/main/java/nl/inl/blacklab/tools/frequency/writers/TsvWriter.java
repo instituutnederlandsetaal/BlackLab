@@ -15,8 +15,8 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
-import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.util.Timer;
 
 /**
@@ -54,7 +54,7 @@ public final class TsvWriter extends FreqListWriter {
      *
      * @param occurrences grouping result
      */
-    public void write(final Map<GroupIdHash, OccurrenceCounts> occurrences) {
+    public void write(final Map<GroupId, GroupCounts> occurrences) {
         final var t = new Timer();
         final var file = getFile();
         try (final var csv = getCsvWriter(file)) {
@@ -67,7 +67,7 @@ public final class TsvWriter extends FreqListWriter {
         System.out.println("  Wrote " + file + " in " + t.elapsedDescription(true));
     }
 
-     void writeGroupRecord(final CsvWriter csv, final GroupIdHash groupId, final int hits) throws IOException {
+     void writeGroupRecord(final CsvWriter csv, final GroupId groupId, final int hits) throws IOException {
         final List<String> record = new ArrayList<>();
         // - annotation values
         addAnnotationsToRecord(groupId, record);
@@ -78,7 +78,7 @@ public final class TsvWriter extends FreqListWriter {
         csv.writeRecord(record);
     }
 
-    private void addAnnotationsToRecord(final GroupIdHash groupId, final List<String> record) {
+    private void addAnnotationsToRecord(final GroupId groupId, final List<String> record) {
         int[] tokenIds = groupId.getTokenIds();
         // for each annotation construct a string for the ngram
         int ngramSize = groupId.getNgramSize();
@@ -132,7 +132,7 @@ public final class TsvWriter extends FreqListWriter {
         return String.join(" ", tokenList);
     }
 
-    private static void addMetadataToRecord(final GroupIdHash groupId, final List<String> record) {
+    private static void addMetadataToRecord(final GroupId groupId, final List<String> record) {
         String[] metadataValues = groupId.getMetadataValues();
         if (metadataValues != null)
             Collections.addAll(record, metadataValues);

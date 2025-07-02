@@ -10,8 +10,8 @@ import de.siegmar.fastcsv.writer.CsvWriter;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupIdHash;
-import nl.inl.blacklab.tools.frequency.data.OccurrenceCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.util.Timer;
 
 public final class ChunkedTsvWriter extends FreqListWriter {
@@ -40,8 +40,8 @@ public final class ChunkedTsvWriter extends FreqListWriter {
 
             // These hold the index, key and value for the current group from every chunk file
             int[] index = new int[n];
-            GroupIdHash[] key = new GroupIdHash[n];
-            OccurrenceCounts[] value = new OccurrenceCounts[n];
+            GroupId[] key = new GroupId[n];
+            GroupCounts[] value = new GroupCounts[n];
 
             try {
                 int chunksExhausted = 0;
@@ -52,8 +52,8 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                     numGroups[i] = (int) fory.deserialize(fis);
                     // Initialize index, key and value with first group from each file
                     index[i] = 0;
-                    key[i] = numGroups[i] > 0 ? (GroupIdHash) fory.deserialize(fis) : null;
-                    value[i] = numGroups[i] > 0 ? (OccurrenceCounts) fory.deserialize(fis) : null;
+                    key[i] = numGroups[i] > 0 ? (GroupId) fory.deserialize(fis) : null;
+                    value[i] = numGroups[i] > 0 ? (GroupCounts) fory.deserialize(fis) : null;
                     if (numGroups[i] == 0)
                         chunksExhausted++;
                 }
@@ -62,7 +62,7 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                 // until we run out of groups.
                 while (chunksExhausted < n) {
                     // Find lowest key value; we will merge that group next
-                    GroupIdHash nextGroupToMerge = null;
+                    GroupId nextGroupToMerge = null;
                     for (int j = 0; j < n; j++) {
                         if (nextGroupToMerge == null || key[j] != null && key[j].compareTo(nextGroupToMerge) < 0)
                             nextGroupToMerge = key[j];
@@ -79,8 +79,8 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                             // Advance to next group in this chunk
                             index[j]++;
                             boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
-                            key[j] = noMoreGroupsInChunk ? null : (GroupIdHash) fory.deserialize(chunks[j]);
-                            value[j] = noMoreGroupsInChunk ? null : (OccurrenceCounts) fory.deserialize(chunks[j]);
+                            key[j] = noMoreGroupsInChunk ? null : (GroupId) fory.deserialize(chunks[j]);
+                            value[j] = noMoreGroupsInChunk ? null : (GroupCounts) fory.deserialize(chunks[j]);
                             if (noMoreGroupsInChunk)
                                 chunksExhausted++;
                         }
