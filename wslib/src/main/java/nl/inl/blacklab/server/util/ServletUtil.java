@@ -33,7 +33,7 @@ public class ServletUtil {
      */
     public static boolean getParameter(HttpServletRequest request, String name, boolean defaultValue) {
         String defStr = defaultValue ? "true" : "false";
-        String value = getParameter(request, name, defStr);
+        String value = getParameterSafe(request, name, defStr);
         if (value.toLowerCase().matches("true|yes|1"))
             return true;
         if (value.toLowerCase().matches("false|no|0"))
@@ -54,8 +54,26 @@ public class ServletUtil {
      */
     public static String getParameter(HttpServletRequest request, String name, String defaultValue) {
         String value = request.getParameter(name);
-        if (value == null || value.length() == 0)
+        if (value == null || value.isEmpty())
             value = defaultValue; // default action
+        return value;
+    }
+
+    /**
+     * Get a parameter value, but replace line endings with underscores.
+     *
+     * This is to make it safe for logging. Only use this method if the parameter
+     * does not need to contain line endings, which should be most of them.
+     *
+     * @param request the request object
+     * @param name name of the parameter
+     * @param defaultValue default value
+     * @return value of the paramater
+     */
+    public static String getParameterSafe(HttpServletRequest request, String name, String defaultValue) {
+        String value = getParameter(request, name, defaultValue);
+        if (value != null)
+            value = value.replaceAll("[\n\r]", "_");
         return value;
     }
 
