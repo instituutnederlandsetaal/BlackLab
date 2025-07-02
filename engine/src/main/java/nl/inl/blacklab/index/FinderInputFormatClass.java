@@ -1,5 +1,12 @@
 package nl.inl.blacklab.index;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
+
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
@@ -13,28 +20,31 @@ public class FinderInputFormatClass implements FinderInputFormat {
     public InputFormat find(String formatIdentifier) {
         // Is it a fully qualified class name?
         Class<? extends DocIndexerLegacy> docIndexerClass = null;
-        try {
-            docIndexerClass = getDocIndexerClass(formatIdentifier);
-        } catch (Exception e1) {
-            try {
-                // No. Is it a class in the BlackLab indexers package?
-                docIndexerClass = getDocIndexerClass("nl.inl.blacklab.indexers." + formatIdentifier);
-            } catch (Exception e) {
-                // Couldn't be resolved. That's okay, maybe another factory will support this key.
+        docIndexerClass = getLegacyDocIndexers().get(formatIdentifier);
+        return docIndexerClass == null ? null : DocumentFormats.add(formatIdentifier, docIndexerClass);
+    }
+
+    private static Map<String, Class<? extends DocIndexerLegacy>> legacyDocIndexers = null;
+
+    /**
+     * Find all legacy DocIndexers and store them in a map.
+     * @return a map of format identifiers to DocIndexerLegacy classes
+     */
+    private synchronized static Map<String, Class<? extends  DocIndexerLegacy>> getLegacyDocIndexers() {
+        if (legacyDocIndexers == null) {
+            Reflections reflections = new Reflections("", new SubTypesScanner(false));
+            for (Class<? extends  DocIndexerLegacy> cl: reflections.getSubTypesOf(DocIndexerLegacy.class)) {
+                String qualifiedName = cl.getName();
+                legacyDocIndexers.put(qualifiedName, cl);
+                if (qualifiedName.startsWith("nl.inl.blacklab.indexers."))
+                    legacyDocIndexers.put(cl.getSimpleName(), cl);
             }
         }
-        if (docIndexerClass != null) {
-            return DocumentFormats.add(formatIdentifier, docIndexerClass);
-        }
-        return null;
+        return legacyDocIndexers;
     }
 
     private static Class<? extends DocIndexerLegacy> getDocIndexerClass(String formatIdentifier) throws ClassNotFoundException {
-        Class<?> aClass = Class.forName(formatIdentifier);
-        if (!DocIndexerLegacy.class.isAssignableFrom(aClass)) {
-            throw new BlackLabRuntimeException("Class " + formatIdentifier + " is not a DocIndexer");
-        }
-        return (Class<? extends DocIndexerLegacy>) aClass;
+        return getLegacyDocIndexers().get(formatIdentifier);
     }
 
 }
