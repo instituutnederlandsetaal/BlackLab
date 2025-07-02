@@ -6,11 +6,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -159,6 +161,42 @@ public class FileUtil {
         });
         if (!dir.delete() && throwOnError)
             throw new RuntimeException("Could not delete directory: " + dir);
+    }
+
+    /** Check if a file is in a given directory or one of its subdirectories.
+     *
+     * @param file the file to check
+     * @param directory the directory to check against
+     * @return true if the file is in the directory or one of its subdirectories, false otherwise
+     */
+    public static boolean isFileInDirectory(File file, File directory) {
+        File parent = file.getParentFile();
+        boolean ok = false;
+        while (parent != null) {
+            if (parent.equals(directory)) {
+                ok = true;
+                break;
+            }
+            parent = parent.getParentFile();
+        }
+        return ok;
+    }
+
+    /**
+     * Create a temporary file in the java.io.tmpdir and ensure it is
+     * actually in that directory.
+     *
+     * @param fileName (part of) name of temp file
+     * @return the temporary file
+     * @throws IOException if an error occurs while creating the file
+     */
+    public static File createTempFileSafe(String fileName) throws IOException {
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        File file = Files.createTempFile(tempDir.toPath(), "", fileName).toFile();
+        boolean ok = isFileInDirectory(file, tempDir);
+        if (!ok)
+            throw new BlackLabRuntimeException("Uploaded file not in temp dir: " + file.getName());
+        return file;
     }
 
     /**
