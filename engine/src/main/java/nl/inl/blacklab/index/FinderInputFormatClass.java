@@ -1,6 +1,7 @@
 package nl.inl.blacklab.index;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,7 @@ public class FinderInputFormatClass implements FinderInputFormat {
      */
     private synchronized static Map<String, Class<? extends  DocIndexerLegacy>> getLegacyDocIndexers() {
         if (legacyDocIndexers == null) {
+            legacyDocIndexers = new HashMap<>();
             Reflections reflections = new Reflections("", new SubTypesScanner(false));
             for (Class<? extends  DocIndexerLegacy> cl: reflections.getSubTypesOf(DocIndexerLegacy.class)) {
                 String qualifiedName = cl.getName();
