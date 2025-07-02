@@ -662,7 +662,7 @@ public class WebserviceOperations {
         final String[] indexErr = { null }; // array because we set it from closure
         indexer.setListener(new IndexListenerReportConsole() {
             @Override
-            public boolean errorOccurred(Throwable e, String path, File f) {
+            public synchronized boolean errorOccurred(Throwable e, String path, File f) {
                 super.errorOccurred(e, path, f);
                 indexErr[0] = e.getMessage() + " in " + path;
                 return false; // Don't continue indexing
@@ -736,19 +736,17 @@ public class WebserviceOperations {
     }
 
     public static ResultIndexStatus resultIndexStatus(Index index, User user) {
-        synchronized (index) {
-            IndexListener indexerListener = index.getIndexerListener();
-            long files = 0;
-            long docs = 0;
-            long tokens = 0;
-            if (indexerListener != null) {
-                files = indexerListener.getFilesProcessed();
-                docs = indexerListener.getDocsDone();
-                tokens = indexerListener.getTokensProcessed();
-            }
-            boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
-            return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
+        IndexListener indexerListener = index.getIndexerListener();
+        long files = 0;
+        long docs = 0;
+        long tokens = 0;
+        if (indexerListener != null) {
+            files = indexerListener.getFilesProcessed();
+            docs = indexerListener.getDocsDone();
+            tokens = indexerListener.getTokensProcessed();
         }
+        boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
+        return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
     }
 
     public static ResultDocSnippet docSnippet(WebserviceParams params) {
