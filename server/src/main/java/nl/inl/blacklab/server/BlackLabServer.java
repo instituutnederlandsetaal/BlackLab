@@ -222,9 +222,14 @@ public class BlackLabServer extends HttpServlet {
             response.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
             response.setContentType(outputType.getContentType());
             optAddAllowOriginHeader(response);
-            Writer out = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING);
-            out.write(es.getOutput());
-            out.flush();
+            try {
+                Writer out = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING);
+                out.write(es.getOutput());
+                out.flush();
+            } catch (IOException ex) {
+                logger.error("Error writing response for OPTIONS request", ex);
+                throw new RuntimeException("Unable to write error response");
+            }
             return;
         }
         String allowOrigin = optAddAllowOriginHeader(response);
