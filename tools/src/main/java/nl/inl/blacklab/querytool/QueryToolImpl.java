@@ -351,7 +351,7 @@ public class QueryToolImpl {
             nextPage();
             break;
         case "page":
-            showPage(parseInt(arguments, 1) - 1);
+            showPage((long)parseInt(arguments, 1) - 1);
             break;
         case "pagesize":
             resultsPerPage = parseInt(arguments, 1);

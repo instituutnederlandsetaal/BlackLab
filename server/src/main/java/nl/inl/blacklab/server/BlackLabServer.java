@@ -72,12 +72,12 @@ public class BlackLabServer extends HttpServlet {
     public static final String PARAM_ESCAPE_XML_FRAGMENT = "escapexmlfragment";
 
     /** Manages all our searches */
-    private SearchManager searchManager;
+    private static SearchManager searchManager;
 
-    private RequestInstrumentationProvider requestInstrumentationProvider = null;
+    private static RequestInstrumentationProvider requestInstrumentationProvider = null;
 
     /** Default output type to use if none given. */
-    private DataFormat defaultOutputType;
+    private static DataFormat defaultOutputType;
 
     @Override
     public void init() throws ServletException {
@@ -159,7 +159,7 @@ public class BlackLabServer extends HttpServlet {
 
     public synchronized RequestInstrumentationProvider getInstrumentationProvider() {
         if (requestInstrumentationProvider == null) {
-            BLSConfig config = searchManager.config();
+            BLSConfig config = getSearchManager().config();
             requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
         }
         return requestInstrumentationProvider;
@@ -401,12 +401,12 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    public void destroy() {
-
+    public synchronized void destroy() {
         // Stops the load management thread
-        if (searchManager != null)
+        if (searchManager != null) {
             searchManager.cleanup();
-
+            searchManager = null;
+        }
         super.destroy();
     }
 
@@ -424,7 +424,7 @@ public class BlackLabServer extends HttpServlet {
                 + "Licensed under the Apache License v2.\n";
     }
 
-    public SearchManager getSearchManager() {
+    public synchronized SearchManager getSearchManager() {
         return searchManager;
     }
 }
