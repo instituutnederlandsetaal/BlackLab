@@ -183,7 +183,7 @@ public class FileUtil {
      */
     public static File createTempFileSafe(String fileName) throws IOException {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File file = Files.createTempFile(tempDir.toPath(), "", fileName).toFile();
+        File file = new File(tempDir, (int)(Math.random() * Integer.MAX_VALUE) + "_" + fileName);
         boolean ok = isFileInDirectory(file, tempDir);
         if (!ok)
             throw new BlackLabRuntimeException("Uploaded file not in temp dir: " + file.getName());
