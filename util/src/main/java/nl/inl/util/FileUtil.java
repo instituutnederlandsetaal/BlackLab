@@ -13,6 +13,7 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -183,7 +184,8 @@ public class FileUtil {
      */
     public static File createTempFileSafe(String fileName) throws IOException {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        File file = new File(tempDir, (int)(Math.random() * Integer.MAX_VALUE) + "_" + fileName);
+        SecureRandom random = new SecureRandom();
+        File file = new File(tempDir, random.nextInt(Integer.MAX_VALUE) + "_" + fileName);
         boolean ok = isFileInDirectory(file, tempDir);
         if (!ok)
             throw new BlackLabRuntimeException("Uploaded file not in temp dir: " + file.getName());
