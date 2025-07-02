@@ -228,7 +228,6 @@ public class BlackLabServer extends HttpServlet {
                 out.flush();
             } catch (IOException ex) {
                 logger.error("Error writing response for OPTIONS request", ex);
-                throw new RuntimeException("Unable to write error response");
             }
             return;
         }
