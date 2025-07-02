@@ -187,6 +187,8 @@ public class FileUtil {
         boolean ok = isFileInDirectory(file, tempDir);
         if (!ok)
             throw new BlackLabRuntimeException("Uploaded file not in temp dir: " + file.getName());
+        if (!file.createNewFile())
+            throw new BlackLabRuntimeException("Could not create temp file: " + file.getName());
         return file;
     }
 
