@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -44,6 +45,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
      * strings, such as a word, or the value of a metadata field.
      */
     private static final int MAX_CHARACTER_CONTENT_CAPTURE_LENGTH = 4000;
+
+    /** Whitespace and/or punctuation at start or end */
+    protected static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("(^[\\p{Punct}\\p{javaSpaceChar}]+)|([\\p{Punct}\\p{javaSpaceChar}]+$)");
 
     private final HookableSaxHandler hookableHandler = new HookableSaxHandler();
 

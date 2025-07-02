@@ -32,9 +32,6 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         return "An XML format for the description of text OCR and layout information of pages for digitized material.";
     }
 
-    /** Whitespace and/or punctuation at start or end */
-    private static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("^[\\p{Punct}\\p{javaSpaceChar}]+|[\\p{Punct}\\p{javaSpaceChar}]+$");
-
     /**
      * Remove any punctuation and whitespace at the start and end of input.
      *
