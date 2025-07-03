@@ -103,7 +103,7 @@ public class FileUtil {
      * @param inputFile the file to read
      * @return list of lines
      */
-    public static List<String> readLines(File inputFile) {
+    public static List<String> readLines(File inputFile) throws IOException {
         return readLines(inputFile, DEFAULT_ENCODING);
     }
 
@@ -114,19 +114,15 @@ public class FileUtil {
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return list of lines
      */
-    public static List<String> readLines(File inputFile, Charset encoding) {
-        try {
-            List<String> result = new ArrayList<>();
-            try (BufferedReader in = openForReading(inputFile, encoding)) {
-                String line;
-                while ((line = in.readLine()) != null) {
-                    result.add(StringUtil.trimWhitespace(line));
-                }
+    public static List<String> readLines(File inputFile, Charset encoding) throws IOException {
+        List<String> result = new ArrayList<>();
+        try (BufferedReader in = openForReading(inputFile, encoding)) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                result.add(StringUtil.trimWhitespace(line));
             }
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
+        return result;
     }
 
     /**
@@ -134,7 +130,7 @@ public class FileUtil {
      *
      * @param dir directory tree to delete.
      */
-    public static void deleteTree(File dir) {
+    public static void deleteTree(File dir) throws IOException {
         deleteTree(dir, false);
     }
 
@@ -144,21 +140,21 @@ public class FileUtil {
      * @param dir directory tree to delete.
      * @param throwOnError if true, throw an exception if a file could not be deleted.
      */
-    public static void deleteTree(File dir, boolean throwOnError) {
+    public static void deleteTree(File dir, boolean throwOnError) throws IOException {
         // Recursively delete this temp dir
         processTree(dir, new FileTask() {
             @Override
-            public void process(File f) {
+            public void process(File f) throws IOException {
                 if (!f.delete() && throwOnError) {
                     if (f.isDirectory())
-                        throw new RuntimeException("Could not delete directory: " + f);
+                        throw new IOException("Could not delete directory: " + f);
                     else
-                        throw new RuntimeException("Could not delete file: " + f);
+                        throw new IOException("Could not delete file: " + f);
                 }
             }
         });
         if (!dir.delete() && throwOnError)
-            throw new RuntimeException("Could not delete directory: " + dir);
+            throw new IOException("Could not delete directory: " + dir);
     }
 
     /** Check if a file is in a given directory or one of its subdirectories.
@@ -185,9 +181,9 @@ public class FileUtil {
         File file = new File(tempDir, random.nextInt(Integer.MAX_VALUE) + "_" + fileName);
         boolean ok = isFileInDirectory(file, tempDir);
         if (!ok)
-            throw new RuntimeException("Uploaded file not in temp dir: " + file.getName());
+            throw new IllegalStateException("Uploaded file not in temp dir: " + file.getName());
         if (!file.createNewFile())
-            throw new RuntimeException("Could not create temp file: " + file.getName());
+            throw new IOException("Could not create temp file: " + file.getName());
         return file;
     }
 
@@ -200,7 +196,7 @@ public class FileUtil {
          *
          * @param f the file to process
          */
-        public abstract void process(File f);
+        public abstract void process(File f) throws IOException;
     }
 
     /**
@@ -212,7 +208,7 @@ public class FileUtil {
      * @param root the directory to start in (all subdirs are processed)
      * @param task the task to execute for every file
      */
-    public static void processTree(File root, FileTask task) {
+    public static void processTree(File root, FileTask task) throws IOException {
         if (!root.isDirectory())
             throw new IllegalArgumentException("FileUtil.processTree: must be called with a directory! "
                     + root);
@@ -237,7 +233,7 @@ public class FileUtil {
      * @param recurseSubdirs whether or not to process subdirectories
      * @param task the task to execute for every file
      */
-    public static void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) {
+    public static void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) throws IOException {
         Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
         for (File file : listFilesSorted(dir)) {
             if (file.isDirectory()) {
@@ -339,7 +335,7 @@ public class FileUtil {
     public static File[] listFilesSorted(File dir) {
         File[] files = dir.listFiles();
         if (files == null)
-            throw new RuntimeException("Error listing in directory: " + dir);
+            throw new IllegalArgumentException("Error listing in directory: " + dir);
         Arrays.sort(files, LIST_FILES_COMPARATOR);
         return files;
     }

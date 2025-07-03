@@ -13,6 +13,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -61,7 +62,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_ARRAY)
-                throw new RuntimeException("Expected START_ARRAY, found " + token);
+                throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
 
             BigList<Hit> hits = new ObjectBigArrayBigList<>();
             while (true) {
@@ -112,7 +113,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<DocInfo> docInfos = new ArrayList<>();
             while (true) {
@@ -121,7 +122,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 String pid = parser.getCurrentName();
                 if (pid.equals("metadataFieldGroups")) {
                     // Skip this part, which doesn't really belong but ended up here unfortunately.
@@ -138,25 +139,25 @@ public class HitsResults implements Cloneable, EntityWithSummary {
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected START_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
                 while (true) {
                     token = parser.nextToken();
                     if (token == JsonToken.END_OBJECT)
                         break;
 
                     if (token != JsonToken.FIELD_NAME)
-                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                        throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                     String fieldName = parser.getCurrentName();
                     token = parser.nextToken();
                     if (token == JsonToken.VALUE_NUMBER_INT) {
                         // Special lengthInTokens setting?
                         if (!fieldName.equals("lengthInTokens"))
-                            throw new RuntimeException("Unexpected int in metadata");
+                            throw new ErrorReadingResponse("Unexpected int in metadata");
                         docInfo.lengthInTokens = parser.getValueAsInt();
                     } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
                         // Special mayView setting?
                         if (!fieldName.equals("mayView"))
-                            throw new RuntimeException("Unexpected boolean in metadata");
+                            throw new ErrorReadingResponse("Unexpected boolean in metadata");
                         docInfo.mayView = parser.getValueAsBoolean();
                     } else if (token == JsonToken.START_ARRAY) {
                         // A list of metadata values

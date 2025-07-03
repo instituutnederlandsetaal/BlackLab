@@ -20,6 +20,7 @@ import org.apache.lucene.index.IndexReader;
 import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BlackLabConfig;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -322,7 +323,7 @@ public final class BlackLab {
             }
             return value == null ? "UNKNOWN" : value;
         } catch (IOException e) {
-            throw new RuntimeException("Error reading '" + key + "' from manifest", e);
+            throw new InvalidConfiguration("Error reading '" + key + "' from manifest", e);
         }
     }
     

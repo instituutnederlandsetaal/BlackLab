@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.input.ReaderInputStream;
 
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
+
 public class FileReferenceChars implements FileReference {
 
     String path;
@@ -41,7 +43,7 @@ public class FileReferenceChars implements FileReference {
             ByteBuffer byteBuffer = encoder.encode(CharBuffer.wrap(contents));
             return byteBuffer.array();
         } catch (CharacterCodingException e) {
-            throw new RuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 

@@ -22,6 +22,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -302,7 +303,7 @@ class TermsWriter implements Terms {
 
     public void setMaxBlockSize(int maxBlockSize) {
         if ((long) maxBlockSize > ((long) TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE))
-            throw new RuntimeException("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE);
+            throw new InvalidIndex("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE);
         this.maxBlockSize = maxBlockSize;
     }
 

@@ -60,7 +60,7 @@ public class Annotation implements Cloneable {
         try {
             return (Annotation)super.clone();
         } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
+            throw new UnsupportedOperationException(e);
         }
     }
 

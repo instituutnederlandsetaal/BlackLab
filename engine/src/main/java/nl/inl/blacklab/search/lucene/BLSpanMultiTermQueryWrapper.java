@@ -94,7 +94,7 @@ public class BLSpanMultiTermQueryWrapper<Q extends MultiTermQuery>
                 or.setClausesAreSimpleTermsInSameAnnotation(true);
                 or.setField(getRealField());
             } else {
-                throw new RuntimeException("BLSpanMultiTermQueryWrapper rewritten to " +
+                throw new IllegalStateException("BLSpanMultiTermQueryWrapper rewritten to " +
                         result.getClass().getSimpleName() + ", getField() == null");
             }
         }

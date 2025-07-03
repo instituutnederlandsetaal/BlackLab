@@ -107,7 +107,7 @@ class SpansNGrams extends BLSpans {
                 currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
-                throw new RuntimeException("currentDoc > maxDoc!!");
+                throw new IllegalStateException("currentDoc > maxDoc!!");
             if (currentDoc == maxDoc) {
                 currentDoc = NO_MORE_DOCS;
                 currentStart = currentEnd = NO_MORE_POSITIONS;

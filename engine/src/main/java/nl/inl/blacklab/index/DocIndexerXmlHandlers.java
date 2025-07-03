@@ -524,7 +524,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                             DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalArgumentException("Could not instantiate metadata fetcher class", e);
                 }
             }
         }

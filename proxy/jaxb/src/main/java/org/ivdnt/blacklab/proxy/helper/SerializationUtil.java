@@ -114,7 +114,7 @@ public class SerializationUtil {
     public static List<String> readStringList(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_ARRAY)
-            throw new RuntimeException("Expected START_ARRAY, found " + token);
+            throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
 
         List<String> list = new ArrayList<>();
         while (true) {
@@ -122,7 +122,7 @@ public class SerializationUtil {
             if (token == JsonToken.END_ARRAY)
                 break;
             if (token != JsonToken.VALUE_STRING)
-                throw new RuntimeException("Expected END_ARRAY or VALUE_STRING, found " + token);
+                throw new ErrorReadingResponse("Expected END_ARRAY or VALUE_STRING, found " + token);
             list.add(parser.getValueAsString());
         }
         return list;
@@ -136,12 +136,12 @@ public class SerializationUtil {
                 break;
 
             if (token != JsonToken.FIELD_NAME)
-                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
             String annotationName = parser.getCurrentName();
 
             token = parser.nextToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             Annotation annotation = deserializationContext.readValue(parser, Annotation.class);
             annotation.name = annotationName;
@@ -153,7 +153,7 @@ public class SerializationUtil {
     public static Map<String, String> readStringMap(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
-            throw new RuntimeException("Expected START_OBJECT, found " + token);
+            throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
         Map<String, String> result = new LinkedHashMap<>();
         while (true) {
@@ -162,12 +162,12 @@ public class SerializationUtil {
                 break;
 
             if (token != JsonToken.FIELD_NAME)
-                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
             String key = parser.getCurrentName();
 
             token = parser.nextToken();
             if (token != JsonToken.VALUE_STRING)
-                throw new RuntimeException("Expected VALUE_STRING, found " + token);
+                throw new ErrorReadingResponse("Expected VALUE_STRING, found " + token);
             String value = parser.getValueAsString();
 
             result.put(key, value);
@@ -178,7 +178,7 @@ public class SerializationUtil {
     public static Map<String, Integer> readIntegerMap(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
-            throw new RuntimeException("Expected START_OBJECT, found " + token);
+            throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
         Map<String, Integer> result = new LinkedHashMap<>();
         while (true) {
@@ -187,7 +187,7 @@ public class SerializationUtil {
                 break;
 
             if (token != JsonToken.FIELD_NAME)
-                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
             String key = parser.getCurrentName();
 
             token = parser.nextToken();
@@ -201,7 +201,7 @@ public class SerializationUtil {
                 value = Integer.parseInt(strValue);
                 break;
             default:
-                throw new RuntimeException("Expected VALUE_NUMBER_INT or VALUE_STRING, found " + token);
+                throw new ErrorReadingResponse("Expected VALUE_NUMBER_INT or VALUE_STRING, found " + token);
             }
 
             result.put(key, value);
@@ -212,7 +212,7 @@ public class SerializationUtil {
     public static Map<String, Long> readLongMap(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
-            throw new RuntimeException("Expected START_OBJECT, found " + token);
+            throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
         Map<String, Long> result = new LinkedHashMap<>();
         while (true) {
@@ -221,7 +221,7 @@ public class SerializationUtil {
                 break;
 
             if (token != JsonToken.FIELD_NAME)
-                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
             String key = parser.getCurrentName();
 
             token = parser.nextToken();
@@ -231,7 +231,7 @@ public class SerializationUtil {
                 value = parser.getValueAsLong();
                 break;
             default:
-                throw new RuntimeException("Expected VALUE_NUMBER_INT, found " + token);
+                throw new ErrorReadingResponse("Expected VALUE_NUMBER_INT, found " + token);
             }
 
             result.put(key, value);
@@ -263,7 +263,7 @@ public class SerializationUtil {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             Map<String, List<FacetValue>> facets = new LinkedHashMap<>();
             while (true) {
@@ -271,18 +271,18 @@ public class SerializationUtil {
                 if (token == JsonToken.END_OBJECT)
                     break;
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected FIELD_NAME or END_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected FIELD_NAME or END_OBJECT, found " + token);
                 String fieldName = parser.getCurrentName();
                 token = parser.nextToken();
                 if (token != JsonToken.START_ARRAY)
-                    throw new RuntimeException("Expected START_ARRAY, found " + token);
+                    throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
                 List<FacetValue> values = new ArrayList<>();
                 while (true) {
                     token = parser.nextToken();
                     if (token == JsonToken.END_ARRAY)
                         break;
                     if (token != JsonToken.START_OBJECT)
-                        throw new RuntimeException("Expected START_OBJECT, found " + token);
+                        throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
                     values.add(deserializationContext.readValue(parser, FacetValue.class));
                 }
                 facets.put(fieldName, values);

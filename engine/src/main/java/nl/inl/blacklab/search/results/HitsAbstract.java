@@ -216,7 +216,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new RuntimeException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
+            throw new UnsupportedOperationException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
         }
 
         // We can later provide an optimized version that uses a HitsSampleCopy or some such

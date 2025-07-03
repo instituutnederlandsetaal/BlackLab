@@ -13,6 +13,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.DocWriter;
@@ -245,7 +246,7 @@ public class DocIndexerExample extends DocIndexerBase {
                 startDocument();
                 inDoc = true;
             } else {
-                throw new RuntimeException("Command " + command + " cannot appear at top level");
+                throw new InvalidInputFormatConfig("Command " + command + " cannot appear at top level");
             }
         }
     }
@@ -315,7 +316,7 @@ public class DocIndexerExample extends DocIndexerBase {
             break;
 
         default:
-            throw new RuntimeException("Command " + command + " cannot appear inside annotated field block");
+            throw new InvalidInputFormatConfig("Command " + command + " cannot appear inside annotated field block");
         }
     }
 
@@ -362,7 +363,7 @@ public class DocIndexerExample extends DocIndexerBase {
             break;
 
         default:
-            throw new RuntimeException("Command " + command + " cannot appear inside document");
+            throw new InvalidInputFormatConfig("Command " + command + " cannot appear inside document");
         }
     }
 

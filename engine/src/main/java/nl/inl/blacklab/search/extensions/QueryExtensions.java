@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -170,7 +171,7 @@ public class QueryExtensions {
         try {
             extClass.getConstructor().newInstance().register();
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -299,7 +300,7 @@ public class QueryExtensions {
             }
             if (newArgs.get(i) == null) {
                 // Still null, so no default value available
-                throw new RuntimeException("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
+                throw new InvalidQuery("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
             }
 
             // Check argument type
@@ -310,12 +311,12 @@ public class QueryExtensions {
                 default -> true;
             };
             if (wrongType)
-                throw new RuntimeException("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
+                throw new InvalidQuery("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
                         + ", got " + ArgType.typeOf(newArgs.get(i)));
         }
 
         if (!funcInfo.isVarArg && newArgs.size() != funcInfo.argTypes.size())
-            throw new RuntimeException("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
+            throw new InvalidQuery("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
         return funcInfo.func.apply(context.queryInfo(), context, newArgs);
     }
 

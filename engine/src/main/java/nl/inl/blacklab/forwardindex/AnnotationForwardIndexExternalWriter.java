@@ -23,6 +23,7 @@ import org.apache.lucene.index.IndexReader;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -117,16 +118,16 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             if (!create)
                 throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
             if (!dir.mkdir())
-                throw new RuntimeException("Could not create dir: " + dir);
+                throw new InvalidIndex("Could not create dir: " + dir);
         }
 
         if (create) {
             if (tokensFile.exists() && !tokensFile.delete())
-                throw new RuntimeException("Could not delete file: " + tokensFile);
+                throw new InvalidIndex("Could not delete file: " + tokensFile);
             if (tocFile.exists() && !tocFile.delete())
-                throw new RuntimeException("Could not delete file: " + tocFile);
+                throw new InvalidIndex("Could not delete file: " + tocFile);
             if (termsFile.exists() && !termsFile.delete())
-                throw new RuntimeException("Could not delete file: " + termsFile);
+                throw new InvalidIndex("Could not delete file: " + termsFile);
         }
         try {
             if (tocFile.exists()) {
@@ -136,14 +137,14 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             } else {
                 terms = TermsExternalUtil.openForWriting(collators, null);
                 if (!tokensFile.createNewFile())
-                    throw new RuntimeException("Could not create file: " + tokensFile);
+                    throw new InvalidIndex("Could not create file: " + tokensFile);
                 tocModified = true;
             }
             // Tricks to speed up reading
             // Index mode. Open for writing.
             openTokensFileForWriting();
         } catch (IOException e) {
-            throw BlackLabException.wrapRuntime(e);
+            throw new InvalidIndex(e);
         }
 
         if (create) {
@@ -221,9 +222,9 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             throw BlackLabException.wrapRuntime(e);
         }
         if (termsFile.exists() && !termsFile.delete())
-            throw new RuntimeException("Could not delete file: " + termsFile);
+            throw new InvalidIndex("Could not delete file: " + termsFile);
         if (tocFile.exists() && !tocFile.delete())
-            throw new RuntimeException("Could not delete file: " + tocFile);
+            throw new InvalidIndex("Could not delete file: " + tocFile);
         if (toc != null)
             toc.clear();
         if (deletedTocEntries != null)
@@ -449,7 +450,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 tokenIdsIndex++;
             }
             if (tokenIdsIndex != numberOfTokens)
-                throw new RuntimeException(
+                throw new InvalidIndex(
                         "tokenIdsIndex != numberOfTokens (" + tokenIdsIndex + " != " + numberOfTokens + ")");
             writeBuffer.put(tokenIds);
 
@@ -510,7 +511,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
                 int bytesRead = writeTokensFileChannel.read(buffer, offset * Integer.BYTES);
                 if (bytesRead < bytesToRead) {
-                    throw new RuntimeException("Not enough bytes read: " + bytesRead
+                    throw new InvalidIndex("Not enough bytes read: " + bytesRead
                             + " < " + bytesToRead);
                 }
                 ((Buffer)buffer).position(0);

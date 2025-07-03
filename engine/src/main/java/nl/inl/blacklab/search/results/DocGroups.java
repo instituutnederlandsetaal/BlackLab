@@ -57,7 +57,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
         super(queryInfo);
 
         if (groups.size() > MAX_NUMBER_OF_GROUPS)
-            throw new RuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+            throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
         this.groupBy = groupBy;
         this.windowStats = windowStats;

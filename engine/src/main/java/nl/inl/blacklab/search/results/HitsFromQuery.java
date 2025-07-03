@@ -214,17 +214,15 @@ public class HitsFromQuery extends HitsMutable {
                     p.cancel(true);
             }
             throw new InterruptedSearch(e);
-        } catch (ExecutionException e) { 
-            // ExecutionException always wraps another exception, 
-            // but that may just be a RuntimeException wrapping some kind of checked exception (ioexception, interruptedexception, etc.)
-            // we're only interested in the actual deepest cause.
-            Throwable cause = e;
-            while (cause.getCause() != null) cause = cause.getCause(); 
-            throw new RuntimeException(cause);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException rte)
+                throw rte;
+            else
+                throw new IllegalStateException(e.getCause());
         } catch (Exception e) {
             // something unforseen happened in our thread
             // Should generally never happen unless there's a bug or something catastrophic happened.
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         } finally {
             // Don't do this unless we're the thread that's actually using the SpansReaders.
             if (hasLock) {

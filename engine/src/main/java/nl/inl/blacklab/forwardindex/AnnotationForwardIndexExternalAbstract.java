@@ -5,6 +5,7 @@ import java.text.Collator;
 
 import org.apache.lucene.index.IndexReader;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
@@ -81,7 +82,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
                 throw new IllegalArgumentException(
                         "Annotation should have forward index but directory is missing: " + annotation);
             if (!dir.mkdir())
-                throw new RuntimeException("Could not create dir: " + dir);
+                throw new InvalidIndex("Could not create dir: " + dir);
         }
 
         // Version check

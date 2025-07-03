@@ -10,6 +10,7 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocTask;
@@ -48,7 +49,7 @@ public class ExportCorpus implements AutoCloseable {
             System.out.println("Calling export()...");
             exportCorpus.export(exportDir);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -96,7 +97,7 @@ public class ExportCorpus implements AutoCloseable {
                     File dir = file.getAbsoluteFile().getParentFile();
                     if (!dir.exists()) {
                         if (!dir.mkdirs()) // create any subdirectories required
-                            throw new RuntimeException("Could not create dir(s): " + dir);
+                            throw new InvalidIndex("Could not create dir(s): " + dir);
                     }
                     try (PrintWriter pw = FileUtil.openForWriting(file)) {
                         pw.write(xml);

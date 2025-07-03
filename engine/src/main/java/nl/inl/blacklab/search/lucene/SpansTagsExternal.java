@@ -8,6 +8,7 @@ import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.FilterSpans;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 
 /**
  * Gets spans for a certain XML element.
@@ -82,7 +83,7 @@ class SpansTagsExternal extends BLFilterSpans<BLSpans> {
             }
             return end;
         } catch (IOException e) {
-            throw new RuntimeException("Error getting payload");
+            throw new InvalidIndex("Error getting payload");
         }
     }
 

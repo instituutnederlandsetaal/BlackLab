@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -49,7 +50,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             parts.add(new HitPropertyContextPart(index, annotation, sensitivity, partSpec));
         }
         if (parts.isEmpty())
-            throw new RuntimeException("No context parts specified: " + wordSpec);
+            throw new InvalidQuery("No context parts specified: " + wordSpec);
         if (parts.size() == 1)
             return parts.get(0);
         return new HitPropertyMultiple(parts);

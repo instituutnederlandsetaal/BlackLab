@@ -19,6 +19,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -75,7 +76,7 @@ class IndexerImpl implements DocWriter, Indexer {
                     try {
                         docIndexer.index();
                     } catch (Throwable e) {
-                        throw new RuntimeException("Error while indexing input file: " + file.getPath(), e);
+                        throw new ErrorIndexingFile("Error while indexing input file: " + file.getPath(), e);
                     }
                     listener().fileDone(file.getPath());
 
@@ -210,7 +211,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
     private void init(BlackLabIndexWriter indexWriter, String formatIdentifier) throws DocumentFormatNotFound {
         if (indexWriter == null) {
-            throw new RuntimeException("indexWriter == null");
+            throw new IllegalStateException("indexWriter == null");
         }
 
         this.indexWriter = indexWriter;

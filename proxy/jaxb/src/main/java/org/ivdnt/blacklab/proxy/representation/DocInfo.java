@@ -12,6 +12,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.ivdnt.blacklab.proxy.helper.DocInfoAdapter;
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+import org.ivdnt.blacklab.proxy.helper.ErrorWritingResponse;
 import org.ivdnt.blacklab.proxy.helper.MapAdapterMetadataValues;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
@@ -84,7 +86,7 @@ public class DocInfo {
                     jgen.writeBooleanField("mayView", mayView);
                 jgen.writeEndObject();
             } else
-                throw new RuntimeException("Unexpected type " + elObj.getClass().getName());
+                throw new ErrorWritingResponse("Unexpected type " + elObj.getClass().getName());
         }
     }
 
@@ -94,7 +96,7 @@ public class DocInfo {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             DocInfo docInfo = new DocInfo();
             docInfo.metadata = new LinkedHashMap<>();
@@ -105,18 +107,18 @@ public class DocInfo {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 String fieldName = parser.getCurrentName();
                 token = parser.nextToken();
                 if (token == JsonToken.VALUE_NUMBER_INT) {
                     // Special lengthInTokens setting?
                     if (!fieldName.equals("lengthInTokens"))
-                        throw new RuntimeException("Unexpected int in metadata");
+                        throw new ErrorReadingResponse("Unexpected int in metadata");
                     docInfo.lengthInTokens = parser.getValueAsInt();
                 } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
                     // Special mayView setting?
                     if (!fieldName.equals("mayView"))
-                        throw new RuntimeException("Unexpected boolean in metadata");
+                        throw new ErrorReadingResponse("Unexpected boolean in metadata");
                     docInfo.mayView = parser.getValueAsBoolean();
                 } else if (token == JsonToken.START_ARRAY) {
                     // A list of metadata values

@@ -8,6 +8,7 @@ import java.util.function.Supplier;
 import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.util.CountingReader;
 import nl.inl.util.TextContent;
 
@@ -45,13 +46,13 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
                 int length = (int)(endOffset - startOffset);
                 char[] result = new char[length];
                 if (reader.read(result, 0, length) < 0)
-                    throw new RuntimeException("Unexpected end of file");
+                    throw new ErrorIndexingFile("Unexpected end of file");
                 return result;
             } else {
                 return IOUtils.toCharArray(reader);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
@@ -76,10 +77,10 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
         try {
             internalReader.skipTo(startOffset);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
         if (internalReader.getCharsRead() != startOffset) {
-            throw new RuntimeException("Could not skip to start offset");
+            throw new ErrorIndexingFile("Could not skip to start offset");
         }
         return internalReader;
     }
@@ -91,7 +92,7 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
             try {
                 internalReader.close();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new ErrorIndexingFile(e);
             }
             internalReader = null;
         }

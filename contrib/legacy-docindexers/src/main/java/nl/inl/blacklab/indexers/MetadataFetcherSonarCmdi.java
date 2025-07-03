@@ -25,6 +25,8 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
@@ -53,14 +55,14 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
         if (zipFilePath == null) {
             zipFilePath = docIndexer.getParameter("metadataDir");
             if (zipFilePath == null)
-                throw new RuntimeException(
+                throw new InvalidConfiguration(
                         "For OpenSonar metadata, specify metadataZipFile or metadataDir in indexer.properties!");
             metadataDir = new File(zipFilePath);
         } else {
             try {
                 metadataZipFile = new ZipFile(new File(zipFilePath));
             } catch (IOException e) {
-                throw BlackLabException.wrapRuntime(e);
+                throw new InvalidIndex(e);
             }
         }
     }

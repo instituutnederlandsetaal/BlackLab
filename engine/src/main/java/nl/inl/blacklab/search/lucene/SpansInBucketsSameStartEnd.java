@@ -9,6 +9,7 @@ import org.apache.lucene.payloads.PayloadSpanCollector;
 import org.apache.lucene.search.spans.Spans;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 
 /**
  * Gather buckets where all hits have the same start and end position.
@@ -152,7 +153,7 @@ class SpansInBucketsSameStartEnd extends SpansInBuckets {
                         payloads.add(payload);
                         terms.add(collectedTerm);
                     } catch (IOException e) {
-                        throw new RuntimeException("Error getting payload");
+                        throw new InvalidIndex("Error getting payload");
                     }
                 }
                 assert positionedAtHitIfPositionedInDoc();

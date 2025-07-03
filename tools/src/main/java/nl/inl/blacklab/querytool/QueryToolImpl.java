@@ -23,6 +23,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
@@ -280,7 +281,7 @@ public class QueryToolImpl {
         }
     }
 
-    public void processCommand(String cmd) {
+    public void processCommand(String cmd) throws IOException {
         cmd = cmd.trim();
 
         // Strips comments
@@ -645,7 +646,7 @@ public class QueryToolImpl {
             try {
                 output.verbose("Rewritten: " + spanQuery.rewrite(index.reader()).toString(contentsField.name()));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
             AnnotatedField field = index.annotatedField(spanQuery.getField()); // query may override field, e.g. rfield(...)
             SearchHits search = index.search(field).find(spanQuery);

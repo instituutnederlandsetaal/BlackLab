@@ -47,7 +47,7 @@ public class InputFormatError implements InputFormat {
 
     @Override
     public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
-        throw new RuntimeException(getDescription());
+        throw new UnsupportedOperationException(getDescription());
     }
 
     @Override

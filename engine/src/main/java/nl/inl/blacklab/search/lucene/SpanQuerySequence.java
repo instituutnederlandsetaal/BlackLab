@@ -585,7 +585,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
-        throw new RuntimeException("Sequence should have been rewritten!");
+        throw new IllegalStateException("Sequence should have been rewritten!");
     }
 
     @Override

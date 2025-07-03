@@ -55,7 +55,7 @@ public class GapFiller {
             );
             return parseGapQuery(queryTemplate, values);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidQuery(e);
         }
     }
 

@@ -115,7 +115,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             if (group == null) {
 
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
-                    throw new RuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+                    throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
                 group = HitsInternal.create(-1, hits.size(), false);
                 groupLists.put(identity, group);

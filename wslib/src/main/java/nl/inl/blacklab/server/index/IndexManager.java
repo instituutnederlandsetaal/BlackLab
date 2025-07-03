@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.index;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -110,7 +109,7 @@ public class IndexManager {
                 try {
                     index = new Index(indexDir.getName(), indexDir, searchMan);
                     indices.put(indexDir.getName(), index);
-                } catch (FileNotFoundException | IllegalIndexName e) {
+                } catch (IOException | IllegalIndexName e) {
                     logger.error("Error opening index '" + indexDir + "'; " + e.getMessage());
                 }
             } else {
@@ -288,7 +287,7 @@ public class IndexManager {
         try {
             logger.debug("Created index: " + indexName + " (" + indexDir + ")");
             indices.put(indexId, new Index(indexId, indexDir, this.searchMan));
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
     }
@@ -296,7 +295,7 @@ public class IndexManager {
     public void registerIndex(String indexId, BlackLabIndex index) {
         try {
             indices.put(indexId, new Index(indexId, index, this.searchMan));
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
     }
@@ -360,7 +359,7 @@ public class IndexManager {
                 @Override
                 public void process(File f) {
                     if (!f.canWrite())
-                        throw new RuntimeException("Cannot delete " + f);
+                        throw new IllegalStateException("Cannot delete " + f);
                 }
             });
         } catch (Exception e) {
@@ -533,7 +532,7 @@ public class IndexManager {
                     return true;
                 return !pathName.getCanonicalPath().equals(userCollectionsDir.getCanonicalPath());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -636,7 +635,7 @@ public class IndexManager {
                     String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
                     loadUserCorporaInDir(User.fromId(userId), userDir);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException(e);
                 }
             }
         }

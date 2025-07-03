@@ -17,6 +17,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
@@ -163,7 +164,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         try {
             segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
         if (segmentTerms == null) {
             // can happen if segment only contains index metadata doc

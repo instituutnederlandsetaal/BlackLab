@@ -58,7 +58,7 @@ class CommandReader {
                     // Can't init JLine; too bad, fall back to stdin
                     output.line("Command line editing not available; to enable, place jline jar in classpath.");
                 } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException("Could not init JLine console reader", e);
+                    throw new IllegalStateException("Could not init JLine console reader", e);
                 }
             }
 
@@ -67,7 +67,7 @@ class CommandReader {
                 try {
                     cmd = (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
                 } catch (ReflectiveOperationException e) {
-                    throw new RuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
+                    throw new IllegalStateException("Could not invoke JLine ConsoleReader.readLine()", e);
                 }
             } else {
                 if (!output.isBatchMode())

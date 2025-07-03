@@ -13,6 +13,7 @@ import org.apache.lucene.index.NumericDocValues;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -130,7 +131,7 @@ public class FiidLookupExternal implements FiidLookup {
                         return (int) docValues.longValue();
                     }
                 } while (docValues.docID() <= docId - docBase);
-                throw new RuntimeException("not found in docvalues");
+                throw new InvalidIndex("not found in docvalues");
             }
         } catch (IOException e1) {
             throw BlackLabException.wrapRuntime(e1);

@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -274,7 +275,7 @@ public final class BlackLabEngine implements AutoCloseable {
     public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format,
             IndexType indexType) throws ErrorOpeningIndex {
         if (indexType != IndexType.INTEGRATED)
-            throw new RuntimeException("This version of the method only works with integrated indexes");
+            throw new UnsupportedOperationException("This version of the method only works with integrated indexes");
         return new BlackLabIndexIntegrated(indexName, this, reader, null, true, false, format);
     }
 
@@ -479,7 +480,7 @@ public final class BlackLabEngine implements AutoCloseable {
                 blackLabIndex = wrapIndexReader(indexName, reader, false);
                 registerIndex(reader, blackLabIndex);
             } catch (ErrorOpeningIndex e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
         return blackLabIndex;

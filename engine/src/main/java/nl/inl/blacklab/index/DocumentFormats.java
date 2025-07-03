@@ -166,7 +166,7 @@ public class DocumentFormats {
             // OK, JAR not on classpath
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Unable to register legacy doc indexers", e);
         }
     }
 
@@ -243,7 +243,11 @@ public class DocumentFormats {
         // Run the configLocator on the directory - not recursive
         for (File dir : dirs) {
             if (Files.isReadable(dir.toPath()) && Files.isDirectory(dir.toPath())) {
-                FileUtil.processTree(dir, "*", false, configLocator);
+                try {
+                    FileUtil.processTree(dir, "*", false, configLocator);
+                } catch (IOException e) {
+                    throw new InvalidInputFormatConfig(e);
+                }
             }
         }
     }

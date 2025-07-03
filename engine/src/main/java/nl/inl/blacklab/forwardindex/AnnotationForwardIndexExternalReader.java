@@ -19,6 +19,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -217,7 +218,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             }
 
             if (whichChunk == null) {
-                throw new RuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
+                throw new InvalidIndex("Tokens file chunk containing document not found. fiid = " + fiid);
             }
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];

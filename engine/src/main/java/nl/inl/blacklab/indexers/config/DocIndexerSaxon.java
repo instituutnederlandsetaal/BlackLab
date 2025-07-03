@@ -281,7 +281,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             tokenPosition.increment();
         }
         if (!inlinesToClose.isEmpty()) {
-            throw new RuntimeException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
+            throw new IllegalStateException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
         }
         // Index any punctuation occurring after last word
         while (currentPunct != null) {

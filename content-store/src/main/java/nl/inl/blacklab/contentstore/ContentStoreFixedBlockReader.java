@@ -13,6 +13,7 @@ import java.util.zip.Inflater;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.SimpleResourcePool;
 import nl.inl.util.TextContent;
 
@@ -155,7 +156,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
                             int bytesRead = fileChannel.read(buffer, readStartOffset);
                             if (bytesRead < bytesToRead) {
                                 // Apparently, something went wrong.
-                                throw new RuntimeException("Not enough bytes read, " + bytesRead
+                                throw new InvalidIndex("Not enough bytes read, " + bytesRead
                                         + " < " + bytesToRead);
                             }
                             String decodedBlock = decodeBlock(buffer.array(), 0, bytesRead);

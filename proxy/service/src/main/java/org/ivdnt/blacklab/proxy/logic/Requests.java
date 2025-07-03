@@ -13,6 +13,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.representation.EntityWithSummary;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
@@ -114,7 +115,7 @@ public class Requests {
                     } else {
                         // Couldn't map to any of the supplied classes. Throw the final exception.
                         String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
-                        throw new RuntimeException("Couldn't interpret the response as the given entity class(es): " + classes, e);
+                        throw new ErrorReadingResponse("Couldn't interpret the response as the given entity class(es): " + classes, e);
                     }
                 }
             }
@@ -174,7 +175,7 @@ public class Requests {
                     } catch (JsonProcessingException e2) {
                         // Error didn't work either. Fail.
                         String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
-                        throw new RuntimeException(
+                        throw new ErrorReadingResponse(
                                 "Couldn't interpret the response as the given entity class(es): " + classes, e);
                     }
                 }

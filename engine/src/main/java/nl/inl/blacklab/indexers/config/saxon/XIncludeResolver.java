@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.util.CountingReader;
 
 /** Resolve xi:includes using a composite Reader. */
@@ -118,12 +119,12 @@ class XIncludeResolver implements Supplier<CountingReader> {
                         File f = new File(baseDir, href);
                         // Make sure we're not trying to break out of the base directory
                         if (!f.getCanonicalPath().startsWith(baseDir.getParentFile().getCanonicalPath())) {
-                            throw new RuntimeException("XInclude file " + f + " is not within the directory " + baseDir.getParentFile());
+                            throw new ErrorIndexingFile("XInclude file " + f + " is not within the directory " + baseDir.getParentFile());
                         }
                         includedDocReader = new FileReader(f, StandardCharsets.UTF_8);
                         includeFilesRead.add(f);
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        throw new ErrorIndexingFile(e);
                     }
                     // Remove the XInclude tag from the buffer
                     deleteFromBuffer(end - tagStart + (end < tagStart ? buffer.length : 0));

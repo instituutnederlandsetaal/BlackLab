@@ -11,6 +11,10 @@ public class InvalidQuery extends RuntimeException {
         super(message);
     }
 
+    public InvalidQuery(Throwable e) {
+        super(e);
+    }
+
     public InvalidQuery(String message, Throwable e) {
         super(message, e);
     }

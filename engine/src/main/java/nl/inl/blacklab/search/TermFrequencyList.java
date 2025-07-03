@@ -29,7 +29,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         super(queryInfo);
         if (wordFreq.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
         }
         results = new ArrayList<>(wordFreq.size());
         for (Map.Entry<String, Integer> e : wordFreq.entrySet()) {
@@ -45,7 +45,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         super(queryInfo);
         if (list.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " termfrequencies");
         }
         this.results = list;
         calculateTotalFrequency();
@@ -95,7 +95,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
 
     public TermFrequencyList subList(long fromIndex, long toIndex) {
         if (fromIndex < 0 || toIndex < 0 || fromIndex > results.size() || toIndex > results.size())
-            throw new RuntimeException("index out of range");
+            throw new IllegalArgumentException("index out of range");
         return new TermFrequencyList(queryInfo(), results.subList((int)fromIndex, (int)toIndex));
     }
 

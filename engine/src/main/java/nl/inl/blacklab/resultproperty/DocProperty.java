@@ -115,7 +115,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
 
         case HitPropertyDocumentId.ID:
         case HitPropertyDoc.ID:
-            throw new RuntimeException("Grouping doc results by " + type + " is not yet supported");
+            throw new UnsupportedOperationException("Grouping doc results by " + type + " is not yet supported");
 
         case HitPropertyHitText.ID:
         case HitPropertyBeforeHit.ID:
@@ -126,7 +126,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
         case "wordright": // deprecated
         case "context":   // deprecated
         case HitPropertyHitPosition.ID:
-            throw new RuntimeException("Cannot group doc results by " + type);
+            throw new UnsupportedOperationException("Cannot group doc results by " + type);
 
         default:
             logger.debug("Unknown DocProperty '" + type + "'");

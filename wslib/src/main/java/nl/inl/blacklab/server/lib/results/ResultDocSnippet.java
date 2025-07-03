@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.QueryExecutionContext;
@@ -87,13 +86,9 @@ public class ResultDocSnippet {
             TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagNameRegex, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
-            try {
-                BLSpanQuery query = pattern.translate(queryContext);
-                query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
-                hits = index.search(field, params.useCache()).find(query).execute();
-            } catch (InvalidQuery e) {
-                throw new RuntimeException(e);
-            }
+            BLSpanQuery query = pattern.translate(queryContext);
+            query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
+            hits = index.search(field, params.useCache()).find(query).execute();
         }
         if (hits != null && !hits.hitsStats().processedAtLeast(1)) {
             // We couldn't find the tag for the context; use a context of 0 words instead

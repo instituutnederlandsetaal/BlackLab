@@ -24,6 +24,7 @@ import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -214,7 +215,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
                     wordFragment = nav.getElementFragment();
                 }
             } catch (NavException e) {
-                throw new RuntimeException(e);
+                throw new ErrorIndexingFile(e);
             }
             int wordOffset = (int) wordFragment;
             // Handle punct and inline objects before this word
@@ -330,7 +331,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             contentFragment = nav.getContentFragment();
             elementName = nav.toString(nav.getCurrentIndex()).intern();
         } catch (NavException e) {
-            throw new RuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
         int startTagOffset = (int) elementFragment; // 32 least significant bits are the start offset
         int endTagOffset;
@@ -411,7 +412,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
                 }
             }
         } catch (VTDException e) {
-            throw new RuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 

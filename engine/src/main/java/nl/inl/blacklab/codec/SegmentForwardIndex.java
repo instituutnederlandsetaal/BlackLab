@@ -14,6 +14,7 @@ import org.apache.lucene.store.IndexInput;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
@@ -78,7 +79,7 @@ public class SegmentForwardIndex implements AutoCloseable {
             _tokensIndexFile.close();
             _tokensIndexFile = _tokensFile = null;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -214,7 +215,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                 }
                 return snippet;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -228,7 +229,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                 tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
                 tokensCodecParameter = _tokensIndex.readByte();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -251,7 +252,7 @@ public class SegmentForwardIndex implements AutoCloseable {
             try {
                 return fieldsProducer.terms(luceneField);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
     }

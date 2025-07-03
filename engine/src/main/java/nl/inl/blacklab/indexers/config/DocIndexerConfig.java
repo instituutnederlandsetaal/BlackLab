@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -56,7 +57,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 Class<? extends DocIndexerConfig> clz = (Class<? extends DocIndexerConfig>)Class.forName(docIndexerClass);
                 docIndexer = getWithCustomDocIndexerClass(clz, options);
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Custom docIndexerClass not found: " + docIndexerClass, e);
+                throw new InvalidInputFormatConfig("Custom docIndexerClass not found: " + docIndexerClass, e);
             }
         } else {
             docIndexer = switch (config.getFileType()) {
@@ -94,7 +95,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 return clz.getConstructor().newInstance();
             }
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new InvalidInputFormatConfig(e);
         }
     }
 
@@ -177,7 +178,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         .warning("Link path " + path + " not found in document " + documentName);
                 break;
             case FAIL:
-                throw new RuntimeException("Link path " + path + " not found in document " + documentName);
+                throw new ErrorIndexingFile("Link path " + path + " not found in document " + documentName);
         }
     }
 
@@ -278,7 +279,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 // Fetch value from Lucene doc
                 List<String> metadataField = getMetadataField(valueField);
                 if (metadataField == null) {
-                    throw new RuntimeException("Link value field " + valueField + " has no values (null)!");
+                    throw new ErrorIndexingFile("Link value field " + valueField + " has no values (null)!");
                 }
                 results.addAll(metadataField);
             }
@@ -313,7 +314,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                             + ": " + e.getMessage());
                     break;
                 case FAIL:
-                    throw new RuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
+                    throw new ErrorIndexingFile("Could not find or parse linked document for " + documentName + moreInfo, e);
             }
         }
     }

@@ -23,6 +23,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -232,7 +233,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
                 }
                 return attributeSetOffset;
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new InvalidIndex(e1);
             }
         });
     }
@@ -245,7 +246,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
                 outAttrValuesFile.writeString(attrValue);
                 return offset;
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new InvalidIndex(e1);
             }
         });
         return attrValueOffset;
@@ -258,7 +259,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
                 outAttrNamesFile.writeString(attrName);
                 return indexFromAttributeName.size(); // map size before adding == attribute index
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new InvalidIndex(e1);
             }
         });
     }
@@ -362,7 +363,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
             int relationId = test.readInt();
             assert relationId >= 0;
             if (!relationIdsSeen.contains(relationId)) {
-                throw new RuntimeException("Relation id " + relationId + " not seen in payload");
+                throw new InvalidIndex("Relation id " + relationId + " not seen in payload");
             }
         }
         return true;

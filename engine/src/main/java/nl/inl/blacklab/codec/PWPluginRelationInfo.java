@@ -18,6 +18,7 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
@@ -185,7 +186,7 @@ class PWPluginRelationInfo implements PWPlugin {
                 }
                 return attributeSetOffset;
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new InvalidIndex(e1);
             }
         });
     }
@@ -198,7 +199,7 @@ class PWPluginRelationInfo implements PWPlugin {
                 outAttrValuesFile.writeString(attrValue);
                 return offset;
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new InvalidIndex(e1);
             }
         });
     }
@@ -210,7 +211,7 @@ class PWPluginRelationInfo implements PWPlugin {
                 outAttrNamesFile.writeString(attrName);
                 return indexFromAttributeName.size(); // map size before adding == attribute index
             } catch (IOException e1) {
-                throw new RuntimeException(e1);
+                throw new InvalidIndex(e1);
             }
         });
     }

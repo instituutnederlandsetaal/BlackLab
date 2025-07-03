@@ -10,6 +10,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -69,7 +70,7 @@ public class Corpus implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<AnnotatedFieldAnnotationGroups> result = new ArrayList<>();
             while (true) {
@@ -78,21 +79,21 @@ public class Corpus implements Cloneable {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 AnnotatedFieldAnnotationGroups groups = new AnnotatedFieldAnnotationGroups();
                 groups.name = parser.getCurrentName();
                 groups.annotationGroups = new ArrayList<>();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_ARRAY)
-                    throw new RuntimeException("Expected END_OBJECT or START_ARRAY, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or START_ARRAY, found " + token);
                 while (true) {
                     token = parser.nextToken();
                     if (token == JsonToken.END_ARRAY)
                         break;
 
                     if (token != JsonToken.START_OBJECT)
-                        throw new RuntimeException("Expected END_ARRAY or START_OBJECT, found " + token);
+                        throw new ErrorReadingResponse("Expected END_ARRAY or START_OBJECT, found " + token);
                     AnnotationGroup group = new AnnotationGroup();
                     while (true) {
                         token = parser.nextToken();
@@ -100,7 +101,7 @@ public class Corpus implements Cloneable {
                             break;
 
                         if (token != JsonToken.FIELD_NAME)
-                            throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                            throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                         String fieldName = parser.getCurrentName();
                         parser.nextToken();
                         switch (fieldName) {
@@ -111,7 +112,7 @@ public class Corpus implements Cloneable {
                             group.annotations = SerializationUtil.readStringList(parser);
                             break;
                         default:
-                            throw new RuntimeException("Unexpected field " + fieldName + " in AnnotationGroup");
+                            throw new ErrorReadingResponse("Unexpected field " + fieldName + " in AnnotationGroup");
                         }
                     }
                     groups.annotationGroups.add(group);
@@ -154,7 +155,7 @@ public class Corpus implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<AnnotatedField> result = new ArrayList<>();
             while (true) {
@@ -163,13 +164,13 @@ public class Corpus implements Cloneable {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
 //                AnnotatedField field = new AnnotatedField(parser.getCurrentName());
                 String fieldName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected START_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
                 AnnotatedField field = deserializationContext.readValue(parser, AnnotatedField.class);
                 field.name = fieldName;
                 result.add(field);
@@ -210,7 +211,7 @@ public class Corpus implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<MetadataField> result = new ArrayList<>();
             while (true) {
@@ -219,13 +220,13 @@ public class Corpus implements Cloneable {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 //MetadataField field = new MetadataField();
                 String fieldName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected START_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
                 MetadataField field = deserializationContext.readValue(parser, MetadataField.class);
                 field.name = fieldName;

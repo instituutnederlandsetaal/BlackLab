@@ -37,7 +37,7 @@ public class UnicodeStream {
         try {
             name = is.getBOMCharsetName();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException(e);
         }
         return name == null ? defaultEncoding : Charset.forName(name);
     }

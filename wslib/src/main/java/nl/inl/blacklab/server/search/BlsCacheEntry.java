@@ -112,7 +112,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     @Override
     public void start() {
         if (future != null)
-            throw new RuntimeException("Search already started");
+            throw new IllegalStateException("Search already started");
         started = true;
         final String requestId = ThreadContext.get("requestId");
         peekValue = search.peekObject(this);

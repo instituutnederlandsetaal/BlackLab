@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.StringUtil;
 
@@ -103,7 +104,7 @@ public abstract class FieldImpl implements Field, Freezable {
                 ensureNotFrozen();
                 this.contentStore = contentStore;
             } catch (UnsupportedOperationException e) {
-                throw new RuntimeException("Tried to set contentStore to " + contentStore + ", but field is frozen: " + fieldName, e);
+                throw new InvalidIndex("Tried to set contentStore to " + contentStore + ", but field is frozen: " + fieldName, e);
             }
         }
     }

@@ -10,20 +10,16 @@ import org.junit.Test;
 
 public class TestWriteCsv {
 
-    void assertEscapesTo(String expected, String... values) {
-        try {
-            final StringWriter csvContent = new StringWriter();
-            final CSVPrinter csvPrinter = new CSVPrinter(csvContent, CSVFormat.DEFAULT);
-            csvPrinter.printRecord(WriteCsv.escape(values));
-            final String result = csvContent.toString().trim();
-            Assert.assertEquals(expected, result);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    void assertEscapesTo(String expected, String... values) throws IOException {
+        final StringWriter csvContent = new StringWriter();
+        final CSVPrinter csvPrinter = new CSVPrinter(csvContent, CSVFormat.DEFAULT);
+        csvPrinter.printRecord(WriteCsv.escape(values));
+        final String result = csvContent.toString().trim();
+        Assert.assertEquals(expected, result);
     }
 
     @Test
-    public void testEscape() {
+    public void testEscape() throws IOException {
         assertEscapesTo("TAS", "TAS");
         assertEscapesTo("A|B", "A", "B");
         assertEscapesTo("A C|B", "A C", "B");
