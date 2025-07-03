@@ -274,7 +274,7 @@ public class BlsCache implements SearchCache {
 
     @Override
     @SuppressWarnings("unchecked")
-    synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
+    public synchronized <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
         BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
         if (future != null)
             traceInfo("-- REMOVED:  {} ({} searches left)", search, searches.size());

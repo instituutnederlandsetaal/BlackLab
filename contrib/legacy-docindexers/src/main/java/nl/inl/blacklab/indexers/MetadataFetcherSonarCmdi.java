@@ -65,9 +65,9 @@ public class MetadataFetcherSonarCmdi extends MetadataFetcher {
         }
     }
 
-    static private ZipFile metadataZipFile = null;
+    private static ZipFile metadataZipFile = null;
 
-    static private File metadataDir = null;
+    private static File metadataDir = null;
 
     private String metadataPathInZip;
 

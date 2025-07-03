@@ -11,7 +11,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * Replaces punctuation with space.
  */
 public class RemovePunctuationFilter extends TokenFilter {
-    final static Pattern punctuationPattern = Pattern.compile("\\p{P}+");
+    static final Pattern punctuationPattern = Pattern.compile("\\p{P}+");
 
     /**
      * Remove punctuation from a string
@@ -43,7 +43,7 @@ public class RemovePunctuationFilter extends TokenFilter {
     }
 
     @Override
-    final public boolean incrementToken() throws IOException {
+    public final boolean incrementToken() throws IOException {
         if (input.incrementToken()) {
             String t = new String(termAtt.buffer(), 0, termAtt.length());
             t = process(t);

@@ -58,7 +58,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
      * tag yet? (used to make sure the stored XML contains all the required
      * mappings)
      */
-    final private static Map<String, String> outputPrefixMapping = new HashMap<>();
+    private static final Map<String, String> outputPrefixMapping = new HashMap<>();
 
     /**
      * Handle Document element. Starts a new Lucene document and adds the attributes

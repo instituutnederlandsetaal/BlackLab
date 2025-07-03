@@ -130,7 +130,7 @@ public class DownloadCache {
         }
     }
 
-    private synchronized static void removeEntriesIfRequired() {
+    private static synchronized void removeEntriesIfRequired() {
 
         // Remove any entries that haven't been used for a long time
         List<Download> dl = new ArrayList<>(downloadedFiles.values());
@@ -164,7 +164,7 @@ public class DownloadCache {
      * @param inputFile URL of the file
      * @return temp file
      */
-    public synchronized static File downloadFile(String inputFile) throws IOException, MalformedURLException {
+    public static synchronized File downloadFile(String inputFile) throws IOException, MalformedURLException {
         if (!isFileDownloadAllowed())
             throw new AccessDeniedException(inputFile, null, "Http downloads have been disabled");
         Download download = downloadedFiles.get(inputFile);
@@ -197,7 +197,7 @@ public class DownloadCache {
         return Math.min(maxDownloadFolderSize, config.getMaxFileSize());
     }
 
-    public synchronized static File getDownloadTempDir() {
+    public static synchronized File getDownloadTempDir() {
         if (downloadTempDir == null) {
             if (config.getDir() != null) {
                 downloadTempDir = new File(config.getDir());

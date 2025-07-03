@@ -17,7 +17,7 @@ import nl.inl.util.CountingReader;
 class XIncludeResolver implements Supplier<CountingReader> {
 
     /** How we detect xi:include tags */
-    private final static Pattern PATT_XINCLUDE_TAG = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
+    private static final Pattern PATT_XINCLUDE_TAG = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
 
     private final File baseDir;
 

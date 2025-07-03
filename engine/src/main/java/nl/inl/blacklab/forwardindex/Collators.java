@@ -85,7 +85,7 @@ public class Collators {
 
     private static Collators defaultInstance;
 
-    public synchronized static Collators getDefault() {
+    public static synchronized Collators getDefault() {
         if (defaultInstance == null) {
             defaultInstance = new Collators(BlackLab.defaultCollator(), CollatorVersion.V2);
         }

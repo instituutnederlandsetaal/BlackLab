@@ -97,7 +97,7 @@ public final class UtilsForTesting {
      *            debugging)
      * @return the newly created temp dir.
      */
-    public synchronized static TestDir createBlackLabTestDir(String name) {
+    public static synchronized TestDir createBlackLabTestDir(String name) {
         File testDir = new File(tempDir, TEST_DIR_PREFIX + name + "_" + UUID.randomUUID());
         if (!testDir.mkdir())
             throw new RuntimeException("Unable to create test dir: " + testDir);

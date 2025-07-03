@@ -130,7 +130,7 @@ public enum WebserviceParameter {
     /**
      * Default values for request parameters
      */
-    final static private Map<WebserviceParameter, String> defaultValues;
+    private static final Map<WebserviceParameter, String> defaultValues;
 
     /** Default value for limitvalues parameter (how many metadata/annotation values to return) */
     public static final int DEF_VAL_LIMIT_VALUES = 200;

@@ -456,7 +456,7 @@ public class TextPatternSerializerCql {
     }
 
     /** Use double quotes for CQL */
-    private final static String USE_QUOTE = "\"";
+    private static final String USE_QUOTE = "\"";
 
     private static StringBuilder serializeToQuotedString(StringBuilder b, String value) {
         return b.append(USE_QUOTE).append(StringUtil.escapeQuote(value, USE_QUOTE)).append(USE_QUOTE);

@@ -348,7 +348,7 @@ public final class BlackLab {
      *
      * @return list of directories to search in decreasing order of priority
      */
-    public synchronized static List<File> defaultConfigDirs() {
+    public static synchronized List<File> defaultConfigDirs() {
         if (configDirs == null) {
             configDirs = new ArrayList<>();
             String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
@@ -376,7 +376,7 @@ public final class BlackLab {
      * 
      * @return currently set config
      */
-    public synchronized static BlackLabConfig config() {
+    public static synchronized BlackLabConfig config() {
         if (blackLabConfig == null) {
             blackLabConfig = new BlackLabConfig();
         }
@@ -446,7 +446,7 @@ public final class BlackLab {
      *
      * @param index index to apply the config to
      */
-    public synchronized static void applyConfigToIndex(BlackLabIndex index) {
+    public static synchronized void applyConfigToIndex(BlackLabIndex index) {
         ensureGlobalConfigApplied();
         
         // Apply search settings from the config to this BlackLabIndex
@@ -461,7 +461,7 @@ public final class BlackLab {
      * This is called before any settings are applied to individual indexes,
      * which could cause problems.
      */
-    private synchronized static void ensureGlobalConfigApplied() {
+    private static synchronized void ensureGlobalConfigApplied() {
         if (!globalSettingsApplied) {
 
             BLConfigIndexing indexing = config().getIndexing();

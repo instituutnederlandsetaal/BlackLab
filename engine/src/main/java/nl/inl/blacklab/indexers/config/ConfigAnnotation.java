@@ -95,7 +95,7 @@ public class ConfigAnnotation {
     private boolean internal = false;
 
     /** What annotations have we warned about using special default sensitivity? */
-    private final static Set<String> warnSensitivity = new HashSet<>();
+    private static final Set<String> warnSensitivity = new HashSet<>();
 
     public ConfigAnnotation() {
     }

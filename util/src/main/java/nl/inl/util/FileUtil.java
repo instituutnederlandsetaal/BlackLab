@@ -39,7 +39,7 @@ public class FileUtil {
      * Sorts File objects alphabetically, case-insensitively, subdirectories first.
      * Used by listFilesSorted().
      */
-    final public static Comparator<File> LIST_FILES_COMPARATOR = (a, b) -> {
+    public static final Comparator<File> LIST_FILES_COMPARATOR = (a, b) -> {
         int ad = a.isDirectory() ? 0 : 1;
         int bd = b.isDirectory() ? 0 : 1;
         return ad != bd ? (ad - bd) : a.getName().compareToIgnoreCase(b.getName());
@@ -194,7 +194,7 @@ public class FileUtil {
     /**
      * A task to execute on a file. Used by processTree().
      */
-    public static abstract class FileTask {
+    public abstract static class FileTask {
         /**
          * Execute the task on this file.
          *

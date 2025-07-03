@@ -38,7 +38,7 @@ public enum ApiVersion {
     TEST_V0_2_EXP(0, 2, "exp");
 
     /** Valid version indicators, e.g. 3, 3.0, 3.0-beta */
-    private final static Pattern PATT_VERSION_STRING = Pattern.compile("(\\d+)(?:\\.(\\d+)(?:\\-(.*))?)?");
+    private static final Pattern PATT_VERSION_STRING = Pattern.compile("(\\d+)(?:\\.(\\d+)(?:\\-(.*))?)?");
 
     /** What's considered the current version */
     public static final ApiVersion CURRENT = V4_0;
