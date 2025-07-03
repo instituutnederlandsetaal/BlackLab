@@ -34,6 +34,7 @@ import nl.inl.blacklab.codec.PWPluginForwardIndex;
 import nl.inl.blacklab.codec.PWPluginRelationInfo;
 import nl.inl.blacklab.codec.PWPluginRelationInfoLegacy;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -86,8 +87,7 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
             plugins.add(new PWPluginForwardIndex(this));
             if (relationsStrategy.writeRelationInfoToIndex()) {
                 if (relationsStrategy instanceof RelationsStrategySingleTerm) {
-                    // Older dev versions used this. We need to support it for a while for backwards compatibility.
-                    plugins.add(new PWPluginRelationInfoLegacy(this, relationsStrategy));
+                    throw new IndexVersionMismatch("This index uses a tags/relations format that was temporarily used in development, but is not supported anymore. Please re-index.");
                 } else if (relationsStrategy instanceof RelationsStrategySeparateTerms) {
                     // This is the current version of the relation info plugin, used for new indexes.
                     plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms) relationsStrategy));
