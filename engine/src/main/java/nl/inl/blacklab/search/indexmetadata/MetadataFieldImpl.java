@@ -135,6 +135,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
+    @Override
     public MetadataFieldValues values(long maxValues) {
         if (values == null || !values.canTruncateTo(maxValues))
             values = factory.create(name(), type, maxValues);

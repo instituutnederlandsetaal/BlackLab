@@ -265,6 +265,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
     }
 
+    @Override
     public BLIndexObjectFactory indexObjectFactory() {
         return blackLab.indexObjectFactory();
     }
@@ -755,6 +756,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return contentAccessor(field).getContentStore();
     }
 
+    @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
         return field.getRelationsStats(this, limitValues);
     }

@@ -29,6 +29,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
             this.index = index;
         }
 
+        @Override
         public MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues) {
             return new MetadataFieldValuesFromIndex(index.reader(), fieldName, fieldType == FieldType.NUMERIC,
                     limitValues);

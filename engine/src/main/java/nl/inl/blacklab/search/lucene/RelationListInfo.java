@@ -29,10 +29,12 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
         spanEnd = relations.stream().map(RelationInfo::getSpanEnd).max(Integer::compare).orElse(-1);
     }
 
+    @Override
     public int getSpanStart() {
         return spanStart;
     }
 
+    @Override
     public int getSpanEnd() {
         return spanEnd;
     }

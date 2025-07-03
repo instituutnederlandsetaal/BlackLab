@@ -93,6 +93,7 @@ public class TextPatternWildcard extends TextPatternTerm {
         return super.hashCode();
     }
 
+    @Override
     public TextPatternWildcard withAnnotationAndSensitivity(String annotation, MatchSensitivity sensitivity) {
         if (annotation == null)
             annotation = this.annotation;

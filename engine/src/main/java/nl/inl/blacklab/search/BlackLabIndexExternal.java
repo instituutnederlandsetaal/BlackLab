@@ -103,6 +103,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         return new IndexMetadataExternal(this, indexDirectory(), createNewIndex, indexTemplateFile);
     }
 
+    @Override
     public ForwardIndex createForwardIndex(AnnotatedField field) {
         return new ForwardIndexExternal(this, field);
     }

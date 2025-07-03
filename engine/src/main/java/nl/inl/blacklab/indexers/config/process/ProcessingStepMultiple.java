@@ -26,6 +26,7 @@ public class ProcessingStepMultiple extends ProcessingStep {
         return steps;
     }
 
+    @Override
     public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
         for (ProcessingStep step : steps) {
             values = step.perform(values, docIndexer);
@@ -33,6 +34,7 @@ public class ProcessingStepMultiple extends ProcessingStep {
         return values;
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         for (ProcessingStep step : steps) {
             value = step.performSingle(value, docIndexer);
@@ -40,6 +42,7 @@ public class ProcessingStepMultiple extends ProcessingStep {
         return value;
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return multi;
     }

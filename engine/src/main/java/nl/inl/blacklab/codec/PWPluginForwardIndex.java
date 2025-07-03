@@ -287,6 +287,7 @@ class PWPluginForwardIndex implements PWPlugin {
         outTokensIndexFile.close();
     }
 
+    @Override
     public boolean startField(FieldInfo fieldInfo) {
 
         // Should this field get a forward index?
@@ -326,6 +327,7 @@ class PWPluginForwardIndex implements PWPlugin {
         return true;
     }
 
+    @Override
     public void endField() throws IOException {
         // begin writing term IDs and sort orders
         Collators collators = Collators.getDefault();
@@ -352,6 +354,7 @@ class PWPluginForwardIndex implements PWPlugin {
             termsOrderFile.writeInt(i);
     }
 
+    @Override
     public void startTerm(BytesRef term) throws IOException {
         // Write the term to the terms file
         String termString = term.utf8ToString();
@@ -360,10 +363,12 @@ class PWPluginForwardIndex implements PWPlugin {
         termsList.add(termString);
     }
 
+    @Override
     public void endTerm() {
         currentTermId++;
     }
 
+    @Override
     public void startDocument(int docId, int nOccurrences) {
         // Keep track of term positions offsets in term vector file
         this.currentDocId = docId;
@@ -373,6 +378,7 @@ class PWPluginForwardIndex implements PWPlugin {
         currentDocOccurrencesWritten = 0;
     }
 
+    @Override
     public void endDocument() throws IOException {
         if (currentDocLength > -1)
             lengthsAndOffsetsPerDocument.updateFieldLength(currentDocId, currentDocLength);
@@ -389,6 +395,7 @@ class PWPluginForwardIndex implements PWPlugin {
 
     }
 
+    @Override
     public void termOccurrence(int position, BytesRef payload) throws IOException {
         // Go through each occurrence of term in this doc,
         // gathering the positions where this term occurs as a "primary value"
@@ -408,6 +415,7 @@ class PWPluginForwardIndex implements PWPlugin {
         }
     }
 
+    @Override
     public void finish() throws IOException {
         if (outTempTermVectorFile != null) {
             CodecUtil.writeFooter(outTempTermVectorFile);

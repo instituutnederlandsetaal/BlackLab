@@ -218,6 +218,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         return targetEnd;
     }
 
+    @Override
     public int getSpanStart() {
         if (!isCrossFieldRelation()) {
             // Regular relation; return full span
@@ -228,6 +229,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         }
     }
 
+    @Override
     public int getSpanEnd() {
         if (!isCrossFieldRelation()) {
             // Regular relation; return full span
@@ -243,6 +245,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         return targetField;
     }
 
+    @Override
     public int spanStart(SpanMode mode) {
         return switch (mode) {
             case SOURCE -> getSourceStart();
@@ -253,6 +256,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
         };
     }
 
+    @Override
     public int spanEnd(SpanMode mode) {
         return switch (mode) {
             case SOURCE -> getSourceEnd();

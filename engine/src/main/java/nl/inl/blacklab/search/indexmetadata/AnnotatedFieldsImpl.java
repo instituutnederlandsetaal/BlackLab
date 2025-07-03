@@ -88,6 +88,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
         return annotatedFields.containsKey(fieldName);
     }
 
+    @Override
     public boolean freeze() {
         boolean b = freezeStatus.freeze();
         if (b)
@@ -154,6 +155,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
         this.topLevelCustom = custom;
     }
 
+    @Override
     public void addFromConfig(ConfigAnnotatedField f) {
         AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(f.getName());
         annotatedField.putCustom("displayName", f.getDisplayName());

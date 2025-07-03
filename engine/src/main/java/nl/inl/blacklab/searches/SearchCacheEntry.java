@@ -22,6 +22,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
      * Get the timer keeping track of how long this search (originally) executed.
      * @return the search's task timer
      */
+    @Override
     public SearchTimer timer() {
         return searchTimer;
     }
@@ -89,6 +90,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
      *
      * @return the result so far, or null if not supported for this operation
      */
+    @Override
     public R peek() {
         if (isCancelled())
             throw InterruptedSearch.cancelled();

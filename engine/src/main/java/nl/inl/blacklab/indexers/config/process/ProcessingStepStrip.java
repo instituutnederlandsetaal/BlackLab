@@ -23,10 +23,12 @@ public class ProcessingStepStrip extends ProcessingStep {
         return new ProcessingStepStrip(stripChars);
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         return StringUtils.strip(value, stripChars);
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

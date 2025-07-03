@@ -27,6 +27,7 @@ public interface ContentStoreBlockCodec {
          */
         int encode(String input, int offset, int length, byte[] encoded, int encodedOffset, int encodedMaxLength) throws IOException;
 
+        @Override
         void close();
     }
 
@@ -55,6 +56,7 @@ public interface ContentStoreBlockCodec {
          */
         int decode(byte[] buffer, int offset, int length, byte[] decoded, int decodedOffset, int decodedMaxLength) throws IOException;
 
+        @Override
         void close();
     }
 

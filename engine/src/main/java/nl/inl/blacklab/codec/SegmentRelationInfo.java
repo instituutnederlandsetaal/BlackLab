@@ -166,6 +166,7 @@ public class SegmentRelationInfo implements AutoCloseable {
          * @param relationId relation id
          * @return attributes
          */
+        @Override
         public Map<String, List<String>> getAttributes(String luceneField, int docId, int relationId) {
             assert relationId >= 0 : "negative relation id";
             RelationInfoField f = fieldsByName.get(luceneField);

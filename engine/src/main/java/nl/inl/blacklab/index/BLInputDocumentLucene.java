@@ -20,14 +20,17 @@ public class BLInputDocumentLucene implements BLInputDocument {
         document = new Document();
     }
 
+    @Override
     public void addField(String name, String value, BLFieldType fieldType) {
         document.add(new Field(name, value, fieldType.luceneType()));
     }
 
+    @Override
     public void addAnnotationField(String name, TokenStream tokenStream, BLFieldType fieldType) {
         document.add(new Field(name, tokenStream, fieldType.luceneType()));
     }
 
+    @Override
     public void addStoredNumericField(String name, int value, boolean addDocValue) {
         document.add(new IntPoint(name, value));
         document.add(new StoredField(name, value));
@@ -35,6 +38,7 @@ public class BLInputDocumentLucene implements BLInputDocument {
             document.add(new NumericDocValuesField(name, value));
     }
 
+    @Override
     public void addStoredField(String name, String value) {
         document.add(new StoredField(name, value));
     }

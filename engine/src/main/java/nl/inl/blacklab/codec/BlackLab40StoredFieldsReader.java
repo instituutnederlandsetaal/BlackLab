@@ -273,6 +273,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
      *
      * @return content store segment reader
      */
+    @Override
     public synchronized ContentStoreSegmentReader contentStore() {
         // NOTE: this method is synchronized because IndexInput.clone() is not thread-safe!
         //       so if multiple threads could call this method simultaneously, disaster could strike.
@@ -295,6 +296,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param luceneField field to get
              * @return field value as bytes, or null if no value
              */
+            @Override
             public byte[] getBytes(int docId, String luceneField) {
                 try {
                     // Find the value length in characters, and position the valueIndex file pointer
@@ -390,6 +392,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param luceneField field to get
              * @return field value
              */
+            @Override
             public String getValue(int docId, String luceneField) {
                 return getValueSubstring(docId, luceneField, 0, -1);
             }
@@ -405,6 +408,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
              * @return requested part
              */
+            @Override
             public String getValueSubstring(int docId, String luceneField, int startChar, int endChar) {
                 if (startChar < 0)
                     throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
@@ -545,6 +549,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param luceneField field to get length for
              * @return length of the value in characters
              */
+            @Override
             public int valueLength(int docId, String luceneField) {
                 try {
                     return findValueLengthChar(docId, luceneField);
@@ -562,6 +567,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
              * @return requested parts
              */
+            @Override
             public String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end) {
                 if (start.length != end.length)
                     throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);

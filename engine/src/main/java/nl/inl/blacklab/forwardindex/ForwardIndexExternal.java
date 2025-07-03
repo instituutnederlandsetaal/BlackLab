@@ -29,6 +29,7 @@ public class ForwardIndexExternal extends ForwardIndexAbstract {
         return new File(indexDir, "fi_" + annotation.luceneFieldPrefix());
     }
 
+    @Override
     protected AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation, BlackLabIndex index) {
         File dir = determineAfiDir(index.indexDirectory(), annotation);
         boolean create = index.indexMode() && index.isEmpty();

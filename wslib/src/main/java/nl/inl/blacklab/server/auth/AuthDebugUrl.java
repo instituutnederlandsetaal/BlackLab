@@ -24,6 +24,7 @@ public class AuthDebugUrl implements AuthMethod {
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 
+    @Override
     public User determineCurrentUser(UserRequest request) {
         // URL parameter is already dealt with in AuthManager. If we end up here,
         // there was no userid parameter, so just return an anonymous user.

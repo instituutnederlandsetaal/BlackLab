@@ -21,10 +21,12 @@ public class SpanInfo extends MatchInfo {
         this.end = end;
     }
 
+    @Override
     public int getSpanStart() {
         return start;
     }
 
+    @Override
     public int getSpanEnd() {
         return end;
     }

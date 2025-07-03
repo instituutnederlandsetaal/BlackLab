@@ -246,6 +246,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return converted;
     }
 
+    @Override
     public int segmentIdToGlobalId(int ord, int id) {
         int[] mapping = segmentToGlobalTermIds.get(ord);
         return id < 0 ? id : mapping[id];

@@ -148,6 +148,7 @@ public class CharPosTrackingReader extends Reader {
         elStack.pop().setEndPos(charPosForLineAndCol(locator.getLineNumber(), locator.getColumnNumber()));
     }
 
+    @Override
     public int read() throws IOException {
         int currentChar;
         if (readAheadChar != 0) {

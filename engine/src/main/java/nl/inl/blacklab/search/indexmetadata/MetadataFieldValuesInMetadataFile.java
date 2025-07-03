@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 class MetadataFieldValuesInMetadataFile implements MetadataFieldValues {
 
     static class Factory implements MetadataFieldValues.Factory {
+        @Override
         public MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues) {
             // ignore limitValues here, we load whatever was stored in the file.
             return new MetadataFieldValuesInMetadataFile(fieldName, IndexMetadataExternal.maxMetadataValuesToStore());

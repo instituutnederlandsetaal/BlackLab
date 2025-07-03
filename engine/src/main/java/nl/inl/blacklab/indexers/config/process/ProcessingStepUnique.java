@@ -14,10 +14,12 @@ public class ProcessingStepUnique extends ProcessingStep {
         return values.distinct();
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         return value;
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }
