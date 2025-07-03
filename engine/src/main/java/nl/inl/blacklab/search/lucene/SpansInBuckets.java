@@ -62,7 +62,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
     /** Does our clause capture any match info? If not, we don't need to mess with those */
     protected boolean clauseCapturesMatchInfo = true;
 
-    public SpansInBuckets(BLSpans source) {
+    protected SpansInBuckets(BLSpans source) {
         this.source = source; // might be null when testing (MockSpans)
     }
 

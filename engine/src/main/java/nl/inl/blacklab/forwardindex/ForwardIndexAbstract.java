@@ -53,7 +53,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     /** Ensure that we don't try to use the FI after closing it. */
     private boolean closed = false;
 
-    public ForwardIndexAbstract(BlackLabIndex index, AnnotatedField field) {
+    protected ForwardIndexAbstract(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
 

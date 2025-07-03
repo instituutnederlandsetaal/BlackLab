@@ -16,7 +16,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
         super(prop, invert);
     }
 
-    public HitGroupProperty() {
+    protected HitGroupProperty() {
         super();
     }
 

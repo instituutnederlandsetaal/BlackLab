@@ -41,7 +41,7 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
     public static abstract class SpansAndFilter {
         protected HitQueryContext context;
 
-        public SpansAndFilter() {
+        protected SpansAndFilter() {
         }
 
         public void setContext(HitQueryContext context) {

@@ -160,7 +160,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
      */
     private final FiidLookup fiidLookup;
 
-    public AnnotationForwardIndexExternalAbstract(IndexReader reader, Annotation annotation, File dir, Collators collators) {
+    protected AnnotationForwardIndexExternalAbstract(IndexReader reader, Annotation annotation, File dir, Collators collators) {
         this.annotation = annotation;
         this.collators = collators;
         canDoNfaMatching = collators != null && collators.version() != CollatorVersion.V1;

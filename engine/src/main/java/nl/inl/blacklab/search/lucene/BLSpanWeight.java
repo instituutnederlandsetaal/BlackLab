@@ -16,7 +16,7 @@ import org.apache.lucene.queries.spans.SpanWeight;
  */
 public abstract class BLSpanWeight extends SpanWeight {
 
-    public BLSpanWeight(SpanQuery query, IndexSearcher searcher, Map<Term, TermStates> termStates, float boost)
+    protected BLSpanWeight(SpanQuery query, IndexSearcher searcher, Map<Term, TermStates> termStates, float boost)
             throws IOException {
         super(query, searcher, termStates,boost);
     }

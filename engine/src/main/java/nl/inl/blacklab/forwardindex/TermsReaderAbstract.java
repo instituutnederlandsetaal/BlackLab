@@ -93,7 +93,7 @@ public abstract class TermsReaderAbstract implements Terms {
      */
     private int[] cacheFirstTermIdInGroup2GroupOffset;
 
-    public TermsReaderAbstract(Collators collators) {
+    protected TermsReaderAbstract(Collators collators) {
         assert DEBUGGING = true;
         collatorSensitive = collators.get(MatchSensitivity.SENSITIVE);
         collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);

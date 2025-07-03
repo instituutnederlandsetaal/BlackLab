@@ -27,7 +27,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     protected final String corpusName;
 
-    public QueryParamsAbstract(String corpusName, SearchManager searchMan, User user) {
+    protected QueryParamsAbstract(String corpusName, SearchManager searchMan, User user) {
         this.searchMan = searchMan;
         this.user = user;
         this.corpusName = corpusName;

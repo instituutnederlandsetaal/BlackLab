@@ -136,7 +136,7 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
         }
     };
 
-    public ResultsAbstract(QueryInfo queryInfo) {
+    protected ResultsAbstract(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
 //        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
         threadAborter = ThreadAborter.create();

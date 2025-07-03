@@ -11,7 +11,7 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
 
     protected String multipleValuesSeparatorRegex;
 
-    public DocIndexerTabularBase(String multipleValuesSeparatorRegex) {
+    protected DocIndexerTabularBase(String multipleValuesSeparatorRegex) {
         super();
         this.multipleValuesSeparatorRegex = multipleValuesSeparatorRegex;
     }

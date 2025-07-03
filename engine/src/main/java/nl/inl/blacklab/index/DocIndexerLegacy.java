@@ -105,7 +105,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         return charsContentAlreadyStored + content.length();
     }
 
-    public DocIndexerLegacy(DocWriter indexer, String fileName, Reader reader) {
+    protected DocIndexerLegacy(DocWriter indexer, String fileName, Reader reader) {
         setDocWriter(indexer);
         setDocumentName(fileName);
         setDocument(reader);
