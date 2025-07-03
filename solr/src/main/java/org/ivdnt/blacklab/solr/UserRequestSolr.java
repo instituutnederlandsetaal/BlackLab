@@ -14,13 +14,13 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -96,6 +96,7 @@ public class UserRequestSolr implements UserRequest {
         return null;
     }
 
+    @Override
     public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         User user = getUser();
         SolrParams solrParams = rb.req.getParams();

@@ -160,6 +160,7 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
      * <p>
      * This is called during two-phase processing.
      */
+    @Override
     @SuppressWarnings("fallthrough")
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         assert positionedInDoc();

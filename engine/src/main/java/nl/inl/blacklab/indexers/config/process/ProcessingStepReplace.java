@@ -53,6 +53,7 @@ public class ProcessingStepReplace extends ProcessingStep {
         return pattern.matcher(value).replaceAll(replacement);
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return keepOriginal;
     }

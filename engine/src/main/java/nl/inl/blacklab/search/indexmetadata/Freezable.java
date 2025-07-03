@@ -19,6 +19,7 @@ public interface Freezable {
             this.frozen = frozen;
         }
 
+        @Override
         public synchronized boolean isFrozen() {
             return frozen;
         }

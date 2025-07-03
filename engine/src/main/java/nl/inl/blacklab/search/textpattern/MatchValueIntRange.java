@@ -4,12 +4,14 @@ import nl.inl.util.RangeRegex;
 
 record MatchValueIntRange(int min, int max) implements MatchValue {
 
+    @Override
     public String regex() {
         if (min > max)
             return RangeRegex.REGEX_WITHOUT_MATCHES; // a regex that will never match anything
         return RangeRegex.forRange(min, max);
     }
 
+    @Override
     public String getBcql() {
         return "in[" + min + "," + max + "]";
     }

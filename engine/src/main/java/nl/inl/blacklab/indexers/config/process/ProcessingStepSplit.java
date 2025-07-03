@@ -90,6 +90,7 @@ public class ProcessingStepSplit extends ProcessingStep {
         return parts.length > 0 ? parts[0] : "";
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return keepAllParts() || keepOriginal;
     }

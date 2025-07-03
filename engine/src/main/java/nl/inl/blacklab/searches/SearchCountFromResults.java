@@ -59,6 +59,7 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
      * @param future future result object
      * @return peek object, or null if not supported for this operation
      */
+    @Override
     public ResultsStatsDelegate peekObject(Future<ResultsStats> future) {
         // Create a temporary stats object that will return 0 until it receives the
         // real object and will delegate to that.

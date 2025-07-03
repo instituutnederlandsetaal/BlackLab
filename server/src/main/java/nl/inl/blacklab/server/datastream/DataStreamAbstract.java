@@ -111,6 +111,7 @@ public abstract class DataStreamAbstract implements DataStream {
         return pretty("\n");
     }
 
+    @Override
     public DataStreamAbstract space() {
         return pretty(" ");
     }

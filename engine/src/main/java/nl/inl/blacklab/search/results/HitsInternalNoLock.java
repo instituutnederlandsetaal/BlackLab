@@ -86,6 +86,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         }
     }
 
+    @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         assert HitsInternal.debugCheckReasonableHit(doc, start, end);
         docs.add(doc);
@@ -102,6 +103,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
+    @Override
     public void add(EphemeralHit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc);
@@ -118,6 +120,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
+    @Override
     public void add(Hit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc());
@@ -139,6 +142,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         matchInfos.addAll(hits.matchInfos);
     }
 
+    @Override
     public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h : hits) {
@@ -159,6 +163,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     /**
      * Clear the arrays.
      */
+    @Override
     public void clear() {
         docs.clear();
         starts.clear();
@@ -166,10 +171,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         matchInfos.clear();
     }
 
+    @Override
     public void withReadLock(Consumer<HitsInternal> cons) {
         cons.accept(this);
     }
 
+    @Override
     public Hit get(long index) {
         MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
         return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
@@ -189,6 +196,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
      * }
      * </pre>
      */
+    @Override
     public void getEphemeral(long index, EphemeralHit h) {
         h.doc = docs.getInt(index);
         h.start = starts.getInt(index);
@@ -197,14 +205,17 @@ class HitsInternalNoLock implements HitsInternalMutable {
         assert HitsInternal.debugCheckReasonableHit(h);
     }
 
+    @Override
     public int doc(long index) {
         return this.docs.getInt(index);
     }
 
+    @Override
     public int start(long index) {
         return this.starts.getInt(index);
     }
 
+    @Override
     public int end(long index) {
         return this.ends.getInt(index);
     }
@@ -212,6 +223,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     @Override
     public MatchInfo[] matchInfo(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
 
+    @Override
     public long size() {
         return docs.size64();
     }
@@ -225,6 +237,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
      *
      * @return list of document ids
      */
+    @Override
     public IntIterator docsIterator() {
         return docs.intIterator();
     }
@@ -237,6 +250,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         return new HitIterator();
     }
 
+    @Override
     public HitsInternal sort(HitProperty p) {
         HitsInternalMutable r;
         long size = docs.size64();

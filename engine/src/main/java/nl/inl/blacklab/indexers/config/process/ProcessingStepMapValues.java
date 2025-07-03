@@ -24,14 +24,17 @@ public class ProcessingStepMapValues extends ProcessingStep {
         return new ProcessingStepMapValues(mapping);
     }
 
+    @Override
     public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
         return values.map(v -> mapping.getOrDefault(v, v));
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         return mapping.getOrDefault(value, value);
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

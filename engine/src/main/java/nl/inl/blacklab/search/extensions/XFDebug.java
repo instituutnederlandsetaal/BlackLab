@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
  */
 public class XFDebug implements ExtensionFunctionClass {
 
+    @Override
     public void register() {
 
         // Adjust hits

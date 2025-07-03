@@ -80,6 +80,7 @@ public abstract class ContentStoreExternal implements ContentStore {
      * 
      * @param id content store id of the document to delete
      */
+    @Override
     public abstract void delete(int id);
 
     /**
@@ -103,6 +104,7 @@ public abstract class ContentStoreExternal implements ContentStore {
      */
     public abstract boolean isDeleted(int id);
 
+    @Override
     public abstract void initialize();
 
     @Override

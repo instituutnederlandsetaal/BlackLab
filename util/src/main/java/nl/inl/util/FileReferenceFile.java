@@ -63,6 +63,7 @@ public class FileReferenceFile implements FileReference {
         return this;
     }
 
+    @Override
     public InputStream getSinglePassInputStream() {
         try {
             return new FileInputStream(file);
@@ -71,6 +72,7 @@ public class FileReferenceFile implements FileReference {
         }
     }
 
+    @Override
     public BufferedReader createReader(Charset overrideEncoding) {
         if (overrideEncoding == null)
             overrideEncoding = getCharSet();

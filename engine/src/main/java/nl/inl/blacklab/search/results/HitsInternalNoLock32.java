@@ -151,6 +151,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
     }
 
+    @Override
     public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h: hr) {
@@ -171,6 +172,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     /**
      * Clear the arrays.
      */
+    @Override
     public void clear() {
         docs.clear();
         starts.clear();
@@ -240,6 +242,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         return docs.size();
     }
 
+    @Override
     public IntIterator docsIterator() {
         return docs.intIterator();
     }

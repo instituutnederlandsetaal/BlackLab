@@ -184,6 +184,7 @@ public class XFRelations implements ExtensionFunctionClass {
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
     }
 
+    @Override
     public void register() {
         QueryExtensions.registerRelationsFunction(FUNC_REL, ARGS_SQSSS,
                 Arrays.asList(".+", QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),

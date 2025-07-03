@@ -18,22 +18,27 @@ public class InputFormatClass implements InputFormat {
 
     private final Class<? extends DocIndexerLegacy> docIndexerClass;
 
+    @Override
     public String getIdentifier() {
         return formatIdentifier;
     }
 
+    @Override
     public String getDisplayName() {
         return DocIndexerLegacy.getDisplayName(docIndexerClass);
     }
 
+    @Override
     public String getDescription() {
         return DocIndexerLegacy.getDescription(docIndexerClass);
     }
 
+    @Override
     public String getHelpUrl() {
         return "";
     }
 
+    @Override
     public boolean isVisible() {
         return DocIndexerLegacy.isVisible(docIndexerClass);
     }

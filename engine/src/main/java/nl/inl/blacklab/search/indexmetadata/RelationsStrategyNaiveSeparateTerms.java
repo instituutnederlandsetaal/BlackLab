@@ -34,6 +34,7 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
     /**
      * Should we write the extra relation info index?
      */
+    @Override
     public boolean writeRelationInfoToIndex() {
         return false;
     }
@@ -122,6 +123,7 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
 
     public static final PayloadCodec CODEC = new Codec();
 
+    @Override
     public PayloadCodec getPayloadCodec() { return CODEC; }
 
     static class Codec implements PayloadCodec {
@@ -133,6 +135,7 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
         /**
          * Get payload for an inline tag
          */
+        @Override
         public BytesRef inlineTagPayload(int spanStart, int spanEnd, BlackLabIndex.IndexType indexType, int relationId,
                 boolean maybeExtraInfo) {
             assert indexType == BlackLabIndex.IndexType.EXTERNAL_FILES;
@@ -142,6 +145,7 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
         /**
          * Get payload for a relation
          */
+        @Override
         public BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int start, int end,
                 int nextRelationId, boolean maybeExtraInfo) {
             throw new UnsupportedOperationException();
@@ -150,6 +154,7 @@ public class RelationsStrategyNaiveSeparateTerms implements RelationsStrategy {
         /**
          * Read the relationId directly from the payload
          */
+        @Override
         public int readRelationId(ByteArrayDataInput dataInput) {
             // this strategy doesn't use relationIds. Just return an invalid value.
             return -1;

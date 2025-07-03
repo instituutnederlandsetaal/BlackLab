@@ -239,6 +239,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      *
      * @return user wait time (ms)
      */
+    @Override
     public long timeUserWaitedMs() {
         if (isDone())
             return doneTime - createTime;
@@ -351,6 +352,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return result;
     }
 
+    @Override
     public boolean threwException() {
         return exceptionThrown != null;
     }
@@ -467,6 +469,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      *
      * @return the result so far, or null if not supported for this operation
      */
+    @Override
     public T peek() {
         if (isCancelled())
             throw InterruptedSearch.cancelled();

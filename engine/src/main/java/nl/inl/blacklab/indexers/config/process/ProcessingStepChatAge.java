@@ -13,6 +13,7 @@ public class ProcessingStepChatAge extends ProcessingStep {
     public ProcessingStepChatAge() {
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         String[] parts = value.split("[;.]", 3);
         int years = 0;
@@ -36,6 +37,7 @@ public class ProcessingStepChatAge extends ProcessingStep {
         return Integer.toString(years * 12 + months + (days > 14 ? 1 : 0) );
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

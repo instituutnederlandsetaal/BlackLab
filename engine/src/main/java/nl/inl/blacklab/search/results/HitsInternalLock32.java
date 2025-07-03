@@ -92,6 +92,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         }
     }
 
+    @Override
     public void addAll(HitsInternal hits) {
         this.lock.writeLock().lock();
         try {
@@ -104,6 +105,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     /**
      * Clear the arrays.
      */
+    @Override
     public void clear() {
         lock.writeLock().lock();
         try {

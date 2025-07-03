@@ -142,6 +142,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      *
      * @return current relation info object; don't store or modify this, use .copy() first!
      */
+    @Override
     public RelationInfo getRelationInfo() {
         // Decode the payload if we haven't already
         if (!fetchedRelationInfo) {

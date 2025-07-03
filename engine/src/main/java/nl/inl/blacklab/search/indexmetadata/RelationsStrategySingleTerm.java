@@ -99,6 +99,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
         return term;
     }
 
+    @Override
     public boolean isOptimizationTerm(String indexedTerm) {
         return indexedTerm.endsWith(IS_OPTIMIZATION_INDICATOR);
     }
@@ -111,6 +112,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
         return allAttributesFromIndexedTerm.entrySet().stream();
     }
 
+    @Override
     public Map<String, String> getAllAttributesFromIndexedTerm(String indexedTerm) {
         int i = indexedTerm.indexOf(
                 ATTR_SEPARATOR); // if <0, there's no attributes (older index where rel name isn't always terminated)
@@ -172,6 +174,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
      * @param indexedTerm the term indexed in Lucene
      * @return the full relation type
      */
+    @Override
     public String fullTypeFromIndexedTerm(String indexedTerm) {
         int sep = indexedTerm.indexOf(ATTR_SEPARATOR);
         if (sep < 0)
@@ -200,6 +203,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
      * @param attributes            any attribute criteria for this relation
      * @return regex to find this relation
      */
+    @Override
     public List<String> searchRegexes(BlackLabIndex index, String fullRelationTypeRegex,
             Map<String, String> attributes) {
 
@@ -280,6 +284,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
 
     private final PayloadCodec CODEC = new Codec();
 
+    @Override
     public PayloadCodec getPayloadCodec() { return CODEC; }
 
     class Codec implements PayloadCodec {
@@ -415,6 +420,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
          * @param dataInput payload
          * @return relation id, or -1 if not present
          */
+        @Override
         public int readRelationId(ByteArrayDataInput dataInput) {
             try {
                 int relationId = dataInput.readZInt();
@@ -434,6 +440,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
          * @param dataInput data to deserialize
          * @throws IOException on corrupted payload
          */
+        @Override
         public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput,
                 RelationInfo target) {
             try {
@@ -491,6 +498,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
          *
          * @return the serialized data
          */
+        @Override
         public BytesRef serialize(RelationInfo relInfo) {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             DataOutput dataOutput = new OutputStreamDataOutput(os);
@@ -516,6 +524,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
          * @param relationId     unique id for this relation, to look up attributes later
          * @return payload to store
          */
+        @Override
         public BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId, boolean maybeExtraInfo) {
             if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
                 return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
@@ -529,6 +538,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
             }
         }
 
+        @Override
         public BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
                 int targetEnd, int relationId, boolean maybeExtraInfo) {
             ByteArrayOutputStream os = new ByteArrayOutputStream();

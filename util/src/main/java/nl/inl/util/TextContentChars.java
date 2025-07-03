@@ -34,6 +34,7 @@ public class TextContentChars implements TextContent {
         this.length = length;
     }
 
+    @Override
     public boolean isEmpty() {
         return length == 0;
     }
@@ -42,6 +43,7 @@ public class TextContentChars implements TextContent {
      * Append this text content to a string builder.
      * @param builder where to add our content
      */
+    @Override
     public void appendToStringBuilder(StringBuilder builder) {
         builder.append(chars, offset, length);
     }

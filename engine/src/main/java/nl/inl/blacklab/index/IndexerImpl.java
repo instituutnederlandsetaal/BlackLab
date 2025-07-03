@@ -590,6 +590,7 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     /** Get the strategy to use for indexing relations. */
+    @Override
     public RelationsStrategy getRelationsStrategy() {
         return indexWriter.getRelationsStrategy();
     }

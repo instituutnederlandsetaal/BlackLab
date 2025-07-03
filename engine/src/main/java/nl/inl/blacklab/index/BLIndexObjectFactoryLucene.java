@@ -53,6 +53,7 @@ public class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
         return BLFieldTypeLucene.annotationSensitivity(offsets, forwardIndex, relationsStrategy);
     }
 
+    @Override
     public BLFieldType fieldTypeIndexMetadataMarker() {
         return indexMetadataMarkerFieldType;
     }

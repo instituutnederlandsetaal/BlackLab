@@ -692,6 +692,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return params.getNumberOfResultsToShow();
     }
 
+    @Override
     public ContextSize getContext() {
         return params.getContext();
     }
@@ -856,6 +857,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public ApiVersion apiCompatibility() { return params.apiCompatibility(); }
 
+    @Override
     public Optional<String> getInputFormat() {
         if (inputFormat != null)
             return Optional.of(inputFormat);

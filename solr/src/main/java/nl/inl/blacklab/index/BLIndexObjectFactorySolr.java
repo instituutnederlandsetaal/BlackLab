@@ -37,6 +37,7 @@ public class BLIndexObjectFactorySolr implements BLIndexObjectFactory {
         return BLFieldTypeLucene.annotationSensitivity(offsets, forwardIndex, relationsStrategy);
     }
 
+    @Override
     public BLFieldType fieldTypeIndexMetadataMarker() {
         // ignored in solr path, see BLInputDocumentSolr.
         return fieldTypeMetadata(false);

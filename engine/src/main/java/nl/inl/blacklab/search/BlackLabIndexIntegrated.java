@@ -187,6 +187,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public RelationsStrategy relationsStrategy = RelationsStrategy.ifNotRecorded();
 
     /** Get the strategy to use for indexing/searching relations. */
+    @Override
     public RelationsStrategy getRelationsStrategy() {
         return relationsStrategy;
     }
@@ -236,12 +237,14 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
             relationsStrategy = RelationsStrategy.forNewIndex();
     }
 
+    @Override
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
         if (!createNewIndex)
             return IndexMetadataIntegrated.deserializeFromJsonJaxb(this);
         return IndexMetadataIntegrated.create(this, config);
     }
 
+    @Override
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile) {
         if (indexTemplateFile != null)
             throw new IllegalArgumentException("Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
@@ -255,6 +258,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         registerContentStore(field, cs);
     }
 
+    @Override
     public ForwardIndex createForwardIndex(AnnotatedField field) {
         return new ForwardIndexIntegrated(this, field);
     }

@@ -30,6 +30,7 @@ public class TestSearchBehavior {
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null) {
+            @Override
             public synchronized void run() {
                 try {
                     // signal main thread we have started, so it can send the interrupt()
@@ -40,6 +41,7 @@ public class TestSearchBehavior {
                 }
             }
 
+            @Override
             void initialize() {}
         });
 
@@ -81,8 +83,10 @@ public class TestSearchBehavior {
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
         h.spansReaders.clear();
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null) {
+            @Override
             public synchronized void run() { throw exceptionToThrow; }
 
+            @Override
             void initialize() {}
         });
 

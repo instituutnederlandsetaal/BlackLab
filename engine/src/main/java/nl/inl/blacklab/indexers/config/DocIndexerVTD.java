@@ -153,6 +153,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     // process annotated field
 
+    @Override
     protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
 
         if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
@@ -384,6 +385,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
      * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
+    @Override
     protected void processAnnotation(ConfigAnnotation annotation, VTDNav word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {

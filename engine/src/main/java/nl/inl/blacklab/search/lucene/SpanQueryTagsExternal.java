@@ -208,6 +208,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
         return startTagFieldName;
     }
 
+    @Override
     public String getElementNameRegex() {
         return tagNameRegex;
     }

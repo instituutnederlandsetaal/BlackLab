@@ -200,6 +200,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return field.isEmpty() ? null : get(field);
     }
 
+    @Override
     public MetadataField pidField() {
         return pidField == null ? null : get(pidField);
     }

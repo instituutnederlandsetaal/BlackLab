@@ -383,6 +383,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         return this.hitsInternal.get(i);
     }
 
+    @Override
     public void getEphemeral(long i, EphemeralHit hit) {
         ensureResultsRead(i + 1);
         this.hitsInternal.getEphemeral(i, hit);

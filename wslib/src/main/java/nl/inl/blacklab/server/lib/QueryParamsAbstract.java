@@ -264,6 +264,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
         return getLong(WebserviceParameter.NUMBER_OF_RESULTS);
     }
 
+    @Override
     public ContextSize getContext() {
         // ("wordsaroundhit" is deprecated, now called "context")
         WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?
@@ -304,6 +305,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     @Override
     public Optional<String> getFacetProps() { return opt(WebserviceParameter.INCLUDE_FACETS); }
 
+    @Override
     public Optional<String> getGroupProps() { return opt(WebserviceParameter.GROUP_BY); }
 
     @Override

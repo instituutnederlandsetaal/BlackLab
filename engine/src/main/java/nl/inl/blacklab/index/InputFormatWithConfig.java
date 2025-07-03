@@ -40,26 +40,32 @@ public class InputFormatWithConfig implements InputFormat {
         return errorMessage;
     }
 
+    @Override
     public String getIdentifier() {
         return formatIdentifier;
     }
 
+    @Override
     public String getDisplayName() {
         return getConfig().getDisplayName();
     }
 
+    @Override
     public String getDescription() {
         return getConfig().getDescription();
     }
 
+    @Override
     public String getHelpUrl() {
         return getConfig().getHelpUrl();
     }
 
+    @Override
     public boolean isVisible() {
         return getConfig().isVisible();
     }
 
+    @Override
     public synchronized ConfigInputFormat getConfig() {
         if (config == null) {
             try {

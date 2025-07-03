@@ -138,6 +138,7 @@ public class TextPatternRegex extends TextPatternTerm {
         return super.hashCode();
     }
 
+    @Override
     public TextPatternRegex withAnnotationAndSensitivity(String annotation, MatchSensitivity sensitivity) {
         if (annotation == null)
             annotation = this.annotation;

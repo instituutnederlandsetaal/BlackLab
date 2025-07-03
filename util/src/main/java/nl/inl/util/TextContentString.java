@@ -14,6 +14,7 @@ public class TextContentString implements TextContent {
         this.str = str;
     }
 
+    @Override
     public boolean isEmpty() {
         return str.isEmpty();
     }
@@ -22,6 +23,7 @@ public class TextContentString implements TextContent {
      * Append this text content to a string builder.
      * @param builder where to add our content
      */
+    @Override
     public void appendToStringBuilder(StringBuilder builder) {
         builder.append(str);
     }

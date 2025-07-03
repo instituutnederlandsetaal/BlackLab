@@ -23,6 +23,7 @@ public class BLInputDocumentSolr implements BLInputDocument {
         document = new SolrInputDocument();
     }
 
+    @Override
     public void addField(String name, String value, BLFieldType fieldType) {
         document.addField(name, value);
     }
@@ -44,10 +45,12 @@ public class BLInputDocumentSolr implements BLInputDocument {
         }
     }
 
+    @Override
     public void addStoredNumericField(String name, int value, boolean addDocValue) {
         document.addField(name, value);
     }
 
+    @Override
     public void addStoredField(String name, String value) {
         document.addField(name, value);
     }

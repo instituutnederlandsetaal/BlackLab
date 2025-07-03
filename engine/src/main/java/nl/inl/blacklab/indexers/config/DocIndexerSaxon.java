@@ -200,6 +200,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         docStartEndOffsetsPerField.clear();
     }
 
+    @Override
     protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
             Map<String, Span> tokenPositionsMap) {
 
@@ -412,6 +413,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
      * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
+    @Override
     protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {

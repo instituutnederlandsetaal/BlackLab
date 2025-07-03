@@ -302,6 +302,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
     }
 
+    @Override
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
         super.fixAfterDeserialization(index, fieldName);
         for (Map.Entry<String, AnnotationImpl> entry : annots.entrySet()) {
@@ -323,6 +324,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
      * @param limitValues truncate lists/maps of values to this length
      * @return information about relations in this corpus
      */
+    @Override
     public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
         RelationsStats results;
         synchronized (this) {

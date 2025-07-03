@@ -339,6 +339,7 @@ public class AnnotationImpl implements Annotation, Freezable {
         subannotations.addAll(names);
     }
 
+    @Override
     public CustomPropsMap custom() {
         return custom;
     }
@@ -354,10 +355,12 @@ public class AnnotationImpl implements Annotation, Freezable {
             freeze();
     }
 
+    @Override
     public boolean isSubannotation() {
         return mainAnnotation != null;
     }
 
+    @Override
     public Annotation parentAnnotation() {
         return mainAnnotation;
     }

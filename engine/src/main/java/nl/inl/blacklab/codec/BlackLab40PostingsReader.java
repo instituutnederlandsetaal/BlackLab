@@ -140,6 +140,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
      * @param extension extension of the file to open (should be one of the prefixed constants from BlacklabPostingsFormat)
      * @return handle to the opened segment file
      */
+    @Override
     public IndexInput openIndexFile(String extension) throws IOException {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
         IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
@@ -173,6 +174,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
      *
      * @return forward index segment reader
      */
+    @Override
     public ForwardIndexSegmentReader forwardIndex() {
         return forwardIndex.reader();
     }
@@ -186,6 +188,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
      *
      * @return relation info segment reader if available, otherwise null
      */
+    @Override
     public RelationInfoSegmentReader relationInfo() {
         return relationInfo == null ? null : relationInfo.reader();
     }

@@ -889,6 +889,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         metadataDocument.saveToIndex(indexWriter, metadata);
     }
 
+    @Override
     public BlackLabIndex.IndexType getIndexType() {
         return BlackLabIndex.IndexType.INTEGRATED;
     }
