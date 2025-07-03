@@ -3,14 +3,12 @@ package nl.inl.blacklab.search.textpattern;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
-import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
@@ -110,7 +108,7 @@ public class TextPatternRelationMatch extends TextPattern {
         // Filter out "any n-gram" arguments ([]*) because they don't do anything
         clauses = clauses.stream()
                 .filter(q -> !BLSpanQuery.isAnyNGram(q))    // remove any []* clauses, which don't do anything
-                .collect(Collectors.toList());
+                .toList();
 
         if (clauses.isEmpty()) {
             // All clauses were []*; return any n-gram query (good luck with that...)
@@ -171,7 +169,7 @@ public class TextPatternRelationMatch extends TextPattern {
         TextPattern newParent = parent.applyWithSpans();
         List<RelationTarget> newChildren = children.stream()
                 .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyWithSpans(), ch.getSpanMode(), ch.getCaptureAs()))
-                .collect(Collectors.toList());
+                .toList();
         return new TextPatternRelationMatch(newParent, newChildren);
     }
 
@@ -186,7 +184,7 @@ public class TextPatternRelationMatch extends TextPattern {
         TextPattern newParent = parent.applyRspanAll();
         List<RelationTarget> newChildren = children.stream()
                 .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyRspanAll(), ch.getSpanMode(), ch.getCaptureAs()))
-                .collect(Collectors.toList());
+                .toList();
         return new TextPatternRelationMatch(newParent, newChildren);
     }
 }

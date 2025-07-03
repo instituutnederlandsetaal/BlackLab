@@ -595,7 +595,7 @@ public class WebserviceOperations {
         if (!index.userMayRead(user))
             throw new NotAuthorized("You (" + user.getId() + ") are not authorized to share " + indexName + "; you are not the owner.");
         // Update the list of users to share with
-        List<String> shareWithUsers = Arrays.stream(users).map(String::trim).collect(Collectors.toList());
+        List<String> shareWithUsers = Arrays.stream(users).map(String::trim).toList();
         index.setShareWithUsers(shareWithUsers);
     }
 

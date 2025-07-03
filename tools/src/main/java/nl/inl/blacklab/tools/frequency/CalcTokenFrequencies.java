@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -69,7 +68,7 @@ class CalcTokenFrequencies {
         final List<AnnotInfo> hitProperties = annotations.stream().map(ann -> {
             AnnotationForwardIndex afi = index.annotationForwardIndex(ann);
             return new AnnotInfo(afi, MatchSensitivity.INSENSITIVE);
-        }).collect(Collectors.toList());
+        }).toList();
         final List<String> docProperties = new ArrayList<>(metadataFields);
 
         final int numAnnotations = hitProperties.size();

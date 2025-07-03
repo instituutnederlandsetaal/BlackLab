@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -261,7 +260,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
 
     @Override
     public HitGroups filter(GroupProperty<Hit, HitGroup> property, PropertyValue value) {
-        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList());
+        List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).toList();
         Pair<ResultsStats, ResultsStats> stats = getStatsOfSample(list, this.hitsStats.maxStats(), this.docsStats.maxStats());
         return HitGroups.fromList(queryInfo(), list, groupCriteria(), null, null, stats.getLeft(), stats.getRight());
     }

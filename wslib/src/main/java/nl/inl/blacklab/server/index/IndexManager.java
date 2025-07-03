@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -460,7 +459,7 @@ public class IndexManager {
     }
 
     private List<Index> getPrivateCorporaSharedWith(User user) {
-        return getAllLoadedCorpora().stream().filter(i -> i.sharedWith(user)).collect(Collectors.toList());
+        return getAllLoadedCorpora().stream().filter(i -> i.sharedWith(user)).toList();
     }
 
     /**
@@ -690,7 +689,7 @@ public class IndexManager {
         FileAlterationMonitor monitor = new FileAlterationMonitor(pollingIntervalInMs);
         List<FileAlterationObserver> observers = directories.stream()
             .map(FileAlterationObserver::new)
-            .collect(Collectors.toList());
+            .toList();
         FileAlterationListenerAdaptor listener = new FileAlterationListenerAdaptor() {
             @Override
             public void onDirectoryDelete(File directory) {

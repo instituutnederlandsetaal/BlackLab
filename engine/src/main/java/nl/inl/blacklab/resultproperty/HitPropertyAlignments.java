@@ -3,7 +3,6 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -38,7 +37,7 @@ public class HitPropertyAlignments extends HitProperty {
                 // Find indexes of foreign hits in matchInfo
                 targetHitGroupIndexes = hits.matchInfoDefs().currentListFiltered(MatchInfo.Def::isForeignHit).stream()
                         .map(MatchInfo.Def::getIndex)
-                        .collect(Collectors.toList());
+                        .toList();
             } else {
                 targetHitGroupIndexes = Collections.emptyList();
             }

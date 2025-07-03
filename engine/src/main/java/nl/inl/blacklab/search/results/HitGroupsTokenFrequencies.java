@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -470,7 +469,7 @@ public class HitGroupsTokenFrequencies {
                     }
 
                     return new HitGroupWithoutResults(queryInfo, groupId, groupSizeHits, groupSizeDocs, false, false);
-                }).collect(Collectors.toList());
+                }).map(g -> (HitGroup)g).toList();
             }
             logger.debug("fast path used for grouping");
 

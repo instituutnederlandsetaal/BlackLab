@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -111,7 +110,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     public DocGroups filter(GroupProperty<DocResult, DocGroup> property, PropertyValue value) {
         return new DocGroups(
             this.queryInfo(), 
-            this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList()), 
+            this.results.stream().filter(group -> property.get(group).equals(value)).toList(),
             this.groupBy, 
             null,
             null

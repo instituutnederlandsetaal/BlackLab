@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
@@ -74,10 +73,10 @@ public class Contexts {
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
                 .map(AnnotationForwardIndex::annotation)
-                .collect(Collectors.toList());
+                .toList();
         List<Terms> annotationTerms = forwardIndexes.stream()
                 .map(AnnotationForwardIndex::terms)
-                .collect(Collectors.toList());
+                .toList();
         int hitIndex = 0;
         for (Hit h: hits) {
             int[] hitContext = contexts[hitIndex];

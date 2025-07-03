@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPath;
@@ -189,7 +188,7 @@ public class XPathFinder {
                                         .map(o -> o instanceof NodeInfo ?
                                                 ((NodeInfo) o).toShortString() :
                                                 String.valueOf(o))
-                                        .collect(Collectors.toList()), xPath));
+                                        .toList(), xPath));
         }
     }
 
@@ -219,7 +218,7 @@ public class XPathFinder {
                                         .map(o -> o instanceof NodeInfo ?
                                                 ((NodeInfo) o).toShortString() :
                                                 String.valueOf(o))
-                                        .collect(Collectors.toList()), xPath));
+                                        .toList(), xPath));
         }
     }
 }
