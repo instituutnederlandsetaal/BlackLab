@@ -35,12 +35,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return System.currentTimeMillis();
     }
 
-    public static long getNextEntryId() {
-        Long n;
-        synchronized(nextEntryId) {
-            n = nextEntryId;
-            nextEntryId++;
-        }
+    public static synchronized long getNextEntryId() {
+        Long n = nextEntryId;
+        nextEntryId++;
         return n;
     }
 

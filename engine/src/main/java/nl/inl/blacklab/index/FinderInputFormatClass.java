@@ -1,14 +1,10 @@
 package nl.inl.blacklab.index;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.reflections.Reflections;
 import org.reflections.scanners.SubTypesScanner;
-
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * Supports creation of several types of DocIndexers implemented directly in
@@ -31,7 +27,7 @@ public class FinderInputFormatClass implements FinderInputFormat {
      * Find all legacy DocIndexers and store them in a map.
      * @return a map of format identifiers to DocIndexerLegacy classes
      */
-    private synchronized static Map<String, Class<? extends  DocIndexerLegacy>> getLegacyDocIndexers() {
+    private static synchronized Map<String, Class<? extends  DocIndexerLegacy>> getLegacyDocIndexers() {
         if (legacyDocIndexers == null) {
             legacyDocIndexers = new HashMap<>();
             Reflections reflections = new Reflections("", new SubTypesScanner(false));
@@ -43,10 +39,6 @@ public class FinderInputFormatClass implements FinderInputFormat {
             }
         }
         return legacyDocIndexers;
-    }
-
-    private static Class<? extends DocIndexerLegacy> getDocIndexerClass(String formatIdentifier) throws ClassNotFoundException {
-        return getLegacyDocIndexers().get(formatIdentifier);
     }
 
 }

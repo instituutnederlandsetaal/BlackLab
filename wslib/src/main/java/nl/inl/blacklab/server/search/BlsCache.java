@@ -264,7 +264,8 @@ public class BlsCache implements SearchCache {
         if (trace) {
             String msg = getCacheStats();
             if (!msg.equals(previousCacheStatsMessage)) {
-                double freeGigs = (double)(getFreeMemory() * 10 / ONE_GB_BYTES) / 10;
+                long freeGigsTimesTen = getFreeMemory() * 10 / ONE_GB_BYTES;
+                double freeGigs = (double)freeGigsTimesTen / 10;
                 traceInfo("{}: {}, {}G free heap", "CACHE AFTER UPDATE", msg, freeGigs);
             }
             previousCacheStatsMessage = msg;
