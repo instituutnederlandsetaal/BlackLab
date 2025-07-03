@@ -15,7 +15,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.InputFormatWithConfig;
@@ -650,7 +649,7 @@ public class ResponseStreamer {
         String docPid = result.getParams().getDocPid();
         Hits hits = result.getHits();
         if (!hits.hitsStats().processedAtLeast(1))
-            throw new BlackLabRuntimeException("Hit for snippet not found");
+            throw new RuntimeException("Hit for snippet not found");
         Hit hit = hits.get(0);
         hits = hits.size() > 1 ? hits.window(hit) : hits; // make sure we only have 1 hit
         Map<String, MatchInfo> matchInfo = hits.getMatchInfoMap(hit);

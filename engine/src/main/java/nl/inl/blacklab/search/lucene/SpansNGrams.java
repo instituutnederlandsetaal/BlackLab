@@ -8,7 +8,6 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
@@ -108,7 +107,7 @@ class SpansNGrams extends BLSpans {
                 currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
-                throw new BlackLabRuntimeException("currentDoc > maxDoc!!");
+                throw new RuntimeException("currentDoc > maxDoc!!");
             if (currentDoc == maxDoc) {
                 currentDoc = NO_MORE_DOCS;
                 currentStart = currentEnd = NO_MORE_POSITIONS;

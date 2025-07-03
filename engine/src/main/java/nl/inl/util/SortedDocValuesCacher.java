@@ -10,7 +10,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.util.BytesRef;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Wrap a SortedDocValues to enable random access.
@@ -68,7 +68,7 @@ public class SortedDocValuesCacher {
             }
             return null; // default missing value
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

@@ -15,7 +15,6 @@ import org.apache.lucene.queries.spans.FilterSpans;
 import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -159,7 +158,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
                 }
                 relStrat.getPayloadCodec().deserialize(in.startPosition(), dataInput, relationInfo);
             } catch (IOException e) {
-                throw new BlackLabRuntimeException("Error getting payload");
+                throw new RuntimeException("Error getting payload");
             }
             if (collector.term != null) // can happen during testing...
                 setIndexedTerm(relationInfo, collector.term.text(), docID(), relInfo, relStrat);

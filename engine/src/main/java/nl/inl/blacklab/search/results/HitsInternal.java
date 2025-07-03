@@ -5,7 +5,6 @@ import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -45,7 +44,7 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
             return new HitsInternalNoLock(initialCapacity);
         }
         if (initialCapacity > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("initialCapacity=" + initialCapacity + " > " + Constants.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
+            throw new RuntimeException("initialCapacity=" + initialCapacity + " > " + Constants.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
         if (mustLock)
             return new HitsInternalLock32((int)initialCapacity);
         return new HitsInternalNoLock32((int)initialCapacity);

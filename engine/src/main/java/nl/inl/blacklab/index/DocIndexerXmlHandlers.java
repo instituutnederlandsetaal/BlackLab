@@ -22,7 +22,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
@@ -149,7 +149,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 // Add Lucene doc to indexer
                 getDocWriter().add(currentDoc);
             } catch (Exception e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
 
             // Report progress
@@ -524,7 +524,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                             DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException e) {
-                    throw new BlackLabRuntimeException(e);
+                    throw new RuntimeException(e);
                 }
             }
         }
@@ -593,7 +593,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             parser = factory.newSAXParser();
         } catch (SAXException | ParserConfigurationException e1) {
             // Unrecoverable error, throw runtime exception
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
         try {
             InputSource is = new InputSource(reader);

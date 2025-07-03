@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -77,7 +77,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             try {
                 return new DocIndexerConvertAndTag(docIndexer, config);
             } catch (Exception e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         } else {
             return docIndexer;
@@ -178,7 +178,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         .warning("Link path " + path + " not found in document " + documentName);
                 break;
             case FAIL:
-                throw new BlackLabRuntimeException("Link path " + path + " not found in document " + documentName);
+                throw new RuntimeException("Link path " + path + " not found in document " + documentName);
         }
     }
 
@@ -279,7 +279,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 // Fetch value from Lucene doc
                 List<String> metadataField = getMetadataField(valueField);
                 if (metadataField == null) {
-                    throw new BlackLabRuntimeException("Link value field " + valueField + " has no values (null)!");
+                    throw new RuntimeException("Link value field " + valueField + " has no values (null)!");
                 }
                 results.addAll(metadataField);
             }
@@ -314,7 +314,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                             + ": " + e.getMessage());
                     break;
                 case FAIL:
-                    throw new BlackLabRuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
+                    throw new RuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
             }
         }
     }

@@ -17,7 +17,7 @@ import org.apache.lucene.index.Term;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
@@ -210,7 +210,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
     private void init(BlackLabIndexWriter indexWriter, String formatIdentifier) throws DocumentFormatNotFound {
         if (indexWriter == null) {
-            throw new BlackLabRuntimeException("indexWriter == null");
+            throw new RuntimeException("indexWriter == null");
         }
 
         this.indexWriter = indexWriter;
@@ -599,7 +599,7 @@ class IndexerImpl implements DocWriter, Indexer {
         try {
             ((BLIndexWriterProxyLucene) indexWriter().writer()).getWriter().forceMerge(1);
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 }

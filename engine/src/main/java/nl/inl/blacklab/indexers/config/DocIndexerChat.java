@@ -26,7 +26,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.CollUtil;
@@ -61,7 +61,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         try {
             index();
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -90,7 +90,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         try (BufferedReader reader = file.createReader()) {
             charEncodingLine = reader.readLine();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         Charset charEncoding = charEncodingLine == null ? null : getCharEncoding(charEncodingLine);
         if (charEncoding == null) {
@@ -106,12 +106,12 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void close() throws BlackLabRuntimeException {
+    public void close() throws RuntimeException {
         try {
             if (reader != null)
                 reader.close();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -352,7 +352,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 date = DateUtils.parseDate(str, usLocale, "d-M-Y", "dd-MMM-yyyy");
             } catch (ParseException e1) {
                 log("Date " + str + " cannot be interpreted");
-                throw BlackLabRuntimeException.wrap(e1);
+                throw BlackLabException.wrapRuntime(e1);
             }
         }
         return date;

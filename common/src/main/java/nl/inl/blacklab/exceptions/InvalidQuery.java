@@ -5,7 +5,7 @@ package nl.inl.blacklab.exceptions;
  *
  * A message is included that can be shown to the user.
  */
-public class InvalidQuery extends BlackLabRuntimeException {
+public class InvalidQuery extends RuntimeException {
 
     public InvalidQuery(String message) {
         super(message);

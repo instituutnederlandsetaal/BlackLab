@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -55,7 +55,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
                     throw new AssertionError(e2);
                 }
             }
-            throw BlackLabRuntimeException.wrap(e.getCause() == null ? e : e.getCause());
+            throw BlackLabException.wrapRuntime(e.getCause() == null ? e : e.getCause());
         } catch (InterruptedException e) {
             throw new InterruptedSearch(e);
         } catch (CompletionException e) {

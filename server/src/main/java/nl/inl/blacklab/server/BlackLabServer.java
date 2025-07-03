@@ -27,7 +27,6 @@ import com.fasterxml.jackson.core.JacksonException;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -255,7 +254,7 @@ public class BlackLabServer extends HttpServlet {
 
         try {
             ensureSearchManagerAvailable();
-        } catch (BlackLabRuntimeException | BlsException e) {
+        } catch (RuntimeException e) {
             boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, true);
             String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
                     ApiVersion.CURRENT.toString());

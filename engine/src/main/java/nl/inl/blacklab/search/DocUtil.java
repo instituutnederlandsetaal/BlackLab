@@ -13,7 +13,7 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.EphemeralHit;
@@ -63,7 +63,7 @@ public class DocUtil {
                     maxP = endsOfWord;
             }
             if (minP < 0 || maxP < 0)
-                throw new BlackLabRuntimeException("Can't determine min and max positions");
+                throw new RuntimeException("Can't determine min and max positions");
 
             String fieldPropName = field.offsetsField();
 
@@ -138,10 +138,10 @@ public class DocUtil {
             }
             if (found < total) {
                 if (!fillInDefaultsIfNotFound)
-                    throw new BlackLabRuntimeException("Could not find all character offsets!");
+                    throw new RuntimeException("Could not find all character offsets!");
 
                 if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
-                    throw new BlackLabRuntimeException("Could not find default char positions!");
+                    throw new RuntimeException("Could not find default char positions!");
 
                 for (int m = 0; m < startsOfWords.length; m++) {
                     if (!done[m])
@@ -154,13 +154,13 @@ public class DocUtil {
             }
 
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
     private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
         if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
         Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();

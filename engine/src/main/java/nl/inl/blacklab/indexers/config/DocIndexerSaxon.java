@@ -23,14 +23,14 @@ import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.iter.AxisIterator;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
+import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileReference;
 
@@ -136,7 +136,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             finder = new XPathFinder(xPath,
                     config.isNamespaceAware() ? config.getNamespaces() : null);
         } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -280,7 +280,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             tokenPosition.increment();
         }
         if (!inlinesToClose.isEmpty()) {
-            throw new BlackLabRuntimeException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
+            throw new RuntimeException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
         }
         // Index any punctuation occurring after last word
         while (currentPunct != null) {

@@ -23,7 +23,7 @@ import org.apache.lucene.queryparser.classic.ParseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -388,7 +388,7 @@ public class IndexTool {
             System.out.println("Writing " + indexInfoFile);
             FileUtils.write(indexInfoFile, indexInfo, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -408,7 +408,7 @@ public class IndexTool {
 
             index.metadata().setIndexMetadataFromString(indexmetadata);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -479,7 +479,7 @@ public class IndexTool {
                 return properties;
             }
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 }

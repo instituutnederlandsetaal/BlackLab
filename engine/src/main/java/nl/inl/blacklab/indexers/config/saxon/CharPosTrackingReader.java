@@ -13,7 +13,6 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.sf.saxon.om.NodeInfo;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /** Tracks characters positions for each tag in an XML document while reading through it. */
 public class CharPosTrackingReader extends Reader {
@@ -130,7 +129,7 @@ public class CharPosTrackingReader extends Reader {
 
         // NOTE more testing needed for self closing tags
         if (begin == end) {
-            throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
+            throw new RuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
                     qName, locator.getLineNumber(), locator.getColumnNumber(), end));
         }
         StartEndPos startEndPos = new StartEndPos(begin);

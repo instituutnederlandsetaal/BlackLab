@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,7 +11,6 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -118,7 +116,7 @@ public class HitGroups extends ResultsList<HitGroup, GroupProperty<Hit, HitGroup
             if (group == null) {
 
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
-                    throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+                    throw new RuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
                 group = HitsInternal.create(-1, hits.size(), false);
                 groupLists.put(identity, group);

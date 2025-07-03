@@ -4,15 +4,14 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
+import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
-import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.StringUtil;
 
@@ -62,7 +61,7 @@ public class CorpusQueryLanguageParser {
     String chopEnds(String input) {
         if (input.length() >= 2)
             return input.substring(1, input.length() - 1);
-        throw new BlackLabRuntimeException("Cannot chop ends off string shorter than 2 chars");
+        throw new RuntimeException("Cannot chop ends off string shorter than 2 chars");
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {

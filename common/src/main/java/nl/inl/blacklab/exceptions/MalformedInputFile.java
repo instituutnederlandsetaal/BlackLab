@@ -4,7 +4,7 @@ package nl.inl.blacklab.exceptions;
  * Thrown when the file you're indexing is malformed in some way (i.e. not
  * well-formed XML)
  */
-public class MalformedInputFile extends BlackLabRuntimeException {
+public class MalformedInputFile extends RuntimeException {
 
     public MalformedInputFile() {
         super();

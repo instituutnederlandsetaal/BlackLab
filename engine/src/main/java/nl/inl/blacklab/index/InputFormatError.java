@@ -2,7 +2,6 @@ package nl.inl.blacklab.index;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.FileReference;
 
 /**
@@ -43,7 +42,7 @@ public class InputFormatError implements InputFormat {
 
     @Override
     public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
-        throw new BlackLabRuntimeException(getDescription());
+        throw new RuntimeException(getDescription());
     }
 
     public String getErrorMessage() {

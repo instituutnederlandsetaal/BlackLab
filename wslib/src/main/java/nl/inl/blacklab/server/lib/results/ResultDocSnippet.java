@@ -5,7 +5,6 @@ import java.util.Optional;
 
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -93,7 +92,7 @@ public class ResultDocSnippet {
                 query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
                 hits = index.search(field, params.useCache()).find(query).execute();
             } catch (InvalidQuery e) {
-                throw new BlackLabRuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         if (hits != null && !hits.hitsStats().processedAtLeast(1)) {

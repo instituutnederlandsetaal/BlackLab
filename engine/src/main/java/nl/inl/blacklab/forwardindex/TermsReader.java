@@ -8,7 +8,7 @@ import java.nio.channels.FileChannel;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.BlockTimer;
 
@@ -29,7 +29,7 @@ public class TermsReader extends TermsReaderAbstract {
                 read(fc);
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

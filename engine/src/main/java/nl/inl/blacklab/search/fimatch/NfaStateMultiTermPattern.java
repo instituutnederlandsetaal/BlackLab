@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -88,7 +87,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     public void setNextState(int i, NfaState state) {
         if (i != 0)
-            throw new BlackLabRuntimeException("Token state only has one next state");
+            throw new RuntimeException("Token state only has one next state");
         nextState = state;
     }
 

@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -71,12 +71,12 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
     }
 
     @Override
-    public void close() throws BlackLabRuntimeException {
+    public void close() throws RuntimeException {
         try {
             if (inputReader != null)
                 inputReader.close();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -258,7 +258,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         try {
             index();
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

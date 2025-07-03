@@ -22,7 +22,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -117,16 +117,16 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             if (!create)
                 throw new IllegalArgumentException("ForwardIndex doesn't exist: " + dir);
             if (!dir.mkdir())
-                throw new BlackLabRuntimeException("Could not create dir: " + dir);
+                throw new RuntimeException("Could not create dir: " + dir);
         }
 
         if (create) {
             if (tokensFile.exists() && !tokensFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + tokensFile);
+                throw new RuntimeException("Could not delete file: " + tokensFile);
             if (tocFile.exists() && !tocFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + tocFile);
+                throw new RuntimeException("Could not delete file: " + tocFile);
             if (termsFile.exists() && !termsFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + termsFile);
+                throw new RuntimeException("Could not delete file: " + termsFile);
         }
         try {
             if (tocFile.exists()) {
@@ -136,14 +136,14 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             } else {
                 terms = TermsExternalUtil.openForWriting(collators, null);
                 if (!tokensFile.createNewFile())
-                    throw new BlackLabRuntimeException("Could not create file: " + tokensFile);
+                    throw new RuntimeException("Could not create file: " + tokensFile);
                 tocModified = true;
             }
             // Tricks to speed up reading
             // Index mode. Open for writing.
             openTokensFileForWriting();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         if (create) {
@@ -194,7 +194,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             }
             sortDeletedTocEntries();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -218,12 +218,12 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 writeTokensFp.setLength(0);
 
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         if (termsFile.exists() && !termsFile.delete())
-            throw new BlackLabRuntimeException("Could not delete file: " + termsFile);
+            throw new RuntimeException("Could not delete file: " + termsFile);
         if (tocFile.exists() && !tocFile.delete())
-            throw new BlackLabRuntimeException("Could not delete file: " + tocFile);
+            throw new RuntimeException("Could not delete file: " + tocFile);
         if (toc != null)
             toc.clear();
         if (deletedTocEntries != null)
@@ -263,7 +263,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 buf.put(deleted);
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         tocModified = false;
     }
@@ -286,7 +286,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 writeTokensFp.close();
 
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -449,13 +449,13 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 tokenIdsIndex++;
             }
             if (tokenIdsIndex != numberOfTokens)
-                throw new BlackLabRuntimeException(
+                throw new RuntimeException(
                         "tokenIdsIndex != numberOfTokens (" + tokenIdsIndex + " != " + numberOfTokens + ")");
             writeBuffer.put(tokenIds);
 
             return newDocumentFiid;
         } catch (IOException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
     }
 
@@ -510,7 +510,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 ByteBuffer buffer = ByteBuffer.allocate(bytesToRead);
                 int bytesRead = writeTokensFileChannel.read(buffer, offset * Integer.BYTES);
                 if (bytesRead < bytesToRead) {
-                    throw new BlackLabRuntimeException("Not enough bytes read: " + bytesRead
+                    throw new RuntimeException("Not enough bytes read: " + bytesRead
                             + " < " + bytesToRead);
                 }
                 ((Buffer)buffer).position(0);
@@ -521,7 +521,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
 
             return result;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

@@ -7,7 +7,6 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.Collator;
 import java.text.RuleBasedCollator;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,13 +19,12 @@ import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BlackLabConfig;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.util.DownloadCache;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
+import nl.inl.util.DownloadCache;
 import nl.inl.util.FileUtil;
 
 /**
@@ -324,7 +322,7 @@ public final class BlackLab {
             }
             return value == null ? "UNKNOWN" : value;
         } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error reading '" + key + "' from manifest", e);
+            throw new RuntimeException("Error reading '" + key + "' from manifest", e);
         }
     }
     

@@ -3,7 +3,7 @@ package nl.inl.blacklab.exceptions;
 /**
  * Error logging data.
  */
-public class LogException extends BlackLabRuntimeException {
+public class LogException extends RuntimeException {
     
     public LogException(String msg) {
         super(msg);

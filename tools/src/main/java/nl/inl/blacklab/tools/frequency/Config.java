@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 
@@ -72,7 +71,7 @@ class Config {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             return mapper.readValue(f, Config.class);
         } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error reading config file " + f, e);
+            throw new RuntimeException("Error reading config file " + f, e);
         }
     }
 

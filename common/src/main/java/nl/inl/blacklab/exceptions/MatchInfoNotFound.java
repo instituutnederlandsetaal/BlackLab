@@ -2,7 +2,7 @@ package nl.inl.blacklab.exceptions;
 
 public class MatchInfoNotFound extends InvalidQuery {
 
-    private String name;
+    private final String name;
 
     public MatchInfoNotFound(String name) {
         super("Reference to unknown match info (e.g. capture group): " + name);

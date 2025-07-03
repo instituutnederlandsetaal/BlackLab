@@ -32,7 +32,7 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
@@ -198,7 +198,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             }
 
             if (!indexMode && createNewIndex)
-                throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
+                throw new RuntimeException("Cannot create new index, not in index mode");
 
             if (reader != null) {
                 // Only create analyzer if not in solr mode.
@@ -338,7 +338,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true));
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -353,7 +353,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                         boolean createNewContentStore = isEmptyIndex;
                         openContentStore(field, createNewContentStore, indexLocation);
                     } catch (ErrorOpeningIndex e) {
-                        throw BlackLabRuntimeException.wrap(e);
+                        throw BlackLabException.wrapRuntime(e);
                     }
                     ca = contentStores.contentAccessor(field);
                 } else if (field instanceof AnnotatedField && field != mainAnnotatedField()) {
@@ -502,7 +502,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new BlackLabRuntimeException("Main contents field unknown");
+                        throw new RuntimeException("Main contents field unknown");
                 }
             }
 
@@ -588,7 +588,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             }
             contentStores.close();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -633,7 +633,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
-                throw new BlackLabRuntimeException("Could not create dir: " + indexDir);
+                throw new RuntimeException("Could not create dir: " + indexDir);
         }
         Path indexPath = indexDir.toPath();
         while (Files.isSymbolicLink(indexPath)) {
@@ -671,7 +671,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             indexWriter.rollback();
             indexWriter = null;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

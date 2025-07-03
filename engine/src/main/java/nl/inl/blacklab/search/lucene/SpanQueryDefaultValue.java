@@ -8,7 +8,6 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -32,12 +31,12 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         return SpanQueryAnyToken.anyNGram(queryInfo, luceneField);
-        //throw new BlackLabRuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
+        //throw new RuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
     }
 
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-        throw new BlackLabRuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
+        throw new RuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
     }
 
     @Override

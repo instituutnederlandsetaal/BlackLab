@@ -21,7 +21,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
@@ -187,7 +187,7 @@ public class QueryToolImpl {
             QueryToolImpl c = new QueryToolImpl(config.getIndexDir(), in, output);
             c.run();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -205,7 +205,7 @@ public class QueryToolImpl {
         try {
             output.line("Opening index " + indexDir.getCanonicalPath() + "...");
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         // Create the BlackLab index object

@@ -21,7 +21,6 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.queries.spans.SpanWeight;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -587,7 +586,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
-        throw new BlackLabRuntimeException("Sequence should have been rewritten!");
+        throw new RuntimeException("Sequence should have been rewritten!");
     }
 
     @Override

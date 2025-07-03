@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
 /**
@@ -39,7 +39,7 @@ public class DocFieldLengthGetter {
                     // this is fine if there are no real documents in this segment (i.e. only metadata value doc)
                 }
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         } else {
             // Only used for test (all lengths are the same)
@@ -89,7 +89,7 @@ public class DocFieldLengthGetter {
             }
             return 0;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 }

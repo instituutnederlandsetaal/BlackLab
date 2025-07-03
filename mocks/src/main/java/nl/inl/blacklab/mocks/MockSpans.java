@@ -8,7 +8,6 @@ import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -90,7 +89,7 @@ public class MockSpans extends BLSpans {
                 return startOffset();
             }
             if (currentHit < 0)
-                throw new BlackLabRuntimeException("nextDoc() not called yet!");
+                throw new RuntimeException("nextDoc() not called yet!");
             if (currentHit < doc.length && doc[currentHit] == currentDoc) {
                 currentHit++;
                 return startOffset(); // may return NO_MORE_POSITIONS if we're at the next doc
@@ -209,7 +208,7 @@ public class MockSpans extends BLSpans {
     public int nextDoc() throws IOException {
         assert docID() != NO_MORE_DOCS;
         if (noMoreDocs)
-            throw new BlackLabRuntimeException("Called nextDoc() on exhausted spans!");
+            throw new RuntimeException("Called nextDoc() on exhausted spans!");
         endPos = -1;
         int docId = spans.nextDoc();
         if (docId == NO_MORE_DOCS)
@@ -223,7 +222,7 @@ public class MockSpans extends BLSpans {
     public int nextStartPosition() throws IOException {
         assert startPosition() != NO_MORE_POSITIONS;
         if (noMoreHitsInDoc)
-            throw new BlackLabRuntimeException("Called nextStartPosition() on hit-exhausted spans!");
+            throw new RuntimeException("Called nextStartPosition() on hit-exhausted spans!");
         int startPos = spans.nextStartPosition();
         endPos = startPos == NO_MORE_POSITIONS ? NO_MORE_POSITIONS : postings.endOffset();
         if (startPos == NO_MORE_POSITIONS) {
@@ -236,7 +235,7 @@ public class MockSpans extends BLSpans {
     public int advance(int target) throws IOException {
         assert target >= 0 && target > docID();
         if (noMoreDocs)
-            throw new BlackLabRuntimeException("Called advance() on exhausted spans!");
+            throw new RuntimeException("Called advance() on exhausted spans!");
         endPos = -1;
         if (target <= spans.docID())
             throw new IllegalArgumentException("target <= doc (" + target + " <= " + spans.docID() + ")");

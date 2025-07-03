@@ -1,7 +1,5 @@
 package nl.inl.blacklab.server.search;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -19,7 +17,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import io.micrometer.core.instrument.Metrics;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -154,7 +152,7 @@ public class ResultsCache implements SearchCache {
             CompletableFuture<SearchResult> resultsFuture = searchCache.get(new SearchInfoWrapper(search, ThreadContext.get("requestId")));
             return new SearchCacheEntryFromFuture(resultsFuture, search);
         } catch (Exception ex) {
-            throw BlackLabRuntimeException.wrap(ex);
+            throw BlackLabException.wrapRuntime(ex);
         }
     }
 

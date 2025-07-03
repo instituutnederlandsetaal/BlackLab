@@ -9,7 +9,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -283,7 +282,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         assert fromIndex >= 0 && toIndexExclusive > 0;
         assert fromIndex < toIndexExclusive;
         if (toIndexExclusive - fromIndex > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int n = (int)(toIndexExclusive - fromIndex);
 
         // Determine which bits of context to get

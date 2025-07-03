@@ -1,6 +1,6 @@
 package nl.inl.blacklab.exceptions;
 
-public class ErrorOpeningIndex extends BlackLabRuntimeException {
+public class ErrorOpeningIndex extends RuntimeException {
     
     public ErrorOpeningIndex(String message) {
         super(message);

@@ -11,7 +11,6 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.codec.BlackLabPostingsFormat;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.codec.ForwardIndexField;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * Presents an iterator over ONE field/annotation in ONE segment of the Index.
@@ -54,17 +53,17 @@ public class TermsIntegratedSegment implements AutoCloseable {
                 }
                 // we checked all fields but did not find it.
                 if (this.field == null)
-                    throw new BlackLabRuntimeException("Trying to read forward index for field "+luceneField+ ", but it does not exist.");
+                    throw new RuntimeException("Trying to read forward index for field "+luceneField+ ", but it does not exist.");
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error reading forward index/terms for segment");
+            throw new RuntimeException("Error reading forward index/terms for segment");
         }
     }
 
     public synchronized Iterator<TermInSegment> iterator() {
         // NOTE: method is synchronized because TermInSegmentIterator constructor uses IndexInput.clone(), which is
         // not thread-safe.
-        if (this.isClosed) throw new BlackLabRuntimeException("Segment is closed");
+        if (this.isClosed) throw new RuntimeException("Segment is closed");
         return new TermInSegmentIterator(this);
     }
 

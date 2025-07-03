@@ -17,7 +17,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -32,8 +32,8 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
@@ -101,7 +101,7 @@ public interface BlackLabIndex extends AutoCloseable {
                 return DirectoryReader.indexExists(dir);
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -294,7 +294,7 @@ public interface BlackLabIndex extends AutoCloseable {
      *
      * @param annotation the annotation for which we want the forward index
      * @return the ForwardIndex if found/created
-     * @throws BlackLabRuntimeException if the annotation has no forward index
+     * @throws RuntimeException if the annotation has no forward index
      */
     AnnotationForwardIndex annotationForwardIndex(Annotation annotation);
 

@@ -20,7 +20,7 @@ import org.apache.solr.search.DocSet;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigArrays;
 import it.unimi.dsi.fastutil.ints.IntBigListIterator;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * A Filter that matches Lucene documents from a set of global doc ids.
@@ -136,7 +136,7 @@ public class DocSetFilter extends Query {
                         try {
                             return DocIdSet.EMPTY.iterator();
                         } catch (IOException e) {
-                            throw BlackLabRuntimeException.wrap(e);
+                            throw BlackLabException.wrapRuntime(e);
                         }
                     }
 

@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.lang.reflect.Method;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /** Read QueryTool commands from a Reader.
  *
@@ -58,7 +58,7 @@ class CommandReader {
                     // Can't init JLine; too bad, fall back to stdin
                     output.line("Command line editing not available; to enable, place jline jar in classpath.");
                 } catch (ReflectiveOperationException e) {
-                    throw new BlackLabRuntimeException("Could not init JLine console reader", e);
+                    throw new RuntimeException("Could not init JLine console reader", e);
                 }
             }
 
@@ -67,7 +67,7 @@ class CommandReader {
                 try {
                     cmd = (String) jlineReadLineMethod.invoke(jlineConsoleReader, prompt);
                 } catch (ReflectiveOperationException e) {
-                    throw new BlackLabRuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
+                    throw new RuntimeException("Could not invoke JLine ConsoleReader.readLine()", e);
                 }
             } else {
                 if (!output.isBatchMode())
@@ -77,7 +77,7 @@ class CommandReader {
             }
             return outputCommandIfNotSilenced(cmd);
         } catch (IOException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
     }
 

@@ -12,7 +12,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -26,7 +25,7 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
@@ -37,7 +36,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
@@ -85,7 +83,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
                 // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
                 //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-                throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
+                throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
             }
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
         }
@@ -230,7 +228,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
+            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
         }
         this.results = results;
         this.sampleParameters = sampleParameters;
@@ -246,7 +244,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         try {
             queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo));
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -343,7 +341,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
+            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
         }
 
         DocResult docResult;
