@@ -68,7 +68,6 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
 
     protected static <T, P extends ResultProperty<T>> List<T> doWindow(ResultsList<T, P> results, long first, long number) {
         if (first < 0 || first != 0 && !results.resultsProcessedAtLeast(first + 1)) {
-            //throw new RuntimeException("First hit out of range");
             return Collections.emptyList();
         }
 

@@ -494,7 +494,6 @@ public final class BlackLab {
                     fieldValueSortCollator = new RuleBasedCollator(rules);
                 } catch (Exception e) {
                     // Oh well, we'll use the collator as-is
-                    //throw new RuntimeException();//DEBUG
                 }
             }
         }

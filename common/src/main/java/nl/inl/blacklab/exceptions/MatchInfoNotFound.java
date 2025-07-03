@@ -1,5 +1,6 @@
 package nl.inl.blacklab.exceptions;
 
+/** Thrown when you refer to a match info that does not exist. */
 public class MatchInfoNotFound extends InvalidQuery {
 
     private final String name;

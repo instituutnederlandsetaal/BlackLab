@@ -98,7 +98,6 @@ public class TestIndex {
         @Override
         public boolean errorOccurred(Throwable e, String path, File f) {
             // FileProcessor doesn't like when we re-throw the exception.
-            //throw new RuntimeException("Error in indexer, path=" + path + ", file=" + f, e);
             System.err.println("Error while indexing. path=" + path + ", file=" + f);
             e.printStackTrace();
             return false; // don't continue

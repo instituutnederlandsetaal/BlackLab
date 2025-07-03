@@ -163,7 +163,6 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             if (j < 0) {
                 // This is not an attribute term.
                 return Stream.empty();
-                //throw new RuntimeException("Malformed attribute term, no value sep: " + indexedTerm);
             }
             String name = indexedTerm.substring(i + 1, j);
             String value = indexedTerm.substring(j + 1);

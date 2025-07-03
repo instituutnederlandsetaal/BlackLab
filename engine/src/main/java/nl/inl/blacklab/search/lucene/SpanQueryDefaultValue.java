@@ -31,7 +31,6 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         return SpanQueryAnyToken.anyNGram(queryInfo, luceneField);
-        //throw new RuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
     }
 
     @Override

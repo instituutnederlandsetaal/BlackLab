@@ -29,7 +29,6 @@ import nl.inl.util.TextContent;
  */
 @NotThreadSafe // in index mode
 public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
-    //private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
     SimpleResourcePool<Inflater> decompresserPool;
 
