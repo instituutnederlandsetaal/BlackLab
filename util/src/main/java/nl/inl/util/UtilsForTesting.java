@@ -100,7 +100,7 @@ public final class UtilsForTesting {
     public static synchronized TestDir createBlackLabTestDir(String name) {
         File testDir = new File(tempDir, TEST_DIR_PREFIX + name + "_" + UUID.randomUUID());
         if (!testDir.mkdir())
-            throw new RuntimeException("Unable to create test dir: " + testDir);
+            throw new IllegalStateException("Unable to create test dir: " + testDir);
 
         createMarkerFile(testDir);
 
@@ -111,9 +111,9 @@ public final class UtilsForTesting {
         File markerFile = new File(directory, MARKER_FILE_NAME);
         try {
             if (!markerFile.createNewFile())
-                throw new RuntimeException("Unable to create marker file: " + markerFile);
+                throw new IllegalStateException("Unable to create marker file: " + markerFile);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to create marker file: " + markerFile, e);
+            throw new IllegalStateException("Unable to create marker file: " + markerFile, e);
         }
     }
 }

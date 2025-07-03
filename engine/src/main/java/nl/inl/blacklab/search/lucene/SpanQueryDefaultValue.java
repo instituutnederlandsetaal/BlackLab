@@ -35,7 +35,7 @@ public class SpanQueryDefaultValue extends BLSpanQuery {
 
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-        throw new RuntimeException("SpanQueryDefaultValue must not occur here (should have been replaced)");
+        throw new IllegalStateException("SpanQueryDefaultValue must not occur here (should have been replaced)");
     }
 
     @Override

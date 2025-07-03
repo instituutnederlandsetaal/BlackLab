@@ -27,8 +27,8 @@ import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -334,19 +334,19 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
                 return reader().document(docId, allExceptContentStoreFields);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
     @Override
     public void delete(Query q) {
         if (!indexMode())
-            throw new RuntimeException("Cannot delete documents, not in index mode");
+            throw new UnsupportedOperationException("Cannot delete documents, not in index mode");
         try {
             logger.debug("Delete query: " + q);
             indexWriter.deleteDocuments(q);
         } catch (IOException e) {
-            throw BlackLabException.wrapRuntime(e);
+            throw new InvalidIndex(e);
         }
     }
 

@@ -247,7 +247,7 @@ public class WriteCsv {
         try {
             printer.printRecord(writeRowTemp);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot write response");
+            throw new IllegalStateException("Cannot write response");
         }
         writeRowTemp.clear();
     }

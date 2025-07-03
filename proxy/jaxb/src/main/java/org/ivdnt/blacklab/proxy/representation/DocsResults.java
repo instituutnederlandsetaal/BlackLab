@@ -12,6 +12,7 @@ import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -55,7 +56,7 @@ public class DocsResults implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_ARRAY)
-                throw new RuntimeException("Expected START_ARRAY, found " + token);
+                throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
 
             BigList<Doc> hits = new ObjectBigArrayBigList<>();
             while (true) {

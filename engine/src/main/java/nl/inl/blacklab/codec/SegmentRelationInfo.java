@@ -13,6 +13,7 @@ import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
@@ -105,7 +106,7 @@ public class SegmentRelationInfo implements AutoCloseable {
             _attrValuesFile.clone();
             _docsFile = _relationsFile = _attrSetsFile = _attrValuesFile = null;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -203,7 +204,7 @@ public class SegmentRelationInfo implements AutoCloseable {
                 }
                 return attrMap;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 

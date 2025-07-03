@@ -14,6 +14,7 @@ import org.apache.lucene.search.DocIdSetIterator;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.EphemeralHit;
@@ -63,7 +64,7 @@ public class DocUtil {
                     maxP = endsOfWord;
             }
             if (minP < 0 || maxP < 0)
-                throw new RuntimeException("Can't determine min and max positions");
+                throw new InvalidIndex("Can't determine min and max positions");
 
             String fieldPropName = field.offsetsField();
 
@@ -138,10 +139,10 @@ public class DocUtil {
             }
             if (found < total) {
                 if (!fillInDefaultsIfNotFound)
-                    throw new RuntimeException("Could not find all character offsets!");
+                    throw new InvalidIndex("Could not find all character offsets!");
 
                 if (lowestPosFirstChar < 0 || highestPosLastChar < 0)
-                    throw new RuntimeException("Could not find default char positions!");
+                    throw new InvalidIndex("Could not find default char positions!");
 
                 for (int m = 0; m < startsOfWords.length; m++) {
                     if (!done[m])
@@ -160,7 +161,7 @@ public class DocUtil {
 
     private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
         if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
         Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();
@@ -241,7 +242,7 @@ public class DocUtil {
                 return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -326,7 +327,7 @@ public class DocUtil {
                 return contentAccessor.getSubstringsFromDocument(docId, d, starts, ends);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -416,7 +417,7 @@ public class DocUtil {
                 return index.contentAccessor(field).getDocumentContents(docId, d);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 

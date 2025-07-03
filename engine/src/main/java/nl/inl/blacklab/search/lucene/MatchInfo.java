@@ -23,7 +23,6 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
                 case RELATION -> "relation";
                 case LIST_OF_RELATIONS -> "list";
                 case INLINE_TAG -> "tag";
-                default -> throw new RuntimeException("Unknown match info type: " + this);
             };
         }
     }

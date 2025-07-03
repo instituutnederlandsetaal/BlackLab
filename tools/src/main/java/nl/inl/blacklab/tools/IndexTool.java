@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
@@ -403,7 +404,7 @@ public class IndexTool {
                 // (this will throw an exception if it's not valid JSON)
                 new ObjectMapper().readTree(indexmetadata);
             } catch (Exception e) {
-                throw new RuntimeException("Invalid JSON in " + indexMetadataFile + ": " + e.getMessage(), e);
+                throw new InvalidIndex("Invalid JSON in " + indexMetadataFile + ": " + e.getMessage(), e);
             }
 
             index.metadata().setIndexMetadataFromString(indexmetadata);

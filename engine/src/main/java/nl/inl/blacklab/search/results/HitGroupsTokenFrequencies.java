@@ -201,7 +201,7 @@ public class HitGroupsTokenFrequencies {
                     final DocProperty asDocPropIfApplicable = p.docPropsOnly();
                     if (asDocPropIfApplicable != null) { // property can be converted to docProperty (applies to the document instead of the token/hit)
                         if (asDocPropIfApplicable.isCompound()) {
-                            throw new RuntimeException("Nested PropertyMultiples detected, should never happen");
+                            throw new IllegalStateException("Nested PropertyMultiples detected, should never happen");
                         }
                         final int positionInUnpackedList = docProperties.size();
                         docProperties.add(asDocPropIfApplicable);
@@ -463,7 +463,7 @@ public class HitGroupsTokenFrequencies {
                     if (DEBUG_DUPLICATE_GROUPS) {
                         synchronized (duplicateGroupsDebug) {
                             if (!duplicateGroupsDebug.add(groupId)) {
-                                throw new RuntimeException("Identical groups - should never happen");
+                                throw new IllegalStateException("Identical groups - should never happen");
                             }
                         }
                     }

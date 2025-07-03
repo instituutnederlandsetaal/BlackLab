@@ -128,7 +128,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                             skipThisDoc = currentDocIsDeletedDoc || currentDocIsTooShort;
                         } while (currentDoc < maxDoc && skipThisDoc);
                         if (currentDoc > maxDoc)
-                            throw new RuntimeException("currentDoc > maxDoc!!");
+                            throw new IllegalStateException("currentDoc > maxDoc!!");
                         if (currentDoc == maxDoc) {
                             currentDoc = NO_MORE_DOCS;
                             return NO_MORE_DOCS; // no more docs; we're done

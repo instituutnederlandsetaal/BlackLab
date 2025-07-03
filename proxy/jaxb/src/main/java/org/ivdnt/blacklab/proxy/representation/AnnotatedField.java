@@ -11,6 +11,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -62,7 +63,7 @@ public class AnnotatedField implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
             return SerializationUtil.readAnnotations(parser, deserializationContext);
         }
     }
@@ -126,7 +127,7 @@ public class AnnotatedField implements Cloneable {
         try {
             return (AnnotatedField)super.clone();
         } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
+            throw new UnsupportedOperationException(e);
         }
     }
 

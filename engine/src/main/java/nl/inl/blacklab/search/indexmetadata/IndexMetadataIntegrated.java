@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -92,7 +93,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             }
             return metadata;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -138,7 +139,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             if (docIds.isEmpty())
                 return null;
             if (docIds.size() > 1)
-                throw new RuntimeException("Multiple index metadata found!");
+                throw new InvalidIndex("Multiple index metadata found!");
             return docIds.get(0);
         }
 
@@ -160,7 +161,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
                 updateMetadataDoc(indexWriter, metadataJson);
             } catch (IOException e) {
-                throw new RuntimeException("Error saving index metadata", e);
+                throw new InvalidIndex("Error saving index metadata", e);
             }
         }
 
@@ -168,7 +169,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             try {
                 updateMetadataDoc(indexWriter, metadataJson);
             } catch (IOException e) {
-                throw new RuntimeException("Error saving index metadata", e);
+                throw new InvalidIndex("Error saving index metadata", e);
             }
         }
 
@@ -185,7 +186,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             try {
                 return Json.getJaxbWriter().writeValueAsString(metadata);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -817,9 +818,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public void save() {
         if (!index.indexMode())
-            throw new RuntimeException("Cannot save indexmetadata in search mode!");
+            throw new UnsupportedOperationException("Cannot save indexmetadata in search mode!");
         if (indexWriter == null)
-            throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+            throw new IllegalStateException("Cannot save indexmetadata, indexWriter == null");
 
         if (!isFrozen())
             ensureMainAnnotatedFieldSet();
@@ -885,7 +886,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public void setIndexMetadataFromString(String metadata) {
         if (!index.indexMode())
-            throw new RuntimeException("Cannot save indexmetadata in search mode!");
+            throw new UnsupportedOperationException("Cannot save indexmetadata in search mode!");
         metadataDocument.saveToIndex(indexWriter, metadata);
     }
 

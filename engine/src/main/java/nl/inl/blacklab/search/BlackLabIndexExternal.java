@@ -26,6 +26,7 @@ import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
@@ -217,7 +218,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         try {
             return reader().document(docId);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -225,7 +226,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     public void delete(Query q) {
         logger.debug("Delete query: " + q);
         if (!indexMode())
-            throw new RuntimeException("Cannot delete documents, not in index mode");
+            throw new UnsupportedOperationException("Cannot delete documents, not in index mode");
         try {
             // We have to delete the document from the CS and FI separately.
 

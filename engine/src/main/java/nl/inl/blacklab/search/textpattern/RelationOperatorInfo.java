@@ -6,6 +6,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -66,14 +67,14 @@ public class RelationOperatorInfo {
         //              --> captures a single relation from source to target)
         boolean isAlignmentOperator = op.contains("=>");
         if (isRoot && isAlignmentOperator)
-            throw new RuntimeException("Root relation operator cannot be an alignment operator");
+            throw new InvalidQuery("Root relation operator cannot be an alignment operator");
 
         // Negated?
         // (i.e. no child exists conforming to this filter)
         boolean negate = false;
         if (op.charAt(0) == '!') {
             if (isRoot)
-                throw new RuntimeException("Root relation operator cannot be negated");
+                throw new InvalidQuery("Root relation operator cannot be negated");
             negate = true;
             op = op.substring(1);
         }
@@ -82,7 +83,7 @@ public class RelationOperatorInfo {
         // (used for parallel corpora)
         Matcher matcher = PATT_RELATION_OPERATOR.matcher(op);
         if (!matcher.matches())
-            throw new RuntimeException("Invalid relation operator: " + op);
+            throw new InvalidQuery("Invalid relation operator: " + op);
         String typeRegex = matcher.group(1);
         String targetVersion = matcher.group(2);
         if (StringUtils.isEmpty(typeRegex))
@@ -123,9 +124,9 @@ public class RelationOperatorInfo {
         this.optionalMatch = optionalMatch;
 
         if (isAlignmentOperator && negate)
-            throw new RuntimeException("Alignment operator cannot be negated");
+            throw new InvalidQuery("Alignment operator cannot be negated");
         if (optionalMatch && !isAlignmentOperator)
-            throw new RuntimeException("Optional match operator can only be used with alignment operators");
+            throw new InvalidQuery("Optional match operator can only be used with alignment operators");
     }
 
     public String getTypeRegex() {

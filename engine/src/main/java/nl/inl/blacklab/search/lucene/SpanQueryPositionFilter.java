@@ -248,7 +248,7 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     @Override
     public BLSpanQuery internalizeNeighbour(BLSpanQuery clause, boolean addToRight) {
         if (!clause.guarantees().hitsAllSameLength())
-            throw new RuntimeException("Trying to internalize non-constant-length clause: " + clause);
+            throw new IllegalStateException("Trying to internalize non-constant-length clause: " + clause);
         // Create a new position filter query with a constant-length clause added to our producer.
         // adjustLeading and adjustTrailing are updated according to the clause's length, so it is not
         // actually filtered.

@@ -60,7 +60,7 @@ public class TestIndex {
                 File indexDir = new File(TestIndex.class.getResource("/test-index-" + strType).toURI());
                 testIndexExternalPre = new TestIndex(indexDir);
             } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
+                throw new IllegalArgumentException(e);
             }
         }
         return testIndexExternalPre;
@@ -179,12 +179,8 @@ public class TestIndex {
     private TestIndex(File indexDir) {
         this.indexDir = indexDir;
         this.dir = null;
-        try {
-            index = BlackLab.open(indexDir);
-            word = index.mainAnnotatedField().annotation("word");
-        } catch (ErrorOpeningIndex e) {
-            throw new RuntimeException(e);
-        }
+        index = BlackLab.open(indexDir);
+        word = index.mainAnnotatedField().annotation("word");
     }
 
     /** Create a temporary index, delete the directory when finished */

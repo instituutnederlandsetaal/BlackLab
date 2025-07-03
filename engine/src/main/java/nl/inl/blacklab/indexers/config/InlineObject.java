@@ -41,7 +41,7 @@ class InlineObject implements Comparable<InlineObject> {
         this.text = text;
         this.offset = offset;
         if (offset < 0)
-            throw new RuntimeException("Inline object with offset < 0");
+            throw new IllegalArgumentException("Inline object with offset < 0");
         this.type = type;
         this.attributes = Collections.emptyMap();
         if (attributes != null)

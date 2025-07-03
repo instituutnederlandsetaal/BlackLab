@@ -61,7 +61,7 @@ public class CorpusQueryLanguageParser {
     String chopEnds(String input) {
         if (input.length() >= 2)
             return input.substring(1, input.length() - 1);
-        throw new RuntimeException("Cannot chop ends off string shorter than 2 chars");
+        throw new IllegalArgumentException("Cannot chop ends off string shorter than 2 chars");
     }
 
     String getStringBetweenQuotes(String input) throws SingleQuotesException {

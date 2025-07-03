@@ -282,7 +282,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         assert fromIndex >= 0 && toIndexExclusive > 0;
         assert fromIndex < toIndexExclusive;
         if (toIndexExclusive - fromIndex > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int n = (int)(toIndexExclusive - fromIndex);
 
         // Determine which bits of context to get

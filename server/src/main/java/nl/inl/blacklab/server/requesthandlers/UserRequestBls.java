@@ -9,6 +9,7 @@ import org.apache.logging.log4j.ThreadContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
@@ -17,13 +18,13 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.ServletUtil;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /** Represents a servlet request to the webservice. */
 public class UserRequestBls implements UserRequest {
@@ -100,7 +101,7 @@ public class UserRequestBls implements UserRequest {
                     try {
                         user = authObj.determineCurrentUser(this);
                     } catch (Exception e) {
-                        throw new RuntimeException("Error determining current user", e);
+                        throw new InvalidConfiguration("Error determining current user", e);
                     }
                 }
             }

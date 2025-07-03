@@ -9,6 +9,7 @@ import java.util.Set;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.TextContent;
 import nl.inl.util.VersionFile;
 
@@ -101,7 +102,7 @@ public abstract class ContentStoreExternal implements ContentStore {
         // Classic external index format. Read the content store id field.
         String contentIdStr = d.get(contentIdField);
         if (contentIdStr == null)
-            throw new RuntimeException("Lucene document has no content id: " + d);
+            throw new InvalidIndex("Lucene document has no content id: " + d);
         return Integer.parseInt(contentIdStr);
     }
 

@@ -12,6 +12,8 @@ import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -64,7 +66,7 @@ public class Server implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<CorpusSummary> result = new ArrayList<>();
             while (true) {
@@ -73,13 +75,13 @@ public class Server implements Cloneable {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 //CorpusSummary corpus = new CorpusSummary();
                 String corpusName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or START_OBJECT, found " + token);
 
                 CorpusSummary corpus = deserializationContext.readValue(parser, CorpusSummary.class);
                 corpus.name = corpusName;

@@ -22,6 +22,8 @@ import org.apache.solr.logging.log4j2.Log4j2Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
+
 public class SolrTestServer {
     private static final String SOLR_DIR_NAME = "blacklab-test-solr";
 
@@ -50,7 +52,7 @@ public class SolrTestServer {
             File srcDir = srcFilePath.toFile();
             File targetDir = targetFilePath.toFile();
             if (!targetDir.mkdir())
-                throw new RuntimeException("Cannot create dir: " + targetFilePath);
+                throw new InvalidIndex("Cannot create dir: " + targetFilePath);
             File[] files = srcDir.listFiles();
             if (files != null) {
                 for (File f: files) {
@@ -62,7 +64,7 @@ public class SolrTestServer {
                 // Regular file; copy it
                 Files.copy(srcFilePath, targetFilePath);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
     }
@@ -78,13 +80,13 @@ public class SolrTestServer {
         return dir.delete();
     }
 
-    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath)
-            throws IOException {
-        solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
-        copy(resourcePath, solrPath, "solr.xml");
+    static void createEmbeddedServer(String defaultCoreName, Path resourcePath, Path existingIndexPath) {
+        try {
+            solrPath = Files.createTempDirectory(SOLR_DIR_NAME);
+            copy(resourcePath, solrPath, "solr.xml");
 
-        if (existingIndexPath != null)
-            copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
+            if (existingIndexPath != null)
+                copy(existingIndexPath.getParent(), solrPath, existingIndexPath.toFile().getName(), defaultCoreName);
 
         NodeConfig config = new NodeConfig.NodeConfigBuilder("testNode", solrPath)
                 .setLogWatcherConfig(new LogWatcherConfig(true,null,null,0))
@@ -92,7 +94,10 @@ public class SolrTestServer {
         CoreContainer container = new CoreContainer(config);
         container.load();
 
-        server = new EmbeddedSolrServer(container, defaultCoreName);
+            server = new EmbeddedSolrServer(container, defaultCoreName);
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
     /**
@@ -126,7 +131,7 @@ public class SolrTestServer {
             NamedList<Object> response = server.request(reqAddSearchComponent);
             //System.err.println("Add search component response\n" + response.toString());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -158,7 +163,7 @@ public class SolrTestServer {
             System.setProperty("solr.allow.unsafe.resourceloading", "true"); // allow loading files from outside dirs
             server.request(request);
         } catch (Exception e) {
-            throw new RuntimeException("Error creating core " + coreName, e);
+            throw new InvalidIndex("Error creating core " + coreName, e);
         }
 
         // Copy XSLT file used by our SearchComponent.
@@ -176,7 +181,7 @@ public class SolrTestServer {
                 SolrTestServer.deleteDirectoryTree(f);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 

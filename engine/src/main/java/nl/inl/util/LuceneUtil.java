@@ -35,6 +35,8 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -80,7 +82,7 @@ public final class LuceneUtil {
                 boolean endInclusive) {
             if (isNumericField(field)) {
                 if (!startInclusive || !endInclusive)
-                    throw new RuntimeException("Numeric range queries must be inclusive");
+                    throw new InvalidQuery("Numeric range queries must be inclusive");
                 int lowerValue = Integer.parseInt(startValue);
                 int upperValue = Integer.parseInt(endValue);
                 return IntPoint.newRangeQuery(field, lowerValue, upperValue);
@@ -167,7 +169,7 @@ public final class LuceneUtil {
                     for (int i = 0; i < docPosEnum.freq(); i++) {
                         int position = docPosEnum.nextPosition();
                         if (position == -1)
-                            throw new RuntimeException("Unexpected missing position (i=" + i + ", docPosEnum.freq() = "
+                            throw new InvalidIndex("Unexpected missing position (i=" + i + ", docPosEnum.freq() = "
                                     + docPosEnum.freq() + ")");
                         if (position >= start && position <= end) {
                             if (concordanceWords[position - start] == null)
@@ -189,7 +191,7 @@ public final class LuceneUtil {
                 System.arraycopy(concordanceWords, 0, partial, 0, numFound);
                 for (int i = 0; i < numFound; i++) {
                     if (partial[i] == null) {
-                        throw new RuntimeException("Not all words found (" + numFound + " out of "
+                        throw new InvalidIndex("Not all words found (" + numFound + " out of "
                                 + concordanceWords.length
                                 + "); missing words in the middle of concordance!");
                     }
@@ -235,7 +237,7 @@ public final class LuceneUtil {
                     // documents, go to the next alternative.
                     break;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
         }
@@ -294,7 +296,7 @@ public final class LuceneUtil {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -354,7 +356,7 @@ public final class LuceneUtil {
             
             return new ArrayList<>(results);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -377,14 +379,14 @@ public final class LuceneUtil {
             if (documentFilterQuery != null) {
                 weight = indexSearcher.createWeight(documentFilterQuery,ScoreMode.COMPLETE_NO_SCORES,1.0f);
                 if (weight == null)
-                    throw new RuntimeException("weight == null");
+                    throw new InvalidIndex("weight == null");
             }
 
             for (LeafReaderContext arc : indexReader.leaves()) {
                 if (arc == null)
-                    throw new RuntimeException("arc == null");
+                    throw new InvalidIndex("arc == null");
                 if (arc.reader() == null)
-                    throw new RuntimeException("arc.reader() == null");
+                    throw new InvalidIndex("arc.reader() == null");
 
                 LeafReader reader = arc.reader();
                 if (weight != null) { // retrieve term frequency per matched document
@@ -462,7 +464,7 @@ public final class LuceneUtil {
             }
             return totalTerms;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -486,7 +488,7 @@ public final class LuceneUtil {
                     maxTermsPerLeafReader = terms.size();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
         return maxTermsPerLeafReader;
     }

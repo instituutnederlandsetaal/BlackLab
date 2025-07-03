@@ -36,6 +36,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
@@ -198,7 +199,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             }
 
             if (!indexMode && createNewIndex)
-                throw new RuntimeException("Cannot create new index, not in index mode");
+                throw new IllegalArgumentException("Cannot create new index, not in index mode");
 
             if (reader != null) {
                 // Only create analyzer if not in solr mode.
@@ -472,7 +473,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
         if (indexMode) {
             if (!solrMode) {
-                if (indexWriter == null) throw new RuntimeException("When not in solr mode, there must always be an indexWriter when in indexMode.");
+                if (indexWriter == null)
+                    throw new IllegalStateException("When not in solr mode, there must always be an indexWriter when in indexMode.");
                 // Re-open the IndexWriter with the analyzer we've created above (see comment above)
                 if (traceIndexOpening())
                     logger.debug("  Re-opening IndexWriter with newly created analyzers...");
@@ -503,7 +505,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new RuntimeException("Main contents field unknown");
+                        throw new InvalidIndex("Main contents field unknown");
                 }
             }
 
@@ -634,7 +636,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
-                throw new RuntimeException("Could not create dir: " + indexDir);
+                throw new InvalidIndex("Could not create dir: " + indexDir);
         }
         Path indexPath = indexDir.toPath();
         while (Files.isSymbolicLink(indexPath)) {

@@ -19,6 +19,7 @@ import org.apache.lucene.store.IndexInput;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**
@@ -199,7 +200,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
             return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                     delegate.clone(), delegateFormatName);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -236,7 +237,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
                 return new BlackLab40StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                         mergeInstance, delegateFormatName);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
         return this;
@@ -347,7 +348,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
                     System.arraycopy(decodedValue, 0, result, 0, result.length);
                     return result;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
 
@@ -474,7 +475,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
                     }
                     return result.toString();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
 
@@ -537,7 +538,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
                 try {
                     return findValueLengthChar(docId, luceneField);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
 

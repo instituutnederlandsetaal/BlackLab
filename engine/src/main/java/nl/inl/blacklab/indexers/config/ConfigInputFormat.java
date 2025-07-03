@@ -170,7 +170,7 @@ public class ConfigInputFormat {
                 return "(configuration file not available)";
             return IOUtils.toString(getFormatFile());
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidInputFormatConfig(e);
         }
     }
 

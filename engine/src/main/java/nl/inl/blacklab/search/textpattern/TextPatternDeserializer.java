@@ -11,6 +11,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 
 public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct> {
@@ -20,7 +21,7 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
-            throw new RuntimeException("Expected START_OBJECT, found " + token);
+            throw new InvalidQuery("Expected START_OBJECT, found " + token);
         Object tp = readObject(parser);
         assert tp instanceof TextPatternStruct; // not a MatchFilter (those can only be part of a TextPattern)
         return (TextPatternStruct) tp;
@@ -35,7 +36,7 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             if (token == JsonToken.END_OBJECT)
                 break;
             if (token != JsonToken.FIELD_NAME)
-                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                throw new InvalidQuery("Expected END_OBJECT or FIELD_NAME, found " + token);
             String fieldName = parser.getCurrentName();
             parser.nextToken();
             Object value = readValue(fieldName, parser);
@@ -103,7 +104,7 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
     public static Map<String, MatchValue> readMatchValueMap(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
-            throw new RuntimeException("Expected START_OBJECT, found " + token);
+            throw new InvalidQuery("Expected START_OBJECT, found " + token);
 
         Map<String, MatchValue> result = new LinkedHashMap<>();
         while (true) {
@@ -112,7 +113,7 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
                 break;
 
             if (token != JsonToken.FIELD_NAME)
-                throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                throw new InvalidQuery("Expected END_OBJECT or FIELD_NAME, found " + token);
             String key = parser.getCurrentName();
 
             token = parser.nextToken();
@@ -129,20 +130,20 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
                         break;
 
                     if (token != JsonToken.FIELD_NAME)
-                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                        throw new InvalidQuery("Expected END_OBJECT or FIELD_NAME, found " + token);
                     String rangeKey = parser.getCurrentName();
                     if (rangeKey.equals(TextPatternSerializerJson.KEY_MIN))
                         min = parser.nextIntValue(-1);
                     else if (rangeKey.equals(TextPatternSerializerJson.KEY_MAX))
                         max = parser.nextIntValue(-1);
                     else
-                        throw new RuntimeException("Expected min or max, found " + key);
+                        throw new InvalidQuery("Expected min or max, found " + key);
                 }
                 if (min == Integer.MIN_VALUE && max == Integer.MAX_VALUE)
-                    throw new RuntimeException("Range must have min, max or both");
+                    throw new InvalidQuery("Range must have min, max or both");
                 result.put(key, MatchValue.intRange(min, max));
             } else
-                throw new RuntimeException("Expected VALUE_STRING, found " + token);
+                throw new InvalidQuery("Expected VALUE_STRING, found " + token);
         }
         return result;
     }

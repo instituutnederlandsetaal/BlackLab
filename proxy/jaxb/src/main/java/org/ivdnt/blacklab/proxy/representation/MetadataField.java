@@ -111,7 +111,7 @@ public class MetadataField implements Cloneable {
         try {
             return (MetadataField)super.clone();
         } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
+            throw new UnsupportedOperationException(e);
         }
     }
 

@@ -4,21 +4,21 @@ package nl.inl.blacklab.exceptions;
  * Thrown when the file you're indexing is malformed in some way (i.e. not
  * well-formed XML)
  */
-public class MalformedInputFile extends ErrorIndexingFile {
+public class ErrorIndexingFile extends RuntimeException {
 
-    public MalformedInputFile() {
+    public ErrorIndexingFile() {
         super();
     }
 
-    public MalformedInputFile(String message, Throwable cause) {
+    public ErrorIndexingFile(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public MalformedInputFile(String message) {
+    public ErrorIndexingFile(String message) {
         super(message);
     }
 
-    public MalformedInputFile(Throwable cause) {
+    public ErrorIndexingFile(Throwable cause) {
         super(cause);
     }
 

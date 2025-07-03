@@ -1,7 +1,9 @@
 package nl.inl.blacklab.performance;
 
 import java.io.File;
+import java.io.IOException;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalAbstract;
 import nl.inl.blacklab.search.BlackLab;
@@ -17,7 +19,7 @@ public class BatchForwardIndex {
 
     private static final int SNIPPET_LENGTH_WORDS = 11;
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         LogUtil.setupBasicLoggingConfig(); // suppress log4j warning
 
@@ -115,7 +117,7 @@ public class BatchForwardIndex {
             int length;
             do {
                 if (docPos >= fi.numDocs())
-                    throw new RuntimeException("Performance test went beyond end of forward index ("
+                    throw new InvalidIndex("Performance test went beyond end of forward index ("
                             + fi.numDocs() + " docs)");
 
                 // Choose random snippets

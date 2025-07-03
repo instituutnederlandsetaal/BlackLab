@@ -518,7 +518,7 @@ class Output {
                         String fieldName = e.getKey();
                         AnnotatedField annotatedField = index.metadata().annotatedFields().get(fieldName);
                         if (annotatedField == null)
-                            throw new RuntimeException();
+                            throw new IllegalStateException("No annotated field with name '" + fieldName);
                         Kwic kwic = e.getValue();
                         Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
                                 hit.matchInfo());

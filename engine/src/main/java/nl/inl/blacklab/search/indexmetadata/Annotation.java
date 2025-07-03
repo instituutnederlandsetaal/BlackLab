@@ -105,7 +105,7 @@ public interface Annotation {
 	 */
     default AnnotationSensitivity forwardIndexSensitivity() {
 		if (!hasForwardIndex())
-			throw new RuntimeException("Annotation has no forward index: " + name());
+			throw new UnsupportedOperationException("Annotation has no forward index: " + name());
         return mainSensitivity();
 	}
 

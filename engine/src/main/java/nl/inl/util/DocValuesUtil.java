@@ -11,6 +11,8 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.DocIdSetIterator;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
+
 public class DocValuesUtil {
 
     public static SortedDocValuesCacher cacher(SortedDocValues dv) {
@@ -81,7 +83,7 @@ public class DocValuesUtil {
             }
             return key == null ? Collections.emptyList() : key;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 }

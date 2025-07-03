@@ -87,7 +87,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     public void setNextState(int i, NfaState state) {
         if (i != 0)
-            throw new RuntimeException("Token state only has one next state");
+            throw new IllegalArgumentException("Token state only has one next state");
         nextState = state;
     }
 

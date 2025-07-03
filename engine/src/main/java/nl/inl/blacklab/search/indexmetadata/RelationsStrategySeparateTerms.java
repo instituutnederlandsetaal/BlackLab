@@ -20,6 +20,7 @@ import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.RegExp;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
@@ -126,7 +127,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             String attr = parts[i];
             int p = attr.indexOf(KEY_VALUE_SEPARATOR);
             if (p < 0)
-                throw new RuntimeException("Malformed attribute in relation info term: " + riTerm);
+                throw new InvalidIndex("Malformed attribute in relation info term: " + riTerm);
             String key = attr.substring(0, p);
             String[] values = attr.substring(p + 1).split(ATTR_SEPARATOR, -1);
             attrHandler.accept(key, Arrays.asList(values));
@@ -147,7 +148,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 String attr = parts[j];
                 int p = attr.indexOf(KEY_VALUE_SEPARATOR);
                 if (p < 0)
-                    throw new RuntimeException("Malformed attribute in relation info term: " + indexedTerm);
+                    throw new InvalidIndex("Malformed attribute in relation info term: " + indexedTerm);
                 String name = attr.substring(0, p);
                 String[] values = attr.substring(p + 1).split(ATTR_VALUE_SEPARATOR, -1);
                 for (String value: values)
@@ -398,7 +399,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 if (writeOtherLength)
                     dataOutput.writeVInt(targetLength);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -458,7 +459,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
                 target.fill(relationId, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, maybeExtraInfo);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -504,7 +505,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
                 return new BytesRef(os.toByteArray());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -524,7 +525,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 OutputStreamDataOutput outputStreamDataOutput = new OutputStreamDataOutput(os);
                 writeRelationId(relationId, outputStreamDataOutput);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
             return new BytesRef(os.toByteArray());
         }

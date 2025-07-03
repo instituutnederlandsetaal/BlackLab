@@ -106,7 +106,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     @Override
     public Terms terms(Annotation annotation) {
         if (closed)
-            throw new RuntimeException("ForwardIndex was closed");
+            throw new IllegalStateException("ForwardIndex was closed");
         return get(annotation).terms();
     }
 
@@ -118,7 +118,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     @Override
     public Iterator<AnnotationForwardIndex> iterator() {
         if (closed)
-            throw new RuntimeException("ForwardIndex was closed");
+            throw new IllegalStateException("ForwardIndex was closed");
         synchronized (fis) {
             return fis.values().iterator();
         }
@@ -128,7 +128,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     public AnnotationForwardIndex get(Annotation annotation) {
         assert annotation != null;
         if (closed)
-            throw new RuntimeException("ForwardIndex was closed");
+            throw new IllegalStateException("ForwardIndex was closed");
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation has no forward index, according to itself: " + annotation);
         AnnotationForwardIndex afi;
@@ -149,9 +149,9 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     protected void add(Annotation annotation, AnnotationForwardIndex afi) {
         if (initialized)
-            throw new RuntimeException("All forward indexes should have been opened while initializing!");
+            throw new IllegalStateException("All forward indexes should have been opened while initializing!");
         if (closed)
-            throw new RuntimeException("ForwardIndex was closed");
+            throw new IllegalStateException("ForwardIndex was closed");
         synchronized (fis) {
             fis.put(annotation, afi);
         }

@@ -19,6 +19,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
@@ -108,7 +109,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
             return codec.storedFieldsFormat().fieldsReader(
                     state.directory, state.segmentInfo, state.fieldInfos, state.context);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 

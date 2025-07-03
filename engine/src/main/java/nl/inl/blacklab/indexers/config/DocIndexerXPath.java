@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
@@ -474,7 +475,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // Find our specific document in the file
                 xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
                     if (docDone.get())
-                        throw new RuntimeException(
+                        throw new ErrorIndexingFile(
                                 "Document link " + documentXPath + " matched multiple documents in "
                                         + documentName);
                     indexDocument(doc);
@@ -488,7 +489,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             throw BlackLabException.wrapRuntime(e1);
         }
         if (!docDone.get())
-            throw new RuntimeException("Linked document not found in " + documentName);
+            throw new ErrorIndexingFile("Linked document not found in " + documentName);
     }
 
     protected void processMetadataBlock(T doc, ConfigMetadataBlock metaBlock) {
@@ -589,7 +590,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             AtomicBoolean docDone = new AtomicBoolean(false); // any doc(s) processed?
             xpathForEach(docXPath, contextNodeWholeDocument(),(doc) -> {
                 if (mustBeSingleDocument && docDone.get())
-                    throw new RuntimeException(
+                    throw new ErrorIndexingFile(
                             "Linked file contains multiple documents (and no document path given) in "
                                     + documentName);
                 indexDocument(doc);

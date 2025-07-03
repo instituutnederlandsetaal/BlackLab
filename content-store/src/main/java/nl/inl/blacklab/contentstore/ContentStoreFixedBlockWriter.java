@@ -18,6 +18,7 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.SimpleResourcePool;
 import nl.inl.util.TextContent;
 
@@ -372,7 +373,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 fchContentsFile = rafContentsFile.getChannel();
             }
         } catch (FileNotFoundException e) {
-            throw new RuntimeException("Contents file not found" + CONTENTS_FILE_NAME, e);
+            throw new InvalidIndex("Contents file not found" + CONTENTS_FILE_NAME, e);
         }
     }
 
@@ -450,10 +451,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 compresser.finish();
                 int compressedDataLength = compresser.deflate(zipbuf, 0, zipbuf.length, Deflater.FULL_FLUSH);
                 if (compressedDataLength <= 0) {
-                    throw new RuntimeException("Error, deflate returned " + compressedDataLength);
+                    throw new InvalidIndex("Error, deflate returned " + compressedDataLength);
                 }
                 if (compressedDataLength == zipbuf.length) {
-                    throw new RuntimeException(
+                    throw new InvalidIndex(
                             "Error, deflate returned size of zipbuf, this indicates insufficient space");
                 }
 

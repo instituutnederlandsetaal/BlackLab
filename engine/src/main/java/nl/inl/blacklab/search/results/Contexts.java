@@ -112,7 +112,7 @@ public class Contexts {
     private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end,
             ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];
@@ -136,7 +136,7 @@ public class Contexts {
                 // We have a forward index for this field. Use it.
                 words = forwardIndex.retrievePartsInt(doc, startsOfSnippets, endsOfSnippets);
             } else {
-                throw new RuntimeException("Cannot get context without a forward index");
+                throw new UnsupportedOperationException("Cannot get context without a forward index");
             }
 
             // Build the actual concordances

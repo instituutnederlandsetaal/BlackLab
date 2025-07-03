@@ -20,6 +20,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
+
 /**
  * Generic custom properties class that wrap a map.
  */
@@ -47,7 +49,7 @@ public class CustomPropsMap implements CustomProps {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new InvalidIndex("Expected START_OBJECT, found " + token);
             return new CustomPropsMap(parser.readValueAs(Map.class));
         }
     }

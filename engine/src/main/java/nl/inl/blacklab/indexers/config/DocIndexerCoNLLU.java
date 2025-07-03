@@ -227,7 +227,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                         } else
                             value = "";
                     } else {
-                        throw new RuntimeException("valuePath must be a column number");
+                        throw new InvalidInputFormatConfig("valuePath must be a column number");
                     }
                     indexValue(annotation, value);
                 }

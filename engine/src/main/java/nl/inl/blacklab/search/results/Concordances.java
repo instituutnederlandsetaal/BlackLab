@@ -81,7 +81,7 @@ public class Concordances {
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
         if (arrayLength > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 

@@ -28,6 +28,7 @@ import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
@@ -149,7 +150,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 defaultHttpClient = clsDefaultHttpClient.getConstructor().newInstance();
 
             } catch (Exception e) {
-                throw new RuntimeException("Error finding (some of the) Apache HTTP libraries."
+                throw new InvalidConfiguration("Error finding (some of the) Apache HTTP libraries."
                         + "Make sure Apache commons-codec, commons-logging, httpclient, httpcore (4.1.2 or higher) are on the classpath.",
                         e);
             }

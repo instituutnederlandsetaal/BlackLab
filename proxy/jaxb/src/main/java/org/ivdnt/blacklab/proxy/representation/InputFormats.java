@@ -10,6 +10,8 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -49,7 +51,7 @@ public class InputFormats {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<InputFormat> result = new ArrayList<>();
             while (true) {
@@ -58,12 +60,12 @@ public class InputFormats {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 String name = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or START_OBJECT, found " + token);
 
                 InputFormat inputFormat = deserializationContext.readValue(parser, InputFormat.class);
                 inputFormat.name = name;

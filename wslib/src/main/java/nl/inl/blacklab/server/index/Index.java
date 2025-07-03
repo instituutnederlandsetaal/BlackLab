@@ -81,7 +81,7 @@ public class Index {
     /** File where the list of users to share with is stored */
     private final File shareWithUsersFile;
 
-    public Index(String indexId, BlackLabIndex index, SearchManager searchMan) throws FileNotFoundException {
+    public Index(String indexId, BlackLabIndex index, SearchManager searchMan) throws IOException {
         this(indexId, index.indexDirectory(), searchMan);
 
         this.index = index;
@@ -96,7 +96,7 @@ public class Index {
      * @param dir directory of this index
      * @param searchMan search manager
      */
-    public Index(String indexId, File dir, SearchManager searchMan) throws IllegalIndexName, FileNotFoundException {
+    public Index(String indexId, File dir, SearchManager searchMan) throws IllegalIndexName, IOException {
         if (!isValidIndexName(indexId))
             throw new IllegalIndexName(indexId);
 
@@ -119,14 +119,11 @@ public class Index {
         readShareWithUsersFile();
     }
 
-    private void readShareWithUsersFile() {
+    private void readShareWithUsersFile() throws IOException {
         if (shareWithUsersFile.exists()) {
-            try {
-                shareWithUsers = FileUtils.readLines(shareWithUsersFile, "utf-8").stream().map(String::trim)
-                        .toList();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            shareWithUsers = FileUtils.readLines(shareWithUsersFile, "utf-8").stream()
+                    .map(String::trim)
+                    .toList();
         } else {
             shareWithUsers = new ArrayList<>();
         }
@@ -137,7 +134,7 @@ public class Index {
             // We don't want to share with anyone. Delete the share file if it exists.
             if (shareWithUsersFile.exists()) {
                 if (!shareWithUsersFile.delete())
-                    throw new RuntimeException("Could not delete share file: " + shareWithUsersFile);
+                    throw new IllegalStateException("Could not delete share file: " + shareWithUsersFile);
             }
         } else {
             // (Over)write the share file with the current list of users to share with.
@@ -145,7 +142,7 @@ public class Index {
                     StandardCharsets.UTF_8)) {
                 writer.write(StringUtils.join(shareWithUsers, "\n"));
             } catch (IOException e) {
-                throw new RuntimeException("Could not write share file", e);
+                throw new IllegalStateException("Could not write share file", e);
             }
         }
     }
@@ -207,7 +204,7 @@ public class Index {
             return this.indexer.indexWriter().metadata();
 
         // This should literally never happen, after openForSearching either index or indexer must be set
-        throw new RuntimeException(
+        throw new IllegalStateException(
                 "Index in invalid state, openForSearching didn't throw unrecoverable error yet there is no BlackLabIndex and no Indexer");
     }
 
@@ -388,7 +385,7 @@ public class Index {
     public String getUserId() {
         Matcher m = PATT_INDEXID.matcher(getId());
         if (!m.matches())
-            throw new RuntimeException();
+            throw new IllegalStateException();
         return m.group(1);
     }
 
@@ -483,7 +480,7 @@ public class Index {
     public boolean equals(Object obj) {
         if (obj instanceof Index && ((Index) obj).getId().equals(this.getId())) {
             if (!((Index) obj).getDir().equals(this.getDir()))
-                throw new RuntimeException("Index has same id but different directory");
+                throw new IllegalStateException("Index has same id but different directory");
 
             return true;
         }

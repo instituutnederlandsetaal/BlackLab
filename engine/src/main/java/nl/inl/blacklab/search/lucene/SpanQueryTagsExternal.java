@@ -103,7 +103,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         if (attr != null)
-            throw new RuntimeException("Query should've been rewritten! (attr != null)");
+            throw new IllegalStateException("Query should've been rewritten! (attr != null)");
         BLSpanWeight weight = clause.createWeight(searcher, scoreMode, boost);
         return new SpanWeightTags(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }

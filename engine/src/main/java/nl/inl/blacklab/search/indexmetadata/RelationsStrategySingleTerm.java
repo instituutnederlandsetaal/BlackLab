@@ -19,6 +19,7 @@ import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.RegExp;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
@@ -366,7 +367,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
                 if (writeOtherLength)
                     dataOutput.writeVInt(otherLength);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -410,7 +411,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
                 if (writeOtherLength)
                     dataOutput.writeVInt(otherLength);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -429,7 +430,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
                     return relationId;
                 return -1;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -489,7 +490,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
                 assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
                 target.fill(relationId, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId != RelationInfo.RELATION_ID_NO_INFO);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -534,7 +535,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
                 serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
                 return new BytesRef(os.toByteArray());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 

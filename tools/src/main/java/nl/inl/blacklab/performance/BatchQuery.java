@@ -1,6 +1,7 @@
 package nl.inl.blacklab.performance;
 
 import java.io.File;
+import java.io.IOException;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
@@ -93,6 +94,8 @@ public class BatchQuery {
                     System.err.println("Error with query " + query + "; skipping...");
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 

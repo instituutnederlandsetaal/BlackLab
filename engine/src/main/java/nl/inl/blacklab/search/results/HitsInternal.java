@@ -44,7 +44,7 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
             return new HitsInternalNoLock(initialCapacity);
         }
         if (initialCapacity > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new RuntimeException("initialCapacity=" + initialCapacity + " > " + Constants.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
+            throw new UnsupportedOperationException("initialCapacity=" + initialCapacity + " > " + Constants.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
         if (mustLock)
             return new HitsInternalLock32((int)initialCapacity);
         return new HitsInternalNoLock32((int)initialCapacity);

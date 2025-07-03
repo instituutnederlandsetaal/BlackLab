@@ -204,7 +204,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     public void setFilter(SpansAndFilterFactory filterFactory) {
         this.filterFactory = filterFactory;
         if (!exclude.isEmpty())
-            throw new RuntimeException("Cannot combine exclude and filter!");
+            throw new UnsupportedOperationException("Cannot combine exclude and filter!");
     }
 
     @Override
@@ -438,7 +438,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         if (!exclude.isEmpty())
-            throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
+            throw new IllegalStateException("Query should've been rewritten! (exclude clauses left)");
 
         List<BLSpanWeight> weights = new ArrayList<>();
         for (BLSpanQuery clause : include) {
@@ -521,7 +521,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             return include.get(0).getField();
         if (!exclude.isEmpty())
             return exclude.get(0).getField();
-        throw new RuntimeException("Query has no clauses");
+        throw new IllegalStateException("Query has no clauses");
     }
 
     @Override
@@ -530,13 +530,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
             return include.get(0).getRealField();
         if (!exclude.isEmpty())
             return exclude.get(0).getRealField();
-        throw new RuntimeException("Query has no clauses");
+        throw new IllegalStateException("Query has no clauses");
     }
 
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         if (!exclude.isEmpty())
-            throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
+            throw new IllegalStateException("Query should've been rewritten! (exclude clauses left)");
         List<NfaState> nfaClauses = new ArrayList<>();
         for (BLSpanQuery clause : include) {
             Nfa nfa = clause.getNfa(fiAccessor, direction);

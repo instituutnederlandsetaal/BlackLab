@@ -15,6 +15,7 @@ import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.collections4.iterators.ReverseListIterator;
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -72,7 +73,7 @@ public class ContextWords {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             Map<String, List<String>> wordsPerAnnot = new LinkedHashMap<>();
             while (true) {
@@ -80,12 +81,12 @@ public class ContextWords {
                 if (token == JsonToken.END_OBJECT)
                     break;
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 String annotationName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_ARRAY)
-                    throw new RuntimeException("Expected START_ARRAY, found " + token);
+                    throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
                 List<String> words = new ArrayList<>();
                 wordsPerAnnot.put(annotationName, words);
                 while (true) {
@@ -93,7 +94,7 @@ public class ContextWords {
                     if (token == JsonToken.END_ARRAY)
                         break;
                     if (token != JsonToken.VALUE_STRING)
-                        throw new RuntimeException("Expected END_ARRAY or VALUE_STRING, found " + token);
+                        throw new ErrorReadingResponse("Expected END_ARRAY or VALUE_STRING, found " + token);
                     String value = parser.getValueAsString();
                     words.add(value);
                 }

@@ -19,16 +19,16 @@ public class TestNfa {
         public void getGlobalTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
                 MatchSensitivity sensitivity) {
             if (annotNumber != 0)
-                throw new RuntimeException("only 0 is valid annotation");
+                throw new IllegalArgumentException("only 0 is valid annotation");
             if (annotValue.length() > 1)
-                throw new RuntimeException("only words of length 1 are valid");
+                throw new IllegalArgumentException("only words of length 1 are valid");
             results.add(annotValue.charAt(0));
         }
 
         @Override
         public int getAnnotationNumber(String annotName) {
             if (!annotName.equals("word"))
-                throw new RuntimeException("only 'word' is valid annotation");
+                throw new IllegalArgumentException("only 'word' is valid annotation");
             return 0;
         }
 
@@ -55,7 +55,7 @@ public class TestNfa {
         @Override
         public int getTokenSegmentTermId(int annotIndex, int pos) {
             if (annotIndex != 0)
-                throw new RuntimeException("only 0 is valid annotation");
+                throw new IllegalArgumentException("only 0 is valid annotation");
             if (!validPos(pos))
                 return -1;
             return input.charAt(pos);
@@ -74,14 +74,14 @@ public class TestNfa {
         @Override
         public String getTermString(int annotIndex, int segmentTermId) {
             if (annotIndex != 0)
-                throw new RuntimeException("only 0 is valid annotation");
+                throw new IllegalArgumentException("only 0 is valid annotation");
             return Character.toString((char) segmentTermId);
         }
 
         @Override
         public boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity) {
             if (annotIndex != 0)
-                throw new RuntimeException("only 0 is valid annotation");
+                throw new IllegalArgumentException("only 0 is valid annotation");
             for (int i = 1; i < segmentTermId.length; i++) {
                 if (segmentTermId[i] != segmentTermId[0])
                     return false;

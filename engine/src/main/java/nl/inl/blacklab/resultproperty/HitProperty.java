@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -113,10 +114,10 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
             break;
             
         case DocPropertyAnnotatedFieldLength.ID:
-            throw new RuntimeException("Grouping hit results by " + type + " is not yet supported");
+            throw new UnsupportedOperationException("Grouping hit results by " + type + " is not yet supported");
             
         case DocPropertyNumberOfHits.ID:
-            throw new RuntimeException("Cannot group hit results by " + type);
+            throw new InvalidQuery("Cannot group hit results by " + type);
             
         default:
             logger.debug("Unknown HitProperty '" + type + "'");

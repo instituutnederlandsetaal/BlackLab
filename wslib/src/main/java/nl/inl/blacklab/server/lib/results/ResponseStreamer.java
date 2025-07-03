@@ -649,7 +649,7 @@ public class ResponseStreamer {
         String docPid = result.getParams().getDocPid();
         Hits hits = result.getHits();
         if (!hits.hitsStats().processedAtLeast(1))
-            throw new RuntimeException("Hit for snippet not found");
+            throw new IllegalStateException("Hit for snippet not found");
         Hit hit = hits.get(0);
         hits = hits.size() > 1 ? hits.window(hit) : hits; // make sure we only have 1 hit
         Map<String, MatchInfo> matchInfo = hits.getMatchInfoMap(hit);
