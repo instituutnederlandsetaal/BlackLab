@@ -1,7 +1,7 @@
 package nl.inl.blacklab.webservice;
 
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -138,7 +138,7 @@ public enum WebserviceParameter {
     static {
         // Default values for the parameters. Note that if no default is set, the default will be the empty string.
         // (which for booleans will translate to false, etc.)
-        defaultValues = new HashMap<>();
+        defaultValues = new EnumMap<>(WebserviceParameter.class);
         defaultValues.put(CONTEXT, "5"); // previously "wordsaroundhit"
         defaultValues.put(CREATE_CONCORDANCES_FROM, "fi");
         defaultValues.put(CSV_DECLARE_SEPARATOR, "yes");
