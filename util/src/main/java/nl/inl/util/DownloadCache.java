@@ -43,10 +43,10 @@ public class DownloadCache {
     private static Config config;
 
     /** Maximum age of downloaded file in sec */
-    private static final int maxDownloadAgeSec = 24 * 3600;
+    private static final int MAX_DOWNLOAD_AGE_SEC = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
-    private static final long maxDownloadFolderSize = 100_000_000;
+    private static final long MAX_DOWNLOAD_FOLDER_SIZE = 100_000_000;
 
     /** Where to download files (or null to use the system temp dir) */
     private static File downloadTempDir;
@@ -139,7 +139,7 @@ public class DownloadCache {
         Iterator<Download> it = dl.iterator();
         while (it.hasNext()) {
             Download download = it.next();
-            if (download.timeSinceLastUsed() > maxDownloadAgeSec) {
+            if (download.timeSinceLastUsed() > MAX_DOWNLOAD_AGE_SEC) {
                 downloadedFiles.remove(download.key);
                 downloadFolderSize -= download.size();
                 download.delete();
@@ -148,10 +148,10 @@ public class DownloadCache {
         }
 
         // If the cache is too big, remove entries that haven't been used the longest
-        if (downloadFolderSize > maxDownloadFolderSize) {
+        if (downloadFolderSize > MAX_DOWNLOAD_FOLDER_SIZE) {
             dl.sort(Comparator.naturalOrder());
             it = downloadedFiles.values().iterator();
-            while (downloadFolderSize > maxDownloadFolderSize && it.hasNext()) {
+            while (downloadFolderSize > MAX_DOWNLOAD_FOLDER_SIZE && it.hasNext()) {
                 Download download = it.next();
                 downloadFolderSize -= download.size();
                 download.delete(); // delete the file
@@ -196,7 +196,7 @@ public class DownloadCache {
     }
 
     private static long getMaxDownloadedFileSize() {
-        return Math.min(maxDownloadFolderSize, config.getMaxFileSize());
+        return Math.min(MAX_DOWNLOAD_FOLDER_SIZE, config.getMaxFileSize());
     }
 
     public static synchronized File getDownloadTempDir() {

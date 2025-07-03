@@ -225,7 +225,7 @@ public class BlsUtils {
                 }
         }
         if (!root.delete())
-            logger.error("Unable to delete directory: " + root);
+            logger.error("Unable to delete directory: {}", root);
     }
 
     /**
