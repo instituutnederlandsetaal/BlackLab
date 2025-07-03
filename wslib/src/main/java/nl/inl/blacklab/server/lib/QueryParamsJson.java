@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.lib;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -13,8 +13,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.Json;
@@ -33,7 +33,7 @@ public class QueryParamsJson extends QueryParamsAbstract {
         if (!jsonNode.isObject())
             throw new IllegalArgumentException("Expected JSON object node");
         ObjectNode jsonObject = (ObjectNode) jsonNode;
-        params = new HashMap<>();
+        params = new EnumMap<>(WebserviceParameter.class);
         Iterator<Map.Entry<String, JsonNode>> it = jsonObject.fields();
         while (it.hasNext()) {
             Map.Entry<String, JsonNode> entry = it.next();

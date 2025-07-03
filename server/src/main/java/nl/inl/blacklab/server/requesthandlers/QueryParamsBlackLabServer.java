@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -21,7 +21,7 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  */
 public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
-    private final Map<WebserviceParameter, String> map = new TreeMap<>();
+    private final Map<WebserviceParameter, String> map = new EnumMap<>(WebserviceParameter.class);
 
     public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request, WebserviceOperation operation) {
         super(corpusName, searchMan, user);
