@@ -21,7 +21,7 @@ public class CharPosTrackingReader extends Reader {
     private static final int AVERAGE_CHARS_PER_TAG_ESTIMATE = 20;
 
     /** Document we're reading */
-    private Reader reader;
+    private final Reader reader;
 
     /** How many characters have been read from our reader. */
     private long charsRead;
@@ -35,13 +35,13 @@ public class CharPosTrackingReader extends Reader {
      * End-of-line characters are included in the count.
      * Used to translate line/column into character position.
      */
-    private LongList lineNumberToCharPos;
+    private final LongList lineNumberToCharPos;
 
     /**
      * The positions of all open brackets &lt; in the document.
      * We use these to find the starting character position of a tag.
      */
-    private LongList openBracketPositions;
+    private final LongList openBracketPositions;
 
     /**
      * We need to be able to find the start char. position of a tag, but we only know the end position.
@@ -58,7 +58,7 @@ public class CharPosTrackingReader extends Reader {
      * Connects recorded SAX positions (just after start and end tags) to the calculated
      * characters positions of those tags.
      */
-    private Map<Long, StartEndPos> startEndPosMap;
+    private final Map<Long, StartEndPos> startEndPosMap;
 
     /** Our element stack while parsing, for filling in the end tag character position when we encounter it. */
     private final Deque<StartEndPos> elStack = new ArrayDeque<>();

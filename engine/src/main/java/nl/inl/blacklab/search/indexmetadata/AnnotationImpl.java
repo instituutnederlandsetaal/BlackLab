@@ -69,7 +69,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     private MatchSensitivity offsetsMatchSensitivity;
 
     @XmlTransient
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
     
     /** Names of our subannotations, if we have any */
     private final Set<String> subannotations = new HashSet<>();

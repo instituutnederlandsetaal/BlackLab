@@ -51,7 +51,7 @@ class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
         private final List<String> captureTargetAs;
 
         /** Group index of captureTargetAs */
-        private List<Integer> captureTargetAsIndex = new ArrayList<>();
+        private final List<Integer> captureTargetAsIndex = new ArrayList<>();
 
         /** If target == null and captureTargetAs is set, this gives the target field for capture. */
         private final String targetField;

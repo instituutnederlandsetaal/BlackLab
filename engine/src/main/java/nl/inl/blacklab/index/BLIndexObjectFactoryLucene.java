@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 public class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
     public static BLIndexObjectFactoryLucene INSTANCE = new BLIndexObjectFactoryLucene();
 
-    private static BLFieldTypeLucene indexMetadataMarkerFieldType;
+    private static final BLFieldTypeLucene indexMetadataMarkerFieldType;
 
     static {
         FieldType marker = new org.apache.lucene.document.FieldType();

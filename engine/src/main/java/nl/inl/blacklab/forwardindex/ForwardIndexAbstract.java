@@ -48,7 +48,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
 
     /** Used to ensure that no new FIs are opened after the constructor. */
-    private boolean initialized;
+    private final boolean initialized;
 
     /** Ensure that we don't try to use the FI after closing it. */
     private boolean closed = false;

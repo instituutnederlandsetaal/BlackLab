@@ -186,7 +186,7 @@ public class FileProcessor implements AutoCloseable {
     private ExecutorService executor = null;
 
     /** Are we processing multiple files in separte threads? If not, we can optimize. */
-    private boolean isMultiThreaded;
+    private final boolean isMultiThreaded;
 
     /**
      * FileProcessor operates in two distinct stages: - The traversal of

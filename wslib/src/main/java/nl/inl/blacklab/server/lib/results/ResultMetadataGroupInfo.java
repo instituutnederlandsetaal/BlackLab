@@ -7,9 +7,9 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 
 public class ResultMetadataGroupInfo {
-    private Map<String, ? extends MetadataFieldGroup> metaGroups;
+    private final Map<String, ? extends MetadataFieldGroup> metaGroups;
 
-    private Collection<MetadataField> metadataFieldsNotInGroups;
+    private final Collection<MetadataField> metadataFieldsNotInGroups;
 
     ResultMetadataGroupInfo(Map<String, ? extends MetadataFieldGroup> metaGroups,
             Collection<MetadataField> metadataFieldsNotInGroups) {

@@ -48,7 +48,7 @@ public class PWPluginForwardIndex implements PWPlugin {
 
     private final BlackLabPostingsWriter postingsWriter;
 
-    private Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
+    private final Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
 
     private final IndexOutput outTokensIndexFile;
     private final IndexOutput outTokensFile;

@@ -58,7 +58,7 @@ public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
     boolean atFirstInCurrentDoc;
 
     /** Keeps our subspans in order, and keeps track of total length and end position. */
-    private SpanTotalLengthEndPositionWindow spanWindow;
+    private final SpanTotalLengthEndPositionWindow spanWindow;
 
     private HitQueryContext context;
 
@@ -67,7 +67,7 @@ public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
      *  we should produce separate hits for separate combinations of relations matches,
      *  but we shouldn't produce two hits that match the same relations, even if the
      *  order is different. */
-    private Set<List<RelationInfo>> relationsReturnedAtThisPosition = new HashSet<>();
+    private final Set<List<RelationInfo>> relationsReturnedAtThisPosition = new HashSet<>();
 
     /**
      * Wrap BLSpans in SpansInBucketsSameStartEnd.

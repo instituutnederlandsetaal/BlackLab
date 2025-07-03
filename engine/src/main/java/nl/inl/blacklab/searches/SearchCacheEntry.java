@@ -16,7 +16,7 @@ import nl.inl.util.SearchTimer;
 public abstract class SearchCacheEntry<R extends SearchResult> implements Future<R>, ActiveSearch<R> {
 
     /** Keep track of how long this task and subtasks took to (originally) execute. */
-    private SearchTimer searchTimer = new SearchTimer();
+    private final SearchTimer searchTimer = new SearchTimer();
 
     /**
      * Get the timer keeping track of how long this search (originally) executed.

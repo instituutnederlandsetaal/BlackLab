@@ -20,7 +20,7 @@ class SpansBuffered extends BLSpans {
 
         private final static int LIST_INITIAL_CAPACITY = 100;
 
-        private boolean doMatchInfo;
+        private final boolean doMatchInfo;
 
         /** Starts and ends of hits in our bucket */
         private final LongList startsEnds = new LongArrayList(LIST_INITIAL_CAPACITY);

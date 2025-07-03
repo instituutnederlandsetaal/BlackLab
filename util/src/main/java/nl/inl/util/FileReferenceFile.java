@@ -17,7 +17,7 @@ import nl.inl.blacklab.Constants;
 public class FileReferenceFile implements FileReference {
 
     /** The file */
-    private File file;
+    private final File file;
 
     /** The encoding, or null if BOM not yet detected */
     private Charset charSet;

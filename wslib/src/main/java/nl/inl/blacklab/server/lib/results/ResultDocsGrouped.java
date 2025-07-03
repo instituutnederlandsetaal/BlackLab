@@ -15,16 +15,16 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultDocsGrouped {
 
-    private WebserviceParams params;
+    private final WebserviceParams params;
 
-    private DocGroups groups;
+    private final DocGroups groups;
 
-    private WindowStats ourWindow;
+    private final WindowStats ourWindow;
 
     private ResultSummaryNumDocs numResultDocs;
 

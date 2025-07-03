@@ -6,11 +6,11 @@ import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 
 public class ResultAnnotationInfo {
 
-    private Annotation annotation;
+    private final Annotation annotation;
 
-    private boolean showValues;
+    private final boolean showValues;
 
-    private TruncatableFreqList terms;
+    private final TruncatableFreqList terms;
 
     ResultAnnotationInfo(BlackLabIndex index, Annotation annotation, boolean showValues, long limitValues) {
         this.annotation = annotation;

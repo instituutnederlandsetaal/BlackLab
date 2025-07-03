@@ -44,7 +44,7 @@ public class DownloadCache {
     private static final int maxDownloadAgeSec = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
-    private static long maxDownloadFolderSize = 100_000_000;
+    private static final long maxDownloadFolderSize = 100_000_000;
 
     /** Where to download files (or null to use the system temp dir) */
     private static File downloadTempDir;

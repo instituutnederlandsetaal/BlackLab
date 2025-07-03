@@ -38,7 +38,7 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
     private MatchInfo[] matchInfo;
 
     /** List of relations captured for current hit */
-    private List<RelationInfo> capturedRelations = new ArrayList<>();
+    private final List<RelationInfo> capturedRelations = new ArrayList<>();
 
     /**
      * Construct a SpansCaptureRelationsWithinSpan.

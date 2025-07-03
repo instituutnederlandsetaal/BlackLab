@@ -66,7 +66,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     /** Is the object frozen, not allowing any modifications? */
     @XmlTransient
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
 
     /** If we try to get() a missing field, should we throw or return a default config?
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.

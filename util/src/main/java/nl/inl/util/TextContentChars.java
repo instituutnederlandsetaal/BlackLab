@@ -6,13 +6,13 @@ package nl.inl.util;
 public class TextContentChars implements TextContent {
 
     /** chars buffer for text content (use offset and length as well). */
-    private char[] chars;
+    private final char[] chars;
 
     /** start offset of text content */
-    private int offset;
+    private final int offset;
 
     /** length of text content (in chars) */
-    private int length;
+    private final int length;
 
     TextContentChars(char[] chars) {
         if (chars == null)

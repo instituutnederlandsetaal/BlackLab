@@ -11,7 +11,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.exceptions.NotFound;
 
 public class ResultInputFormat {
-    private ConfigInputFormat config;
+    private final ConfigInputFormat config;
 
     ResultInputFormat(String formatName) {
         InputFormat inputFormat = DocumentFormats.getFormat(formatName).orElseThrow(

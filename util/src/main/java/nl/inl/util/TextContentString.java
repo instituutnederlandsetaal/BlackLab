@@ -6,7 +6,7 @@ package nl.inl.util;
 public class TextContentString implements TextContent {
 
     /** text content as string. */
-    private String str;
+    private final String str;
 
     TextContentString(String str) {
         if (str == null)

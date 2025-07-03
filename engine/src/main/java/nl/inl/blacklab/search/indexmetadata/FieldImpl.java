@@ -26,7 +26,7 @@ public abstract class FieldImpl implements Field, Freezable {
      * Doing so anyway will throw an exception.
      */
     @XmlTransient
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
 
     // For JAXB deserialization
     @SuppressWarnings("unused")

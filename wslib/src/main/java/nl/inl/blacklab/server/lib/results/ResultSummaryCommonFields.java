@@ -11,13 +11,13 @@ import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultSummaryCommonFields {
-    private WebserviceParams searchParam;
+    private final WebserviceParams searchParam;
     private TextPattern textPattern = null;
-    private Index.IndexStatus indexStatus;
-    private SearchTimings timings;
-    private MatchInfoDefs matchInfoDefs;
-    private ResultGroups<?> groups;
-    private WindowStats window;
+    private final Index.IndexStatus indexStatus;
+    private final SearchTimings timings;
+    private final MatchInfoDefs matchInfoDefs;
+    private final ResultGroups<?> groups;
+    private final WindowStats window;
     private final String searchField;
     private final Collection<String> otherFields;
 

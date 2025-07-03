@@ -48,9 +48,9 @@ public class TestProcessingStep {
         }
     }
 
-    private static Pattern find = Pattern.compile("a");
+    private static final Pattern find = Pattern.compile("a");
 
-    private static Pattern separator = Pattern.compile("-");
+    private static final Pattern separator = Pattern.compile("-");
 
     private static List<String> processStringMultipleValues(String input) {
         List<String> result = new ArrayList<>();
