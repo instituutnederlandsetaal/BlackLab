@@ -14,7 +14,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     final String fieldName;
 
-    final private DocPropertyStoredField docPropStoredField;
+    private final DocPropertyStoredField docPropStoredField;
 
     HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
         super(prop, hits, invert);

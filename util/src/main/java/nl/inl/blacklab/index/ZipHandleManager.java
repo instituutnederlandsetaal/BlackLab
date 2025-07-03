@@ -97,7 +97,7 @@ public class ZipHandleManager {
         }
     }
 
-    private synchronized static void removeEntriesIfRequired() {
+    private static synchronized void removeEntriesIfRequired() {
 
         // Remove any entries that haven't been used for a long time
         List<ZipHandle> zl = new ArrayList<>(openZips.values());

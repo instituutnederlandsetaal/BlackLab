@@ -55,7 +55,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     }
 
     /** Don't issue warnings again if they starts with the same prefix. */
-    synchronized static void warnOnce(String message, String prefix) {
+    static synchronized void warnOnce(String message, String prefix) {
         if (!reportedWarnings.contains(prefix)) {
             logger.warn(message);
             logger.warn("  (above warning is only issued once)");
@@ -64,7 +64,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     }
 
     /** Don't issue warning again if the message is the same */
-    synchronized static void warnOnce(String message) {
+    static synchronized void warnOnce(String message) {
         warnOnce(message, message);
     }
 

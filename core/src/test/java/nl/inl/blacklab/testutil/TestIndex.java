@@ -51,7 +51,7 @@ public class TestIndex {
         return new TestIndex(false, indexType);
     }
 
-    private synchronized static TestIndex getPreindexed(IndexType indexType) {
+    private static synchronized TestIndex getPreindexed(IndexType indexType) {
         if (indexType == IndexType.INTEGRATED)
             throw new UnsupportedOperationException("Integrated index still in development, no preindexed version!");
         if (testIndexExternalPre == null) {
@@ -66,7 +66,7 @@ public class TestIndex {
         return testIndexExternalPre;
     }
 
-    public synchronized static TestIndex getReusable(IndexType indexType) {
+    public static synchronized TestIndex getReusable(IndexType indexType) {
         if (testIndexExternal == null) {
             // Instantiate reusable testindexes
             testIndexExternal = new TestIndex(false, IndexType.EXTERNAL_FILES);
@@ -163,7 +163,7 @@ public class TestIndex {
 
     public static final int[] DOC_LENGTHS_TOKENS = { 9, 12, 6, 10 };
 
-    final static String TEST_FORMAT_NAME = "testformat";
+    static final String TEST_FORMAT_NAME = "testformat";
 
     /**
      * The BlackLab index object.

@@ -34,7 +34,7 @@ public class BLIndexWriterProxySolr implements BLIndexWriterProxy, Closeable {
 
 
     @Override
-    synchronized public void addDocument(BLInputDocument document) throws IOException {
+    public synchronized void addDocument(BLInputDocument document) throws IOException {
         pendingAddDocuments.add((BLInputDocumentSolr) document);
     }
 

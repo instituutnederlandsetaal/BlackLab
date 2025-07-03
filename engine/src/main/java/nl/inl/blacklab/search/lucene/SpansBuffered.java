@@ -18,7 +18,7 @@ class SpansBuffered extends BLSpans {
 
     protected class Bucket {
 
-        private final static int LIST_INITIAL_CAPACITY = 100;
+        private static final int LIST_INITIAL_CAPACITY = 100;
 
         private final boolean doMatchInfo;
 

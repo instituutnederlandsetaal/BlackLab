@@ -38,9 +38,9 @@ public class SpanFuzzyQuery extends BLSpanQuery {
         return SpanGuarantees.TERM;
     }
 
-    public final static int defaultMaxEdits = 2;
+    public static final int defaultMaxEdits = 2;
 
-    public final static int defaultPrefixLength = 0;
+    public static final int defaultPrefixLength = 0;
 
     private final Term term;
 

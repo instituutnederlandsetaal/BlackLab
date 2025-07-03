@@ -19,7 +19,7 @@ public class StubTokenStream extends TokenStream {
     }
 
     @Override
-    final public boolean incrementToken() {
+    public final boolean incrementToken() {
         i++;
         if (i >= terms.length)
             return false;

@@ -39,7 +39,7 @@ public class DesensitizeFilter extends TokenFilter {
     }
 
     @Override
-    final public boolean incrementToken() throws IOException {
+    public final boolean incrementToken() throws IOException {
         if (input.incrementToken()) {
             String t = new String(termAtt.buffer(), 0, termAtt.length());
             // SPECIAL CASE: don't desensitize relation info terms, they're not used for searching,

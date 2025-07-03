@@ -24,11 +24,11 @@ import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModu
  */
 public class Json {
 
-    static private ObjectMapper jsonObjectMapper;
+    private static ObjectMapper jsonObjectMapper;
 
-    static private ObjectMapper jsonWithJaxbAnnotation;
+    private static ObjectMapper jsonWithJaxbAnnotation;
 
-    static private ObjectMapper yamlObjectMapper;
+    private static ObjectMapper yamlObjectMapper;
 
     private static ObjectReader jaxbReader;
 

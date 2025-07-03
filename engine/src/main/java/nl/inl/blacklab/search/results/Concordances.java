@@ -72,7 +72,7 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl highlighter
      */
-    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
+    private static synchronized void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.size() == 0)

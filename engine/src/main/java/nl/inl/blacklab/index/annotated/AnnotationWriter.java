@@ -261,7 +261,7 @@ public class AnnotationWriter {
      * @param value value to add
      * @return position of the token added
      */
-    final public int addValue(String value) {
+    public final int addValue(String value) {
         return addValue(value, 1, null);
     }
 

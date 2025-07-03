@@ -31,21 +31,21 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 public class Contexts {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
-    private final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
+    private static final int NUMBER_OF_BOOKKEEPING_INTS = 3;
 
     /**
      * In context arrays, what index after the bookkeeping units indicates the hit
      * start?
      */
-    private final static int HIT_START_INDEX = 0;
+    private static final int HIT_START_INDEX = 0;
 
     /**
      * In context arrays, what index indicates the hit end (start of right part)?
      */
-    private final static int RIGHT_START_INDEX = 1;
+    private static final int RIGHT_START_INDEX = 1;
 
     /** In context arrays, what index indicates the length of the context? */
-    private final static int LENGTH_INDEX = 2;
+    private static final int LENGTH_INDEX = 2;
 
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
@@ -241,7 +241,7 @@ public class Contexts {
      *
      * @return the frequency of each occurring token
      */
-    public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+    public static synchronized TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
         BlackLabIndex index = hits.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();

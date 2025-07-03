@@ -294,7 +294,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     }
 
     /** Pattern for getting DPO number from image file name */
-    private final static Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
+    private static final Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
 
     public MetadataFetcherKbDpo(DocIndexerLegacy docIndexer) {
         super(docIndexer);

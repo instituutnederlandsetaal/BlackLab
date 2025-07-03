@@ -12,13 +12,13 @@ import org.apache.commons.lang3.StringUtils;
  */
 public final class PropertySerializeUtil {
 
-    private final static String PART_SEPARATOR = ":";
+    private static final String PART_SEPARATOR = ":";
 
-    private final static String PART_SEPARATOR_ESC_REGEX = ":";
+    private static final String PART_SEPARATOR_ESC_REGEX = ":";
 
-    private final static String MULTIPLE_SEPARATOR = ",";
+    private static final String MULTIPLE_SEPARATOR = ",";
 
-    private final static String MULTIPLE_SEPARATOR_ESC_REGEX = ",";
+    private static final String MULTIPLE_SEPARATOR_ESC_REGEX = ",";
 
     private PropertySerializeUtil() {
     }

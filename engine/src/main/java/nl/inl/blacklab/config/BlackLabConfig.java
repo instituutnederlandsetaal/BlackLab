@@ -50,7 +50,7 @@ public class BlackLabConfig {
      * @param file file to read
      * @return configuration configuration from file
      */
-    public synchronized static BlackLabConfig readConfigFile(File file) throws IOException {
+    public static synchronized BlackLabConfig readConfigFile(File file) throws IOException {
         if (file == null || !file.canRead())
             throw new FileNotFoundException("Configuration file " + file + " is unreadable.");
 
@@ -68,7 +68,7 @@ public class BlackLabConfig {
      * @param fileContents contents of the config file
      * @param isJson if true, reads JSON. Otherwise, reads YAML.
      */
-    private synchronized static BlackLabConfig readConfigFile(String fileName, String fileContents, boolean isJson) throws InvalidConfiguration {
+    private static synchronized BlackLabConfig readConfigFile(String fileName, String fileContents, boolean isJson) throws InvalidConfiguration {
         ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
 
         logger.debug("Reading global BlackLab config");

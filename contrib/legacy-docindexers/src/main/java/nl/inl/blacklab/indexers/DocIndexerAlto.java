@@ -183,7 +183,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
      * Pattern for getting DPO number and page number from image file name (OLD.
      * Will be removed soon)
      */
-    private final static Pattern PATT_DPO_AND_PAGE = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
+    private static final Pattern PATT_DPO_AND_PAGE = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
 
     /**
      * Whether or not the external metadata is available (OLD. Will be removed soon)

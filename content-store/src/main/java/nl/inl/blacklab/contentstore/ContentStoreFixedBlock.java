@@ -222,7 +222,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     }
 
     @Override
-    public synchronized final void initialize() {
+    public final synchronized void initialize() {
         if (initialized)
             return;
         performInitialization();

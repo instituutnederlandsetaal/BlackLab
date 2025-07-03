@@ -38,7 +38,7 @@ import org.apache.lucene.util.PriorityQueue;
 public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
 
     /** Filter instance for filtering our hits */
-    public static abstract class SpansAndFilter {
+    public abstract static class SpansAndFilter {
         protected HitQueryContext context;
 
         protected SpansAndFilter() {
