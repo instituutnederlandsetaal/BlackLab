@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.zip.ZipFile;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Manages opened zip files.
@@ -78,7 +78,7 @@ public class ZipHandleManager {
             try {
                 zipFile.close();
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         }
 

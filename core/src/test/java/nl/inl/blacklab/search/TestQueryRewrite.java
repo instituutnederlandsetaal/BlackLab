@@ -9,7 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -52,7 +52,7 @@ public class TestQueryRewrite {
             cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
             return CorpusQueryLanguageParser.parse(cqlQuery);
         } catch (InvalidQuery e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -71,7 +71,7 @@ public class TestQueryRewrite {
             BLSpanQuery rewritten = explanation.rewrittenQuery();
             Assert.assertEquals(after, rewritten.toString());
         } catch (InvalidQuery e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

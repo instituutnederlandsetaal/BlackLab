@@ -2,7 +2,7 @@ package nl.inl.blacklab.searches;
 
 import org.apache.commons.lang3.concurrent.ConcurrentUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.results.SearchResult;
@@ -15,7 +15,7 @@ public final class SearchCacheDummy implements SearchCache {
         try {
             return SearchCacheEntry.fromFuture(ConcurrentUtils.constantFuture(search.executeInternal(null)), search); // It's never in cache, and don't add it either
         } catch (InvalidQuery e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

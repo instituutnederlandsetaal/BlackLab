@@ -15,7 +15,6 @@ import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -114,7 +113,7 @@ public class Contexts {
     private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end,
             ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new RuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];
@@ -138,7 +137,7 @@ public class Contexts {
                 // We have a forward index for this field. Use it.
                 words = forwardIndex.retrievePartsInt(doc, startsOfSnippets, endsOfSnippets);
             } else {
-                throw new BlackLabRuntimeException("Cannot get context without a forward index");
+                throw new RuntimeException("Cannot get context without a forward index");
             }
 
             // Build the actual concordances

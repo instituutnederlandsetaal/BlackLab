@@ -28,7 +28,6 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -88,7 +87,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
             }
         } catch (IOException e) {
             // Something went wrong, e.g. we couldn't create the output files.
-            throw new BlackLabRuntimeException("Error initializing PostingsWriter plugins", e);
+            throw new RuntimeException("Error initializing PostingsWriter plugins", e);
         }
     }
 
@@ -242,7 +241,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
                     action.endField();
             } // for each field
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 

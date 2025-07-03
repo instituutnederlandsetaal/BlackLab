@@ -14,7 +14,6 @@ import org.apache.lucene.search.spans.SpanOrQuery;
 import org.apache.lucene.search.spans.SpanQuery;
 import org.apache.lucene.search.spans.SpanTermQuery;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -80,7 +79,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
      */
     public static int addMaxValues(int a, int b) {
         if (a < 0 || b < 0)
-            throw new BlackLabRuntimeException("max values cannot be negative");
+            throw new RuntimeException("max values cannot be negative");
         // Is either value infinite?
         if (a == MAX_UNLIMITED || b == MAX_UNLIMITED)
             return MAX_UNLIMITED; // Yes, result is infinite
@@ -226,7 +225,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
                 baseFieldNameWithVersion = baseWithVersion;
             }
             else if (!baseFieldName.equals(base))
-                throw new BlackLabRuntimeException("Mix of incompatible fields in query ("
+                throw new RuntimeException("Mix of incompatible fields in query ("
                         + baseFieldName + " and " + base + ")");
         }
         return baseFieldNameWithVersion;

@@ -26,7 +26,7 @@ import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
@@ -40,8 +40,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -328,19 +328,19 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
                 return reader().document(docId, allExceptContentStoreFields);
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public void delete(Query q) {
         if (!indexMode())
-            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
+            throw new RuntimeException("Cannot delete documents, not in index mode");
         try {
             logger.debug("Delete query: " + q);
             indexWriter.deleteDocuments(q);
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

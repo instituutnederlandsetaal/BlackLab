@@ -6,7 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Reads/writes a type/version file for a directory, to indicate the version of
@@ -130,18 +130,18 @@ public class VersionFile {
     public void read() {
         try {
             if (!file.exists())
-                throw new BlackLabRuntimeException("Version file not found: " + file);
+                throw new RuntimeException("Version file not found: " + file);
             try (BufferedReader r = FileUtil.openForReading(file)) {
                 String line = r.readLine();
                 if (line == null)
-                    throw new BlackLabRuntimeException("Version file appears to be empty: " + file);
+                    throw new RuntimeException("Version file appears to be empty: " + file);
                 String[] info = line.trim().split("\\|\\|", -1);
                 type = info[0];
                 if (info.length > 1)
                     version = info[1];
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -149,7 +149,7 @@ public class VersionFile {
         try (PrintWriter w = FileUtil.openForWriting(file)) {
             w.write(type + "||" + version + "\n");
         } catch (FileNotFoundException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

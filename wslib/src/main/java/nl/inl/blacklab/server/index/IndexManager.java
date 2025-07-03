@@ -26,7 +26,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormat;
@@ -145,7 +145,7 @@ public class IndexManager {
         try {
             startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
         } catch (Exception ex) {
-            throw BlackLabRuntimeException.wrap(ex);
+            throw BlackLabException.wrapRuntime(ex);
         }
     }
 
@@ -189,7 +189,7 @@ public class IndexManager {
                 FileUtils.writeStringToFile(userIdFile, user.getId(), StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         return dir;
@@ -552,7 +552,7 @@ public class IndexManager {
                 Path indexPath = pathName.toPath().toRealPath();
                 return Files.isDirectory(indexPath);
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         }
 
@@ -569,7 +569,7 @@ public class IndexManager {
             try {
                 indexPath = subDir.toPath().toRealPath();
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
             if (!Files.isReadable(indexPath) || !BlackLabIndex.isIndex(indexPath)) {
                 // Not readable or not an index.
@@ -637,7 +637,7 @@ public class IndexManager {
                     String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
                     loadUserCorporaInDir(User.fromId(userId), userDir);
                 } catch (IOException e) {
-                    throw new BlackLabRuntimeException(e);
+                    throw new RuntimeException(e);
                 }
             }
         }

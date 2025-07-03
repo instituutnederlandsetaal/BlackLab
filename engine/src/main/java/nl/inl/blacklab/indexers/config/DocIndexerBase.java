@@ -13,7 +13,7 @@ import java.util.Set;
 
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
@@ -225,7 +225,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             data = FileReference.fromFile(f);
         }
         if (data == null)
-            throw new BlackLabRuntimeException("Error reading linked document");
+            throw new RuntimeException("Error reading linked document");
 
         // Index the data
         InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
@@ -242,9 +242,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 ldi.indexSpecificDocument(documentPath);
             } else {
                 if (docIndexer == null)
-                    throw new BlackLabRuntimeException("Could not instantiate linked DocIndexer, format not found? (" + inputFormatIdentifier + ")");
+                    throw new RuntimeException("Could not instantiate linked DocIndexer, format not found? (" + inputFormatIdentifier + ")");
                 else
-                    throw new BlackLabRuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
+                    throw new RuntimeException("Linked document indexer must be subclass of DocIndexerBase, but is "
                         + docIndexer.getClass().getName());
             }
         }
@@ -365,7 +365,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             if (getDocWriter() != null && !indexingIntoExistingDoc)
                 getDocWriter().add(currentDoc);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         for (AnnotatedFieldWriter annotatedField : getAnnotatedFields().values()) {
@@ -432,7 +432,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                 contentStoreName = main.name();
                 contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
             } else {
-                throw new BlackLabRuntimeException("No main annotated field defined, can't store document");
+                throw new RuntimeException("No main annotated field defined, can't store document");
                 /*
                 // We're indexing documents and storing the contents,
                 // but we don't have a main annotated field in the current indexing configuration.

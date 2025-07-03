@@ -27,7 +27,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
@@ -462,11 +461,11 @@ public class WebserviceOperations {
                 return new BadRequest("UNKNOWN_MATCH_INFO",
                         "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'",
                         Map.of("name", e1.getMatchInfoName()));
-            } catch (BlackLabRuntimeException | BlackLabException e1) {
-                e.printStackTrace();
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage(), e1);
             } catch (BlsException e1) {
                 return e1;
+            } catch (RuntimeException | BlackLabException e1) {
+                e.printStackTrace();
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage(), e1);
             } catch (Throwable e1) {
                 return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
             }

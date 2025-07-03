@@ -17,7 +17,6 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
@@ -104,7 +103,7 @@ public class SpanQueryTagsExternal extends BLSpanQuery implements TagQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         if (attr != null)
-            throw new BlackLabRuntimeException("Query should've been rewritten! (attr != null)");
+            throw new RuntimeException("Query should've been rewritten! (attr != null)");
         BLSpanWeight weight = clause.createWeight(searcher, scoreMode, boost);
         return new SpanWeightTags(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
     }

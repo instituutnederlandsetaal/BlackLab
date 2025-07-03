@@ -10,8 +10,6 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-
 /** Represents a file to be indexed.
  *
  * May be in the form of an input stream, byte array, or file.
@@ -56,7 +54,7 @@ public interface FileReference {
                 return fromCharArray(path, chars, assocFile);
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 

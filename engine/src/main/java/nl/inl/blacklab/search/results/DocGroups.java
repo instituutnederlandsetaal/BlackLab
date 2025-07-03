@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -59,7 +58,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
         super(queryInfo);
 
         if (groups.size() > MAX_NUMBER_OF_GROUPS)
-            throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+            throw new RuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
         this.groupBy = groupBy;
         this.windowStats = windowStats;

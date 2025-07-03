@@ -18,7 +18,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -126,7 +126,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
                 mappedBytes = startOfNextMappingBytes + sizeBytes;
             }
         } catch (IOException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
         initialized = true;
     }
@@ -161,7 +161,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             }
             sortDeletedTocEntries();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -217,7 +217,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             }
 
             if (whichChunk == null) {
-                throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
+                throw new RuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
             }
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];

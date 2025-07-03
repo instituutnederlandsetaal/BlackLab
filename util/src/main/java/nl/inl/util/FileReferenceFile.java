@@ -13,7 +13,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 public class FileReferenceFile implements FileReference {
 
@@ -32,7 +31,7 @@ public class FileReferenceFile implements FileReference {
         try {
             return file.getCanonicalPath();
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -43,7 +42,7 @@ public class FileReferenceFile implements FileReference {
         try {
             return FileUtils.readFileToByteArray(file);
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -58,7 +57,7 @@ public class FileReferenceFile implements FileReference {
             try {
                 return FileReference.readIntoMemoryFromTextualInputStream(getPath(), new FileInputStream(file), file);
             } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         return this;
@@ -68,7 +67,7 @@ public class FileReferenceFile implements FileReference {
         try {
             return new FileInputStream(file);
         } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -78,7 +77,7 @@ public class FileReferenceFile implements FileReference {
         try {
             return new BufferedReader(new InputStreamReader(new FileInputStream(file), overrideEncoding));
         } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -99,7 +98,7 @@ public class FileReferenceFile implements FileReference {
             try (BOMInputStream is = UnicodeStream.wrap(new FileInputStream(file))) {
                 charSet = UnicodeStream.getCharset(is);
             } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
         return charSet;

@@ -8,7 +8,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntLongMap;
 import org.eclipse.collections.impl.map.mutable.primitive.IntLongHashMap;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Wrap a NumericDocValues to enable random access.
@@ -62,7 +62,7 @@ public class NumericDocValuesCacher {
             }
             return 0L; // default missing value
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

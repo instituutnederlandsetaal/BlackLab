@@ -9,7 +9,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -104,7 +103,7 @@ public class NfaStateToken extends NfaState {
     @Override
     public void setNextState(int i, NfaState state) {
         if (i != 0)
-            throw new BlackLabRuntimeException("Token state only has one next state");
+            throw new RuntimeException("Token state only has one next state");
         nextState = state;
     }
 

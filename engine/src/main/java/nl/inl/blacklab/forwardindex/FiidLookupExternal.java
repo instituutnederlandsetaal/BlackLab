@@ -12,7 +12,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -59,7 +59,7 @@ public class FiidLookupExternal implements FiidLookup {
                 cachedFiids.put(rc.docBase, numericDocValues);
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -130,10 +130,10 @@ public class FiidLookupExternal implements FiidLookup {
                         return (int) docValues.longValue();
                     }
                 } while (docValues.docID() <= docId - docBase);
-                throw new BlackLabRuntimeException("not found in docvalues");
+                throw new RuntimeException("not found in docvalues");
             }
         } catch (IOException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
     }
 

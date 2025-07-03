@@ -23,12 +23,11 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-import nl.inl.util.LuceneUtil;
-
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.queryparser.classic.ParseException;
+import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -48,10 +47,8 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
-
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.Query;
 
 /**
  * Determine frequency lists over annotation(s) and
@@ -448,7 +445,7 @@ public class FrequencyTool {
             FreqListOutput.TSV.write(index, annotatedField, freqList, result, outputDir,
                     outputType == FreqListOutput.Type.TSV_GZIP);
         } catch (InvalidQuery e) {
-            throw new BlackLabRuntimeException("Error creating freqList " + freqList.getReportName(), e);
+            throw new RuntimeException("Error creating freqList " + freqList.getReportName(), e);
         }
     }
 

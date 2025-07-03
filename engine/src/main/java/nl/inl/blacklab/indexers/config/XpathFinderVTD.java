@@ -17,7 +17,7 @@ import com.ximpleware.VTDNav;
 import com.ximpleware.XPathEvalException;
 import com.ximpleware.XPathParseException;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.indexers.config.DocIndexerVTD.FragmentPosition;
 import nl.inl.blacklab.indexers.config.DocIndexerXPath.NodeHandler;
@@ -68,7 +68,7 @@ class XpathFinderVTD {
         this.nav = nav;
         this.namespaces = namespaces == null ? Collections.emptyMap() : namespaces;
         if (nav.getEncoding() != VTDNav.FORMAT_UTF8)
-            throw new BlackLabRuntimeException(
+            throw new RuntimeException(
                     "DocIndexerXPath only supports UTF-8 input, but document was parsed as " + nav.getEncoding()
                             + " (See VTD-XML's VTDNav.java for format codes)");
         apCurrentNode = acquireExpression(XPATH_CURRENT_NODE);
@@ -104,7 +104,7 @@ class XpathFinderVTD {
             try {
                 ap.selectXPath(xpathExpr);
             } catch (XPathParseException e) {
-                throw new BlackLabRuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(),
+                throw new RuntimeException("Error in XPath expression " + xpathExpr + " : " + e.getMessage(),
                         e);
             }
         } else {
@@ -200,7 +200,7 @@ class XpathFinderVTD {
             int length = (int) (frag >> 32);
             return nav.toRawString(offset, length);
         } catch (VTDException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -210,7 +210,7 @@ class XpathFinderVTD {
                 return "";
             return currentNodeXml(nav);
         } catch (VTDException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -243,7 +243,7 @@ class XpathFinderVTD {
                 attr.put(name, List.of(value));
             }
         } catch (NavException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         navpop();
         return attr;
@@ -269,7 +269,7 @@ class XpathFinderVTD {
             }
             return contOffset;
         } catch (NavException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 

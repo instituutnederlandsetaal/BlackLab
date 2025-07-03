@@ -19,7 +19,6 @@ import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.xpath.XPathEvaluator;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.indexers.config.DocIndexerXPath;
 
@@ -177,7 +176,7 @@ public class XPathFinder {
                     throw new RuntimeException(e);
                 }
             } else {
-                throw new BlackLabRuntimeException("XPath matched non-NodeInfo; cannot convert to XML: " + xPath);
+                throw new RuntimeException("XPath matched non-NodeInfo; cannot convert to XML: " + xPath);
             }
         } else {
             if (list.isEmpty())

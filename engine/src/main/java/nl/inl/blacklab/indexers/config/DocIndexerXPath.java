@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
@@ -474,7 +474,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // Find our specific document in the file
                 xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
                     if (docDone.get())
-                        throw new BlackLabRuntimeException(
+                        throw new RuntimeException(
                                 "Document link " + documentXPath + " matched multiple documents in "
                                         + documentName);
                     indexDocument(doc);
@@ -485,10 +485,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 docDone.set(indexParsedFile(config.getDocumentPath(), true));
             }
         } catch (Exception e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
         if (!docDone.get())
-            throw new BlackLabRuntimeException("Linked document not found in " + documentName);
+            throw new RuntimeException("Linked document not found in " + documentName);
     }
 
     protected void processMetadataBlock(T doc, ConfigMetadataBlock metaBlock) {
@@ -589,7 +589,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             AtomicBoolean docDone = new AtomicBoolean(false); // any doc(s) processed?
             xpathForEach(docXPath, contextNodeWholeDocument(),(doc) -> {
                 if (mustBeSingleDocument && docDone.get())
-                    throw new BlackLabRuntimeException(
+                    throw new RuntimeException(
                             "Linked file contains multiple documents (and no document path given) in "
                                     + documentName);
                 indexDocument(doc);

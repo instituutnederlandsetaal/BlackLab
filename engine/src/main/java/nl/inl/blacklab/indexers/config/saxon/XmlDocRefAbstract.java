@@ -8,7 +8,6 @@ import java.util.function.Supplier;
 import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.util.CountingReader;
 import nl.inl.util.TextContent;
 
@@ -52,7 +51,7 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
                 return IOUtils.toCharArray(reader);
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -77,10 +76,10 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
         try {
             internalReader.skipTo(startOffset);
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
         if (internalReader.getCharsRead() != startOffset) {
-            throw new BlackLabRuntimeException("Could not skip to start offset");
+            throw new RuntimeException("Could not skip to start offset");
         }
         return internalReader;
     }
@@ -92,7 +91,7 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
             try {
                 internalReader.close();
             } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new RuntimeException(e);
             }
             internalReader = null;
         }

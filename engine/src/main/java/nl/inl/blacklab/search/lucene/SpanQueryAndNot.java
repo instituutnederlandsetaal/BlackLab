@@ -21,7 +21,6 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaState;
@@ -206,7 +205,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     public void setFilter(SpansAndFilterFactory filterFactory) {
         this.filterFactory = filterFactory;
         if (!exclude.isEmpty())
-            throw new BlackLabRuntimeException("Cannot combine exclude and filter!");
+            throw new RuntimeException("Cannot combine exclude and filter!");
     }
 
     @Override
@@ -440,7 +439,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         if (!exclude.isEmpty())
-            throw new BlackLabRuntimeException("Query should've been rewritten! (exclude clauses left)");
+            throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
 
         List<BLSpanWeight> weights = new ArrayList<>();
         for (BLSpanQuery clause : include) {
@@ -531,7 +530,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
             return include.get(0).getField();
         if (!exclude.isEmpty())
             return exclude.get(0).getField();
-        throw new BlackLabRuntimeException("Query has no clauses");
+        throw new RuntimeException("Query has no clauses");
     }
 
     @Override
@@ -540,13 +539,13 @@ public class SpanQueryAndNot extends BLSpanQuery {
             return include.get(0).getRealField();
         if (!exclude.isEmpty())
             return exclude.get(0).getRealField();
-        throw new BlackLabRuntimeException("Query has no clauses");
+        throw new RuntimeException("Query has no clauses");
     }
 
     @Override
     public Nfa getNfa(ForwardIndexAccessor fiAccessor, int direction) {
         if (!exclude.isEmpty())
-            throw new BlackLabRuntimeException("Query should've been rewritten! (exclude clauses left)");
+            throw new RuntimeException("Query should've been rewritten! (exclude clauses left)");
         List<NfaState> nfaClauses = new ArrayList<>();
         for (BLSpanQuery clause : include) {
             Nfa nfa = clause.getNfa(fiAccessor, direction);

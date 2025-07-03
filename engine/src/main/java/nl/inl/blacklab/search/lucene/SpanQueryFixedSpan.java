@@ -16,7 +16,6 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -133,7 +132,7 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
                             skipThisDoc = currentDocIsDeletedDoc || currentDocIsTooShort;
                         } while (currentDoc < maxDoc && skipThisDoc);
                         if (currentDoc > maxDoc)
-                            throw new BlackLabRuntimeException("currentDoc > maxDoc!!");
+                            throw new RuntimeException("currentDoc > maxDoc!!");
                         if (currentDoc == maxDoc) {
                             currentDoc = NO_MORE_DOCS;
                             return NO_MORE_DOCS; // no more docs; we're done

@@ -13,7 +13,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.util.UtilsForTesting;
 
@@ -63,7 +63,7 @@ public class TestContentStoreDirFixedBlock {
             store = new ContentStoreFixedBlockWriter(testDir.file(), false);
             currentlyWriteMode = true;
         } catch (ErrorOpeningIndex e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -197,7 +197,7 @@ public class TestContentStoreDirFixedBlock {
             store = ContentStoreExternal.open(testDir.file(), write, false);
             currentlyWriteMode = write;
         } catch (ErrorOpeningIndex e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

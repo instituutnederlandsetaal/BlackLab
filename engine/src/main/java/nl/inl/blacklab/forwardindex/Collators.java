@@ -3,7 +3,7 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 import java.text.RuleBasedCollator;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -73,7 +73,7 @@ public class Collators {
                 try {
                     coll = new RuleBasedCollator(rules);
                 } catch (Exception e) {
-                    throw BlackLabRuntimeException.wrap(e);
+                    throw BlackLabException.wrapRuntime(e);
                 }
             } else {
                 coll = (Collator)coll.clone();

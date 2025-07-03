@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -199,7 +199,7 @@ class CalcTokenFrequencies {
 
                     }
                 } catch (IOException e) {
-                    throw BlackLabRuntimeException.wrap(e);
+                    throw BlackLabException.wrapRuntime(e);
                 }
             });
         }

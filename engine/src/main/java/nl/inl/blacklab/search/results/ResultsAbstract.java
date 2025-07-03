@@ -11,7 +11,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -39,7 +38,7 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
+            throw new RuntimeException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
         }
 
         List<T> results = new ArrayList<>();
@@ -69,7 +68,7 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
 
     protected static <T, P extends ResultProperty<T>> List<T> doWindow(ResultsList<T, P> results, long first, long number) {
         if (first < 0 || first != 0 && !results.resultsProcessedAtLeast(first + 1)) {
-            //throw new BlackLabRuntimeException("First hit out of range");
+            //throw new RuntimeException("First hit out of range");
             return Collections.emptyList();
         }
 

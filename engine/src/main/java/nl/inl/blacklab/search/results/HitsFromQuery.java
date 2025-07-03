@@ -16,7 +16,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -148,7 +148,7 @@ public class HitsFromQuery extends HitsMutable {
             if (spansReaders.isEmpty())
                 allSourceSpansFullyRead = true;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -220,11 +220,11 @@ public class HitsFromQuery extends HitsMutable {
             // we're only interested in the actual deepest cause.
             Throwable cause = e;
             while (cause.getCause() != null) cause = cause.getCause(); 
-            throw new BlackLabRuntimeException(cause);
+            throw new RuntimeException(cause);
         } catch (Exception e) {
             // something unforseen happened in our thread
             // Should generally never happen unless there's a bug or something catastrophic happened.
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         } finally {
             // Don't do this unless we're the thread that's actually using the SpansReaders.
             if (hasLock) {

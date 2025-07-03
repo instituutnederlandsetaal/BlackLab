@@ -23,8 +23,6 @@ import java.util.regex.Pattern;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-
 /**
  * Utilities for working with files
  */
@@ -127,7 +125,7 @@ public class FileUtil {
             }
             return result;
         } catch (Exception e) {
-            throw new BlackLabRuntimeException(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -187,9 +185,9 @@ public class FileUtil {
         File file = new File(tempDir, random.nextInt(Integer.MAX_VALUE) + "_" + fileName);
         boolean ok = isFileInDirectory(file, tempDir);
         if (!ok)
-            throw new BlackLabRuntimeException("Uploaded file not in temp dir: " + file.getName());
+            throw new RuntimeException("Uploaded file not in temp dir: " + file.getName());
         if (!file.createNewFile())
-            throw new BlackLabRuntimeException("Could not create temp file: " + file.getName());
+            throw new RuntimeException("Could not create temp file: " + file.getName());
         return file;
     }
 
@@ -341,7 +339,7 @@ public class FileUtil {
     public static File[] listFilesSorted(File dir) {
         File[] files = dir.listFiles();
         if (files == null)
-            throw new BlackLabRuntimeException("Error listing in directory: " + dir);
+            throw new RuntimeException("Error listing in directory: " + dir);
         Arrays.sort(files, LIST_FILES_COMPARATOR);
         return files;
     }
