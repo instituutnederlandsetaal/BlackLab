@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.IndexReader;
@@ -112,7 +111,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
                             // all the equal terms into one entry.
                             return invertSortedTermsArray(terms, sorted, cmp);
                         })
-                        .collect(Collectors.toList());
+                        .toList();
             }
             int[] termId2SensitivePosition = sortedInverted.get(0);
             int[] termId2InsensitivePosition = sortedInverted.get(1);

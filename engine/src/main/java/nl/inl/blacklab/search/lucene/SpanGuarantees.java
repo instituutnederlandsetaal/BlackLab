@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.lucene.search.DocIdSetIterator;
@@ -217,9 +216,7 @@ public interface SpanGuarantees {
     }
 
     static <T extends SpanGuaranteeGiver> List<SpanGuarantees> from(Stream<T> stream) {
-        return stream
-                .map(T::guarantees)
-                .collect(Collectors.toList());
+        return stream.map(T::guarantees).toList();
     }
 
     /**

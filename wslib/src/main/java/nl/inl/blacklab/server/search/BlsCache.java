@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -492,7 +491,7 @@ public class BlsCache implements SearchCache {
 
     @Override
     public List<Map<String, Object>> getContents(boolean includeDebugInfo) {
-        return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).collect(Collectors.toList());
+        return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).toList();
     }
 
 }

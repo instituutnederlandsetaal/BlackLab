@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.lucene.index.DocValues;
 import org.apache.lucene.index.LeafReader;
@@ -482,7 +481,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
     @Override
     public DocResults filter(DocProperty property, PropertyValue value) {
-        List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).collect(Collectors.toList());
+        List<DocResult> list = stream().filter(g -> property.get(g).equals(value)).toList();
         return DocResults.fromList(queryInfo(), list, null, null);
     }
 

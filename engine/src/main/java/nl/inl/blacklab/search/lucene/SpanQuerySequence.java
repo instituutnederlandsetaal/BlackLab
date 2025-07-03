@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -121,7 +120,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
         List<SpanGuarantees> clauseGuarantees = clauscol.stream()
                 .map(BLSpanQuery::guarantees)
-                .collect(Collectors.toList());
+                .toList();
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 

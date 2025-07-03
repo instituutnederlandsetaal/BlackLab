@@ -19,7 +19,6 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -178,7 +177,7 @@ public class FrequencyTool {
         Terms[] terms = annotationNames.stream()
                 .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                 .toArray(Terms[]::new);
-        List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation).collect(Collectors.toList());
+        List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation).toList();
         List<String> metadataFields = freqList.getMetadataFields();
         final List<Integer> docIds = getDocIds(index, freqList);
 

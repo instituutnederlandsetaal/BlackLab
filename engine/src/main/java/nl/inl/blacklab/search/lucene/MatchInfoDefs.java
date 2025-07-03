@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Definitions of match information (captured groups) for a query.
@@ -63,7 +62,7 @@ public class MatchInfoDefs {
     public synchronized List<MatchInfo.Def> currentListFiltered(Predicate<MatchInfo.Def> filter) {
         return defs.stream()
                 .filter(filter)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

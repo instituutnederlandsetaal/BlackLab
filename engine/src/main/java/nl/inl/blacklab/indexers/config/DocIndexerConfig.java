@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.lucene.util.BytesRef;
@@ -190,7 +189,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         // Do we have anything to do?
         if (!hasProcessing || values.isEmpty()) {
             // No processing or deduplication to do; just return the values as-is (but sanitized/normalized)
-            return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).collect(Collectors.toList());
+            return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).toList();
         }
 
         // Apply processing steps
@@ -323,7 +322,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         // If there's no processing to be done (the most common case), skip the list allocation.
         return process instanceof ProcessingStepIdentity ?
                 List.of(input) :
-                process.perform(Stream.of(input), this).collect(Collectors.toList());
+                process.perform(Stream.of(input), this).toList();
     }
 
     /**

@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
@@ -33,13 +32,13 @@ public record AnnotationGroups(String fieldName, List<AnnotationGroup> groups) i
     public List<Map<String, Object>> toCustom() {
         return groups.stream()
                 .map(AnnotationGroup::toCustom)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static AnnotationGroups fromCustom(String fieldName, List<Map<String, Object>> serialized) {
         List<AnnotationGroup> groups = serialized.stream()
                 .map(g -> AnnotationGroup.fromCustom(fieldName, g))
-                .collect(Collectors.toList());
+                .toList();
         return new AnnotationGroups(fieldName, groups);
     }
 }

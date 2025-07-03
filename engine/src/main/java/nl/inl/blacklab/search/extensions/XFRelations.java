@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.extensions;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -160,7 +159,7 @@ public class XFRelations implements ExtensionFunctionClass {
     private static BLSpanQuery rmatch(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
         if (args.isEmpty())
             throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
-        List<BLSpanQuery> tps = args.stream().map(o -> (BLSpanQuery)o).collect(Collectors.toList());
+        List<BLSpanQuery> tps = args.stream().map(o -> (BLSpanQuery)o).toList();
         return TextPatternRelationMatch.createRelMatchQuery(context, tps);
     }
 

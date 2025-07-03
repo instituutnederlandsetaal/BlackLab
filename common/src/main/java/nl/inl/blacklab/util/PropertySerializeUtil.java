@@ -44,7 +44,7 @@ public final class PropertySerializeUtil {
     public static List<String> splitPartsList(String partsCombined) {
         return Arrays.stream(partsCombined.split(PART_SEPARATOR_ESC_REGEX, -1))
                 .map(PropertySerializeUtil::unescapePart)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static String combineMultiple(String... values) {

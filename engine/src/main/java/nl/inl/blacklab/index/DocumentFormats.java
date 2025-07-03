@@ -109,10 +109,8 @@ public class DocumentFormats {
      */
     public static synchronized Collection<InputFormat> getFormats() {
         // TODO maybe we should have a well-defined order? alphabetical, or configs before classes?
-        List<InputFormat> result = inputFormats.values().stream()
-                .filter(f -> !f.isError())
-                .collect(Collectors.toList());
-        List<InputFormat> reversed = new ArrayList<>(result);
+        List<InputFormat> reversed = inputFormats.values().stream()
+                .filter(f -> !f.isError()).collect(Collectors.toList());
         Collections.reverse(reversed);
         return reversed;
     }
@@ -207,7 +205,7 @@ public class DocumentFormats {
     private static void addConfigFormatsInDefaultDirectories() {
         List<File> dirs = BlackLab.defaultConfigDirs().stream()
                 .map(dir -> new File(dir, "formats"))
-                .collect(Collectors.toList());
+                .toList();
         addConfigFormatsInDirectories(dirs);
     }
 

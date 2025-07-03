@@ -44,7 +44,7 @@ class SpansAndSameRelationIdOld extends BLSpans {
      */
     public SpansAndSameRelationIdOld(List<BLSpans> clauses) {
         super(SpanQueryAnd.createGuarantees(
-                clauses.stream().map(BLSpans::guarantees).collect(Collectors.toList()),
+                clauses.stream().map(BLSpans::guarantees).toList(),
                 false));
         subSpans = new ArrayList<>(clauses.size());
         for (int i = 0; i < clauses.size(); i++) {

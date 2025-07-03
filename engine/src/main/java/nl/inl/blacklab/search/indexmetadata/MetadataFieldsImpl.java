@@ -254,9 +254,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     public void setMetadataGroups(Map<String, MetadataFieldGroupImpl> metadataGroups) {
         if (!groups().equals(metadataGroups)) {
             ensureNotFrozen();
-            List<Map<String, Object>> metaGroupsCustom = metadataGroups.entrySet().stream()
-                    .map( e -> e.getValue().toCustom())
-                    .collect(Collectors.toList());
+            List<Map<String, Object>> metaGroupsCustom = metadataGroups.values().stream()
+                    .map(MetadataFieldGroupImpl::toCustom)
+                    .toList();
             topLevelCustom.put("metadataFieldGroups", metaGroupsCustom);
         }
     }
