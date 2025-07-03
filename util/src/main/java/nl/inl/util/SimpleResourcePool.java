@@ -36,7 +36,7 @@ public abstract class SimpleResourcePool<T> {
      *
      * @param maxFreePoolSize size of the resource pool. If 0, disables pooling.
      */
-    public SimpleResourcePool(int maxFreePoolSize) {
+    protected SimpleResourcePool(int maxFreePoolSize) {
         this.maxFreePoolSize = maxFreePoolSize;
         freePool = new ArrayList<>();
         neverPool = (maxFreePoolSize == 0);

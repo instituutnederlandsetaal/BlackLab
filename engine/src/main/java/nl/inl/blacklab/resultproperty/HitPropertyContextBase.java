@@ -179,7 +179,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected final BlackLabIndex index;
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
         this.index = hits == null ? prop.index : hits.index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
@@ -201,7 +201,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
+    protected HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
             MatchSensitivity sensitivity, boolean compareInReverse) {
         super();
         this.name = name;

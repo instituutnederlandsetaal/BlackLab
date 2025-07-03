@@ -29,7 +29,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
 
     protected List<BLSpanQuery> clauses;
 
-    public BLSpanQueryAbstract(Collection<BLSpanQuery> clauses) {
+    protected BLSpanQueryAbstract(Collection<BLSpanQuery> clauses) {
         super(getQueryInfo(clauses));
         this.clauses = new ArrayList<>(clauses);
         baseFieldName = checkAllCompatibleFields(clauses);
@@ -52,7 +52,7 @@ abstract class BLSpanQueryAbstract extends BLSpanQuery {
         return null;
     }
 
-    public BLSpanQueryAbstract(BLSpanQuery... clauses) {
+    protected BLSpanQueryAbstract(BLSpanQuery... clauses) {
         this(Arrays.asList(clauses));
     }
 

@@ -8,8 +8,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 
 /** A search that yields groups of documents. */
 public abstract class SearchDocGroups extends SearchForResults<DocGroups> {
-    
-    public SearchDocGroups(QueryInfo queryInfo) {
+
+    protected SearchDocGroups(QueryInfo queryInfo) {
         super(queryInfo);
     }
     

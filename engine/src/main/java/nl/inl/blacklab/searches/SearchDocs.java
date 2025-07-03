@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.SampleParameters;
 /** A search that produces DocResults. */
 public abstract class SearchDocs extends SearchForResults<DocResults> {
 
-    public SearchDocs(QueryInfo queryInfo) {
+    protected SearchDocs(QueryInfo queryInfo) {
         super(queryInfo);
     }
     

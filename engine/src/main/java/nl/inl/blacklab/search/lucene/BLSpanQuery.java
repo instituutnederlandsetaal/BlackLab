@@ -36,7 +36,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     protected SpanGuarantees guarantees;
 
-    public BLSpanQuery(QueryInfo queryInfo) {
+    protected BLSpanQuery(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
     }
     

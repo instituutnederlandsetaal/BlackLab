@@ -398,7 +398,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         return contentsField.addAnnotation(propName, sensitivity, false);
     }
 
-    public DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
+    protected DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
         super(docWriter, fileName, reader);
 
         // Define the properties that make up our annotated field

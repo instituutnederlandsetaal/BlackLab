@@ -5,6 +5,9 @@ package nl.inl.blacklab;
  */
 public class Constants {
 
+    /** Utility class, don't instantiate */
+    private Constants() {}
+
     /**
      * Safe maximum size for a Java array.
      *

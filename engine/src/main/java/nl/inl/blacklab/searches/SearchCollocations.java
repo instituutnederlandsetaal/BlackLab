@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.results.SampleParameters;
  */
 public abstract class SearchCollocations extends AbstractSearch<TermFrequencyList> {
 
-    public SearchCollocations(QueryInfo queryInfo) {
+    protected SearchCollocations(QueryInfo queryInfo) {
         super(queryInfo);
     }
 

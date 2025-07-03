@@ -8,19 +8,19 @@ package nl.inl.blacklab.exceptions;
  */
 public abstract class BlackLabException extends Exception {
 
-    public BlackLabException() {
+    protected BlackLabException() {
         super();
     }
 
-    public BlackLabException(String message, Throwable cause) {
+    protected BlackLabException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public BlackLabException(String message) {
+    protected BlackLabException(String message) {
         super(message);
     }
 
-    public BlackLabException(Throwable cause) {
+    protected BlackLabException(Throwable cause) {
         super(cause);
     }
 

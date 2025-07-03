@@ -174,7 +174,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      */
     IntList contextIndices;
 
-    public HitProperty() {
+    protected HitProperty() {
         this.hits = null;
         this.reverse = sortDescendingByDefault();
     }

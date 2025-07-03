@@ -44,7 +44,7 @@ public abstract class BLConjunctionSpans extends BLSpans {
     protected boolean atFirstInCurrentDoc; // a first start position is available in current doc for nextStartPosition
     protected boolean oneExhaustedInCurrentDoc; // one subspans exhausted in current doc
 
-    public BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
+    protected BLConjunctionSpans(List<BLSpans> subSpans, SpanGuarantees guarantees) {
         super(guarantees);
         if (subSpans.size() < 2) {
             throw new IllegalArgumentException("Less than 2 subSpans.size():" + subSpans.size());

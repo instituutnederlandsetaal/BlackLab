@@ -115,7 +115,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
-    public HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
+    protected HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
         this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create(-1, true, true), null);
     }
 
@@ -128,7 +128,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
+    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo);
         this.hitsInternal = hits == null ? HitsInternal.create(-1, true, true) : hits;
         this.matchInfoDefs = matchInfoDefs;

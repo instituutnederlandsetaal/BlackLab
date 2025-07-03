@@ -7,8 +7,8 @@ import nl.inl.blacklab.search.results.ResultsStats;
  * A search operation that yields a count as its result.
  */
 public abstract class SearchCount extends AbstractSearch<ResultsStats> {
-    
-    public SearchCount(QueryInfo queryInfo) {
+
+    protected SearchCount(QueryInfo queryInfo) {
         super(queryInfo);
     }
 

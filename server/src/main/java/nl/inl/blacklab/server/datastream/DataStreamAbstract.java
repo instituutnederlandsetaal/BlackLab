@@ -33,7 +33,7 @@ public abstract class DataStreamAbstract implements DataStream {
 
     private final boolean prettyPrintPref;
 
-    public DataStreamAbstract(boolean prettyPrint) {
+    protected DataStreamAbstract(boolean prettyPrint) {
         this.stringWriter = new StringWriter();
         this.out = new PrintWriter(stringWriter);
         this.prettyPrintPref = this.prettyPrint = prettyPrint;

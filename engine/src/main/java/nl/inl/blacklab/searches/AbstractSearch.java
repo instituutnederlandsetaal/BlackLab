@@ -23,7 +23,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
 
     private final QueryInfo queryInfo;
 
-    public AbstractSearch(QueryInfo queryInfo) {
+    protected AbstractSearch(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
     }
 

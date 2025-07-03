@@ -52,7 +52,7 @@ public abstract class BlackLabPostingsFormat extends PostingsFormat {
      */
     static final String RI_RELATIONS_TMP_EXT = EXT_RELINFO_PREFIX + "relations.tmp";
 
-    public BlackLabPostingsFormat(String name) {
+    protected BlackLabPostingsFormat(String name) {
         super(name);
     }
 }
