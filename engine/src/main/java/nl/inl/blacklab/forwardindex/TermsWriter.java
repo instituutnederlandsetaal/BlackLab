@@ -207,8 +207,6 @@ class TermsWriter implements Terms {
                         int newPosition = buf.position() + Integer.BYTES * (2 + numTermsThisBlock);
                         ((Buffer)buf).position(newPosition); // advance past offsets array
                         if (fileMapLength - buf.position() < blockSize) {
-                            //throw new RuntimeException("Not enough space in file mapping to write term strings!");
-
                             // Re-map a new part of the file before we write the term strings
                             fileMapStart += buf.position();
                             buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);

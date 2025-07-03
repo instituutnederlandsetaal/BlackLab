@@ -76,14 +76,6 @@ public abstract class ContentStoreExternal implements ContentStore {
     public abstract void storePart(TextContent content);
 
     /**
-     * Delete a document from the content store.
-     * 
-     * @param id content store id of the document to delete
-     */
-    @Override
-    public abstract void delete(int id);
-
-    /**
      * Clear the entire content store.
      */
     public abstract void clear() throws IOException;
@@ -103,9 +95,6 @@ public abstract class ContentStoreExternal implements ContentStore {
      * @return true iff deleted
      */
     public abstract boolean isDeleted(int id);
-
-    @Override
-    public abstract void initialize();
 
     @Override
     public int getContentId(int docId, Document d, String contentIdField) {
