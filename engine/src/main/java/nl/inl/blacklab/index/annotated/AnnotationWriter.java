@@ -21,6 +21,7 @@ import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -39,6 +40,9 @@ import nl.inl.util.CollUtil;
  * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
  */
 public class AnnotationWriter {
+
+    /** Maximum length a value is allowed to be (0 = no limit). */
+    private int maximumValueLength;
 
     private final AnnotatedFieldWriter fieldWriter;
 
@@ -160,6 +164,8 @@ public class AnnotationWriter {
             includePayloads = true;
         if (includePayloads)
             payloads = new ArrayList<>();
+
+        maximumValueLength = BlackLab.config().getIndexing().getMaxValueLength();
     }
 
     public Collection<String> sensitivitySuffixes() {
@@ -316,6 +322,11 @@ public class AnnotationWriter {
                     "inline tags. To work properly with the new integrated index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
 
+        }
+
+        if (maximumValueLength > 0 && value.length() > maximumValueLength) {
+            // Truncate value to the configured maximum length.
+            value = value.substring(0, maximumValueLength);
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
