@@ -718,9 +718,9 @@ public class IndexManager {
         try {
             File deletionMarker = new File(directory, PENDING_DELETION_FILE_MARKER);
             if (!deletionMarker.createNewFile())
-                logger.error("Cannot mark directory for future deletion (createNewFile failed): " + deletionMarker);
+                logger.error("Cannot mark directory for future deletion (createNewFile failed): {}, ", deletionMarker);
         } catch (IOException e) {
-            logger.error("Cannot mark directory for future deletion: " + e.getMessage());
+            logger.error("Cannot mark directory for future deletion: {}", e.getMessage());
         }
     }
 

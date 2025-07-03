@@ -21,10 +21,10 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -210,9 +210,11 @@ public class BlsUtils {
      * @param root the directory tree to delete
      */
     public static void delTree(File root) {
+        if (root == null)
+            throw new IllegalArgumentException("Root directory is null");
         if (!root.isDirectory())
             throw new IllegalArgumentException("Not a directory: " + root);
-        for (File f : root.listFiles()) {
+        for (File f: root.listFiles()) {
             if (f.isDirectory())
                 delTree(f);
             else
@@ -222,7 +224,8 @@ public class BlsUtils {
                     logger.error(e.getMessage());
                 }
         }
-        root.delete();
+        if (!root.delete())
+            logger.error("Unable to delete directory: " + root);
     }
 
     /**
