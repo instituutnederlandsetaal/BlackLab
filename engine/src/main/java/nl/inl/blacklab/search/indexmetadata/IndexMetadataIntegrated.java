@@ -303,7 +303,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     @XmlTransient
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
 
     /** Free-form flags that indicate how indexing was done.
      *
@@ -314,7 +314,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      * Use sparingly, and flags should generally be temporary, to be removed
      * when it is no longer needed.
      */
-    private Map<String, String> indexFlags = new HashMap<>();
+    private final Map<String, String> indexFlags = new HashMap<>();
 
     // For JAXB deserialization
     @SuppressWarnings("unused")

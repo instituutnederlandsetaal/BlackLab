@@ -53,10 +53,10 @@ public class HitPropertySpanAttribute extends HitProperty {
     private boolean relNameIsFullRelType = false;
 
     /** Name of the attribute to capture */
-    private String attributeName;
+    private final String attributeName;
 
     /** The sensitivity of the match */
-    private MatchSensitivity sensitivity;
+    private final MatchSensitivity sensitivity;
 
     HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, boolean invert) {
         super(prop, hits, invert);

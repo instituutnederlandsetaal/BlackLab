@@ -66,7 +66,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
         // Convert dataFiles to a generic data structure
         final Iterator<WebserviceOperations.UploadedFile> dataFilesIt = new Iterator<>() {
-            Iterator<FileItem> it = dataFiles.iterator();
+            final Iterator<FileItem> it = dataFiles.iterator();
 
             @Override
             public boolean hasNext() {

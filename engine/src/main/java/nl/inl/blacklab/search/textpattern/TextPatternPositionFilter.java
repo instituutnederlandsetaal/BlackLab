@@ -27,10 +27,10 @@ public class TextPatternPositionFilter extends TextPattern {
     private final boolean invert;
 
     /** How to adjust the leading edge of the producer hits while matching */
-    private int adjustLeading;
+    private final int adjustLeading;
 
     /** How to adjust the trailing edge of the producer hits while matching */
-    private int adjustTrailing;
+    private final int adjustTrailing;
 
     public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanQueryPositionFilter.Operation operation) {
         this(producer, filter, operation, false, 0, 0);

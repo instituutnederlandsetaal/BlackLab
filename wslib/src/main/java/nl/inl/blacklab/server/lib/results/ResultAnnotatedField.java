@@ -10,11 +10,11 @@ public class ResultAnnotatedField {
 
     BlackLabIndex index;
 
-    private String indexName;
+    private final String indexName;
 
-    private AnnotatedField fieldDesc;
+    private final AnnotatedField fieldDesc;
 
-    private Map<String, ResultAnnotationInfo> annotInfos;
+    private final Map<String, ResultAnnotationInfo> annotInfos;
 
     private CorpusSize.Count count;
 

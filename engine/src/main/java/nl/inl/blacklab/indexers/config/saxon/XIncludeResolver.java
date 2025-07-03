@@ -44,7 +44,7 @@ class XIncludeResolver implements Supplier<CountingReader> {
             private Reader includedDocReader;
 
             /** Buffered chars from base doc. Buffer wraps around. */
-            private char[] buffer = new char[BUFFER_LENGTH];
+            private final char[] buffer = new char[BUFFER_LENGTH];
 
             /** Index of first buffered char */
             private int start = 0;
@@ -54,7 +54,7 @@ class XIncludeResolver implements Supplier<CountingReader> {
 
             private boolean done = false;
 
-            private List<File> includeFilesRead = new ArrayList<>();
+            private final List<File> includeFilesRead = new ArrayList<>();
 
             private boolean isBufferEmpty() {
                 return start == end;

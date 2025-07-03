@@ -10,11 +10,11 @@ import nl.inl.blacklab.server.lib.results.ResultMetadataField;
 
 public class ResultIndexMetadata {
 
-    private ResultIndexStatus progress;
-    private List<ResultAnnotatedField> afs;
-    private String mainAnnotatedField;
-    private List<ResultMetadataField> mfs;
-    private Map<String, List<String>> metadataFieldGroups;
+    private final ResultIndexStatus progress;
+    private final List<ResultAnnotatedField> afs;
+    private final String mainAnnotatedField;
+    private final List<ResultMetadataField> mfs;
+    private final Map<String, List<String>> metadataFieldGroups;
 
     public ResultIndexMetadata(ResultIndexStatus progress, List<ResultAnnotatedField> afs,
             String mainAnnotatedField, List<ResultMetadataField> mfs, Map<String, List<String>> metadataFieldGroups) {

@@ -177,7 +177,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     /** A list of stored fields that doesn't include content store fields. */
-    private Set<String> allExceptContentStoreFields;
+    private final Set<String> allExceptContentStoreFields;
 
     /** Relation index/search strategy for this index.
      * ("all encoded into one term" / "type and attributes in separate terms" / ...)

@@ -30,7 +30,7 @@ class InlineObject implements Comparable<InlineObject> {
 
     /** An open tag's token id, for if we want to capture e.g. tei:anchor positions to refer to later
      *  from standoff annotations. If null, don't capture token ids. */
-    private String tokenId;
+    private final String tokenId;
 
     public InlineObject(String text, int offset, InlineObjectType type, Map<String, List<String>> attributes) {
         this(text, offset, type, attributes, null);

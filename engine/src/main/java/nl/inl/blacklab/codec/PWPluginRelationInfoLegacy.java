@@ -95,7 +95,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
     private final BlackLab40PostingsWriter postingsWriter;
 
     /** Lucene fields that we'll store relation info for */
-    private Map<String, RelationInfoFieldMutable> riFields = new HashMap<>();
+    private final Map<String, RelationInfoFieldMutable> riFields = new HashMap<>();
 
     /**
      * Information per unique relation id.
@@ -145,7 +145,7 @@ class PWPluginRelationInfoLegacy implements PWPlugin {
      * The key is a sorted map of attribute name index to attribute value offset.
      * The value is the offset in the attrsets file.
      */
-    private Map<SortedMap<Integer, Long>, Long> attributeSetOffsets = new HashMap<>();
+    private final Map<SortedMap<Integer, Long>, Long> attributeSetOffsets = new HashMap<>();
 
     /**
      * Number of relations in each doc, per field (e.g. "contents%_relation@s").

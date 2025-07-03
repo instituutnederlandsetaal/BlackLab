@@ -8,7 +8,7 @@ public class BLSConfigProtocol {
     private static final Logger logger = LogManager.getLogger(BLSConfigProtocol.class);
 
     @Deprecated
-    private boolean useOldElementNames = false;
+    private final boolean useOldElementNames = false;
 
     private boolean omitEmptyProperties = false;
 

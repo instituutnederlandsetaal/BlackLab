@@ -64,7 +64,7 @@ public class XPathFinder {
     /**
      * Compiled XPaths for use in one thread.
      */
-    private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
+    private final Map<String, XPathExpression> compiledXPaths = new HashMap<>();
 
     public XPathFinder(XPath xPath, Map<String, String> namespaces) {
         // setup namespace aware xpath that will compile xpath expressions

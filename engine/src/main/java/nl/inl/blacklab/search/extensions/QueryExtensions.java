@@ -110,15 +110,15 @@ public class QueryExtensions {
     }
 
     private static class FuncInfo {
-        private ExtensionFunction func;
+        private final ExtensionFunction func;
 
-        private List<ArgType> argTypes;
+        private final List<ArgType> argTypes;
 
-        private List<Object> defaultValues;
+        private final List<Object> defaultValues;
 
-        private boolean isVarArg;
+        private final boolean isVarArg;
 
-        private boolean relationsFunction;
+        private final boolean relationsFunction;
 
         public FuncInfo(ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
             this(func, argTypes, defaultValues, false);
@@ -157,7 +157,7 @@ public class QueryExtensions {
     }
 
     /** Registry of extension functions by name */
-    private static Map<String, FuncInfo> functions = new HashMap<>();
+    private static final Map<String, FuncInfo> functions = new HashMap<>();
 
     static {
         register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()

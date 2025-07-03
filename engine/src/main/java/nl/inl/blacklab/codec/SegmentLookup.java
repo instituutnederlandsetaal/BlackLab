@@ -21,7 +21,7 @@ public class SegmentLookup<T> {
     private final List<T> segments;
 
     /** Base id for each segment  */
-    private List<Integer> ids;
+    private final List<Integer> ids;
 
     @FunctionalInterface
     interface SegmentBaseLookup<T> {

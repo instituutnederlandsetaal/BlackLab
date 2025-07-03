@@ -366,7 +366,7 @@ public abstract class RequestHandler {
         return true;
     }
 
-    private UserRequestBls userRequest;
+    private final UserRequestBls userRequest;
 
     protected boolean debugMode;
 

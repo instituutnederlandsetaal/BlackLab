@@ -35,7 +35,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
         }
     }
 
-    private TruncatableFreqList values;
+    private final TruncatableFreqList values;
 
     private final boolean isNumeric;
 

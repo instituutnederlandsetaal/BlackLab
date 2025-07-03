@@ -56,10 +56,10 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
     }
 
     /** How to filter our matches */
-    private SpansAndFilter filter;
+    private final SpansAndFilter filter;
 
     /** Name of the filter factory (without SpansFilterFactory), for toString() */
-    private String filterName;
+    private final String filterName;
 
     /** One subspans exhausted in current doc, so there's no more hits in this doc. */
     private boolean oneExhaustedInCurrentDoc;
@@ -68,7 +68,7 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
     private boolean atFirstInCurrentDoc;
 
     /** Keeps our subspans in order, and keeps track of total length and end position. */
-    private SpanTotalLengthEndPositionWindow spanWindow;
+    private final SpanTotalLengthEndPositionWindow spanWindow;
 
     /**
      * Wrap BLSpans in SpansInBucketsSameStartEnd.

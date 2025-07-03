@@ -625,9 +625,9 @@ public class WebserviceOperations {
     }
 
     public static class UploadedFile {
-        private String name;
+        private final String name;
 
-        private byte[] data;
+        private final byte[] data;
 
         public UploadedFile(String name, byte[] data) {
             this.name = name;
