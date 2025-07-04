@@ -146,10 +146,10 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            ((Buffer)buf).position(buf.position() + Long.BYTES * n);
+            buf.position(buf.position() + Long.BYTES * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
+            buf.position(buf.position() + Integer.BYTES * n);
             buf.get(deleted);
             deletedTocEntries = new ArrayList<>();
             for (int i = 0; i < n; i++) {

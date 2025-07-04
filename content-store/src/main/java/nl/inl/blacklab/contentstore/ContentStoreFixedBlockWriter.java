@@ -202,7 +202,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                         int p = tocFileBuffer.position();
                         closeMappedToc();
                         mapToc(true, true);
-                        ((Buffer)tocFileBuffer).position(p);
+                        tocFileBuffer.position(p);
                     }
                     e.serialize(tocFileBuffer);
                 }
