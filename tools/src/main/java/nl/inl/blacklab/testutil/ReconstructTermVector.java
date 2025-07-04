@@ -11,6 +11,9 @@ import nl.inl.util.LuceneUtil;
 
 public class ReconstructTermVector {
 
+    private ReconstructTermVector() {
+    }
+
     public static void main(String[] args) {
         int docId = 0;
         String fieldName = "contents%word@s";

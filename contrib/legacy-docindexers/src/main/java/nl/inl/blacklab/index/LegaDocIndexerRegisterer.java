@@ -9,6 +9,9 @@ import nl.inl.blacklab.indexers.DocIndexerTeiText;
 import nl.inl.blacklab.indexers.DocIndexerXmlSketch;
 
 public class LegaDocIndexerRegisterer {
+    private LegaDocIndexerRegisterer() {
+    }
+
     public static void register() {
         // Note that these names should not collide with the builtin config-based formats, or those will be used instead.
 

@@ -35,7 +35,6 @@ import nl.inl.util.TextContent;
  */
 @NotThreadSafe // in index mode
 public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
-    //private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
     /** Name of the version file */
     private static final String VERSION_FILE_NAME = "version.dat";
@@ -441,7 +440,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                     // Doesn't fit; make it a little smaller until it does fit.
                     float shrinkFactor = 1.0f + (1.05f * (encoded.length - MAX_BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
                     length = (int) (length / shrinkFactor);
-                    //System.err.println("Will try " + length + " characters as blocksize next.");
                     doMinCheck = false;
                 }
 

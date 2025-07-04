@@ -35,6 +35,9 @@ public class RunTermQuery {
 
     static boolean docsFound = false;
 
+    private RunTermQuery() {
+    }
+
     public static void main(String[] args) throws IOException {
         String word = "koekenbakker";
         String fieldName = "contents%word@s";

@@ -18,10 +18,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.jar.Manifest;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Plugin;
 
 public class ConvertPluginOpenConvert implements ConvertPlugin {
+
+    static final Logger logger = LogManager.getLogger(ConvertPluginOpenConvert.class);
+
     private static final String PROP_JAR = "jarPath";
 
     private static final String VERSION = "0.2";
@@ -29,9 +35,12 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
     private ClassLoader loader;
 
     private Class<?> clsOpenConvert;
-    private Method methodOpenConvert_GetConverter;
 
-    private Method SimpleInputOutputProcess_handleStream;
+    /** OpenConvert::getConverter() */
+    private Method methodOpenConvertGetConverter;
+
+    /** SimpleInputOutputProcess::handleStream() */
+    private Method methodSimpleInputOutputProcessHandleStream;
     
     @Override
     public boolean needsConfig() {
@@ -57,10 +66,10 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
             assertVersion(loader);
 
             clsOpenConvert = loader.loadClass("org.ivdnt.openconvert.converters.OpenConvert");
-            methodOpenConvert_GetConverter = clsOpenConvert.getMethod("getConverter", String.class, String.class);
+            methodOpenConvertGetConverter = clsOpenConvert.getMethod("getConverter", String.class, String.class);
 
             Class<?> simpleInputOutputProcess = loader.loadClass("org.ivdnt.openconvert.filehandling.SimpleInputOutputProcess");
-            SimpleInputOutputProcess_handleStream = simpleInputOutputProcess.getMethod("handleStream",
+            methodSimpleInputOutputProcessHandleStream = simpleInputOutputProcess.getMethod("handleStream",
                     InputStream.class, Charset.class, OutputStream.class);
         } catch (ClassNotFoundException | NoSuchMethodException | SecurityException | MalformedURLException e) {
             throw new PluginException("Error loading the OpenConvert jar: " + e.getMessage(), e);
@@ -93,10 +102,10 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
                         + "' to '" + getOutputFormat() + "'");
 
             Object openConvertInstance = clsOpenConvert.getConstructor().newInstance();
-            Object simpleInputOutputProcessInstance = methodOpenConvert_GetConverter.invoke(openConvertInstance,
+            Object simpleInputOutputProcessInstance = methodOpenConvertGetConverter.invoke(openConvertInstance,
                     getOutputFormat(), inputFormat);
 
-            SimpleInputOutputProcess_handleStream.invoke(simpleInputOutputProcessInstance, pbIn, inputCharset, out);
+            methodSimpleInputOutputProcessHandleStream.invoke(simpleInputOutputProcessInstance, pbIn, inputCharset, out);
         } catch (ReflectiveOperationException | IllegalArgumentException | IOException | SecurityException e) {
             throw new PluginException("Exception while running OpenConvert: " + e.getMessage(), e);
         }
@@ -167,7 +176,7 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
             Manifest manifest = new Manifest(is);
             String version = manifest.getMainAttributes().getValue("Specification-Version");
             if (version == null)
-                System.err.println ("No Specification-Version found in referenced jarFile");
+                logger.error("No Specification-Version found in referenced jarFile");
             else if (!version.equals(VERSION))
                 throw new PluginException("Mismatched version! Expected " + VERSION + " but found " + version);
         } catch (IOException e) {

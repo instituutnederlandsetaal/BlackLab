@@ -19,6 +19,9 @@ public class BatchForwardIndex {
 
     private static final int SNIPPET_LENGTH_WORDS = 11;
 
+    private BatchForwardIndex() {
+    }
+
     public static void main(String[] args) throws IOException {
 
         LogUtil.setupBasicLoggingConfig(); // suppress log4j warning

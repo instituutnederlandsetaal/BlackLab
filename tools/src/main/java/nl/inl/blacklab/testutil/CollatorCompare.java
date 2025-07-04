@@ -9,6 +9,9 @@ import nl.inl.util.StringUtil;
 
 public class CollatorCompare {
 
+    private CollatorCompare() {
+    }
+
     private static Collator getDefaultEnglishCollator() {
         return Collator.getInstance(new Locale("en", "GB"));
     }

@@ -21,6 +21,9 @@ import org.apache.commons.io.input.BOMInputStream;
  */
 public class UnicodeStream {
 
+    private UnicodeStream() {
+    }
+
     public static BOMInputStream wrap(InputStream is) {
         if (is instanceof BOMInputStream) {
             return (BOMInputStream) is;

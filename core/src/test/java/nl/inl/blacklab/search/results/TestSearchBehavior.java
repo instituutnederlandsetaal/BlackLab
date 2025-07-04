@@ -40,9 +40,6 @@ public class TestSearchBehavior {
                     waitForSpansReaderToBeInterrupted.countDown(); // we got it! signal main thread again.
                 }
             }
-
-            @Override
-            void initialize() {}
         });
 
         // Set up the interrupt.
@@ -85,9 +82,6 @@ public class TestSearchBehavior {
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null) {
             @Override
             public synchronized void run() { throw exceptionToThrow; }
-
-            @Override
-            void initialize() {}
         });
 
         Throwable thrownException = null;

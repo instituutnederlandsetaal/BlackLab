@@ -22,11 +22,16 @@ import java.util.jar.Manifest;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.Plugin;
 
 public class TagPluginDutchTagger implements TagPlugin {
+
+    static final Logger logger = LogManager.getLogger(TagPluginDutchTagger.class);
+
     private static final String PROP_JAR = "jarPath";
     private static final String PROP_VECTORS = "vectorFile";
     private static final String PROP_MODEL = "modelFile";
@@ -62,15 +67,15 @@ public class TagPluginDutchTagger implements TagPlugin {
 
     private void initJar(File jar, Properties converterProps)
             throws PluginException {
-        try {
-            if (!jar.exists())
-                throw new PluginException("Could not find the dutchTagger jar at location " + jar);
-            if (!jar.canRead())
+        if (!jar.exists())
+            throw new PluginException("Could not find the dutchTagger jar at location " + jar);
+        if (!jar.canRead())
             throw new PluginException("Could not read the dutchTagger jar at location " + jar);
+
+        try {
             URL jarUrl = jar.toURI().toURL();
             loader = new URLClassLoader(new URL[] { jarUrl }, null);
             assertVersion(loader);
-
 
             Class<?> converterClass = loader.loadClass("nl.namescape.tagging.ImpactTaggerLemmatizerClient");
             Method setProperties = converterClass.getMethod("setProperties", Properties.class);
@@ -167,7 +172,7 @@ public class TagPluginDutchTagger implements TagPlugin {
             Manifest manifest = new Manifest(is);
             String version = manifest.getMainAttributes().getValue("Specification-Version");
             if (version == null)
-                System.err.println ("No Specification-Version found in referenced jarFile");
+                logger.error("No Specification-Version found in referenced jarFile");
             else if (!version.equals(VERSION))
                 throw new PluginException("Mismatched version! Expected " + VERSION + " but found " + version);
         } catch (IOException e) {

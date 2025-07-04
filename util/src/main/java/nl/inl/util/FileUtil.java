@@ -45,6 +45,9 @@ public class FileUtil {
         return ad != bd ? (ad - bd) : a.getName().compareToIgnoreCase(b.getName());
     };
 
+    private FileUtil() {
+    }
+
     /**
      * Opens a file for writing in the default encoding.
      *

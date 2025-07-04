@@ -26,6 +26,9 @@ public class SolrTestServer {
 
     private static Path solrPath;
 
+    private SolrTestServer() {
+    }
+
     private static void copy(Path sourcePath, Path targetPath, String fileName) {
         copy(sourcePath, targetPath, fileName, fileName);
     }

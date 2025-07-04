@@ -11,6 +11,9 @@ import java.io.IOException;
  */
 public class ThreeByteInt {
 
+    private ThreeByteInt() {
+    }
+
     @FunctionalInterface
     public interface ByteOutput {
         void writeByte(byte b) throws IOException;

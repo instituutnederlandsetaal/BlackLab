@@ -34,6 +34,9 @@ public class ZipHandleManager {
     /** Zip files opened by DocIndexerBase indexers. Should be closed eventually. */
     private static final Map<File, ZipHandle> openZips = new LinkedHashMap<>();
 
+    private ZipHandleManager() {
+    }
+
     static class ZipHandle implements Comparable<ZipHandle> {
 
         public final File key;

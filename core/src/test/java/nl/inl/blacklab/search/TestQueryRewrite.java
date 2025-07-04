@@ -290,9 +290,6 @@ public class TestQueryRewrite {
                 "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), matches)");
         assertRewriteResult("<s> ('a' 'b') 'c' </s>",
                 "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b), TERM(contents%word@i:c)), matches)");
-        // Depends on implementation...
-        //assertRewriteResult("<s test='1'> 'a' </s>",
-        //        "POSFILTER(POSFILTER(TAGS(s), TERM(contents%" + relName + "@s:@test__1), STARTS_AT), TERM(contents%word@i:a), MATCHES)");
     }
 
     @Test
@@ -318,8 +315,7 @@ public class TestQueryRewrite {
     public void testRewritePropertyRegexMatchAll() {
         assertRewriteResult("[lemma='.*']", "ANYTOKEN(1, 1)");
         assertRewriteResult("[lemma='.*' & word='de']", "TERM(contents%word@i:de)");
-        // TODO: this actually rewrites to AND(ANYTOKEN(1, 1), ANYTOKEN(1, 1)), which is redundant
-        //  assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
+        assertRewriteResult("[lemma='.*' & word='.*']", "ANYTOKEN(1, 1)");
     }
 
 }

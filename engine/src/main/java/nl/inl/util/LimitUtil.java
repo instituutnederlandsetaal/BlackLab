@@ -7,6 +7,9 @@ import java.util.TreeMap;
 
 public class LimitUtil {
 
+    private LimitUtil() {
+    }
+
     public static <T> T limit(T value, long limitValue) {
         if (value instanceof Limitable)
             return ((Limitable<T>)value).withLimit(limitValue);

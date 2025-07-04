@@ -22,6 +22,9 @@ import nl.inl.blacklab.server.datastream.DataFormat;
 public class ServletUtil {
     private static final Logger logger = LogManager.getLogger(ServletUtil.class);
 
+    private ServletUtil() {
+    }
+
     /**
      * Returns the value of a servlet parameter, or the default value
      * 

@@ -14,6 +14,9 @@ public class CompareHitsInternalImpls {
 
     public static final long ITERATIONS = 100_000_000;
 
+    private CompareHitsInternalImpls() {
+    }
+
     static void time(String message, Runnable r) {
         Timer t = new Timer();
         r.run();

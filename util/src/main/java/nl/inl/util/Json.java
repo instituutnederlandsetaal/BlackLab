@@ -40,6 +40,9 @@ public class Json {
         initObjectMappers();
     }
 
+    private Json() {
+    }
+
     private static void initObjectMappers() {
         JsonFactory jsonFactory = new JsonFactory();
         jsonFactory.enable(JsonParser.Feature.ALLOW_COMMENTS);

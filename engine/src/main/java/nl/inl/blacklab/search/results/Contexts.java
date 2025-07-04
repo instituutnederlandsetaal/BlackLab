@@ -46,6 +46,9 @@ public class Contexts {
     /** In context arrays, what index indicates the length of the context? */
     private static final int LENGTH_INDEX = 2;
 
+    private Contexts() {
+    }
+
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
      * context) for a number of hits in the same document from the ContentStore.

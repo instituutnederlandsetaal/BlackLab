@@ -48,6 +48,9 @@ public class GapFiller {
     private static final String GAP_REGEX = "@@";
     private static final Pattern GAP_REGEX_PATT = Pattern.compile(GAP_REGEX, Pattern.DOTALL);
 
+    private GapFiller() {
+    }
+
     public static TextPattern parseGapQuery(String queryTemplate, String tsvValues) throws InvalidQuery {
         try {
             // Fill in the gaps

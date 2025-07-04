@@ -39,6 +39,9 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  */
 public class WebserviceRequestHandler {
 
+    private WebserviceRequestHandler() {
+    }
+
     /**
      * Show information about a field in a corpus.
      *

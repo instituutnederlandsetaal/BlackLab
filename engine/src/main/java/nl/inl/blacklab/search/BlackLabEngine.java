@@ -162,7 +162,7 @@ public final class BlackLabEngine implements AutoCloseable {
                 pool.shutdownNow(); // Cancel currently executing tasks
                 // Wait a while for tasks to respond to being cancelled
                 if (!pool.awaitTermination(POOL_TERMINATE_WAIT_SEC, TimeUnit.SECONDS))
-                    System.err.println("Pool did not terminate");
+                    logger.error("Pool did not terminate");
             }
         } catch (InterruptedException ie) {
             // (Re-)Cancel if current thread also interrupted

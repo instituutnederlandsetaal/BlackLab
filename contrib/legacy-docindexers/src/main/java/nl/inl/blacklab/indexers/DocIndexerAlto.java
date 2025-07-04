@@ -206,7 +206,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         } else {
             dpo = "?";
             page = "?";
-            System.err.println("No DPO/page found: " + imageFileName);
+            logger.error("No DPO/page found: {}", imageFileName);
         }
         return new String[] {
                 titles.getOrDefault(dpo, "?"),

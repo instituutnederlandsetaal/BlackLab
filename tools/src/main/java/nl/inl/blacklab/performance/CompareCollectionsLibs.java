@@ -24,6 +24,9 @@ public class CompareCollectionsLibs {
     
     private static final boolean FALSE = false;
 
+    private CompareCollectionsLibs() {
+    }
+
     public static void main(String[] args) {
         testIntObjectMaps();
         if (FALSE) {

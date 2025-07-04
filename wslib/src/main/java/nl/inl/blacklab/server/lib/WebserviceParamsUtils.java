@@ -17,6 +17,9 @@ import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.GapFiller;
 
 public class WebserviceParamsUtils {
+    private WebserviceParamsUtils() {
+    }
+
     /**
      * Parse the patt parameter.
      *

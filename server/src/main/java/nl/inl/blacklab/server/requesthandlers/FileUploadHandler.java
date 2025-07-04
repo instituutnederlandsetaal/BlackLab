@@ -26,6 +26,9 @@ public class FileUploadHandler {
 
     private static final File TMP_DIR = new File(System.getProperty("java.io.tmpdir"));
 
+    private FileUploadHandler() {
+    }
+
     /**
      * Parse and validate the uploaded file(s).
      *

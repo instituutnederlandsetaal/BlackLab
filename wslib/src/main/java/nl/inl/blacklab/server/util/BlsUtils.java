@@ -37,6 +37,9 @@ import nl.inl.util.Json;
 public class BlsUtils {
     private static final Logger logger = LogManager.getLogger(BlsUtils.class);
 
+    private BlsUtils() {
+    }
+
     public static Query parseFilter(BlackLabIndex index, String filter,
             String filterLang) throws BlsException {
         return BlsUtils.parseFilter(index, filter, filterLang, false);

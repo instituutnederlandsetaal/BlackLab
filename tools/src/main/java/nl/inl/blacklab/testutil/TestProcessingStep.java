@@ -17,6 +17,9 @@ import nl.inl.util.Timer;
  * probably similar.
  */
 public class TestProcessingStep {
+    private TestProcessingStep() {
+    }
+
     public static void main(String[] args) {
         ProcessingStep script = getTestSteps();
         List<String> words = randomWords(10_000_000);
