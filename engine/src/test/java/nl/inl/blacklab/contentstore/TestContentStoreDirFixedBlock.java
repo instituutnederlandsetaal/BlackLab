@@ -95,7 +95,7 @@ public class TestContentStoreDirFixedBlock {
     public void testDelete() {
         store.delete(2);
         ensureMode(false);
-        Assert.assertNull(store.retrieve(2));
+        Assert.assertThrows(IllegalArgumentException.class, () -> store.retrieve(2));
         Assert.assertEquals(doc[0], store.retrieve(1));
     }
 

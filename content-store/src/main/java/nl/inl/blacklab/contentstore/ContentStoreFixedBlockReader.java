@@ -90,8 +90,10 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         try {
             // Find the correct TOC entry
             TocEntry e = toc.get(contentId);
-            if (e == null || e.deleted)
-                return null;
+            if (e == null)
+                throw new IllegalArgumentException("contentId not found: " + contentId);
+            if (e.deleted)
+                throw new IllegalArgumentException("contentId points to a deleted entry: " + contentId);
 
             // Sanity-check parameters
             int n = start.length;
