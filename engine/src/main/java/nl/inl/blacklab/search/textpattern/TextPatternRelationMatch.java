@@ -58,6 +58,7 @@ public class TextPatternRelationMatch extends TextPattern {
     }
 
     private BLSpanQuery createAlignmentQuery(QueryExecutionContext context) throws InvalidQuery {
+        assert parent != null;
         BLSpanQuery source = TextPatternDefaultValue.replaceWithAnyToken(parent).translate(context);
         List<SpanQueryCaptureRelationsBetweenSpans.Target> targets = new ArrayList<>();
         for (RelationTarget child: children) {
@@ -159,32 +160,51 @@ public class TextPatternRelationMatch extends TextPattern {
 
     @Override
     protected boolean hasWithSpans() {
-        return parent.hasWithSpans() || children.stream()
+        return (parent != null && parent.hasWithSpans()) || children.stream()
                 .anyMatch(ch -> ch.getTarget().hasWithSpans());
     }
 
     @Override
     public TextPattern applyWithSpans() {
-        // Apply with-spans() to the parent and all children
-        TextPattern newParent = parent.applyWithSpans();
-        List<RelationTarget> newChildren = children.stream()
-                .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyWithSpans(), ch.getSpanMode(), ch.getCaptureAs()))
-                .toList();
-        return new TextPatternRelationMatch(newParent, newChildren);
+        if (isParallelAlignmentQuery()) {
+            // Apply with-spans() to the parent and all children
+            assert parent != null;
+            TextPattern newParent = parent.applyWithSpans();
+            List<RelationTarget> newChildren = children.stream()
+                    .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyWithSpans(),
+                            ch.getSpanMode(), ch.getCaptureAs()))
+                    .toList();
+            return new TextPatternRelationMatch(newParent, newChildren);
+        } else {
+            // Regular relation match. Apply with-spans to the whole query.
+            return super.applyWithSpans();
+        }
     }
 
     @Override
     protected boolean hasRspanAll() {
-        return parent.hasRspanAll() || children.stream()
+        return (parent != null && parent.hasRspanAll()) || children.stream()
                 .anyMatch(ch -> ch.getTarget().hasRspanAll());
     }
 
     @Override
     public TextPattern applyRspanAll() {
-        TextPattern newParent = parent.applyRspanAll();
-        List<RelationTarget> newChildren = children.stream()
-                .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyRspanAll(), ch.getSpanMode(), ch.getCaptureAs()))
-                .toList();
-        return new TextPatternRelationMatch(newParent, newChildren);
+        if (isParallelAlignmentQuery()) {
+            // Parallel. Apply rspan to each part of the query separately.
+            assert parent != null;
+            TextPattern newParent = parent.applyRspanAll();
+            List<RelationTarget> newChildren = children.stream()
+                    .map(ch -> new RelationTarget(ch.getOperatorInfo(), ch.getTarget().applyRspanAll(),
+                            ch.getSpanMode(), ch.getCaptureAs()))
+                    .toList();
+            return new TextPatternRelationMatch(newParent, newChildren);
+        } else {
+            // Regular relation match. Apply rspan to the whole query.
+            return super.applyRspanAll();
+        }
+    }
+
+    private boolean isParallelAlignmentQuery() {
+        return children.stream().anyMatch(ch -> ch.getOperatorInfo().isAlignment());
     }
 }
