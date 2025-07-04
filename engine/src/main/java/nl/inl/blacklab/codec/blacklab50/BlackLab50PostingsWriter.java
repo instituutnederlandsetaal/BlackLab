@@ -32,9 +32,8 @@ import nl.inl.blacklab.codec.BlackLabPostingsWriter;
 import nl.inl.blacklab.codec.PWPlugin;
 import nl.inl.blacklab.codec.PWPluginForwardIndex;
 import nl.inl.blacklab.codec.PWPluginRelationInfo;
-import nl.inl.blacklab.codec.PWPluginRelationInfoLegacy;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -91,12 +90,11 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
                 } else if (relationsStrategy instanceof RelationsStrategySeparateTerms) {
                     // This is the current version of the relation info plugin, used for new indexes.
                     plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms) relationsStrategy));
-                } else
-                    throw new BlackLabRuntimeException("Unsuitable relationsStrategy for BlackLab50 codec: " + relationsStrategy);
+                }
             }
         } catch (IOException e) {
             // Something went wrong, e.g. we couldn't create the output files.
-            throw new BlackLabRuntimeException("Error initializing PostingsWriter plugins", e);
+            throw new InvalidIndex("Error initializing PostingsWriter plugins", e);
         }
     }
 
@@ -251,7 +249,7 @@ public class BlackLab50PostingsWriter extends BlackLabPostingsWriter {
                     action.endField();
             } // for each field
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
