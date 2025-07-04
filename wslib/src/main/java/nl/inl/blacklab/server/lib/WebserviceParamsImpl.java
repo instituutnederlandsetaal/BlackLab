@@ -736,8 +736,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public boolean getIncludeTokenCount() {
-        return params.getIncludeTokenCount();
+    public boolean getIncludeSubcorpusSize() {
+        return params.getIncludeSubcorpusSize();
     }
 
     @Override

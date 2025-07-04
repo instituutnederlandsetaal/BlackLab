@@ -334,8 +334,8 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public boolean getWaitForTotal() { return getBool(WebserviceParameter.WAIT_FOR_TOTAL_COUNT); }
 
     @Override
-    public boolean getIncludeTokenCount() {
-        return getBool(WebserviceParameter.INCLUDE_TOKEN_COUNT);
+    public boolean getIncludeSubcorpusSize() {
+        return getBool(WebserviceParameter.SUBCORPUS_SIZE);
     }
 
     @Override

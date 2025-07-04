@@ -510,7 +510,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
     public String toString(String field) {
         String type = filterFactory == null ?
                 "AND" :
-                "AND_" + filterFactory.name() + ", ";
+                "AND_" + filterFactory.name();
         if (exclude.isEmpty())
             return type + "(" + clausesToString(field, include) + ")";
         return type + "(" + clausesToString(field, include) + ", " + clausesToString(field, exclude, "!") + ")";

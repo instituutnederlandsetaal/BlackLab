@@ -64,9 +64,7 @@
         <jersey.version>3.1.5</jersey.version>
         <jaxb.version>4.0.4</jaxb.version>
 
-        <!-- Java versions -->
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
+        <!-- Java version -->
         <maven.compiler.release>17</maven.compiler.release>
 
         <!-- Plugin versions -->
@@ -163,9 +161,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.14.0</version>
-                <configuration>
-                    <release>17</release>
-                </configuration>
             </plugin>
 
             <!-- Enforces minimum Maven version -->
@@ -482,99 +477,7 @@
         </profile>
     </profiles>
 
-    <dependencyManagement>
-        <dependencies>
-            <!--
-                a special BOM (Bill of Materials) file that contains compatible versions of all Java EE (Jakarta) API libraries
-                See https://reflectoring.io/maven-bom/
-
-                NOTE: these are NOT implementations. Just the empty interfaces, annotations, etc.
-
-                To find the library:
-                Start at the list of modules part of the Jakarta 10 specification:
-                There's a nice list here: https://tomee.apache.org/comparison.html
-
-                - Find the spec version for the module (ex. Jakarta RESTful Web Services 3.1)
-                  You can find this from the BOM
-                - Find an implementation for that specific version (so "jakarta restful web services 3.1 implementation")
-                  This returns jersey 3.1.1 for example.
-                  Now you can add that dependency to your project.
-            -->
-            <!-- https://mvnrepository.com/artifact/jakarta.platform/jakarta.jakartaee-bom -->
-            <dependency>
-                <groupId>jakarta.platform</groupId>
-                <artifactId>jakarta.jakartaee-bom</artifactId>
-                <version>10.0.0</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-
-            <!-- jersey (rest) -->
-            <!-- https://mvnrepository.com/artifact/org.glassfish.jersey.core/jersey-server -->
-            <dependency>
-                <groupId>org.glassfish.jersey.core</groupId>
-                <artifactId>jersey-server</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-            <dependency>
-                <groupId>org.glassfish.jersey.containers</groupId>
-                <artifactId>jersey-container-servlet</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-            <!-- xml -->
-            <dependency>
-                <groupId>org.glassfish.jersey.media</groupId>
-                <artifactId>jersey-media-jaxb</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-            <!-- json -->
-            <dependency>
-                <groupId>org.glassfish.jersey.media</groupId>
-                <artifactId>jersey-media-json-jackson</artifactId>
-                <version>3.1.5</version>
-            </dependency>
-
-            <!-- jersey injection framework -->
-            <dependency>
-                <groupId>org.glassfish.jersey.inject</groupId>
-                <artifactId>jersey-hk2</artifactId>
-                <version>${jersey.version}</version>
-            </dependency>
-
-
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-
-<!--        <dependency>-->
-<!--            <groupId>jakarta.platform</groupId>-->
-<!--            <artifactId>jakarta.jakartaee-api</artifactId>-->
-<!--            <version>10.0.0</version>-->
-<!--            <scope>provided</scope>-->
-<!--        </dependency>-->
-
-        <dependency>
-            <groupId>net.sf.saxon</groupId>
-            <artifactId>Saxon-HE</artifactId>
-            <version>12.4</version>
-            <exclusions>
-                <exclusion>
-                    <artifactId>xml-apis</artifactId>
-                    <groupId>xml-apis</groupId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
-        <dependency>
-            <groupId>net.jcip</groupId>
-            <artifactId>jcip-annotations</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
 
         <!-- Testing (JUnit and Mockito) -->
         <dependency>

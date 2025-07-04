@@ -42,7 +42,7 @@ public class RelationsStrategySingleTerm implements RelationsStrategy {
     /**
      * Separator after relation type and attribute value in _relation annotation.
      */
-    private static final String ATTR_SEPARATOR = "\u0001";
+    protected static final String ATTR_SEPARATOR = "\u0001";
 
     /**
      * Separator between attr and value in _relation annotation.

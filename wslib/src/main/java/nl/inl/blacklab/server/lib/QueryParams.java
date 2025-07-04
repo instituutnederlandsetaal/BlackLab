@@ -112,7 +112,7 @@ public interface QueryParams {
 
     boolean getWaitForTotal();
 
-    boolean getIncludeTokenCount();
+    boolean getIncludeSubcorpusSize();
 
     boolean getIncludeCustomInfo();
 
