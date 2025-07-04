@@ -35,6 +35,7 @@ import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.blacklab.webservice.BlsPath;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -49,28 +50,28 @@ public abstract class RequestHandler {
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
-    public static final String ENDPOINT_AUTOCOMPLETE     = "autocomplete";
-    public static final String ENDPOINT_CACHE_CLEAR      = "cache-clear";
-    public static final String ENDPOINT_CACHE_INFO       = "cache-info";
-    public static final String ENDPOINT_DOCS             = "docs";
-    public static final String ENDPOINT_DOCS_CSV         = "docs-csv";
-    public static final String ENDPOINT_DOCS_GROUPED     = "docs-grouped";
-    public static final String ENDPOINT_DOCS_GROUPED_CSV = "docs-grouped-csv";
+    public static final String ENDPOINT_AUTOCOMPLETE     = BlsPath.AUTOCOMPLETE.path();
+    public static final String ENDPOINT_CACHE_CLEAR      = BlsPath.CACHE_CLEAR.path();
+    public static final String ENDPOINT_CACHE_INFO       = BlsPath.CACHE_INFO.path();
+    public static final String ENDPOINT_DOCS             = BlsPath.DOCS.path();
+    public static final String ENDPOINT_DOCS_CSV         = BlsPath.DOCS.path() + "-csv";
+    public static final String ENDPOINT_DOCS_GROUPED     = BlsPath.DOCS.path() + "-grouped";
+    public static final String ENDPOINT_DOCS_GROUPED_CSV = BlsPath.DOCS.path() + "-grouped-csv";
     public static final String ENDPOINT_DOC_CONTENTS     = "doc-contents";
     public static final String ENDPOINT_DOC_INFO         = "doc-info";
     public static final String ENDPOINT_DOC_SNIPPET      = "doc-snippet";
-    public static final String ENDPOINT_FIELDS           = "fields";
-    public static final String ENDPOINT_HITS             = "hits";
-    public static final String ENDPOINT_HITS_CSV         = "hits-csv";
-    public static final String ENDPOINT_HITS_GROUPED     = "hits-grouped";
-    public static final String ENDPOINT_HITS_GROUPED_CSV = "hits-grouped-csv";
-    public static final String ENDPOINT_INPUT_FORMATS    = "input-formats";
-    public static final String ENDPOINT_PARSE_PATTERN    = "parse-pattern";
-    public static final String ENDPOINT_RELATIONS        = "relations";
-    public static final String ENDPOINT_SHARED_WITH_ME   = "shared-with-me";
-    public static final String ENDPOINT_SHARING          = "sharing";
-    public static final String ENDPOINT_STATUS           = "status";
-    public static final String ENDPOINT_TERMFREQ         = "termfreq";
+    public static final String ENDPOINT_FIELDS           = BlsPath.FIELDS.path();
+    public static final String ENDPOINT_HITS             = BlsPath.HITS.path();
+    public static final String ENDPOINT_HITS_CSV         = BlsPath.HITS.path() + "-csv";
+    public static final String ENDPOINT_HITS_GROUPED     = BlsPath.HITS.path() + "-grouped";
+    public static final String ENDPOINT_HITS_GROUPED_CSV = BlsPath.HITS.path() + "-grouped-csv";
+    public static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
+    public static final String ENDPOINT_PARSE_PATTERN    = BlsPath.PARSE_PATTERN.path();
+    public static final String ENDPOINT_RELATIONS        = BlsPath.RELATIONS.path();
+    public static final String ENDPOINT_SHARED_WITH_ME   = BlsPath.SHARED_WITH_ME.path();
+    public static final String ENDPOINT_SHARING          = BlsPath.SHARING.path();
+    public static final String ENDPOINT_STATUS           = BlsPath.STATUS.path();
+    public static final String ENDPOINT_TERMFREQ         = BlsPath.TERMFREQ.path();
 
     public static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
             WebserviceOperation.CACHE_CLEAR.path(),

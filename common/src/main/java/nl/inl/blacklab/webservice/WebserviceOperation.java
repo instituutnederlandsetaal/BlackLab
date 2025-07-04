@@ -10,50 +10,50 @@ import java.util.Optional;
  * and gets all info via parameters.
  */
 public enum WebserviceOperation {
-    SERVER_INFO("server-info", ""),
-    CORPUS_INFO("corpus-info", ""),
-    CORPUS_STATUS("corpus-status", "status"),
-    CORPUS_SHARING("corpus-sharing", "sharing"),
-    FIELD_INFO("field-info", "fields"),
+    SERVER_INFO("server-info", BlsPath.EMPTY),
+    CORPUS_INFO("corpus-info", BlsPath.EMPTY),
+    CORPUS_STATUS("corpus-status", BlsPath.STATUS),
+    CORPUS_SHARING("corpus-sharing", BlsPath.SHARING),
+    FIELD_INFO("field-info", BlsPath.FIELDS),
 
-    HITS("hits", "hits"),
-    HITS_CSV("hits-csv", "hits"), // TODO: shouldn't be separate operations
-    HITS_GROUPED("hits-grouped", "hits"),  // should -grouped be separate? (triggered by group/viewgroup params)
-    PARSE_PATTERN("parse-pattern", "parse-pattern"),
+    HITS("hits", BlsPath.HITS),
+    HITS_CSV("hits-csv", BlsPath.HITS), // not ideal that this is a separate operation, but output is quite different
+    HITS_GROUPED("hits-grouped", BlsPath.HITS),  // should -grouped be separate? (triggered by group/viewgroup params)
+    PARSE_PATTERN("parse-pattern", BlsPath.PARSE_PATTERN),
 
-    RELATIONS("relations", "relations"),
+    RELATIONS("relations", BlsPath.RELATIONS),
 
-    DOCS("docs", "docs"),
-    DOCS_CSV("docs-csv", "docs"), // TODO: shouldn't be separate operations
-    DOCS_GROUPED("docs-grouped", "docs"),  // should -grouped be separate? (triggered by group/viewgroup params)
+    DOCS("docs", BlsPath.DOCS),
+    DOCS_CSV("docs-csv", BlsPath.DOCS), // not ideal that this is a separate operation, but output is quite different
+    DOCS_GROUPED("docs-grouped", BlsPath.DOCS),  // should -grouped be separate? (triggered by group/viewgroup params)
 
-    DOC_CONTENTS("doc-contents", "docs"),
-    DOC_INFO("doc-info", "docs"),
-    DOC_SNIPPET("doc-snippet", "docs"),
+    DOC_CONTENTS("doc-contents", BlsPath.DOCS),
+    DOC_INFO("doc-info", BlsPath.DOCS),
+    DOC_SNIPPET("doc-snippet", BlsPath.DOCS),
 
-    TERM_FREQUENCIES("termfreq", "termfreq"),
-    AUTOCOMPLETE("autocomplete", "autocomplete"),
+    TERM_FREQUENCIES("termfreq", BlsPath.TERMFREQ),
+    AUTOCOMPLETE("autocomplete", BlsPath.AUTOCOMPLETE),
 
-    LIST_INPUT_FORMATS("list-input-formats", "input-formats"),
-    INPUT_FORMAT_INFO("input-format-info", "input-formats"),
-    INPUT_FORMAT_XSLT("input-format-xslt", "input-formats"),
-    WRITE_INPUT_FORMAT("write-input-format", "POST", "input-formats"),
-    DELETE_INPUT_FORMAT("delete-input-format", "DELETE", "input-formats"),
+    LIST_INPUT_FORMATS("list-input-formats", BlsPath.INPUT_FORMATS),
+    INPUT_FORMAT_INFO("input-format-info", BlsPath.INPUT_FORMATS),
+    INPUT_FORMAT_XSLT("input-format-xslt", BlsPath.INPUT_FORMATS),
+    WRITE_INPUT_FORMAT("write-input-format", "POST", BlsPath.INPUT_FORMATS),
+    DELETE_INPUT_FORMAT("delete-input-format", "DELETE", BlsPath.INPUT_FORMATS),
 
-    ADD_TO_CORPUS("add-to-corpus", "POST", ""),
+    ADD_TO_CORPUS("add-to-corpus", "POST", BlsPath.EMPTY),
 
-    CACHE_INFO("cache-info", "cache-info"),
-    CACHE_CLEAR("cache-clear", "POST", "cache-clear"),
+    CACHE_INFO("cache-info", BlsPath.CACHE_INFO),
+    CACHE_CLEAR("cache-clear", "POST", BlsPath.CACHE_CLEAR),
 
-    CREATE_CORPUS("create-corpus", "POST", ""),
-    DELETE_CORPUS("delete-corpus", "DELETE", ""),
+    CREATE_CORPUS("create-corpus", "POST", BlsPath.EMPTY),
+    DELETE_CORPUS("delete-corpus", "DELETE", BlsPath.EMPTY),
 
-    STATIC_RESPONSE("static-response", ""), // internal, used by BLS
-    NONE("none", "");
+    STATIC_RESPONSE("static-response", BlsPath.EMPTY), // internal, used by BLS
+    NONE("none", BlsPath.EMPTY);
 
     private final String value;
 
-    private final String blsPath;
+    private final BlsPath blsPath;
 
     private final String httpMethod;
 
@@ -65,11 +65,11 @@ public enum WebserviceOperation {
         return Optional.empty();
     }
 
-    WebserviceOperation(String value, String blsPath) {
+    WebserviceOperation(String value, BlsPath blsPath) {
         this(value, "GET", blsPath);
     }
 
-    WebserviceOperation(String value, String httpMethod, String blsPath) {
+    WebserviceOperation(String value, String httpMethod, BlsPath blsPath) {
         this.value = value;
         this.blsPath = blsPath;
         this.httpMethod = httpMethod;
@@ -85,7 +85,7 @@ public enum WebserviceOperation {
     }
 
     public String path() {
-        return blsPath;
+        return blsPath.path();
     }
 
     public String getHttpMethod() {
