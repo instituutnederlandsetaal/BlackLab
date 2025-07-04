@@ -176,10 +176,10 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             byte[] deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            ((Buffer)buf).position(buf.position() + Long.BYTES * n);
+            buf.position(buf.position() + Long.BYTES * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
+            buf.position(buf.position() + Integer.BYTES * n);
             buf.get(deleted);
             toc = new ArrayList<>(n);
             deletedTocEntries = new ArrayList<>();
@@ -257,10 +257,10 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                 buf.putInt(n);
                 LongBuffer lb = buf.asLongBuffer();
                 lb.put(offset);
-                ((Buffer)buf).position(buf.position() + Long.BYTES * n);
+                buf.position(buf.position() + Long.BYTES * n);
                 IntBuffer ib = buf.asIntBuffer();
                 ib.put(length);
-                ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
+                buf.position(buf.position() + Integer.BYTES * n);
                 buf.put(deleted);
             }
         } catch (IOException e) {
@@ -419,7 +419,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
             }
 
             // Set the correct start position
-            ((Buffer)writeBuffer).position((int) (newDocumentOffset - writeBufOffset));
+            writeBuffer.position((int) (newDocumentOffset - writeBufOffset));
 
             // Did we increase the length of the tokens file?
             long end = newDocumentOffset + numberOfTokens;
@@ -514,7 +514,7 @@ public class AnnotationForwardIndexExternalWriter extends AnnotationForwardIndex
                     throw new InvalidIndex("Not enough bytes read: " + bytesRead
                             + " < " + bytesToRead);
                 }
-                ((Buffer)buffer).position(0);
+                buffer.position(0);
                 ib = buffer.asIntBuffer();
                 ib.get(snippet);
                 result.add(snippet);

@@ -206,7 +206,7 @@ class TermsWriter implements Terms {
                         ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
                                                // (doubles as the size of the data block to follow) //@4
                         int newPosition = buf.position() + Integer.BYTES * (2 + numTermsThisBlock);
-                        ((Buffer)buf).position(newPosition); // advance past offsets array
+                        buf.position(newPosition); // advance past offsets array
                         if (fileMapLength - buf.position() < blockSize) {
                             // Re-map a new part of the file before we write the term strings
                             fileMapStart += buf.position();

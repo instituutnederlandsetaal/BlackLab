@@ -61,7 +61,7 @@ public class TextContentBytes implements TextContent {
         while (in.hasRemaining()) {
             cd.decode(in, out, true);
             builder.append(out.array(), 0, out.position());
-            ((Buffer)out).position(0);
+            out.position(0);
         }
     }
 
