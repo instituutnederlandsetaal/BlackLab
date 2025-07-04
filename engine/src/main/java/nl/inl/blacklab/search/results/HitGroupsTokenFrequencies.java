@@ -53,6 +53,9 @@ public class HitGroupsTokenFrequencies {
 
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
+    private HitGroupsTokenFrequencies() {
+    }
+
     /** Precalculated hashcode for group id, to save time while grouping and sorting. */
     private static class GroupIdHash {
         private final int[] tokenIds;

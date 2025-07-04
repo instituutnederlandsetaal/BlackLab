@@ -10,6 +10,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
@@ -40,6 +42,7 @@ import nl.inl.util.CollUtil;
  * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
  */
 public class AnnotationWriter {
+    private static final Logger logger = LogManager.getLogger(AnnotationWriter.class);
 
     /** Maximum length a value is allowed to be (0 = no limit). */
     private int maximumValueLength;
@@ -318,10 +321,9 @@ public class AnnotationWriter {
             // This is the _relation annotation in the integrated index format, but not the right sort of value
             // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
             // Warn the user.
-            System.err.println("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
+            logger.warn("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
                     "inline tags. To work properly with the new integrated index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
-
         }
 
         if (maximumValueLength > 0 && value.length() > maximumValueLength) {

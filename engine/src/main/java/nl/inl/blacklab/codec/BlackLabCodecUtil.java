@@ -4,6 +4,9 @@ import org.apache.lucene.index.LeafReaderContext;
 
 public class BlackLabCodecUtil {
 
+    private BlackLabCodecUtil() {
+    }
+
     /**
      * Get the BlackLabStoredFieldsReader for the given leafreader.
      *

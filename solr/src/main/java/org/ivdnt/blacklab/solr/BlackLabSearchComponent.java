@@ -8,6 +8,8 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
@@ -19,6 +21,7 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
+import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -32,6 +35,8 @@ import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
+
+    private static final Logger logger = LogManager.getLogger(BlackLabSearchComponent.class);
 
     public static final String COMPONENT_NAME = "blacklab-search";
 
@@ -81,14 +86,13 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
             try (InputStream is = resourceLoader.openResource(configFilePath)) {
                 InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8);
                 config = BLSConfig.read(reader, isJson);
-                //System.err.println("##### Loaded BLS config file " + configFilePath);
             } catch (IOException e) {
                 // ignore, file doesn't exist, fallback to default.
             }
         } 
         if (config == null) {
             config = new BLSConfig(); // Default config if no config file found
-            System.err.println("##### no BLS config file found at " + configFilePath);
+            logger.error("##### no BLS config file found at " + configFilePath);
         }
      
         return config;
@@ -292,7 +296,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         if (e != null) {
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
-            System.err.println(sw);
+            logger.error(e);
             err.add("stackTrace", sw.toString());
         }
         rb.rsp.add(Constants.SOLR_BLACKLAB_SECTION_NAME, Map.of("error", err));

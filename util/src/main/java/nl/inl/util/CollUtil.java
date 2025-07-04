@@ -15,6 +15,9 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 public class CollUtil {
 
+    private CollUtil() {
+    }
+
     public static AbstractSet<Integer> toJavaSet(final MutableIntSet keySet) {
         return new AbstractSet<>() {
             @Override

@@ -27,6 +27,9 @@ public class RelationUtil {
      *  (e.g. "s" for sentence tag, or "nsubj" for dependency relation "nominal subject") */
     public static final String CLASS_TYPE_SEPARATOR = "::";
 
+    private RelationUtil() {
+    }
+
     public static boolean isFullType(String relationType) {
         return relationType.contains(CLASS_TYPE_SEPARATOR);
     }

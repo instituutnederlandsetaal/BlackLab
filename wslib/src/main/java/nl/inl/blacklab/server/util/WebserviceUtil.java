@@ -13,6 +13,9 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 public class WebserviceUtil {
     private static final Logger logger = LogManager.getLogger(WebserviceUtil.class);
 
+    private WebserviceUtil() {
+    }
+
     public static String internalErrorMessage(String code) {
         return "An internal error occurred. Please contact the administrator. Error code: " + code + ".";
     }

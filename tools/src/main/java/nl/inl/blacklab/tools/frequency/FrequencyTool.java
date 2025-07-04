@@ -55,6 +55,9 @@ import nl.inl.util.Timer;
  */
 public class FrequencyTool {
 
+    private FrequencyTool() {
+    }
+
     static void exit(String msg) {
         System.out.println(msg);
         System.exit(1);

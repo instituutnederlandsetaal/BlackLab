@@ -16,6 +16,9 @@ import nl.inl.blacklab.exceptions.BlackLabException;
  * for each "normal" file in the .tar.gz file.
  */
 public class TarGzipReader {
+    private TarGzipReader() {
+    }
+
     /**
      * Handles a file inside the .tar.gz archive.
      */

@@ -15,6 +15,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.index.ZipHandleManager;
@@ -25,6 +27,8 @@ import nl.inl.blacklab.index.ZipHandleManager;
  * configuration is changed during processing.
  */
 public class FileProcessor implements AutoCloseable {
+
+    private static final Logger logger = LogManager.getLogger(FileProcessor.class);
 
     public interface FileHandler {
         /**
@@ -86,6 +90,8 @@ public class FileProcessor implements AutoCloseable {
      * Simple error handler that reports errors and can abort or continue.
      */
     public static class SimpleErrorHandler implements ErrorHandler {
+        private static final Logger logger = LogManager.getLogger(SimpleErrorHandler.class);
+
         private final boolean continueOnError;
 
         public SimpleErrorHandler(boolean continueOnError) {
@@ -94,8 +100,8 @@ public class FileProcessor implements AutoCloseable {
 
         @Override
         public synchronized boolean errorOccurred(Throwable e, String path, File f) {
-            System.err.println("Error processing file " + (f != null ? f.toString() : path));
-            e.printStackTrace(System.err);
+            logger.error("Error processing file " + (f != null ? f.toString() : path));
+            logger.error(e);
             return continueOnError;
         }
     }
@@ -439,8 +445,8 @@ public class FileProcessor implements AutoCloseable {
         // Only report the first fatal exception
         if (!aborted) {
             if (errorHandler == null) {
-                System.err.println("WARNING: No errorHandler set for FileProcessor!");
-                e.printStackTrace(System.err);
+                logger.warn("WARNING: No errorHandler set for FileProcessor!");
+                logger.warn(e);
             }
             if (errorHandler == null || !errorHandler.errorOccurred(e, path, f)) {
                 abort();

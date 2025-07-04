@@ -34,7 +34,6 @@ public class DefaultFilter implements Filter {
                     return;
                 }
             }
-            System.err.println("###" + url);
         }
 
         defaultRequestDispatcher.forward(request, response);

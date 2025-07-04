@@ -49,6 +49,9 @@ public class IndexTool {
 
     static final Map<String, String> indexerParam = new TreeMap<>();
 
+    private IndexTool() {
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 

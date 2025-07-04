@@ -30,6 +30,9 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternSerializerCql {
 
+    private TextPatternSerializerCql() {
+    }
+
     public static String serialize(TextPatternStruct pattern) {
         StringBuilder b = new StringBuilder();
         serialize(pattern, b, false, false);

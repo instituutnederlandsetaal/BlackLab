@@ -27,6 +27,9 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
  */
 public class DownloadCache {
 
+    private DownloadCache() {
+    }
+
     /**
      * How this class can be configured.
      */

@@ -20,6 +20,9 @@ public class BatchContentStore {
 
     private static final int SNIPPET_LENGTH_CHARS = 100;
 
+    private BatchContentStore() {
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex, IOException {
 
         int fileArgNumber = 0;

@@ -14,6 +14,9 @@ public class TestOpenCorpus {
 
     static final AtomicBoolean terminate = new AtomicBoolean();
 
+    private TestOpenCorpus() {
+    }
+
     public static void main(String[] args) throws Exception {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
         LogUtil.setupBasicLoggingConfig(Level.DEBUG);

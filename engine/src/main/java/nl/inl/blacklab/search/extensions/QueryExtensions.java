@@ -88,6 +88,9 @@ public class QueryExtensions {
     /** A query and three strings */
     public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
 
+    private QueryExtensions() {
+    }
+
     public static boolean isRelationsFunction(String name) {
         FuncInfo funcInfo = functions.get(name);
         if (funcInfo == null)

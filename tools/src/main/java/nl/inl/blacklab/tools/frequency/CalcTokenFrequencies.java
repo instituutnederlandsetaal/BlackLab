@@ -42,6 +42,9 @@ import nl.inl.util.BlockTimer;
 @SuppressWarnings("DuplicatedCode") // see above
 class CalcTokenFrequencies {
 
+    private CalcTokenFrequencies() {
+    }
+
     /**
      * Get the token frequencies for the given query and hit property.
      *

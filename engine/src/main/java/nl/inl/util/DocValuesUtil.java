@@ -15,6 +15,9 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 
 public class DocValuesUtil {
 
+    private DocValuesUtil() {
+    }
+
     public static SortedDocValuesCacher cacher(SortedDocValues dv) {
         return dv == null ? null : new SortedDocValuesCacher(dv);
     }

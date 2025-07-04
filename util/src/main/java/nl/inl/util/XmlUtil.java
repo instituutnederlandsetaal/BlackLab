@@ -28,6 +28,9 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 public class XmlUtil {
     private static boolean namespaceAware = false;
 
+    private XmlUtil() {
+    }
+
     public static boolean isNamespaceAware() {
         return namespaceAware;
     }

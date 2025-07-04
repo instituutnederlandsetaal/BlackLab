@@ -15,6 +15,9 @@ import nl.inl.blacklab.server.exceptions.NotFound;
 
 public class XslGenerator {
 
+    private XslGenerator() {
+    }
+
     private static String applyTemplates(String selector) {
         selector = StringUtils.stripStart(selector, ".");
 

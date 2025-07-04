@@ -67,15 +67,15 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
      * @param last         What's the last token we're interested in?
      * @param confineToHit Can we only take context from the hit itself, or outside of it as well?
      */
-    private record ContextPart(boolean fromHitEnd, int direction, int first, int last, boolean confineToHit) {
+    public record ContextPart(boolean fromHitEnd, int direction, int first, int last, boolean confineToHit) {
 
-        private ContextPart {
+        public ContextPart {
             assert Math.abs(direction) == 1;
             assert first >= 0;
             assert last >= 0;
         }
 
-        private static ContextPart forString(String param, ContextSize defaultContextSize) {
+        public static ContextPart forString(String param, ContextSize defaultContextSize) {
             boolean fromHitEnd = false;
             int direction = 1;
             boolean confineToHit = false;

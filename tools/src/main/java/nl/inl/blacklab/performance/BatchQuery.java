@@ -19,6 +19,9 @@ import nl.inl.util.Timer;
  */
 public class BatchQuery {
 
+    private BatchQuery() {
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex, IOException {
 
         boolean determineTotalHits = true;

@@ -7,6 +7,9 @@ import nl.inl.blacklab.querytool.QueryToolImpl;
  * Simple command-line querying tool for BlackLab indices.
  */
 public class QueryTool {
+    private QueryTool() {
+    }
+
     /**
      * The main program.
      *
