@@ -37,6 +37,7 @@ public class TestSearchBehavior {
                     waitForSpansReaderToStart.countDown();
                     Thread.sleep(100_000); // wait for the interrupt() to arrive
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // preserve interrupted status
                     waitForSpansReaderToBeInterrupted.countDown(); // we got it! signal main thread again.
                 }
             }
@@ -51,6 +52,7 @@ public class TestSearchBehavior {
             } catch (InterruptedException e) {
                 // never happens unless thread is interrupted during await(),
                 // which only happens when test is aborted/shut down prematurely.
+                Thread.currentThread().interrupt(); // preserve interrupted status
             }
         });
 
@@ -67,6 +69,7 @@ public class TestSearchBehavior {
                     waitForSpansReaderToBeInterrupted.await(1_000, TimeUnit.MILLISECONDS));
         } catch (InterruptedException e) {
             // await was interrupted, test suite probably shutting down.
+            Thread.currentThread().interrupt(); // preserve interrupted status
         }
     }
 

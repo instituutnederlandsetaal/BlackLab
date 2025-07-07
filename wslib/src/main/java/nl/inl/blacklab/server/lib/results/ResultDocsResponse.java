@@ -82,7 +82,10 @@ public class ResultDocsResponse {
         DocGroups groups;
         try {
             groups = docGroupFuture.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw WebserviceOperations.translateSearchException(e);
+        } catch (ExecutionException e) {
             throw WebserviceOperations.translateSearchException(e);
         }
 
@@ -139,7 +142,10 @@ public class ResultDocsResponse {
         try {
             window = searchWindow.get();
             totalDocResults = total.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw WebserviceOperations.translateSearchException(e);
+        } catch (ExecutionException e) {
             throw WebserviceOperations.translateSearchException(e);
         }
 

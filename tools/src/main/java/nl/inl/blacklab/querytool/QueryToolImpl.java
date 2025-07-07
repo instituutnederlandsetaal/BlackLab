@@ -486,6 +486,7 @@ public class QueryToolImpl {
                 output.error("Sleep takes a float, the number of seconds to sleep");
             } catch (InterruptedException e) {
                 // OK
+                Thread.currentThread().interrupt(); // preserve interrupted status
             }
             break;
         case "wordlist":

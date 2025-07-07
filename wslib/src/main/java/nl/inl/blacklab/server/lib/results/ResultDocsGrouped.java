@@ -47,7 +47,10 @@ public class ResultDocsGrouped {
         SearchCacheEntry<DocGroups> groupSearch = params.docsGrouped().executeAsync();
         try {
             groups = groupSearch.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw WebserviceOperations.translateSearchException(e);
+        } catch (ExecutionException e) {
             throw WebserviceOperations.translateSearchException(e);
         }
 

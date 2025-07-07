@@ -333,6 +333,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 ensureResultsReadLock.unlock();
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         }
     }

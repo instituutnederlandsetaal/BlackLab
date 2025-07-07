@@ -408,24 +408,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return Collections.unmodifiableMap(info);
     }
 
-    public String futureStatus() {
-        if (cancelled || future.isCancelled())
-            return "cancelled";
-        if (future == null)
-            return "future==null";
-        if (future.isDone()) {
-            try {
-                future.get();
-            } catch (InterruptedException e) {
-                return "interruptedEx" + e.getMessage();
-            } catch (ExecutionException e) {
-                return "executionEx: " + e.getMessage();
-            }
-            return "done";
-        }
-        return "running";
-    }
-
     @Override
     public String toString() {
         return "BlsCacheEntry(" + search + ", " + status() + ")";

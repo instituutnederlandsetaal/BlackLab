@@ -51,6 +51,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
                 throw e2;
             throw BlackLabException.wrapRuntime(e.getCause() == null ? e : e.getCause());
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         } catch (CompletionException e) {
             // If cause is an InvalidQuery, rethrow that.
