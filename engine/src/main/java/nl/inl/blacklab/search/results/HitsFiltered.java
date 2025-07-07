@@ -115,6 +115,7 @@ public class HitsFiltered extends HitsMutable {
                 ensureHitsReadLock.unlock();
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         }
     }

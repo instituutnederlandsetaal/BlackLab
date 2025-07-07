@@ -156,9 +156,14 @@ public class ResultHits {
                         hitsStats = ResultsStatsStatic.INVALID;
                     if (docsStats == null)
                         docsStats = ResultsStatsStatic.INVALID;
+                    throw e;
                 }
             }
-        } catch (InterruptedException | ExecutionException | InvalidQuery e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            logger.debug("Searching threw an exception", e);
+            throw WebserviceOperations.translateSearchException(e);
+        } catch (ExecutionException | InvalidQuery e) {
             logger.debug("Searching threw an exception", e);
             throw WebserviceOperations.translateSearchException(e);
         }
@@ -332,7 +337,10 @@ public class ResultHits {
             cacheEntryWindow = params.hitsWindow().executeAsync();
             try {
                 window = cacheEntryWindow.get(); // blocks until requested hits window is available
-            } catch (InterruptedException | ExecutionException e) {
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // preserve interrupted status
+                throw WebserviceOperations.translateSearchException(e);
+            } catch (ExecutionException e) {
                 throw WebserviceOperations.translateSearchException(e);
             }
         } else {

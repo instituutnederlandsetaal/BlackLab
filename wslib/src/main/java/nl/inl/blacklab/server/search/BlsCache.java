@@ -72,6 +72,7 @@ public class BlsCache implements SearchCache {
                     Thread.sleep(CLEAN_UP_CACHE_INTERVAL_MS);
                 } catch (InterruptedException e) {
                     logger.info("CleanupSearchesThread interrupted");
+                    Thread.currentThread().interrupt(); // preserve interrupted status
                     return;
                 }
 

@@ -249,6 +249,7 @@ public class FileProcessor implements AutoCloseable {
                             try {
                                 return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
                             } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt(); // preserve interrupted status
                                 return false;
                             }
                         }
@@ -498,6 +499,7 @@ public class FileProcessor implements AutoCloseable {
             // This is used by tasks that threw a fatal exception
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new IllegalStateException("Interrupted while waiting for processing threads to finish", e);
         }
     }

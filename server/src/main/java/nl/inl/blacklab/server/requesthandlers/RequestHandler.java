@@ -360,6 +360,7 @@ public abstract class RequestHandler {
                     Thread.sleep(sleepMs);
                     logger.debug("Ahh, that was a nice snooze!");
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // preserve interrupted status
                     return false;
                 }
             }

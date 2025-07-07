@@ -72,7 +72,10 @@ public class ResultHitsGrouped {
             search = params.hitsGroupedStats().executeAsync();
             // Search is done; construct the results object
             groups = search.get();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw WebserviceOperations.translateSearchException(e);
+        } catch (ExecutionException e) {
             throw WebserviceOperations.translateSearchException(e);
         }
 

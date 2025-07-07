@@ -75,8 +75,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     public static final String IFL_INDEX_RELATIONS_TWICE = "index_relations_twice";
 
-    //private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
-
     public static IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index) {
         try {
             Integer docId = MetadataDocument.getMetadataDocId(index.reader());

@@ -340,6 +340,7 @@ class SpansReader implements Runnable {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         } catch (Exception e) {
             e.printStackTrace();
