@@ -134,14 +134,16 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     private void addMetadataToRecord(final GroupId groupId, final List<String> record) {
-        String[] metadataValues = groupId.getMetadataValues();
+        final String[] metadataValues = groupId.getMetadataValues();
         if (bCfg.isDatabaseFormat()) {
             // first write out non-grouped metadata
-            Arrays.stream(aInfo.getNonGroupedMetaIdx()).forEach(metaIdx -> {
-                record.add(metadataValues[metaIdx]);
-            });
+            final int[] idx = aInfo.getNonGroupedMetaIdx();
+            for (final int i: idx) {
+                // add metadata value for this index
+                record.add(metadataValues[i]);
+            }
             // then, write the group ID of the grouped metadata
-            int metaId = aInfo.getMetaId(groupId.getMetadataValues());
+            final int metaId = aInfo.getMetaId(groupId.getMetadataValues());
             record.add(Integer.toString(metaId));
         } else {
             if (metadataValues != null)
