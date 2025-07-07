@@ -14,6 +14,7 @@ import nl.inl.blacklab.tools.frequency.builder.SearchBasedBuilder;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
+import nl.inl.blacklab.tools.frequency.writers.MetaGroupWriter;
 import nl.inl.util.Timer;
 
 /**
@@ -118,8 +119,10 @@ public class FrequencyTool {
             // if database format, write lookup tables
             if (bCfg.isDatabaseFormat()) {
                 new LookupTableWriter(index, bCfg, fCfg).write();
+                new MetaGroupWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
             }
-            System.out.println("  Generating frequency list " + fCfg.getReportName() + " took " + t.elapsedDescription());
+            System.out.println(
+                    "  Generating frequency list " + fCfg.getReportName() + " took " + t.elapsedDescription());
         }
     }
 }

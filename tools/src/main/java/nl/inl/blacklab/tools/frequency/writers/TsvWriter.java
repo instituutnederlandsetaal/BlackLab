@@ -3,6 +3,7 @@ package nl.inl.blacklab.tools.frequency.writers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +16,8 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.data.GroupCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
 
 /**
@@ -67,7 +68,7 @@ public final class TsvWriter extends FreqListWriter {
         System.out.println("  Wrote " + file + " in " + t.elapsedDescription(true));
     }
 
-     void writeGroupRecord(final CsvWriter csv, final GroupId groupId, final int hits) throws IOException {
+    void writeGroupRecord(final CsvWriter csv, final GroupId groupId, final int hits) throws IOException {
         final List<String> record = new ArrayList<>();
         // - annotation values
         addAnnotationsToRecord(groupId, record);
@@ -132,10 +133,20 @@ public final class TsvWriter extends FreqListWriter {
         return String.join(" ", tokenList);
     }
 
-    private static void addMetadataToRecord(final GroupId groupId, final List<String> record) {
+    private void addMetadataToRecord(final GroupId groupId, final List<String> record) {
         String[] metadataValues = groupId.getMetadataValues();
-        if (metadataValues != null)
-            Collections.addAll(record, metadataValues);
+        if (bCfg.isDatabaseFormat()) {
+            // first write out non-grouped metadata
+            Arrays.stream(aInfo.getNonGroupedMetaIdx()).forEach(metaIdx -> {
+                record.add(metadataValues[metaIdx]);
+            });
+            // then, write the group ID of the grouped metadata
+            int metaId = aInfo.getMetaId(groupId.getMetadataValues());
+            record.add(Integer.toString(metaId));
+        } else {
+            if (metadataValues != null)
+                Collections.addAll(record, metadataValues);
+        }
     }
 
     private File getFile() {

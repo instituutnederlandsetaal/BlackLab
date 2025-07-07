@@ -21,4 +21,8 @@ public abstract class FreqListBuilder {
     public void makeFrequencyList() {
         System.out.println("Generate frequency list: " + fCfg.getReportName());
     }
+
+    public AnnotationInfo getAnnotationInfo() {
+        return aInfo;
+    }
 }

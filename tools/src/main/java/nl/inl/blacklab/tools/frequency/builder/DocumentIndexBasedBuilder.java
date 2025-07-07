@@ -7,11 +7,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
-
-import nl.inl.blacklab.tools.frequency.data.DocumentMetadata;
 
 import org.apache.lucene.document.Document;
 
@@ -23,6 +20,7 @@ import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
+import nl.inl.blacklab.tools.frequency.data.DocumentMetadata;
 import nl.inl.blacklab.tools.frequency.data.DocumentTokens;
 import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
@@ -34,12 +32,14 @@ final public class DocumentIndexBasedBuilder {
     private final int docId;
     private final int docLength;
     private final List<String> metaFieldNames;
+    private final BuilderConfig bCfg;
 
     public DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final BuilderConfig bCfg,
             final FreqListConfig fCfg, final AnnotationInfo aInfo) throws IOException {
         this.fCfg = fCfg;
         this.aInfo = aInfo;
         this.docId = docId;
+        this.bCfg = bCfg;
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
          * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
@@ -75,11 +75,37 @@ final public class DocumentIndexBasedBuilder {
             // Skip this document, it has no valid metadata values
             return;
         }
+        // store the metadata in the id map when writing database format
+        if (bCfg.isDatabaseFormat()) {
+            aInfo.putMetaToId(meta);
+        }
         // now we have all values for all relevant annotations for this document
         // iterate again and pair up the nth entries for all annotations, then store that as a group.
         final var occsInDoc = getDocumentFrequencies(doc, meta, termFrequencies);
         // Step 3: merge the occurrences in this document with the global occurrences
         mergeOccurrences(occurrences, occsInDoc);
+    }
+
+    private DocumentTokens getDocumentTokens() {
+        final var tokensPerAnnotation = new ArrayList<int[]>();
+        final var sortingPerAnnotation = new ArrayList<int[]>();
+
+        for (final var annotation: aInfo.getAnnotations()) {
+            // From forward index
+            final var index = aInfo.getForwardIndexOf(annotation);
+            // Get the tokens for this annotation
+            final int[] tokenValues = index.getDocument(docId);
+            tokensPerAnnotation.add(tokenValues);
+            // And look up their sort values
+            final int[] sortValues = new int[docLength];
+            for (int i = 0; i < docLength; ++i) {
+                final int termId = tokenValues[i];
+                sortValues[i] = aInfo.getTermsOf(annotation).idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
+            }
+            sortingPerAnnotation.add(sortValues);
+        }
+
+        return new DocumentTokens(tokensPerAnnotation, sortingPerAnnotation);
     }
 
     private DocumentMetadata getDocumentMetadata() {
@@ -106,46 +132,6 @@ final public class DocumentIndexBasedBuilder {
         // precompute, it's the same for all hits in document
         final int hash = Arrays.hashCode(aMetaValues);
         return new DocumentMetadata(aMetaValues, hash);
-    }
-
-    /**
-     * Merge occurrences in this doc with global occurrences.
-     */
-    private static void mergeOccurrences(Map<GroupId, GroupCounts> global, Map<GroupId, GroupCounts> doc) {
-        doc.forEach((groupId, docCount) -> global.compute(groupId, (__, globalCount) -> {
-            // NOTE: we cannot modify globalCount or occ here like we do in HitGroupsTokenFrequencies,
-            //       because we use ConcurrentSkipListMap, which may call the remapping function
-            //       multiple times if there's potential concurrency issues.
-            if (globalCount != null) {
-                // Group existed already
-                // Count hits and doc
-                docCount.hits += globalCount.hits;
-                docCount.docs += globalCount.docs;
-            }
-            return docCount; // reusing occ here is okay because it doesn't change on subsequent calls
-        }));
-    }
-
-    private DocumentTokens getDocumentTokens() {
-        final var tokensPerAnnotation = new ArrayList<int[]>();
-        final var sortingPerAnnotation = new ArrayList<int[]>();
-
-        for (final var annotation: aInfo.getAnnotations()) {
-            // From forward index
-            final var index = aInfo.getForwardIndexOf(annotation);
-            // Get the tokens for this annotation
-            final int[] tokenValues = index.getDocument(docId);
-            tokensPerAnnotation.add(tokenValues);
-            // And look up their sort values
-            final int[] sortValues = new int[docLength];
-            for (int i = 0; i < docLength; ++i) {
-                final int termId = tokenValues[i];
-                sortValues[i] = aInfo.getTermsOf(annotation).idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
-            }
-            sortingPerAnnotation.add(sortValues);
-        }
-
-        return new DocumentTokens(tokensPerAnnotation, sortingPerAnnotation);
     }
 
     private Map<GroupId, GroupCounts> getDocumentFrequencies(DocumentTokens doc, DocumentMetadata meta,
@@ -200,5 +186,23 @@ final public class DocumentIndexBasedBuilder {
             }
         }
         return occsInDoc;
+    }
+
+    /**
+     * Merge occurrences in this doc with global occurrences.
+     */
+    private static void mergeOccurrences(Map<GroupId, GroupCounts> global, Map<GroupId, GroupCounts> doc) {
+        doc.forEach((groupId, docCount) -> global.compute(groupId, (__, globalCount) -> {
+            // NOTE: we cannot modify globalCount or occ here like we do in HitGroupsTokenFrequencies,
+            //       because we use ConcurrentSkipListMap, which may call the remapping function
+            //       multiple times if there's potential concurrency issues.
+            if (globalCount != null) {
+                // Group existed already
+                // Count hits and doc
+                docCount.hits += globalCount.hits;
+                docCount.docs += globalCount.docs;
+            }
+            return docCount; // reusing occ here is okay because it doesn't change on subsequent calls
+        }));
     }
 }

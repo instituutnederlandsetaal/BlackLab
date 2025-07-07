@@ -22,8 +22,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
-import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.data.GroupCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
@@ -64,11 +64,12 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             final var t = new Timer();
             final var sensitivity = aInfo.getCutoffAnnotation().sensitivity(MatchSensitivity.SENSITIVE);
             final var searcher = new IndexSearcher(index.reader());
-            Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null, sensitivity, Collections.emptySet());
+            Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null, sensitivity,
+                    Collections.emptySet());
             System.out.println("  Retrieved " + termFrequenciesMap.size() + " term frequencies for cutoff annotation '"
                     + fCfg.cutoff().annotation() + "' in " + t.elapsedDescription(true));
             // Only save the strings when the frequency is above the cutoff
-            for (Map.Entry<String, Integer> entry : termFrequenciesMap.entrySet()) {
+            for (Map.Entry<String, Integer> entry: termFrequenciesMap.entrySet()) {
                 if (entry.getValue() >= fCfg.cutoff().count()) {
                     termFrequencies.add(entry.getKey());
                 }
@@ -179,7 +180,8 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             // No filter: include all documents.
             index.forEachDocument((__, id) -> docIds.add(id));
         }
-        System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + fCfg.filter()+ "' in " + t.elapsedDescription(true));
+        System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + fCfg.filter() + "' in "
+                + t.elapsedDescription(true));
         return docIds;
     }
 

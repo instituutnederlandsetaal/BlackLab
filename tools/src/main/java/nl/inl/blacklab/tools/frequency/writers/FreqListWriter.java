@@ -19,8 +19,8 @@ import net.jpountz.lz4.LZ4FrameOutputStream;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.data.GroupCounts;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
 
 abstract class FreqListWriter {
     static final Fory fory = getFory();
