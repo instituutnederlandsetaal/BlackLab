@@ -25,7 +25,7 @@ public record FreqListConfig(
     }
 
     private String generateName() {
-        List<String> parts = new ArrayList<>();
+        final var parts = new ArrayList<>();
         parts.addAll(annotations);
         parts.addAll(metadataFields.stream().map(MetadataConfig::name).toList());
         return StringUtils.join(parts, "-");

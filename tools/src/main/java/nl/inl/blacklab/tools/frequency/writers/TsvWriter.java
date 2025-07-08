@@ -23,7 +23,7 @@ import nl.inl.util.Timer;
  * Writes frequency results to a TSV file.
  */
 public final class TsvWriter extends FreqListWriter {
-    final StringBuilder sb = new StringBuilder();
+    private final StringBuilder sb = new StringBuilder();
 
     public TsvWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
@@ -45,7 +45,7 @@ public final class TsvWriter extends FreqListWriter {
                 record.add(Long.toString(group.size()));
                 csv.writeRecord(record);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw reportIOException(e);
         }
     }
@@ -62,7 +62,7 @@ public final class TsvWriter extends FreqListWriter {
             for (final var entry: occurrences.entrySet()) {
                 writeGroupRecord(csv, entry.getKey(), entry.getValue().hits);
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw reportIOException(e);
         }
         System.out.println("  Wrote " + file + " in " + t.elapsedDescription(true));
@@ -80,16 +80,17 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     private void addAnnotationsToRecord(final GroupId groupId, final List<String> record) {
-        int[] tokenIds = groupId.getTokenIds();
+        final int[] tokenIds = groupId.getTokenIds();
         // for each annotation construct a string for the ngram
-        int ngramSize = groupId.getNgramSize();
-        for (int i = 0, tokenArrIndex = 0; tokenArrIndex < tokenIds.length; i++, tokenArrIndex += ngramSize) {
-            String token;
+        final int ngramSize = groupId.getNgramSize();
+        for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
+             tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
+            final String token;
             if (bCfg.isDatabaseFormat()) {
                 token = writeIdRecord(tokenIds, tokenArrIndex);
             } else {
                 // get term index for the annotation
-                Terms termIndex = aInfo.getTerms().get(i); // contains id to string mapping
+                final Terms termIndex = aInfo.getTerms().get(i); // contains id to string mapping
                 token = writeStringRecord(ngramSize, tokenIds, tokenArrIndex, termIndex);
             }
             record.add(token);
@@ -115,7 +116,7 @@ public final class TsvWriter extends FreqListWriter {
     private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
             final Terms termIndex) {
         // map token int ids to their string values
-        String[] tokenList = new String[ngramSize];
+        final String[] tokenList = new String[ngramSize];
         for (int j = 0; j < ngramSize; j++) {
             tokenList[j] = MatchSensitivity.INSENSITIVE.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
         }

@@ -8,7 +8,7 @@ import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.util.Timer;
 
-public class MetaGroupWriter extends FreqListWriter {
+public final class MetaGroupWriter extends FreqListWriter {
 
     public MetaGroupWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
@@ -25,8 +25,8 @@ public class MetaGroupWriter extends FreqListWriter {
                 k.add(String.valueOf(v));
                 csv.writeRecord(k);
             });
-        } catch (IOException e) {
-            throw new RuntimeException();
+        } catch (final IOException e) {
+            throw reportIOException(e);
         }
 
         System.out.println("  Wrote grouped metadata IDs in " + t.elapsedDescription(true));

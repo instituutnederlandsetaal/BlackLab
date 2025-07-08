@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 /**
  * Configuration for making frequency lists
  */
-public class BuilderConfig {
+final public class BuilderConfig {
 
     /**
      * Number of docs to process in parallel per run. After each run,
@@ -39,13 +39,13 @@ public class BuilderConfig {
      * Whether to compress any files written to disk, including intermediate chunk files.
      * Default: false.
      */
-    private boolean compressed = false;
+    private boolean compressed;
 
     /**
      * Use regular search instead of specifically optimized one?
      * Optional, for debugging.
      */
-    private boolean useRegularSearch = false;
+    private boolean useRegularSearch;
 
     /**
      * How often to count each document.
@@ -58,7 +58,7 @@ public class BuilderConfig {
      * Results in outputting ID's instead of string values for the annotations. (Metadata is left as is.)
      * Also outputs a 'lookup table' for each annotation, mapping the ID's to the string values.
      */
-    private boolean databaseFormat = false;
+    private boolean databaseFormat;
 
     /**
      * Output directory for frequency lists.
@@ -76,15 +76,15 @@ public class BuilderConfig {
     /**
      * Read config from file.
      *
-     * @param f config file
+     * @param file config file
      * @return config object
      */
-    public static BuilderConfig fromFile(File f) {
+    public static BuilderConfig fromFile(final File file) {
         try {
-            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
-            return mapper.readValue(f, BuilderConfig.class);
-        } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error reading config file " + f, e);
+            final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            return mapper.readValue(file, BuilderConfig.class);
+        } catch (final IOException e) {
+            throw new BlackLabRuntimeException("Error reading config file " + file, e);
         }
     }
 
@@ -93,7 +93,7 @@ public class BuilderConfig {
     }
 
     @SuppressWarnings("unused")
-    public void setAnnotatedField(String annotatedField) {
+    public void setAnnotatedField(final String annotatedField) {
         this.annotatedField = annotatedField;
     }
 
@@ -102,25 +102,25 @@ public class BuilderConfig {
     }
 
     @SuppressWarnings("unused")
-    public void setFrequencyLists(List<FreqListConfig> frequencyLists) {
+    public void setFrequencyLists(final List<FreqListConfig> frequencyLists) {
         this.frequencyLists = frequencyLists;
     }
 
     public int getGroupsPerChunk() {
-        return this.groupsPerChunk;
+        return groupsPerChunk;
     }
 
     @SuppressWarnings("unused")
-    public void setGroupsPerChunk(int groupsPerChunk) {
+    public void setGroupsPerChunk(final int groupsPerChunk) {
         this.groupsPerChunk = groupsPerChunk;
     }
 
     public int getDocsToProcessInParallel() {
-        return this.docsToProcessInParallel;
+        return docsToProcessInParallel;
     }
 
     @SuppressWarnings("unused")
-    public void setDocsToProcessInParallel(int docsToProcessInParallel) {
+    public void setDocsToProcessInParallel(final int docsToProcessInParallel) {
         this.docsToProcessInParallel = docsToProcessInParallel;
     }
 
@@ -129,7 +129,7 @@ public class BuilderConfig {
     }
 
     @SuppressWarnings("unused")
-    public void setUseRegularSearch(boolean useRegularSearch) {
+    public void setUseRegularSearch(final boolean useRegularSearch) {
         this.useRegularSearch = useRegularSearch;
     }
 
@@ -138,7 +138,7 @@ public class BuilderConfig {
     }
 
     @SuppressWarnings("unused")
-    public void setCompressed(boolean compressed) {
+    public void setCompressed(final boolean compressed) {
         this.compressed = compressed;
     }
 
@@ -154,7 +154,7 @@ public class BuilderConfig {
                 ", outputDir=" + outputDir +
                 ", annotatedField=" + annotatedField +
                 ", frequencyLists=" + frequencyLists +
-                '}';
+                "}";
     }
 
     public String show() {
@@ -178,19 +178,19 @@ public class BuilderConfig {
     public void check(final BlackLabIndex index) {
         if (!index.annotatedFields().exists(annotatedField))
             throw new IllegalArgumentException("Annotated field not found: " + annotatedField);
-        AnnotatedField af = index.annotatedField(annotatedField);
-        Set<String> reportNames = new HashSet<>();
-        for (FreqListConfig l: frequencyLists) {
-            String name = l.getReportName();
+        final AnnotatedField af = index.annotatedField(annotatedField);
+        final Set<String> reportNames = new HashSet<>();
+        for (final FreqListConfig l: frequencyLists) {
+            final String name = l.getReportName();
             if (reportNames.contains(name))
                 throw new IllegalArgumentException("Report occurs twice: " + name);
             reportNames.add(name);
 
-            for (String a: l.annotations()) {
+            for (final String a: l.annotations()) {
                 if (!af.annotations().exists(a))
                     throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a);
             }
-            for (String m: l.metadataFields().stream().map(MetadataConfig::name).toList()) {
+            for (final String m: l.metadataFields().stream().map(MetadataConfig::name).toList()) {
                 if (!index.metadataFields().exists(m))
                     throw new IllegalArgumentException("Metadata field not found: " + m);
             }
@@ -198,11 +198,11 @@ public class BuilderConfig {
     }
 
     public int getRepetitions() {
-        return this.repetitions;
+        return repetitions;
     }
 
     @SuppressWarnings("unused")
-    public void setRepetitions(int repetitions) {
+    public void setRepetitions(final int repetitions) {
         this.repetitions = repetitions;
     }
 
@@ -210,7 +210,7 @@ public class BuilderConfig {
         return databaseFormat;
     }
 
-    public void setDatabaseFormat(boolean databaseFormat) {
+    public void setDatabaseFormat(final boolean databaseFormat) {
         this.databaseFormat = databaseFormat;
     }
 
@@ -218,7 +218,7 @@ public class BuilderConfig {
         return outputDir;
     }
 
-    public void setOutputDir(File outputDir) {
+    public void setOutputDir(final File outputDir) {
         this.outputDir = outputDir;
     }
 }

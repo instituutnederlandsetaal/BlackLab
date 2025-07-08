@@ -26,8 +26,8 @@ public final class AnnotationInfo {
     private final BlackLabIndex index;
     private final Map<ArrayList<String>, Integer> metaToId;
     private final AtomicInteger metaId = new AtomicInteger(0);
-    private final Integer[] groupedMetaIdx;
-    private final Integer[] nonGroupedMetaIdx;
+    private final int[] groupedMetaIdx;
+    private final int[] nonGroupedMetaIdx;
 
     public AnnotationInfo(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         this.index = index;
@@ -38,9 +38,9 @@ public final class AnnotationInfo {
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
         this.metaToId = new ConcurrentHashMap<>();
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
-                .map(m -> fCfg.metadataFields().indexOf(m)).toArray(Integer[]::new);
+                .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
         this.nonGroupedMetaIdx = fCfg.metadataFields().stream().filter(m -> !m.outputAsId())
-                .map(m -> fCfg.metadataFields().indexOf(m)).toArray(Integer[]::new);
+                .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
     }
 
     public List<Terms> getTerms() {
@@ -67,11 +67,11 @@ public final class AnnotationInfo {
         return cutoffAnnotation;
     }
 
-    public Integer[] getGroupedMetaIdx() {
+    public int[] getGroupedMetaIdx() {
         return groupedMetaIdx;
     }
 
-    public Integer[] getNonGroupedMetaIdx() {
+    public int[] getNonGroupedMetaIdx() {
         return nonGroupedMetaIdx;
     }
 
@@ -79,24 +79,24 @@ public final class AnnotationInfo {
         return metaToId;
     }
 
-    public void putMetaToId(DocumentMetadata meta) {
+    public void putMetaToId(final DocumentMetadata meta) {
         // retrieve key
-        ArrayList<String> key = getMetaKey(meta.values());
+        final var key = getMetaKey(meta.values());
         if (!metaToId.containsKey(key)) {
-            int id = metaId.getAndIncrement();
+            final int id = metaId.getAndIncrement();
             metaToId.put(key, id);
         }
     }
 
-    private ArrayList<String> getMetaKey(String[] meta) {
-        ArrayList<String> key = new ArrayList<>(groupedMetaIdx.length);
+    private ArrayList<String> getMetaKey(final String[] meta) {
+        final var key = new ArrayList<String>(groupedMetaIdx.length);
         for (int i = 0; i < groupedMetaIdx.length; i++) {
             key.add(i, meta[groupedMetaIdx[i]]);
         }
         return key;
     }
 
-    public int getMetaId(String[] meta) {
+    public int getMetaId(final String[] meta) {
         return metaToId.get(getMetaKey(meta));
     }
 }

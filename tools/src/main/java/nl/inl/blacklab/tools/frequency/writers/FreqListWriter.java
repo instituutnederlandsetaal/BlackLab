@@ -46,36 +46,36 @@ abstract class FreqListWriter {
         return fory;
     }
 
-    OutputStream getOutputStream(final File file) {
+    final OutputStream getOutputStream(final File file) {
         try {
             final var fos = new FileOutputStream(file);
             return bCfg.isCompressed() ? new LZ4FrameOutputStream(fos) : fos;
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw reportIOException(e);
         }
     }
 
-    CsvWriter getCsvWriter(final File file) {
+    final CsvWriter getCsvWriter(final File file) {
         final var stream = getOutputStream(file);
         final var w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
         return csvWriterBuilder.build(w);
     }
 
-    ForyInputStream getForyInputStream(final File file) {
+    final ForyInputStream getForyInputStream(final File file) {
         try {
             final var fis = new FileInputStream(file);
             final var zis = bCfg.isCompressed() ? new LZ4FrameInputStream(fis) : fis;
             return new ForyInputStream(zis);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw reportIOException(e);
         }
     }
 
-    String getExt() {
+    final String getExt() {
         return bCfg.isCompressed() ? ".tsv.lz4" : ".tsv";
     }
 
-    RuntimeException reportIOException(IOException e) {
+    final RuntimeException reportIOException(final IOException e) {
         return new RuntimeException("Error writing output for " + fCfg.getReportName(), e);
     }
 }

@@ -16,7 +16,8 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
     /**
      * @param tokenSortPositions sort position for each token in the group id
      */
-    public GroupId(int ngramSize, int[] tokenIds, int[] tokenSortPositions, DocumentMetadata meta) {
+    public GroupId(final int ngramSize, final int[] tokenIds, final int[] tokenSortPositions,
+            final DocumentMetadata meta) {
         this.ngramSize = ngramSize;
         this.tokenIds = tokenIds;
         this.tokenSortPositions = tokenSortPositions;
@@ -40,14 +41,14 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
     // Assume only called with other instances of IdHash (faster for large groupings)
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
-    public boolean equals(Object obj) {
-        return ((GroupId) obj).hash == this.hash &&
-                Arrays.equals(((GroupId) obj).tokenSortPositions, this.tokenSortPositions) &&
-                Arrays.equals(((GroupId) obj).metadataValues, this.metadataValues);
+    public boolean equals(final Object obj) {
+        return ((GroupId) obj).hash == hash &&
+                Arrays.equals(((GroupId) obj).tokenSortPositions, tokenSortPositions) &&
+                Arrays.equals(((GroupId) obj).metadataValues, metadataValues);
     }
 
     @Override
-    public int compareTo(GroupId other) {
+    public int compareTo(final GroupId other) {
         return Integer.compare(hash, other.hash);
     }
 

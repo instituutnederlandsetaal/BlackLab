@@ -42,14 +42,14 @@ public final class SearchBasedBuilder extends FreqListBuilder {
             }
             // write output file
             tsvWriter.write(result);
-        } catch (InvalidQuery e) {
+        } catch (final InvalidQuery e) {
             throw new BlackLabRuntimeException("Error creating frequency list: " + fCfg.getReportName(), e);
         }
     }
 
     private SearchHitGroups getSearch() {
         final var queryInfo = QueryInfo.create(index);
-        BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, aInfo.getAnnotatedField().name());
+        final BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, aInfo.getAnnotatedField().name());
         final var groupBy = getGroupBy();
         return index.search()
                 .find(anyToken)

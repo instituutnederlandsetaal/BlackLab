@@ -35,17 +35,18 @@ public final class LookupTableWriter extends FreqListWriter {
                     final String token = getToken(terms, id);
                     csv.writeRecord(String.valueOf(id), token);
                 }
-            } catch (IOException e) {
-                throw new RuntimeException();
+            } catch (final IOException e) {
+                throw reportIOException(e);
             }
         }
         System.out.println("  Wrote annotation id lookup tables in " + t.elapsedDescription(true));
     }
 
-    private static String getToken(Terms terms, int id) {
+    private static String getToken(final Terms terms, final int id) {
         final var sb = new StringBuilder(MatchSensitivity.INSENSITIVE.desensitize(terms.get(id)));
         // Escape any \ with \\
-        for (int i = 0; i < sb.length(); i++) {
+        final int len = sb.length();
+        for (int i = 0; i < len; i++) {
             if (sb.charAt(i) == '\\') {
                 sb.replace(i, i + 1, "\\\\");
                 i++; // skip the next char, which is now escaped

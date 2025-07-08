@@ -33,21 +33,21 @@ public final class ChunkedTsvWriter extends FreqListWriter {
         final var t = new Timer();
         final var file = getFile();
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + file);
-        try (CsvWriter csv = getCsvWriter(file)) {
-            int n = chunkFiles.size();
-            ForyInputStream[] chunks = new ForyInputStream[n];
-            int[] numGroups = new int[n]; // groups per chunk file
+        try (final CsvWriter csv = getCsvWriter(file)) {
+            final int n = chunkFiles.size();
+            final ForyInputStream[] chunks = new ForyInputStream[n];
+            final int[] numGroups = new int[n]; // groups per chunk file
 
             // These hold the index, key and value for the current group from every chunk file
-            int[] index = new int[n];
-            GroupId[] key = new GroupId[n];
-            GroupCounts[] value = new GroupCounts[n];
+            final int[] index = new int[n];
+            final GroupId[] key = new GroupId[n];
+            final GroupCounts[] value = new GroupCounts[n];
 
             try {
                 int chunksExhausted = 0;
                 for (int i = 0; i < n; i++) {
-                    File chunkFile = chunkFiles.get(i);
-                    ForyInputStream fis = getForyInputStream(chunkFile);
+                    final File chunkFile = chunkFiles.get(i);
+                    final ForyInputStream fis = getForyInputStream(chunkFile);
                     chunks[i] = fis;
                     numGroups[i] = (int) fory.deserialize(fis);
                     // Initialize index, key and value with first group from each file
@@ -78,7 +78,7 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                             docs += value[j].docs;
                             // Advance to next group in this chunk
                             index[j]++;
-                            boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
+                            final boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
                             key[j] = noMoreGroupsInChunk ? null : (GroupId) fory.deserialize(chunks[j]);
                             value[j] = noMoreGroupsInChunk ? null : (GroupCounts) fory.deserialize(chunks[j]);
                             if (noMoreGroupsInChunk)
@@ -92,10 +92,10 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                 }
 
             } finally {
-                for (ForyInputStream chunk: chunks)
+                for (final ForyInputStream chunk: chunks)
                     chunk.close();
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw reportIOException(e);
         }
         System.out.println("  Merged chunk files in " + t.elapsedDescription(true));

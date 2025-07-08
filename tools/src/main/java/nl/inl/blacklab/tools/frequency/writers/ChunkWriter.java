@@ -13,9 +13,11 @@ import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
 
 public final class ChunkWriter extends FreqListWriter {
+    private final File tmpDir;
 
     public ChunkWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
+        this.tmpDir = new File(bCfg.getOutputDir(), "tmp");
     }
 
     public File write(final Map<GroupId, GroupCounts> occurrences) {
@@ -28,7 +30,7 @@ public final class ChunkWriter extends FreqListWriter {
                 os.write(fory.serialize(entry.getKey()));
                 os.write(fory.serialize(entry.getValue()));
             }
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw reportIOException(e);
         }
         System.out.println("  Wrote chunk file in " + t.elapsedDescription(true));
@@ -38,6 +40,6 @@ public final class ChunkWriter extends FreqListWriter {
     private File getFile() {
         final String ext = bCfg.isCompressed() ? ".chunk.lz4" : ".chunk";
         final String chunkName = fCfg.getReportName() + "-" + UUID.randomUUID() + ext;
-        return new File(bCfg.getOutputDir() + "/tmp", chunkName);
+        return new File(tmpDir, chunkName);
     }
 }

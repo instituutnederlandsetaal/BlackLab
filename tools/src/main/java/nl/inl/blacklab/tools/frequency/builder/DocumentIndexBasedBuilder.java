@@ -34,7 +34,7 @@ final public class DocumentIndexBasedBuilder {
     private final List<String> metaFieldNames;
     private final BuilderConfig bCfg;
 
-    public DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final BuilderConfig bCfg,
+    DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final BuilderConfig bCfg,
             final FreqListConfig fCfg, final AnnotationInfo aInfo) throws IOException {
         this.fCfg = fCfg;
         this.aInfo = aInfo;
@@ -65,12 +65,12 @@ final public class DocumentIndexBasedBuilder {
                 Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
-    public void process(final ConcurrentMap<GroupId, GroupCounts> occurrences, Set<String> termFrequencies) {
+    public void process(final ConcurrentMap<GroupId, GroupCounts> occurrences, final Set<String> termFrequencies) {
         // Step 1: read all values for the to-be-grouped annotations for this document
         // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
-        DocumentTokens doc = getDocumentTokens();
+        final DocumentTokens doc = getDocumentTokens();
         // Step 2: retrieve the to-be-grouped metadata for this document
-        DocumentMetadata meta = getDocumentMetadata();
+        final DocumentMetadata meta = getDocumentMetadata();
         if (meta == null) {
             // Skip this document, it has no valid metadata values
             return;
@@ -134,17 +134,17 @@ final public class DocumentIndexBasedBuilder {
         return new DocumentMetadata(aMetaValues, hash);
     }
 
-    private Map<GroupId, GroupCounts> getDocumentFrequencies(DocumentTokens doc, DocumentMetadata meta,
-            Set<String> termFrequencies) {
+    private Map<GroupId, GroupCounts> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta,
+            final Set<String> termFrequencies) {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-        Map<GroupId, GroupCounts> occsInDoc = new HashMap<>();
+        final Map<GroupId, GroupCounts> occsInDoc = new HashMap<>();
         final int ngramSize = fCfg.ngramSize();
         final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTermsOf(aInfo.getCutoffAnnotation()) : null;
         final int numAnnotations = aInfo.getAnnotations().size();
         // We can't get an ngram for the last ngramSize-1 tokens
         for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
-            int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
-            int[] sortPositions = new int[numAnnotations * ngramSize];
+            final int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
+            final int[] sortPositions = new int[numAnnotations * ngramSize];
 
             // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
             // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
@@ -154,9 +154,9 @@ final public class DocumentIndexBasedBuilder {
             for (int annotationIndex = 0, arrIndex = 0;
                  annotationIndex < numAnnotations; ++annotationIndex, arrIndex += ngramSize) {
                 // get array slices of ngramSize
-                int[] tokenValues = doc.tokens().get(annotationIndex);
+                final int[] tokenValues = doc.tokens().get(annotationIndex);
                 System.arraycopy(tokenValues, tokenIndex, annotationValuesForThisToken, arrIndex, ngramSize);
-                int[] sortValuesThisAnnotation = doc.sorting().get(annotationIndex);
+                final int[] sortValuesThisAnnotation = doc.sorting().get(annotationIndex);
                 System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex, ngramSize);
             }
             final GroupId groupId = new GroupId(ngramSize, annotationValuesForThisToken, sortPositions, meta);
@@ -191,7 +191,7 @@ final public class DocumentIndexBasedBuilder {
     /**
      * Merge occurrences in this doc with global occurrences.
      */
-    private static void mergeOccurrences(Map<GroupId, GroupCounts> global, Map<GroupId, GroupCounts> doc) {
+    private static void mergeOccurrences(final Map<GroupId, GroupCounts> global, final Map<GroupId, GroupCounts> doc) {
         doc.forEach((groupId, docCount) -> global.compute(groupId, (__, globalCount) -> {
             // NOTE: we cannot modify globalCount or occ here like we do in HitGroupsTokenFrequencies,
             //       because we use ConcurrentSkipListMap, which may call the remapping function
