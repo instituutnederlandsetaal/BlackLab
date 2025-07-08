@@ -32,26 +32,6 @@ public class FileProcessor implements AutoCloseable {
 
     public interface FileHandler {
         /**
-         * Handle a directory.
-         * <p>
-         * Called for all processed child (and descendant if
-         * {@link FileProcessor#isRecurseSubdirs()} directories of the input file,
-         * excluding the input directory itself. NOTE: This is only called for regular
-         * directories, and not for archives or processed directories within archives.
-         * NOTE: {@link FileProcessor#pattGlob} is NOT applied to directories. So the
-         * directory names may not match the provided pattern.
-         * <p>
-         * This function may be called in multiple threads when FileProcessor was
-         * created with thread support (see
-         * {@link FileProcessor#FileProcessor(int, boolean, boolean)})
-         *
-         * @param dir the directory
-         * @throws Exception these will be passed to
-         *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
-         */
-        void directory(File dir) throws Exception;
-
-        /**
          * Handle a file.
          * <p>
          * This function may be called in multiple threads when FileProcessor was
@@ -64,7 +44,6 @@ public class FileProcessor implements AutoCloseable {
          *             {@link ErrorHandler#errorOccurred(Throwable, String, File)}
          */
         void file(FileReference file) throws Exception;
-
     }
 
     /**
@@ -115,11 +94,6 @@ public class FileProcessor implements AutoCloseable {
             // We have to process the whole file, we can't do random access.
             PathCapturingFileHandler fileCapturer = new PathCapturingFileHandler() {
                 FileReference fileRef;
-
-                @Override
-                public void directory(File dir) {
-                    //
-                }
 
                 @Override
                 public void file(FileReference file) throws Exception {
@@ -361,13 +335,6 @@ public class FileProcessor implements AutoCloseable {
             for (File childFile : FileUtil.listFilesSorted(file)) {
                 if (closed)
                     return;
-
-                // Report
-                if (childFile.isDirectory()) {
-                    CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(childFile)), executor)
-                            .exceptionally(e -> reportAndAbort(e, childFile.toString(), childFile));
-                }
-
                 if (recurseSubdirs || !childFile.isDirectory())
                     processFileOrDirectory(childFile);
             }

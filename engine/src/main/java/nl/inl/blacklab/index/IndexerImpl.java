@@ -57,7 +57,7 @@ class IndexerImpl implements DocWriter, Indexer {
      * FileProcessor FileHandler that creates a DocIndexer for every file and
      * performs some reporting.
      */
-    private class DocIndexerWrapper implements FileProcessor.FileHandler {
+    private class FileHandlerDocIndexer implements FileProcessor.FileHandler {
 
         @Override
         public void file(FileReference file) throws MalformedInputFile, PluginException {
@@ -92,14 +92,9 @@ class IndexerImpl implements DocWriter, Indexer {
                 }
             }
         }
-
-        @Override
-        public void directory(File dir) {
-            // ignore
-        }
     }
 
-    private final DocIndexerWrapper docIndexerWrapper = new DocIndexerWrapper();
+    private final FileHandlerDocIndexer docIndexerWrapper = new FileHandlerDocIndexer();
 
     /** Our index */
     private BlackLabIndexWriter indexWriter;
@@ -437,6 +432,14 @@ class IndexerImpl implements DocWriter, Indexer {
             currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);
         }
     }
+
+//    public void indexUsing(String indexSource, String indexSpec) {
+//        switch (indexSource) {
+//        case "file":
+//            // Index from file system
+//            index()
+//        }
+//    }
 
     @Override
     public void index(String documentName, InputStream input) {

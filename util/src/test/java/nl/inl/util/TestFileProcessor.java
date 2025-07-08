@@ -191,23 +191,15 @@ public class TestFileProcessor {
     }
 
     // Implementation is synchronized so expected file/directory count is deterministic when throwing exceptions in multithreaded tests
-    // In we didn't synchronize then multiple file() or directory() calls may run simultaneously.
-    // (also ArrayList is not thread-safe)
+    // If we didn't synchronize then multiple file() or directory() calls may run simultaneously.
+    // (also, ArrayList is not threadsafe)
     private static class LoggingFileHandler implements FileProcessor.FileHandler {
         private final boolean triggerException;
 
-        public final List<File> dirsReceived = new ArrayList<>();
         public final List<String> filesReceived = new ArrayList<>();
 
         public LoggingFileHandler(boolean triggerException) {
             this.triggerException = triggerException;
-        }
-
-        @Override
-        public synchronized void directory(File dir) throws Exception {
-            this.dirsReceived.add(dir);
-            if (triggerException)
-                throw new TestException();
         }
 
         @Override
@@ -241,10 +233,9 @@ public class TestFileProcessor {
 
         if (!shouldTriggerException) {
             // Deterministic results
-            assertEquals(expectedDirectories, fileHandler.dirsReceived.size());
             assertEquals(expectedFiles, fileHandler.filesReceived.size());
         } else if (!useThreads) {
-            assertEquals(1, fileHandler.dirsReceived.size() + fileHandler.filesReceived.size());
+            assertEquals(1, fileHandler.filesReceived.size());
         } // else both throwing and using threads, results are nondeterministic
 
         assertEquals(shouldTriggerException, errorHandler.caughtException instanceof TestException);

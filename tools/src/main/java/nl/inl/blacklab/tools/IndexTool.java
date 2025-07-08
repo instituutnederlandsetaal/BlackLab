@@ -9,17 +9,23 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.WordUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
+import org.reflections.Reflections;
+import org.reflections.scanners.SubTypesScanner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,6 +55,112 @@ public class IndexTool {
 
     static final Map<String, String> indexerParam = new TreeMap<>();
 
+    static abstract class IndexSource {
+
+        private static final Logger logger = LogManager.getLogger(IndexSource.class);
+
+        private static final String PROTOCOL_SEPARATOR = "://";
+
+        private static Map<String, Class<? extends IndexSource>> indexSourceTypes;
+
+        /**
+         * Find all legacy DocIndexers and store them in a map.
+         * @return a map of format identifiers to DocIndexerLegacy classes
+         */
+        private static synchronized Map<String, Class<? extends IndexSource>> getIndexSourceTypes() {
+            if (indexSourceTypes == null) {
+                indexSourceTypes = new HashMap<>();
+                Reflections reflections = new Reflections("", new SubTypesScanner(false));
+                for (Class<? extends IndexSource> cl: reflections.getSubTypesOf(IndexSource.class)) {
+                    try {
+                        // Get the URI_SCHEME constant from the class
+                        String scheme = (String) cl.getField("URI_SCHEME").get(null);
+                        indexSourceTypes.put(scheme, cl);
+                    } catch (NoSuchFieldException | IllegalAccessException e) {
+                        logger.error("Could not get URI_SCHEME constant from class {}, ", cl.getName());
+                        logger.error(e);
+                    }
+                }
+            }
+            return indexSourceTypes;
+        }
+
+        private static IndexSource fromUri(String uri) {
+            int index = uri.indexOf(PROTOCOL_SEPARATOR);
+            String scheme = index >= 0 ? uri.substring(0, index) : "";
+            String path = index >= 0 ? uri.substring(index + PROTOCOL_SEPARATOR.length()) : uri;
+            Class<? extends IndexSource> indexSourceClass = getIndexSourceTypes().get(scheme);
+            if (indexSourceClass == null) {
+                throw new IllegalArgumentException("Unknown input URI scheme: " + uri);
+            }
+            // Create an instance of the appropriate IndexSource subclass
+            try {
+                return indexSourceClass.getConstructor(String.class).newInstance(path);
+            } catch (ReflectiveOperationException e) {
+                throw new IllegalArgumentException("Error creating IndexSource for URI: " + uri, e);
+            }
+        }
+
+        private final String uri;
+
+        public IndexSource(String uri) {
+            this.uri = uri;
+        }
+
+        public String getUri() {
+            return uri;
+        }
+
+        /** Get directory associated with this IndexSource; we will search it for format files. */
+        public Optional<File> getAssociatedDirectory() {
+            return Optional.empty();
+        }
+
+        @Override
+        public String toString() {
+            return uri;
+        }
+    }
+
+    static class IndexSourceFile extends IndexSource {
+
+        public static final String URI_SCHEME = "file";
+
+        private final File inputDir;
+
+        private final String glob;
+
+        public IndexSourceFile(String uri) {
+            super(uri);
+            File file = new File(uri);
+            if (file.isDirectory()) {
+                this.inputDir = file;
+                this.glob = "*";
+            } else {
+                this.inputDir = file.getParentFile() == null ? new File(".") : file.getParentFile();
+                this.glob = file.getName();
+            }
+        }
+
+        public File getInputDir() {
+            return inputDir;
+        }
+
+        public String getGlob() {
+            return glob;
+        }
+
+        @Override
+        public Optional<File> getAssociatedDirectory() {
+            return Optional.of(inputDir);
+        }
+
+        @Override
+        public String toString() {
+            return inputDir + File.separator + (glob.isEmpty() || glob.equals("*") ? "" : glob);
+        }
+    }
+
     private IndexTool() {
     }
 
@@ -62,8 +174,8 @@ public class IndexTool {
 
         // Parse command line
         int maxDocsToIndex = 0;
-        File indexDir = null, inputDir = null;
-        String glob = "*";
+        File indexDir = null;
+        IndexSource indexSource = null; // full file path, or other location to get input from
         String formatIdentifier = null;
         boolean forceCreateNew = false;
         String command = "";
@@ -193,27 +305,13 @@ public class IndexTool {
                     addingFiles = command.equals("add") || command.equals("create");
                 } else if (indexDir == null) {
                     indexDir = new File(arg);
-                } else if (addingFiles && inputDir == null) {
+                } else if (addingFiles && indexSource == null) {
                     if (arg.startsWith("\"") && arg.endsWith("\"")) {
                         // Trim off extra quotes needed to pass file glob to
                         // Windows JVM.
                         arg = arg.substring(1, arg.length() - 1);
                     }
-                    if (arg.contains("*") || arg.contains("?") || new File(arg).isFile()) {
-                        // Contains file glob. Separate the two components.
-                        int n = arg.lastIndexOf('/', arg.length() - 2);
-                        if (n < 0)
-                            n = arg.lastIndexOf('\\', arg.length() - 2);
-                        if (n < 0) {
-                            glob = arg;
-                            inputDir = new File(".");
-                        } else {
-                            glob = arg.substring(n + 1);
-                            inputDir = new File(arg.substring(0, n));
-                        }
-                    } else {
-                        inputDir = new File(arg);
-                    }
+                    indexSource = IndexSource.fromUri(arg);
                 } else if (addingFiles && formatIdentifier == null) {
                     formatIdentifier = arg;
                 } else if (command.equals("delete") && deleteQuery == null) {
@@ -232,7 +330,7 @@ public class IndexTool {
         }
 
         // Check the command
-        if (command.length() == 0) {
+        if (command.isEmpty()) {
             System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
             usage();
             return;
@@ -259,7 +357,7 @@ public class IndexTool {
         }
 
         // We're adding files. Do we have an input dir/file and file format name?
-        if (inputDir == null) {
+        if (indexSource == null) {
             System.err.println("No input dir given.");
             usage();
             return;
@@ -268,28 +366,30 @@ public class IndexTool {
         // Init log4j
         LogUtil.setupBasicLoggingConfig();
 
-        File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
-        File inputDirParent = inputDir.getAbsoluteFile().getParentFile();
-        List<File> dirs = new ArrayList<>(Arrays.asList(new File("."), inputDir, indexDir));
+        List<File> dirs = new ArrayList<>(List.of(new File(".")));
+        Optional<File> inputDir = indexSource.getAssociatedDirectory();
+        File inputDirParent = null;
+        if (inputDir.isPresent()) {
+            dirs.add(inputDir.get());
+            inputDirParent = inputDir.get().getAbsoluteFile().getParentFile();
+        }
         if (inputDirParent != null)
-            dirs.add(2, inputDirParent);
-        if (indexDirParent != null && !dirs.contains(indexDirParent))
+            dirs.add(inputDirParent);
+        dirs.add(indexDir);
+        File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
+        if (indexDirParent != null)
             dirs.add(indexDirParent);
+
         propFile = FileUtil.findFile(dirs, "indexer", List.of("properties"));
         if (propFile != null && propFile.canRead())
             readParametersFromPropertiesFile(propFile);
-
         File indexTemplateFile = null;
         if (forceCreateNew) {
             indexTemplateFile = FileUtil.findFile(dirs, "indextemplate", Arrays.asList("json", "yaml", "yml"));
         }
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
-        String strGlob = File.separator;
-        if (glob != null && glob.length() > 0 && !glob.equals("*")) {
-            strGlob += glob;
-        }
-        System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
+        System.out.println(op + " index in " + indexDir + File.separator + " from " + indexSource +
                 (formatIdentifier != null ? " (using format " + formatIdentifier + ")" : "(using autodetected format)"));
         if (!indexerParam.isEmpty()) {
             System.out.println("Indexer parameters:");
@@ -303,12 +403,11 @@ public class IndexTool {
         //  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
         //  and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
-        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
-        if (!formatDirs.contains(indexDirParent))
+        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent));
+        inputDir.ifPresent(formatDirs::add);
+        if (indexDirParent != null)
             formatDirs.add(indexDirParent);
-
         DocumentFormats.addConfigFormatsInDirectories(formatDirs);
-
 
         // Create the indexer and index the files
         if (!forceCreateNew || indexTemplateFile == null || !indexTemplateFile.canRead()) {
@@ -331,7 +430,7 @@ public class IndexTool {
             }
         }
 
-        Indexer indexer = null;
+        Indexer indexer;
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
                     formatIdentifier, indexTemplateFile, indexType);
@@ -355,12 +454,13 @@ public class IndexTool {
         indexer.setLinkedFileDirs(linkedFileDirs);
         try {
             if (!createEmptyIndex) {
-                if (glob.contains("*") || glob.contains("?")) {
+                indexer.index
+                if (inputGlob.contains("*") || inputGlob.contains("?")) {
                     // Real wildcard glob
-                    indexer.index(inputDir, glob);
+                    indexer.index(inputDir, inputGlob);
                 } else {
                     // Single file.
-                    indexer.index(new File(inputDir, glob));
+                    indexer.index(new File(inputDir, inputGlob));
                     MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
                 }
             }
