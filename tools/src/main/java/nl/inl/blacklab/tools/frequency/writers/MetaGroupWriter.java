@@ -22,7 +22,7 @@ public final class MetaGroupWriter extends FreqListWriter {
         final var map = aInfo.getMetaToId();
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
-                k.add(String.valueOf(v));
+                k.add(0, String.valueOf(v)); // add ID as first column
                 csv.writeRecord(k);
             });
         } catch (final IOException e) {

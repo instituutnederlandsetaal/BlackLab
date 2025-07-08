@@ -1,5 +1,7 @@
 package nl.inl.blacklab.tools.frequency.writers;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -38,9 +40,9 @@ abstract class FreqListWriter {
     }
 
     private static Fory getFory() {
-        final var fory = Fory.builder().withLanguage(Language.JAVA).requireClassRegistration(true)
-                .withAsyncCompilation(true)
-                .withStringCompressed(true).build();
+        final var fory = Fory.builder().withLanguage(Language.JAVA)
+                .requireClassRegistration(true)
+                .build();
         fory.register(GroupId.class);
         fory.register(GroupCounts.class);
         return fory;
