@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -275,7 +274,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      */
     private int writeToFreeBlock(byte[] encoded) {
         int freeBlock;
-        if (freeBlocks.size() == 0) {
+        if (freeBlocks.isEmpty()) {
             // Add a new one at the end
             totalBlocks++;
             freeBlock = totalBlocks - 1;

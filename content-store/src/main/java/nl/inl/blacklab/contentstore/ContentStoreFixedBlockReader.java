@@ -131,7 +131,8 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
                         }
 
                         // 1 - determine what blocks to read
-                        int firstBlock = -1, lastBlock = -1;
+                        int firstBlock = -1;
+                        int lastBlock = -1;
                         int bl = 0;
                         int charOffset = -1;
                         for (int offs : e.blockCharOffsets) {
