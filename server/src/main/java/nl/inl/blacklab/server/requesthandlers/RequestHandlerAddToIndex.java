@@ -57,6 +57,9 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                     }
                     linkedFiles.put(fileNameOnly.toLowerCase(), tempFile);
                     break;
+                default:
+                    // ignore any other file uploads
+                    break;
                 }
             }
         } catch (IOException e) {

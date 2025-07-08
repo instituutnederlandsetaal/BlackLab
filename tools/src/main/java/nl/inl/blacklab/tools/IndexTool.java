@@ -250,6 +250,10 @@ public class IndexTool {
         case "create":
             forceCreateNew = true;
             break;
+        default:
+            System.err.println("Unknown command: " + command + ". (--help for details)");
+            usage();
+            return;
         }
 
         // We're adding files. Do we have an input dir/file and file format name?

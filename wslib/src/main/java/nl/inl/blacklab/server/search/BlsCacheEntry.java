@@ -140,14 +140,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
                 eis.setCacheEntry(this);
             }
             exceptionThrown = e;
-        } catch (Throwable e) {
-            // NOTE: we catch Throwable here (while it's normally good practice to
-            //  catch only Exception and derived classes) because we need to know if
-            //  our thread crashed or not. The Throwable will be re-thrown by the
-            //  main thread, so any non-Exception Throwables will then go uncaught
-            //  as they "should".
-            exceptionThrown = e;
-            throw e;
         } finally {
 
             // Stop keeping track of processing time for this task.

@@ -78,6 +78,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
             case "0":
             case "no":
             case "off":
+            default:
                 return false;
             }
         }

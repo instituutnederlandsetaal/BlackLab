@@ -56,20 +56,18 @@ public class CorpusResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response corpusInfo(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        switch (corpusName) {
-        case "cache-info":
-            return ProxyResponse.notImplemented("/cache-info");
-
-        case "help":
-            return ProxyResponse.notImplemented("/help");
-
-        case "cache-clear":
-            return ProxyResponse.error(Response.Status.BAD_REQUEST, "WRONG_METHOD", "/cache-clear works only with POST");
-        }
-
-        Map<WebserviceParameter, String> params = ParamsUtil.get(uriInfo.getQueryParameters(), corpusName,
-                WebserviceOperation.CORPUS_INFO);
-        return ProxyResponse.success(Requests.get(client, params, Corpus.class));
+        return switch (corpusName) {
+            case "cache-info" -> ProxyResponse.notImplemented("/cache-info");
+            case "help" -> ProxyResponse.notImplemented("/help");
+            case "cache-clear" -> ProxyResponse.error(Response.Status.BAD_REQUEST, "WRONG_METHOD",
+                    "/cache-clear works only with POST");
+            default -> {
+                // Actually a corpus name (we assume), so get the corpus info.
+                Map<WebserviceParameter, String> params = ParamsUtil.get(uriInfo.getQueryParameters(), corpusName,
+                        WebserviceOperation.CORPUS_INFO);
+                yield ProxyResponse.success(Requests.get(client, params, Corpus.class));
+            }
+        };
     }
 
     @Path("/parse-pattern")

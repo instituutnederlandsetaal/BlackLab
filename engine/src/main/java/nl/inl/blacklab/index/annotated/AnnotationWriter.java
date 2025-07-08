@@ -176,8 +176,7 @@ public class AnnotationWriter {
     }
 
     TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
-        boolean debugMode = false;
-        assert (debugMode = true);
+        boolean debugMode = AnnotationWriter.class.desiredAssertionStatus();
         if (relationsStrategy instanceof RelationsStrategySeparateTerms && annotationName.equals("_relation")) {
             if (debugMode) {
                 // In debug mode, ensure that we've seen each relationId.
