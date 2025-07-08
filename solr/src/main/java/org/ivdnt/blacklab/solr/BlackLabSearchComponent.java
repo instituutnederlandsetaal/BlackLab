@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
@@ -21,7 +22,6 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
-import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -272,6 +272,10 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case NONE:
                     // do nothing
                     break;
+
+                case PARSE_PATTERN:
+                case RELATIONS:
+                    throw new NotImplementedException("TODO");
                 }
                 ds.endEntry().endDocument();
             } catch (Exception e) {

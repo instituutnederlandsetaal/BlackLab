@@ -85,6 +85,9 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
                 // A TextPattern or MatchFilter (determined by "type")
                 value = readObject(parser);
             }
+            break;
+        default:
+            throw new IllegalStateException("Unexpected token " + token);
         }
         assert value != null: "no field value found";
         return value;
