@@ -155,23 +155,22 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         titles = new HashMap<>();
         dates = new HashMap<>();
         authors = new HashMap<>();
-        // File metadataFile = new File("c:\\temp\\dpo_metadata.txt");
         try (BufferedReader r = FileUtil.openForReading(metadataFile)) {
             String l;
             while (true) {
                 try {
                     l = r.readLine();
+                    if (l == null)
+                        break;
                 } catch (IOException e) {
                     throw BlackLabException.wrapRuntime(e);
                 }
-                if (l == null)
-                    break;
-                if (l.length() == 0)
-                    continue;
-                String[] fields = l.split("\t", -1);
-                titles.put(fields[0].trim(), fields[1].trim());
-                dates.put(fields[0].trim(), fields[3].trim());
-                authors.put(fields[0].trim(), fields[4].trim());
+                if (!l.isEmpty()) {
+                    String[] fields = l.split("\t", -1);
+                    titles.put(fields[0].trim(), fields[1].trim());
+                    dates.put(fields[0].trim(), fields[3].trim());
+                    authors.put(fields[0].trim(), fields[4].trim());
+                }
             }
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);

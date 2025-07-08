@@ -16,6 +16,8 @@ import nl.inl.blacklab.index.annotated.AnnotationWriter;
  */
 public class DocIndexerFolia extends DocIndexerXmlHandlers {
 
+    public static final String ATTR_NAME_CLASS = "class";
+
     public static String getDisplayName() {
         return "FoLiA-DocIndexer (alternative indexer)";
     }
@@ -76,7 +78,7 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
             public void startElement(String uri, String localName, String qName,
                     Attributes attributes) {
                 super.startElement(uri, localName, qName, attributes);
-                lemma = attributes.getValue("class");
+                lemma = attributes.getValue(ATTR_NAME_CLASS);
                 if (lemma == null)
                     lemma = "";
             }
@@ -88,7 +90,7 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
             public void startElement(String uri, String localName, String qName,
                     Attributes attributes) {
                 super.startElement(uri, localName, qName, attributes);
-                pos = attributes.getValue("class");
+                pos = attributes.getValue(ATTR_NAME_CLASS);
                 if (pos == null)
                     pos = "";
             }
@@ -107,7 +109,7 @@ public class DocIndexerFolia extends DocIndexerXmlHandlers {
             public void startElement(String uri, String localName, String qName,
                     Attributes attributes) {
                 super.startElement(uri, localName, qName, attributes);
-                isOcr = attributes.getValue("class") != null;
+                isOcr = attributes.getValue(ATTR_NAME_CLASS) != null;
             }
 
             @Override
