@@ -75,8 +75,11 @@ class IndexerImpl implements DocWriter, Indexer {
                     long tokensDoneBefore = docIndexer.numberOfTokensDone();
                     try {
                         docIndexer.index();
-                    } catch (Throwable e) {
+                    } catch (Exception e) {
                         throw new ErrorIndexingFile("Error while indexing input file: " + file.getPath(), e);
+                    } catch (Throwable e) {
+                        logger.error("Fatal error while indexing input file {}: {}", file.getPath(), e.getMessage());
+                        throw e;
                     }
                     listener().fileDone(file.getPath());
 
