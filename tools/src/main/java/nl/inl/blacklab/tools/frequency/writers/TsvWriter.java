@@ -3,7 +3,6 @@ package nl.inl.blacklab.tools.frequency.writers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +23,7 @@ import nl.inl.util.Timer;
  * Writes frequency results to a TSV file.
  */
 public final class TsvWriter extends FreqListWriter {
+    final StringBuilder sb = new StringBuilder();
 
     public TsvWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
@@ -86,7 +86,7 @@ public final class TsvWriter extends FreqListWriter {
         for (int i = 0, tokenArrIndex = 0; tokenArrIndex < tokenIds.length; i++, tokenArrIndex += ngramSize) {
             String token;
             if (bCfg.isDatabaseFormat()) {
-                token = writeIdRecord(ngramSize, tokenIds, tokenArrIndex);
+                token = writeIdRecord(tokenIds, tokenArrIndex);
             } else {
                 // get term index for the annotation
                 Terms termIndex = aInfo.getTerms().get(i); // contains id to string mapping
@@ -99,26 +99,16 @@ public final class TsvWriter extends FreqListWriter {
     /**
      * Write in a database suitable format using IDs instead of strings.
      */
-    private static String writeIdRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex) {
-        int[] tokenList = new int[ngramSize];
-        System.arraycopy(tokenIds, tokenArrIndex, tokenList, 0, ngramSize);
-        return formatToArray(tokenList);
-    }
-
-    /**
-     * Format n-gram tokens as a array string. E.g. "{1,2,3}"
-     *
-     * @param tokens the token list
-     * @return formatted n-gram
-     */
-    private static String formatToArray(final int[] tokens) {
-        StringBuilder sb = new StringBuilder("{");
-        for (int token: tokens) {
-            sb.append(token);
-            sb.append(",");
+    private String writeIdRecord(final int[] tokenIds, final int startPos) {
+        sb.setLength(0);
+        sb.append('{');
+        for (int i = startPos, endPos = startPos + fCfg.ngramSize(); i < endPos; i++) {
+            sb.append(tokenIds[i]);
+            if (i < endPos - 1) {
+                sb.append(',');
+            }
         }
-        // replace last comma with closing brace
-        sb.setCharAt(sb.length() - 1, '}');
+        sb.append('}');
         return sb.toString();
     }
 
