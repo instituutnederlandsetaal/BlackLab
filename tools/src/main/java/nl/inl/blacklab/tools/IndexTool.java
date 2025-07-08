@@ -8,6 +8,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -22,6 +25,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.IndexSource;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -44,8 +48,8 @@ public class IndexTool {
 
         // Parse command line
         int maxDocsToIndex = 0;
-        File indexDir = null, inputDir = null;
-        String glob = "*";
+        File indexDir = null;
+        IndexSource indexSource = null; // full file path, or other location to get input from
         String formatIdentifier = null;
         boolean forceCreateNew = false;
         String command = "";
@@ -143,27 +147,13 @@ public class IndexTool {
                     addingFiles = command.equals("add") || command.equals("create");
                 } else if (indexDir == null) {
                     indexDir = new File(arg);
-                } else if (addingFiles && inputDir == null) {
+                } else if (addingFiles && indexSource == null) {
                     if (arg.startsWith("\"") && arg.endsWith("\"")) {
                         // Trim off extra quotes needed to pass file glob to
                         // Windows JVM.
                         arg = arg.substring(1, arg.length() - 1);
                     }
-                    if (arg.contains("*") || arg.contains("?") || new File(arg).isFile()) {
-                        // Contains file glob. Separate the two components.
-                        int n = arg.lastIndexOf('/', arg.length() - 2);
-                        if (n < 0)
-                            n = arg.lastIndexOf('\\', arg.length() - 2);
-                        if (n < 0) {
-                            glob = arg;
-                            inputDir = new File(".");
-                        } else {
-                            glob = arg.substring(n + 1);
-                            inputDir = new File(arg.substring(0, n));
-                        }
-                    } else {
-                        inputDir = new File(arg);
-                    }
+                    indexSource = IndexSource.fromUri(arg);
                 } else if (addingFiles && formatIdentifier == null) {
                     formatIdentifier = arg;
                 } else if (command.equals("delete") && deleteQuery == null) {
@@ -209,7 +199,7 @@ public class IndexTool {
         }
 
         // We're adding files. Do we have an input dir/file and file format name?
-        if (inputDir == null) {
+        if (indexSource == null) {
             System.err.println("No input dir given.");
             usage();
             return;
@@ -218,20 +208,22 @@ public class IndexTool {
         // Init log4j
         LogUtil.setupBasicLoggingConfig();
 
-        File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
-        File inputDirParent = inputDir.getAbsoluteFile().getParentFile();
-        List<File> dirs = new ArrayList<>(Arrays.asList(new File("."), inputDir, indexDir));
+        List<File> dirs = new ArrayList<>(List.of(new File(".")));
+        Optional<File> inputDir = indexSource.getAssociatedDirectory();
+        File inputDirParent = null;
+        if (inputDir.isPresent()) {
+            dirs.add(inputDir.get());
+            inputDirParent = inputDir.get().getAbsoluteFile().getParentFile();
+        }
         if (inputDirParent != null)
-            dirs.add(2, inputDirParent);
-        if (indexDirParent != null && !dirs.contains(indexDirParent))
+            dirs.add(inputDirParent);
+        dirs.add(indexDir);
+        File indexDirParent = indexDir.getAbsoluteFile().getParentFile();
+        if (indexDirParent != null)
             dirs.add(indexDirParent);
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
-        String strGlob = File.separator;
-        if (!glob.isEmpty() && !glob.equals("*")) {
-            strGlob += glob;
-        }
-        System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
+        System.out.println(op + " index in " + indexDir + File.separator + " from " + indexSource +
                 (formatIdentifier != null ? " (using format " + formatIdentifier + ")" : "(using autodetected format)"));
 
         // Make sure BlackLab can find our format configuration files
@@ -239,11 +231,11 @@ public class IndexTool {
         //  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
         //  and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
-        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
+        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent));
+        inputDir.ifPresent(formatDirs::add);
         formatDirs.add(indexDirParent);
 
         DocumentFormats.addConfigFormatsInDirectories(formatDirs);
-
 
         // Create the indexer and index the files
         // First check if the format is a file: if so, load it before continuing.
@@ -285,13 +277,7 @@ public class IndexTool {
         indexer.setLinkedFileDirs(linkedFileDirs);
         try {
             if (!createEmptyIndex) {
-                if (glob.contains("*") || glob.contains("?")) {
-                    // Real wildcard glob
-                    indexer.index(inputDir, glob);
-                } else {
-                    // Single file.
-                    indexer.index(new File(inputDir, glob));
-                }
+                indexer.index(indexSource);
             }
         } catch (Exception e) {
             System.err.println(
