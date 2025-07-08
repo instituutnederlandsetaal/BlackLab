@@ -132,21 +132,22 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         timer().start();
         try {
             result = search.executeInternal(this);
-        } catch (Throwable e) {
-
-            if (e instanceof InterruptedSearch) {
+        } catch (Exception e) {
+            if (e instanceof InterruptedSearch eis) {
                 // Inject ourselves into the exception object, so
                 // the code that eventually catches it can access us,
                 // e.g. to find out the exact reason a search was cancelled
-                ((InterruptedSearch)e).setCacheEntry(this);
+                eis.setCacheEntry(this);
             }
-
+            exceptionThrown = e;
+        } catch (Throwable e) {
             // NOTE: we catch Throwable here (while it's normally good practice to
             //  catch only Exception and derived classes) because we need to know if
             //  our thread crashed or not. The Throwable will be re-thrown by the
             //  main thread, so any non-Exception Throwables will then go uncaught
             //  as they "should".
             exceptionThrown = e;
+            throw e;
         } finally {
 
             // Stop keeping track of processing time for this task.

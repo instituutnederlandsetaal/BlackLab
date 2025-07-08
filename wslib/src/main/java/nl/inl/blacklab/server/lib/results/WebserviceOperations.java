@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
@@ -26,7 +27,6 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
@@ -454,22 +454,28 @@ public class WebserviceOperations {
     public static BlsException translateSearchException(Exception e) {
         if (e instanceof InterruptedException) {
             throw new InterruptedSearch(e);
-        } else {
-            try {
-                throw e.getCause();
-            } catch (MatchInfoNotFound e1) {
+        } else if (e instanceof InvalidQuery e1) {
+            if (e instanceof MatchInfoNotFound e2) {
                 return new BadRequest("UNKNOWN_MATCH_INFO",
-                        "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'",
-                        Map.of("name", e1.getMatchInfoName()));
-            } catch (BlsException e1) {
-                return e1;
-            } catch (RuntimeException | BlackLabException e1) {
-                e.printStackTrace();
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage(), e1);
-            } catch (Throwable e1) {
-                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
+                        "Reference to unknown match info (i.e. capture group) '" + e2.getMatchInfoName() + "'",
+                        Map.of("name", e2.getMatchInfoName()));
+            }
+        } else if (e instanceof ExecutionException e1) {
+            // See if we recognize the cause of this exception
+            if (e.getCause() instanceof BlsException e2) {
+                return e2;
+            } else if (e.getCause() instanceof MatchInfoNotFound e2) {
+                return new BadRequest("UNKNOWN_MATCH_INFO",
+                        "Reference to unknown match info (i.e. capture group) '" + e2.getMatchInfoName() + "'",
+                        Map.of("name", e2.getMatchInfoName()));
+            } else if (e.getCause() instanceof InvalidQuery e2) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e2.getMessage(), e2);
+            } else if (e.getCause() instanceof Exception e2) {
+                logger.error(e2);
+                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e2);
             }
         }
+        return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e);
     }
 
     /**
