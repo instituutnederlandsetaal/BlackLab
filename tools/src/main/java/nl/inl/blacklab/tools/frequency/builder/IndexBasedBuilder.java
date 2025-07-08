@@ -26,7 +26,6 @@ import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
-import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
 
@@ -47,14 +46,12 @@ import nl.inl.util.Timer;
 public final class IndexBasedBuilder extends FreqListBuilder {
     private final ChunkWriter chunkWriter;
     private final ChunkedTsvWriter chunkedTsvWriter;
-    private final TsvWriter tsvWriter;
     private final Set<String> termFrequencies; // used for cutoff
 
     public IndexBasedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         super(index, bCfg, fCfg);
         this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
         this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
-        this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
         this.termFrequencies = getTermFrequencies(index, fCfg);
     }
 

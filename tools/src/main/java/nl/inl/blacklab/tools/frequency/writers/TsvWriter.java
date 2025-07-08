@@ -3,6 +3,7 @@ package nl.inl.blacklab.tools.frequency.writers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -23,7 +24,6 @@ import nl.inl.util.Timer;
  * Writes frequency results to a TSV file.
  */
 public final class TsvWriter extends FreqListWriter {
-    private final StringBuilder sb = new StringBuilder();
 
     public TsvWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
@@ -81,37 +81,25 @@ public final class TsvWriter extends FreqListWriter {
 
     private void addAnnotationsToRecord(final GroupId groupId, final List<String> record) {
         final int[] tokenIds = groupId.getTokenIds();
-        // for each annotation construct a string for the ngram
-        final int ngramSize = groupId.getNgramSize();
-        for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
-             tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
-            final String token;
-            if (bCfg.isDatabaseFormat()) {
-                token = writeIdRecord(tokenIds, tokenArrIndex);
-            } else {
+        if (bCfg.isDatabaseFormat()) {
+            // When writing database format, simply register to get an ID and write that.
+            // first convert to arraylist b
+            final int wordID = aInfo.putOrGetWordId(tokenIds);
+            record.add(Integer.toString(wordID));
+        } else {
+            // for each annotation construct a string for the ngram
+            final int ngramSize = groupId.getNgramSize();
+            for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
+                 tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
                 // get term index for the annotation
                 final Terms termIndex = aInfo.getTerms().get(i); // contains id to string mapping
-                token = writeStringRecord(ngramSize, tokenIds, tokenArrIndex, termIndex);
+                final String token = writeStringRecord(ngramSize, tokenIds, tokenArrIndex, termIndex);
+                record.add(token);
             }
-            record.add(token);
         }
     }
 
-    /**
-     * Write in a database suitable format using IDs instead of strings.
-     */
-    private String writeIdRecord(final int[] tokenIds, final int startPos) {
-        sb.setLength(0);
-        sb.append('{');
-        for (int i = startPos, endPos = startPos + fCfg.ngramSize(); i < endPos; i++) {
-            sb.append(tokenIds[i]);
-            if (i < endPos - 1) {
-                sb.append(',');
-            }
-        }
-        sb.append('}');
-        return sb.toString();
-    }
+
 
     private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
             final Terms termIndex) {
@@ -134,7 +122,7 @@ public final class TsvWriter extends FreqListWriter {
                 record.add(metadataValues[i]);
             }
             // then, write the group ID of the grouped metadata
-            final int metaId = aInfo.getMetaId(groupId.getMetadataValues());
+            final int metaId = aInfo.putOrGetMetaToId(groupId.getMetadataValues());
             record.add(Integer.toString(metaId));
         } else {
             if (metadataValues != null)

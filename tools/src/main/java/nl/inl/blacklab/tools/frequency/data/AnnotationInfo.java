@@ -1,6 +1,7 @@
 package nl.inl.blacklab.tools.frequency.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,8 +25,10 @@ public final class AnnotationInfo {
     private final List<Terms> terms;
     private final Annotation cutoffAnnotation;
     private final BlackLabIndex index;
-    private final Map<ArrayList<String>, Integer> metaToId;
+    private final Map<List<String>, Integer> metaToId;
+    private final Map<List<Integer>, Integer> wordToId;
     private final AtomicInteger metaId = new AtomicInteger(0);
+    private final AtomicInteger wordId = new AtomicInteger(0);
     private final int[] groupedMetaIdx;
     private final int[] nonGroupedMetaIdx;
 
@@ -37,6 +40,7 @@ public final class AnnotationInfo {
                 .toList();
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
         this.metaToId = new ConcurrentHashMap<>();
+        this.wordToId = new ConcurrentHashMap<>();
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
         this.nonGroupedMetaIdx = fCfg.metadataFields().stream().filter(m -> !m.outputAsId())
@@ -67,24 +71,43 @@ public final class AnnotationInfo {
         return cutoffAnnotation;
     }
 
-    public int[] getGroupedMetaIdx() {
-        return groupedMetaIdx;
-    }
-
     public int[] getNonGroupedMetaIdx() {
         return nonGroupedMetaIdx;
     }
 
-    public Map<ArrayList<String>, Integer> getMetaToId() {
+    public Map<List<String>, Integer> getMetaToId() {
         return metaToId;
     }
+    public Map<List<Integer>, Integer> getWordToId() {
+        return wordToId;
+    }
 
-    public void putMetaToId(final DocumentMetadata meta) {
-        // retrieve key
-        final var key = getMetaKey(meta.values());
-        if (!metaToId.containsKey(key)) {
+    public int putOrGetMetaToId(final String[] meta) {
+        // calculate key
+        // TODO compare with Arrays.asList(meta).stream(... etc.)
+        final var key = getMetaKey(meta);
+        if (metaToId.containsKey(key)) {
+            // return ID if it exists
+            return metaToId.get(key);
+        } else {
+            // otherwise, create ID and return
             final int id = metaId.getAndIncrement();
             metaToId.put(key, id);
+            return id;
+        }
+    }
+
+    public int putOrGetWordId(final int[] tokens) {
+        // calculate key
+        final var key = Arrays.asList(Arrays.stream(tokens).boxed().toArray(Integer[]::new));
+        if (wordToId.containsKey(key)) {
+            // return ID if it exists
+            return wordToId.get(key);
+        } else {
+            // otherwise, create ID and return
+            final int id = wordId.getAndIncrement();
+            wordToId.put(key, id);
+            return id;
         }
     }
 
@@ -94,9 +117,5 @@ public final class AnnotationInfo {
             key.add(i, meta[groupedMetaIdx[i]]);
         }
         return key;
-    }
-
-    public int getMetaId(final String[] meta) {
-        return metaToId.get(getMetaKey(meta));
     }
 }

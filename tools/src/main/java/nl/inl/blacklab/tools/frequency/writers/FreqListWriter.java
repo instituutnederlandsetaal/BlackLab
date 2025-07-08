@@ -1,7 +1,5 @@
 package nl.inl.blacklab.tools.frequency.writers;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

@@ -2,6 +2,8 @@ package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
 
+import nl.inl.blacklab.tools.frequency.writers.AnnotationWriter;
+
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -116,6 +118,7 @@ public class FrequencyTool {
             if (bCfg.isDatabaseFormat()) {
                 new LookupTableWriter(index, bCfg, fCfg).write();
                 new MetaGroupWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
+                new AnnotationWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
             }
             System.out.println(
                     "  Generating frequency list " + fCfg.getReportName() + " took " + t.elapsedDescription());

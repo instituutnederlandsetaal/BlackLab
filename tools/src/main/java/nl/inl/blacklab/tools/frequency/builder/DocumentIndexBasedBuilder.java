@@ -75,10 +75,6 @@ final public class DocumentIndexBasedBuilder {
             // Skip this document, it has no valid metadata values
             return;
         }
-        // store the metadata in the id map when writing database format
-        if (bCfg.isDatabaseFormat()) {
-            aInfo.putMetaToId(meta);
-        }
         // now we have all values for all relevant annotations for this document
         // iterate again and pair up the nth entries for all annotations, then store that as a group.
         final var occsInDoc = getDocumentFrequencies(doc, meta, termFrequencies);
