@@ -409,11 +409,6 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void index(File file) {
-        index(file, "*");
-    }
-
-    @Override
     public void index(File file, String fileNameGlob) {
         try (FileProcessor proc = createFileProcessor()) {
             proc.setFileHandler(new FileHandlerDocIndexer(this));
@@ -425,6 +420,7 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public void index(String fileName, byte[] contents, String fileNameGlob) {
         try (FileProcessor proc = createFileProcessor()) {
+            proc.setFileHandler(new FileHandlerDocIndexer(this));
             proc.setFileNameGlob(fileNameGlob == null ? "*" : fileNameGlob);
             proc.processFile(FileReference.fromBytes(fileName, contents, (File)null));
         }
