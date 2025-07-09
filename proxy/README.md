@@ -18,7 +18,7 @@ This is a work in progress. Still to do:
 
 The Solr component and this proxy introduce version 4.0 of the BlackLab webservice API, with a few minor improvements. Pass `api=3` to get the old behaviour.
 
-See [API versions](https://blacklab.ivdnt.org/server/rest-api/api-versions.html) for details.
+See [API versions](https://blacklab.ivdnt.org/server/rest-api/miscellaneous/api-versions.html) for details.
 
 
 ## Configuration

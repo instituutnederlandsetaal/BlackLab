@@ -15,7 +15,7 @@ public class BLSConfigParameters {
     String filterLanguage = "luceneql";
 
     /** Should we default to case-/accent-sensitive search or not? */
-    MatchSensitivity defaultSearchSensitivity;
+    MatchSensitivity defaultSearchSensitivity = MatchSensitivity.INSENSITIVE;
 
     /** After how many hits should we stop processing them? */
     DefaultMax processHits = DefaultMax.get(5000000, 5000000);

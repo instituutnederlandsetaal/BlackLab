@@ -6,7 +6,7 @@ version: '3.9'
 services:
 
   server:
-    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-latest}
+    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-dev}
     build:
         context: .
         dockerfile: docker/Dockerfile
@@ -22,7 +22,7 @@ services:
 
   # Creates new index
   indexer:
-    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-latest}
+    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-dev}
     profiles: [ "tools" ]
     build:
         context: .
