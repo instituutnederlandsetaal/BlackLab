@@ -3,6 +3,7 @@ package nl.inl.blacklab.tools.frequency.builder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +34,7 @@ final public class DocumentIndexBasedBuilder {
     private final int docLength;
     private final List<String> metaFieldNames;
     private final BuilderConfig bCfg;
+    private static final int[] EMPTY_ARRAY = new int[0];
 
     DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final BuilderConfig bCfg,
             final FreqListConfig fCfg, final AnnotationInfo aInfo) throws IOException {
@@ -137,6 +139,22 @@ final public class DocumentIndexBasedBuilder {
         final int ngramSize = fCfg.ngramSize();
         final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTermsOf(aInfo.getCutoffAnnotation()) : null;
         final int numAnnotations = aInfo.getAnnotations().size();
+
+        if (numAnnotations == 0) {
+            // just doc length, no annotations
+            final var groupId = new GroupId(ngramSize, EMPTY_ARRAY, EMPTY_ARRAY, meta);
+
+            // Count occurrence in this doc
+            final var occ = occsInDoc.get(groupId);
+            final int tokenCount = docLength - (ngramSize - 1);
+            if (occ == null) {
+                occsInDoc.put(groupId, new GroupCounts(tokenCount, 1));
+            } else {
+                occ.hits += tokenCount;
+            }
+            return occsInDoc; // no annotations, so no ngrams to calculate
+        }
+
         // We can't get an ngram for the last ngramSize-1 tokens
         for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
             final int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
@@ -181,6 +199,7 @@ final public class DocumentIndexBasedBuilder {
                 occ.hits++;
             }
         }
+
         return occsInDoc;
     }
 
