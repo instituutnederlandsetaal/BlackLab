@@ -1,6 +1,6 @@
 # Manage user corpora
 
-If [user authentication and private user corpora](/server/howtos.md#let-users-manage-their-own-corpora) are enabled, these can be used to manage the user's own corpora: creating/deleting, adding data and sharing.
+If [user authentication and private user corpora](/server/user-corpora.html) are enabled, these can be used to manage the user's own corpora: creating/deleting, adding data and sharing.
 
 ("global" corpora, that don't belong to a specific user, can not be managed through these endpoints at this time)
 
