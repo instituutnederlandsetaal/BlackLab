@@ -28,9 +28,8 @@ public final class AnnotationWriter extends FreqListWriter {
             map.forEach((k, v) -> {
                 final var record = new ArrayList<String>();
                 record.add(Integer.toString(v)); // add ID as first column
-                for (int i = 0, tokenArrIndex = 0, len = k.size();
-                     tokenArrIndex < len; i++, tokenArrIndex += fCfg.ngramSize()) {
-                    record.add(writeIdRecord(k, 0));
+                for (int i = 0, len = k.size(); i < len; i += fCfg.ngramSize()) {
+                    record.add(writeIdRecord(k, i));
                 }
                 csv.writeRecord(record);
             });
