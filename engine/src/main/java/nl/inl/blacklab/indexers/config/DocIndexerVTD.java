@@ -158,7 +158,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
     protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
 
         if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
-            warnOnce("Parallel corpora not supported with VTD indexer! Results will be undefined. Use 'processor: saxon' in your config file.");
+            warnOnce().warn("Parallel corpora not supported with VTD indexer! Results will be undefined. Use 'processor: saxon' in your config file.");
         }
 
         // First we find all inline elements (stuff like s, p, b, etc.) and store

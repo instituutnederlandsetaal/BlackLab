@@ -250,6 +250,8 @@ public class IndexTool {
         case "create":
             forceCreateNew = true;
             break;
+        case "add":
+            break;
         default:
             System.err.println("Unknown command: " + command + ". (--help for details)");
             usage();

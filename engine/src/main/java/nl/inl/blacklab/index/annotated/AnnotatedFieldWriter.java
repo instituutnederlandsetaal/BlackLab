@@ -48,6 +48,8 @@ public class AnnotatedFieldWriter {
 
     private final Map<String, AnnotationWriter> annotations = new HashMap<>();
 
+    private final DocWriter docWriter;
+
     private MutableIntList start = new IntArrayList();
 
     private MutableIntList end = new IntArrayList();
@@ -90,6 +92,7 @@ public class AnnotatedFieldWriter {
      */
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
+        this.docWriter = docWriter;
         indexType = docWriter.getIndexType();
         relationsStrategy = docWriter.getRelationsStrategy();
         relationAnnotationName = AnnotatedFieldNameUtil.relationAnnotationName(indexType);
@@ -243,5 +246,9 @@ public class AnnotatedFieldWriter {
 
     public RelationsStrategy getRelationsStrategy() {
         return relationsStrategy;
+    }
+
+    public DocWriter getDocWriter() {
+        return docWriter;
     }
 }

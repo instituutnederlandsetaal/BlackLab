@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
+import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.TextContent;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -90,4 +91,7 @@ public interface DocWriter {
 
     /** Force a merge (debug feature) */
     void debugForceMerge();
+
+    /** Allows us to issue a warning that is only shown once. */
+    WarnOnce warnOnce();
 }

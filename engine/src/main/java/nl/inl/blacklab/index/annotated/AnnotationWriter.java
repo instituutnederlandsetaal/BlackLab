@@ -19,10 +19,12 @@ import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -42,7 +44,6 @@ import nl.inl.util.CollUtil;
  * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
  */
 public class AnnotationWriter {
-    private static final Logger logger = LogManager.getLogger(AnnotationWriter.class);
 
     /** Maximum length a value is allowed to be (0 = no limit). */
     private int maximumValueLength;
@@ -320,14 +321,22 @@ public class AnnotationWriter {
             // This is the _relation annotation in the integrated index format, but not the right sort of value
             // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
             // Warn the user.
-            logger.warn("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
-                    "inline tags. To work properly with the new integrated index format, update it to use " +
+            warnOnce("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
+                    "inline tags.", " To work properly with the new integrated index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
         }
 
-        if (maximumValueLength > 0 && value.length() > maximumValueLength) {
-            // Truncate value to the configured maximum length.
-            value = value.substring(0, maximumValueLength);
+        if (maximumValueLength > 0) {
+            if (value.length() > maximumValueLength) {
+                // Truncate value to the configured maximum length.
+                value = value.substring(0, maximumValueLength);
+            }
+        } else if (value.length() > Constants.MAX_LUCENE_VALUE_LENGTH) {
+            // Lucene limits the length of a term to 32766 characters, so we truncate it.
+            // This is a hard limit, so we can't just warn and continue.
+            warnOnce("Annotation value for annotation '" + annotationName + "' is too long",
+                    " (" + value.length() + " characters), truncating to 32766 characters.");
+            value = value.substring(0, Constants.MAX_LUCENE_VALUE_LENGTH);
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
@@ -378,6 +387,10 @@ public class AnnotationWriter {
         }
 
         return lastValuePosition;
+    }
+
+    private void warnOnce(String uniquePart, String restOfMessage) {
+        fieldWriter.getDocWriter().warnOnce().warn(uniquePart, restOfMessage);
     }
 
     /**

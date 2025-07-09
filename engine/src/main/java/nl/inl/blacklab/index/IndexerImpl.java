@@ -27,6 +27,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -165,6 +166,9 @@ class IndexerImpl implements DocWriter, Indexer {
 
     /** Was this Indexer closed? */
     private boolean closed = false;
+
+    /** To ensure certain warnings are only issued once */
+    WarnOnce warnOnce = new WarnOnce(logger);
 
     /**
      * Construct Indexer
@@ -603,5 +607,10 @@ class IndexerImpl implements DocWriter, Indexer {
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
+    }
+
+    @Override
+    public WarnOnce warnOnce() {
+        return warnOnce;
     }
 }
