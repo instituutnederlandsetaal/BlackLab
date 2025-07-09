@@ -40,6 +40,7 @@
     - new DocIndexerExample gives a better example of low-level custom indexing
     - you can now use a custom DocIndexerConfig subclass by specifying `fileTypeOptions.docIndexerClass` in your .blf.yaml file.
     - standoff annotations can now be used to index spans and relations as well
+    - New `blacklab.yaml` option `indexing.maxValueLength` controls truncating of annotation values. Default is no truncation (causing a Lucene error if a token is longer than 32K).
 - Misc:
     - support for Docker
     - ability to run BlackLab as a Solr plugin (work in progress), and a proxy so Solr with plugin behaves the same as BLS.
@@ -51,10 +52,13 @@
 ### Changed
 
 - minimum Java version is now 17.
-- annotation setting allowDuplicateValues defaults to false, which is usually what you want.
+- annotation config settings `allowDuplicateValues` and `multipleValues` were removed (any annotation can have multiple values if needed, and any duplicate values are always removed).
 - various performance improvements, e.g. when opening huge indexes. Also Lucene's two-phase iterators are used where possible.
-- BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
-- BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
+- BLS boolean parameter `includetokencount` was renamed to `subcorpussize` (it will determine the number of tokens and documents in the subcorpus matching your filter query).
+- BCQL:
+  - we've settled on BlackLab "normalizing" BCQL to use double quotes instead of single quotes, for maximum compatibility with other corpus tools. Users can still choose to use either single or double quotes in their queries.
+  - BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
+  - BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
 - Unicode normalization is applied to documents while indexing.
 - If a corpus directory is named `index`, we used to look at the parent directory for the "real" corpus name, but this quirk has been removed.
 - There is no longer an arbitrary term length limit.
@@ -329,7 +333,7 @@
 * It is now possible to configure global unknown condition and value (use metadataDefaultUnknownCondition 
   and metadataDefaultUnknownValue at the top-level of your indexing config)
 * You can now set isInternal to true on annotations to prevent searching and grouping on it in BlackLab Frontend
-* Added annotation option allowDuplicateValues (defaults to true). If multipleValues is true and allowDuplicateValues 
+* Added annotation option `allowDuplicateValues` (defaults to true). If `multipleValues` is true and `allowDuplicateValues` 
   is false, duplicates encountered will not be indexed twice, preventing double hits.
 * Add support for retrieving occurrences of a list of terms, /blacklab-server/INDEX_NAME/termfreq
 
