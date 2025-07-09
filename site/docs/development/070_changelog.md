@@ -23,7 +23,7 @@
   - version 2 of the .blf.yaml format, changing the default processor to Saxon and removing various quirks. See [here](../guide/index-your-data/miscellaneous.md#differences-between-version-1-and-2).
   - support for indexing extra attributes with inline tags using XPath; only indexing certain attributes; or excluding all except certain attributes.
 - BlackLab Server:
-  - Evolving the BLS API. See [API versions](../server/rest-api/api-versions.md).
+  - Evolving the BLS API. See [API versions](/server/rest-api/miscellaneous/api-versions.md).
   - you can pass `context=s` to get a whole sentence as context around a hit.
   - group by capture, e.g. `capture:word:s:A` to group on the words from the group captured as `A` in your query.
   - group on a tag in a list of overlapping tags, e.g. `capture:word:s:with-spans[named-entity]` to group on the whole named entity (if the match overlap with one) if you passed `withspans=true` as a parameter.

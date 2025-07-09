@@ -3,29 +3,47 @@ title: How to use
 ---
 # Using BlackLab Server
 
-::: warning Work in progress
-This will become a guided introduction to BlackLab Server. See the [REST API reference](rest-api/) for details about each endpoint.
+This assumes you have a BlackLab Server instance running and have a corpus available. You can either:
+
+- [index a corpus yourself](/guide/getting-started.html) 
+- experiment with one of our [online corpora](/guide/#try-it-online) (use F12 > Network to find the API URL; usually just `/blacklab-server/`).
+
+We'll assume you have a BlackLab Server instance running on your local machine below.
+
+## See what corpora are available
+
+The simplest request is the "server info" request:
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;http://localhost:8080/blacklab-server/
+
+This will return a list of available corpora and some information about the server itself.
+
+::: details JSON, XML or CSV?
+
+The webservice answers in JSON or XML. We generally recommend using JSON, as it is generally easier to work with from various programming languages.
+
+Selecting between them can be done by either:
+
+- passing the HTTP header `Accept` with the value `application/json`, `application/xml` or `text/csv`
+- passing an extra parameter `outputformat` with the value `json`, `xml` or `csv`
+
+If both are specified, the `outputformat` parameter is used.
+
+In the browser, you will get XML by default, because the default `Accept` header includes `application/xml`. Just add `?outputformat=json` to the URL to see the JSON response.
+
+In Chrome-based browsers, the debug console's network tab provides a convenient Preview subtab for JSON responses. 
+
 :::
 
 ## Overview
 
-### JSON, XML or CSV?
+::: details Running results count
 
-The webservice answers in JSON or XML. Selection of the desired output format can be done two ways:
+BlackLab Server is mostly stateless: a particular URL will always result in the same response. An exception to this is the running result count. When you're requesting a page of results (say the first 20), and there are more results to the query, BlackLab Server will keep retrieving these results in the background. When it returns the requested page of hits, it will also report how many it has retrieved so far and whether it has finished or is still retrieving.
 
-- by passing the HTTP header `Accept` with the value `application/json`, `application/xml` or `text/csv`
-- by passing an extra parameter `outputformat` with the value `json`, `xml` or `csv`
+A note about "retrieving" versus "counting". BLS has two limits for processing results: maximum number of hits to retrieve/process and maximum number of hits to count. Retrieving or processing hits means the hit is stored and will appear on the results page, is sorted, grouped, faceted, etc. If the retrieval limit is reached, BLS will still keep _counting_ hits (to determine the total number of hits) but will no longer store them.
 
-If both are specified, the parameter has precedence.
-
-We'll usually use JSON in our examples.
-
-### Running results count
-
-BlackLab Server is mostly stateless: a particular URL will always result in the same response. An exception to this is the running result count. When you're requesting a page of results, and there are more results to the query, BlackLab Server will retrieve these results in the background. It will report how many results it has retrieved and whether it has finished or is still retrieving.
-
-A note about retrieving versus counting. BLS has two limits for processing results: maximum number of hits to retrieve/process and maximum number of hits to count. Retrieving or processing hits means the hit is stored and will appear on the results page, is sorted, grouped, faceted, etc. If the retrieval limit is reached, BLS will still keep counting hits but will no longer store them.
-
+:::
 
 ## Examples
 

@@ -89,6 +89,11 @@ const redirects = Object.entries({
   '/BlackLab/improve-search-speed.html':                 '/server/vmtouch.html',
   '/BlackLab/server/vmtouch.html':                       '/server/vmtouch.html',
   '/improve-search-speed.html':                          '/server/vmtouch.html',
+  '/server/rest-api/get.html':                           '/server/rest-api/server-corpus-info/server-info.html',
+  '/server/rest-api/corpus/get.html':                    '/server/rest-api/server-corpus-info/corpus-info.html',
+  '/server/rest-api/corpus/hits/get.html':               '/server/rest-api/search/find-hits.html',
+  '/server/rest-api/corpus/docs/pid/get.html':           '/server/rest-api/documents/metadata.html',
+  '/server/howtos.html':                                 '/server/user-corpora.html',
 });
 
 import DefaultTheme from 'vitepress/theme'

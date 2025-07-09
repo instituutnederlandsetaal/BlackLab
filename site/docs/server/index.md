@@ -6,21 +6,17 @@ order: -1
 
 ## What is it?
 
-BlackLab Server is a web service providing a REST API for accessing BlackLab corpora. This makes it easy to use BlackLab from your favourite programming language. It can be used for anything from quick analysis scripts to full-featured corpus search applications.
-
-This page explains how to set up and use BlackLab Server.
-
+BlackLab Server is a web service (REST API) for accessing BlackLab corpora. It is the preferred way of using BlackLab from any programming language. It can be used for anything from quick analysis scripts to full-featured corpus search applications (such as [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/)).
 
 ## Basic installation, configuration
 
 ### Using Docker
 
-Images are available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). We are preparing for an official Docker release. The current image is usable, but should be considered experimental: details may change in the final version. Also, there's currently no stable release tags, only a `latest` version (updated from the `dev` branch with no particular schedule) and 
-several versions of specific commits on the `dev` branch.
+Images are available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). The current image should be considered somewhat experimental: details may change. Suggestions for improving the image (and this guide) are welcome.
 
-Suggestions for improving the image (and this guide) are welcome.
+Starting with the upcoming v4.0, we will provide stable release images. For now, we only provide the `dev` tag, which is always up to date with the `dev` branch.
 
-A Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher.
+To build a version from source, a Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher.
 
 We assume here that you are familiar with the BlackLab indexing process; see [Indexing with BlackLab](/guide/index-your-data/create-an-index.md) to learn more.
 
@@ -51,15 +47,17 @@ Your corpus should now be accessible at http://localhost:8080/blacklab-server/my
 
 See the [Docker README](https://github.com/instituutnederlandsetaal/BlackLab/tree/dev/docker#readme) for more details.
 
-### Java JRE
+### Manual installation (without Docker)
+
+#### Java JRE
 
 Install a JRE (Java runtime environment). BlackLab requires at least version 17, but version 21 or newer versions should work as well.
 
-### Tomcat
+#### Tomcat
 
 BlackLab Server needs a Java application server to run. We will use Apache Tomcat.
 
-Install Tomcat on your machine. See the [official docs](https://tomcat.apache.org/tomcat-9.0-doc/setup.html) or an OS-specific guide like [this one for Ubuntu](https://linuxize.com/post/how-to-install-tomcat-9-on-ubuntu-20-04/).
+Install Tomcat 9 on your machine. See the [official docs](https://tomcat.apache.org/tomcat-9.0-doc/setup.html) or an OS-specific guide like [this one for Ubuntu](https://linuxize.com/post/how-to-install-tomcat-9-on-ubuntu-20-04/).
 
 ::: warning Tomcat 10 not yet supported
 BlackLab currently uses Java EE and therefore runs in Tomcat 8 and 9, but not in Tomcat 10 (which migrated to [Jakarta EE](https://eclipse-foundation.blog/2020/06/23/jakarta-ee-is-taking-off/)). If you try to run BlackLab Server on Tomcat 10, you will get a [ClassNotFoundException](https://stackoverflow.com/questions/66711660/tomcat-10-x-throws-java-lang-noclassdeffounderror-on-javax-servlet-servletreques/66712199#66712199). A future release of BlackLab will migrate to Jakarta EE. There is an experimental branch `experiment/fa-tomcat-10` that you can try if you want.
@@ -107,12 +105,16 @@ To ensure the correct handling of accented characters in (search) URLs, you shou
 Of course, make sure that URLs you send to BlackLab are URL-encoded using UTF-8 (so e.g. searching for `"señor"` corresponds to a request like `http://myserver/blacklab-server/mycorpus/hits?patt=%22se%C3%B1or%22`). [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) does this by default.
 :::
 
-::: details <b>TIP:</b> Memory usage
-For larger corpora, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). (If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.) If you are indexing unique ids for each word, you may also be able to save memory by [disabling the forward index](/guide/index-your-data/annotations.md#disable-the-forward-index) for that 'unique id' annotation.
+## Memory usage
 
-We used to also recommend locking the forward index in memory using the `vmtouch` utility, but we now believe it's better to leave disk cache management to the operating system.
+For larger corpora, it is important to [give Tomcat's JVM enough heap memory](http://crunchify.com/how-to-change-jvm-heap-setting-xms-xmx-of-tomcat/). If heap memory is low and/or fragmented, the JVM garbage collector might start taking 100% CPU moving objects in order to recover enough free space, slowing things down to a crawl.
 
-:::
+On the other hand, do not assign all of the system's memory to the JVM either. You should leave a significant amount for the operating system's disk cache, which can greatly speed up certain operations.
+
+The optimum way to divide up memory depends on many factors, but a good starting point is to assign no more than 50% of the system memory to the JVM. You can then experiment with increasing or decreasing the heap size to see what works best in your case.
+
+**NOTE:** If you are indexing unique ids for each word, you may also be able to save memory by [disabling the forward index](/guide/index-your-data/annotations.md#disable-the-forward-index) for that 'unique id' annotation.
+
 
 ## Indexing data
 
@@ -124,11 +126,9 @@ There is currently no way to use BlackLab Server to add data to non-user ("globa
 
 ## Searching your corpus
 
-You can try most BlackLab Server requests out by typing URLs into your browser. See [How to use](./overview) and the [API reference](/server/rest-api/) for more information. 
+You can try most BlackLab Server requests out by typing URLs into your browser. See [How to use](./overview) and the [API reference](/server/rest-api/) for more information.
 
-> **TODO:** provide a very short introduction here
-
-We have a full-featured corpus search frontend available. See [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) for more information.
+We also have a full-featured corpus search application available. See [BlackLab Frontend](https://blacklab-frontend.ivdnt.org/) for more information.
 
 
 ## What's next?
