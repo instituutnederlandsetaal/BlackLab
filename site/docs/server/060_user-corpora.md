@@ -16,7 +16,7 @@ To add a file to a private corpus, upload it to `/blacklab-server/INDEX_NAME/doc
 
 To remove a private corpus, send a `DELETE` request to `/blacklab-server/INDEX_NAME/`.
 
-See [Manage user corpora API endpoints](/server/rest-api/corpus-management) for details.
+See [Manage user corpora API endpoints](/server/rest-api/corpus-management/) for details.
 
 ## Manage user input formats
 

@@ -120,7 +120,7 @@ The optimum way to divide up memory depends on many factors, but a good starting
 
 You can index your data using the provided commandline tool IndexTool. See [Indexing with BlackLab](/guide/index-your-data/create-an-index.md).
 
-Another option is to configure user authentication to allow users to create corpora and add their data using BlackLab Server. See [here](/server/howtos) to get started.
+Another option is to configure user authentication to allow users to create corpora and add their data using BlackLab Server. See [here](/server/user-corpora.html) to get started.
 
 There is currently no way to use BlackLab Server to add data to non-user ("global" or regular) corpora. In the future, this will be available using Solr.
 
