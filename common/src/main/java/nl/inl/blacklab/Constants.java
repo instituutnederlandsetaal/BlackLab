@@ -5,6 +5,8 @@ package nl.inl.blacklab;
  */
 public class Constants {
 
+    public static final int MAX_LUCENE_VALUE_LENGTH = 32766;
+
     /** Utility class, don't instantiate */
     private Constants() {}
 
