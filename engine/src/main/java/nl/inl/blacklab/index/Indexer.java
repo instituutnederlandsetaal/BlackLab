@@ -15,8 +15,9 @@ import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.util.FileProcessor;
 
-public interface Indexer {
+public interface Indexer extends DocWriter {
 
     /**
      * Create an Indexer for an existing index.
@@ -155,6 +156,10 @@ public interface Indexer {
      */
     void update(Term term, BLInputDocument document) throws IOException;
 
+    default void index(IndexSource indexSource) {
+        indexSource.index(this);
+    }
+
     /**
      * Index a document or archive from an InputStream.
      *
@@ -244,4 +249,7 @@ public interface Indexer {
 
     void setNumberOfThreadsToUse(int numberOfThreadsToUse);
 
+    FileProcessor createFileProcessor();
+
+    String getFormatIdentifier();
 }

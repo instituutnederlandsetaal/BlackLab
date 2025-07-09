@@ -19,10 +19,7 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
-import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -53,49 +50,6 @@ class IndexerImpl implements DocWriter, Indexer {
 
     static final Logger logger = LogManager.getLogger(IndexerImpl.class);
 
-    /**
-     * FileProcessor FileHandler that creates a DocIndexer for every file and
-     * performs some reporting.
-     */
-    private class FileHandlerDocIndexer implements FileProcessor.FileHandler {
-
-        @Override
-        public void file(FileReference file) throws MalformedInputFile, PluginException {
-            InputFormat inputFormat = DocumentFormats.getFormat(IndexerImpl.this.formatIdentifier).orElseThrow();
-            try (DocIndexer docIndexer = inputFormat.createDocIndexer(IndexerImpl.this, file)) {
-                if (docIndexer == null) {
-                    throw new PluginException(
-                            "Could not instantiate DocIndexer: " + IndexerImpl.this.formatIdentifier + ", " + file.getPath());
-                }
-                if (file.getAssociatedFile() != null)
-                    docIndexer.setDocumentDirectory(file.getAssociatedFile().getParentFile()); // for XInclude resolution
-
-                if (docIndexer.continueIndexing()) {
-                    listener().fileStarted(file.getPath());
-                    int docsDoneBefore = docIndexer.numberOfDocsDone();
-                    long tokensDoneBefore = docIndexer.numberOfTokensDone();
-                    try {
-                        docIndexer.index();
-                    } catch (Exception e) {
-                        throw new ErrorIndexingFile("Error while indexing input file: " + file.getPath(), e);
-                    }
-                    listener().fileDone(file.getPath());
-
-                    int docsDoneAfter = docIndexer.numberOfDocsDone();
-                    if (docsDoneAfter == docsDoneBefore) {
-                        logger.warn("No docs found in " + file.getPath() + "; wrong format?");
-                    }
-                    long tokensDoneAfter = docIndexer.numberOfTokensDone();
-                    if (tokensDoneAfter == tokensDoneBefore) {
-                        logger.warn("No words indexed in " + file.getPath() + "; wrong format?");
-                    }
-                }
-            }
-        }
-    }
-
-    private final FileHandlerDocIndexer docIndexerWrapper = new FileHandlerDocIndexer();
-
     /** Our index */
     private BlackLabIndexWriter indexWriter;
 
@@ -122,7 +76,7 @@ class IndexerImpl implements DocWriter, Indexer {
      * Recursively index files inside a directory? (or archive file, if
      * processArchivesAsDirectories == true)
      */
-    private boolean defaultRecurseSubdirs = true;
+    private boolean recurseSubdirs = true;
 
     /**
      * Format of the documents we're going to be indexing, used to create the
@@ -285,7 +239,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void setRecurseSubdirs(boolean recurseSubdirs) {
-        this.defaultRecurseSubdirs = recurseSubdirs;
+        this.recurseSubdirs = recurseSubdirs;
     }
 
     @Override
@@ -433,26 +387,23 @@ class IndexerImpl implements DocWriter, Indexer {
         }
     }
 
-//    public void indexUsing(String indexSource, String indexSpec) {
-//        switch (indexSource) {
-//        case "file":
-//            // Index from file system
-//            index()
-//        }
-//    }
-
     @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, null);
     }
 
     @Override
+    public FileProcessor createFileProcessor() {
+        FileProcessor proc = new FileProcessor(numberOfThreadsToUse, recurseSubdirs, processArchivesAsDirectories);
+        proc.setErrorHandler(listener());
+        return proc;
+    }
+
+    @Override
     public void index(String fileName, InputStream input, String fileNameGlob) {
-        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs,
-                this.processArchivesAsDirectories)) {
+        try (FileProcessor proc = createFileProcessor()) {
+            proc.setFileHandler(new FileHandlerDocIndexer(this));
             proc.setFileNameGlob(fileNameGlob);
-            proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener());
             proc.processFile(FileReference.fromInputStream(fileName, input, null));
         }
     }
@@ -464,22 +415,17 @@ class IndexerImpl implements DocWriter, Indexer {
 
     @Override
     public void index(File file, String fileNameGlob) {
-        Optional<String> optGlob = Optional.ofNullable(fileNameGlob);
-        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
-            proc.setFileNameGlob(optGlob.orElse("*"));
-            proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener());
+        try (FileProcessor proc = createFileProcessor()) {
+            proc.setFileHandler(new FileHandlerDocIndexer(this));
+            proc.setFileNameGlob(fileNameGlob == null ? "*" : fileNameGlob);
             proc.processFileOrDirectory(file);
         }
     }
     
     @Override
     public void index(String fileName, byte[] contents, String fileNameGlob) {
-        Optional<String> optGlob = Optional.ofNullable(fileNameGlob);
-        try (FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories)) {
-            proc.setFileNameGlob(optGlob.orElse("*"));
-            proc.setFileHandler(docIndexerWrapper);
-            proc.setErrorHandler(listener());
+        try (FileProcessor proc = createFileProcessor()) {
+            proc.setFileNameGlob(fileNameGlob == null ? "*" : fileNameGlob);
             proc.processFile(FileReference.fromBytes(fileName, contents, (File)null));
         }
     }
@@ -615,5 +561,9 @@ class IndexerImpl implements DocWriter, Indexer {
     @Override
     public WarnOnce warnOnce() {
         return warnOnce;
+    }
+
+    public String getFormatIdentifier() {
+        return formatIdentifier;
     }
 }

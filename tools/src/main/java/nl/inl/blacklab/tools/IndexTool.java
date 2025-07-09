@@ -9,7 +9,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -21,11 +20,7 @@ import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.WordUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -35,6 +30,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.IndexSource;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -43,7 +39,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
@@ -54,112 +49,6 @@ import nl.inl.util.LuceneUtil;
 public class IndexTool {
 
     static final Map<String, String> indexerParam = new TreeMap<>();
-
-    static abstract class IndexSource {
-
-        private static final Logger logger = LogManager.getLogger(IndexSource.class);
-
-        private static final String PROTOCOL_SEPARATOR = "://";
-
-        private static Map<String, Class<? extends IndexSource>> indexSourceTypes;
-
-        /**
-         * Find all legacy DocIndexers and store them in a map.
-         * @return a map of format identifiers to DocIndexerLegacy classes
-         */
-        private static synchronized Map<String, Class<? extends IndexSource>> getIndexSourceTypes() {
-            if (indexSourceTypes == null) {
-                indexSourceTypes = new HashMap<>();
-                Reflections reflections = new Reflections("", new SubTypesScanner(false));
-                for (Class<? extends IndexSource> cl: reflections.getSubTypesOf(IndexSource.class)) {
-                    try {
-                        // Get the URI_SCHEME constant from the class
-                        String scheme = (String) cl.getField("URI_SCHEME").get(null);
-                        indexSourceTypes.put(scheme, cl);
-                    } catch (NoSuchFieldException | IllegalAccessException e) {
-                        logger.error("Could not get URI_SCHEME constant from class {}, ", cl.getName());
-                        logger.error(e);
-                    }
-                }
-            }
-            return indexSourceTypes;
-        }
-
-        private static IndexSource fromUri(String uri) {
-            int index = uri.indexOf(PROTOCOL_SEPARATOR);
-            String scheme = index >= 0 ? uri.substring(0, index) : "";
-            String path = index >= 0 ? uri.substring(index + PROTOCOL_SEPARATOR.length()) : uri;
-            Class<? extends IndexSource> indexSourceClass = getIndexSourceTypes().get(scheme);
-            if (indexSourceClass == null) {
-                throw new IllegalArgumentException("Unknown input URI scheme: " + uri);
-            }
-            // Create an instance of the appropriate IndexSource subclass
-            try {
-                return indexSourceClass.getConstructor(String.class).newInstance(path);
-            } catch (ReflectiveOperationException e) {
-                throw new IllegalArgumentException("Error creating IndexSource for URI: " + uri, e);
-            }
-        }
-
-        private final String uri;
-
-        public IndexSource(String uri) {
-            this.uri = uri;
-        }
-
-        public String getUri() {
-            return uri;
-        }
-
-        /** Get directory associated with this IndexSource; we will search it for format files. */
-        public Optional<File> getAssociatedDirectory() {
-            return Optional.empty();
-        }
-
-        @Override
-        public String toString() {
-            return uri;
-        }
-    }
-
-    static class IndexSourceFile extends IndexSource {
-
-        public static final String URI_SCHEME = "file";
-
-        private final File inputDir;
-
-        private final String glob;
-
-        public IndexSourceFile(String uri) {
-            super(uri);
-            File file = new File(uri);
-            if (file.isDirectory()) {
-                this.inputDir = file;
-                this.glob = "*";
-            } else {
-                this.inputDir = file.getParentFile() == null ? new File(".") : file.getParentFile();
-                this.glob = file.getName();
-            }
-        }
-
-        public File getInputDir() {
-            return inputDir;
-        }
-
-        public String getGlob() {
-            return glob;
-        }
-
-        @Override
-        public Optional<File> getAssociatedDirectory() {
-            return Optional.of(inputDir);
-        }
-
-        @Override
-        public String toString() {
-            return inputDir + File.separator + (glob.isEmpty() || glob.equals("*") ? "" : glob);
-        }
-    }
 
     private IndexTool() {
     }
@@ -454,15 +343,7 @@ public class IndexTool {
         indexer.setLinkedFileDirs(linkedFileDirs);
         try {
             if (!createEmptyIndex) {
-                indexer.index
-                if (inputGlob.contains("*") || inputGlob.contains("?")) {
-                    // Real wildcard glob
-                    indexer.index(inputDir, inputGlob);
-                } else {
-                    // Single file.
-                    indexer.index(new File(inputDir, inputGlob));
-                    MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
-                }
+                indexer.index(indexSource);
             }
         } catch (Exception e) {
             System.err.println(
