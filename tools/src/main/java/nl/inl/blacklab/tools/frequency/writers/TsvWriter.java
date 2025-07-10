@@ -3,7 +3,6 @@ package nl.inl.blacklab.tools.frequency.writers;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -87,7 +86,7 @@ public final class TsvWriter extends FreqListWriter {
             record.add(Integer.toString(wordID));
         } else {
             // for each annotation construct a string for the ngram
-            final int ngramSize = groupId.getNgramSize();
+            final int ngramSize = fCfg.ngramSize();
             for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
                  tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
                 // get term index for the annotation
@@ -97,8 +96,6 @@ public final class TsvWriter extends FreqListWriter {
             }
         }
     }
-
-
 
     private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
             final Terms termIndex) {

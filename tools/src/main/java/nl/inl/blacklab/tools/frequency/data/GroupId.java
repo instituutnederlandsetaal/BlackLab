@@ -7,7 +7,6 @@ import java.util.Arrays;
  * Group id, with a precalculated hashcode to save time while grouping and sorting.
  */
 public final class GroupId implements Comparable<GroupId>, Serializable {
-    private final int ngramSize;
     private final int[] tokenIds;
     private final int[] tokenSortPositions;
     private final String[] metadataValues;
@@ -16,9 +15,8 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
     /**
      * @param tokenSortPositions sort position for each token in the group id
      */
-    public GroupId(final int ngramSize, final int[] tokenIds, final int[] tokenSortPositions,
+    public GroupId(final int[] tokenIds, final int[] tokenSortPositions,
             final DocumentMetadata meta) {
-        this.ngramSize = ngramSize;
         this.tokenIds = tokenIds;
         this.tokenSortPositions = tokenSortPositions;
         this.metadataValues = meta.values();
@@ -50,9 +48,5 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
     @Override
     public int compareTo(final GroupId other) {
         return Integer.compare(hash, other.hash);
-    }
-
-    public int getNgramSize() {
-        return ngramSize;
     }
 }

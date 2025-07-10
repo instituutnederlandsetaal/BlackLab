@@ -140,7 +140,7 @@ final public class DocumentIndexBasedBuilder {
 
         if (numAnnotations == 0) {
             // just doc length, no annotations
-            final var groupId = new GroupId(ngramSize, EMPTY_ARRAY, EMPTY_ARRAY, meta);
+            final var groupId = new GroupId(EMPTY_ARRAY, EMPTY_ARRAY, meta);
 
             // Count occurrence in this doc
             final var occ = occsInDoc.get(groupId);
@@ -174,7 +174,7 @@ final public class DocumentIndexBasedBuilder {
                 final int[] sortValuesThisAnnotation = doc.sorting().get(annotationIndex);
                 System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex, ngramSize);
             }
-            final GroupId groupId = new GroupId(ngramSize, annotationValuesForThisToken, sortPositions, meta);
+            final GroupId groupId = new GroupId(annotationValuesForThisToken, sortPositions, meta);
 
             // Only add if it is above the cutoff
             if (fCfg.cutoff() != null) {
