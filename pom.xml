@@ -14,8 +14,8 @@
 
     <modules>
 
-        <!-- Contains config for checkstyle, PMD and findbugs. -->
-        <module>build-tools</module>
+        <!-- Contains config for checkstyle, PMD and findbugs.
+        <module>build-tools</module> -->
 
         <!-- Smaller modules used by Java lib and webservice -->
         <module>util</module>
@@ -322,7 +322,7 @@
                 <version>3.3.0</version>
             </plugin>
 
-            <!-- Report on (possible) bugs -->
+            <!-- Report on (possible) bugs
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -334,9 +334,9 @@
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on possible bugs/style problems -->
+            <!-- Report on possible bugs/style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
@@ -348,9 +348,9 @@
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on style problems -->
+            <!-- Report on style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -362,7 +362,7 @@
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
             <!-- Javadoc -->
             <plugin>
@@ -585,7 +585,7 @@
                 <version>3.3.0</version>
             </plugin>
 
-            <!-- Project info section of the project site -->
+            <!-- Project info section of the project site
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
@@ -595,19 +595,17 @@
                         <reports>
                             <report>dependencies</report>
                             <report>dependency-info</report>
-                            <!-- <report>index</report> -->
                             <report>issue-management</report>
                             <report>licenses</report>
                             <report>plugin-management</report>
                             <report>plugins</report>
                             <report>team</report>
-                            <!-- <report>mailing-list</report> <report>cim</report> -->
                             <report>scm</report>
                             <report>summary</report>
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
+            </plugin> -->
 
             <!-- Javadoc -->
             <plugin>
@@ -627,7 +625,7 @@
                 </reportSets>
             </plugin>
 
-            <!-- Report on (possible) bugs -->
+            <!-- Report on (possible) bugs
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -635,9 +633,9 @@
                 <configuration>
                     <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on possible bugs/style problems -->
+            <!-- Report on possible bugs/style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
@@ -653,9 +651,9 @@
                         <exclude>**/queryParser/**/*</exclude>
                     </excludes>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on style problems -->
+            <!-- Report on style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -671,9 +669,9 @@
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on tags like TODO, etc. -->
+            <!-- Report on tags like TODO, etc.
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>taglist-maven-plugin</artifactId>
@@ -719,9 +717,9 @@
                         </tagClasses>
                     </tagListOptions>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on dependency versions -->
+            <!-- Report on dependency versions
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
@@ -731,11 +729,10 @@
                         <reports>
                             <report>dependency-updates-report</report>
                             <report>plugin-updates-report</report>
-                            <!-- <report>property-updates-report</report> -->
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
+            </plugin> -->
 
         </plugins>
 
