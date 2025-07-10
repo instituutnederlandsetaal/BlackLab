@@ -56,9 +56,9 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            docs.add(hit.doc);
-            starts.add(hit.start);
-            ends.add(hit.end);
+            docs.add(hit.doc_);
+            starts.add(hit.start_);
+            ends.add(hit.end_);
             if (hit.matchInfo != null)
                 matchInfos.add(hit.matchInfo);
         } finally {
@@ -159,9 +159,9 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            h.doc = docs.getInt((int)index);
-            h.start = starts.getInt((int)index);
-            h.end = ends.getInt((int)index);
+            h.doc_ = docs.getInt((int)index);
+            h.start_ = starts.getInt((int)index);
+            h.end_ = ends.getInt((int)index);
             h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             assert HitsInternal.debugCheckReasonableHit(h);
         } finally {

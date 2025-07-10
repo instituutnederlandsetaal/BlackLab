@@ -185,7 +185,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 h.getEphemeral(i, hit);
                 // OPT: copy context as well..?
 
-                int doc = hit.doc;
+                int doc = hit.doc();
                 if (doc != prevDoc) {
                     docsRetrieved.add(1);
                     prevDoc = doc;
@@ -249,9 +249,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             EphemeralHit hit = new EphemeralHit();
             for (Long hitIndex : chosenHitIndices) {
                 hr.getEphemeral(hitIndex, hit);
-                if (hit.doc != previousDoc) { // this works because indexes are sorted (TreeSet)
+                if (hit.doc() != previousDoc) { // this works because indexes are sorted (TreeSet)
                     docsInSample.add(1);
-                    previousDoc = hit.doc;
+                    previousDoc = hit.doc();
                 }
 
                 sample.add(hit);
@@ -468,7 +468,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         HitsInternalMutable hitsInDoc = HitsInternal.create(-1, size(), false);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsInternal) {
-            if (h.doc == docId)
+            if (h.doc() == docId)
                 hitsInDoc.add(h);
         }
         return new HitsList(queryInfo(), hitsInDoc, matchInfoDefs);

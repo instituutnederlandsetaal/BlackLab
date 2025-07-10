@@ -43,9 +43,9 @@ class HitsInternalLock extends HitsInternalNoLock {
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            docs.add(hit.doc);
-            starts.add(hit.start);
-            ends.add(hit.end);
+            docs.add(hit.doc_);
+            starts.add(hit.start_);
+            ends.add(hit.end_);
             matchInfos.add(hit.matchInfo);
         } finally {
             this.lock.writeLock().unlock();
@@ -150,9 +150,9 @@ class HitsInternalLock extends HitsInternalNoLock {
     public void getEphemeral(long index, EphemeralHit h) {
         lock.readLock().lock();
         try {
-            h.doc = docs.getInt(index);
-            h.start = starts.getInt(index);
-            h.end = ends.getInt(index);
+            h.doc_ = docs.getInt(index);
+            h.start_ = starts.getInt(index);
+            h.end_ = ends.getInt(index);
             h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             assert HitsInternal.debugCheckReasonableHit(h);
         } finally {

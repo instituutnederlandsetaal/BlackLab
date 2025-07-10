@@ -167,8 +167,8 @@ public class DocUtil {
         Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();
         for (int i = 0; i < starts.length; i++) {
             EphemeralHit hit = hitsIt.next(); // hits.get(i);
-            starts[i] = hit.start;
-            ends[i] = hit.end - 1; // end actually points to the first word not in the hit, so
+            starts[i] = hit.start();
+            ends[i] = hit.end() - 1; // end actually points to the first word not in the hit, so
                                    // subtract one
         }
 

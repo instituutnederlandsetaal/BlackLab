@@ -48,9 +48,9 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         @Override
         public EphemeralHit next() {
             try {
-                hit.doc = HitsInternalNoLock32.this.docs.getInt(pos);
-                hit.start = HitsInternalNoLock32.this.starts.getInt(pos);
-                hit.end = HitsInternalNoLock32.this.ends.getInt(pos);
+                hit.doc_ = HitsInternalNoLock32.this.docs.getInt(pos);
+                hit.start_ = HitsInternalNoLock32.this.starts.getInt(pos);
+                hit.end_ = HitsInternalNoLock32.this.ends.getInt(pos);
                 hit.matchInfo = HitsInternalNoLock32.this.matchInfos.isEmpty() ? null :
                         HitsInternalNoLock32.this.matchInfos.get(pos);
                 ++pos;
@@ -116,9 +116,9 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     @Override
     public void add(EphemeralHit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
-        docs.add(hit.doc);
-        starts.add(hit.start);
-        ends.add(hit.end);
+        docs.add(hit.doc_);
+        starts.add(hit.start_);
+        ends.add(hit.end_);
         if (hit.matchInfo != null) {
             matchInfos.add(hit.matchInfo);
         } else {
@@ -156,9 +156,9 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         hits.withReadLock(hr -> {
             for (EphemeralHit h: hr) {
                 assert HitsInternal.debugCheckReasonableHit(h);
-                docs.add(h.doc);
-                starts.add(h.start);
-                ends.add(h.end);
+                docs.add(h.doc_);
+                starts.add(h.start_);
+                ends.add(h.end_);
                 if (h.matchInfo != null) {
                     matchInfos.add(h.matchInfo);
                 } else {
@@ -210,9 +210,9 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
      */
     @Override
     public void getEphemeral(long index, EphemeralHit h) {
-        h.doc = docs.getInt((int)index);
-        h.start = starts.getInt((int)index);
-        h.end = ends.getInt((int)index);
+        h.doc_ = docs.getInt((int)index);
+        h.start_ = starts.getInt((int)index);
+        h.end_ = ends.getInt((int)index);
         h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
         assert HitsInternal.debugCheckReasonableHit(h);
     }
