@@ -78,6 +78,7 @@ public final class AnnotationInfo {
     public Map<List<String>, Integer> getMetaToId() {
         return metaToId;
     }
+
     public Map<List<Integer>, Integer> getWordToId() {
         return wordToId;
     }

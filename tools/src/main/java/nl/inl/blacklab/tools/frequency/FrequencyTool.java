@@ -2,8 +2,6 @@ package nl.inl.blacklab.tools.frequency;
 
 import java.io.File;
 
-import nl.inl.blacklab.tools.frequency.writers.AnnotationWriter;
-
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -14,6 +12,7 @@ import nl.inl.blacklab.tools.frequency.builder.IndexBasedBuilder;
 import nl.inl.blacklab.tools.frequency.builder.SearchBasedBuilder;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.writers.AnnotationWriter;
 import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
 import nl.inl.blacklab.tools.frequency.writers.MetaGroupWriter;
 import nl.inl.util.Timer;

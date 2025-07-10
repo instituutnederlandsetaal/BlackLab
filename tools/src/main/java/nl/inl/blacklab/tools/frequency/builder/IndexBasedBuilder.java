@@ -152,7 +152,9 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             occurrences.clear();
         } else if (groupingTooLarge || isFinalRun) {
             // Sort our map now.
-            final SortedMap<GroupId, GroupCounts> sorted = new TreeMap<>(occurrences);
+            final var t = new Timer();
+            final SortedMap<GroupId, Integer> sorted = new TreeMap<>(occurrences);
+            System.out.println("  Sorted treemap in " + t.elapsedDescription(true));
             // Write chunk files, to be merged at the end
             final var chunkFile = chunkWriter.write(sorted);
             chunkFiles.add(chunkFile);
