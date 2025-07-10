@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class CorpusStatus implements Cloneable {
+public class CorpusStatus {
 
     public String indexName = "";
 
@@ -35,11 +35,6 @@ public class CorpusStatus implements Cloneable {
         this.indexName = name;
         this.displayName = displayName;
         this.documentFormat = documentFormat;
-    }
-
-    @Override
-    public CorpusStatus clone() throws CloneNotSupportedException {
-        return (CorpusStatus)super.clone();
     }
 
     @Override

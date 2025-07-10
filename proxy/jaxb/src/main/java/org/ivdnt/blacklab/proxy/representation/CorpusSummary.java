@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" })
-public class CorpusSummary implements Cloneable {
+public class CorpusSummary {
 
     @XmlAttribute
     @JsonInclude(Include.NON_NULL)
@@ -40,11 +40,6 @@ public class CorpusSummary implements Cloneable {
         this.name = name;
         this.displayName = displayName;
         this.documentFormat = documentFormat;
-    }
-
-    @Override
-    public CorpusSummary clone() throws CloneNotSupportedException {
-        return (CorpusSummary)super.clone();
     }
 
     @Override

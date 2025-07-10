@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" }) // don't serialize name, it is used as the key
-public class Annotation implements Cloneable {
+public class Annotation {
 
     @XmlAttribute
     public String name;
@@ -54,15 +54,6 @@ public class Annotation implements Cloneable {
 
     @JsonInclude(Include.NON_NULL)
     public String parentAnnotation;
-
-    @Override
-    public Annotation clone() {
-        try {
-            return (Annotation)super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new UnsupportedOperationException(e);
-        }
-    }
 
     @Override
     public String toString() {

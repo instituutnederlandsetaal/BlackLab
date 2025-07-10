@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
         //"blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
         "corpora", "indices", "user", "cacheStatus" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
-public class Server implements Cloneable {
+public class Server {
 
     /** Use this to serialize indices to JSON.
      *
@@ -139,10 +139,5 @@ public class Server implements Cloneable {
                 ", indices=" + indices +
                 ", user=" + user +
                 '}';
-    }
-
-    @Override
-    public Server clone() throws CloneNotSupportedException {
-        return (Server)super.clone();
     }
 }
