@@ -35,7 +35,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"summary", "hits", "docInfos", "hitGroups", "facets" })
-public class HitsResults implements Cloneable, EntityWithSummary {
+public class HitsResults implements EntityWithSummary {
 
     @Override
     public SearchSummary getSummary() {
@@ -219,11 +219,6 @@ public class HitsResults implements Cloneable, EntityWithSummary {
         this.hits = null;
         this.docInfos = null;
         this.hitGroups = groups;
-    }
-
-    @Override
-    public HitsResults clone() throws CloneNotSupportedException {
-        return (HitsResults)super.clone();
     }
 
     @Override

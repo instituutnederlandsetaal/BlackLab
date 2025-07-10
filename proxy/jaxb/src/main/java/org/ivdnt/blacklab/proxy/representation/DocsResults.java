@@ -34,7 +34,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"summary", "docs", "docGroups", "facets" })
-public class DocsResults implements Cloneable, EntityWithSummary {
+public class DocsResults implements EntityWithSummary {
 
     private static class DocListSerializer extends JsonSerializer<BigList<Doc>> {
         @Override
@@ -99,11 +99,6 @@ public class DocsResults implements Cloneable, EntityWithSummary {
     // required for Jersey
     @SuppressWarnings("unused")
     public DocsResults() {}
-
-    @Override
-    public DocsResults clone() throws CloneNotSupportedException {
-        return (DocsResults)super.clone();
-    }
 
     @Override
     public String toString() {

@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" })
-public class AnnotatedField implements Cloneable {
+public class AnnotatedField {
 
     /** Use this to serialize annotatedFields to JSON.
      *
@@ -121,15 +121,6 @@ public class AnnotatedField implements Cloneable {
     }
 
     private AnnotatedField() {}
-
-    @Override
-    public AnnotatedField clone() {
-        try {
-            return (AnnotatedField)super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new UnsupportedOperationException(e);
-        }
-    }
 
     public AnnotatedField(String name) {
         this.name = this.fieldName = name;

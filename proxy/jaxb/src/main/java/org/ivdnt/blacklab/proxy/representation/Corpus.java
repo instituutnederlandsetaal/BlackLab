@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class Corpus implements Cloneable {
+public class Corpus {
 
     /** Use this to serialize indices to JSON.
      *
@@ -305,11 +305,6 @@ public class Corpus implements Cloneable {
         this.fieldInfo = fieldInfo;
         this.annotatedFields = annotatedFields;
         this.metadataFields = metadataFields;
-    }
-
-    @Override
-    public Corpus clone() throws CloneNotSupportedException {
-        return (Corpus)super.clone();
     }
 
     @Override

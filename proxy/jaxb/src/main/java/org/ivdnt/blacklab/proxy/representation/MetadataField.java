@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" }) // this is the key of the object
-public class MetadataField implements Cloneable {
+public class MetadataField {
 
     public static class FieldValuesSerializer extends JsonSerializer<Object> {
         @Override
@@ -105,15 +105,6 @@ public class MetadataField implements Cloneable {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Boolean valueListComplete = true;
-
-    @Override
-    public MetadataField clone() {
-        try {
-            return (MetadataField)super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new UnsupportedOperationException(e);
-        }
-    }
 
     @Override
     public String toString() {
