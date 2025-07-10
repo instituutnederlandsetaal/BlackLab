@@ -156,8 +156,8 @@ public class Contexts {
                     contexts[i] = new int[NUMBER_OF_BOOKKEEPING_INTS
                             + theseWords.length * contextSources.size()];
                     // Math.min() so we don't go beyond actually retrieved snippet (which may have been limited because of config)!
-                    contexts[i][HIT_START_INDEX] = Math.min(theseWords.length, hit.start - firstWordIndex);
-                    contexts[i][RIGHT_START_INDEX] = Math.min(theseWords.length, hit.end - firstWordIndex);
+                    contexts[i][HIT_START_INDEX] = Math.min(theseWords.length, hit.start() - firstWordIndex);
+                    contexts[i][RIGHT_START_INDEX] = Math.min(theseWords.length, hit.end() - firstWordIndex);
                     contexts[i][LENGTH_INDEX] = theseWords.length;
                 }
                 // Copy the context we just retrieved into the context array
