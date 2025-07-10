@@ -1,7 +1,7 @@
 # Parallel corpus querying
 
 ::: tip Supported from v4.0
-Indexing and searching parallel corpoora will be supported from BlackLab 4.0 (and current development snapshots).
+Indexing and searching parallel corpora is supported from BlackLab 4.0.
 :::
 
 A parallel corpus is a corpus that contains multiple versions of the corpus content, usually from different languages and/or time periods, and record the alignment between the versions at different levels (e.g. paragraph, sentence, word).
