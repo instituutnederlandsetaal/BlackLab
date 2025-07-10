@@ -63,14 +63,16 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             final var searcher = new IndexSearcher(index.reader());
             final Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null, sensitivity,
                     Collections.emptySet());
-            System.out.println("  Retrieved " + termFrequenciesMap.size() + " term frequencies for cutoff annotation '"
-                    + fCfg.cutoff().annotation() + "' in " + t.elapsedDescription(true));
             // Only save the strings when the frequency is above the cutoff
             for (final Map.Entry<String, Integer> entry: termFrequenciesMap.entrySet()) {
                 if (entry.getValue() >= fCfg.cutoff().count()) {
                     termFrequencies.add(entry.getKey());
                 }
             }
+            final String logging = " Retrieved " + termFrequenciesMap.size() + " term frequencies " +
+                    " for annotation '" + fCfg.cutoff().annotation() + "' with " +
+                    termFrequencies.size() + " above cutoff in " + t.elapsedDescription(true);
+            System.out.println(logging);
         }
         return termFrequencies;
     }

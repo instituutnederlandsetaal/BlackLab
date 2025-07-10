@@ -40,6 +40,7 @@ abstract class FreqListWriter {
     private static Fory getFory() {
         final var fory = Fory.builder().withLanguage(Language.JAVA)
                 .requireClassRegistration(true)
+                .withAsyncCompilation(true)
                 .build();
         fory.register(GroupId.class);
         fory.register(GroupCounts.class);
