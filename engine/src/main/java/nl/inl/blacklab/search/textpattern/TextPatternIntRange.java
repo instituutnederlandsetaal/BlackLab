@@ -17,8 +17,6 @@ public class TextPatternIntRange extends TextPatternTerm {
 
     private final int max;
 
-    private final String annotation;
-
     public TextPatternIntRange(int min, int max) {
         this(min, max, null);
     }
@@ -27,7 +25,6 @@ public class TextPatternIntRange extends TextPatternTerm {
         super(getRegex(min, max), annotation, null);
         this.min = min;
         this.max = max;
-        this.annotation = annotation;
     }
 
     public int getMin() {
