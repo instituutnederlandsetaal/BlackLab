@@ -100,6 +100,19 @@
         <system>GitHub Issues</system>
     </issueManagement>
 
+    <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+        </repository>
+        <snapshotRepository>
+            <id>central</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <developers>
         <developer>
             <id>jan-niestadt</id>
