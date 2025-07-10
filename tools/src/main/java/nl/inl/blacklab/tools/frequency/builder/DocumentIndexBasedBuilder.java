@@ -141,18 +141,10 @@ final public class DocumentIndexBasedBuilder {
         if (numAnnotations == 0) {
             // just doc length, no annotations
             final var groupId = new GroupId(EMPTY_ARRAY, EMPTY_ARRAY, meta);
-
             // Count occurrence in this doc
-            final var occ = occsInDoc.get(groupId);
             final int tokenCount = docLength - (ngramSize - 1);
-            // TODO map merge?
-            if (occ == null) {
-                occsInDoc.put(groupId, tokenCount);
-            } else {
-                // If we already have this group, increment the count
-                // TODO performance?
-                occsInDoc.put(groupId, occ + tokenCount);
-            }
+            // If we already have this group, increment the count
+            occsInDoc.merge(groupId, tokenCount, Integer::sum);
             return occsInDoc; // no annotations, so no ngrams to calculate
         }
 
@@ -193,15 +185,7 @@ final public class DocumentIndexBasedBuilder {
             }
 
             // Count occurrence in this doc
-            // TODO map merge?
-            final var occ = occsInDoc.get(groupId);
-            if (occ == null) {
-                occsInDoc.put(groupId, 1);
-            } else {
-                // If we already have this group, increment the count
-                // TODO performance?
-                occsInDoc.put(groupId, occ + 1);
-            }
+            occsInDoc.merge(groupId, 1, Integer::sum);
         }
 
         return occsInDoc;
