@@ -307,7 +307,7 @@ public class TextPatternSerializerCql {
         // MatchFilter funccall
         cqlSerializers.put(MatchFilterFunctionCall.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             MatchFilterFunctionCall tp = (MatchFilterFunctionCall) pattern;
-            b.append(tp.getName()).append("(" + tp.getCapture() + ")");
+            b.append(tp.getName() + "(" + tp.getCapture() + ")");
         });
 
         // MatchFilter implication
@@ -375,7 +375,7 @@ public class TextPatternSerializerCql {
         TextPatternPositionFilter tp = (TextPatternPositionFilter) pattern;
         boolean supportedOp = tp.getOperation() == SpanQueryPositionFilter.Operation.WITHIN ||
                 tp.getOperation() == SpanQueryPositionFilter.Operation.CONTAINING;
-        if (tp.getAdjustLeading() != 0 || tp.getAdjustTrailing() != 0 || tp.isInvert() | !supportedOp)
+        if (tp.getAdjustLeading() != 0 || tp.getAdjustTrailing() != 0 || tp.isInvert() || !supportedOp)
             throw new IllegalArgumentException(
                     "Cannot serialize to CorpusQL: posfilter with adjustLeading " + tp.getAdjustLeading() +
                             ", adjustTrailing " + tp.getAdjustTrailing() + ", invert " + tp.isInvert() +
