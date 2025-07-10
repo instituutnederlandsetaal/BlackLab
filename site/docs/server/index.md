@@ -14,7 +14,7 @@ BlackLab Server is a web service (REST API) for accessing BlackLab corpora. It i
 
 Images are available on [Docker Hub](https://hub.docker.com/r/instituutnederlandsetaal/blacklab). The current image should be considered somewhat experimental: details may change. Suggestions for improving the image (and this guide) are welcome.
 
-Starting with the upcoming v4.0, we will provide stable release images. For now, we only provide the `dev` tag, which is always up to date with the `dev` branch.
+Since `v4.0.0`, we provide stable release images. We also provide a `dev` tag, which is always up to date with the `dev` branch.
 
 To build a version from source, a Docker version supporting [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/) is required (18.09 or higher), as well as Docker Compose version 1.27.1 or higher.
 
