@@ -20,6 +20,7 @@ import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
 
 abstract class FreqListWriter {
     static final Fory fory = getFory();
@@ -64,7 +65,7 @@ abstract class FreqListWriter {
         try {
             final var fis = new FileInputStream(file);
             final var zis = bCfg.isCompressed() ? new LZ4FrameInputStream(fis) : fis;
-            return new ForyInputStream(zis);
+            return new BufferedForyInputStream(zis, 2 << 12);
         } catch (final IOException e) {
             throw reportIOException(e);
         }

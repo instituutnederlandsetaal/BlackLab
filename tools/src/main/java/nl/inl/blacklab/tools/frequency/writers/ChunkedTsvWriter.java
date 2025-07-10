@@ -11,6 +11,7 @@ import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
 import nl.inl.util.Timer;
 
 public final class ChunkedTsvWriter extends FreqListWriter {
@@ -34,7 +35,7 @@ public final class ChunkedTsvWriter extends FreqListWriter {
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + file);
         try (final CsvWriter csv = getCsvWriter(file)) {
             final int n = chunkFiles.size();
-            final ForyInputStream[] chunks = new ForyInputStream[n];
+            final ForyInputStream[] chunks = new BufferedForyInputStream[n];
             final int[] numGroups = new int[n]; // groups per chunk file
 
             // These hold the index, key and value for the current group from every chunk file
@@ -90,7 +91,7 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                 }
 
             } finally {
-                for (final ForyInputStream chunk: chunks)
+                for (final var chunk: chunks)
                     chunk.close();
             }
         } catch (final IOException e) {
