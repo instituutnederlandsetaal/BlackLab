@@ -3,7 +3,6 @@ package nl.inl.blacklab.tools.frequency.builder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -23,7 +22,6 @@ import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.DocumentMetadata;
 import nl.inl.blacklab.tools.frequency.data.DocumentTokens;
-import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 
 final public class DocumentIndexBasedBuilder {
@@ -67,7 +65,7 @@ final public class DocumentIndexBasedBuilder {
                 Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
-    public void process(final ConcurrentMap<GroupId, GroupCounts> occurrences, final Set<String> termFrequencies) {
+    public void process(final ConcurrentMap<GroupId, Integer> occurrences, final Set<String> termFrequencies) {
         // Step 1: read all values for the to-be-grouped annotations for this document
         // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
         final DocumentTokens doc = getDocumentTokens();
@@ -132,10 +130,10 @@ final public class DocumentIndexBasedBuilder {
         return new DocumentMetadata(aMetaValues, hash);
     }
 
-    private Map<GroupId, GroupCounts> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta,
+    private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta,
             final Set<String> termFrequencies) {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-        final Map<GroupId, GroupCounts> occsInDoc = new HashMap<>();
+        final Map<GroupId, Integer> occsInDoc = new HashMap<>();
         final int ngramSize = fCfg.ngramSize();
         final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTermsOf(aInfo.getCutoffAnnotation()) : null;
         final int numAnnotations = aInfo.getAnnotations().size();
@@ -147,10 +145,13 @@ final public class DocumentIndexBasedBuilder {
             // Count occurrence in this doc
             final var occ = occsInDoc.get(groupId);
             final int tokenCount = docLength - (ngramSize - 1);
+            // TODO map merge?
             if (occ == null) {
-                occsInDoc.put(groupId, new GroupCounts(tokenCount, 1));
+                occsInDoc.put(groupId, tokenCount);
             } else {
-                occ.hits += tokenCount;
+                // If we already have this group, increment the count
+                // TODO performance?
+                occsInDoc.put(groupId, occ + tokenCount);
             }
             return occsInDoc; // no annotations, so no ngrams to calculate
         }
@@ -192,11 +193,14 @@ final public class DocumentIndexBasedBuilder {
             }
 
             // Count occurrence in this doc
+            // TODO map merge?
             final var occ = occsInDoc.get(groupId);
             if (occ == null) {
-                occsInDoc.put(groupId, new GroupCounts(1, 1));
+                occsInDoc.put(groupId, 1);
             } else {
-                occ.hits++;
+                // If we already have this group, increment the count
+                // TODO performance?
+                occsInDoc.put(groupId, occ + 1);
             }
         }
 
@@ -206,18 +210,8 @@ final public class DocumentIndexBasedBuilder {
     /**
      * Merge occurrences in this doc with global occurrences.
      */
-    private static void mergeOccurrences(final Map<GroupId, GroupCounts> global, final Map<GroupId, GroupCounts> doc) {
-        doc.forEach((groupId, docCount) -> global.compute(groupId, (__, globalCount) -> {
-            // NOTE: we cannot modify globalCount or occ here like we do in HitGroupsTokenFrequencies,
-            //       because we use ConcurrentSkipListMap, which may call the remapping function
-            //       multiple times if there's potential concurrency issues.
-            if (globalCount != null) {
-                // Group existed already
-                // Count hits and doc
-                docCount.hits += globalCount.hits;
-                docCount.docs += globalCount.docs;
-            }
-            return docCount; // reusing occ here is okay because it doesn't change on subsequent calls
-        }));
+    private static void mergeOccurrences(final Map<GroupId, Integer> global, final Map<GroupId, Integer> doc) {
+        doc.forEach((groupId, docCount) -> global.compute(groupId,
+                (_g, globalCount) -> globalCount != null ? docCount + globalCount : docCount));
     }
 }

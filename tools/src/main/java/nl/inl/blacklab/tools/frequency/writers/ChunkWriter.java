@@ -8,7 +8,6 @@ import java.util.UUID;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
 
@@ -20,7 +19,7 @@ public final class ChunkWriter extends FreqListWriter {
         this.tmpDir = new File(bCfg.getOutputDir(), "tmp");
     }
 
-    public File write(final Map<GroupId, GroupCounts> occurrences) {
+    public File write(final Map<GroupId, Integer> occurrences) {
         final var t = new Timer();
         final var file = getFile();
         try (final var os = getOutputStream(file)) {

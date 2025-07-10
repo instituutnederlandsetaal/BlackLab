@@ -22,7 +22,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
-import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
@@ -114,7 +113,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // This is where we store our groups while we're computing/gathering them.
         // Maps from group Id to number of hits and number of docs
         // ConcurrentMap because we're counting in parallel.
-        final ConcurrentMap<GroupId, GroupCounts> occurrences = new ConcurrentHashMap<>();
+        final ConcurrentMap<GroupId, Integer> occurrences = new ConcurrentHashMap<>();
 
         final int docsToProcessInParallel = bCfg.getDocsToProcessInParallel();
         final List<File> chunkFiles = new ArrayList<>();
@@ -140,7 +139,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
      * Write the occurrences to a file. Either a chunk file, or the final output file.
      */
     private void writeOccurences(
-            final List<Integer> docIds, final ConcurrentMap<GroupId, GroupCounts> occurrences, final int rep,
+            final List<Integer> docIds, final ConcurrentMap<GroupId, Integer> occurrences, final int rep,
             final int runEnd,
             final List<File> chunkFiles) {
         // If the grouping has gotten too large, write it to file so we don't run out of memory.
@@ -193,7 +192,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     @SuppressWarnings("DuplicatedCode")
     private void processDocsParallel(
             final List<Integer> docIds,
-            final ConcurrentMap<GroupId, GroupCounts> occurrences
+            final ConcurrentMap<GroupId, Integer> occurrences
     ) {
         docIds.parallelStream().forEach(docId -> {
             try {

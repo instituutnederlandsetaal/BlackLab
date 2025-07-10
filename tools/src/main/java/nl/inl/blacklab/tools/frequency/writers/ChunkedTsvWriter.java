@@ -10,7 +10,6 @@ import de.siegmar.fastcsv.writer.CsvWriter;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupCounts;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
 
@@ -41,7 +40,7 @@ public final class ChunkedTsvWriter extends FreqListWriter {
             // These hold the index, key and value for the current group from every chunk file
             final int[] index = new int[n];
             final GroupId[] key = new GroupId[n];
-            final GroupCounts[] value = new GroupCounts[n];
+            final int[] value = new int[n];
 
             try {
                 int chunksExhausted = 0;
@@ -53,7 +52,7 @@ public final class ChunkedTsvWriter extends FreqListWriter {
                     // Initialize index, key and value with first group from each file
                     index[i] = 0;
                     key[i] = numGroups[i] > 0 ? (GroupId) fory.deserialize(fis) : null;
-                    value[i] = numGroups[i] > 0 ? (GroupCounts) fory.deserialize(fis) : null;
+                    value[i] = numGroups[i] > 0 ? (int) fory.deserialize(fis) : 0;
                     if (numGroups[i] == 0)
                         chunksExhausted++;
                 }
@@ -70,17 +69,16 @@ public final class ChunkedTsvWriter extends FreqListWriter {
 
                     // Merge all groups with the lowest value,
                     // and advance those chunk files to the next group
-                    int hits = 0, docs = 0;
+                    int hits = 0;
                     for (int j = 0; j < n; j++) {
                         if (key[j] != null && key[j].equals(nextGroupToMerge)) {
                             // Add to merged counts
-                            hits += value[j].hits;
-                            docs += value[j].docs;
+                            hits += value[j];
                             // Advance to next group in this chunk
                             index[j]++;
                             final boolean noMoreGroupsInChunk = index[j] >= numGroups[j];
                             key[j] = noMoreGroupsInChunk ? null : (GroupId) fory.deserialize(chunks[j]);
-                            value[j] = noMoreGroupsInChunk ? null : (GroupCounts) fory.deserialize(chunks[j]);
+                            value[j] = noMoreGroupsInChunk ? 0 : (int) fory.deserialize(chunks[j]);
                             if (noMoreGroupsInChunk)
                                 chunksExhausted++;
                         }
