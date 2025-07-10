@@ -2,6 +2,7 @@ package nl.inl.blacklab.tools.frequency.data;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,9 +27,9 @@ public final class AnnotationInfo {
     private final Annotation cutoffAnnotation;
     private final BlackLabIndex index;
     private final Map<List<String>, Integer> metaToId;
-    private final Map<List<Integer>, Integer> wordToId;
+    private final Map<AnnotationGroupId, Integer> wordToId;
     private final AtomicInteger metaId = new AtomicInteger(0);
-    private final AtomicInteger wordId = new AtomicInteger(0);
+    private int wordId = 0;
     private final int[] groupedMetaIdx;
     private final int[] nonGroupedMetaIdx;
 
@@ -40,7 +41,7 @@ public final class AnnotationInfo {
                 .toList();
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
         this.metaToId = new ConcurrentHashMap<>();
-        this.wordToId = new ConcurrentHashMap<>();
+        this.wordToId = new HashMap<>();
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
         this.nonGroupedMetaIdx = fCfg.metadataFields().stream().filter(m -> !m.outputAsId())
@@ -79,7 +80,7 @@ public final class AnnotationInfo {
         return metaToId;
     }
 
-    public Map<List<Integer>, Integer> getWordToId() {
+    public Map<AnnotationGroupId, Integer> getWordToId() {
         return wordToId;
     }
 
@@ -100,14 +101,16 @@ public final class AnnotationInfo {
 
     public int putOrGetWordId(final int[] tokens) {
         // calculate key
-        final var key = Arrays.asList(Arrays.stream(tokens).boxed().toArray(Integer[]::new));
-        if (wordToId.containsKey(key)) {
-            // return ID if it exists
-            return wordToId.get(key);
+        final var key = new AnnotationGroupId(tokens);
+        final int idToPut = wordId;
+        final Integer id = wordToId.putIfAbsent(key, idToPut);
+        if (id == null) {
+            // new ID was created
+            wordId++; // increment for next time
+            return idToPut;
+
         } else {
-            // otherwise, create ID and return
-            final int id = wordId.getAndIncrement();
-            wordToId.put(key, id);
+            // existing ID
             return id;
         }
     }

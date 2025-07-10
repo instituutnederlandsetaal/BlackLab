@@ -26,9 +26,10 @@ public final class AnnotationWriter extends FreqListWriter {
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
                 final var record = new ArrayList<String>();
+                final int[] tokenIds = k.getTokens();
                 record.add(Integer.toString(v)); // add ID as first column
-                for (int i = 0, len = k.size(); i < len; i += fCfg.ngramSize()) {
-                    record.add(writeIdRecord(k, i));
+                for (int i = 0, len = tokenIds.length; i < len; i += fCfg.ngramSize()) {
+                    record.add(writeIdRecord(tokenIds, i));
                 }
                 csv.writeRecord(record);
             });
@@ -42,11 +43,11 @@ public final class AnnotationWriter extends FreqListWriter {
     /**
      * Write in a database suitable format using IDs instead of strings.
      */
-    private String writeIdRecord(final List<Integer> tokenIds, final int startPos) {
+    private String writeIdRecord(final int[] tokenIds, final int startPos) {
         sb.setLength(0);
         sb.append('{');
         for (int i = startPos, endPos = startPos + fCfg.ngramSize(); i < endPos; i++) {
-            sb.append(tokenIds.get(i));
+            sb.append(tokenIds[i]);
             if (i < endPos - 1) {
                 sb.append(',');
             }
