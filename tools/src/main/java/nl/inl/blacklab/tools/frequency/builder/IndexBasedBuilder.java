@@ -16,6 +16,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 import java.util.LinkedHashMap;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -58,7 +60,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     }
 
     private Set<String> getTermFrequencies(final BlackLabIndex index, final FreqListConfig fCfg) {
-        final Set<String> termFrequencies = new HashSet<>();
+        final Set<String> termFrequencies = new ObjectOpenHashSet<>();
         if (fCfg.cutoff() != null) {
             final var t = new Timer();
             final var sensitivity = aInfo.getCutoffAnnotation().sensitivity(MatchSensitivity.SENSITIVE);
@@ -72,7 +74,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                 }
             }
             final String logging = " Retrieved " + termFrequenciesMap.size() + " term frequencies " +
-                    " for annotation '" + fCfg.cutoff().annotation() + "' with " +
+                    "for annotation '" + fCfg.cutoff().annotation() + "' with " +
                     termFrequencies.size() + " above cutoff in " + t.elapsedDescription(true);
             System.out.println(logging);
         }
