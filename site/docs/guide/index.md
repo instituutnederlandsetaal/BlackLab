@@ -3,6 +3,14 @@ title: "Introduction"
 order: -1
 ---
 
+::: tip BlackLab 4 now available!
+
+Major new features include [dependency relations](https://blacklab.ivdnt.org/guide/query-language/relations.html) and [parallel corpora](https://blacklab.ivdnt.org/guide/query-language/parallel.html).
+
+See the [release notes](https://github.com/instituutnederlandsetaal/BlackLab/releases/tag/v4.0.0) and the [full changelog](https://blacklab.ivdnt.org/development/changelog.html).
+
+:::
+
 # What is BlackLab?
 
 BlackLab is a corpus search engine built on top of [Apache Lucene](http://lucene.apache.org/). It supports token-based querying and querying (dependency) relations.
