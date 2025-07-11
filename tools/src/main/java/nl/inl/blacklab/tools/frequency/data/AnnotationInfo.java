@@ -8,6 +8,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
+import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -27,9 +30,9 @@ public final class AnnotationInfo {
     private final Annotation cutoffAnnotation;
     private final BlackLabIndex index;
     private final Map<List<String>, Integer> metaToId;
-    private final Map<AnnotationGroupId, Integer> wordToId;
+    private final Object2IntOpenCustomHashMap<int[]> wordToId;
     private final AtomicInteger metaId = new AtomicInteger(0);
-    private int wordId = 0;
+    private int wordId = 1;
     private final int[] groupedMetaIdx;
     private final int[] nonGroupedMetaIdx;
 
@@ -41,7 +44,8 @@ public final class AnnotationInfo {
                 .toList();
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
         this.metaToId = new ConcurrentHashMap<>();
-        this.wordToId = new HashMap<>();
+        this.wordToId = new Object2IntOpenCustomHashMap<>(IntArrays.HASH_STRATEGY);
+        this.wordToId.defaultReturnValue(-1);
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
         this.nonGroupedMetaIdx = fCfg.metadataFields().stream().filter(m -> !m.outputAsId())
@@ -80,7 +84,7 @@ public final class AnnotationInfo {
         return metaToId;
     }
 
-    public Map<AnnotationGroupId, Integer> getWordToId() {
+    public Object2IntOpenCustomHashMap<int[]> getWordToId() {
         return wordToId;
     }
 
@@ -101,10 +105,9 @@ public final class AnnotationInfo {
 
     public int putOrGetWordId(final int[] tokens) {
         // calculate key
-        final var key = new AnnotationGroupId(tokens);
         final int idToPut = wordId;
-        final Integer id = wordToId.putIfAbsent(key, idToPut);
-        if (id == null) {
+        final int id = wordToId.putIfAbsent(tokens, idToPut);
+        if (id == -1) {
             // new ID was created
             wordId++; // increment for next time
             return idToPut;

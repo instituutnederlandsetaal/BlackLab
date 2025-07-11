@@ -26,10 +26,9 @@ public final class AnnotationWriter extends FreqListWriter {
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
                 final var record = new ArrayList<String>();
-                final int[] tokenIds = k.getTokens();
                 record.add(Integer.toString(v)); // add ID as first column
-                for (int i = 0, len = tokenIds.length; i < len; i += fCfg.ngramSize()) {
-                    record.add(writeIdRecord(tokenIds, i));
+                for (int i = 0, len = k.length; i < len; i += fCfg.ngramSize()) {
+                    record.add(writeIdRecord(k, i));
                 }
                 csv.writeRecord(record);
             });
