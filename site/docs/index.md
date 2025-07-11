@@ -2,7 +2,7 @@
 layout: home
 
 hero:
-  name: BlackLab corpus search
+  name: BlackLab corpus search 4.0
   text: Powerful search for large, annotated text corpora
   tagline: Publish, search, and analyze your corpora with speed and flexibility
   actions:
@@ -17,7 +17,7 @@ features:
   - title: Publish your corpora
     details: Many common formats supported. Easily configure your own.
   - title: Find your matches
-    details: Rich querying for token annotations or dependency relations.
+    details: Rich querying for token annotations, dependency relations.
   - title: Fast and scalable
     details: Uses Apache Lucene as a solid foundation.
 
