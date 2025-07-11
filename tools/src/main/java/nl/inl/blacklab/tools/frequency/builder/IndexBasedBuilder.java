@@ -12,6 +12,9 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
+import java.util.LinkedHashMap;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
@@ -153,8 +156,15 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         } else if (groupingTooLarge || isFinalRun) {
             // Sort our map now.
             final var t = new Timer();
-            final SortedMap<GroupId, Integer> sorted = new TreeMap<>(occurrences);
-            System.out.println("  Sorted treemap in " + t.elapsedDescription(true));
+            final var sorted = occurrences.entrySet()
+                    .parallelStream()
+                    .collect(Collectors.toConcurrentMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            (e1, e2) -> e1,
+                            ConcurrentSkipListMap::new
+                    ));
+            System.out.println("  Sorted ConcurrentSkipListMap in " + t.elapsedDescription(true));
             // Write chunk files, to be merged at the end
             final var chunkFile = chunkWriter.write(sorted);
             chunkFiles.add(chunkFile);
