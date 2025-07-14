@@ -8,6 +8,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 
+import it.unimi.dsi.fastutil.io.FastBufferedInputStream;
+import it.unimi.dsi.fastutil.io.FastBufferedOutputStream;
+
 import org.apache.fory.Fory;
 import org.apache.fory.config.Language;
 import org.apache.fory.io.ForyInputStream;
@@ -48,7 +51,7 @@ abstract class FreqListWriter {
 
     final OutputStream getOutputStream(final File file) {
         try {
-            final var fos = new FileOutputStream(file);
+            final var fos = new FastBufferedOutputStream(new FileOutputStream(file));
             return bCfg.isCompressed() ? new LZ4FrameOutputStream(fos) : fos;
         } catch (final IOException e) {
             throw reportIOException(e);
@@ -63,7 +66,7 @@ abstract class FreqListWriter {
 
     final ForyInputStream getForyInputStream(final File file) {
         try {
-            final var fis = new FileInputStream(file);
+            final var fis = new FastBufferedInputStream(new FileInputStream(file));
             final var zis = bCfg.isCompressed() ? new LZ4FrameInputStream(fis) : fis;
             return new BufferedForyInputStream(zis, 2 << 12);
         } catch (final IOException e) {

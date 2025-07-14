@@ -145,7 +145,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
      * Write the occurrences to a file. Either a chunk file, or the final output file.
      */
     private void writeOccurences(
-            final List<Integer> docIds, final ConcurrentMap<GroupId, Integer> occurrences, final int rep,
+            final List<Integer> docIds, final Map<GroupId, Integer> occurrences, final int rep,
             final int runEnd,
             final List<File> chunkFiles) {
         // If the grouping has gotten too large, write it to file so we don't run out of memory.
@@ -200,7 +200,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     @SuppressWarnings("DuplicatedCode")
     private void processDocsParallel(
             final List<Integer> docIds,
-            final ConcurrentMap<GroupId, Integer> occurrences
+            final Map<GroupId, Integer> occurrences
     ) {
         docIds.parallelStream().forEach(docId -> {
             try {

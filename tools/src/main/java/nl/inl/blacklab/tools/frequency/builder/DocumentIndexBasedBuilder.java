@@ -8,7 +8,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 
 import org.apache.lucene.document.Document;
 
@@ -65,7 +64,7 @@ final public class DocumentIndexBasedBuilder {
                 Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
-    public void process(final ConcurrentMap<GroupId, Integer> occurrences, final Set<String> termFrequencies) {
+    public void process(final Map<GroupId, Integer> occurrences, final Set<String> termFrequencies) {
         // Step 1: read all values for the to-be-grouped annotations for this document
         // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
         final DocumentTokens doc = getDocumentTokens();
@@ -195,7 +194,8 @@ final public class DocumentIndexBasedBuilder {
      * Merge occurrences in this doc with global occurrences.
      */
     private static void mergeOccurrences(final Map<GroupId, Integer> global, final Map<GroupId, Integer> doc) {
-        doc.forEach((groupId, docCount) -> global.compute(groupId,
-                (_g, globalCount) -> globalCount != null ? docCount + globalCount : docCount));
+        doc.forEach((groupId, docCount) -> {
+            global.merge(groupId, docCount, Integer::sum);
+        });
     }
 }
