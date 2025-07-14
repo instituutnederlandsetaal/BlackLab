@@ -1,6 +1,7 @@
 package nl.inl.blacklab.tools.frequency.data;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,8 +23,8 @@ import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
  */
 public final class AnnotationInfo {
     private final AnnotatedField annotatedField;
-    private final List<Annotation> annotations;
-    private final List<Terms> terms;
+    private final Annotation[] annotations;
+    private final Terms[] terms;
     private final Annotation cutoffAnnotation;
     private final BlackLabIndex index;
     private final Map<List<String>, Integer> metaToId;
@@ -36,9 +37,9 @@ public final class AnnotationInfo {
     public AnnotationInfo(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         this.index = index;
         this.annotatedField = index.annotatedField(bCfg.getAnnotatedField());
-        this.annotations = fCfg.annotations().stream().map(annotatedField::annotation).toList();
-        this.terms = annotations.stream().map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
-                .toList();
+        this.annotations = fCfg.annotations().stream().map(annotatedField::annotation).toArray(Annotation[]::new);
+        this.terms = Arrays.stream(annotations).map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
+                .toArray(Terms[]::new);
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
         this.metaToId = new ConcurrentHashMap<>();
         this.wordToId = new Object2IntOpenCustomHashMap<>(IntArrays.HASH_STRATEGY);
@@ -49,7 +50,7 @@ public final class AnnotationInfo {
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
     }
 
-    public List<Terms> getTerms() {
+    public Terms[] getTerms() {
         return terms;
     }
 
@@ -57,16 +58,12 @@ public final class AnnotationInfo {
         return annotatedField;
     }
 
-    public List<Annotation> getAnnotations() {
+    public Annotation[] getAnnotations() {
         return annotations;
     }
 
     public AnnotationForwardIndex getForwardIndexOf(final Annotation annotation) {
         return index.annotationForwardIndex(annotation);
-    }
-
-    public Terms getTermsOf(final Annotation annotation) {
-        return terms.get(annotations.indexOf(annotation));
     }
 
     public Annotation getCutoffAnnotation() {

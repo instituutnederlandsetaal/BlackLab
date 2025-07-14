@@ -3,14 +3,16 @@ package nl.inl.blacklab.tools.frequency.builder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.apache.lucene.document.Document;
 
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -82,27 +84,27 @@ final public class DocumentIndexBasedBuilder {
     }
 
     private DocumentTokens getDocumentTokens() {
-        final var tokensPerAnnotation = new ArrayList<int[]>();
-        final var sortingPerAnnotation = new ArrayList<int[]>();
+        final var annotations = aInfo.getAnnotations();
+        final int numAnnotations = annotations.length;
+        final var tokensPerAnnotation = new int[numAnnotations][];
+        final var sortingPerAnnotation = new int[numAnnotations][];
 
-        for (final var annotation: aInfo.getAnnotations()) {
+        for (int i = 0; i < numAnnotations; i++) {
+            final var annotation = annotations[i];
             // From forward index
             final var index = aInfo.getForwardIndexOf(annotation);
             // Get the tokens for this annotation
             final int[] tokenValues = index.getDocument(docId);
-            tokensPerAnnotation.add(tokenValues);
+            tokensPerAnnotation[i] = tokenValues;
             // And look up their sort values
-            final int[] sortValues = new int[docLength];
-            for (int i = 0; i < docLength; ++i) {
-                final int termId = tokenValues[i];
-                sortValues[i] = aInfo.getTermsOf(annotation).idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
-            }
-            sortingPerAnnotation.add(sortValues);
+            sortingPerAnnotation[i] = new int[docLength + 1]; // +1 for the extra closing token
+            aInfo.getTerms()[i].toSortOrder(tokenValues, sortingPerAnnotation[i], MatchSensitivity.INSENSITIVE);
         }
 
         return new DocumentTokens(tokensPerAnnotation, sortingPerAnnotation);
     }
 
+    @Nullable
     private DocumentMetadata getDocumentMetadata() {
         final var metaValues = new ArrayList<String>();
         // for each metadata field defined in the config
@@ -132,10 +134,10 @@ final public class DocumentIndexBasedBuilder {
     private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta,
             final Set<String> termFrequencies) {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-        final Map<GroupId, Integer> occsInDoc = new HashMap<>();
+        final Map<GroupId, Integer> occsInDoc = new Object2IntOpenHashMap<>();
         final int ngramSize = fCfg.ngramSize();
-        final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTermsOf(aInfo.getCutoffAnnotation()) : null;
-        final int numAnnotations = aInfo.getAnnotations().size();
+        final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTerms()[0] : null;
+        final int numAnnotations = aInfo.getAnnotations().length;
 
         if (numAnnotations == 0) {
             // just doc length, no annotations
@@ -149,7 +151,7 @@ final public class DocumentIndexBasedBuilder {
 
         // We can't get an ngram for the last ngramSize-1 tokens
         for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
-            final int[] annotationValuesForThisToken = new int[numAnnotations * ngramSize];
+            final int[] tokenIds = new int[numAnnotations * ngramSize];
             final int[] sortPositions = new int[numAnnotations * ngramSize];
 
             // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
@@ -160,12 +162,12 @@ final public class DocumentIndexBasedBuilder {
             for (int annotationIndex = 0, arrIndex = 0;
                  annotationIndex < numAnnotations; ++annotationIndex, arrIndex += ngramSize) {
                 // get array slices of ngramSize
-                final int[] tokenValues = doc.tokens().get(annotationIndex);
-                System.arraycopy(tokenValues, tokenIndex, annotationValuesForThisToken, arrIndex, ngramSize);
-                final int[] sortValuesThisAnnotation = doc.sorting().get(annotationIndex);
-                System.arraycopy(sortValuesThisAnnotation, tokenIndex, sortPositions, arrIndex, ngramSize);
+                final int[] tokenValues = doc.tokens()[annotationIndex];
+                System.arraycopy(tokenValues, tokenIndex, tokenIds, arrIndex, ngramSize);
+                final int[] sortValues = doc.sorting()[annotationIndex];
+                System.arraycopy(sortValues, tokenIndex, sortPositions, arrIndex, ngramSize);
             }
-            final GroupId groupId = new GroupId(annotationValuesForThisToken, sortPositions, meta);
+            final var groupId = new GroupId(tokenIds, sortPositions, meta);
 
             // Only add if it is above the cutoff
             if (fCfg.cutoff() != null) {

@@ -23,15 +23,16 @@ public final class LookupTableWriter extends FreqListWriter {
     }
 
     public void write() {
-        System.out.println("  Writing annotation id lookup tables");
         final var t = new Timer();
-        for (final var annotation: aInfo.getAnnotations()) {
+        final var annotations = aInfo.getAnnotations();
+        for (int i = 0; i < annotations.length; i++) {
+            final var annotation = annotations[i];
             // write individual lookup table for each annotation to a separate file
             final var file = getFile(annotation);
             try (final var csv = getCsvWriter(file)) {
-                final var terms = aInfo.getTermsOf(annotation);
+                final var terms = aInfo.getTerms()[i];
                 // id is simply the index in the terms list
-                for (int id = 0; id < terms.numberOfTerms(); id++) {
+                for (int id = 0, len = terms.numberOfTerms(); id < len; id++) {
                     final String token = getToken(terms, id);
                     csv.writeRecord(String.valueOf(id), token);
                 }
@@ -54,5 +55,4 @@ public final class LookupTableWriter extends FreqListWriter {
         }
         return sb.toString();
     }
-
 }

@@ -25,10 +25,14 @@ public final class ChunkWriter extends FreqListWriter {
         try (final var os = getOutputStream(file)) {
             // Write keys and values in sorted order, so we can merge later
             os.write(fory.serialize(occurrences.size())); // start with number of groups
-            for (final var entry: occurrences.entrySet()) {
-                os.write(fory.serialize(entry.getKey()));
-                os.write(fory.serialize(entry.getValue()));
-            }
+            occurrences.forEach((key, value) -> {
+                try {
+                    os.write(fory.serialize(key));
+                    os.write(fory.serialize(value));
+                } catch (final IOException e) {
+                    throw reportIOException(e);
+                }
+            });
         } catch (final IOException e) {
             throw reportIOException(e);
         }

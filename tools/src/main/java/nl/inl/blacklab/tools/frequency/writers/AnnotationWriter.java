@@ -17,7 +17,6 @@ public final class AnnotationWriter extends FreqListWriter {
     }
 
     public void write() {
-        System.out.println("  Writing annotation IDs");
         final var t = new Timer();
 
         final var file = getFile();

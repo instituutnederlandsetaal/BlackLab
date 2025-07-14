@@ -90,7 +90,7 @@ public final class TsvWriter extends FreqListWriter {
             for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
                  tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
                 // get term index for the annotation
-                final Terms termIndex = aInfo.getTerms().get(i); // contains id to string mapping
+                final Terms termIndex = aInfo.getTerms()[i]; // contains id to string mapping
                 final String token = writeStringRecord(ngramSize, tokenIds, tokenArrIndex, termIndex);
                 record.add(token);
             }

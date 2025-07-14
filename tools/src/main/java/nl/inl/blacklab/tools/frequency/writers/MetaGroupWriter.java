@@ -15,7 +15,6 @@ public final class MetaGroupWriter extends FreqListWriter {
     }
 
     public void write() {
-        System.out.println("  Writing grouped metadata IDs");
         final var t = new Timer();
 
         final var file = getFile();
