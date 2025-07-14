@@ -10,8 +10,8 @@ import de.siegmar.fastcsv.writer.CsvWriter;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
+import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
 
 public final class ChunkedTsvWriter extends FreqListWriter {

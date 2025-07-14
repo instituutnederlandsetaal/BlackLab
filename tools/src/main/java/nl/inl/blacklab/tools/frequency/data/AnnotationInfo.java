@@ -1,14 +1,11 @@
 package nl.inl.blacklab.tools.frequency.data;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import it.unimi.dsi.fastutil.ints.Int2IntArrayMap;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -45,7 +42,7 @@ public final class AnnotationInfo {
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
         this.metaToId = new ConcurrentHashMap<>();
         this.wordToId = new Object2IntOpenCustomHashMap<>(IntArrays.HASH_STRATEGY);
-        this.wordToId.defaultReturnValue(-1);
+        wordToId.defaultReturnValue(-1);
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
         this.nonGroupedMetaIdx = fCfg.metadataFields().stream().filter(m -> !m.outputAsId())

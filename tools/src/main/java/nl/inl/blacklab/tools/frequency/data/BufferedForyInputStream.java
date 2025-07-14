@@ -1,13 +1,13 @@
 package nl.inl.blacklab.tools.frequency.data;
 
-import org.apache.fory.io.ForyInputStream;
-
 import java.io.InputStream;
+
+import org.apache.fory.io.ForyInputStream;
 
 /**
  * Better buffer implementation of ForyInputStream.
  */
-public class BufferedForyInputStream extends ForyInputStream {
+public final class BufferedForyInputStream extends ForyInputStream {
     // This value is unfortunately a hardcoded estimate.
     // As long as the buffer is large and the objects are small, it should be fine.
     private static final int leeway = 512;
@@ -17,7 +17,7 @@ public class BufferedForyInputStream extends ForyInputStream {
     }
 
     @Override
-    public final void shrinkBuffer() {
+    public void shrinkBuffer() {
         // shrink is called after every read in the base class, which is not necessary
         // so we override it to only shrink the buffer when we are nearing the end of the stream
         final int idx = getBuffer().readerIndex();
