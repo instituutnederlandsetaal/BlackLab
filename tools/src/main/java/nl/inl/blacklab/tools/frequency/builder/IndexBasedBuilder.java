@@ -7,8 +7,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
@@ -26,6 +27,11 @@ import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
+
+import org.eclipse.collections.impl.factory.Sets;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMapUnsafe;
+import org.eclipse.collections.impl.map.sorted.mutable.TreeSortedMap;
 
 /**
  * More optimized version of HitGroupsTokenFrequencies.
@@ -112,7 +118,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // This is where we store our groups while we're computing/gathering them.
         // Maps from group Id to number of hits and number of docs
         // ConcurrentMap because we're counting in parallel.
-        final ConcurrentMap<GroupId, Integer> occurrences = new ConcurrentHashMap<>();
+        final ConcurrentMap<GroupId, Integer> occurrences = new ConcurrentHashMapUnsafe<>();
 
         final int docsToProcessInParallel = bCfg.getDocsToProcessInParallel();
         final List<File> chunkFiles = new ArrayList<>();
@@ -152,7 +158,14 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         } else if (groupingTooLarge || isFinalRun) {
             // Sort our map now.
             final var t = new Timer();
-            final var sorted = new Object2IntLinkedOpenHashMap<>(occurrences);
+            final var sorted = occurrences.entrySet()
+                    .parallelStream()
+                    .collect(Collectors.toConcurrentMap(
+                            Map.Entry::getKey,
+                            Map.Entry::getValue,
+                            Integer::sum,
+                            ConcurrentSkipListMap::new
+                    ));
             System.out.println("  Sorted ConcurrentSkipListMap in " + t.elapsedDescription(true));
             // Write chunk files, to be merged at the end
             final var chunkFile = chunkWriter.write(sorted);
