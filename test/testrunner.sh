@@ -51,14 +51,14 @@ $COMPOSE rm -fv testserver
 
 ##----------------------------------------------------------
 ## Re-run the same tests using Solr+proxy
-#echo '=== Testing Solr (with integrated index format)...'
-#$COMPOSE build proxy solr "$SERVICE_NAME"
-#$COMPOSE down -v  # delete previous index so it updates if it was changed in the repo
-#$COMPOSE up --force-recreate -d proxy solr
-#export APP_URL=http://proxy:8080/blacklab-server
-#export CORPUS_NAME=test
-#export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
-#sleep 15 # allow Solr a little time to start up
-#$COMPOSE run --rm "$SERVICE_NAME"
-#$COMPOSE stop # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
-#$COMPOSE rm -fv
+echo '=== Testing Solr (with integrated index format)...'
+$COMPOSE build proxy solr "$SERVICE_NAME"
+$COMPOSE down -v  # delete previous index so it updates if it was changed in the repo
+$COMPOSE up --force-recreate -d proxy solr
+export APP_URL=http://proxy:8080/blacklab-server
+export CORPUS_NAME=test
+export SKIP_INDEXING_TESTS=true   # not yet implemented for Solr
+sleep 15 # allow Solr a little time to start up
+$COMPOSE run --rm "$SERVICE_NAME"
+$COMPOSE stop # (stop then rm -v instead of down -v, otherwise we get an error about the volume being in use)
+$COMPOSE rm -fv

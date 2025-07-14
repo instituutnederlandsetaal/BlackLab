@@ -1,12 +1,11 @@
 package org.ivdnt.blacklab.proxy.representation;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import java.util.Map;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class SummaryTextPattern {
@@ -15,15 +14,15 @@ public class SummaryTextPattern {
     public String bcql;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String fieldName;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public Object json;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String error;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    Map<String, MatchInfoDef> matchInfos;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    String fieldName;
+    public Map<String, MatchInfoDef> matchInfos;
 
 }

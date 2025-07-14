@@ -14,7 +14,8 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 ## Stage 1: Solr
 #=============================
-FROM solr:8.11.2
+#FROM solr:9.6.1-slim
+FROM solr:9.6.1
 LABEL maintainer="Jan Niestadt <jan.niestadt@ivdnt.org>"
 
 # Create directory for our test core
