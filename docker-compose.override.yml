@@ -21,6 +21,7 @@ services:
       - "5005:5005"
 
   solr:
+      profiles: [ "tools" ]
       ports:
           # Solr runs on this port
           - "8983:8983"

@@ -42,12 +42,12 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     @Override
     public void serialize(TextPatternStruct pattern, JsonGenerator gen, SerializerProvider serializerProvider) {
         serialize(pattern, (type, args) -> {
-            Map<String, Object> map = mapFromArgs(args);
             try {
                 gen.writeStartObject();
                 {
                     gen.writeStringField("bcqlFragment", TextPatternSerializerCql.serialize(pattern));
                     gen.writeStringField("type", type);
+                    Map<String, Object> map = ObjectSerializationWriter.mapFromArgs(args);
                     for (Map.Entry<String, Object> e: map.entrySet()) {
                         Object value = e.getValue();
                         if (value != null) {
@@ -86,15 +86,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         });
     }
 
-    private static Map<String, Object> mapFromArgs(Object[] args) {
-        Map<String, Object> map = new LinkedHashMap<>();
-        for (int i = 0; i < args.length; i += 2) {
-            assert args[i] instanceof String; // key, value, key, value, ...
-            map.put((String)args[i], args[i + 1]);
-        }
-        return map;
-    }
-
     interface NodeSerializer {
         void serialize(TextPatternStruct pattern, ObjectSerializationWriter writer);
     }
@@ -108,7 +99,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_ALIGNMENT = "alignment";
     private static final String KEY_ANNOTATION = "annotation";
     private static final String KEY_ARGS = "args";
-    static final String KEY_ATTRIBUTES = "attributes";
+    public static final String KEY_ATTRIBUTES = "attributes";
     private static final String KEY_CAPTURE = "capture"; // capture, tags
     private static final String KEY_CAPTURES = "captures";
     private static final String KEY_CHILDREN = "children";
@@ -121,8 +112,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_FILTER = "filter";
     private static final String KEY_INCLUDE = "include";
     private static final String KEY_INVERT = "invert";
-    static final String KEY_MAX = "max"; // (same)
-    static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
+    public static final String KEY_MAX = "max"; // (same)
+    public static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
     private static final String KEY_NAME = "name"; // annotation, function
     private static final String KEY_NEGATE = "negate";
     private static final String KEY_OPERATION = "operation"; // posfilter, ngrams

@@ -204,6 +204,7 @@ public class DocumentFormats {
 
     private static void addConfigFormatsInDefaultDirectories() {
         List<File> dirs = BlackLab.defaultConfigDirs().stream()
+                .filter(File::canRead)
                 .map(dir -> new File(dir, "formats"))
                 .toList();
         addConfigFormatsInDirectories(dirs);

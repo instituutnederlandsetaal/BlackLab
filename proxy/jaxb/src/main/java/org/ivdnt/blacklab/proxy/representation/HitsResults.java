@@ -2,7 +2,6 @@ package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -132,39 +131,45 @@ public class HitsResults implements EntityWithSummary {
                     }
                     continue;
                 }
-                DocInfo docInfo = new DocInfo();
-                docInfo.pid = parser.getCurrentName();
-                docInfo.metadata = new LinkedHashMap<>();
 
-                token = parser.nextToken();
-                if (token != JsonToken.START_OBJECT)
+                if (parser.nextToken() != JsonToken.START_OBJECT)
                     throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
-                while (true) {
-                    token = parser.nextToken();
-                    if (token == JsonToken.END_OBJECT)
-                        break;
-
-                    if (token != JsonToken.FIELD_NAME)
-                        throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
-                    String fieldName = parser.getCurrentName();
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT) {
-                        // Special lengthInTokens setting?
-                        if (!fieldName.equals("lengthInTokens"))
-                            throw new ErrorReadingResponse("Unexpected int in metadata");
-                        docInfo.lengthInTokens = parser.getValueAsInt();
-                    } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
-                        // Special mayView setting?
-                        if (!fieldName.equals("mayView"))
-                            throw new ErrorReadingResponse("Unexpected boolean in metadata");
-                        docInfo.mayView = parser.getValueAsBoolean();
-                    } else if (token == JsonToken.START_ARRAY) {
-                        // A list of metadata values
-                        List<String> values = SerializationUtil.readStringList(parser);
-                        docInfo.metadata.put(fieldName, new MetadataValues(values));
-                    }
-                }
+                DocInfo docInfo = deserializationContext.readValue(parser, DocInfo.class);
+                docInfo.pid = parser.getCurrentName();
                 docInfos.add(docInfo);
+//                if (token != JsonToken.START_OBJECT)
+//                    throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
+//                while (true) {
+//                    token = parser.nextToken();
+//                    if (token == JsonToken.END_OBJECT)
+//                        break;
+//
+//                    if (token != JsonToken.FIELD_NAME)
+//                        throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
+//                    String fieldName = parser.getCurrentName();
+//                    token = parser.nextToken();
+//                    if (token == JsonToken.VALUE_NUMBER_INT) {
+//                        // Special lengthInTokens setting?
+//                        if (!fieldName.equals("lengthInTokens"))
+//                            throw new ErrorReadingResponse("Unexpected int in metadata");
+//                        docInfo.lengthInTokens = parser.getValueAsInt();
+//                    } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
+//                        // Special mayView setting?
+//                        if (!fieldName.equals("mayView"))
+//                            throw new ErrorReadingResponse("Unexpected boolean in metadata");
+//                        docInfo.mayView = parser.getValueAsBoolean();
+//                    } else if (token == JsonToken.START_ARRAY) {
+//                        if (fieldName.equals("tokenCounts")) {
+//                            // Token count per field
+//                            docInfo.tokenCounts = (List<FieldTokenCount>)deserializationContext.readValue(parser, ArrayList.class);
+//                        } else {
+//                            // A list of metadata values
+//                            List<String> values = SerializationUtil.readStringList(parser);
+//                            docInfo.metadata.put(fieldName, new MetadataValues(values));
+//                        }
+//                    }
+//                }
+//                docInfos.add(docInfo);
             }
 
             return docInfos;

@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.util.RangeRegex;
 
-record MatchValueIntRange(int min, int max) implements MatchValue {
+public record MatchValueIntRange(int min, int max) implements MatchValue {
 
     @Override
     public String regex() {
