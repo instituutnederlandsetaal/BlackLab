@@ -6,7 +6,7 @@
     <parent>
         <groupId>nl.inl.blacklab</groupId>
         <artifactId>blacklab-proxy</artifactId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>4.0.1-SNAPSHOT</version>
     </parent>
     <artifactId>blacklab-proxy-service</artifactId>
     <packaging>war</packaging>
@@ -89,7 +89,7 @@
             <version>${jersey.version}</version>
         </dependency>
 
-        <!-- Jackson JSON/YAML reading (BLS client, config file) -->
+        <!-- Jackson JSON/YAML reading (BLS client, config file)
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
@@ -119,7 +119,7 @@
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-json-org</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
+        </dependency> -->
 
         <!-- JDK 11 removed these, explicitly add them -->
         <dependency>
@@ -163,7 +163,7 @@
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-util</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 
