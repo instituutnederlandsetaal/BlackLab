@@ -6,6 +6,7 @@ import java.util.List;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
 import org.apache.commons.fileupload2.core.FileItem;
 import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.FileUploadSizeException;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.apache.commons.io.FileUtils;
 
@@ -71,6 +72,9 @@ public class FileUploadHandler {
                             + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
             }
             return items;
+        } catch (FileUploadSizeException e) {
+            throw new BadRequest("ERROR_UPLOADING_FILE",
+                    "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
         } catch (FileUploadException e) {
             throw new BadRequest("ERROR_UPLOADING_FILE", e.getMessage());
         }
