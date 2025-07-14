@@ -16,6 +16,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 import java.util.LinkedHashMap;
 
+import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -158,14 +159,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         } else if (groupingTooLarge || isFinalRun) {
             // Sort our map now.
             final var t = new Timer();
-            final var sorted = occurrences.entrySet()
-                    .parallelStream()
-                    .collect(Collectors.toConcurrentMap(
-                            Map.Entry::getKey,
-                            Map.Entry::getValue,
-                            (e1, e2) -> e1,
-                            ConcurrentSkipListMap::new
-                    ));
+            final var sorted = new Object2IntLinkedOpenHashMap<>(occurrences);
             System.out.println("  Sorted ConcurrentSkipListMap in " + t.elapsedDescription(true));
             // Write chunk files, to be merged at the end
             final var chunkFile = chunkWriter.write(sorted);
