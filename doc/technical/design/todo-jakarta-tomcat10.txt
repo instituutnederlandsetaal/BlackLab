@@ -1,0 +1,30 @@
+LUCENE 8/9 TOMCAT 9/10-jakarta DIFFERENCES
+- BlackLab50* classes added (lots of duplication) TODO
+- Lucene 8 uses big-endian, Lucene 9 little-endian (see PostingsReader/Writer.openInputCorrectEndian)
+- ramBytesUsed / getChildResources gone (Accountable)
+- knnVectors added (Codec class, related to vector search, not used by us)
+
+
+
+TODO
+- look at duplication between Blacklab40/Blacklab50 classes
+- BlackLab40StoredFieldsReader:154: put largest text field value last?
+- BlackLab40StoredFieldsReader:192: look into character encoding
+- BLSpanTermQuery:116: TermStates.build(searcher, query.getTerm(),needsStats); // <-- searcher WAS: topContext (check Lucene src)
+- Compare Lucene 9 src with classes adapted from Lucene 8! (list...?)
+  - BLSpanOrQuery
+  - BLConjunctionSpans:63 intersectSpans
+- L8 ConjunctionDISI.intersectIterators === L9 ConjunctionUtils.intersectIterators ?
+- SingleDocIdFilter:111 visit(): implement/use elsewhere?  (also DocSetFilter)
+- DocValuesUtil:82 optimization? (also SortedDocValuesCacher)
+- Test Solr
+  - UserRequestSolr: javax.servlet.http.HttpServletRequest !?
+  - SolrTestServer:94 
+  - SolrTestServer:142 setLogLevel commented out
+  - TestIndexComponent:54 prepareClass USE_EXISTING_INDEX
+  - solrconfig.xml:124 shouldn't this be BlackLab50CodecFactory?
+- Test proxy
+- FileUploadHandler:48 max file in mem size / tmp dir / size limit exceeded
+  test autosearch file upload () (maar zit ws. in CI test script?)
+- ResultsHits:227 newSlowSetQuery ?
+
