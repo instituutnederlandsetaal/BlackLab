@@ -6,7 +6,7 @@
     <parent>
         <groupId>nl.inl.blacklab</groupId>
         <artifactId>blacklab-proxy</artifactId>
-        <version>4.0.0-SNAPSHOT</version>
+        <version>4.0.1-SNAPSHOT</version>
     </parent>
     <artifactId>blacklab-jaxb</artifactId>
     <packaging>jar</packaging>
@@ -88,13 +88,13 @@
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-common</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab-util</artifactId>
-            <version>4.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
 

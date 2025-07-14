@@ -24,6 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
+
 public class SolrTestServer {
     private static final String SOLR_DIR_NAME = "blacklab-test-solr";
 

@@ -14,6 +14,8 @@ import jakarta.xml.bind.annotation.XmlType;
 
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
