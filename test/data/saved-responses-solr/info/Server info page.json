@@ -1,0 +1,30 @@
+{
+  "apiVersion": "VALUE_REMOVED",
+  "blacklabBuildTime": "VALUE_REMOVED",
+  "blacklabScmRevision": "UNKNOWN",
+  "blacklabVersion": "VALUE_REMOVED",
+  "corpora": {
+    "test": {
+      "documentCount": 3,
+      "documentFormat": "voice-tei",
+      "status": "available",
+      "timeModified": "VALUE_REMOVED",
+      "tokenCount": 766
+    }
+  },
+  "indices": {
+    "test": {
+      "description": "",
+      "displayName": "test",
+      "documentFormat": "voice-tei",
+      "status": "available",
+      "timeModified": "VALUE_REMOVED",
+      "tokenCount": 766
+    }
+  },
+  "user": {
+    "canCreateIndex": false,
+    "debugMode": false,
+    "loggedIn": false
+  }
+}

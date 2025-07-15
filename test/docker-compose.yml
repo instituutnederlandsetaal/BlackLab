@@ -58,6 +58,9 @@ services:
     build:
       context: ..
       dockerfile: solr/Dockerfile
+    environment:
+        # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
+        - "SOLR_SECURITY_MANAGER_ENABLED=false"
     ports:
       # Solr runs on this port
       - "8983:8983"
@@ -75,35 +78,16 @@ services:
       - INDEX_TYPE=${INDEX_TYPE:-}
 
       # If response file for a test does not exist, the test will FAIL.
-      - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=false
-
-    #extra_hosts:
-    #  - "host.docker.internal:host-gateway"
-
-
-  # Runs the tests locally, so we can save new test responses
-  test-local:
-    build: .
-    environment:
-      - APP_URL=${APP_URL:-http://testserver:8080/blacklab-server}
-      - CORPUS_NAME=${CORPUS_NAME:-test}
-      - TEST_DATA_ROOT=${TEST_DATA_ROOT:-data}
-      - SKIP_INDEXING_TESTS=${SKIP_INDEXING_TESTS:-false} # Solr doesn't implement these ops yet
-      - INDEX_TYPE=${INDEX_TYPE:-}
-
-      # If response file for a test does not exist, the test will SUCCEED,
-      # and the response file will be saved for future runs.
-      - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
-
-    #extra_hosts:
-    #    - "host.docker.internal:host-gateway"
+      - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=${BLACKLAB_TEST_SAVE_MISSING_RESPONSES:-false}
 
     volumes:
       # We need access to the previous responses and be able to save responses for any new tests.
       - ./data/saved-responses:/app/data/saved-responses
       - ./data/saved-responses-integrated:/app/data/saved-responses-integrated
+      - ./data/saved-responses-solr:/app/data/saved-responses-solr
       - ./data/latest-test-output:/app/data/latest-test-output
       - ./data/latest-test-output-integrated:/app/data/latest-test-output-integrated
+      - ./data/latest-test-output-solr:/app/data/latest-test-output-solr
 
 
 

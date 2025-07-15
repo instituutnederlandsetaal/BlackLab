@@ -87,19 +87,8 @@ public class HitsResults implements EntityWithSummary {
                 String pid = el.pid;
                 if (pid == null)
                     pid = "UNKNOWN";
-                jgen.writeObjectFieldStart(pid);
-                for (Map.Entry<String, MetadataValues> v: el.metadata.entrySet()) {
-                    jgen.writeArrayFieldStart(v.getKey());
-                    for (String x: v.getValue().getValue()) {
-                        jgen.writeString(x);
-                    }
-                    jgen.writeEndArray();
-                }
-                if (el.lengthInTokens != null)
-                    jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
-                if (el.mayView != null)
-                    jgen.writeBooleanField("mayView", el.mayView);
-                jgen.writeEndObject();
+                jgen.writeFieldName(pid);
+                provider.defaultSerializeValue(el, jgen);
             }
             jgen.writeEndObject();
         }
@@ -137,39 +126,6 @@ public class HitsResults implements EntityWithSummary {
                 DocInfo docInfo = deserializationContext.readValue(parser, DocInfo.class);
                 docInfo.pid = parser.getCurrentName();
                 docInfos.add(docInfo);
-//                if (token != JsonToken.START_OBJECT)
-//                    throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
-//                while (true) {
-//                    token = parser.nextToken();
-//                    if (token == JsonToken.END_OBJECT)
-//                        break;
-//
-//                    if (token != JsonToken.FIELD_NAME)
-//                        throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
-//                    String fieldName = parser.getCurrentName();
-//                    token = parser.nextToken();
-//                    if (token == JsonToken.VALUE_NUMBER_INT) {
-//                        // Special lengthInTokens setting?
-//                        if (!fieldName.equals("lengthInTokens"))
-//                            throw new ErrorReadingResponse("Unexpected int in metadata");
-//                        docInfo.lengthInTokens = parser.getValueAsInt();
-//                    } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
-//                        // Special mayView setting?
-//                        if (!fieldName.equals("mayView"))
-//                            throw new ErrorReadingResponse("Unexpected boolean in metadata");
-//                        docInfo.mayView = parser.getValueAsBoolean();
-//                    } else if (token == JsonToken.START_ARRAY) {
-//                        if (fieldName.equals("tokenCounts")) {
-//                            // Token count per field
-//                            docInfo.tokenCounts = (List<FieldTokenCount>)deserializationContext.readValue(parser, ArrayList.class);
-//                        } else {
-//                            // A list of metadata values
-//                            List<String> values = SerializationUtil.readStringList(parser);
-//                            docInfo.metadata.put(fieldName, new MetadataValues(values));
-//                        }
-//                    }
-//                }
-//                docInfos.add(docInfo);
             }
 
             return docInfos;

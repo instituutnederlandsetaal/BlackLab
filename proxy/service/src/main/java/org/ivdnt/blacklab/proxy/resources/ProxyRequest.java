@@ -3,12 +3,6 @@ package org.ivdnt.blacklab.proxy.resources;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.AnnotatedField;
 import org.ivdnt.blacklab.proxy.representation.AutocompleteResponse;
@@ -29,6 +23,11 @@ import org.ivdnt.blacklab.proxy.representation.Server;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
 
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -49,7 +48,7 @@ public class ProxyRequest {
         WebserviceOperation op = isCsv ? WebserviceOperation.DOCS_CSV : WebserviceOperation.DOCS;
         List<Class<?>> resultTypes = List.of(isCsv ? JsonCsvResponse.class : DocsResults.class);
         boolean isXml = !isCsv && !headers.getAcceptableMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE);
-        return Requests.requestWithPossibleCsvResponse(client, corpusName, method, parameters, op, resultTypes, isXml);
+        return Requests.requestWithPossibleCsvResponse(client, method, corpusName, parameters, op, resultTypes, isXml);
     }
 
     static Response parsePattern(Client client, String corpusName, MultivaluedMap<String, String> parameters,

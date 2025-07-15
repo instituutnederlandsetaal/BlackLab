@@ -1,9 +1,9 @@
 package org.ivdnt.blacklab.proxy.representation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class User {
@@ -15,15 +15,11 @@ public class User {
 
     public boolean canCreateIndex = false;
 
+    public boolean debugMode = false;
+
     // required for Jersey
     @SuppressWarnings("unused")
     public User() {}
-
-    public User(boolean loggedIn, String id, boolean canCreateIndex) {
-        this.loggedIn = loggedIn;
-        this.id = id;
-        this.canCreateIndex = canCreateIndex;
-    }
 
     @Override
     public String toString() {
@@ -31,6 +27,7 @@ public class User {
                 "loggedIn=" + loggedIn +
                 ", id='" + id + '\'' +
                 ", canCreateIndex=" + canCreateIndex +
+                ", debugMode=" + debugMode +
                 '}';
     }
 }

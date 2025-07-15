@@ -42,7 +42,6 @@ public class DocInfo {
         @Override
         public void serialize(Object elObj, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
-
             if (elObj == null)
                 return;
             if (elObj instanceof DocInfo) {
@@ -59,17 +58,24 @@ public class DocInfo {
                     jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
                 if (el.mayView != null)
                     jgen.writeBooleanField("mayView", el.mayView);
+                if (el.tokenCounts != null) {
+                    jgen.writeFieldName("tokenCounts");
+                    provider.defaultSerializeValue(el.tokenCounts, jgen);
+                }
                 jgen.writeEndObject();
             } else if (elObj instanceof DocInfoAdapter.DocInfoWrapper) {
                 DocInfoAdapter.DocInfoWrapper el = ((DocInfoAdapter.DocInfoWrapper) elObj);
                 jgen.writeStartObject();
-                Integer lengthInTokens = null;
+                Long lengthInTokens = null;
                 Boolean mayView = null;
+                List<FieldTokenCount> tokenCounts = null;
                 for (JAXBElement jaxbe: el.elements) {
                     String name = jaxbe.getName().getLocalPart();
-                    if (name.equals("lengthInTokens") || name.equals("mayView")) {
+                    if (name.equals("lengthInTokens") || name.equals("mayView") || name.equals("tokenCounts")) {
                         if (name.equals("lengthInTokens"))
-                            lengthInTokens = (Integer) jaxbe.getValue();
+                            lengthInTokens = (Long) jaxbe.getValue();
+                        else if (name.equals("tokenCounts"))
+                            tokenCounts = (List<FieldTokenCount>) jaxbe.getValue();
                         else
                             mayView = (Boolean) jaxbe.getValue();
                         continue;
@@ -85,6 +91,10 @@ public class DocInfo {
                     jgen.writeNumberField("lengthInTokens", lengthInTokens);
                 if (mayView != null)
                     jgen.writeBooleanField("mayView", mayView);
+                if (tokenCounts != null) {
+                    jgen.writeFieldName("tokenCounts");
+                    provider.defaultSerializeValue(tokenCounts, jgen);
+                }
                 jgen.writeEndObject();
             } else
                 throw new ErrorWritingResponse("Unexpected type " + elObj.getClass().getName());
@@ -115,7 +125,7 @@ public class DocInfo {
                     // Special lengthInTokens setting?
                     if (!fieldName.equals("lengthInTokens"))
                         throw new ErrorReadingResponse("Unexpected int in metadata");
-                    docInfo.lengthInTokens = parser.getValueAsInt();
+                    docInfo.lengthInTokens = parser.getValueAsLong();
                 } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
                     // Special mayView setting?
                     if (!fieldName.equals("mayView"))
@@ -143,7 +153,7 @@ public class DocInfo {
     public Map<String, MetadataValues> metadata;
 
     @JsonInclude(Include.NON_NULL)
-    public Integer lengthInTokens;
+    public Long lengthInTokens;
 
     @JsonInclude(Include.NON_NULL)
     public Boolean mayView;

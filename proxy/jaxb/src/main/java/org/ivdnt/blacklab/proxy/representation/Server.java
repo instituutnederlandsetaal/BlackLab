@@ -28,7 +28,7 @@ import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion",
+@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion", "blacklabScmRevision",
         //"blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
         "corpora", "indices", "user", "cacheStatus" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
@@ -101,7 +101,7 @@ public class Server {
     public String blacklabVersion;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String blacklabScmVersion;
+    public String blacklabScmRevision;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Map<String, CorpusSummary> corpora;

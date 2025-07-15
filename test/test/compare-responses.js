@@ -178,6 +178,7 @@ function expectUnchanged(category, testName, actualResponse) {
 
     // Stringify to JSON if we're saving the response to a file
     let toSave = '';
+    let saveTestOutputFile = '(test results)';
     if (process.env.BLACKLAB_TEST_SAVE_MISSING_RESPONSES === 'true') {
         toSave = isJson ? stableStringify(sanitized, { space: 2 }) : sanitized;
 
@@ -188,7 +189,7 @@ function expectUnchanged(category, testName, actualResponse) {
         if (!fs.existsSync(categoryDir))
             fs.mkdirSync(categoryDir);
 
-        const saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory, `${sanFileName}.json`);
+        saveTestOutputFile = path.resolve(LATEST_TEST_OUTPUT_PATH, sanCategory, `${sanFileName}.json`);
         fs.writeFileSync(saveTestOutputFile, toSave, {encoding: 'utf8'});
     }
 
@@ -205,6 +206,7 @@ function expectUnchanged(category, testName, actualResponse) {
         const savedResponse = isJson ? JSON.parse(fileContents) : fileContents;
 
         // Compare
+        console.log(`Comparing saved response ${savedResponseFile} to current response ${saveTestOutputFile}`);
         if (isJson) {
             expect(sanitized).to.be.deep.equal(savedResponse);
         } else {

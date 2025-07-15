@@ -1,5 +1,12 @@
 # Change Log
 
+## Changes in dev
+
+### New
+
+- BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
+
+
 ## v4.0.0
 
 ### New
