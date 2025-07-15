@@ -4,13 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlAttribute;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlRootElement;
-
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
@@ -26,6 +19,13 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAttribute;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -79,6 +79,12 @@ public class AnnotatedField {
     public boolean isAnnotatedField = true;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long tokenCount;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long documentCount;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -110,6 +116,8 @@ public class AnnotatedField {
                 ", indexName='" + indexName + '\'' +
                 ", fieldName='" + fieldName + '\'' +
                 ", isAnnotatedField=" + isAnnotatedField +
+                ", tokenCount=" + tokenCount +
+                ", documentCount=" + documentCount +
                 ", displayName='" + displayName + '\'' +
                 ", description='" + description + '\'' +
                 ", hasContentStore=" + hasContentStore +

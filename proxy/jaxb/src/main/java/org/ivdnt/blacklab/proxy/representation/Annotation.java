@@ -1,17 +1,24 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.util.List;
+import java.util.Map;
+
+import org.ivdnt.blacklab.proxy.helper.MapAdapter;
+import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" }) // don't serialize name, it is used as the key
@@ -37,11 +44,17 @@ public class Annotation {
 
     public boolean isInternal;
 
+    @XmlJavaTypeAdapter(MapAdapter.class)
+    @JsonSerialize(using = SerializationUtil.TermFreqMapSerializer.class)
+    @JsonDeserialize(using = SerializationUtil.TermFreqMapDeserializer.class)
+    @JsonInclude(Include.NON_NULL)
+    public Map<String, Long> terms;
+
     @XmlElementWrapper(name="values")
     @XmlElement(name = "value")
     @JsonInclude(Include.NON_NULL)
     @JsonProperty("values")
-    public List<String> values;   ///@@@@ UPDATE: new API has "terms", including frequencies
+    public List<String> values;
 
     @JsonInclude(Include.NON_NULL)
     public Boolean valueListComplete;

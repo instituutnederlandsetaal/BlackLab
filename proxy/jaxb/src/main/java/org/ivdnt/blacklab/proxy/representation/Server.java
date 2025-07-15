@@ -5,15 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.XmlType;
-
-import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
-
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,6 +18,13 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -101,6 +99,9 @@ public class Server {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String blacklabScmVersion;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Map<String, CorpusSummary> corpora;

@@ -1,10 +1,10 @@
 package org.ivdnt.blacklab.proxy.representation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class VersionInfo {
@@ -14,6 +14,9 @@ public class VersionInfo {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String blacklabScmRevision;
 
     // v3 inconsistent naming
     @XmlElement
@@ -34,8 +37,11 @@ public class VersionInfo {
     @Override
     public String toString() {
         return "VersionInfo{" +
-                "blackLabBuildTime='" + blacklabBuildTime + '\'' +
-                ", blackLabVersion='" + blacklabVersion + '\'' +
+                "blacklabBuildTime='" + blacklabBuildTime + '\'' +
+                ", blacklabVersion='" + blacklabVersion + '\'' +
+                ", blacklabScmRevision='" + blacklabScmRevision + '\'' +
+                ", blackLabBuildTime='" + blackLabBuildTime + '\'' +
+                ", blackLabVersion='" + blackLabVersion + '\'' +
                 ", indexFormat='" + indexFormat + '\'' +
                 ", timeCreated='" + timeCreated + '\'' +
                 ", timeModified='" + timeModified + '\'' +
