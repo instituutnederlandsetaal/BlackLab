@@ -266,6 +266,23 @@ public class Index {
     }
 
     /**
+     * Delete a document from the index by its pid.
+     *
+     * @param docPid the pid of the document to delete
+     * @throws BlsException
+     */
+    public synchronized void deleteDocumentByPid(String docPid) throws BlsException {
+        cleanupClosedIndexerOrThrow();
+        close(); // Close any BlackLabIndex that is still in search mode
+        try (BlackLabIndexWriter indexWriter = searchMan.blackLabInstance()
+                .openForWriting(this.dir, false)) {
+            indexWriter.deleteDocumentByPid(docPid);
+        } catch (Exception e) {
+            throw new InternalServerError("Could not delete document " + docPid + " from index '" + id + "'", "INTERR_DELETING_DOCUMENT", e);
+        }
+    }
+
+    /**
      * Gets the indexListener for the current Indexer. Returns null when this Index
      * is not currently Indexing.
      *

@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -14,6 +15,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public interface BlackLabIndexWriter extends AutoCloseable {
@@ -54,13 +56,22 @@ public interface BlackLabIndexWriter extends AutoCloseable {
 
     /**
      * Deletes documents matching a query from the BlackLab index.
-     *
-     * This deletes the documents from the Lucene index, the forward indices and the
-     * content store(s).
      * 
      * @param q the query
      */
     void delete(Query q);
+
+    /**
+     * Delete a document by pid.
+     *
+     * @param docPid the pid of the document to delete
+     */
+    default void deleteDocumentByPid(String docPid) {
+        MetadataField pidField = metadata().metadataFields().pidField();
+        if (pidField == null)
+            throw new RuntimeException("Cannot delete document, index has no pid field");
+        delete(new TermQuery(new Term(pidField.name(), docPid)));
+    }
 
     /**
      * Is the indexer still open?

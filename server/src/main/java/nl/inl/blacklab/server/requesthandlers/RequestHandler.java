@@ -21,6 +21,7 @@ import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.index.Index;
@@ -166,13 +167,24 @@ public abstract class RequestHandler {
         String method = request.getMethod();
         boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
-            // Index given and nothing else?
             if (isInputFormatsRequest) {
+                // Delete input format
                 if (!urlPathInfo.isEmpty())
                     return errorObj.methodNotAllowed("DELETE", null);
                 requestHandler = new RequestHandlerDeleteFormat(userRequest);
+            } if (!indexName.isEmpty() && urlResource.equals(ENDPOINT_DOCS) && !urlPathInfo.isEmpty()) {
+                // DELETE /docs/<pid>: delete a document from a private index
+                String pid = urlPathInfo;
+                if (pid.endsWith("/"))
+                    pid = pid.substring(0, urlPathInfo.length() - 1);
+                if (!pid.contains("/")) {
+                    if (privateIndex == null || !privateIndex.userMayDelete(user))
+                        return errorObj.forbidden("You can only delete documents from your own private indices.");
+                    requestHandler = new RequestHandlerDeleteDocument(userRequest);
+                }
             } else {
-                if (indexName.length() == 0 || resourceOrPathGiven) {
+                // Delete index
+                if (indexName.isEmpty() || resourceOrPathGiven) {
                     return errorObj.methodNotAllowed("DELETE", null);
                 }
                 if (privateIndex == null || !privateIndex.userMayDelete(user))
@@ -184,7 +196,7 @@ public abstract class RequestHandler {
         } else {
             boolean postAsGet = false;
             if (method.equals("POST")) {
-                if (indexName.length() == 0 && !resourceOrPathGiven) {
+                if (indexName.isEmpty() && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
                     requestHandler = new RequestHandlerCreateIndex(userRequest);
                 } else if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
@@ -241,7 +253,7 @@ public abstract class RequestHandler {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");
                     requestHandler = new RequestHandlerSharedWithMe(userRequest);
-                } else if (indexName.length() == 0) {
+                } else if (indexName.isEmpty()) {
                     // No index or operation given; server info
                     requestHandler = new RequestHandlerServerInfo(userRequest);
                 } else {
@@ -250,7 +262,7 @@ public abstract class RequestHandler {
                         String handlerName = urlResource;
 
                         IndexStatus status = indexManager.getIndex(indexName).getStatus();
-                        if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug")
+                        if (status != IndexStatus.AVAILABLE && !handlerName.isEmpty() && !handlerName.equals("debug")
                                 && !handlerName.equals(ENDPOINT_FIELDS) && !handlerName.equals(
                                 ENDPOINT_STATUS)
                                 && !handlerName.equals(ENDPOINT_SHARING)) {
@@ -269,7 +281,7 @@ public abstract class RequestHandler {
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
-                        else if (handlerName.equals(ENDPOINT_DOCS) && urlPathInfo.length() > 0) {
+                        else if (handlerName.equals(ENDPOINT_DOCS) && !urlPathInfo.isEmpty()) {
                             handlerName = ENDPOINT_DOC_INFO;
                             String p = urlPathInfo;
                             if (p.endsWith("/"))
@@ -319,11 +331,11 @@ public abstract class RequestHandler {
             }
         }
 
-        requestHandler.setInstrumentationProvider(userRequest.getInstrumentationProvider());
         if (requestHandler == null) {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
+        requestHandler.setInstrumentationProvider(userRequest.getInstrumentationProvider());
         requestHandler.setIsNewEndpoint(isNewEndpoint);
         return requestHandler;
     }
@@ -495,6 +507,16 @@ public abstract class RequestHandler {
 
     public boolean omitBlackLabResponseRootElement() {
         return false;
+    }
+
+    /** Extract the doc pid from path info like "doc0001/contents" */
+    void determineDocPidFromPathInfo() {
+        // Find the document pid
+        int i = urlPathInfo.indexOf('/');
+        String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
+        if (docPid.isEmpty())
+            throw new BadRequest("NO_DOC_ID", "Specify document pid.");
+        params.setDocPid(docPid);
     }
 
     protected boolean isDocsOperation() {

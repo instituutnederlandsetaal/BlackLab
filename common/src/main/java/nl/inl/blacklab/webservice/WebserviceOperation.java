@@ -41,6 +41,7 @@ public enum WebserviceOperation {
     DELETE_INPUT_FORMAT("delete-input-format", "DELETE", BlsPath.INPUT_FORMATS),
 
     ADD_TO_CORPUS("add-to-corpus", "POST", BlsPath.EMPTY),
+    DELETE_DOCUMENT("delete-document", "DELETE", BlsPath.DOCS),
 
     CACHE_INFO("cache-info", BlsPath.CACHE_INFO),
     CACHE_CLEAR("cache-clear", "POST", BlsPath.CACHE_CLEAR),

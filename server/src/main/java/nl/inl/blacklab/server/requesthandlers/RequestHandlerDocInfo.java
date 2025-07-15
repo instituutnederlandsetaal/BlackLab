@@ -16,12 +16,8 @@ public class RequestHandlerDocInfo extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        int i = urlPathInfo.indexOf('/');
-        String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        params.setDocPid(docPid);
-
+        determineDocPidFromPathInfo();
         debug(logger, "REQ doc info: " + indexName + "-" + params.getDocPid());
-
         WebserviceRequestHandler.opDocInfo(params, rs);
         return HTTP_OK;
     }
