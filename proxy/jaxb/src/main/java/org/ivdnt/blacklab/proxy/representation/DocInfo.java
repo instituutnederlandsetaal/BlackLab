@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -121,9 +122,14 @@ public class DocInfo {
                         throw new ErrorReadingResponse("Unexpected boolean in metadata");
                     docInfo.mayView = parser.getValueAsBoolean();
                 } else if (token == JsonToken.START_ARRAY) {
-                    // A list of metadata values
-                    List<String> values = SerializationUtil.readStringList(parser);
-                    docInfo.metadata.put(fieldName, new MetadataValues(values));
+                    if (fieldName.equals("tokenCounts")) {
+                        // Token count per field
+                        docInfo.tokenCounts = (List<FieldTokenCount>)deserializationContext.readValue(parser, ArrayList.class);
+                    } else {
+                        // A list of metadata values
+                        List<String> values = SerializationUtil.readStringList(parser);
+                        docInfo.metadata.put(fieldName, new MetadataValues(values));
+                    }
                 }
             }
             return docInfo;
@@ -142,6 +148,9 @@ public class DocInfo {
     @JsonInclude(Include.NON_NULL)
     public Boolean mayView;
 
+    @JsonInclude(Include.NON_NULL)
+    public List<FieldTokenCount> tokenCounts;
+
     public DocInfo() {}
 
     public DocInfo(String pid, Map<String, MetadataValues> metadata) {
@@ -158,6 +167,9 @@ public class DocInfo {
         return "DocInfo{" +
                 "pid='" + pid + '\'' +
                 ", metadata=" + metadata +
+                ", lengthInTokens=" + lengthInTokens +
+                ", mayView=" + mayView +
+                ", tokenCounts=" + tokenCounts +
                 '}';
     }
 

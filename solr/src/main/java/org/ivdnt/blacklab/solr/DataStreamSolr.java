@@ -3,13 +3,20 @@ package org.ivdnt.blacklab.solr;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.response.SolrQueryResponse;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.textpattern.MatchValue;
+import nl.inl.blacklab.search.textpattern.MatchValueIntRange;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerJson;
 import nl.inl.blacklab.server.datastream.DataStream;
+import nl.inl.blacklab.util.ObjectSerializationWriter;
 
 public class DataStreamSolr implements DataStream {
 
@@ -230,6 +237,55 @@ public class DataStreamSolr implements DataStream {
     public DataStream value(boolean value) {
         addValueToCurrentStructure(value);
         return this;
+    }
+
+    @Override
+    public DataStream value(TextPattern pattern) {
+        TextPatternSerializerJson.serialize(pattern, (type, args) -> {
+            startMap();
+            entry("bcqlFragment", TextPatternSerializerCql.serialize(pattern));
+            entry("type", type);
+            Map<String, Object> map = ObjectSerializationWriter.mapFromArgs(args);
+            for (Map.Entry<String, Object> e: map.entrySet()) {
+                String key = e.getKey();
+                Object value = e.getValue();
+                if (value != null) {
+                    if (key.equals(TextPatternSerializerJson.KEY_ATTRIBUTES)) {
+                        // Attributes in "tags" node. Special case because match values can now be an int range
+                        // as well as (the more common) regex.
+                        // (we could have made MatchValue a TextPatternStruct, but that would change
+                        //  the JSON structure (each attribute value would be a JSON object with a type).
+                        //  We want to keep everything as-is while also adding the int range filter option)
+                        startEntry(key).startMap();
+                        Map<String, MatchValue> attributes = (Map<String, MatchValue>) value;
+                        for (Map.Entry<String, MatchValue> attr: attributes.entrySet()) {
+                            startEntry(attr.getKey());
+                            if (attr.getValue() instanceof MatchValueIntRange range) {
+                                // Int range; serialize as an object with min and max fields
+                                startMap();
+                                entry(TextPatternSerializerJson.KEY_MIN, range.min());
+                                entry(TextPatternSerializerJson.KEY_MAX, range.max());
+                                endMap();
+                            } else {
+                                // Regex; serialize as a simple string (as we have always done)
+                                value(attr.getValue().regex());
+                            }
+                            endEntry();
+                        }
+                        endMap().endEntry();
+                    } else {
+                        entry(key, value);
+                    }
+                }
+            }
+            endMap();
+        });
+        return this;
+//        try {
+//            return print(Json.getJaxbWriter().writeValueAsString(pattern));
+//        } catch (JsonProcessingException e) {
+//            throw new IllegalStateException(e);
+//        }
     }
 
     @Override

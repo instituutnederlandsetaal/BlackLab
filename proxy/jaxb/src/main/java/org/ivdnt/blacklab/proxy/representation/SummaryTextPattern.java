@@ -14,15 +14,15 @@ public class SummaryTextPattern {
     public String bcql;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String fieldName;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public Object json;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String error;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    Map<String, MatchInfoDef> matchInfos;
-
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    String fieldName;
+    public Map<String, MatchInfoDef> matchInfos;
 
 }
