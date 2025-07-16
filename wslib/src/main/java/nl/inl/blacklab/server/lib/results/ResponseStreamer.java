@@ -100,6 +100,10 @@ public class ResponseStreamer {
     public static final String KEY_TOKENS_IN_MATCHING_DOCUMENTS = "tokensInMatchingDocuments";
     public static final String KEY_SUBCORPUS_SIZE = "subcorpusSize";
 
+    public static final String KEY_JSON = "json";
+    public static final String KEY_BCQL = "bcql";
+    public static final String KEY_NAME = "name";
+
     // resultsStats section
     public static final String KEY_STATS_STATUS = "status";
     public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
@@ -138,7 +142,10 @@ public class ResponseStreamer {
     public static final String KEY_TARGET_FIELD = "targetField";
     public static final String KEY_OTHER_FIELDS = "otherFields";
     public static final String KEY_FIELD_IS_ANNOTATED = "isAnnotatedField";
+    public static final String KEY_VALUES = "values";
+    public static final String KEY_VALUE = "value";
     public static final String KEY_VALUE_LIST_COMPLETE = "valueListComplete";
+    public static final String KEY_ATTRIBUTES = "attributes";
 
     // Sampling
     public static final String KEY_SAMPLE_SEED = "sampleSeed";
@@ -150,7 +157,6 @@ public class ResponseStreamer {
      *  We could make this configurable in the future.
      */
     private static final String SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES = "; ";
-
 
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;
@@ -312,7 +318,7 @@ public class ResponseStreamer {
             ds.startDynEntry(e.getKey()).startList();
             {
                 for (String v: e.getValue()) {
-                    ds.item("value", v);
+                    ds.item(KEY_VALUE, v);
                 }
             }
             ds.endList().endDynEntry();
@@ -324,7 +330,7 @@ public class ResponseStreamer {
         for (Map.Entry<String, List<String>> e: metadataFieldGroups.entrySet()) {
             ds.startItem("metadataFieldGroup").startMap();
             {
-                ds.entry("name", e.getKey());
+                ds.entry(KEY_NAME, e.getKey());
                 ds.startEntry("fields").startList();
                 for (String field: e.getValue()) {
                     ds.item("field", field);
@@ -341,10 +347,10 @@ public class ResponseStreamer {
         for (Map.Entry<String, List<Pair<String,  Long>>> e: facetInfo.entrySet()) {
             String facetBy = e.getKey();
             List<Pair<String,  Long>> facetCounts = e.getValue();
-            ds.startAttrEntry("facet", "name", facetBy).startList();
+            ds.startAttrEntry("facet", KEY_NAME, facetBy).startList();
             for (Pair<String, Long> count : facetCounts) {
                 ds.startItem("item").startMap()
-                        .entry("value", count.getLeft())
+                        .entry(KEY_VALUE, count.getLeft())
                         .entry(KEY_GROUP_SIZE, count.getRight())
                         .endMap().endItem();
             }
@@ -378,13 +384,13 @@ public class ResponseStreamer {
         if (modernizeApi && textPattern != null) {
             // Show how pattern was parsed
             ds.startEntry("pattern").startMap();
-            if (ds.getType().equals("json")) {
+            if (ds.getType().equals(KEY_JSON)) {
                 // Only include the JSON representation in the JSON response
                 // (we don't have a proper XML representation (yet) and don't care as much about that response format)
-                ds.entry("json", textPattern);
+                ds.entry(KEY_JSON, textPattern);
             }
             try {
-                ds.entry("bcql", TextPatternSerializerCql.serialize(textPattern));
+                ds.entry(KEY_BCQL, TextPatternSerializerCql.serialize(textPattern));
             } catch (Exception e) {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
@@ -787,7 +793,7 @@ public class ResponseStreamer {
     private static void legacyCapturedGroup(DataStream ds, Map.Entry<String, MatchInfo> capturedGroup) {
         ds.startMap();
         {
-            ds.entry("name", capturedGroup.getKey());
+            ds.entry(KEY_NAME, capturedGroup.getKey());
             ds.entry(KEY_SPAN_START, capturedGroup.getValue().getSpanStart());
             ds.entry(KEY_SPAN_END, capturedGroup.getValue().getSpanEnd());
         }
@@ -863,7 +869,7 @@ public class ResponseStreamer {
     /** If attribute values are avaiable, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
         if (!inlineTag.getAttributes().isEmpty()) {
-            ds.startEntry("attributes").startMap();
+            ds.startEntry(KEY_ATTRIBUTES).startMap();
             for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
                 ds.elEntry(attr.getKey(), attr.getValue());
             }
@@ -953,7 +959,7 @@ public class ResponseStreamer {
                         Collections.emptyMap());
                 ds.startEntry("displayValues").startMap();
                 for (Map.Entry<String, String> e: displayValues.entrySet()) {
-                    ds.attrEntry("displayValue", "value", e.getKey(), e.getValue());
+                    ds.attrEntry("displayValue", KEY_VALUE, e.getKey(), e.getValue());
                 }
                 ds.endMap().endEntry();
             }
@@ -963,7 +969,7 @@ public class ResponseStreamer {
             // sorted by their displayValue (or regular value if no displayValue specified)
             ds.startEntry("fieldValues").startMap();
             for (Map.Entry<String, Long> e: fieldValuesInOrder.entrySet()) {
-                ds.attrEntry("value", "text", e.getKey(), e.getValue());
+                ds.attrEntry(KEY_VALUE, "text", e.getKey(), e.getValue());
             }
             ds.endMap().endEntry();
 
@@ -1014,7 +1020,7 @@ public class ResponseStreamer {
         for (Map.Entry<String, ResultAnnotationInfo> annotEntry: annotInfos.entrySet()) {
             if (AnnotatedFieldNameUtil.isRelationAnnotation(annotEntry.getKey()))
                 continue; // don't include _relation, may not be used in queries
-            ds.startAttrEntry("annotation", "name", annotEntry.getKey()).startMap();
+            ds.startAttrEntry("annotation", KEY_NAME, annotEntry.getKey()).startMap();
             ResultAnnotationInfo ai = annotEntry.getValue();
             Annotation annotation = ai.getAnnotation();
             AnnotationSensitivity offsetsSensitivity = annotation.offsetsSensitivity();
@@ -1048,9 +1054,9 @@ public class ResponseStreamer {
                 }
                 if (!isNewApi) {
                     // Return the list of terms
-                    ds.startEntry("values").startList();
+                    ds.startEntry(KEY_VALUES).startList();
                     for (String term: terms.getValues().keySet()) {
-                        ds.item("value", term);
+                        ds.item(KEY_VALUE, term);
                     }
                     ds.endList().endEntry();
                 }
@@ -1197,8 +1203,8 @@ public class ResponseStreamer {
         for (Map.Entry<ResultProperty, PropertyValue> p: properties.entrySet()) {
             ds.startItem("property").startMap();
             {
-                ds.entry("name", p.getKey().serialize());
-                ds.entry("value", p.getValue().toString());
+                ds.entry(KEY_NAME, p.getKey().serialize());
+                ds.entry(KEY_VALUE, p.getValue().toString());
             }
             ds.endMap().endItem();
         }
@@ -1430,7 +1436,7 @@ public class ResponseStreamer {
     public void legacyIndexInfo(ResultIndexStatus progress) {
         Index index = progress.getIndex();
         IndexMetadata indexMetadata = progress.getMetadata();
-        ds.startAttrEntry("index", "name", index.getId());
+        ds.startAttrEntry("index", KEY_NAME, index.getId());
         {
             ds.startMap();
             {
@@ -1509,7 +1515,7 @@ public class ResponseStreamer {
                 // This happens when we have linked metadata, a dummy annotatedField is written, but it's required for the contentstore (apparently?).
                 if (annotatedField.getAnnotInfos().isEmpty())
                     continue;
-                ds.startAttrEntry(KEY_ANNOTATED_FIELD, "name", annotatedField.getFieldDesc().name());
+                ds.startAttrEntry(KEY_ANNOTATED_FIELD, KEY_NAME, annotatedField.getFieldDesc().name());
                 {
                     annotatedField(annotatedField, includeCustom);
                 }
@@ -1519,7 +1525,7 @@ public class ResponseStreamer {
 
             ds.startEntry("metadataFields").startMap();
             for (ResultMetadataField metadataField: result.getMetadataFields()) {
-                ds.startAttrEntry("metadataField", "name", metadataField.getFieldDesc().name());
+                ds.startAttrEntry("metadataField", KEY_NAME, metadataField.getFieldDesc().name());
                 {
                     metadataField(metadataField, includeCustom);
                 }
@@ -1550,11 +1556,11 @@ public class ResponseStreamer {
                         annotationsNotInGroups.remove(annotation);
                     }
                 }
-                ds.startAttrEntry(KEY_ANNOTATED_FIELD, "name", f.name()).startList();
+                ds.startAttrEntry(KEY_ANNOTATED_FIELD, KEY_NAME, f.name()).startList();
                 boolean addedRemainingAnnots = false;
                 for (AnnotationGroup group: groups) {
                     ds.startItem("annotationGroup").startMap();
-                    ds.entry("name", group.groupName());
+                    ds.entry(KEY_NAME, group.groupName());
                     ds.startEntry("annotations").startList();
                     for (String annotation: group) {
                         ds.item("annotation", annotation);
@@ -1706,7 +1712,7 @@ public class ResponseStreamer {
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
             ds.startEntry("supportedInputFormats").startMap();
             for (InputFormat inputFormat: result.getFormats()) {
-                ds.startAttrEntry("format", "name", inputFormat.getIdentifier());
+                ds.startAttrEntry("format", KEY_NAME, inputFormat.getIdentifier());
                 {
                     ds.startMap();
                     {
