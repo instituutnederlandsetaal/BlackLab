@@ -320,11 +320,11 @@ public class WebserviceRequestHandler {
                 try {
                     TextPattern tp = params.pattern().orElse(null);
                     try {
-                        ds.entry("bcql", TextPatternSerializerCql.serialize(tp));
+                        ds.entry(ResponseStreamer.KEY_BCQL, TextPatternSerializerCql.serialize(tp));
                     } catch (Exception e) {
                         ds.entry("corpusql-error", e.getMessage());
                     }
-                    ds.entry("json", tp);
+                    ds.entry(ResponseStreamer.KEY_JSON, tp);
                 } catch (Exception e) {
                     ds.entry("error", e.getMessage());
                 }
@@ -387,23 +387,23 @@ public class WebserviceRequestHandler {
                 RelationsStats.TypeStats typeStats = relTypeEntry.getValue();
                 ds.startDynEntry(typeName).startMap();
                 {
-                    ds.entry("count", typeStats.getCount());
+                    ds.entry(ResponseStreamer.KEY_COUNT, typeStats.getCount());
                     Map<String, TruncatableFreqList> attributes = typeStats.getAttributes();
                     if (!attributes.isEmpty()) {
-                        ds.startEntry("attributes").startMap();
+                        ds.startEntry(ResponseStreamer.KEY_ATTRIBUTES).startMap();
                         {
                             for (Map.Entry<String, TruncatableFreqList> attrEntry: attributes.entrySet()) {
                                 ds.startDynEntry(attrEntry.getKey()).startMap();
                                 {
                                     TruncatableFreqList values = attrEntry.getValue();
-                                    ds.startEntry("values").startMap();
+                                    ds.startEntry(ResponseStreamer.KEY_VALUES).startMap();
                                     {
                                         for (Map.Entry<String, Long> valueEntry: values.getValues().entrySet()) {
                                             ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
                                         }
                                     }
                                     ds.endMap().endEntry();
-                                    ds.entry("valueListComplete", !values.isTruncated());
+                                    ds.entry(ResponseStreamer.KEY_VALUE_LIST_COMPLETE, !values.isTruncated());
                                 }
                                 ds.endMap().endDynEntry();
                             }
