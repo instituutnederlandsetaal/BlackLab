@@ -5,17 +5,21 @@
   "blacklabVersion": "VALUE_REMOVED",
   "corpora": {
     "test": {
-      "count": {
-        "documents": 3,
-        "tokens": 766
-      },
-      "custom": {
-        "description": "",
-        "displayName": "test"
-      },
+      "documentCount": 3,
       "documentFormat": "voice-tei",
       "status": "available",
-      "timeModified": "VALUE_REMOVED"
+      "timeModified": "VALUE_REMOVED",
+      "tokenCount": 766
+    }
+  },
+  "indices": {
+    "test": {
+        "description": "",
+      "displayName": "test",
+      "documentFormat": "voice-tei",
+      "status": "available",
+      "timeModified": "VALUE_REMOVED",
+      "tokenCount": 766
     }
   },
   "user": {

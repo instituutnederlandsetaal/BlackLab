@@ -206,7 +206,6 @@ function expectUnchanged(category, testName, actualResponse) {
         const savedResponse = isJson ? JSON.parse(fileContents) : fileContents;
 
         // Compare
-        console.log(`Comparing saved response ${savedResponseFile} to current response ${saveTestOutputFile}`);
         if (isJson) {
             expect(sanitized).to.be.deep.equal(savedResponse);
         } else {
