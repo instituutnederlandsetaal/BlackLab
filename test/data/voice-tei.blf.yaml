@@ -69,6 +69,7 @@ annotatedFields:
     - path: .//u   # Utterance
 
 corpusConfig:
+  displayName: test
 
   specialFields:
     # persistent id field to use to retrieve documents

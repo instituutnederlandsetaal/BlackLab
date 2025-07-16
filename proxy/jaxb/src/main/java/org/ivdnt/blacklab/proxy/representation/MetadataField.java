@@ -49,7 +49,7 @@ public class MetadataField {
                 }
                 jgen.writeEndObject();
             } else {
-                throw new IOException("Unexpected type for fieldValues: " + value.getClass().getName()
+                throw new IOException("Unexpected type for fieldValues: " + value.getClass().getName());
             }
         }
     }
