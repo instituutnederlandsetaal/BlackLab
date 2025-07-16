@@ -11,9 +11,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class MatchInfo {
 
-    public int start;
+    public long start;
 
-    public int end;
+    public long end;
 
     /** What match info type this is (span, tag, relation or list) */
     @JsonInclude(JsonInclude.Include.NON_NULL)

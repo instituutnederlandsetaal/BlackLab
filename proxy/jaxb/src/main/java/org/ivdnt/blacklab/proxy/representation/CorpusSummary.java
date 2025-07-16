@@ -33,6 +33,8 @@ public class CorpusSummary {
 
     public long tokenCount = 0;
 
+    public long documentCount = 0;
+
     // required for Jersey
     CorpusSummary() {}
 

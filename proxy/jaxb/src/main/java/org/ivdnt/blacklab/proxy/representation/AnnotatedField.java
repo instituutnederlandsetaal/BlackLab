@@ -79,6 +79,12 @@ public class AnnotatedField {
     public boolean isAnnotatedField = true;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long tokenCount;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long documentCount;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -110,6 +116,8 @@ public class AnnotatedField {
                 ", indexName='" + indexName + '\'' +
                 ", fieldName='" + fieldName + '\'' +
                 ", isAnnotatedField=" + isAnnotatedField +
+                ", tokenCount=" + tokenCount +
+                ", documentCount=" + documentCount +
                 ", displayName='" + displayName + '\'' +
                 ", description='" + description + '\'' +
                 ", hasContentStore=" + hasContentStore +

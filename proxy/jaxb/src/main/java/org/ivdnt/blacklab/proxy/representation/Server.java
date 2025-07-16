@@ -28,7 +28,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion",
+@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion", "blacklabScmRevision",
         //"blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
         "corpora", "indices", "user", "cacheStatus" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
@@ -99,6 +99,9 @@ public class Server {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String blacklabScmRevision;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Map<String, CorpusSummary> corpora;

@@ -41,6 +41,9 @@ services:
   solr:
     profiles: [ "tools" ]
     image: instituutnederlandsetaal/blacklab-solr:${VERSION:-latest}
+    environment:
+      # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
+      - "SOLR_SECURITY_MANAGER_ENABLED=false"
     build:
       context: .
       dockerfile: solr/Dockerfile

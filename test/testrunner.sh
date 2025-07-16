@@ -11,7 +11,14 @@
 set -o errexit  # Exit on error (set -e)
 
 # Get the servicename (or default to "test", the regular CI test)
-SERVICE_NAME="${1:-test}"
+SERVICE_NAME=test
+
+if [ "$1" = "test-local" ]; then
+    export BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
+elif [ "$1" != "" ]; then
+    echo "Unknown action '$1'. Use 'test' or 'test-local'."
+    exit 1
+fi
 
 # Go to the test dir
 cd "$( dirname -- "$0"; )"/

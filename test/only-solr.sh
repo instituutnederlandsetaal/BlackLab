@@ -11,7 +11,14 @@
 set -o errexit  # Exit on error (set -e)
 
 # Get the servicename (or default to "test", the regular CI test)
-SERVICE_NAME="${1:-test}"
+SERVICE_NAME=test
+
+if [ "$1" = "test-local" ]; then
+    export BLACKLAB_TEST_SAVE_MISSING_RESPONSES=true
+elif [ "$1" != "" ]; then
+    echo "Unknown action '$1'. Use 'test' or 'test-local'."
+    exit 1
+fi
 
 # Go to the test dir
 cd $( dirname -- "$0"; )/
@@ -30,6 +37,8 @@ export DOCKER_BUILDKIT=1
 ## Re-run the same tests using Solr+proxy
 echo === Testing Solr \(with integrated index format\)...
 $COMPOSE build proxy solr "$SERVICE_NAME"
+export BLACKLAB_FEATURE_defaultIndexType=integrated
+export INDEX_TYPE=solr
 $COMPOSE down -v  # delete previous index so it updates if it was changed in the repo
 $COMPOSE up --force-recreate -d proxy solr
 export APP_URL=http://proxy:8080/blacklab-server

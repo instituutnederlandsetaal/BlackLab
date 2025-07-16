@@ -11,6 +11,15 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class DocSnippetResponse {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String docPid;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long start;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long end;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords snippet;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

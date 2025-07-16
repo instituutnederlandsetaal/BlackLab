@@ -1,0 +1,219 @@
+{
+  "docInfos": {
+    "PRint602": {
+      "fromInputFile": [
+        "PRint602.xml"
+      ],
+      "lengthInTokens": 268,
+      "mayView": true,
+      "pid": [
+        "PRint602"
+      ],
+      "title": [
+        "interview about conference experience and impressions of city"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 268
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "docPid": "PRint602",
+      "end": 99,
+      "left": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "a_[org1]"
+        ]
+      },
+      "match": {
+        "lemma": [
+          "two"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "two"
+        ]
+      },
+      "right": {
+        "lemma": [
+          "two"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "two"
+        ]
+      },
+      "start": 98
+    },
+    {
+      "docPid": "PRint602",
+      "end": 100,
+      "left": {
+        "lemma": [
+          "two"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "two"
+        ]
+      },
+      "match": {
+        "lemma": [
+          "two"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "two"
+        ]
+      },
+      "right": {
+        "lemma": [
+          "thousand"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "thousand"
+        ]
+      },
+      "start": 99
+    },
+    {
+      "docPid": "PRint602",
+      "end": 102,
+      "left": {
+        "lemma": [
+          "thousand"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "thousand"
+        ]
+      },
+      "match": {
+        "lemma": [
+          "four"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "four"
+        ]
+      },
+      "right": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "start": 101
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 3,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 3,
+    "numberOfHitsRetrieved": 3,
+    "pattern": {
+      "bcql": "\"two\" | \"four\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"two\" | \"four\"",
+        "clauses": [
+          {
+            "bcqlFragment": "\"two\"",
+            "type": "regex",
+            "value": "two"
+          },
+          {
+            "bcqlFragment": "\"four\"",
+            "type": "regex",
+            "value": "four"
+          }
+        ],
+        "type": "or"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "\"two\"|\"four\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
+}

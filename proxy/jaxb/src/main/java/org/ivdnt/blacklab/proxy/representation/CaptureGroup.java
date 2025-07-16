@@ -7,9 +7,9 @@ import javax.xml.bind.annotation.XmlAccessorType;
 public class CaptureGroup {
     public String name;
 
-    public int start;
+    public long start;
 
-    public int end;
+    public long end;
 
     @Override
     public String toString() {

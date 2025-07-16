@@ -1,0 +1,1082 @@
+{
+  "docs": [
+    {
+      "docInfo": {
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "lengthInTokens": 334,
+        "mayView": true,
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ],
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokenCount": 334
+          }
+        ]
+      },
+      "docPid": "PBsve430",
+      "numberOfHits": 334,
+      "snippets": [
+        {
+          "left": {
+            "lemma": [
+            ],
+            "pos": [
+            ],
+            "punct": [
+            ],
+            "word": [
+            ]
+          },
+          "match": {
+            "lemma": [
+              ""
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "f_hallo"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "",
+              "hello",
+              "i",
+              "want",
+              "to"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "_1",
+              "hello",
+              "i",
+              "want",
+              "to"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              ""
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "f_hallo"
+            ]
+          },
+          "match": {
+            "lemma": [
+              ""
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "_1"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "hello",
+              "i",
+              "want",
+              "to",
+              "apply"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "i",
+              "want",
+              "to",
+              "apply"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "",
+              ""
+            ],
+            "pos": [
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " "
+            ],
+            "word": [
+              "f_hallo",
+              "_1"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "hello"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "hello"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "i",
+              "want",
+              "to",
+              "apply",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "i",
+              "want",
+              "to",
+              "apply",
+              "_1"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "",
+              "",
+              "hello"
+            ],
+            "pos": [
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "f_hallo",
+              "_1",
+              "hello"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "i"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "i"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "want",
+              "to",
+              "apply",
+              "",
+              "for"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "want",
+              "to",
+              "apply",
+              "_1",
+              "for"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "",
+              "",
+              "hello",
+              "i"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "f_hallo",
+              "_1",
+              "hello",
+              "i"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "want"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "want"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "to",
+              "apply",
+              "",
+              "for",
+              "the"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "to",
+              "apply",
+              "_1",
+              "for",
+              "the"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "docInfo": {
+        "fromInputFile": [
+          "PBsve435.xml"
+        ],
+        "lengthInTokens": 164,
+        "mayView": true,
+        "pid": [
+          "PBsve435"
+        ],
+        "title": [
+          "service encounter about getting an address printed out"
+        ],
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokenCount": 164
+          }
+        ]
+      },
+      "docPid": "PBsve435",
+      "numberOfHits": 164,
+      "snippets": [
+        {
+          "left": {
+            "lemma": [
+            ],
+            "pos": [
+            ],
+            "punct": [
+            ],
+            "word": [
+            ]
+          },
+          "match": {
+            "lemma": [
+              "hello"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "hello"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "hello",
+              "",
+              "",
+              "yeah",
+              "this"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "f_gruess",
+              "f_gott",
+              "yeah",
+              "this"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "hello"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "hello"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "hello"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "",
+              "",
+              "yeah",
+              "this",
+              "be"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "f_gruess",
+              "f_gott",
+              "yeah",
+              "this",
+              "is"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello",
+              "hello"
+            ],
+            "pos": [
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "hello"
+            ]
+          },
+          "match": {
+            "lemma": [
+              ""
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "f_gruess"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "",
+              "yeah",
+              "this",
+              "be",
+              "i"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "f_gott",
+              "yeah",
+              "this",
+              "is",
+              "my"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello",
+              "hello",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "hello",
+              "f_gruess"
+            ]
+          },
+          "match": {
+            "lemma": [
+              ""
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "f_gott"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "yeah",
+              "this",
+              "be",
+              "i",
+              "passport"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "yeah",
+              "this",
+              "is",
+              "my",
+              "passport"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello",
+              "hello",
+              "",
+              ""
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "hello",
+              "f_gruess",
+              "f_gott"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "yeah"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "yeah"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "this",
+              "be",
+              "i",
+              "passport",
+              "er"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "this",
+              "is",
+              "my",
+              "passport",
+              "er"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "docInfo": {
+        "fromInputFile": [
+          "PRint602.xml"
+        ],
+        "lengthInTokens": 268,
+        "mayView": true,
+        "pid": [
+          "PRint602"
+        ],
+        "title": [
+          "interview about conference experience and impressions of city"
+        ],
+        "tokenCounts": [
+          {
+            "fieldName": "contents",
+            "tokenCount": 268
+          }
+        ]
+      },
+      "docPid": "PRint602",
+      "numberOfHits": 268,
+      "snippets": [
+        {
+          "left": {
+            "lemma": [
+            ],
+            "pos": [
+            ],
+            "punct": [
+            ],
+            "word": [
+            ]
+          },
+          "match": {
+            "lemma": [
+              "hello"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "hello"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "excuse",
+              "i",
+              "i",
+              "be",
+              "from"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "excuse",
+              "me",
+              "i",
+              "'m",
+              "from"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "hello"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "excuse"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "excuse"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "i",
+              "i",
+              "be",
+              "from",
+              "vienna"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "me",
+              "i",
+              "'m",
+              "from",
+              "vienna"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello",
+              "excuse"
+            ],
+            "pos": [
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "excuse"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "i"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "me"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "i",
+              "be",
+              "from",
+              "vienna",
+              "university"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "i",
+              "'m",
+              "from",
+              "vienna",
+              "university"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello",
+              "excuse",
+              "i"
+            ],
+            "pos": [
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "excuse",
+              "me"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "i"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "i"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "be",
+              "from",
+              "vienna",
+              "university",
+              "mhm"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "'m",
+              "from",
+              "vienna",
+              "university",
+              "mhm"
+            ]
+          }
+        },
+        {
+          "left": {
+            "lemma": [
+              "hello",
+              "excuse",
+              "i",
+              "i"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "hello",
+              "excuse",
+              "me",
+              "i"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "be"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "'m"
+            ]
+          },
+          "right": {
+            "lemma": [
+              "from",
+              "vienna",
+              "university",
+              "mhm",
+              "and"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "from",
+              "vienna",
+              "university",
+              "mhm",
+              "and"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 3,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "numberOfHits": 766,
+    "numberOfHitsRetrieved": 766,
+    "pattern": {
+      "bcql": "[]",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "[]",
+        "max": 1,
+        "min": 1,
+        "type": "anytoken"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "docs",
+      "patt": "[]",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
+}

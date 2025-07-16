@@ -49,7 +49,7 @@ public class ProxyRequest {
         WebserviceOperation op = isCsv ? WebserviceOperation.DOCS_CSV : WebserviceOperation.DOCS;
         List<Class<?>> resultTypes = List.of(isCsv ? JsonCsvResponse.class : DocsResults.class);
         boolean isXml = !isCsv && !headers.getAcceptableMediaTypes().contains(MediaType.APPLICATION_JSON_TYPE);
-        return Requests.requestWithPossibleCsvResponse(client, corpusName, method, parameters, op, resultTypes, isXml);
+        return Requests.requestWithPossibleCsvResponse(client, method, corpusName, parameters, op, resultTypes, isXml);
     }
 
     static Response parsePattern(Client client, String corpusName, MultivaluedMap<String, String> parameters,

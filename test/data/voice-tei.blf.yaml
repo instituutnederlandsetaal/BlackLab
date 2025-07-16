@@ -6,12 +6,16 @@ description: A TEI P5 variant. The text element will be indexed as annotated con
 
 helpUrl: http://www.tei-c.org/Guidelines/P5/
 
+processor: saxon
+
 # (Optional, informational)
 # content, metadata or mixed?
 # (not used by BlackLab, purely informational for the frontend application)
 type: content
 
 namespaces:
+  # Default namespace: TEI
+  '': http://www.tei-c.org/ns/1.0
   'xml': http://www.w3.org/XML/1998/namespace
 
 # What element starts a new document?

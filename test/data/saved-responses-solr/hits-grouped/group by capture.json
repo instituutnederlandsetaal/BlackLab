@@ -1,0 +1,188 @@
+{
+  "hitGroups": [
+    {
+      "identity": "cws:contents%word:i:confirmation",
+      "identityDisplay": "confirmation",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "confirmation"
+        }
+      ],
+      "size": 2
+    },
+    {
+      "identity": "cws:contents%word:i:lot",
+      "identityDisplay": "lot",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "lot"
+        }
+      ],
+      "size": 2
+    },
+    {
+      "identity": "cws:contents%word:i:visa",
+      "identityDisplay": "visa",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "visa"
+        }
+      ],
+      "size": 2
+    },
+    {
+      "identity": "cws:contents%word:i:district",
+      "identityDisplay": "district",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "district"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:end",
+      "identityDisplay": "end",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "end"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:letter",
+      "identityDisplay": "letter",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "letter"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:look",
+      "identityDisplay": "look",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "look"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:monthly",
+      "identityDisplay": "monthly",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "monthly"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:right",
+      "identityDisplay": "right",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "right"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:scholarship",
+      "identityDisplay": "scholarship",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "capture:contents%word:i",
+          "value": "scholarship"
+        }
+      ],
+      "size": 1
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 10,
+    "countTime": "VALUE_REMOVED",
+    "largestGroupSize": 2,
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfGroups": 10,
+    "numberOfHits": 13,
+    "numberOfHitsRetrieved": 13,
+    "pattern": {
+      "bcql": "\"a|the\" (X:[])",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"a|the\" (X:[])",
+        "clauses": [
+          {
+            "bcqlFragment": "\"a|the\"",
+            "type": "regex",
+            "value": "a|the"
+          },
+          {
+            "bcqlFragment": "X:[]",
+            "capture": "X",
+            "clause": {
+              "bcqlFragment": "[]",
+              "max": 1,
+              "min": 1,
+              "type": "anytoken"
+            },
+            "type": "capture"
+          }
+        ],
+        "type": "sequence"
+      },
+      "matchInfos": {
+        "X": {
+          "type": "span"
+        }
+      }
+    },
+    "requestedWindowSize": 30,
+    "searchParam": {
+      "filter": "pid:PBsve430",
+      "group": "capture:word:i:X",
+      "indexname": "test",
+      "number": "30",
+      "op": "hits-grouped",
+      "patt": "\"a|the\" X:[]",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "subcorpusSize": {
+      "documents": 1,
+      "tokens": 334
+    },
+    "tokensInMatchingDocuments": 334,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
+}
