@@ -5,13 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import jakarta.ws.rs.ProcessingException;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.WebTarget;
-import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
-
 import org.ivdnt.blacklab.proxy.ProxyConfig;
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.representation.EntityWithSummary;
@@ -26,6 +19,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.ws.rs.ProcessingException;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.WebTarget;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.Json;
@@ -198,13 +197,13 @@ public class Requests {
             MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes,
             boolean isXml) {
         Object entity = request(client, ParamsUtil.get(parameters, corpusName, op), method, resultTypes);
-        if (isXml && entity instanceof EntityWithSummary) {
+        if (isXml && entity instanceof EntityWithSummary ews) {
             // Don't try to serialize the pattern to XML, this induces headaches.
-            ((EntityWithSummary) entity).getSummary().pattern = null;
+            ews.getSummary().pattern = null;
         }
-        if (entity instanceof JsonCsvResponse) {
+        if (entity instanceof JsonCsvResponse jcr) {
             // Return actual CSV contents instead of JSON
-            String csv = ((JsonCsvResponse) entity).csv;
+            String csv = jcr.csv;
             return Response.ok().type(ParamsUtil.MIME_TYPE_CSV).entity(csv).build();
         } else {
             return ProxyResponse.success(entity);

@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import jakarta.servlet.http.HttpServletResponse;
-
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -27,7 +26,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -304,7 +302,7 @@ public class WebserviceRequestHandler {
         rs.formatXsltResponse(result);
     }
 
-    public static void opParsePattern(WebserviceParamsImpl params, ResponseStreamer rs) {
+    public static void opParsePattern(WebserviceParams params, ResponseStreamer rs) {
         if (!rs.getDataStream().getType().equals("json"))
             throw new UnsupportedOperationException("/parse-pattern only supports JSON output");
         // Write response
@@ -336,7 +334,7 @@ public class WebserviceRequestHandler {
         ds.endMap();
     }
 
-    public static void opRelations(WebserviceParamsImpl params, ResponseStreamer rs) {
+    public static void opRelations(WebserviceParams params, ResponseStreamer rs) {
         BlackLabIndex index = params.blIndex();
         AnnotatedField field = params.getAnnotatedField();
         RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());

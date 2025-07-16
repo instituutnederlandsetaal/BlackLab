@@ -1,6 +1,11 @@
 package org.ivdnt.blacklab.proxy.resources;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
+
+import org.ivdnt.blacklab.proxy.logic.Requests;
+import org.ivdnt.blacklab.proxy.representation.Corpus;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
@@ -17,10 +22,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
-
-import org.ivdnt.blacklab.proxy.logic.Requests;
-import org.ivdnt.blacklab.proxy.representation.Corpus;
-
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -233,7 +234,18 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             @Context UriInfo uriInfo) {
-        return ProxyRequest.field(client, corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        try {
+            return ProxyRequest.field(client, corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        } catch (Exception e) {
+            // If the field is not found, we return a 404 Not Found error.
+            // This is consistent with how the BlackLab web service behaves.
+            StringWriter s = new StringWriter();
+            PrintWriter pw = new PrintWriter(s);
+            e.printStackTrace(pw);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(s.toString())
+                    .type(MediaType.TEXT_PLAIN).build();
+        }
     }
 
     @Path("/fields/{fieldName}")

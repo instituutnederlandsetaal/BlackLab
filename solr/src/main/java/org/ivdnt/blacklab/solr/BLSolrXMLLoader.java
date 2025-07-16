@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStream;
@@ -139,7 +138,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
                 else if (mf.type().equals(FieldType.NUMERIC))
                     fieldType = "metadata_numeric";
                 else
-                    throw new NotImplementedException("Unknown FieldType");
+                    throw new UnsupportedOperationException("Unknown FieldType");
                 SchemaField newField = oldSchema.newField(mf.name(), fieldType, Collections.emptyMap());
                 newFields.add(newField);
             });

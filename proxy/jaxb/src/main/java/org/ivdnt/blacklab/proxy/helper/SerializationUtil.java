@@ -6,8 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.JAXBElement;
-
 import org.ivdnt.blacklab.proxy.representation.Annotation;
 import org.ivdnt.blacklab.proxy.representation.FacetValue;
 
@@ -18,6 +16,8 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
+
+import jakarta.xml.bind.JAXBElement;
 
 public class SerializationUtil {
 
@@ -30,7 +30,7 @@ public class SerializationUtil {
      */
     public static String getCleanLabel(String attributeLabel) {
         attributeLabel = attributeLabel.replaceAll("[()]", "").replaceAll("[^\\w\\s]", "_").replaceAll(" ", "_");
-        return attributeLabel;
+        return attributeLabel.isEmpty() ? "EMPTY_VALUE" : attributeLabel;
     }
 
     /** Use this to serialize a String map using MapAdapter to JSON.
@@ -54,6 +54,8 @@ public class SerializationUtil {
                     jgen.writeStringField(entry.getKey(), entry.getValue());
                 }
                 jgen.writeEndObject();
+            } else {
+                throw new IOException("Expected Map or MapAdapter.MapWrapper, found " + value.getClass().getName());
             }
         }
     }
@@ -92,6 +94,8 @@ public class SerializationUtil {
                     jgen.writeNumberField(entry.getKey(), entry.getValue());
                 }
                 jgen.writeEndObject();
+            } else {
+                throw new IOException("Expected MapAdapterTermFreq.WrapperTermFreq or Map<String, Long>, found " + value.getClass());
             }
         }
     }

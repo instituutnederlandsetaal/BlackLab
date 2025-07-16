@@ -2,7 +2,6 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;

@@ -7,7 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
@@ -200,7 +199,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                                 snippet[j] = _tokens.readByte();
                             }
                             break;
-                        default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
+                        default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
                                 + " not implemented.");
                     }
                     break;

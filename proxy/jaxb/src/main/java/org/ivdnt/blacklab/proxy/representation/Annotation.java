@@ -3,7 +3,7 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.util.List;
 import java.util.Map;
 
-import org.ivdnt.blacklab.proxy.helper.MapAdapter;
+import org.ivdnt.blacklab.proxy.helper.MapAdapterTermFreq;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -44,7 +44,7 @@ public class Annotation {
 
     public boolean isInternal;
 
-    @XmlJavaTypeAdapter(MapAdapter.class)
+    @XmlJavaTypeAdapter(MapAdapterTermFreq.class)
     @JsonSerialize(using = SerializationUtil.TermFreqMapSerializer.class)
     @JsonDeserialize(using = SerializationUtil.TermFreqMapDeserializer.class)
     @JsonInclude(Include.NON_NULL)
