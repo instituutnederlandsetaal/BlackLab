@@ -34,10 +34,12 @@ public class CorpusStatus {
 
     /** How many documents are in the corpus?
      * (NOTE: a document with several parallel versions counts as 1; see docVersions) */
-    public long documentCount = 0;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long documentCount;
 
     /** (Parallel) how many total document versions are in the corpus? */
-    public long docVersions = 0;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long docVersions;
 
     // required for Jersey
     CorpusStatus() {}

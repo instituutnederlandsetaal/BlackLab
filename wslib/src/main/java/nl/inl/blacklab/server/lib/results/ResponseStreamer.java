@@ -360,8 +360,6 @@ public class ResponseStreamer {
      */
     public void summaryCommonFields(ResultSummaryCommonFields summaryFields) throws BlsException {
         WebserviceParams params = summaryFields.getSearchParam();
-        Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
-        WindowStats window = summaryFields.getWindow();
 
         // Include parameters
         ds.startEntry(KEY_PARAMS).startMap();
@@ -370,6 +368,7 @@ public class ResponseStreamer {
         }
         ds.endMap().endEntry();
 
+        Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
         if (indexStatus != null && indexStatus != Index.IndexStatus.AVAILABLE) {
             ds.entry("indexStatus", indexStatus.toString());
         }
@@ -442,6 +441,7 @@ public class ResponseStreamer {
         }
 
         // Information about our viewing window
+        WindowStats window = summaryFields.getWindow();
         if (window != null) {
             summaryWindow(window);
         }
@@ -1111,11 +1111,10 @@ public class ResponseStreamer {
             // Write docField (pidField, titleField, etc.) and metadata display names
             // (this information is not specific to this request and can be found elsewhere,
             //  so it probably shouldn't be here - hence the API differences)
-            if (!isNewApi)
+            if (!isNewApi) {
                 stringMap("docFields", resultHits.getDocFields());
-            boolean includeMetadataFieldDisplayNames = !isNewApi;
-            if (includeMetadataFieldDisplayNames)
                 stringMap("metadataFieldDisplayNames", resultHits.getMetaDisplayNames());
+            }
 
             // Include explanation of how the query was executed?
             if (params.getExplain()) {

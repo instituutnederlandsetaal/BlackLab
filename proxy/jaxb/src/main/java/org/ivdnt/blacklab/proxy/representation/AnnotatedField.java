@@ -82,7 +82,7 @@ public class AnnotatedField {
     public long tokenCount;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public long documentCount;
+    public Long documentCount;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
