@@ -1,7 +1,5 @@
 package nl.inl.blacklab.codec.blacklab50;
 
-import java.io.IOException;
-
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
 import org.apache.lucene.codecs.DocValuesFormat;
@@ -15,10 +13,7 @@ import org.apache.lucene.codecs.SegmentInfoFormat;
 import org.apache.lucene.codecs.TermVectorsFormat;
 import org.apache.lucene.codecs.lucene99.Lucene99Codec;
 import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
-import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabCodec;
 
 /**

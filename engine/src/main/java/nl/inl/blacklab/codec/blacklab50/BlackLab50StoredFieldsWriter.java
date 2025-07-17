@@ -318,7 +318,7 @@ public class BlackLab50StoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public String toString() {
-        return "BlackLab50StoredFieldsWriter(" + delegate.getClass().getName() + ")";
+        return getClass().getSimpleName() + "(" + delegate.getClass().getName() + ")";
     }
 
 }

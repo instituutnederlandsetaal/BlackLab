@@ -21,6 +21,7 @@ import nl.inl.blacklab.codec.BlackLabStoredFieldsFormat;
 import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 import nl.inl.blacklab.codec.ContentStoreBlockCodec;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 
 /**
@@ -112,6 +113,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
         _blocksFile = openInput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
     }
 
+    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         return directory.openInput(fileName, ioContext);
     }
@@ -200,7 +202,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
             return new BlackLab50StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                     delegate.clone(), delegateFormatName);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -237,7 +239,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
                 return new BlackLab50StoredFieldsReader(directory, segmentInfo, ioContext, fieldInfos,
                         mergeInstance, delegateFormatName);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
         return this;
@@ -245,7 +247,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
 
     @Override
     public String toString() {
-        return "BlackLab50StoredFieldsReader(" + delegate.toString() + ")";
+        return getClass().getSimpleName() + "(" + delegate.toString() + ")";
     }
 
     /**
@@ -257,6 +259,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
      *
      * @return content store segment reader
      */
+    @Override
     public synchronized ContentStoreSegmentReader contentStore() {
         // NOTE: this method is synchronized because IndexInput.clone() is not thread-safe!
         //       so if multiple threads could call this method simultaneously, disaster could strike.
@@ -279,6 +282,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param luceneField field to get
              * @return field value as bytes, or null if no value
              */
+            @Override
             public byte[] getBytes(int docId, String luceneField) {
                 try {
                     // Find the value length in characters, and position the valueIndex file pointer
@@ -303,7 +307,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
                     int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
 
                     // Try to make sure we have a large enough buffer available
-                    long decodeBufferLengthLong = valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
+                    long decodeBufferLengthLong = (long) valueLengthChar * UTF8_MAX_BYTES_PER_CHAR + ESTIMATED_DECODE_OVERHEAD;
                     if (decodeBufferLengthLong > Constants.JAVA_MAX_ARRAY_SIZE)
                         decodeBufferLengthLong = Constants.JAVA_MAX_ARRAY_SIZE;
                     final int decodeBufferLength = (int) decodeBufferLengthLong;
@@ -346,7 +350,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
                     System.arraycopy(decodedValue, 0, result, 0, result.length);
                     return result;
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
 
@@ -374,6 +378,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param luceneField field to get
              * @return field value
              */
+            @Override
             public String getValue(int docId, String luceneField) {
                 return getValueSubstring(docId, luceneField, 0, -1);
             }
@@ -389,6 +394,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
              * @return requested part
              */
+            @Override
             public String getValueSubstring(int docId, String luceneField, int startChar, int endChar) {
                 if (startChar < 0)
                     throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
@@ -471,7 +477,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
                     }
                     return result.toString();
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
 
@@ -529,11 +535,12 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param luceneField field to get length for
              * @return length of the value in characters
              */
+            @Override
             public int valueLength(int docId, String luceneField) {
                 try {
                     return findValueLengthChar(docId, luceneField);
                 } catch (IOException e) {
-                    throw new RuntimeException(e);
+                    throw new InvalidIndex(e);
                 }
             }
 
@@ -546,6 +553,7 @@ public class BlackLab50StoredFieldsReader extends BlackLabStoredFieldsReader {
              * @param end positions of the character after the last character to get, or -1 for <code>value.length()</code>.
              * @return requested parts
              */
+            @Override
             public String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end) {
                 if (start.length != end.length)
                     throw new IllegalArgumentException("Different numbers of starts and ends provided: " + start.length + ", " + end.length);

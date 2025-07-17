@@ -23,6 +23,7 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
 import nl.inl.blacklab.codec.SegmentForwardIndex;
 import nl.inl.blacklab.codec.SegmentRelationInfo;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
@@ -112,7 +113,7 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
             return codec.storedFieldsFormat().fieldsReader(
                     state.directory, state.segmentInfo, state.fieldInfos, state.context);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -177,6 +178,7 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
      *
      * @return forward index segment reader
      */
+    @Override
     public ForwardIndexSegmentReader forwardIndex() {
         return forwardIndex.reader();
     }
@@ -190,6 +192,7 @@ public class BlackLab50PostingsReader extends BlackLabPostingsReader {
      *
      * @return relation info segment reader if available, otherwise null
      */
+    @Override
     public RelationInfoSegmentReader relationInfo() {
         return relationInfo == null ? null : relationInfo.reader();
     }
