@@ -1,5 +1,7 @@
 package nl.inl.blacklab.codec;
 
+import java.lang.reflect.InvocationTargetException;
+
 import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
 import org.apache.lucene.codecs.Codec;
 import org.apache.lucene.codecs.CompoundFormat;
@@ -24,7 +26,7 @@ import org.apache.lucene.codecs.perfield.PerFieldPostingsFormat;
  * codec (usually the default Solr codec) and simply proxies
  * most requests to that codec. It will handle specific requests
  * itself, though, in this case the {@link #postingsFormat()} method
- * that returns the {@link BlackLab40PostingsFormat} object responsible for
+ * that returns the postings format object responsible for
  * saving/loading postings data (the actual inverted index, with
  * frequencies, offsets, payloads, etc.).
  *
@@ -46,13 +48,13 @@ public class BlackLab40Codec extends BlackLabCodec {
     private Codec _delegate;
 
     /** Our postings format, that takes care of the forward index as well. */
-    private BlackLab40PostingsFormat postingsFormat;
+    private BlackLabPostingsFormat postingsFormat;
 
     /** Our stored fields format, that takes care of the content stores as well. */
-    private BlackLab40StoredFieldsFormat storedFieldsFormat;
+    private BlackLabStoredFieldsFormat storedFieldsFormat;
 
     public BlackLab40Codec() {
-        super(NAME);
+        super(NAME, Lucene87Codec.class, "Lucene87", BlackLab40PostingsFormat.class);
     }
 
     private synchronized Codec delegate() {
@@ -69,7 +71,7 @@ public class BlackLab40Codec extends BlackLabCodec {
      *
      * @return our postingsformat
      */
-    private BlackLab40PostingsFormat determinePostingsFormat() {
+    private BlackLabPostingsFormat determinePostingsFormat() {
         /*
 
         // This causes errors. We cannot handle a per-field postings format properly yet.
@@ -89,34 +91,42 @@ public class BlackLab40Codec extends BlackLabCodec {
                         // this is probably why this doesn't work: we shouldn't instantiate independent postings formats
                         // for each field, because those will try to write the same files to the index directory.
                         // Instead there should be one class that handles all the read/writes with some per-field logic.
-                        return new BlackLab40PostingsFormat(delegatePF.getPostingsFormatForField(field));
+                        return new BlackLabXXPostingsFormat(delegatePF.getPostingsFormatForField(field));
                     });
                 }
             };
         } else {
             // Simple delegate, not per-field.
-            return new BlackLab40PostingsFormat(delegate().postingsFormat());
+            return new BlackLabXXPostingsFormat(delegate().postingsFormat());
         }*/
 
-        if (delegate().postingsFormat() instanceof PerFieldPostingsFormat) {
-            Codec defaultCodec = new Lucene87Codec(); //Codec.getDefault();
-            PostingsFormat defaultPostingsFormat = defaultCodec.postingsFormat();
-            if (defaultPostingsFormat instanceof PerFieldPostingsFormat) {
-                defaultPostingsFormat = ((PerFieldPostingsFormat) defaultPostingsFormat)
-                        .getPostingsFormatForField("");
-                if ((defaultPostingsFormat == null)
-                        || (defaultPostingsFormat instanceof PerFieldPostingsFormat)) {
-                    // fallback option
-                    defaultPostingsFormat = PostingsFormat.forName("Lucene87");
+        try {
+            PostingsFormat delegatePf;
+            if (delegate().postingsFormat() instanceof PerFieldPostingsFormat) {
+                Codec defaultCodec = defaultLuceneCodec.getDeclaredConstructor().newInstance();
+                PostingsFormat defaultPostingsFormat = defaultCodec.postingsFormat();
+                if (defaultPostingsFormat instanceof PerFieldPostingsFormat) {
+                    defaultPostingsFormat = ((PerFieldPostingsFormat) defaultPostingsFormat)
+                            .getPostingsFormatForField("");
+                    if ((defaultPostingsFormat == null)
+                            || (defaultPostingsFormat instanceof PerFieldPostingsFormat)) {
+                        // fallback option
+                        defaultPostingsFormat = PostingsFormat.forName(fallBackPostingsFormatName);
+                    }
                 }
+                delegatePf = defaultPostingsFormat;
+            } else {
+                delegatePf = delegate().postingsFormat();
             }
-            return new BlackLab40PostingsFormat(defaultPostingsFormat);
+            return ctorPf.newInstance(delegatePf);
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException |
+                 NoSuchMethodException e) {
+            throw new IllegalStateException(e);
         }
-        return new BlackLab40PostingsFormat(delegate().postingsFormat());
     }
 
     @Override
-    public synchronized BlackLab40PostingsFormat postingsFormat() {
+    public synchronized BlackLabPostingsFormat postingsFormat() {
         if (postingsFormat == null)
             postingsFormat = determinePostingsFormat();
         return postingsFormat;
@@ -128,7 +138,7 @@ public class BlackLab40Codec extends BlackLabCodec {
     }
 
     @Override
-    public synchronized BlackLab40StoredFieldsFormat storedFieldsFormat() {
+    public synchronized BlackLabStoredFieldsFormat storedFieldsFormat() {
         if (storedFieldsFormat == null)
             storedFieldsFormat = new BlackLab40StoredFieldsFormat(delegate().storedFieldsFormat());
         return storedFieldsFormat;
