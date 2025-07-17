@@ -108,7 +108,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     @Override
     public BlackLabStoredFieldsReader getStoredFieldsReader() {
         try {
-            BlackLab40Codec codec = (BlackLab40Codec) state.segmentInfo.getCodec();
+            BlackLabCodec codec = (BlackLabCodec) state.segmentInfo.getCodec();
             return codec.storedFieldsFormat().fieldsReader(
                     state.directory, state.segmentInfo, state.fieldInfos, state.context);
         } catch (IOException e) {
@@ -151,7 +151,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
     /**
      * Open a custom file for reading and check the header.
      *
-     * @param extension extension of the file to open (should be one of the prefixed constants from Blacklab40PostingsFormat)
+     * @param extension extension of the file to open (should be one of the prefixed constants from the postings format class)
      * @return handle to the opened segment file
      */
     @Override

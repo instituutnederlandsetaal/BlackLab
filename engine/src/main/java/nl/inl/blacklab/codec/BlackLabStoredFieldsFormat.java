@@ -1,6 +1,12 @@
 package nl.inl.blacklab.codec;
 
+import java.io.IOException;
+
 import org.apache.lucene.codecs.StoredFieldsFormat;
+import org.apache.lucene.index.FieldInfos;
+import org.apache.lucene.index.SegmentInfo;
+import org.apache.lucene.store.Directory;
+import org.apache.lucene.store.IOContext;
 
 public abstract class BlackLabStoredFieldsFormat extends StoredFieldsFormat {
 
@@ -19,4 +25,8 @@ public abstract class BlackLabStoredFieldsFormat extends StoredFieldsFormat {
 
     /** Extension for the blocks file. */
     public static final String BLOCKS_EXT = EXT_PREFIX + "blocks";
+
+    @Override
+    public abstract BlackLabStoredFieldsReader fieldsReader(Directory directory, SegmentInfo si, FieldInfos fn, IOContext context)
+            throws IOException;
 }

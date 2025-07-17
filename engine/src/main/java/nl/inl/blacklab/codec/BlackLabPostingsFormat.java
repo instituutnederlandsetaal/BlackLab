@@ -55,4 +55,6 @@ public abstract class BlackLabPostingsFormat extends PostingsFormat {
     protected BlackLabPostingsFormat(String name) {
         super(name);
     }
+
+    protected abstract PostingsFormat getDelegatePostingsFormat();
 }
