@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.store.ByteArrayDataOutput;
@@ -228,7 +227,7 @@ class PWPluginForwardIndex implements PWPlugin {
                 else tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.INT.code;
                 break;
             }
-            default: throw new NotImplementedException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
+            default: throw new UnsupportedOperationException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
         }
 
         // Write offset in the tokens file, doc length in tokens and tokens codec used
@@ -265,7 +264,7 @@ class PWPluginForwardIndex implements PWPlugin {
                         outTokensFile.writeInt((int) token);
                     }
                     break;
-                    default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
+                    default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
                 }
                 break;
         case ALL_TOKENS_THE_SAME:

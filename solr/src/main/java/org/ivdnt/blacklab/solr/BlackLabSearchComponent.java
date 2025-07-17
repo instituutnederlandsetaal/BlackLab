@@ -8,7 +8,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
@@ -190,92 +189,49 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 boolean debugMode = userRequest.isDebugMode();
                 switch (params.getOperation()) {
                 // "Root" endpoint
-                case SERVER_INFO:
-                    WebserviceRequestHandler.opServerInfo(params, debugMode, dstream);
-                    break;
+                case SERVER_INFO -> WebserviceRequestHandler.opServerInfo(params, debugMode, dstream);
 
                 // Information about the corpus
-                case CORPUS_INFO:
-                    WebserviceRequestHandler.opCorpusInfo(params, dstream);
-                    break;
-                case CORPUS_STATUS:
-                    WebserviceRequestHandler.opCorpusStatus(params, dstream);
-                    break;
-                case FIELD_INFO:
-                    WebserviceRequestHandler.opFieldInfo(params, dstream);
-                    break;
+                case CORPUS_INFO -> WebserviceRequestHandler.opCorpusInfo(params, dstream);
+                case CORPUS_STATUS -> WebserviceRequestHandler.opCorpusStatus(params, dstream);
+                case FIELD_INFO -> WebserviceRequestHandler.opFieldInfo(params, dstream);
 
                 // Find hits or documents
-                case HITS_CSV:
-                    WebserviceRequestHandler.opHitsCsv(params, dstream);
-                    break;
-                case HITS: case HITS_GROUPED:
+                case HITS_CSV -> WebserviceRequestHandler.opHitsCsv(params, dstream);
+                case HITS, HITS_GROUPED ->
                     // [grouped] hits
-                    WebserviceRequestHandler.opHits(params, dstream);
-                    break;
-                case DOCS_CSV:
-                    WebserviceRequestHandler.opDocsCsv(params, dstream);
-                    break;
-                case DOCS: case DOCS_GROUPED:
+                        WebserviceRequestHandler.opHits(params, dstream);
+                case DOCS_CSV -> WebserviceRequestHandler.opDocsCsv(params, dstream);
+                case DOCS, DOCS_GROUPED ->
                     // [grouped] docs
-                    WebserviceRequestHandler.opDocs(params, dstream);
-                    break;
+                        WebserviceRequestHandler.opDocs(params, dstream);
 
                 // Information about a document
-                case DOC_CONTENTS:
-                    WebserviceRequestHandler.opDocContents(params, dstream);
-                    break;
-                case DOC_INFO:
-                    WebserviceRequestHandler.opDocInfo(params, dstream);
-                    break;
-                case DOC_SNIPPET:
-                    WebserviceRequestHandler.opDocSnippet(params, dstream);
-                    break;
+                case DOC_CONTENTS -> WebserviceRequestHandler.opDocContents(params, dstream);
+                case DOC_INFO -> WebserviceRequestHandler.opDocInfo(params, dstream);
+                case DOC_SNIPPET -> WebserviceRequestHandler.opDocSnippet(params, dstream);
 
                 // Other search
-                case TERM_FREQUENCIES:
-                    WebserviceRequestHandler.opTermFreq(params, dstream);
-                    break;
-                case AUTOCOMPLETE:
-                    WebserviceRequestHandler.opAutocomplete(params, dstream);
-                    break;
+                case TERM_FREQUENCIES -> WebserviceRequestHandler.opTermFreq(params, dstream);
+                case AUTOCOMPLETE -> WebserviceRequestHandler.opAutocomplete(params, dstream);
 
                 // Manage user corpora
-                case LIST_INPUT_FORMATS:
-                    WebserviceRequestHandler.opListInputFormats(params, dstream, debugMode);
-                    break;
-                case INPUT_FORMAT_INFO:
-                    WebserviceRequestHandler.opInputFormatInfo(params, dstream);
-                    break;
-                case INPUT_FORMAT_XSLT:
-                    WebserviceRequestHandler.opInputFormatXslt(params, dstream);
-                    break;
-
-                case CACHE_INFO:
-                    WebserviceRequestHandler.opCacheInfo(params, dstream);
-                    break;
-                case CACHE_CLEAR:
-                    WebserviceRequestHandler.opClearCache(params, dstream, debugMode);
-                    break;
-
-                case WRITE_INPUT_FORMAT:
-                case DELETE_INPUT_FORMAT:
-                case CREATE_CORPUS:
-                case DELETE_CORPUS:
-                case ADD_TO_CORPUS:
-                case CORPUS_SHARING:
-                    throw new UnsupportedOperationException("Not (yet) supported: " + params.getOperation());
-
-                case STATIC_RESPONSE:
-                    throw new UnsupportedOperationException("This operation shouldn't be called directly: " + params.getOperation());
-
-                case NONE:
+                case LIST_INPUT_FORMATS -> WebserviceRequestHandler.opListInputFormats(params, dstream, debugMode);
+                case INPUT_FORMAT_INFO -> WebserviceRequestHandler.opInputFormatInfo(params, dstream);
+                case INPUT_FORMAT_XSLT -> WebserviceRequestHandler.opInputFormatXslt(params, dstream);
+                case CACHE_INFO -> WebserviceRequestHandler.opCacheInfo(params, dstream);
+                case CACHE_CLEAR -> WebserviceRequestHandler.opClearCache(params, dstream, debugMode);
+                case WRITE_INPUT_FORMAT, DELETE_INPUT_FORMAT, CREATE_CORPUS, DELETE_CORPUS, ADD_TO_CORPUS,
+                     CORPUS_SHARING ->
+                        throw new UnsupportedOperationException("Not (yet) supported: " + params.getOperation());
+                case STATIC_RESPONSE -> throw new UnsupportedOperationException(
+                        "This operation shouldn't be called directly: " + params.getOperation());
+                case NONE -> {
                     // do nothing
-                    break;
-
-                case PARSE_PATTERN:
-                case RELATIONS:
-                    throw new NotImplementedException("TODO");
+                }
+                case RELATIONS -> WebserviceRequestHandler.opRelations(params, dstream);
+                case PARSE_PATTERN -> WebserviceRequestHandler.opParsePattern(params, dstream);
+                default -> throw new UnsupportedOperationException("TODO");
                 }
                 ds.endEntry().endDocument();
             } catch (Exception e) {

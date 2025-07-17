@@ -255,7 +255,8 @@ public class Corpus {
 
     public long tokenCount = 0;
 
-    public long documentCount = 0;
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long documentCount;
 
     public VersionInfo versionInfo;
 

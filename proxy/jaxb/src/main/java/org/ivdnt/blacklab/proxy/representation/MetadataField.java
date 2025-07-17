@@ -48,6 +48,8 @@ public class MetadataField {
                     jgen.writeNumberField(entry.getKey(), entry.getValue());
                 }
                 jgen.writeEndObject();
+            } else {
+                throw new IOException("Unexpected type for fieldValues: " + value.getClass().getName());
             }
         }
     }

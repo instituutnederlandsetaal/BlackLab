@@ -198,13 +198,13 @@ public class Requests {
             MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes,
             boolean isXml) {
         Object entity = request(client, ParamsUtil.get(parameters, corpusName, op), method, resultTypes);
-        if (isXml && entity instanceof EntityWithSummary) {
+        if (isXml && entity instanceof EntityWithSummary ews) {
             // Don't try to serialize the pattern to XML, this induces headaches.
-            ((EntityWithSummary) entity).getSummary().pattern = null;
+            ews.getSummary().pattern = null;
         }
-        if (entity instanceof JsonCsvResponse) {
+        if (entity instanceof JsonCsvResponse jcr) {
             // Return actual CSV contents instead of JSON
-            String csv = ((JsonCsvResponse) entity).csv;
+            String csv = jcr.csv;
             return Response.ok().type(ParamsUtil.MIME_TYPE_CSV).entity(csv).build();
         } else {
             return ProxyResponse.success(entity);

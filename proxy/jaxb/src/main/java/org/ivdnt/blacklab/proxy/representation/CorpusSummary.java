@@ -33,7 +33,8 @@ public class CorpusSummary {
 
     public long tokenCount = 0;
 
-    public long documentCount = 0;
+    @JsonInclude(Include.NON_NULL)
+    public Long documentCount;
 
     // required for Jersey
     CorpusSummary() {}
