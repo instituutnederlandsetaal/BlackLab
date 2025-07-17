@@ -262,7 +262,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
 
     @Override
     public String toString() {
-        return "BlackLab40StoredFieldsReader(" + delegate.toString() + ")";
+        return getClass().getSimpleName() + "(" + delegate.toString() + ")";
     }
 
     /**

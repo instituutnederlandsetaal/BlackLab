@@ -72,7 +72,6 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         this.delegateFieldsConsumer = delegateFieldsConsumer;
         this.state = state;
         this.delegatePostingsFormatName = delegatePostingsFormatName;
-        /** How to index relations */
         RelationsStrategy relationsStrategy = RelationsStrategy.forNewIndex();
 
         plugins = new ArrayList<>();
@@ -81,9 +80,11 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
             if (relationsStrategy.writeRelationInfoToIndex()) {
                 if (relationsStrategy instanceof RelationsStrategySingleTerm) {
                     throw new IndexVersionMismatch("This index uses a tags/relations format that was temporarily used in development, but is not supported anymore. Please re-index.");
-                } else {
+                } else if (relationsStrategy instanceof RelationsStrategySeparateTerms) {
                     // This is the current version of the relation info plugin, used for new indexes.
                     plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms) relationsStrategy));
+                } else {
+                    throw new IndexVersionMismatch("Unknown relationsStrategy: " + relationsStrategy.getName());
                 }
             }
         } catch (IOException e) {
@@ -147,7 +148,8 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         delegateFieldsConsumer.write(fields, norms);
     }
 
-    public int maxDoc() {
+    @Override
+    protected int maxDoc() {
         return state.segmentInfo.maxDoc();
     }
 
@@ -301,6 +303,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
         delegateFieldsConsumer.close();
     }
 
+    @Override
     public String getSegmentName() {
         return state.segmentInfo.name;
     }
