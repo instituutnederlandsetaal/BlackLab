@@ -2,9 +2,7 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.codecs.CodecUtil;
@@ -17,8 +15,6 @@ import org.apache.lucene.index.StoredFieldVisitor;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.Accountable;
-import org.apache.lucene.util.Accountables;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
@@ -29,40 +25,58 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
 
     /** How large we allow the block decoding buffer to become before throwing an error. */
     private static final int MAX_DECODE_BUFFER_LENGTH = 100_000;
+
     /** Size in bytes of a record in the docindex file */
     private static final int DOCINDEX_RECORD_SIZE = Integer.BYTES + Byte.BYTES;
+
     /** Size in bytes of a record in the valueindex file */
     private static final int VALUEINDEX_RECORD_SIZE = Byte.BYTES + Integer.BYTES + Byte.BYTES + 2 * Long.BYTES;
+
     /** Size in bytes of a record in the blockindex file */
     private static final int BLOCKINDEX_RECORD_SIZE = Integer.BYTES;
+
     /** How many bytes a UTF-8 codepoint can take at most, for reserving buffer space */
     private static final int UTF8_MAX_BYTES_PER_CHAR = 4;
+
     /** How much space to reserve in the buffer for decoding overhead*/
     private static final int ESTIMATED_DECODE_OVERHEAD = 1024;
+
     /** Our segment directory */
     protected final Directory directory;
+
     /** Info about our segment */
     protected final SegmentInfo segmentInfo;
+
     /** Lucene I/O context (?) */
     protected final IOContext ioContext;
+
     /** Information about the fields in this segment */
     protected final FieldInfos fieldInfos;
+
     /** Lucene stored fields reader we delegate to for non-content-store fields */
     protected final StoredFieldsReader delegate;
+
     /** Fields with a content store and their field index. */
     protected final Map<String, Integer> contentStoreFieldIndexes = new HashMap<>();
+
     /** Offset for each doc in the valueindex file, and number of fields stored */
     protected final IndexInput _docIndexFile;
+
     /** Information about field, value length, codec, and offsets in the block* files */
     protected final IndexInput _valueIndexFile;
+
     /** Offsets in the blocks file (1 or more for each value stored) */
     protected final IndexInput _blockIndexFile;
+
     /** Encoded data blocks */
     protected final IndexInput _blocksFile;
+
     /** Offset in docIndex file after header, so we can calculate doc offsets. */
     protected final long docIndexFileOffset;
+
     /** How many characters from the document do we encode into a data block? */
     protected final int blockSizeChars;
+
     /** Stored fields format name. */
     final String storedFieldsFormatName;
 
@@ -111,8 +125,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws
             IOException {
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9+");
-            // return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
+            throw new IllegalStateException("Should only be done for Lucene 9");
         } else {
             return directory.openInput(fileName, ioContext);
         }
@@ -153,6 +166,10 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         }
     }
 
+    // TODO: check if we have already implemented this mentioned optimization
+    // https://lucene.apache.org/core/9_0_0/changes/Changes.html
+    // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied
+    // StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.
     @Override
     public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
         // Visit each regular stored field.
@@ -187,6 +204,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
+        // TODO look into character encoding
         byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
         if (contents != null)
             storedFieldVisitor.stringField(fieldInfo, contents);
@@ -209,24 +227,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
 
         // Let the delegate close its files.
         delegate.close();
-    }
-
-    @Override
-    public long ramBytesUsed() {
-        return delegate.ramBytesUsed() /* +
-                RamUsageEstimator.sizeOfObject(fieldsFile) +
-                RamUsageEstimator.sizeOfObject(docIndexFile) +
-                RamUsageEstimator.sizeOfObject(valueIndexFile) +
-                RamUsageEstimator.sizeOfObject(blockIndexFile) +
-                RamUsageEstimator.sizeOfObject(blocksFile) +
-                Integer.BYTES * 2 + // blockSizeChars, numberOfFieldsWritten
-                RamUsageEstimator.sizeOfMap(fields)
-                */ ;
-    }
-
-    @Override
-    public Collection<Accountable> getChildResources() {
-        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override

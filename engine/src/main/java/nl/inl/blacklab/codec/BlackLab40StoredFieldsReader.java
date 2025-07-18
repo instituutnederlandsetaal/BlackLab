@@ -1,12 +1,16 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 
 import org.apache.lucene.codecs.StoredFieldsReader;
 import org.apache.lucene.index.FieldInfos;
 import org.apache.lucene.index.SegmentInfo;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
+import org.apache.lucene.util.Accountable;
+import org.apache.lucene.util.Accountables;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 
@@ -32,6 +36,16 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }
+    }
+
+    @Override
+    public long ramBytesUsed() {
+        return delegate.ramBytesUsed();
+    }
+
+    @Override
+    public Collection<Accountable> getChildResources() {
+        return List.of(Accountables.namedAccountable("delegate", delegate));
     }
 
     @Override

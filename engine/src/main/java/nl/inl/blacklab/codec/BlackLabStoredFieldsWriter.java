@@ -88,6 +88,10 @@ public abstract class BlackLabStoredFieldsWriter extends StoredFieldsWriter {
         valueIndexFile = createOutput(BlackLabStoredFieldsFormat.VALUEINDEX_EXT, directory, segmentInfo, ioContext);
         blockIndexFile = createOutput(BlackLabStoredFieldsFormat.BLOCKINDEX_EXT, directory, segmentInfo, ioContext);
         blocksFile = createOutput(BlackLabStoredFieldsFormat.BLOCKS_EXT, directory, segmentInfo, ioContext);
+
+        // NOTE: we can make this configurable later (to optimize for specific usage scenarios),
+        // but for now we'll just use the default value.
+        fieldsFile.writeInt(blockSizeChars);
     }
 
     protected IndexOutput createOutput(String ext, Directory directory, SegmentInfo segmentInfo, IOContext ioContext)
@@ -98,8 +102,7 @@ public abstract class BlackLabStoredFieldsWriter extends StoredFieldsWriter {
         String fileName = IndexFileNames.segmentFileName(segmentInfo.name, segmentSuffix, ext);
 
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9+");
-            //indexOutput = EndiannessReverserUtil.createOutput(directory, fileName, ioContext); // flip for Lucene 9
+            throw new IllegalStateException("Should only be done for Lucene 9");
         } else {
             indexOutput = directory.createOutput(fileName, ioContext);
         }

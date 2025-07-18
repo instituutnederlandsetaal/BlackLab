@@ -45,7 +45,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 class PWPluginForwardIndex implements PWPlugin {
 
-    private final BlackLab40PostingsWriter postingsWriter;
+    private final BlackLabPostingsWriter postingsWriter;
 
     private final Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
 
@@ -106,7 +106,7 @@ class PWPluginForwardIndex implements PWPlugin {
     private int currentDocOccurrencesWritten;
 
 
-    PWPluginForwardIndex(BlackLab40PostingsWriter postingsWriter) throws IOException {
+    PWPluginForwardIndex(BlackLabPostingsWriter postingsWriter) throws IOException {
         this.postingsWriter = postingsWriter;
 
         outTokensIndexFile = postingsWriter.createOutput(BlackLabPostingsFormat.TOKENS_INDEX_EXT);

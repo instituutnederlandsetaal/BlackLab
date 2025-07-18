@@ -122,7 +122,7 @@ class PWPluginRelationInfo implements PWPlugin {
     /** How to encode/decode payload for relations */
     private final RelationsStrategy.PayloadCodec relPayloadCodec;
 
-    PWPluginRelationInfo(BlackLab40PostingsWriter postingsWriter, RelationsStrategySeparateTerms relationsStrategy) throws IOException {
+    PWPluginRelationInfo(BlackLabPostingsWriter postingsWriter, RelationsStrategySeparateTerms relationsStrategy) throws IOException {
         this.relationsStrategy = relationsStrategy;
         this.relPayloadCodec = relationsStrategy.getPayloadCodec();
 

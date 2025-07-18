@@ -59,5 +59,5 @@ public abstract class BlackLabPostingsFormat extends PostingsFormat {
         super(name);
     }
 
-    protected abstract PostingsFormat getDelegatePostingsFormat();
+    public abstract PostingsFormat getDelegatePostingsFormat();
 }

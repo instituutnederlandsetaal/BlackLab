@@ -169,8 +169,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9+");
-            // return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
+            throw new IllegalStateException("Should only be done for Lucene 9");
         } else {
             return directory.openInput(fileName, ioContext);
         }

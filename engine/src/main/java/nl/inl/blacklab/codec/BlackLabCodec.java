@@ -69,7 +69,7 @@ public abstract class BlackLabCodec extends Codec {
         return _delegate;
     }
 
-    PostingsFormat getDelegatePostingsFormat() {
+    protected PostingsFormat getDelegatePostingsFormat() {
         /*
 
         // This causes errors. We cannot handle a per-field postings format properly yet.
@@ -130,7 +130,7 @@ public abstract class BlackLabCodec extends Codec {
     @Override
     public abstract BlackLabStoredFieldsFormat storedFieldsFormat();
 
-    StoredFieldsFormat getDelegateStoredFieldsFormat() {
+    protected StoredFieldsFormat getDelegateStoredFieldsFormat() {
         return delegate().storedFieldsFormat();
     }
 

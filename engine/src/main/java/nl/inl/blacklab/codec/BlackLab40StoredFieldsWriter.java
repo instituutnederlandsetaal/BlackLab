@@ -20,10 +20,6 @@ public class BlackLab40StoredFieldsWriter extends BlackLabStoredFieldsWriter {
                 BlackLab40StoredFieldsFormat.VERSION_CURRENT, directory, segmentInfo, ioContext,
                 delegate, delegateFormatName, false);
 
-        // NOTE: we can make this configurable later (to optimize for specific usage scenarios),
-        // but for now we'll just use the default value.
-        fieldsFile.writeInt(blockSizeChars);
-
     }
 
 }
