@@ -46,7 +46,7 @@ public class SegmentRelationInfo implements AutoCloseable {
     /** Attribute names */
     private final List<String> attributeNames = new ArrayList<>();
 
-    public static SegmentRelationInfo openIfPresent(BlackLab40PostingsReader postingsReader) throws IOException {
+    public static SegmentRelationInfo openIfPresent(BlackLabPostingsReader postingsReader) throws IOException {
         try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.RI_FIELDS_EXT)) {
             return new SegmentRelationInfo(postingsReader, fieldsFile);
         } catch (NoSuchFileException | FileNotFoundException e) {

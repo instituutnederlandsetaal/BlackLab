@@ -26,13 +26,6 @@ public class BlackLab40StoredFieldsFormat extends BlackLabStoredFieldsFormat {
     /** Current version */
     public static final int VERSION_CURRENT = 1;
 
-    /**
-     * Default uncompressed block size (in characters) for the values files.
-     * With 8K blocks, compressed blocks should be around 2K, which gives a
-     * decent chance that only a single disk block / memory page is needed.
-     */
-    public static final int DEFAULT_BLOCK_SIZE_CHARS = 8 * 1024;
-
     /** Standard Lucene StoredFieldsFormat we delegate to for regular (non-content-store) stored fields. */
     private final StoredFieldsFormat delegate;
 
