@@ -2,6 +2,8 @@ package org.ivdnt.blacklab.solr;
 
 import java.security.Principal;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.search.DocSet;
@@ -19,10 +21,7 @@ import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
-import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class UserRequestSolr implements UserRequest {
 

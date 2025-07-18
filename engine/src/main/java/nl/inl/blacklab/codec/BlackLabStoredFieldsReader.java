@@ -205,7 +205,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        // TODO look into character encoding
         String contents = contentStore().getValue(docId, fieldInfo.name);
         if (contents != null)
             storedFieldVisitor.stringField(fieldInfo, contents);
