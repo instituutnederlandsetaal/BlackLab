@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
@@ -28,9 +29,13 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm;
 
 public abstract class BlackLabPostingsWriter extends FieldsConsumer {
 
@@ -70,6 +75,25 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
         this.delegatePostingsFormatName = delegatePostingsFormatName;
         this.reverseEndian = reverseEndian;
         plugins = new ArrayList<>();
+
+        RelationsStrategy relationsStrategy = RelationsStrategy.forNewIndex();
+
+        try {
+            plugins.add(new PWPluginForwardIndex(this));
+            if (relationsStrategy.writeRelationInfoToIndex()) {
+                if (relationsStrategy instanceof RelationsStrategySingleTerm) {
+                    throw new IndexVersionMismatch("This index uses a tags/relations format that was temporarily used in development, but is not supported anymore. Please re-index.");
+                } else if (relationsStrategy instanceof RelationsStrategySeparateTerms) {
+                    // This is the current version of the relation info plugin, used for new indexes.
+                    plugins.add(new PWPluginRelationInfo(this, (RelationsStrategySeparateTerms) relationsStrategy));
+                } else {
+                    throw new IndexVersionMismatch("Unknown relationsStrategy: " + relationsStrategy.getName());
+                }
+            }
+        } catch (IOException e) {
+            // Something went wrong, e.g. we couldn't create the output files.
+            throw new InvalidIndex("Error initializing PostingsWriter plugins", e);
+        }
     }
 
     /**
@@ -230,8 +254,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
         IndexOutput output;
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9+");
-            //IndexOutput output = EndiannessReverserUtil.createOutput(state.directory, fileName, state.context); // flip for Lucene 9
+            output = EndiannessReverserUtil.createOutput(state.directory, fileName, state.context); // flip for Lucene 9
         } else
             output = state.directory.createOutput(fileName, state.context);
 
@@ -247,8 +270,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
     /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9+");
-            // return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
+            return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
         } else
             return directory.openInput(fileName, ioContext);
     }

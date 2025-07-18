@@ -1,31 +1,11 @@
 package nl.inl.blacklab.codec.blacklab50;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.codecs.CodecUtil;
-import org.apache.lucene.codecs.FieldsProducer;
-import org.apache.lucene.codecs.PostingsFormat;
-import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.SegmentReadState;
-import org.apache.lucene.index.Terms;
-import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.IOContext;
-import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
-import nl.inl.blacklab.codec.BlackLabStoredFieldsReader;
-import nl.inl.blacklab.codec.SegmentForwardIndex;
-import nl.inl.blacklab.codec.SegmentRelationInfo;
-import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 /**
  * Adds forward index reading to default FieldsProducer.
@@ -44,157 +24,9 @@ import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 @ThreadSafe
 public class BlackLab50PostingsReader extends BlackLabPostingsReader {
 
-    protected static final Logger logger = LogManager.getLogger(BlackLab50PostingsReader.class);
-
-    private final SegmentReadState state;
-
-    /** Name of PF we delegate to (the one from Lucene) */
-    private String delegateFormatName;
-
-    /** The delegate whose functionality we're extending */
-    private final FieldsProducer delegateFieldsProducer;
-
-    /** The forward index */
-    private final SegmentForwardIndex forwardIndex;
-
-    /** The relation info (if it was stored) */
-    private final SegmentRelationInfo relationInfo;
-
-    /** Terms object for each field */
-    private final Map<String, BLTerms> termsPerField = new HashMap<>();
-
     public BlackLab50PostingsReader(SegmentReadState state) throws IOException {
-        this.state = state;
-
-        // NOTE: opening the forward index calls openInputFile, which reads
-        //       delegatePostingsFormatName, so this must be done first.
-        forwardIndex = new SegmentForwardIndex(this);
-        if (delegateFormatName == null)
-            throw new IllegalStateException("Opening the segment FI should have set the delegate format name");
-        PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
-        delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
-
-        // If relation info was stored, make sure we can access it
-        relationInfo = SegmentRelationInfo.openIfPresent(this);
-    }
-
-    @Override
-    public Iterator<String> iterator() {
-        return delegateFieldsProducer.iterator();
-    }
-
-    @Override
-    public void close() throws IOException {
-        if (relationInfo != null)
-            relationInfo.close();
-        forwardIndex.close();
-        delegateFieldsProducer.close();
-    }
-
-    @Override
-    public BLTerms terms(String field) throws IOException {
-        BLTerms terms;
-        synchronized (termsPerField) {
-            terms = termsPerField.get(field);
-            if (terms == null) {
-                Terms delegateTerms = delegateFieldsProducer.terms(field);
-
-                terms = delegateTerms == null ? null : new BLTerms(delegateTerms, this);
-                termsPerField.put(field, terms);
-            }
-        }
-        return terms;
-    }
-
-    @Override
-    public BlackLabStoredFieldsReader getStoredFieldsReader() {
-        try {
-            BlackLab50Codec codec = (BlackLab50Codec) state.segmentInfo.getCodec();
-            return codec.storedFieldsFormat().fieldsReader(
-                    state.directory, state.segmentInfo, state.fieldInfos, state.context);
-        } catch (IOException e) {
-            throw new InvalidIndex(e);
-        }
-    }
-
-    @Override
-    public int size() {
-        return delegateFieldsProducer.size();
-    }
-
-    @Override
-    public void checkIntegrity() throws IOException {
-        delegateFieldsProducer.checkIntegrity();
-
-        // TODO: check integrity of our own (FI) files?
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "(delegate=" + delegateFieldsProducer + ")";
-    }
-
-    /** Lucene 8 uses big-endian, Lucene 9 little-endian */
-    public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
-        return directory.openInput(fileName, ioContext);
-    }
-
-    /**
-     * Open a custom file for reading and check the header.
-     *
-     * @param extension extension of the file to open (should be one of the prefixed constants from BlacklabPostingsFormat)
-     * @return handle to the opened segment file
-     */
-    public IndexInput openIndexFile(String extension) throws IOException {
-        String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, extension);
-        IndexInput input = openInputCorrectEndian(state.directory, fileName, state.context);
-        try {
-            // Check index header
-            CodecUtil.checkIndexHeader(input, BlackLab50PostingsFormat.NAME, BlackLab50PostingsFormat.VERSION_START,
-                    BlackLab50PostingsFormat.VERSION_CURRENT, state.segmentInfo.getId(), state.segmentSuffix);
-
-            // Check delegate format name
-            String delegateFN = input.readString();
-            if (delegateFormatName == null)
-                delegateFormatName = delegateFN;
-            if (!delegateFormatName.equals(delegateFN))
-                throw new IOException("Segment file " + fileName +
-                        " contains wrong delegate format name: " + delegateFN +
-                        " (expected " + delegateFormatName + ")");
-
-            return input;
-        } catch (Exception e) {
-            input.close();
-            throw e;
-        }
-    }
-
-    /**
-     * Create a forward index reader for this segment.
-     *
-     * The returned reader is not threadsafe and shouldn't be stored.
-     * A single thread may use it for reading from this segment. It
-     * can then be discarded.
-     *
-     * @return forward index segment reader
-     */
-    @Override
-    public ForwardIndexSegmentReader forwardIndex() {
-        return forwardIndex.reader();
-    }
-
-    /**
-     * Create a relation info reader for this segment.
-     *
-     * The returned reader is not threadsafe and shouldn't be stored.
-     * A single thread may use it for reading from this segment. It
-     * can then be discarded.
-     *
-     * @return relation info segment reader if available, otherwise null
-     */
-    @Override
-    public RelationInfoSegmentReader relationInfo() {
-        return relationInfo == null ? null : relationInfo.reader();
+        super(BlackLab50PostingsFormat.NAME, BlackLab50PostingsFormat.VERSION_START,
+                BlackLab50PostingsFormat.VERSION_CURRENT, state, false);
     }
 
 }

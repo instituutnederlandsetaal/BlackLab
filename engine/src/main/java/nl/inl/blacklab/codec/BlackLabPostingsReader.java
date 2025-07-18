@@ -1,14 +1,13 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
@@ -18,8 +17,6 @@ import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
-import org.apache.lucene.util.Accountable;
-import org.apache.lucene.util.Accountables;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -145,16 +142,6 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     }
 
     @Override
-    public long ramBytesUsed() {
-        return 3 * delegateFieldsProducer.ramBytesUsed();
-    }
-
-    @Override
-    public Collection<Accountable> getChildResources() {
-        return List.of(Accountables.namedAccountable("delegate", delegateFieldsProducer));
-    }
-
-    @Override
     public void checkIntegrity() throws IOException {
         delegateFieldsProducer.checkIntegrity();
 
@@ -169,8 +156,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9+");
-            // return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
+            return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
         } else {
             return directory.openInput(fileName, ioContext);
         }

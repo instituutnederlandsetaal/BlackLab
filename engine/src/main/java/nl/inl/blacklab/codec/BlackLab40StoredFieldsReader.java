@@ -21,7 +21,7 @@ public class BlackLab40StoredFieldsReader extends BlackLabStoredFieldsReader {
             throws IOException {
         super(BlackLab40StoredFieldsFormat.NAME, BlackLab40StoredFieldsFormat.VERSION_START,
                 BlackLab40StoredFieldsFormat.VERSION_CURRENT, directory, segmentInfo, ioContext, fieldInfos,
-                delegate, delegateFormatName, false);
+                delegate, delegateFormatName, true);
     }
 
     @Override
