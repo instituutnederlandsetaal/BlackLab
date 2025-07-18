@@ -9,7 +9,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 
 public abstract class BlackLabStoredFieldsFormat extends StoredFieldsFormat {
-
     /** Every file extension will be prefixed with this to indicate it is part of the content store. */
     private static final String EXT_PREFIX = "blcs.";
 
@@ -27,6 +26,13 @@ public abstract class BlackLabStoredFieldsFormat extends StoredFieldsFormat {
 
     /** Extension for the blocks file. */
     public static final String BLOCKS_EXT = EXT_PREFIX + "blocks";
+
+    /**
+     * Default uncompressed block size (in characters) for the values files.
+     * With 8K blocks, compressed blocks should be around 2K, which gives a
+     * decent chance that only a single disk block / memory page is needed.
+     */
+    public static final int DEFAULT_BLOCK_SIZE_CHARS = 8 * 1024;
 
     @Override
     public abstract BlackLabStoredFieldsReader fieldsReader(Directory directory, SegmentInfo si, FieldInfos fn, IOContext context)
