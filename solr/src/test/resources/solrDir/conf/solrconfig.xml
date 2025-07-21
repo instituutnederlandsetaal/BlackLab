@@ -121,7 +121,7 @@
          between the existing compression modes in the default codec: "BEST_SPEED" (default)
          or "BEST_COMPRESSION".
     -->
-    <codecFactory class="org.ivdnt.blacklab.solr.BLCodecFactory"/><!-- NOTE: use BLCodecFactory for the older BlackLab40Codec -->
+    <codecFactory class="org.ivdnt.blacklab.solr.BL50CodecFactory"/><!-- NOTE: use BLCodecFactory for the older BlackLab40Codec -->
 
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
          Index Config - These settings control low-level behavior of indexing

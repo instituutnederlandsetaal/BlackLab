@@ -36,7 +36,6 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.analysis.DesensitizeFilter;
@@ -70,9 +69,9 @@ public class TestIndexComponent {
     }
 
     @Test
-    @Ignore
     public void testAddData() throws SolrServerException, IOException {
-        String configFileContents = FileUtils.readFileToString(Paths.get("..", "test", "data", DOCUMENT_FORMAT).toFile(), StandardCharsets.UTF_8);
+        File file = Paths.get("..", "test", "data", DOCUMENT_FORMAT + ".blf.yaml").toFile();
+        String configFileContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
@@ -90,7 +89,8 @@ public class TestIndexComponent {
 
         NamedList<Object> response = SolrTestServer.client().request(r);
         System.err.println("Add file response\n" + response.toString());
-        Assert.assertTrue("Response should contain 'status' field", response.get("status") != null);
+        NamedList<Object> responseHeader = (NamedList<Object>) response.get("responseHeader");
+        Assert.assertTrue("Response should contain 'status' field", responseHeader.get("status") != null);
     }
 
     /** A test of a weird case that somehow sometime broke the code during development */
