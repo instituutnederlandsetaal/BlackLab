@@ -1,39 +1,21 @@
 package nl.inl.blacklab.search.lucene;
 
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexReaderContext;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.IndexSearcher;
-import org.apache.lucene.search.QueryVisitor;
-import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.queries.spans.SpanTermQuery;
 import org.apache.lucene.queries.spans.SpanTermQuery.SpanTermWeight;
 import org.apache.lucene.queries.spans.TermSpans;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.QueryVisitor;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -42,13 +24,7 @@ import nl.inl.blacklab.search.fimatch.NfaState;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
-/**
- * BL-specific subclass of SpanTermQuery that changes what getField() returns
- * (the annotated field name instead of the full Lucene field name) in order to be
- * able to combine queries in different Lucene fields using AND and OR. Also
- * makes sure the SpanWeight returned by createWeight() produces a BLSpans, not
- * a regular Spans.
- */
+/** Wraps a SpanTermQuery to make it a BLSpanQuery. */
 public class BLSpanTermQuery extends BLSpanQuery {
 
     public static final int FIXED_FORWARD_MATCHING_COST = 200;

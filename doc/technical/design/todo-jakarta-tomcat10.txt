@@ -7,18 +7,6 @@ LUCENE 8/9 TOMCAT 9/10-jakarta DIFFERENCES
 
 
 TODO
-- Compare Lucene 8/9
-  - compare src with classes adapted from Lucene:
-    - BLSpanTermQuery
-      - r 116: TermStates.build(searcher, query.getTerm(),needsStats); // <-- searcher WAS: topContext (check Lucene src)
-    - BLSpanOrQuery
-    - BLConjunctionSpans:63 intersectSpans
-    - (more)
-  - L8 ConjunctionDISI.intersectIterators === L9 ConjunctionUtils.intersectIterators ?
-    (same with intersectSpans)
-- SingleDocIdFilter:111 visit(): implement/use elsewhere?  (also DocSetFilter)
-- FileUploadHandler:48 max file in mem size / tmp dir / size limit exceeded
-  test autosearch file upload () (maar zit ws. in CI test script?)
 - ResultsHits:227 newSlowSetQuery ?
 - Test proxy
 - Test Solr
@@ -26,6 +14,7 @@ TODO
   - SolrTestServer:142 setLogLevel commented out
   - TestIndexComponent:54 prepareClass USE_EXISTING_INDEX
   - solrconfig.xml:124 shouldn't this be BlackLab50CodecFactory?
+- SingleDocIdFilter:111 visit(): implement/use elsewhere?  (also DocSetFilter)
 - look at optimizations:
   - DocValuesUtil:82 optimization? (also SortedDocValuesCacher)
   - OPTIMIZATION BlackLab40StoredFieldsReader:154: put largest text field value last?
