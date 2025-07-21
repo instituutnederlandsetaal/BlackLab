@@ -108,7 +108,7 @@ public class PWPluginRelationInfo implements PWPlugin {
 
     /** Attribute(s) found in current term (key is attribute index, value is offset in value file)
      * <p>
-     * NOTE: once we drop support for {@link nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm},
+     * NOTE: once we drop support for RelationsStrategySingleTerm,
      * this doesn't need to be a map anymore, as there can only be 1 attribute per term.
      */
     private final SortedMap<Integer, Long> currentTermAttributes = new TreeMap<>();

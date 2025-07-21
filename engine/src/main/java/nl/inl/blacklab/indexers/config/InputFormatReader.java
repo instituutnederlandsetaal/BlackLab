@@ -199,8 +199,7 @@ public class InputFormatReader extends YamlJsonReader {
     }
 
     private void finalizeConfig(String baseFormat) {
-        boolean atLeastV2 = cfg.getVersion() >= 2;
-        if (baseFormat != null && atLeastV2) {
+        if (baseFormat != null) {
             throw new InvalidInputFormatConfig("baseFormat found. Input format inheritance is no longer supported in " +
                     "version 2 of the .blf.yaml file format. Copy and customize format instead.");
         }
@@ -214,8 +213,8 @@ public class InputFormatReader extends YamlJsonReader {
             }
         }
 
-        // If this config is at least v2: default to Saxon if no processor specified
-        if (atLeastV2 && cfg.getFileType() == FileType.XML &&
+        // Default to Saxon if no processor specified
+        if (cfg.getFileType() == FileType.XML &&
                 cfg.getFileTypeOptions().get(DocIndexerXPath.FT_OPT_PROCESSOR) == null) {
             cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, DocIndexerSaxon.PROCESSOR_NAME);
         }
@@ -431,7 +430,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "name":
                 String name = str(e);
                 String fullName = parentAnnot == null ? name : parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
-                annot.setName(warnSanitizeXmlElementName(fullName, cfg.getVersion()));
+                annot.setName(warnSanitizeXmlElementName(fullName));
                 break;
             case "value":
                 annot.setValuePath(fixedStringToXpath(str(e)));
@@ -484,17 +483,9 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setForwardIndex(bool(e));
                 break;
             case "multipleValues":
-                // deprecated, ignore.
-                if (cfg.getVersion() >= 2)
-                    throw new InvalidInputFormatConfig("multipleValues not allowed in .blf.yaml version 2 (multiple values work automatically)");
-                logger.warn("Encountered deprecated key 'multipleValues' (this key is now ignored, multiple values work automatically)");
-                break;
+                throw new InvalidInputFormatConfig("multipleValues no longer allowed in .blf.yaml (remove this value; multiple values work automatically)");
             case "allowDuplicateValues":
-                if (cfg.getVersion() >= 2)
-                    throw new InvalidInputFormatConfig("allowDuplicateValues not allowed in .blf.yaml version 2 (duplicates are automatically removed)");
-                logger.warn("Encountered deprecated key 'allowDuplicateValues' (remove this, duplicates are automatically removed)");
-                annot.setAllowDuplicateValues(bool(e));
-                break;
+                throw new InvalidInputFormatConfig("allowDuplicateValues no longer allowed in .blf.yaml (remove this value; duplicates are automatically removed)");
             case "captureXml":
                 annot.setCaptureXml(bool(e));
                 break;
@@ -603,25 +594,11 @@ public class InputFormatReader extends YamlJsonReader {
                     t.setTokenIdPath(str(e));
                     break;
                 case "includeAttributes": // (removed in v2, use attributes)
-                    if (cfg.getVersion() >= 2)
-                        throw new InvalidInputFormatConfig("includeAttributes not allowed in .blf.yaml version 2 (use 'attributes' instead)");
-                    List<String> inclAttr = new ArrayList<>();
-                    readStringList(e, inclAttr);
-                    t.setIncludeAttributes(inclAttr);
-                    break;
+                    throw new InvalidInputFormatConfig("includeAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
                 case "excludeAttributes": // (removed in v2, use attributes)
-                    if (cfg.getVersion() >= 2)
-                        throw new InvalidInputFormatConfig("excludeAttributes not allowed in .blf.yaml version 2 (use 'attributes' with exclude: true instead)");
-                    List<String> exclAttr = new ArrayList<>();
-                    readStringList(e, exclAttr);
-                    t.setExcludeAttributes(exclAttr);
-                    break;
+                    throw new InvalidInputFormatConfig("excludeAttributes no longer allowed in .blf.yaml (use 'attributes' with exclude: true instead)");
                 case "extraAttributes": // (deprecated, renamed to attributes)
-                    if (cfg.getVersion() >= 2)
-                        throw new InvalidInputFormatConfig("extraAttributes not allowed in .blf.yaml version 2 (use 'attributes' instead)");
-                    logger.warn("Encountered deprecated key 'extraAttributes' (use 'attributes' instead)");
-                    t.setAttributes(readExtraAttributes(e));
-                    break;
+                    throw new InvalidInputFormatConfig("extraAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
                 case "attributes":
                     t.setAttributes(readExtraAttributes(e));
                     break;
@@ -708,16 +685,11 @@ public class InputFormatReader extends YamlJsonReader {
         }
     }
 
-    private String warnSanitizeXmlElementName(String name, int version) {
-        boolean allowDashes = version >= 2;
-        String sanitizedDashAllowed = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, false);
-        String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, true);
+    private String warnSanitizeXmlElementName(String name) {
+        String sanitizedDashAllowed = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
+        String sanitized = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
         if (sanitizedDashAllowed.equals(name) && name.contains("-")) {
-            if (allowDashes)
-                return sanitizedDashAllowed;
-            logger.warn("Name '" + name + "': dash in name is not currently allowed, but this will likely change in a " +
-                    "future config format version. Sanitized to '" + sanitized + "' " +
-                    inFormat());
+            return sanitizedDashAllowed;
         } else if (!sanitized.equals(name)) {
             logger.warn("Name '" + name + "' is not a valid XML element name; sanitized to '" + sanitized + "'"
                     + inFormat());
@@ -737,7 +709,7 @@ public class InputFormatReader extends YamlJsonReader {
                 // This is mostly because of forward references to fields; the field instance
                 // would be created by the reference, and the field properties will be added when
                 // they are parsed later in the file.
-                f = b.getOrCreateField(warnSanitizeXmlElementName(name, cfg.getVersion()));
+                f = b.getOrCreateField(warnSanitizeXmlElementName(name));
                 existingField = true;
             } else
                 f = new ConfigMetadataField();
@@ -746,7 +718,7 @@ public class InputFormatReader extends YamlJsonReader {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
                 case "name":
-                    f.setName(warnSanitizeXmlElementName(str(e), cfg.getVersion()));
+                    f.setName(warnSanitizeXmlElementName(str(e)));
                     break;
                 case "namePath":
                     f.setName(str(e));
@@ -764,13 +736,7 @@ public class InputFormatReader extends YamlJsonReader {
                     f.setProcess(readProcess(e));
                     break;
                 case "mapValues": // deprecated (use "map" processing stap with "table" param)
-                    if (cfg.getVersion() >= 2)
-                        throw new InvalidInputFormatConfig("'mapValues' has been removed in version 2. Use 'map' processing step with 'table' param instead.");
-                    logger.warn("Encountered deprecated key 'mapValues' (replace with processing step 'map' with 'table' param)");
-                    Map<String, String> mapValues = new HashMap<>();
-                    readStringMap(e, mapValues);
-                    f.setMapValues(mapValues);
-                    break;
+                    throw new InvalidInputFormatConfig("'mapValues' no longer allowed in .blf.yaml (use 'map' processing step with 'table' param instead; see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html)");
                 case "displayName":
                     f.setDisplayName(str(e));
                     break;
@@ -910,17 +876,9 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 }
             }
-
-            // append behaviour was different in v1; adjust for that
-            if (cfg.getVersion() < 2 && s.getMethod().equals("append") && !s.getParam().containsKey("prefix")) {
-                // v1 behaviour: separator is used both for prefix and for joining metadata values
-                s.addParam("prefix", s.getParam().getOrDefault("separator", " "));
-            }
-
             p.add(s);
         }
 
         return p;
     }
-
 }

@@ -8,6 +8,7 @@ import java.util.stream.Stream;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -30,7 +31,7 @@ public interface RelationsStrategy {
      * This would generally be an older strategy, used before we stored the attribute.
      */
     static RelationsStrategy ifNotRecorded() {
-        return RelationsStrategySingleTerm.INSTANCE;
+        throw new IndexVersionMismatch("Index is an older index with an incompatible way of indexing tags/relations. Please reindex.");
     }
 
     /** Return the current default relations strategy (used if no field attribute found).
@@ -44,10 +45,8 @@ public interface RelationsStrategy {
     /** Instantiate strategy with given name */
     static RelationsStrategy fromName(String name) {
         return switch (name) {
-            case RelationsStrategySingleTerm.NAME -> RelationsStrategySingleTerm.INSTANCE;
-            case RelationsStrategyNaiveSeparateTerms.NAME -> RelationsStrategyNaiveSeparateTerms.INSTANCE;
             case RelationsStrategySeparateTerms.NAME -> RelationsStrategySeparateTerms.INSTANCE;
-            default -> throw new IllegalArgumentException("Unknown relation strategy: " + name);
+            default -> throw new IllegalArgumentException("Unsupported relation strategy: " + name);
         };
     }
 

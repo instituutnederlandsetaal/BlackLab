@@ -1,5 +1,3 @@
-version: 2
-
 # For displaying in user interface (optional)
 displayName: Indexing format used for tests (see TestIndex)
 

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.contentstore;
 
-import org.apache.lucene.document.Document;
-
 public interface ContentStore {
     /**
      * Retrieve a document from the content store.
@@ -58,23 +56,6 @@ public interface ContentStore {
 
     /** Initialize the content store. May be run in a background thread. */
     void initialize();
-
-    /**
-     * Get the content id for the specified document.
-     *
-     * For modern indexes, just returns docId unchanged, as the content is
-     * stored in the Lucene index. For older indexes, the content is stored
-     * in a separate file, and the content id is stored in the Lucene index.
-     *
-     * @param docId Lucene doc id
-     * @param d Lucene document
-     * @param contentIdField  name of the field containing the content id (if applicable)
-     * @return the content id
-     */
-    default int getContentId(int docId, Document d, String contentIdField) {
-        // Modern integrated index format. Content is stored in the segment by Lucene docId.
-        return docId;
-    }
 
     /**
      * Delete a document from the content store.

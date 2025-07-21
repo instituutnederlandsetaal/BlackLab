@@ -78,10 +78,6 @@ public interface Annotation {
 		return AnnotatedFieldNameUtil.annotationField(field().name(), name());
 	}
 
-    default String forwardIndexIdField() {
-        return AnnotatedFieldNameUtil.forwardIndexIdField(luceneFieldPrefix());
-    }
-
     /**
      * Get names of the subannotations for this annotation.
      * 

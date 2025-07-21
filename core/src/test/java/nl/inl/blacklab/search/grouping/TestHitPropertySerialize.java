@@ -1,8 +1,5 @@
 package nl.inl.blacklab.search.grouping;
 
-import java.util.Arrays;
-import java.util.List;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -13,11 +10,6 @@ import nl.inl.blacklab.mocks.MockMetadataField;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
-import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyContextPart;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentDecade;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
-import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.PropertyValueDecade;
@@ -59,7 +51,6 @@ public class TestHitPropertySerialize {
         PropertyValue val, val1;
         String exp;
 
-        // removed
         val1 = new PropertyValueContextWords(hits.index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, new int[] { 2 }, null,
                 false);
         exp = "cws:contents%lemma:s:mies";

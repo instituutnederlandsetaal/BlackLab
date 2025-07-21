@@ -13,9 +13,6 @@ import nl.inl.util.StringUtil;
  *
  * NOTE: Lucene includes ASCIIFoldingFilter, but this works with non-ASCII
  * characters too.
- *
- * Uses Normalizer, so Java 1.6+ is needed. If this is not available, use an
- * approach such as RemoveDutchAccentsFilter.
  */
 public class RemoveAllAccentsFilter extends TokenFilter {
 

@@ -165,8 +165,7 @@ class IndexerImpl implements DocWriter, Indexer {
      *
      * @param directory the main BlackLab index directory
      * @param create if true, creates a new index; otherwise, appends to existing
-     *            index. When creating a new index, a formatIdentifier or an
-     *            indexTemplateFile containing a valid "documentFormat" value should
+     *            index. When creating a new index, a formatIdentifier should
      *            also be supplied. Otherwise adding new data to the index isn't
      *            possible, as we can't construct a DocIndexer to do the actual
      *            indexing without a valid formatIdentifier.
@@ -174,21 +173,17 @@ class IndexerImpl implements DocWriter, Indexer {
      *            new data added to it. If omitted, when opening an existing index,
      *            the formatIdentifier in its metadata (as "documentFormat") is used
      *            instead. When creating a new index, this format will be stored as
-     *            the default for that index, unless another default is already set
-     *            by the indexTemplateFile (as "documentFormat"), it will still be
+     *            the default for that index, it will still be
      *            used by this Indexer however.
-     * @param indexTemplateFile (optional) JSON file to use as template for index structure /
-     *            metadata (if creating new index)
      * @throws DocumentFormatNotFound if no formatIdentifier was specified and
      *             autodetection failed
      * @deprecated use {@link IndexerImpl(BlackLabIndexWriter, String, File)} with
-     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     *   {@link #openForWriting(File, boolean, String)} instead
      */
     @Deprecated
-    IndexerImpl(File directory, boolean create, String formatIdentifier, File indexTemplateFile)
+    IndexerImpl(File directory, boolean create, String formatIdentifier)
             throws DocumentFormatNotFound, ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, create, formatIdentifier,
-                indexTemplateFile);
+        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, create, formatIdentifier);
         init(indexWriter, formatIdentifier);
     }
 
@@ -379,7 +374,7 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName,
+    public void storeInContentStore(BLInputDocument currentDoc, TextContent document,
             String contentStoreName) {
         // Store as a field in the document (codec makes sure random access is possible)
         AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();

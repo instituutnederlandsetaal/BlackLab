@@ -26,14 +26,6 @@ public interface Field {
     String offsetsField();
 
     /**
-     * Get the Lucene field that contains the content id (if this has a content store)
-     * @return lucene field containing content id (cid)
-     */
-    default String contentIdField() {
-        return AnnotatedFieldNameUtil.contentIdField(name());
-    }
-
-    /**
      * Get the Lucene field that contains our main contents.
      * 
      * This is either the field itself (for metadata) or the main sensitivity of the 

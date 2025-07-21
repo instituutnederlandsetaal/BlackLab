@@ -94,7 +94,12 @@ public class IndexTool {
                         usage();
                         return;
                     }
-                    indexType = args[i + 1].equalsIgnoreCase("integrated") ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
+                    if (args[i + 1].equalsIgnoreCase("external")) {
+                        System.err.println("The 'external' index type is no longer supported.");
+                        usage();
+                        return;
+                    }
+                    indexType = IndexType.INTEGRATED;
                     i++;
                     break;
                 case "integrate-external-files":
@@ -278,11 +283,6 @@ public class IndexTool {
         if (propFile != null && propFile.canRead())
             readParametersFromPropertiesFile(propFile);
 
-        File indexTemplateFile = null;
-        if (forceCreateNew) {
-            indexTemplateFile = FileUtil.findFile(dirs, "indextemplate", Arrays.asList("json", "yaml", "yml"));
-        }
-
         String op = forceCreateNew ? "Creating new" : "Appending to";
         String strGlob = File.separator;
         if (glob != null && glob.length() > 0 && !glob.equals("*")) {
@@ -310,9 +310,6 @@ public class IndexTool {
 
 
         // Create the indexer and index the files
-        if (!forceCreateNew || indexTemplateFile == null || !indexTemplateFile.canRead()) {
-            indexTemplateFile = null;
-        }
         // First check if the format is a file: if so, load it before continuing.
         if (formatIdentifier != null && !DocumentFormats.isSupported(formatIdentifier)) {
             File maybeFormatFile = new File(formatIdentifier);
@@ -333,7 +330,7 @@ public class IndexTool {
         Indexer indexer = null;
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
-                    formatIdentifier, indexTemplateFile, indexType);
+                    formatIdentifier, indexType);
             indexer = Indexer.create(indexWriter, formatIdentifier);
         } catch (InvalidInputFormatConfig e) {
             System.err.println("ERROR in input format '" + formatIdentifier + "':");

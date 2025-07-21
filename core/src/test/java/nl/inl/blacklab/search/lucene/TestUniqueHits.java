@@ -44,7 +44,7 @@ public class TestUniqueHits {
         BLSpans a = MockSpans.withRelationInfoObjectsInPayload(aDoc, aStart, aEnd, aRelationInfo);
         BLSpans tags = new SpansRelations("contents", "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.ifNotRecorded());
+                RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
         BLSpans spans = new SpansUnique(tags);
         HitQueryContext context = new HitQueryContext(null, "contents", new MatchInfoDefs());
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);
@@ -63,7 +63,7 @@ public class TestUniqueHits {
         a.setGuarantees(SpanGuarantees.NONE); // so PerDocumentSortedSpans doesn't complain we're already sorted
         BLSpans tags = new SpansRelations("contents", "test", a,
                 false, SpanQueryRelations.Direction.FORWARD,
-                RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.ifNotRecorded());
+                RelationInfo.SpanMode.FULL_SPAN, "abc", null, RelationsStrategy.forNewIndex());
         BLSpans spans = new PerDocumentSortedSpans(tags, true, true);
         HitQueryContext context = new HitQueryContext(null, "contents", new MatchInfoDefs());
         context.registerMatchInfo("abc", MatchInfo.Type.RELATION);

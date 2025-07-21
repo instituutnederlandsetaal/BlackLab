@@ -41,7 +41,8 @@ public class TestDeleteDocument {
 
     @AfterClass
     public static void tearDownClass() {
-        testIndexIntegrated.close();
+        if (testIndexIntegrated != null)
+            testIndexIntegrated.close();
     }
 
     @Before

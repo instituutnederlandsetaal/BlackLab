@@ -10,8 +10,6 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
@@ -24,7 +22,6 @@ import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
-import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -33,10 +30,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategySingleTerm;
-import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.util.CollUtil;
 
@@ -312,20 +306,6 @@ public class AnnotationWriter {
      */
     public int addValueAtPosition(String value, int position, BytesRef payload) {
         assert position >= 0;
-
-        if (getRelationsStrategy() instanceof RelationsStrategySingleTerm &&
-                fieldWriter.getIndexType() == BlackLabIndex.IndexType.INTEGRATED &&
-                AnnotatedFieldNameUtil.isRelationAnnotation(annotationName) &&
-                !value.isEmpty() && !value.contains("\u0001")) {
-
-            // This is the _relation annotation in the integrated index format, but not the right sort of value
-            // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
-            // Warn the user.
-            warnOnce("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
-                    "inline tags.", " To work properly with the new integrated index format, update it to use " +
-                    "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
-        }
-
         if (maximumValueLength > 0) {
             if (value.length() > maximumValueLength) {
                 // Truncate value to the configured maximum length.
@@ -489,9 +469,7 @@ public class AnnotationWriter {
         RelationInfo relationInfo = RelationInfo.create(false, startPos, startPos,
                 endPos, endPos, relationId, hasExtraInfoStored);
         String fullRelationType;
-        fullRelationType = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ?
-                tagName :
-                RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
+        fullRelationType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
         return indexRelation(fullRelationType, attributes, indexType, relationInfo);
     }
 
@@ -515,46 +493,19 @@ public class AnnotationWriter {
             BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
-        if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES) {
-            if (relationInfo.getType() != MatchInfo.Type.INLINE_TAG) {
-                // Classic external index doesn't support relations; ignore
-                return relationInfo.getSourceStart();
-            }
-            // classic external index; tag name and attributes are indexed separately
-            payload = relationInfo.getSpanEnd() >= 0 ?
-                    relationsStrategy.getPayloadCodec().inlineTagPayload(relationInfo.getSpanStart(), relationInfo.getSpanEnd(),
-                            BlackLabIndex.IndexType.EXTERNAL_FILES, 0,
-                            relationInfo.mayHaveInfoInRelationIndex()) :
-                    null;
-            addValueAtPosition(fullRelationType, relationInfo.getSourceStart(), payload);
-            tagIndexInAnnotation = lastValueIndex();
-            for (Map.Entry<String, List<String>> e: attributes.entrySet()) {
-                for (String value: e.getValue()) {
-                    String term = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(e.getKey(), value);
-                    addValueAtPosition(term, relationInfo.getSourceStart(), null);
-                }
-            }
-        } else {
-            // integrated index; everything is indexed as a single term
-            // We only add the payload if we know the complete relation info;
-            // for inline tags, we'll only know it when we encounter the closing tag,
-            // and we'll add the payload then.
-            payload = relationsStrategy.getPayload(relationInfo);
+        // integrated index; everything is indexed as a single term
+        // We only add the payload if we know the complete relation info;
+        // for inline tags, we'll only know it when we encounter the closing tag,
+        // and we'll add the payload then.
+        payload = relationsStrategy.getPayload(relationInfo);
 
-            AtomicInteger indexedCount = new AtomicInteger(0);
-            relationsStrategy.indexRelationTerms(fullRelationType, attributes, payload,
-                    (valueToIndex, payloadThisToken) -> {
-                        addValueAtPosition(valueToIndex, relationInfo.getSourceStart(), payloadThisToken);
-                        indexedCount.incrementAndGet();
-                    });
-            boolean indexedTwice = indexedCount.get() > 1 && (relationsStrategy instanceof RelationsStrategySingleTerm);
-            tagIndexInAnnotation = lastValueIndex() - indexedCount.get() + 1; // make sure this points to the first term indexed!
-            if (indexedTwice) {
-                // HACK so we will be able to update both payloads if this is an open tag and we have yet to
-                // encounter the close tag (only for single-term relations strategy)
-                tagIndexInAnnotation = -tagIndexInAnnotation;
-            }
-        }
+        AtomicInteger indexedCount = new AtomicInteger(0);
+        relationsStrategy.indexRelationTerms(fullRelationType, attributes, payload,
+                (valueToIndex, payloadThisToken) -> {
+                    addValueAtPosition(valueToIndex, relationInfo.getSourceStart(), payloadThisToken);
+                    indexedCount.incrementAndGet();
+                });
+        tagIndexInAnnotation = lastValueIndex() - indexedCount.get() + 1; // make sure this points to the first term indexed!
         return tagIndexInAnnotation;
     }
 

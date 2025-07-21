@@ -575,9 +575,8 @@ public class QueryToolImpl {
             output.line("Document " + docId + " does not exist.");
             return;
         }
-        Document doc = index.luceneDoc(docId);
         ContentAccessor ca = index.contentAccessor(contentsField);
-        output.line(ca.getDocumentContents(docId, doc));
+        output.line(ca.getDocumentContents(docId));
     }
 
     private void showMetadata(int docId) {

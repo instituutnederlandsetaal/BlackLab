@@ -288,26 +288,9 @@ public class ConfigAnnotation {
 
     public AnnotationSensitivities getSensitivitySetting() {
         AnnotationSensitivities sensitivity = getSensitivity();
-        if (sensitivity == AnnotationSensitivities.DEFAULT || sensitivity == AnnotationSensitivities.LEGACY_DEFAULT) {
+        if (sensitivity == AnnotationSensitivities.DEFAULT) {
             String name = getName();
-            sensitivity = AnnotationSensitivities.defaultForAnnotation(name, sensitivity == AnnotationSensitivities.LEGACY_DEFAULT ? 1 : 2);
-            if (sensitivity != AnnotationSensitivities.ONLY_INSENSITIVE) {
-                // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
-                // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
-                // Warn users about this so they can make their config files explicit before this special case is removed.
-                synchronized (warnSensitivity) {
-                    if (!warnSensitivity.contains(name)) {
-                        warnSensitivity.add(name);
-                        logger.warn("Configuration " + getName()
-                                + " relies on special default sensitivity 'sensitive_insensitive' for annotation '"
-                                + name
-                                + "'; this behaviour is deprecated in .blf.yaml version 1 and removed in version 2. "
-                                + "Please update your config to explicitly declare the sensitivity setting for this "
-                                + "annotation. Starting with .blf.yaml version 2, all annotations without explicit "
-                                + "sensitivity default to 'insensitive'.");
-                    }
-                }
-            }
+            sensitivity = AnnotationSensitivities.defaultForAnnotation(name);
         }
         return sensitivity;
     }

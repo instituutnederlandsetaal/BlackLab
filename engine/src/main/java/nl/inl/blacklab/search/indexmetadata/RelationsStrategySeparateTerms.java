@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.indexmetadata;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -496,12 +495,8 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          */
         @Override
         public BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId, boolean maybeExtraInfo) {
-            if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
-                return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
-
             try {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
-
                 serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
                 return new BytesRef(os.toByteArray());
             } catch (IOException e) {

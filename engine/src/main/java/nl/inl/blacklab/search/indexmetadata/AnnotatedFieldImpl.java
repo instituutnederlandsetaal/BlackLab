@@ -8,10 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlTransient;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.FieldInfo;
@@ -20,6 +16,9 @@ import org.apache.lucene.index.IndexReader;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.LuceneUtil;
 
@@ -172,16 +171,11 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             // Bookkeeping field
             String bookkeepName = parts[3];
             switch (parts[3]) {
-            case AnnotatedFieldNameUtil.BOOKKEEP_CONTENT_ID:
             case AnnotatedFieldNameUtil.BOOKKEEP_CONTENT_STORE:
                 // Annotated field has content store
                 // (old external index has content id, new integrated index has content store field)
                 contentStore = true;
                 return;
-            case AnnotatedFieldNameUtil.BOOKKEEP_FORWARD_INDEX_ID:
-                // Main annotation has forward index
-                // [should never happen anymore, because main annotation always has a name now]
-                throw new IllegalStateException("Found lucene field " + fi.name + " with forward index id, but no annotation name!");
             case AnnotatedFieldNameUtil.BOOKKEEP_LENGTH_TOKENS:
                 // Annotated field always has length in tokens
                 return;
@@ -200,11 +194,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
                 MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[2]);
                 annotation.addAlternative(sensitivity);
             } else {
-                // Annotation bookkeeping field
-                if (parts[3].equals(AnnotatedFieldNameUtil.BOOKKEEP_FORWARD_INDEX_ID)) {
-                    annotation.setForwardIndex(true);
-                } else
-                    throw new IllegalArgumentException("Unknown annotation bookkeeping field " + parts[3]);
+                throw new IllegalArgumentException("Unknown annotation bookkeeping field " + parts[3]);
             }
         }
     }
@@ -332,7 +322,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         }
         if (results == null || results.getLimitValues() < limitValues) {
             // We either don't have cached relationsStats, or the limitValues value is too low.
-            boolean oldStyleStarttag = index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
             results = new RelationsStats(index.getRelationsStrategy(), limitValues);
 
             // Look up the correct field for the _relation annotation (depending on whether it

@@ -3,8 +3,6 @@ package nl.inl.blacklab.contentstore;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.lucene.document.Document;
-
 import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.indexmetadata.Field;
 
@@ -41,10 +39,5 @@ public class ContentStoresManager {
         return contentAccessors.get(field);
     }
 
-    public void deleteDocument(Document d) {
-        for (ContentAccessor ca : contentAccessors.values()) {
-            ca.delete(d);
-        }
-    }
 
 }

@@ -5,19 +5,12 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Some utility functions for dealing with annotated field names.
  */
 public final class AnnotatedFieldNameUtil {
-
-    /** Used in classic external index format to store forward index id in Lucene doc */
-    public static final String BOOKKEEP_FORWARD_INDEX_ID = "fiid";
-
-    /** Used in classic external index format to store content store id in Lucene doc */
-    public static final String BOOKKEEP_CONTENT_ID = "cid";
 
     /** Used in integrated index format to store content in Lucene doc */
     public static final String BOOKKEEP_CONTENT_STORE = "cs";
@@ -29,12 +22,6 @@ public final class AnnotatedFieldNameUtil {
 
     /** Used as a default value if no name has been specified (legacy indexers only) */
     public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
-
-    private static final String LEGACY_TAGS_ANNOT_NAME = "starttag";
-
-    @Deprecated
-    /** @deprecated use {@link #relationAnnotationName(DocWriter)} instead */
-    public static final String TAGS_ANNOT_NAME = LEGACY_TAGS_ANNOT_NAME;
 
     public static final String RELATIONS_ANNOT_NAME = "_relation";
 
@@ -102,25 +89,15 @@ public final class AnnotatedFieldNameUtil {
      * @return name of annotation that stores the relations between words (and inline tags)
      */
     public static String relationAnnotationName(BlackLabIndex.IndexType indexType) {
-        return indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? LEGACY_TAGS_ANNOT_NAME : RELATIONS_ANNOT_NAME;
+        return RELATIONS_ANNOT_NAME;
     }
 
     public static boolean isRelationAnnotation(String name) {
-        // TODO: icky, we can't name an annotation "starttag" in the integrated index this way.
-        //   not a huge deal, and we can remove it when we remove the external index.
-        return name.equals(LEGACY_TAGS_ANNOT_NAME) || name.equals(RELATIONS_ANNOT_NAME);
+        return name.equals(RELATIONS_ANNOT_NAME);
     }
 
     public static String contentStoreField(String fieldName) {
         return bookkeepingField(fieldName, BOOKKEEP_CONTENT_STORE);
-    }
-
-    public static String contentIdField(String fieldName) {
-        return bookkeepingField(fieldName, BOOKKEEP_CONTENT_ID);
-    }
-
-    public static String forwardIndexIdField(String annotFieldName) {
-        return bookkeepingField(annotFieldName, BOOKKEEP_FORWARD_INDEX_ID);
     }
 
     public static String lengthTokensField(String fieldName) {
@@ -353,18 +330,13 @@ public final class AnnotatedFieldNameUtil {
      * Also prepends an underscore if the name start in an invalid way (with the letters "xml" or not with letter or underscore).
      *
      * @param name           name to sanitize
-     * @param disallowDashes if true, also disallow dash in names (even though XML element names can contain those)
-     *                       (done for index compatibility; classic index format forbids these, but the new integrated
-     *                       index format does allow them)
      * @return sanitized name
      */
-    public static String sanitizeXmlElementName(String name, boolean disallowDashes) {
+    public static String sanitizeXmlElementName(String name) {
         if (name.isEmpty())
             return "_EMPTY_";
         // can only contain letter, digit, dash (used to be disallowed in config v1, but no more), underscore and period
         name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_");
-        if (disallowDashes)
-            name = name.replaceAll("-", "_");
         if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
             name = "_" + name;
         }

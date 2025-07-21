@@ -2,7 +2,6 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -237,9 +236,7 @@ public class DocUtil {
                     d = index.reader().document(docId, Set.of(fieldName));
                 return d.get(fieldName).substring(startAtChar, endAtChar);
             } else {
-                if (d == null && index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES)
-                    d = index.reader().document(docId, Set.of(field.contentIdField()));
-                return index.contentAccessor(field).getSubstringsFromDocument(docId, d, new int[] { startAtChar }, new int[] { endAtChar })[0];
+                return index.contentAccessor(field).getSubstringsFromDocument(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -300,8 +297,7 @@ public class DocUtil {
      * @return document with highlighting
      */
     public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
-        Document doc = index.luceneDoc(docId);
-        String contents = index.contentAccessor(contentsField).getDocumentContents(docId, doc);
+        String contents = index.contentAccessor(contentsField).getDocumentContents(docId);
         return highlightContent(index, docId, hits, false, 0, contents);
     }
 
@@ -323,8 +319,7 @@ public class DocUtil {
                 return content;
             } else {
                 // Content accessor set. Use it to retrieve the content.
-                d = fetchDocumentIfRequired(index, docId, d, field);
-                return contentAccessor.getSubstringsFromDocument(docId, d, starts, ends);
+                return contentAccessor.getSubstringsFromDocument(docId, starts, ends);
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -412,35 +407,11 @@ public class DocUtil {
                     throw new IllegalArgumentException("Field not found: " + field.name());
                 return content;
             } else {
-                d = fetchDocumentIfRequired(index, docId, d, field);
                 //int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-                return index.contentAccessor(field).getDocumentContents(docId, d);
+                return index.contentAccessor(field).getDocumentContents(docId);
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }
-    }
-
-    /**
-     * For the classic external index format, we need the Lucene doc to look up the content store id.
-     *
-     * @param index our index
-     * @param docId document id
-     * @param d Lucene document if already fetched, otherwise null
-     * @param field field to get content for
-     * @return Lucene document
-     */
-    private static Document fetchDocumentIfRequired(BlackLabIndex index, int docId, Document d, AnnotatedField field)
-            throws IOException {
-        if (d == null) {
-            if (index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
-                // We need the document (classic index format so we need to look op content store id)
-                d = index.reader().document(docId, Set.of(field.contentIdField()));
-            } else {
-                // Integrated index. Fetch doc start/end offset if present (parallel corpora).
-                d = index.reader().document(docId, Collections.emptySet());
-            }
-        }
-        return d;
     }
 }

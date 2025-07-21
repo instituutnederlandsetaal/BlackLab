@@ -175,7 +175,7 @@ public class TestIndex {
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
-            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, TEST_FORMAT_NAME, null, indexType);
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, TEST_FORMAT_NAME, indexType);
             Indexer indexer = Indexer.create(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
@@ -187,7 +187,7 @@ public class TestIndex {
                     // Delete the first doc, to test deletion.
                     // (close and re-open to be sure the document was written to disk first)
                     indexer.close();
-                    indexWriter = BlackLab.openForWriting(indexDir, false, null, null, indexType);
+                    indexWriter = BlackLab.openForWriting(indexDir, false, null, indexType);
                     indexer = Indexer.create(indexWriter);
                     String luceneField = indexer.indexWriter().metadata().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));

@@ -120,10 +120,6 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
                     SchemaField newField = oldSchema.newField(AnnotatedFieldNameUtil.contentStoreField(af.name()), "metadata_untokenized", Collections.emptyMap());
                     newFields.add(newField);
                 }
-                if (!oldSchema.hasExplicitField(af.contentIdField())) {
-                    SchemaField newField = oldSchema.newField(af.contentIdField(), "metadata_numeric", options);
-                    newFields.add(newField);
-                }
             }
 
             // Now tell solr about all of the regular metadata in documents.

@@ -9,7 +9,6 @@ import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
@@ -46,12 +45,6 @@ public class TestIndexFormats {
     @Parameterized.Parameter
     public TestIndex testIndex;
 
-    int numberOfTerms() {
-        // HACK. 28 is the "correcter" value (including secondary values that are not stored in the forward index)
-        //   but the external index excludes the two secondary values.
-        return testIndex.getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES ? 26 : 28;
-    }
-
     private static BlackLabIndex index;
 
     private static AnnotationForwardIndex wordFi;
@@ -72,13 +65,13 @@ public class TestIndexFormats {
 
     @Test
     public void testSimple() {
-        Assert.assertEquals("Number of terms", numberOfTerms(), wordTerms.numberOfTerms());
+        Assert.assertEquals("Number of terms", 28, wordTerms.numberOfTerms());
     }
 
     @Test
     public void testIndexOfAndGet() {
         MutableIntSet s = new IntHashSet();
-        for (int i = 0; i < numberOfTerms(); i++) {
+        for (int i = 0; i < 28; i++) {
             String term = wordTerms.get(i);
             Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(term));
             s.clear();
@@ -104,8 +97,8 @@ public class TestIndexFormats {
         Collator collator = wordFi.collators().get(sensitive);
         Random random = new Random(123_456);
         for (int i = 0; i < 100; i++) {
-            int a = random.nextInt(numberOfTerms());
-            int b = random.nextInt(numberOfTerms());
+            int a = random.nextInt(28);
+            int b = random.nextInt(28);
             String ta = terms.get(a);
             String tb = terms.get(b);
             int expected = collator.compare(ta, tb);
@@ -211,8 +204,7 @@ public class TestIndexFormats {
         int[] end = { 10, -1, 20, -1 };
         for (int i = 0; i < TestIndex.TEST_DATA.length; i++) {
             int docId = testIndex.getDocIdForDocNumber(i);
-            Document document = index.luceneDoc(docId);
-            String[] substrings = ca.getSubstringsFromDocument(docId, document, start, end);
+            String[] substrings = ca.getSubstringsFromDocument(docId, start, end);
             Assert.assertEquals(4, substrings.length);
             for (int j = 0; j < substrings.length; j++) {
                 int a = start[j], b = end[j];

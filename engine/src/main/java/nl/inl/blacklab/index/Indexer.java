@@ -48,30 +48,29 @@ public interface Indexer {
 
     /**
      * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
-     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     *   {@link #openForWriting(File, boolean, String)} instead
      */
     @Deprecated
     static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return openIndex(directory, true, formatIdentifier, null);
+        return openIndex(directory, true, formatIdentifier);
     }
 
     /**
      * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
-     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     *   {@link #openForWriting(File, boolean, String)} instead
      */
     @Deprecated
     static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return openIndex(directory, false, null, null);
+        return openIndex(directory, false, null);
     }
 
     /**
      * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
-     *   {@link BlackLab#openForWriting(File, boolean, String, File)} instead
+     *   {@link #openForWriting(File, boolean, String)} instead
      */
     @Deprecated
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier, File indexTemplateFile) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, createNewIndex, formatIdentifier,
-                indexTemplateFile);
+    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
+        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, createNewIndex, formatIdentifier);
         return new IndexerImpl(indexWriter, formatIdentifier);
     }
 

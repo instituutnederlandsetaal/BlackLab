@@ -11,8 +11,6 @@ import java.util.TreeSet;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-import org.apache.lucene.util.BytesRef;
-
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -25,9 +23,7 @@ import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.indexers.config.process.ProcessingStepIdentity;
 import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategyNaiveSeparateTerms;
 import nl.inl.util.StringUtil;
 
 /**
@@ -138,7 +134,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     needsPrimaryValuePayloads);
 
             String relAnnotName = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
-            AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(relAnnotName, config.getVersion());
+            AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(relAnnotName);
             AnnotationWriter annotRelation = fieldWriter.addAnnotation(relAnnotName, relAnnotSensitivity, true, false);
             annotRelation.setHasForwardIndex(false);
 
@@ -217,33 +213,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     protected void indexAnnotationValues(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             Collection<String> valuesToIndex) {
-        if (Span.isValid(spanEndOrRelTarget)) {
-            // Relation (span) attributes in classic external index
-            assert getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
-            indexAnnotationValuesSpanExternal(annotation, positionSpanEndOrSource, spanEndOrRelTarget, valuesToIndex);
-        } else {
-            indexAnnotationValuesNoRelation(annotation, positionSpanEndOrSource.start(), valuesToIndex);
-        }
-    }
-
-    private void indexAnnotationValuesSpanExternal(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget,
-            Collection<String> valuesToIndex) {
-        // For attributes to span annotations in classic external index (which are all added to the same annotation),
-        // the span name has already been indexed at this position with an increment of 1,
-        // so the attribute values we're indexing here should all get position increment 0.
-        String name = AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.EXTERNAL_FILES);
-        // Now add values to the index
-        for (String value: valuesToIndex) {
-            // External index, attribute values are indexed separately from the tag name
-            // For the external index format (annotation "starrtag"), we index several terms:
-            // // one for the span name, and one for each attribute name and value.
-            value = RelationsStrategyNaiveSeparateTerms.tagAttributeIndexValue(annotation.getName(), value);
-
-            int indexAtPosition = positionSpanEndOrSource.start();
-            BytesRef payload = getPayload(positionSpanEndOrSource, spanEndOrRelTarget, AnnotationType.SPAN,
-                    true, indexAtPosition);
-            annotationValue(name, value, indexAtPosition, payload);
-        }
+        indexAnnotationValuesNoRelation(annotation, positionSpanEndOrSource.start(), valuesToIndex);
     }
 
     private void indexAnnotationValuesNoRelation(ConfigAnnotation annotation, int indexAtPosition,

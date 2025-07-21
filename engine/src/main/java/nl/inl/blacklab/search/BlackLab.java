@@ -73,12 +73,6 @@ public final class BlackLab {
     /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
-    /** Controls what BlackLab's default index type is. If not present, will default to the new
-     *  integrated index. Set to 'external' to use the legacy index with external forward index
-     *  that was the default in BlackLab 3.x. Used for testing.
-     */
-    public static final String FEATURE_DEFAULT_INDEX_TYPE = "defaultIndexType";
-
     /** The default XML processing library to use. Valid values are "vtd" and "saxon".
      *  VTD-XML, the current default, is memory-efficient but generally slower and doesn't support recent XPath.
      *  Saxon uses more memory but is faster and has better XPath support.
@@ -119,31 +113,18 @@ public final class BlackLab {
     public static BlackLabIndex open(File dir) throws ErrorOpeningIndex {
         return implicitInstance().open(dir);
     }
-    
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * @param indexDir the index directory
-     * @param createNewIndex if true, create a new index even if one existed there
-     * @return index writer
-     * @throws ErrorOpeningIndex if the index could not be opened
-     */
-    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex) throws ErrorOpeningIndex {
-        return openForWriting(indexDir, createNewIndex, (File) null);
-    }
 
     /**
      * Open an index for writing ("index mode": adding/deleting documents).
      *
      * @param indexDir the index directory
      * @param createNewIndex if true, create a new index even if one existed there
-     * @param indexTemplateFile JSON template to use for index structure / metadata
      * @return index writer
      * @throws ErrorOpeningIndex if index couldn't be opened
      */
-    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, File indexTemplateFile)
+    public static BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex)
             throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(indexDir, createNewIndex, indexTemplateFile);
+        return implicitInstance().openForWriting(indexDir, createNewIndex);
     }
 
     /**
@@ -171,7 +152,7 @@ public final class BlackLab {
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier) throws ErrorOpeningIndex {
-        return openForWriting(directory, create, formatIdentifier, null, null);
+        return openForWriting(directory, create, formatIdentifier, null);
     }
 
     /**
@@ -180,29 +161,13 @@ public final class BlackLab {
      * @param directory the index directory
      * @param create if true, create a new index even if one existed there
      * @param formatIdentifier default format to use
-     * @param indexTemplateFile (optional, legacy) index template file
-     * @return index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
-            File indexTemplateFile) throws ErrorOpeningIndex {
-        return openForWriting(directory, create, formatIdentifier, indexTemplateFile, null);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * @param directory the index directory
-     * @param create if true, create a new index even if one existed there
-     * @param formatIdentifier default format to use
-     * @param indexTemplateFile (optional, legacy) index template file
      * @param indexType index format to use: classic with external files or new integrated
      * @return index writer
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
-            File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(directory, create, formatIdentifier, indexTemplateFile, indexType);
+            IndexType indexType) throws ErrorOpeningIndex {
+        return implicitInstance().openForWriting(directory, create, formatIdentifier, indexType);
     }
 
     public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
@@ -341,7 +306,6 @@ public final class BlackLab {
      * <li>$BLACKLAB_CONFIG_DIR (if env. var. is defined)</li>
      * <li>$HOME/.blacklab</li>
      * <li>/etc/blacklab</li>
-     * <li>/tmp (legacy, will be removed)</li>
      * </ul>>
      *
      * A convenient method to use with this is
@@ -365,7 +329,6 @@ public final class BlackLab {
             }
             configDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
             configDirs.add(new File("/etc/blacklab"));
-            configDirs.add(new File(System.getProperty("java.io.tmpdir")));
         }
         return new ArrayList<>(configDirs);
     }

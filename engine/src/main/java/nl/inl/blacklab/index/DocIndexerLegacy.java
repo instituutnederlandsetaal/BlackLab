@@ -69,7 +69,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         // storePart only works for the classic external index format.
         // for internal, we just ignore it (will be fully stored eventually by final call to store())
 
-        getDocWriter().storeInContentStore(null, TextContent.from(content.toString()), captureContentFieldName, "contents");
+        getDocWriter().storeInContentStore(null, TextContent.from(content.toString()), "contents");
     }
 
     private void appendContentInternal(String str) {
@@ -225,8 +225,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         // Not in parameter (or unrecognized value), use default based on
         // annotationName
         if (getAnnotationSensitivity(annotationName) != AnnotationSensitivities.ONLY_INSENSITIVE) {
-            // Word or lemma: default to sensitive/insensitive
-            // (deprecated, will be removed eventually)
             return getAnnotationSensitivity(annotationName);
         }
         if (annotationName.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
@@ -234,7 +232,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
             return AnnotationSensitivities.ONLY_INSENSITIVE;
         }
         if (AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()).equals(annotationName)) {
-            // XML tag properties: default to only sensitive
+            // Tags and relations: default to only sensitive
             return AnnotationSensitivities.ONLY_SENSITIVE;
         }
 
@@ -243,7 +241,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
     }
 
     protected static AnnotationSensitivities getAnnotationSensitivity(String name) {
-        return AnnotationSensitivities.defaultForAnnotation(name, 1);
+        return AnnotationSensitivities.defaultForAnnotation(name);
     }
 
     /**
@@ -366,8 +364,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
 
     protected void storeDocument() {
         String contentStoreName = captureContentFieldName;
-        String contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(contentStoreName);
         getDocWriter().storeInContentStore(currentDoc, TextContent.from(content.toString()),
-                contentIdFieldName, contentStoreName);
+                contentStoreName);
     }
 }

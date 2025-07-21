@@ -184,7 +184,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     /** Relation index/search strategy for this index.
      * ("all encoded into one term" / "type and attributes in separate terms" / ...)
      */
-    public RelationsStrategy relationsStrategy = RelationsStrategy.ifNotRecorded();
+    public RelationsStrategy relationsStrategy = null;
 
     /**
      * If this directory contains any external index files/subdirs, delete them.
@@ -221,7 +221,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     BlackLabIndexIntegrated(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
-        super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config, null);
+        super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config);
 
         // See if this is an old external index. If so, delete the version file,
         // forward indexes and content stores.
@@ -262,6 +262,8 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         }
         if (createNewIndex || !fieldsFounds)
             relationsStrategy = RelationsStrategy.forNewIndex();
+        if (relationsStrategy == null)
+            relationsStrategy = RelationsStrategy.ifNotRecorded();
     }
 
     @Override
@@ -269,13 +271,6 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         if (!createNewIndex)
             return IndexMetadataIntegrated.deserializeFromJsonJaxb(this);
         return IndexMetadataIntegrated.create(this, config);
-    }
-
-    @Override
-    protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile) {
-        if (indexTemplateFile != null)
-            throw new IllegalArgumentException("Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
-        return getIndexMetadata(createNewIndex, (ConfigInputFormat)null);
     }
 
     @Override

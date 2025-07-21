@@ -143,7 +143,7 @@ public class MetadataFetcherCgnImdi extends MetadataFetcher {
             // Store metadata XML in content store and corresponding id in
             // Lucene document
             TextContent document = TextContent.from(cmdiBuffer, Indexer.DEFAULT_INPUT_ENCODING);
-            docIndexer.getDocWriter().storeInContentStore(luceneDoc, document, "metadataCid", "metadata");
+            docIndexer.getDocWriter().storeInContentStore(luceneDoc, document, "metadata");
 
             if (metadataZipFile == null)
                 is.close();

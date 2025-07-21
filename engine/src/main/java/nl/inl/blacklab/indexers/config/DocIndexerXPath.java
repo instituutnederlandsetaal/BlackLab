@@ -14,7 +14,6 @@ import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -69,7 +68,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     }
 
     protected String optSanitizeFieldName(String origFieldName) {
-        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName, disallowDashInname());
+        String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
         if (!origFieldName.equals(fieldName)) {
             warnOnce().warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
         }
@@ -131,50 +130,33 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             String spanOrRelType) {
         String name = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
         AnnotationWriter annotationWriter = getAnnotation(name);
-        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
-            // Classic external index format. Span name and attributes indexed separately.
+        // Integrated index format.
 
-            assert type != AnnotationType.RELATION; // not supported in classic external index
-
-            // First index the span name at this position, then any configured
-            // annotations as attributes.
-            // (we pass null for the annotation name to indicate that this is the tag name we're indexing,
-            //  not an attribute)
-            int indexAtPosition = sourceSpan.start();
-            BytesRef payload = getPayload(sourceSpan, targetSpan, type, false, indexAtPosition);
-            annotationValue(annotationWriter.name(), spanOrRelType, indexAtPosition, payload);
-            for (ConfigAnnotation annotation: standoffAnnotations) {
-                processAnnotation(annotation, standoffNode, sourceSpan, targetSpan, this::indexAnnotationValues);
-            }
-        } else {
-            // Integrated index format.
-
-            // Collect any attribute values
-            Map<String, List<String>> attributes = new HashMap<>();
-            for (ConfigAnnotation annotation: standoffAnnotations) {
-                // NOTE: we pass invalid values for the positions because they don't matter here; we're not indexing,
-                //       just finding XPath matches for the attributes and collecting them.
-                processAnnotation(annotation, standoffNode, null, null,
-                        (annot, pos, spanEndPos, values) -> attributes.put(annot.getName(), values));
-            }
-
-            // Determine the full type name to index (relation class and relation type, e.g. "__tag::s" or "dep::nmod")
-            String fullType = spanOrRelType;
-            if (type == AnnotationType.SPAN)
-                fullType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, spanOrRelType);
-
-            // Actually index the relation according to our relation indexing strategy (single term / multiple terms)
-            // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
-            // which has no source, so we index it at its target.
-            int indexAtPosition = sourceSpan.start() >= 0 ? sourceSpan.start() : targetSpan.start();
-            RelationsStrategy relationsStrategy = getDocWriter().getRelationsStrategy();
-            // For separate terms: always assign relationId even if no attributes, because it is needed for matching
-            boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
-            BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);
-            relationsStrategy.indexRelationTerms(fullType, attributes, payload,
-                    (String valueToIndex, BytesRef payloadThisToken) ->
-                            annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken));
+        // Collect any attribute values
+        Map<String, List<String>> attributes = new HashMap<>();
+        for (ConfigAnnotation annotation: standoffAnnotations) {
+            // NOTE: we pass invalid values for the positions because they don't matter here; we're not indexing,
+            //       just finding XPath matches for the attributes and collecting them.
+            processAnnotation(annotation, standoffNode, null, null,
+                    (annot, pos, spanEndPos, values) -> attributes.put(annot.getName(), values));
         }
+
+        // Determine the full type name to index (relation class and relation type, e.g. "__tag::s" or "dep::nmod")
+        String fullType = spanOrRelType;
+        if (type == AnnotationType.SPAN)
+            fullType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, spanOrRelType);
+
+        // Actually index the relation according to our relation indexing strategy (single term / multiple terms)
+        // Start of positionSpan gives the position where this will be indexed, unless it's a root relation,
+        // which has no source, so we index it at its target.
+        int indexAtPosition = sourceSpan.start() >= 0 ? sourceSpan.start() : targetSpan.start();
+        RelationsStrategy relationsStrategy = getDocWriter().getRelationsStrategy();
+        // For separate terms: always assign relationId even if no attributes, because it is needed for matching
+        boolean maybeExtraInfo = relationsStrategy instanceof RelationsStrategySeparateTerms || !attributes.isEmpty();
+        BytesRef payload = getPayload(sourceSpan, targetSpan, type, maybeExtraInfo, indexAtPosition);
+        relationsStrategy.indexRelationTerms(fullType, attributes, payload,
+                (String valueToIndex, BytesRef payloadThisToken) ->
+                        annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken));
     }
 
     protected abstract void processAnnotatedFieldContainer(T nav, ConfigAnnotatedField annotatedField,

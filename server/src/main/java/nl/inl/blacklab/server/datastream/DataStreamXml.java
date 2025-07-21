@@ -74,7 +74,7 @@ public class DataStreamXml extends DataStreamAbstract {
     private DataStreamXml openEl(String name) {
         // prevent invalid XML for dynamic elements in old API
         // (e.g. term frequencies, with each term being an element name and the frequency being the value)
-        name = AnnotatedFieldNameUtil.sanitizeXmlElementName(name, false);
+        name = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
 
         startOpenEl(name);
         endOpenEl();

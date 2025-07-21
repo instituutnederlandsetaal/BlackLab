@@ -59,8 +59,6 @@ What alternatives are indexed determines how specifically you can specify the de
 
 If you don't configure an annotation's `sensitivity` parameter, it will default to `insensitive`.
 
-There is one exception: annotations named `word` or `lemma` default to `sensitive_insensitive` for now. This special behaviour is deprecated though, and will be removed eventually. It's best to explicitly declare a `sensitivity` for these two annotations so this future change won't impact you.
-
 
 ## Standoff annotations
 

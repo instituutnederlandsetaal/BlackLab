@@ -15,7 +15,6 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
@@ -69,26 +68,8 @@ public class BlackLabConfig {
      * @param isJson if true, reads JSON. Otherwise, reads YAML.
      */
     private static synchronized BlackLabConfig readConfigFile(String fileName, String fileContents, boolean isJson) throws InvalidConfiguration {
-        ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-
         logger.debug("Reading global BlackLab config");
-        JsonNode parsedConfig;
-        try {
-            parsedConfig = mapper.readTree(new StringReader(fileContents));
-        } catch (IOException e) {
-            throw new InvalidConfiguration("Error reading BlackLab config file (" + fileName + "): " + e.getMessage(), e);
-        }
-
-        // Is this the new config format, or the old one?
-        if (parsedConfig.get("configVersion") != null) {
-            // New config format
-            return BlackLabConfig.read(new StringReader(fileContents), isJson);
-        } else {
-            // Old config format
-            logger.error("You are using the old configuration file format. This is no longer supported.");
-            logger.error("Please upgrade to the new format. See https://blacklab.ivdnt.org/server/configuration.html");
-            throw new InvalidConfiguration("Your configuration files are in the old, no longer supported format. Please upgrade: https://blacklab.ivdnt.org/server/configuration.html");
-        }
+        return BlackLabConfig.read(new StringReader(fileContents), isJson);
     }
 
     private int configVersion = 2;
@@ -111,6 +92,8 @@ public class BlackLabConfig {
     }
 
     public void setConfigVersion(int configVersion) {
+        if (configVersion != 2)
+            throw new InvalidConfiguration("Unsupported config version: " + configVersion + ". Expected 2.");
         this.configVersion = configVersion;
     }
 

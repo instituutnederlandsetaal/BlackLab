@@ -192,60 +192,25 @@ public final class BlackLabEngine implements AutoCloseable {
      * @param directory index directory
      * @param create force creating a new index even if one already exists?
      * @param formatIdentifier default document format to use
-     * @return the index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier)
-            throws ErrorOpeningIndex {
-        return openForWriting(directory, create, formatIdentifier, null, null);
-    }
-
-    /**
-     * Create or open an index.
-     *
-     * @param directory index directory
-     * @param create force creating a new index even if one already exists?
-     * @param formatIdentifier default document format to use
-     * @param indexTemplateFile optional file to use as template for index (legacy)
-     * @return the index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
-            File indexTemplateFile) throws ErrorOpeningIndex {
-        return openForWriting(directory, create, formatIdentifier, indexTemplateFile, null);
-    }
-
-    /**
-     * Create or open an index.
-     *
-     * @param directory index directory
-     * @param create force creating a new index even if one already exists?
-     * @param formatIdentifier default document format to use
-     * @param indexTemplateFile optional file to use as template for index (legacy)
      * @param indexType index format to use for creating index: classic with external files or integrated
      * @return the index writer
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
-            File indexTemplateFile, IndexType indexType) throws ErrorOpeningIndex {
+            IndexType indexType) throws ErrorOpeningIndex {
         BlackLabIndexWriter indexWriter;
         if (create) {
-            if (indexTemplateFile == null) {
-                // Create index from format configuration (modern)
-                // (or a legacy DocIndexer, but no index template file, so the defaults will be used)
-                // No indexTemplateFile, but maybe the formatIdentifier is backed by a ConfigInputFormat (instead of
-                // some other DocIndexer implementation)
-                // this ConfigInputFormat could then still be used as a minimal template to setup the index
-                // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
-                InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
-                ConfigInputFormat config = inputFormat == null ? null : inputFormat.getConfig();
+            // Create index from format configuration (modern)
+            // (or a legacy DocIndexer, but no index template file, so the defaults will be used)
+            // Maybe the formatIdentifier is backed by a ConfigInputFormat (instead of
+            // some other DocIndexer implementation)
+            // this ConfigInputFormat could then still be used as a minimal template to setup the index
+            // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
+            InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
+            ConfigInputFormat config = inputFormat == null ? null : inputFormat.getConfig();
 
-                // template might still be null, in that case a default will be created
-                indexWriter = openForWriting(directory, true, config, indexType);
-            } else {
-                // Create index from index template file (legacy)
-                indexWriter = openForWriting(directory, true, indexTemplateFile, indexType);
-            }
+            // template might still be null, in that case a default will be created
+            indexWriter = openForWriting(directory, true, config, indexType);
             BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
         } else {
             // opening an existing index
@@ -278,17 +243,6 @@ public final class BlackLabEngine implements AutoCloseable {
         if (indexType != IndexType.INTEGRATED)
             throw new UnsupportedOperationException("This version of the method only works with integrated indexes");
         return new BlackLabIndexIntegrated(indexName, this, reader, null, true, false, format);
-    }
-
-    /**
-     * Return the current default index type, external or integrated
-     * @return the default index type
-     */
-    public IndexType getDefaultIndexType() {
-        String defaultIndexType = BlackLab.featureFlag(BlackLab.FEATURE_DEFAULT_INDEX_TYPE);
-        return defaultIndexType.equalsIgnoreCase("external") ?
-                IndexType.EXTERNAL_FILES :
-                IndexType.INTEGRATED;
     }
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
@@ -327,7 +281,7 @@ public final class BlackLabEngine implements AutoCloseable {
      * @throws ErrorOpeningIndex if the index could not be opened
      */
     public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew) throws ErrorOpeningIndex {
-        return openForWriting(indexDir, forceCreateNew, (File) null, null);
+        return openForWriting(indexDir, forceCreateNew, (IndexType)null);
     }
 
     /**
@@ -335,33 +289,15 @@ public final class BlackLabEngine implements AutoCloseable {
      *
      * @param indexDir the index directory
      * @param forceCreateNew if true, create a new index even if one existed there
-     * @param indexTemplateFile JSON template to use for index structure / metadata
-     * @return index writer
-     * @throws ErrorOpeningIndex if index couldn't be opened
-     */
-    public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew, File indexTemplateFile)
-            throws ErrorOpeningIndex {
-        return openForWriting(indexDir, forceCreateNew, indexTemplateFile, null);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * @param indexDir the index directory
-     * @param forceCreateNew if true, create a new index even if one existed there
-     * @param indexTemplateFile (optional) JSON template to use for index structure / metadata
-     *                          (only works with {@link IndexType#EXTERNAL_FILES}; pass null for integrated)
      * @param indexType (optional) type of index to create (external or integrated), or null to use the default type
      * @return index writer
      * @throws ErrorOpeningIndex if index couldn't be opened
      */
-    public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew, File indexTemplateFile, IndexType indexType)
+    public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew, IndexType indexType)
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         indexType = determineIndexType(indexDir, forceCreateNew, indexType);
         checkSupportedIndexType(indexDir, indexType);
-        if (indexTemplateFile != null)
-            throw new IllegalArgumentException("Cannot use index template file with integrated index!");
         return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
     }
 
@@ -370,7 +306,6 @@ public final class BlackLabEngine implements AutoCloseable {
             // Index type not specified.
             if (forceCreateNew || !BlackLabIndex.isIndex(indexDir)) {
                 // New index. Use the default type
-                indexType = getDefaultIndexType();
             } else {
                 // Existing index. Detect type.
                 indexType = VersionFile.exists(indexDir) ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;

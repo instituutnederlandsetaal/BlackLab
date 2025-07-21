@@ -276,8 +276,6 @@ public class TestQueryRewrite {
 
     @Test
     public void testRewriteTags() {
-        if (index.getType() == BlackLabIndex.IndexType.EXTERNAL_FILES)
-            return; // rewrite differently, and will be obsolete soon(ish)
         assertRewriteResult("<s/> containing 'a' 'b'",
                 "POSFILTER(TAGS(s, cap:s), SEQ(TERM(contents%word@i:a), TERM(contents%word@i:b)), containing)");
         assertRewriteResult("<s> []* 'a' 'b' []* </s>",

@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.extensions;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureOverlappingSpans;
@@ -28,8 +27,6 @@ public class XFSpans implements ExtensionFunctionClass {
      * @return relations query
      */
     private static BLSpanQuery withSpans(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
-        if (queryInfo.index().getType() == BlackLabIndex.IndexType.EXTERNAL_FILES)
-            throw new IllegalArgumentException("with-spans not supported for deprecated external files index; use new integrated index");
         BLSpanQuery query = (BLSpanQuery) args.get(0);
         BLSpanQuery spans = (BLSpanQuery) args.get(1);
         String captureAs = context.ensureUniqueCapture((String)args.get(2));

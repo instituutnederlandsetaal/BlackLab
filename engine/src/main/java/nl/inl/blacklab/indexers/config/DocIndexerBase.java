@@ -25,8 +25,6 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileProcessor;
@@ -391,8 +389,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     protected void storeContent(ConfigAnnotatedField field, TextContent content) {
-        getDocWriter().storeInContentStore(currentDoc, content,
-                AnnotatedFieldNameUtil.contentIdField(field.getName()), field.getName());
+        getDocWriter().storeInContentStore(currentDoc, content, field.getName());
     }
 
     /**
@@ -416,34 +413,20 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param document document to store
      */
     protected void storeWholeDocument(TextContent document) {
-        // Finish storing the document in the document store,
-        // retrieve the content id, and store that in Lucene.
+        // Finish storing the document in the content store.
         // (Note that we do this after adding the "extra closing token", so the character
         // positions for the closing token still make (some) sense)
-        String contentIdFieldName;
         String contentStoreName = getLinkedDocumentContentStoreName();
-        if (contentStoreName != null) {
-            contentIdFieldName = contentStoreName + "Cid";
-        } else {
+        if (contentStoreName == null) {
             AnnotatedFieldWriter main = getMainAnnotatedField();
             if (main != null) {
                 // Regular case. Store content for the main annotated field.
                 contentStoreName = main.name();
-                contentIdFieldName = AnnotatedFieldNameUtil.contentIdField(main.name());
             } else {
                 throw new InvalidIndex("No main annotated field defined, can't store document");
-                /*
-                // We're indexing documents and storing the contents,
-                // but we don't have a main annotated field in the current indexing configuration.
-                // This happens when indexing linked metadata documents, which are stored but don't
-                // have annotated content to be indexed in a field.
-                // (OLD HACK, NOT USED ANYMORE..?)
-                contentStoreName = "metadata";
-                contentIdFieldName = "metadataCid";
-                */
             }
         }
-        getDocWriter().storeInContentStore(currentDoc, document, contentIdFieldName, contentStoreName);
+        getDocWriter().storeInContentStore(currentDoc, document, contentStoreName);
     }
 
     /**
@@ -648,19 +631,5 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     public void setDocument(FileReference file) {
         if (documentName == null)
             documentName = file.getPath();
-    }
-
-    /**
-     * Are dashes forbidden in annotation names?
-     *
-     * True for classic index format, false for integrated index format.
-     * Annotation names must be valid XML element names, which is why we sanitize certain
-     * characters. But dashes are valid in XML element names. For compatibility, classic index
-     * format still forbids dashes, but newer index formats allow them.
-     *
-     * @return true if dashes should be sanitized from annotation names
-     */
-    protected boolean disallowDashInname() {
-        return getDocWriter().getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES;
     }
 }

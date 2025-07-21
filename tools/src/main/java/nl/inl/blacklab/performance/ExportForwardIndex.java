@@ -26,7 +26,6 @@ public class ExportForwardIndex {
     private static final List<String> SKIP_ANNOTATIONS = List.of(
             "pos",
             AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-            AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.EXTERNAL_FILES),
             AnnotatedFieldNameUtil.relationAnnotationName(BlackLabIndex.IndexType.INTEGRATED)
     );
 

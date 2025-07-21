@@ -37,6 +37,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
@@ -177,13 +178,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      *         exists.
      * @param config input format config to use as template for index structure /
      *            metadata (if creating new index)
-     * @param indexTemplateFile index template file to use to create index (legacy, only works with older
-     *                          "external files" index type; pass null otherwise)
      * @throws IndexVersionMismatch if the index is too old or too new to be opened by this BlackLab version
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     BlackLabIndexAbstract(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
-            ConfigInputFormat config, File indexTemplateFile) throws ErrorOpeningIndex {
+            ConfigInputFormat config) throws ErrorOpeningIndex {
         this.blackLab = blackLab;
         this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr)
         this.name = name;
@@ -218,10 +217,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            if (config != null)
-                indexMetadata = getIndexMetadata(createNewIndex, config);
+            if (createNewIndex && config == null)
+                throw new InvalidInputFormatConfig("No configuration available");
             else
-                indexMetadata = getIndexMetadata(createNewIndex, indexTemplateFile);
+                indexMetadata = getIndexMetadata(createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
             if (traceIndexOpening())
@@ -272,9 +271,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config)
-            throws IndexVersionMismatch;
-
-    protected abstract IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile)
             throws IndexVersionMismatch;
 
     boolean traceIndexOpening() {

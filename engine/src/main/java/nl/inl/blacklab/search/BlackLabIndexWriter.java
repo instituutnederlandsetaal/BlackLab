@@ -32,7 +32,7 @@ public interface BlackLabIndexWriter extends AutoCloseable {
     static void setMetadataDocumentFormatIfMissing(BlackLabIndexWriter indexWriter, String formatIdentifier) {
         String defaultFormatIdentifier = indexWriter.metadata().documentFormat();
         if (defaultFormatIdentifier == null || defaultFormatIdentifier.isEmpty()) {
-            // indexTemplateFile didn't provide a default formatIdentifier,
+            // no default formatIdentifier,
             // overwrite it with our provided formatIdentifier
             indexWriter.metadata().setDocumentFormat(formatIdentifier);
         }

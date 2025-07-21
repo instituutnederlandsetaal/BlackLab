@@ -9,7 +9,6 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -172,18 +171,7 @@ public class MockSpans extends BLSpans {
 
     @Override
     public int endPosition() {
-        return endPos; //spans.endPosition();
-    }
-
-    private void setPayloadsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
-        this.payloads = new BytesRef[aEnd.length];
-        for (int i = 0; i < aEnd.length; i++) {
-            BytesRef payload = relationsStrategy.getPayloadCodec().inlineTagPayload(aStart[i], aEnd[i],
-                    BlackLabIndex.IndexType.EXTERNAL_FILES, -1, true);
-            if (aIsPrimary != null)
-                payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);
-            this.payloads[i] = payload;
-        }
+        return endPos;
     }
 
     private void setPayloadsRelationsInt(int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
@@ -283,12 +271,6 @@ public class MockSpans extends BLSpans {
 
     public static MockSpans fromLists(int[] doc, int[] start, int[] end) {
         return new MockSpans(doc, start, end);
-    }
-
-    public static MockSpans withEndInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {
-        MockSpans spans = MockSpans.singleWordSpans(aDoc, aStart);
-        spans.setPayloadsInt(aStart, aEnd, aIsPrimary);
-        return spans;
     }
 
     public static MockSpans withRelationInfoInPayload(int[] aDoc, int[] aStart, int[] aEnd, boolean[] aIsPrimary) {

@@ -70,7 +70,7 @@ public interface DocWriter {
 
     Optional<Function<String, File>> linkedFileResolver();
 
-    void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName, String contentStoreName);
+    void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentStoreName);
 
     boolean needsPrimaryValuePayloads();
 
