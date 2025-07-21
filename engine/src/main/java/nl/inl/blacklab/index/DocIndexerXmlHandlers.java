@@ -248,8 +248,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             for (int i = 0; i < attributes.getLength(); i++) {
                 attrMap.put(attributes.getLocalName(i), List.of(attributes.getValue(i)));
             }
-            int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1,
-                    attrMap, getIndexType());
+            int openTagIndex = propTags.indexInlineTag(localName, currentPos, -1, attrMap);
             openTagIndexes.add(openTagIndex);
             openTagPositions.add(currentPos);
         }
@@ -263,7 +262,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             int closeTagPosition = propMain.lastValuePosition() + 1;
             boolean maybeExtraInfo = true; // we're not sure, but that's okay; slightly slower
             BytesRef payload = getPayloadCodec().inlineTagPayload(openTagPosition,
-                    closeTagPosition, getIndexType(), -1, maybeExtraInfo);
+                    closeTagPosition, -1, maybeExtraInfo);
             Integer openTagIndex = openTagIndexes.remove(lastIndex);
             if (openTagIndex < 0) {
                 // Negative value means two terms were indexed (one with, one without attributes, for search performance)
@@ -406,7 +405,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 false, needsPrimaryValuePayloads);
         propMain = contentsField.mainAnnotation();
         propPunct = addAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME);
-        propTags = addAnnotation(AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()), true); // start tag
+        propTags = addAnnotation(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME, true); // start tag
         // positions
         propTags.setHasForwardIndex(false);
     }

@@ -77,7 +77,7 @@ public interface RelationsStrategy {
         /**
          * Get payload for an inline tag
          */
-        BytesRef inlineTagPayload(int spanStart, int spanEnd, BlackLabIndex.IndexType indexType, int relationId,
+        BytesRef inlineTagPayload(int spanStart, int spanEnd, int relationId,
                 boolean maybeExtraInfo);
 
         /**

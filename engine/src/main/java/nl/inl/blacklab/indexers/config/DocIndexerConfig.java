@@ -133,7 +133,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                     mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
                     needsPrimaryValuePayloads);
 
-            String relAnnotName = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
+            String relAnnotName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
             AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(relAnnotName);
             AnnotationWriter annotRelation = fieldWriter.addAnnotation(relAnnotName, relAnnotSensitivity, true, false);
             annotRelation.setHasForwardIndex(false);

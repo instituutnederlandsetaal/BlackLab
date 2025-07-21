@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * Some utility functions for dealing with annotated field names.
@@ -74,26 +73,6 @@ public final class AnnotatedFieldNameUtil {
     static final int BOOKKEEPING_SEP_LEN = BOOKKEEPING_SEP.length();
 
     private AnnotatedFieldNameUtil() {
-    }
-
-    public static boolean defaultSensitiveInsensitive(String name) {
-        // Historic behaviour: if no sensitivity is given, "word" and "lemma" annotations will
-        // get SensitivitySetting.SENSITIVE_AND_INSENSITIVE; all others get SensitivitySetting.ONLY_INSENSITIVE.
-        // We warn users if their configuration relies on this, so we can eventually remove it.
-        return name.equals("lemma") || name.equals(DEFAULT_MAIN_ANNOT_NAME);
-    }
-
-    /**
-     * Get the name of the annotation that stores the relations between words.
-     * @param indexType index type
-     * @return name of annotation that stores the relations between words (and inline tags)
-     */
-    public static String relationAnnotationName(BlackLabIndex.IndexType indexType) {
-        return RELATIONS_ANNOT_NAME;
-    }
-
-    public static boolean isRelationAnnotation(String name) {
-        return name.equals(RELATIONS_ANNOT_NAME);
     }
 
     public static String contentStoreField(String fieldName) {

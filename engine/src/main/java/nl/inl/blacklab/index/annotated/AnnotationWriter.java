@@ -23,7 +23,6 @@ import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -132,7 +131,7 @@ public class AnnotationWriter {
         super();
         this.fieldWriter = fieldWriter;
         annotationName = name;
-        relationsStrategy = AnnotatedFieldNameUtil.isRelationAnnotation(name) ? fieldWriter.getRelationsStrategy() : null;
+        relationsStrategy = name.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME) ? fieldWriter.getRelationsStrategy() : null;
         this.sensitivitySetting = sensitivity;
         if (fieldWriter.field() != null) {
             annotation = fieldWriter.field().annotation(annotationName);
@@ -452,13 +451,12 @@ public class AnnotationWriter {
      * @param startPos the start position of the tag
      * @param endPos the end position of the tag, or -1 if we don't know it yet
      * @param attributes the tag attributes
-     * @param indexType index type (external files or integrated)
      * @return index the tag was stored at (so we can add payload later if needed).
      *         Note that if this is a negative value, it is the index of the second
      *         term indexed for this tag. We should update the payloads of both later.
      */
     public int indexInlineTag(String tagName, int startPos, int endPos,
-            Map<String, List<String>> attributes, BlackLabIndex.IndexType indexType) {
+            Map<String, List<String>> attributes) {
 
         // NOTE: for single-term strategy, we only create a relationId if we know the end position. If we don't,
         // the payload will be added later (when the closing tag is encountered) with
@@ -470,11 +468,11 @@ public class AnnotationWriter {
                 endPos, endPos, relationId, hasExtraInfoStored);
         String fullRelationType;
         fullRelationType = RelationUtil.fullType(RelationUtil.CLASS_INLINE_TAG, tagName);
-        return indexRelation(fullRelationType, attributes, indexType, relationInfo);
+        return indexRelation(fullRelationType, attributes, relationInfo);
     }
 
     public void indexRelation(String fullRelationType, boolean onlyHasTarget, int sourceStartPos, int sourceEnd,
-            int targetStart, int targetEnd, Map<String, List<String>> attributes, BlackLabIndex.IndexType indexType) {
+            int targetStart, int targetEnd, Map<String, List<String>> attributes) {
         int relationId = relationsStrategy.getRelationId(this, targetStart, attributes);
           //getNextRelationId(attributes != null && !attributes.isEmpty());
         boolean hasExtraInfoStored = attributes != null && !attributes.isEmpty();
@@ -486,11 +484,10 @@ public class AnnotationWriter {
         // for the target or full span (because target position can be before source).
         // (we also might not even need to decode the payload if we ONLY need the source
         //  start position)
-        indexRelation(fullRelationType, attributes, indexType, relationInfo);
+        indexRelation(fullRelationType, attributes, relationInfo);
     }
 
-    private int indexRelation(String fullRelationType, Map<String, List<String>> attributes,
-            BlackLabIndex.IndexType indexType, RelationInfo relationInfo) {
+    private int indexRelation(String fullRelationType, Map<String, List<String>> attributes, RelationInfo relationInfo) {
         int tagIndexInAnnotation;
         BytesRef payload;
         // integrated index; everything is indexed as a single term

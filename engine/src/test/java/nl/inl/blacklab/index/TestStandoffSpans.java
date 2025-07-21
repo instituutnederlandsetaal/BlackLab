@@ -80,7 +80,7 @@ public class TestStandoffSpans {
         SearchEmpty s = testIndex.search();
 
         AnnotatedField field = testIndex.mainAnnotatedField();
-        String relAnnotName = AnnotatedFieldNameUtil.relationAnnotationName(testIndex.getType());
+        String relAnnotName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
         Annotation relAnnotation = field.annotation(relAnnotName);
         AnnotationSensitivity annotationSensitivity = relAnnotation.hasSensitivity(MatchSensitivity.SENSITIVE) ?
                 relAnnotation.sensitivity(MatchSensitivity.SENSITIVE) :

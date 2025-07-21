@@ -24,7 +24,6 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileUtil;
 
@@ -152,22 +151,7 @@ public final class BlackLab {
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
     public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier) throws ErrorOpeningIndex {
-        return openForWriting(directory, create, formatIdentifier, null);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * @param directory the index directory
-     * @param create if true, create a new index even if one existed there
-     * @param formatIdentifier default format to use
-     * @param indexType index format to use: classic with external files or new integrated
-     * @return index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    public static BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
-            IndexType indexType) throws ErrorOpeningIndex {
-        return implicitInstance().openForWriting(directory, create, formatIdentifier, indexType);
+        return implicitInstance().openForWriting(directory, create, formatIdentifier);
     }
 
     public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {

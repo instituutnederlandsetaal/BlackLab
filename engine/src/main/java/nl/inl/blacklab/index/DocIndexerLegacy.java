@@ -231,7 +231,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
             // Punctuation: default to only insensitive
             return AnnotationSensitivities.ONLY_INSENSITIVE;
         }
-        if (AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()).equals(annotationName)) {
+        if (AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME.equals(annotationName)) {
             // Tags and relations: default to only sensitive
             return AnnotationSensitivities.ONLY_SENSITIVE;
         }

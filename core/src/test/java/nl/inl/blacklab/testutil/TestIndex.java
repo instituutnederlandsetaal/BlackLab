@@ -16,6 +16,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -43,22 +44,18 @@ public class TestIndex {
     /** Pre-indexed (to test that we don't accidentally break file compatibility). */
     private static TestIndex testIndexPre;
 
-    public static TestIndex get(IndexType indexType) {
-        return new TestIndex(false, indexType);
+    public static TestIndex get() {
+        return new TestIndex(false);
     }
 
-    private static synchronized TestIndex getPreindexed(IndexType indexType) {
-        if (indexType == IndexType.EXTERNAL_FILES)
-            throw new UnsupportedOperationException("External index no longer supported!");
+    private static synchronized TestIndex getPreindexed() {
         return testIndexPre;
     }
 
-    public static synchronized TestIndex getReusable(IndexType indexType) {
-        if (indexType == IndexType.EXTERNAL_FILES)
-            throw new UnsupportedOperationException("External index no longer supported!");
+    public static synchronized TestIndex getReusable() {
         if (testIndexIntegrated == null) {
             // Instantiate reusable testindexes
-            testIndexIntegrated = new TestIndex(false, IndexType.INTEGRATED);
+            testIndexIntegrated = new TestIndex(false);
             // Make sure files are cleaned up at the end
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 testIndexIntegrated.close();
@@ -67,14 +64,14 @@ public class TestIndex {
         return testIndexIntegrated;
     }
 
-    public static TestIndex getWithTestDelete(IndexType indexType) {
-        return new TestIndex(true, indexType);
+    public static TestIndex getWithTestDelete() {
+        return new TestIndex(true);
     }
 
     public static Collection<TestIndex> typesForTests() {
         return List.of(
-                //getPreindexed(IndexType.INTEGRATED),
-                getReusable(BlackLabIndex.IndexType.INTEGRATED)
+                //getPreindexed(),
+                getReusable()
         );
     }
 
@@ -168,14 +165,14 @@ public class TestIndex {
     }
 
     /** Create a temporary index, delete the directory when finished */
-    private TestIndex(boolean testDelete, IndexType indexType) {
+    private TestIndex(boolean testDelete) {
         // Get a temporary directory for our test index
         dir = UtilsForTesting.createBlackLabTestDir("TestIndex");
         indexDir = dir.file();
 
         // Instantiate the BlackLab indexer, supplying our DocIndexer class
         try {
-            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, TEST_FORMAT_NAME, indexType);
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, TEST_FORMAT_NAME);
             Indexer indexer = Indexer.create(indexWriter);
             indexer.setListener(new IndexListenerAbortOnError()); // throw on error
             try {
@@ -187,7 +184,7 @@ public class TestIndex {
                     // Delete the first doc, to test deletion.
                     // (close and re-open to be sure the document was written to disk first)
                     indexer.close();
-                    indexWriter = BlackLab.openForWriting(indexDir, false, null, indexType);
+                    indexWriter = BlackLab.openForWriting(indexDir, false, (ConfigInputFormat)null);
                     indexer = Indexer.create(indexWriter);
                     String luceneField = indexer.indexWriter().metadata().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));

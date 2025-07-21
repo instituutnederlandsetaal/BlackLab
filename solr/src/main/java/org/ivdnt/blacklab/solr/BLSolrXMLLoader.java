@@ -31,7 +31,6 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -71,8 +70,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         
         String fileName = params.get("bl.filename");
         String indexName = req.getCore().getName();
-        try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, formatConfig,
-                BlackLabIndex.IndexType.INTEGRATED)) {
+        try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, formatConfig)) {
             Indexer indexer = Indexer.create(index, paramFormat);
             InputStream is = stream.getStream();
 

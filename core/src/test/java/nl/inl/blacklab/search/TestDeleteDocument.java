@@ -36,7 +36,7 @@ public class TestDeleteDocument {
 
     @BeforeClass
     public static void setUpClass() {
-        testIndexIntegrated = TestIndex.getWithTestDelete(BlackLabIndex.IndexType.INTEGRATED);
+        testIndexIntegrated = TestIndex.getWithTestDelete();
     }
 
     @AfterClass

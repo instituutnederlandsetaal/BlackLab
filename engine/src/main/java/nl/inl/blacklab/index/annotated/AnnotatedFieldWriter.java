@@ -13,7 +13,6 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocWriter;
-import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -64,8 +63,6 @@ public class AnnotatedFieldWriter {
 
     private AnnotatedField field;
 
-    private final IndexType indexType;
-
     /** The name of the annotation where relations and spans are stored. */
     private final String relationAnnotationName;
 
@@ -93,9 +90,8 @@ public class AnnotatedFieldWriter {
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
             boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
         this.docWriter = docWriter;
-        indexType = docWriter.getIndexType();
         relationsStrategy = docWriter.getRelationsStrategy();
-        relationAnnotationName = AnnotatedFieldNameUtil.relationAnnotationName(indexType);
+        relationAnnotationName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
             logger.warn("Field name '" + name
                     + "' is discouraged (field/annotation names should be valid XML element names)");
@@ -238,10 +234,6 @@ public class AnnotatedFieldWriter {
     @Override
     public String toString() {
         return "AnnotatedFieldWriter(" + fieldName + ")";
-    }
-
-    public IndexType getIndexType() {
-        return indexType;
     }
 
     public RelationsStrategy getRelationsStrategy() {

@@ -441,8 +441,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         AnnotationWriter relationsAnnot = tagsAnnotation();
         if (isOpenTag) {
             trace("<" + tagName + ">");
-            int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes,
-                    getIndexType());
+            int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes);
             // We'll remember the relationId assigned above, even though the payload will updated later, when we encounter
             // the closing tag. We have to use the same relationId in the updated payload, or it won't match the relationId
             // stored in the attribute terms (which get a payload that only contains the relation id, so we can match them
@@ -461,7 +460,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                         "Close tag " + tagName + " found, but " + openTag.name + " expected");
             attributes = openTag.attributes;
             boolean maybeExtraInfo = attributes != null && !attributes.isEmpty();
-            BytesRef payload = getPayloadCodec().inlineTagPayload(openTag.position, currentPos, getIndexType(),
+            BytesRef payload = getPayloadCodec().inlineTagPayload(openTag.position, currentPos,
                     openTag.relationId, maybeExtraInfo);
             int index = openTag.index;
             if (index < 0) {
@@ -552,7 +551,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             // Span: index as a relation from the start of source to the start of target (0-length)
             //   (and in the classic external index, the payload just contains the end position)
             payload = getPayloadCodec().inlineTagPayload(indexPosition, target.start(),
-                    getIndexType(), tagsAnnotation().getNextRelationId(maybeExtraInfo), maybeExtraInfo);
+                    tagsAnnotation().getNextRelationId(maybeExtraInfo), maybeExtraInfo);
             break;
         case RELATION:
             // Relation: index with the full source and target spans

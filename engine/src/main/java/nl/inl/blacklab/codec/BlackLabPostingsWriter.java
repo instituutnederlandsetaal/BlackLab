@@ -178,7 +178,8 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
                 // so we can look them up for individual relations matched.
                 boolean storeRelationInfo = false;
                 String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(luceneField);
-                if (nameComponents.length > 1 && AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1])) {
+                if (nameComponents.length > 1 && nameComponents[1].equals(
+                        AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
                     // Yes, store relation info.
                     storeRelationInfo = true;
                 }

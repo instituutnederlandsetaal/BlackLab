@@ -203,12 +203,12 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
                     // Regular relation with source and target.
                     Span headSpan = idSpan(strHead, sentenceStartPosition);
                     tagsAnnotation().indexRelation(fullRelationType, false, headSpan.start, headSpan.end,
-                            span.start, span.end, null, getIndexType());
+                            span.start, span.end, null);
                 } else {
                     // Root relation has no source. We just use the target positions for the source, so
                     // the relation is stored in a sane position.
                     tagsAnnotation().indexRelation(fullRelationType, true, span.start, span.end,
-                            span.start, span.end, null, getIndexType());
+                            span.start, span.end, null);
                 }
             }
 

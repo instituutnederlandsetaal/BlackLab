@@ -9,7 +9,6 @@ import org.apache.lucene.util.BytesRef;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
@@ -67,7 +66,7 @@ public class TestPayloadUtils {
         int[] ends  = { 0, 11, 30 };
         for (int i = 0; i < starts.length; i++) {
             // Integrated index type: writes start and end position
-            BytesRef b = payloadCodec.inlineTagPayload(starts[i], ends[i], BlackLabIndex.IndexType.INTEGRATED, 0, true);
+            BytesRef b = payloadCodec.inlineTagPayload(starts[i], ends[i], 0, true);
             RelationInfo r = RelationInfo.create();
             payloadCodec.deserialize(starts[i], new ByteArrayDataInput(b.bytes), r);
             Assert.assertEquals(starts[i], r.getSpanStart());

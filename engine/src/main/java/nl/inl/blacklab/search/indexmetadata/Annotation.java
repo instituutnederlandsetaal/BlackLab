@@ -154,7 +154,7 @@ public interface Annotation {
     Annotation parentAnnotation();
 
     default boolean isRelationAnnotation() {
-        return AnnotatedFieldNameUtil.isRelationAnnotation(name());
+        return name().equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
     }
 
     /** We include the field name when serializing. This is the separator we use.

@@ -128,7 +128,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected void processStandoffSpan(T standoffNode, AnnotationType type,
             Span sourceSpan, Span targetSpan, Collection<ConfigAnnotation> standoffAnnotations,
             String spanOrRelType) {
-        String name = AnnotatedFieldNameUtil.relationAnnotationName(getIndexType());
+        String name = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
         AnnotationWriter annotationWriter = getAnnotation(name);
         // Integrated index format.
 

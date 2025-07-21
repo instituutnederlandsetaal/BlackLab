@@ -489,12 +489,11 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          *
          * @param startPosition  start position (inclusive), or the first token of the span
          * @param endPosition    end position (exclusive), or the first token after the span
-         * @param indexType      type of index we're writing
          * @param relationId     unique id for this relation, to look up attributes later
          * @return payload to store
          */
         @Override
-        public BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId, boolean maybeExtraInfo) {
+        public BytesRef inlineTagPayload(int startPosition, int endPosition, int relationId, boolean maybeExtraInfo) {
             try {
                 ByteArrayOutputStream os = new ByteArrayOutputStream();
                 serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));

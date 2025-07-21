@@ -10,12 +10,11 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.index.Term;
 import org.junit.Test;
 
-import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestSearchBehavior {
-    public final TestIndex testIndex = TestIndex.get(IndexType.INTEGRATED);
+    public final TestIndex testIndex = TestIndex.get();
 
     @Test
     public void testParallelSearchInterrupt() {

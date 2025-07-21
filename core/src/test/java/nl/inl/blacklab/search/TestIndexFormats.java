@@ -188,7 +188,7 @@ public class TestIndexFormats {
         Assert.assertTrue(field.hasContentStore());
         Set<String> expectedAnnotations =
                 new HashSet<>(Arrays.asList("word", "lemma", "pos",
-                AnnotatedFieldNameUtil.relationAnnotationName(index.getType()), AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
+                        AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
         Set<String> actualAnnotations = field.annotations().stream().map(Annotation::name).collect(Collectors.toSet());
         Assert.assertEquals(expectedAnnotations, actualAnnotations);
         Assert.assertEquals("word", field.mainAnnotation().name());

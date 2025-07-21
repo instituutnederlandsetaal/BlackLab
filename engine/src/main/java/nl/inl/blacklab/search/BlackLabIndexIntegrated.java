@@ -162,8 +162,8 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      */
     public static boolean isRelationsField(FieldInfo fieldInfo) {
         String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
-        return nameComponents.length > 1 && nameComponents[1] != null &&
-                AnnotatedFieldNameUtil.isRelationAnnotation(nameComponents[1]);
+        return nameComponents.length > 1 && nameComponents[1] != null && nameComponents[1].equals(
+                AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
     }
 
     /**

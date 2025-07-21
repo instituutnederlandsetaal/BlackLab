@@ -34,7 +34,6 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
@@ -71,7 +70,6 @@ public class IndexTool {
         String deleteQuery = null;
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
-        IndexType indexType = null; // null means "use default"
         boolean createEmptyIndex = false;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
@@ -99,17 +97,6 @@ public class IndexTool {
                         usage();
                         return;
                     }
-                    indexType = IndexType.INTEGRATED;
-                    i++;
-                    break;
-                case "integrate-external-files":
-                    // NOTE: deprecated; this is the default (or use  --index-type external  to use the legacy variant)
-                    if (i + 1 == args.length || !List.of("true", "false").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--integrate-external-files needs a parameter: true or false.");
-                        usage();
-                        return;
-                    }
-                    indexType = Boolean.parseBoolean(args[i + 1]) ? IndexType.INTEGRATED : IndexType.EXTERNAL_FILES;
                     i++;
                     break;
                 case "create-empty":
@@ -329,8 +316,7 @@ public class IndexTool {
 
         Indexer indexer = null;
         try {
-            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew,
-                    formatIdentifier, indexType);
+            BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew, formatIdentifier);
             indexer = Indexer.create(indexWriter, formatIdentifier);
         } catch (InvalidInputFormatConfig e) {
             System.err.println("ERROR in input format '" + formatIdentifier + "':");

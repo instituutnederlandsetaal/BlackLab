@@ -144,7 +144,7 @@ public class DocIndexerExample extends DocIndexerBase {
                     true);
         }
         // Add a special annotation where we can index arbitrary spans.
-        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()),
+        addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME,
                 AnnotationSensitivities.ONLY_SENSITIVE, false);
         // Add a special annotation where whitespace and punctuation between words is stored.
         addAnnotationToFieldConfig(field, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
@@ -178,7 +178,7 @@ public class DocIndexerExample extends DocIndexerBase {
                 getDocWriter().needsPrimaryValuePayloads());
         while (annotIt.hasNext()) {
             ConfigAnnotation annot = annotIt.next();
-            boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.relationAnnotationName(getIndexType()));
+            boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
             contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads, annot.createForwardIndex());
         }
         addAnnotatedField(contents);
@@ -302,7 +302,7 @@ public class DocIndexerExample extends DocIndexerBase {
             }
 
             tagsAnnotation().indexInlineTag(spanType, spanStart, spanEnd,
-                    spanAttributes, getIndexType());
+                    spanAttributes);
             break;
 
         case "FIELD_END":

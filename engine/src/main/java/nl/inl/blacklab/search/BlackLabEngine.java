@@ -192,12 +192,10 @@ public final class BlackLabEngine implements AutoCloseable {
      * @param directory index directory
      * @param create force creating a new index even if one already exists?
      * @param formatIdentifier default document format to use
-     * @param indexType index format to use for creating index: classic with external files or integrated
      * @return the index writer
      * @throws ErrorOpeningIndex if the index couldn't be opened
      */
-    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier,
-            IndexType indexType) throws ErrorOpeningIndex {
+    public BlackLabIndexWriter openForWriting(File directory, boolean create, String formatIdentifier) throws ErrorOpeningIndex {
         BlackLabIndexWriter indexWriter;
         if (create) {
             // Create index from format configuration (modern)
@@ -210,7 +208,7 @@ public final class BlackLabEngine implements AutoCloseable {
             ConfigInputFormat config = inputFormat == null ? null : inputFormat.getConfig();
 
             // template might still be null, in that case a default will be created
-            indexWriter = openForWriting(directory, true, config, indexType);
+            indexWriter = openForWriting(directory, true, config);
             BlackLabIndexWriter.setMetadataDocumentFormatIfMissing(indexWriter, formatIdentifier);
         } else {
             // opening an existing index
@@ -238,21 +236,25 @@ public final class BlackLabEngine implements AutoCloseable {
         }
     }
 
-    public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format,
-            IndexType indexType) throws ErrorOpeningIndex {
-        if (indexType != IndexType.INTEGRATED)
-            throw new UnsupportedOperationException("This version of the method only works with integrated indexes");
+    public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format) throws ErrorOpeningIndex {
         return new BlackLabIndexIntegrated(indexName, this, reader, null, true, false, format);
     }
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
-        IndexType indexType = determineIndexType(indexDir, false, null);
-        checkSupportedIndexType(indexDir, indexType);
+        checkSupportedIndexType(indexDir, false);
         return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, false, false, null);
     }
 
-    private static void checkSupportedIndexType(File indexDir, IndexType indexType) {
+    private static void checkSupportedIndexType(File indexDir, boolean createNewIndex) {
+        IndexType indexType;
+        if (createNewIndex || !BlackLabIndex.isIndex(indexDir)) {
+            // New index. Use the default type
+            indexType = null;
+        } else {
+            // Existing index. Detect type.
+            indexType = VersionFile.exists(indexDir) ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;
+        }
         if (indexType == IndexType.EXTERNAL_FILES)
             throw new IndexVersionMismatch("This index (" + indexDir + ") uses an older file format (with and external forward index) that is no longer supported by BlackLab. Use BlackLab 4.x to open it.");
     }
@@ -278,40 +280,13 @@ public final class BlackLabEngine implements AutoCloseable {
      * @param indexDir the index directory
      * @param forceCreateNew if true, create a new index even if one existed there
      * @return index writer
-     * @throws ErrorOpeningIndex if the index could not be opened
-     */
-    public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew) throws ErrorOpeningIndex {
-        return openForWriting(indexDir, forceCreateNew, (IndexType)null);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * @param indexDir the index directory
-     * @param forceCreateNew if true, create a new index even if one existed there
-     * @param indexType (optional) type of index to create (external or integrated), or null to use the default type
-     * @return index writer
      * @throws ErrorOpeningIndex if index couldn't be opened
      */
-    public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew, IndexType indexType)
+    public BlackLabIndexWriter openForWriting(File indexDir, boolean forceCreateNew)
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
-        indexType = determineIndexType(indexDir, forceCreateNew, indexType);
-        checkSupportedIndexType(indexDir, indexType);
+        checkSupportedIndexType(indexDir, forceCreateNew);
         return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
-    }
-
-    private IndexType determineIndexType(File indexDir, boolean forceCreateNew, IndexType indexType) {
-        if (indexType == null) {
-            // Index type not specified.
-            if (forceCreateNew || !BlackLabIndex.isIndex(indexDir)) {
-                // New index. Use the default type
-            } else {
-                // Existing index. Detect type.
-                indexType = VersionFile.exists(indexDir) ? IndexType.EXTERNAL_FILES : IndexType.INTEGRATED;
-            }
-        }
-        return indexType;
     }
 
     /**
@@ -326,22 +301,6 @@ public final class BlackLabEngine implements AutoCloseable {
      */
     public BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config)
             throws ErrorOpeningIndex {
-        return openForWriting(indexDir, createNewIndex, config, null);
-    }
-
-    /**
-     * Open an index for writing ("index mode": adding/deleting documents).
-     *
-     * @param indexDir the index directory
-     * @param createNewIndex if true, create a new index even if one existed there
-     * @param config input format config to use as template for index structure /
-     *            metadata (if creating new index)
-     * @param indexType type of index to create (external or integrated), or null to use the default type
-     * @return index writer
-     * @throws ErrorOpeningIndex if the index couldn't be opened
-     */
-    public BlackLabIndexWriter openForWriting(File indexDir, boolean createNewIndex, ConfigInputFormat config, IndexType indexType)
-            throws ErrorOpeningIndex {
 
         if (config != null && config.getCorpusConfig().getSpecialFields().get(MetadataFields.SPECIAL_FIELD_SETTING_PID) == null) {
             logger.warn("YOUR DOCUMENT IDs ARE NOT PERSISTENT! The input format " + config.getName() + " " +
@@ -352,8 +311,7 @@ public final class BlackLabEngine implements AutoCloseable {
                     "input format configuration (.blf.yaml file).");
         }
 
-        indexType = determineIndexType(indexDir, createNewIndex, indexType);
-        checkSupportedIndexType(indexDir, indexType);
+        checkSupportedIndexType(indexDir, createNewIndex);
         return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
     }
 
