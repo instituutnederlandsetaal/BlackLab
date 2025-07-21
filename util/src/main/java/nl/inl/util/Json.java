@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
+import com.fasterxml.jackson.module.jakarta.xmlbind.JakartaXmlBindAnnotationModule;
 
 /**
  * Supports reading/writing JSON and YAML files.
@@ -50,7 +50,7 @@ public class Json {
         jsonObjectMapper.configure(JsonParser.Feature.STRICT_DUPLICATE_DETECTION, true);
 
         jsonWithJaxbAnnotation = jsonObjectMapper.copy();
-        jsonWithJaxbAnnotation.registerModule(new JaxbAnnotationModule());
+        jsonWithJaxbAnnotation.registerModule(new JakartaXmlBindAnnotationModule());
         jaxbReader = jsonWithJaxbAnnotation.reader();
         jaxbWriterPretty = jsonWithJaxbAnnotation.writerWithDefaultPrettyPrinter();
         jaxbWriter = jsonWithJaxbAnnotation.writer();

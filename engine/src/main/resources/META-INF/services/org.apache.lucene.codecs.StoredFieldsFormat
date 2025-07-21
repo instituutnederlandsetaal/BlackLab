@@ -1,2 +1,3 @@
 # List of stored fields formats
 nl.inl.blacklab.codec.BlackLab40StoredFieldsFormat
+nl.inl.blacklab.codec.blacklab50.BlackLab50StoredFieldsFormat

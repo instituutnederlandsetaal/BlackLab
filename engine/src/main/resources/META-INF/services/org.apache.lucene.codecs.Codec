@@ -1,2 +1,3 @@
 # List of codecs
 nl.inl.blacklab.codec.BlackLab40Codec
+nl.inl.blacklab.codec.blacklab50.BlackLab50Codec

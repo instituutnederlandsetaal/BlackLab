@@ -36,7 +36,6 @@ import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import nl.inl.blacklab.analysis.DesensitizeFilter;
@@ -50,19 +49,17 @@ public class TestIndexComponent {
     public static final String[] INPUT_FILE_PATH = new String[] {"..", "test", "data", "input", "PBsve430.xml"};
 
     @BeforeClass
-    public static void prepareClass() throws Exception
-    {
+    public static void prepareClass() throws Exception {
+        final boolean USE_EXISTING_INDEX = true;
+
         Path resourcePath = Paths.get("src", "test", "resources", "solrDir");
-        Path confTemplatePath = resourcePath.resolve("conf");
+        Path existingIndexPath = USE_EXISTING_INDEX ? Paths.get("src", "test", "resources", "existing-index") : null;
 
-        // Create server, core and add document
-        SolrTestServer.createEmbeddedServer(CORE_NAME, resourcePath, null);
+        // Create srver, core and add document
+        SolrTestServer.createEmbeddedServer(CORE_NAME, resourcePath, existingIndexPath);
         SolrTestServer.setLogLevel("WARN"); // show log messages
-        SolrTestServer.createCore(CORE_NAME, confTemplatePath);
-
-        // (component is already added in solrconfig.xml, so this call is not needed,
-        //  and the method unfortunately doesn't work yet anyway, see comment. we'll look at it later)
-        //SolrTestServer.addSearchComponent(CORE_NAME, "apply-xslt", ApplyXsltComponent.class.getCanonicalName());
+        if (!USE_EXISTING_INDEX)
+            SolrTestServer.createCore(CORE_NAME, resourcePath.resolve("conf"));
     }
 
 
@@ -72,9 +69,9 @@ public class TestIndexComponent {
     }
 
     @Test
-    @Ignore
     public void testAddData() throws SolrServerException, IOException {
-        String configFileContents = FileUtils.readFileToString(Paths.get("..", "test", "data", DOCUMENT_FORMAT).toFile(), StandardCharsets.UTF_8);
+        File file = Paths.get("..", "test", "data", DOCUMENT_FORMAT + ".blf.yaml").toFile();
+        String configFileContents = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
         
         ModifiableSolrParams solrParams = new ModifiableSolrParams();
         solrParams.add(CommonParams.Q, "*:*");
@@ -92,7 +89,8 @@ public class TestIndexComponent {
 
         NamedList<Object> response = SolrTestServer.client().request(r);
         System.err.println("Add file response\n" + response.toString());
-        Assert.assertTrue("Response should contain 'status' field", response.get("status") != null);
+        NamedList<Object> responseHeader = (NamedList<Object>) response.get("responseHeader");
+        Assert.assertTrue("Response should contain 'status' field", responseHeader.get("status") != null);
     }
 
     /** A test of a weird case that somehow sometime broke the code during development */

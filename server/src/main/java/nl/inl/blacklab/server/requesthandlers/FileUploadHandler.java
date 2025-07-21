@@ -3,15 +3,15 @@ package nl.inl.blacklab.server.requesthandlers;
 import java.io.File;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-
-import org.apache.commons.fileupload.FileItem;
-import org.apache.commons.fileupload.FileUploadBase;
-import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.core.DiskFileItem;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.core.FileItem;
+import org.apache.commons.fileupload2.core.FileUploadException;
+import org.apache.commons.fileupload2.core.FileUploadSizeException;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.apache.commons.io.FileUtils;
 
+import jakarta.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 
@@ -39,21 +39,20 @@ public class FileUploadHandler {
      * @throws BlsException on invalid upload parameter/missing file/too large
      *             file/general IO errors
      */
-    public static List<FileItem> getFiles(HttpServletRequest request) throws BlsException {
+    public static List<? extends FileItem<?>> getFiles(HttpServletRequest request) throws BlsException {
         // Check that we have a file upload request
-        boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+        boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
             throw new BadRequest("NO_FILE", "No file(s) were uploaded");
         }
-        DiskFileItemFactory factory = new DiskFileItemFactory();
-
-        // maximum size that will be stored in memory
-        factory.setSizeThreshold(MAX_MEM_UPLOAD_SIZE);
-        // Location to save data that is larger than maxMemSize.
-        factory.setRepository(TMP_DIR);
+        DiskFileItemFactory factory = new DiskFileItemFactory.Builder()
+            .setBufferSize(MAX_MEM_UPLOAD_SIZE)    // files smaller than this will be stored in memory
+            .setPath(TMP_DIR.toPath())             // location to save data that is larger than maxMemSize.
+            .setBufferSizeMax(MAX_MEM_UPLOAD_SIZE) // internal buffer size for I/O operations (larger is more efficient)
+            .get();
 
         // Create a new file upload handler
-        ServletFileUpload upload = new ServletFileUpload(factory);
+        JakartaServletFileUpload<DiskFileItem, DiskFileItemFactory> upload = new JakartaServletFileUpload<>(factory);
         // maximum file size to be uploaded. Intentionally accept a bit more than we actually support,
         // because when the SizeLimitExceededException is thrown, the request is aborted (from the browser), and user will never receive/see our response
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
@@ -61,11 +60,11 @@ public class FileUploadHandler {
 
         try {
             // Parse the request to get file items.
-            List<FileItem> items = upload.parseRequest(request);
+            List<DiskFileItem> items = upload.parseRequest(request);
             if (items.isEmpty())
                 throw new BadRequest("NO_FILE", "No file(s) were uploaded");
 
-            for (FileItem f : items) {
+            for (FileItem<DiskFileItem> f: items) {
                 if (f.isFormField())
                     throw new BadRequest("CANNOT_UPLOAD_FILE", "File must not be uploaded as a form field.");
                 if (f.getSize() > MAX_UPLOAD_SIZE)
@@ -73,7 +72,7 @@ public class FileUploadHandler {
                             + (MAX_UPLOAD_SIZE / 1024 / 1024) + " MB.");
             }
             return items;
-        } catch (FileUploadBase.SizeLimitExceededException e) {
+        } catch (FileUploadSizeException e) {
             throw new BadRequest("ERROR_UPLOADING_FILE",
                     "File too large (maximum " + MAX_UPLOAD_SIZE / 1024 / 1024 + " MB)");
         } catch (FileUploadException e) {

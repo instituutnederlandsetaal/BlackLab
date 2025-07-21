@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import javax.xml.bind.annotation.XmlTransient;
+import jakarta.xml.bind.annotation.XmlTransient;
 
 import org.apache.commons.lang3.StringUtils;
 

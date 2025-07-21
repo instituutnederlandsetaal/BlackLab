@@ -1,8 +1,8 @@
 package nl.inl.blacklab.server.exceptions;
 
-import java.util.Map;
+import jakarta.servlet.http.HttpServletResponse;
 
-import javax.servlet.http.HttpServletResponse;
+import java.util.Map;
 
 public class BadRequest extends BlsException {
 

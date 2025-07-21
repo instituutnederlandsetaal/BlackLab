@@ -189,12 +189,6 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
         }
 
         @Override
-        @Deprecated
-        public void extractTerms(Set<Term> terms) {
-            weight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return weight.isCacheable(ctx);
         }

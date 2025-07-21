@@ -4,7 +4,7 @@ import java.text.Collator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.ivdnt.blacklab.proxy.helper.MapAdapterAnnotations;
 import org.ivdnt.blacklab.proxy.helper.Util;

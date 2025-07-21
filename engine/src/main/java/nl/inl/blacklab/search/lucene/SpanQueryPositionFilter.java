@@ -122,12 +122,6 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            prodWeight.extractTerms(terms);
-            filterWeight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return prodWeight.isCacheable(ctx) && filterWeight.isCacheable(ctx);
         }

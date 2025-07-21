@@ -11,7 +11,7 @@
 
         <!-- Our Application class -->
         <init-param>
-            <param-name>javax.ws.rs.Application</param-name>
+            <param-name>jakarta.ws.rs.Application</param-name>
             <param-value>org.ivdnt.blacklab.proxy.AppConfig</param-value>
         </init-param>
 

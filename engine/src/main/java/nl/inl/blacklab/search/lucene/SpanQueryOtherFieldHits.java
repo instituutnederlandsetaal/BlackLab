@@ -72,12 +72,6 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
         }
 
         @Override
-        @Deprecated
-        public void extractTerms(Set<Term> terms) {
-            weight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return weight.isCacheable(ctx);
         }

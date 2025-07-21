@@ -122,4 +122,5 @@ public abstract class XmlDocRefAbstract implements XmlDocRef {
         }
         return xincludeResolver.get();
     }
+
 }

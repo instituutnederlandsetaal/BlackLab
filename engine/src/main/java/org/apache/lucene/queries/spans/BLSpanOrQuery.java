@@ -24,26 +24,28 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
+import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
+import nl.inl.blacklab.search.lucene.SpanQueryAnd;
+import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
+
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.DisiPriorityQueue;
-import org.apache.lucene.search.DisiWrapper;
-import org.apache.lucene.search.DisjunctionDISIApproximation;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.SpanOrQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
+import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -389,63 +391,54 @@ public final class BLSpanOrQuery extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         List<BLSpanWeight> subWeights = new ArrayList<>(inner.getClauses().length);
-        for (SpanQuery q : inner.getClauses()) {
-            BLSpanWeight weight = ((BLSpanQuery) q).createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, boost);
-            subWeights.add(weight);
+        for (SpanQuery q: inner.getClauses()) {
+            subWeights.add(((BLSpanQuery) q).createWeight(searcher, scoreMode, boost));
         }
-        Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(subWeights.toArray(new SpanWeight[0])) : null;
-        return new SpanOrWeight(searcher, contexts, subWeights, boost);
+        Map<Term, TermStates> terms = scoreMode.needsScores() ?
+                getTermStates(subWeights.toArray(new SpanWeight[0])) :
+                null;
+        return new SpanOrWeight(searcher, terms, subWeights, boost);
     }
 
+    /**
+     * Creates SpanOrQuery scorer instances
+     *
+     * @lucene.internal
+     */
     public class SpanOrWeight extends BLSpanWeight {
+
         final List<BLSpanWeight> subWeights;
 
-        public SpanOrWeight(IndexSearcher searcher, Map<Term, TermStates> terms, List<BLSpanWeight> subWeights, float boost)
+        public SpanOrWeight(
+                IndexSearcher searcher,
+                Map<Term, TermStates> terms,
+                List<BLSpanWeight> subWeights,
+                float boost)
                 throws IOException {
             super(BLSpanOrQuery.this, searcher, terms, boost);
             this.subWeights = subWeights;
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            for (final BLSpanWeight w : subWeights) {
-                w.extractTerms(terms);
-            }
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
-            for (final SegmentCacheable w : subWeights) {
-                if (w.isCacheable(ctx) == false)
-                    return false;
+            for (Weight w: subWeights) {
+                if (w.isCacheable(ctx) == false) return false;
             }
             return true;
         }
 
         @Override
         public void extractTermStates(Map<Term, TermStates> contexts) {
-            for (BLSpanWeight w : subWeights) {
+            for (SpanWeight w: subWeights) {
                 w.extractTermStates(contexts);
             }
         }
 
-        class SpanPositionQueue extends PriorityQueue<Spans> {
-            SpanPositionQueue(int maxSize) {
-                super(maxSize);// equals to super(maxSize, false);? , do not prepopulate
-            }
-
-            @Override
-            protected boolean lessThan(Spans s1, Spans s2) {
-                int start1 = s1.startPosition();
-                int start2 = s2.startPosition();
-                return (start1 < start2) ? true : (start1 == start2) ? s1.endPosition() < s2.endPosition() : false;
-            }
-        }
-
         @Override
-        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings) throws IOException {
+        public BLSpans getSpans(final LeafReaderContext context, Postings requiredPostings)
+                throws IOException {
 
-            final ArrayList<Spans> subSpans = new ArrayList<>(inner.getClauses().length);
+            ArrayList<Spans> subSpans = new ArrayList<>(inner.getClauses().length);
 
             for (SpanWeight w : subWeights) {
                 Spans spans = w.getSpans(context, requiredPostings);
@@ -454,7 +447,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
             }
 
-            if (subSpans.isEmpty()) {
+            if (subSpans.size() == 0) {
                 return null;
             } else if (subSpans.size() == 1) {
                 //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly
@@ -469,15 +462,13 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 //return new BLSpansWrapper(new ScoringWrapperSpans(subSpans.get(0), getSimScorer(context)));
             }
 
-            final DisiPriorityQueue byDocQueue = new DisiPriorityQueue(subSpans.size());
+            final SpanDisiPriorityQueue byDocQueue = new SpanDisiPriorityQueue(subSpans.size());
             for (Spans spans : subSpans) {
-                byDocQueue.add(new DisiWrapper(spans));
+                byDocQueue.add(new SpanDisiWrapper(spans));
             }
 
-            final SpanPositionQueue byPositionQueue = new SpanPositionQueue(subSpans.size()); // when
-                                                                                              // empty
-                                                                                              // use
-                                                                                              // -1
+            SpanPositionQueue byPositionQueue =
+                    new SpanPositionQueue(subSpans.size()); // when empty use -1
 
             return new BLSpans(SpanGuarantees.NONE) {
                 Spans topPositionSpans = null;
@@ -486,7 +477,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 public int nextDoc() throws IOException {
                     assert docID() != NO_MORE_DOCS;
                     topPositionSpans = null;
-                    DisiWrapper topDocSpans = byDocQueue.top();
+                    SpanDisiWrapper topDocSpans = byDocQueue.top();
                     int currentDoc = topDocSpans.doc;
                     do {
                         topDocSpans.doc = topDocSpans.iterator.nextDoc();
@@ -499,7 +490,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 public int advance(int target) throws IOException {
                     assert target >= 0 && target > docID();
                     topPositionSpans = null;
-                    DisiWrapper topDocSpans = byDocQueue.top();
+                    SpanDisiWrapper topDocSpans = byDocQueue.top();
                     do {
                         topDocSpans.doc = topDocSpans.iterator.advance(target);
                         topDocSpans = byDocQueue.updateTop();
@@ -509,7 +500,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                 @Override
                 public int docID() {
-                    DisiWrapper topDocSpans = byDocQueue.top();
+                    SpanDisiWrapper topDocSpans = byDocQueue.top();
                     return topDocSpans.doc;
                 }
 
@@ -518,7 +509,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                     float sumMatchCost = 0; // See also DisjunctionScorer.asTwoPhaseIterator()
                     long sumApproxCost = 0;
 
-                    for (DisiWrapper w : byDocQueue) {
+                    for (SpanDisiWrapper w : byDocQueue) {
                         if (w.twoPhaseView != null) {
                             long costWeight = (w.cost <= 1) ? 1 : w.cost;
                             sumMatchCost += w.twoPhaseView.matchCost() * costWeight;
@@ -533,7 +524,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                     final float matchCost = sumMatchCost / sumApproxCost;
 
-                    return new TwoPhaseIterator(new DisjunctionDISIApproximation(byDocQueue)) {
+                    return new TwoPhaseIterator(new SpanDisjunctionDISIApproximation(byDocQueue)) {
                         @Override
                         public boolean matches() throws IOException {
                             return twoPhaseCurrentDocMatches();
@@ -551,7 +542,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 void computePositionsCost() {
                     float sumPositionsCost = 0;
                     long sumCost = 0;
-                    for (DisiWrapper w : byDocQueue) {
+                    for (SpanDisiWrapper w : byDocQueue) {
                         long costWeight = (w.cost <= 1) ? 1 : w.cost;
                         sumPositionsCost += w.spans.positionsCost() * costWeight;
                         sumCost += costWeight;
@@ -571,7 +562,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                 boolean twoPhaseCurrentDocMatches() throws IOException {
                     assert positionedInDoc();
-                    DisiWrapper listAtCurrentDoc = byDocQueue.topList();
+                    SpanDisiWrapper listAtCurrentDoc = byDocQueue.topList();
                     // remove the head of the list as long as it does not match
                     final int currentDoc = listAtCurrentDoc.doc;
                     while (listAtCurrentDoc.twoPhaseView != null) {
@@ -595,15 +586,14 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 void fillPositionQueue() throws IOException { // called at first nextStartPosition
                     assert byPositionQueue.size() == 0;
                     // add all matching Spans at current doc to byPositionQueue
-                    DisiWrapper listAtCurrentDoc = byDocQueue.topList();
+                    SpanDisiWrapper listAtCurrentDoc = byDocQueue.topList();
                     while (listAtCurrentDoc != null) {
                         Spans spansAtDoc = listAtCurrentDoc.spans;
-                        if (lastDocTwoPhaseMatched == listAtCurrentDoc.doc) { // matched by
-                                                                              // DisjunctionDisiApproximation
+                        if (lastDocTwoPhaseMatched
+                                == listAtCurrentDoc.doc) { // matched by DisjunctionDisiApproximation
                             if (listAtCurrentDoc.twoPhaseView != null) { // matched by approximation
-                                if (listAtCurrentDoc.lastApproxNonMatchDoc == listAtCurrentDoc.doc) { // matches()
-                                                                                                      // returned
-                                                                                                      // false
+                                if (listAtCurrentDoc.lastApproxNonMatchDoc
+                                        == listAtCurrentDoc.doc) { // matches() returned false
                                     spansAtDoc = null;
                                 } else {
                                     if (listAtCurrentDoc.lastApproxMatchDoc != listAtCurrentDoc.doc) {
@@ -658,7 +648,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
                 @Override
                 public void collect(SpanCollector collector) throws IOException {
-                    topPositionSpans.collect(collector);
+                    if (topPositionSpans != null) topPositionSpans.collect(collector);
                 }
 
                 @Override

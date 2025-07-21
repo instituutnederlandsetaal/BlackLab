@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;

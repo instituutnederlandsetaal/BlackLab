@@ -25,7 +25,7 @@ public class BlackLab40PostingsReader extends BlackLabPostingsReader {
 
     public BlackLab40PostingsReader(SegmentReadState state) throws IOException {
         super(BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START,
-                BlackLab40PostingsFormat.VERSION_CURRENT, state, false);
+                BlackLab40PostingsFormat.VERSION_CURRENT, state, true);
     }
 
 }

@@ -18,7 +18,7 @@ public class BlackLab40StoredFieldsWriter extends BlackLabStoredFieldsWriter {
             throws IOException {
         super(BlackLab40StoredFieldsFormat.NAME, BlackLab40StoredFieldsFormat.VERSION_START,
                 BlackLab40StoredFieldsFormat.VERSION_CURRENT, directory, segmentInfo, ioContext,
-                delegate, delegateFormatName, false);
+                delegate, delegateFormatName, true);
 
     }
 

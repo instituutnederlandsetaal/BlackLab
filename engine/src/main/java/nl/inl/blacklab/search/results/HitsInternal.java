@@ -2,13 +2,14 @@ package nl.inl.blacklab.search.results;
 
 import java.util.function.Consumer;
 
-import org.apache.lucene.search.spans.Spans;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * A list of simple hits.

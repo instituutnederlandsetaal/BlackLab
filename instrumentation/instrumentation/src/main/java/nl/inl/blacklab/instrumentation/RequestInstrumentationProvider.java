@@ -2,7 +2,7 @@ package nl.inl.blacklab.instrumentation;
 
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * RequestInstrumentationProvider provides information used

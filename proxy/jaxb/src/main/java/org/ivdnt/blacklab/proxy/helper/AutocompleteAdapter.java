@@ -2,7 +2,7 @@ package org.ivdnt.blacklab.proxy.helper;
 
 import java.util.ArrayList;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 import org.ivdnt.blacklab.proxy.representation.AutocompleteResponse;
 

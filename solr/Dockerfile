@@ -1,18 +1,21 @@
 ## Stage 0: Build Solr plugin
 #=============================
 FROM maven:3.9-eclipse-temurin-17 AS builder
-WORKDIR /app
 
 # Copy source
+WORKDIR /app
 COPY . .
 
 # Build plugin JAR
+# NOTE: make sure BuildKit is enabled (see https://docs.docker.com/develop/develop-images/build_enhancements/)
+#       to be able to cache Maven libs so they aren't re-downloaded every time you build the image
 RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 
 ## Stage 1: Solr
 #=============================
-FROM solr:8.11.2
+#FROM solr:9.6.1-slim
+FROM solr:9.6.1
 LABEL maintainer="Jan Niestadt <jan.niestadt@ivdnt.org>"
 
 # Create directory for our test core

@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

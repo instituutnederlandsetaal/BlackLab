@@ -6,19 +6,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
-import org.apache.lucene.search.spans.SpanWeight;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -456,14 +455,6 @@ public class SpanQueryAndNot extends BLSpanQuery {
                 throws IOException {
             super(SpanQueryAndNot.this, searcher, terms, boost);
             this.weights = weights;
-        }
-
-        @Override
-        @Deprecated
-        public void extractTerms(Set<Term> terms) {
-            for (BLSpanWeight weight : weights) {
-                weight.extractTerms(terms);
-            }
         }
 
         @Override

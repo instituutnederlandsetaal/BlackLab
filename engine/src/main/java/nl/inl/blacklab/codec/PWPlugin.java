@@ -10,7 +10,7 @@ import org.apache.lucene.util.BytesRef;
  *
  * Used to write the forward index and relation info.
  */
-interface PWPlugin extends AutoCloseable {
+public interface PWPlugin extends AutoCloseable {
 
     /** Start processing a new Lucene field */
     boolean startField(FieldInfo fieldInfo);

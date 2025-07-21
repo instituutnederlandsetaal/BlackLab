@@ -3,12 +3,6 @@ package org.ivdnt.blacklab.proxy.resources;
 import java.util.List;
 import java.util.Map;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
-
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.AnnotatedField;
 import org.ivdnt.blacklab.proxy.representation.AutocompleteResponse;
@@ -29,6 +23,11 @@ import org.ivdnt.blacklab.proxy.representation.Server;
 import org.ivdnt.blacklab.proxy.representation.TermFreqList;
 import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
 
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 

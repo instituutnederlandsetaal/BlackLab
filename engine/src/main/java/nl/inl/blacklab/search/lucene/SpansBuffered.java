@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;

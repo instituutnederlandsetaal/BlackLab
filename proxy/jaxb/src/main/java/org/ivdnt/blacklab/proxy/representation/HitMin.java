@@ -3,8 +3,8 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.util.Arrays;
 import java.util.Objects;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 
 import org.ivdnt.blacklab.proxy.helper.SortValueUtil;
 import org.ivdnt.blacklab.proxy.helper.Util;

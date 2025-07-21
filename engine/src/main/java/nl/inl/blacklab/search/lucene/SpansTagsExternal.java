@@ -5,7 +5,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 
 import org.apache.lucene.payloads.PayloadSpanCollector;
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;

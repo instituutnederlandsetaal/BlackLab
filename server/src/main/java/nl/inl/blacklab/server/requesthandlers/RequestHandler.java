@@ -7,10 +7,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -213,7 +213,7 @@ public abstract class RequestHandler {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to add a format.");
                     requestHandler = new RequestHandlerAddFormat(userRequest);
-                } else if (ServletFileUpload.isMultipartContent(request)) {
+                } else if (JakartaServletFileUpload.isMultipartContent(request)) {
                     // Add document to index
                     if (privateIndex == null || !privateIndex.userMayAddData(user))
                         return errorObj.forbidden("Can only POST to your own private indices.");

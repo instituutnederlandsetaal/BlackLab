@@ -81,11 +81,6 @@ public class SpanQueryFilterByHitLength extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            prodWeight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return prodWeight.isCacheable(ctx);
         }

@@ -18,14 +18,19 @@
 package org.apache.lucene.queries.spans;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
-import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
+
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.SpanGuarantees;
 
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -50,8 +55,33 @@ public abstract class BLConjunctionSpans extends BLSpans {
             throw new IllegalArgumentException("Less than 2 subSpans.size():" + subSpans.size());
         }
         this.subSpans = subSpans.toArray(new BLSpans[0]);
-        this.conjunction = ConjunctionDISI.intersectSpans(Collections.unmodifiableList(subSpans));
+        this.conjunction = intersectSpans(subSpans);
         this.atFirstInCurrentDoc = true; // ensure for doc -1 that start/end positions are -1
+    }
+
+    // Copied from ConjunctionSpans
+    private static DocIdSetIterator intersectSpans(List<BLSpans> spanList) {
+        if (spanList.size() < 2) {
+            throw new IllegalArgumentException("Cannot make a ConjunctionDISI of less than 2 iterators");
+        }
+        final List<DocIdSetIterator> allIterators = new ArrayList<>();
+        final List<TwoPhaseIterator> twoPhaseIterators = new ArrayList<>();
+        for (Spans spans : spanList) {
+            addSpans(spans, allIterators, twoPhaseIterators);
+        }
+
+        return ConjunctionUtils.createConjunction(allIterators, twoPhaseIterators);
+    }
+
+    // Copied from ConjunctionSpans
+    private static void addSpans(
+            Spans spans, List<DocIdSetIterator> allIterators, List<TwoPhaseIterator> twoPhaseIterators) {
+        TwoPhaseIterator twoPhaseIter = spans.asTwoPhaseIterator();
+        if (twoPhaseIter != null) {
+            ConjunctionUtils.addTwoPhaseIterator(twoPhaseIter, allIterators, twoPhaseIterators);
+        } else { // no approximation support, use the iterator as-is
+            ConjunctionUtils.addIterator(spans, allIterators, twoPhaseIterators);
+        }
     }
 
     @Override

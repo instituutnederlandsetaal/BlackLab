@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 # Tomcat container with the WAR file
 #--------------------------------------
-FROM tomcat:9-jre17
+FROM tomcat:10-jre17
 ARG CONFIG_ROOT=docker/config
 ARG TOMCAT_APP_NAME=blacklab-server
 

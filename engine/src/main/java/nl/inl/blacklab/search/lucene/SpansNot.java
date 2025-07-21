@@ -5,7 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;

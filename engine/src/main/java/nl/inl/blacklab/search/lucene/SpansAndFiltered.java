@@ -22,7 +22,7 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.PriorityQueue;
 
 /**
@@ -33,7 +33,7 @@ import org.apache.lucene.util.PriorityQueue;
  * different relation and we don't produce identical sets of relations matches
  * ({@link SpansAndFilterFactoryUniqueRelations}), etc.
  *
- * Based on {@link org.apache.lucene.search.spans.NearSpansUnordered}.
+ * Based on {@link org.apache.lucene.queries.spans.NearSpansUnordered}.
  */
 public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
 

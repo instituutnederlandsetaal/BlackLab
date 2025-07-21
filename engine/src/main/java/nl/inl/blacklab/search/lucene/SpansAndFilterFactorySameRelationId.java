@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.lucene;
 
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;

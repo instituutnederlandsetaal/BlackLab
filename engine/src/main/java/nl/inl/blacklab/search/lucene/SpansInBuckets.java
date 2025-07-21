@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * Base class for retrieving lists ("buckets") of related matches

@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Captures all relations between the hits from two clauses.

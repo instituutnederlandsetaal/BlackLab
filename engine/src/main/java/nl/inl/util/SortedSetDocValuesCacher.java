@@ -61,10 +61,9 @@ public class SortedSetDocValuesCacher {
                         break;
                     }
                     sourceNexted = true;
-
                     final List<String> ret = new ArrayList<>();
-
-                    for (long ord = source.nextOrd(); ord != SortedSetDocValues.NO_MORE_ORDS; ord = source.nextOrd()) {
+                    for (int i = 0; i < source.docValueCount(); i++) {
+                        long ord = source.nextOrd();
                         BytesRef val = source.lookupOrd(ord);
                         ret.add(new String(val.bytes, val.offset, val.length, StandardCharsets.UTF_8));
                     }

@@ -2,6 +2,8 @@ package org.ivdnt.blacklab.solr;
 
 import java.security.Principal;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.handler.component.ResponseBuilder;
 import org.apache.solr.search.DocSet;
@@ -19,7 +21,6 @@ import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
-import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
 public class UserRequestSolr implements UserRequest {
@@ -63,7 +64,10 @@ public class UserRequestSolr implements UserRequest {
     public String getRemoteAddr() {
         if (rb.req.getHttpSolrCall() == null)
             return "UNKNOWN"; // test
-        return ServletUtil.getOriginatingAddress(rb.req.getHttpSolrCall().getReq());
+        final HttpServletRequest req = rb.req.getHttpSolrCall().getReq();
+        String header = req.getHeader("X-Forwarded-For");
+        if (header != null && header.length() > 0) header = req.getRemoteAddr();
+        return header;
     }
 
     @Override

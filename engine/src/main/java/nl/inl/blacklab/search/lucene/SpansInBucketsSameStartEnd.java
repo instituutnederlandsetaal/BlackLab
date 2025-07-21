@@ -6,7 +6,7 @@ import java.util.Iterator;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.payloads.PayloadSpanCollector;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import nl.inl.blacklab.exceptions.InvalidIndex;

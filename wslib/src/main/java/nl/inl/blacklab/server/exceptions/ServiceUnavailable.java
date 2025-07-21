@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.exceptions;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 public class ServiceUnavailable extends BlsException {
 

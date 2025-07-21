@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 import org.eclipse.collections.api.map.primitive.MutableIntLongMap;
 import org.eclipse.collections.impl.factory.primitive.IntLongMaps;
 

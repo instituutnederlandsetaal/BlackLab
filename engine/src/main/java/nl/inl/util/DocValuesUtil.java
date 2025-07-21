@@ -66,20 +66,17 @@ public class DocValuesUtil {
             if (dv instanceof NumericDocValues)
                 key = List.of(Long.toString(((NumericDocValues) dv).longValue()));
             else if (dv instanceof SortedSetDocValues ssdv) {
-                if (ssdv.getValueCount() > 0) {
-                    // NOTE: we only count the first value stored (for backward compatibility)
-                    // TODO: pros/cons of changing this?
-                    while (true) {
-                        long ord = ssdv.nextOrd();
-                        if (ord == SortedSetDocValues.NO_MORE_ORDS)
-                            break;
-                        if (key == null)
-                            key = new ArrayList<>();
-                        key.add(ssdv.lookupOrd(ord).utf8ToString());
-                    }
+                for (int i = 0; i < ssdv.docValueCount(); i++) {
+                    long ord = ssdv.nextOrd();
+                    if (key == null)
+                        key = new ArrayList<>();
+                    key.add(ssdv.lookupOrd(ord).utf8ToString());
                 }
-            } else if (dv instanceof SortedDocValues) {
-                key = List.of(((SortedDocValues) dv).binaryValue().utf8ToString());
+            } else if (dv instanceof SortedDocValues sdv) {
+                // OPT: avoid looking up the value and just use the ord directly if possible
+                // (e.g. while determining frequencies in MetadataFieldVAluesFromIndex.determineValueDistribution())
+                // See LUCENE-9796 in https://lucene.apache.org/core/9_0_0/MIGRATE.html
+                key = List.of(sdv.lookupOrd(sdv.ordValue()).utf8ToString());
             } else {
                 throw new IllegalStateException("Unexpected DocValues type");
             }

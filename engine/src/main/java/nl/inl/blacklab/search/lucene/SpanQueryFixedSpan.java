@@ -13,7 +13,7 @@ import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -71,10 +71,6 @@ public class SpanQueryFixedSpan extends BLSpanQuery {
     @Override
     public BLSpanWeight createWeight(final IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
         return new BLSpanWeight(this, searcher, null, boost) {
-            @Override
-            public void extractTerms(Set<Term> terms) {
-                // No terms
-            }
 
             @Override
             public boolean isCacheable(LeafReaderContext ctx) {

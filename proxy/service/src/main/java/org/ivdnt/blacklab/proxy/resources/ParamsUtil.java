@@ -3,9 +3,9 @@ package org.ivdnt.blacklab.proxy.resources;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.MultivaluedMap;
 
 import org.apache.commons.lang3.StringUtils;
 

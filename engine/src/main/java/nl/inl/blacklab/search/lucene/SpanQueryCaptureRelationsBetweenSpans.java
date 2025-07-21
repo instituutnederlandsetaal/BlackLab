@@ -14,7 +14,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
-import org.apache.lucene.search.spans.SpanWeight;
+import org.apache.lucene.queries.spans.SpanWeight;
 
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -253,12 +253,6 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             this.captureTargetOverlapsAs = captureTargetOverlapsAs;
         }
 
-        public static void extractTermsFromTargets(List<TargetWeight> targets, Set<Term> terms) {
-            for (TargetWeight target: targets) {
-                target.extractTerms(terms);
-            }
-        }
-
         public static boolean isCacheableTargets(List<TargetWeight> targets, LeafReaderContext ctx) {
             for (TargetWeight target: targets) {
                 if (!target.isCacheable(ctx))
@@ -318,13 +312,6 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
 
         private boolean isCacheable(LeafReaderContext ctx) {
             return matchRelations.isCacheable(ctx) && (target == null || target.isCacheable(ctx));
-        }
-
-        private void extractTerms(Set<Term> terms) {
-            matchRelations.extractTerms(terms);
-            captureRelations.extractTerms(terms);
-            if (target != null)
-                target.extractTerms(terms);
         }
 
         @Override
@@ -410,12 +397,6 @@ public class SpanQueryCaptureRelationsBetweenSpans extends BLSpanQueryAbstract {
             super(SpanQueryCaptureRelationsBetweenSpans.this, searcher, terms, boost);
             this.sourceWeight = sourceWeight;
             this.targets = targets;
-        }
-
-        @Override
-        public void extractTerms(Set<Term> terms) {
-            sourceWeight.extractTerms(terms);
-            TargetWeight.extractTermsFromTargets(targets, terms);
         }
 
         @Override

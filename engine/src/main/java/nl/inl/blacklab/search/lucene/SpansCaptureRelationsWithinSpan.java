@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Captures all relations within a match info span.

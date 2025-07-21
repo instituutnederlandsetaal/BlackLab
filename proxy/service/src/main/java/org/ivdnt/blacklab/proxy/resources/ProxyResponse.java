@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.proxy.resources;
 
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 

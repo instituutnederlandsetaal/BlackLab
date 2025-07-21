@@ -22,8 +22,8 @@ import java.util.Objects;
 
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanCollector;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * A {@link Spans} implementation wrapping another spans instance (or any doc iterator, such as SpansInBuckets),

@@ -8,8 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import javax.servlet.http.HttpServletResponse;
-
+import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;

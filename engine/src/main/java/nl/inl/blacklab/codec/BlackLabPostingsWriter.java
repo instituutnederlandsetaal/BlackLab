@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsConsumer;
 import org.apache.lucene.codecs.FieldsProducer;
@@ -253,7 +254,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
         String fileName = IndexFileNames.segmentFileName(state.segmentInfo.name, state.segmentSuffix, ext);
         IndexOutput output;
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9");
+            output = EndiannessReverserUtil.createOutput(state.directory, fileName, state.context); // flip for Lucene 9
         } else
             output = state.directory.createOutput(fileName, state.context);
 
@@ -269,7 +270,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
     /** Lucene 8 uses big-endian, Lucene 9 little-endian */
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws IOException {
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9");
+            return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
         } else
             return directory.openInput(fileName, ioContext);
     }

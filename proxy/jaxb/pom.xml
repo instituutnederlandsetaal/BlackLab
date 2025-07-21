@@ -1,12 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-    http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0     http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
         <groupId>nl.inl.blacklab</groupId>
         <artifactId>blacklab-proxy</artifactId>
-        <version>4.0.1-SNAPSHOT</version>
+        <version>5.0.0-SNAPSHOT</version>
     </parent>
     <artifactId>blacklab-jaxb</artifactId>
     <packaging>jar</packaging>
@@ -29,31 +27,12 @@
         </dependency>
 
         <!-- Jersey (JAX-RS) -->
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>org.glassfish.jersey.containers</groupId>
             <artifactId>jersey-container-servlet</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.containers</groupId>
-            <artifactId>jersey-container-servlet-core</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-common</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>
-        <!--<dependency>
-            <groupId>org.glassfish.jersey.media</groupId>
-            <artifactId>jersey-media-multipart</artifactId>
-            <version>${jersey.version}</version>
-        </dependency>-->
         <dependency>
             <groupId>org.glassfish.jersey.media</groupId>
             <artifactId>jersey-media-json-jackson</artifactId>
@@ -64,7 +43,7 @@
             <artifactId>jersey-media-jaxb</artifactId>
             <version>${jersey.version}</version>
         </dependency>
-        <dependency>
+        <!-- <dependency>
             <groupId>org.glassfish.jersey.ext</groupId>
             <artifactId>jersey-declarative-linking</artifactId>
             <version>${jersey.version}</version>
@@ -73,32 +52,26 @@
             <groupId>org.glassfish.jersey.inject</groupId>
             <artifactId>jersey-hk2</artifactId>
             <version>${jersey.version}</version>
+        </dependency> -->
+
+        <!-- JAXB-runtime is our XML serialization library. It's an implementation of Jakarta XML Binding (part of Jakarta EE) -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>4.0.1</version>
         </dependency>
 
-        <!-- Jackson JSON/YAML reading (BLS client, config file) -->
+        <!-- jackson is our json and yaml library, it's not a part of jakarta/Java EE -->
+        <!-- transitively pulls in data-binding, core -->
+        <!-- Jakarta equivalent would be some implementation JSONB (as opposed to JAXB). But would require porting all json code. -->
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-        <!--<dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>-->
-        <dependency>
-            <groupId>com.fasterxml.jackson.jaxrs</groupId>
-            <artifactId>jackson-jaxrs-json-provider</artifactId>
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
@@ -106,27 +79,15 @@
             <artifactId>jackson-datatype-json-org</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-
-        <!-- JDK 11 removed these, explicitly add them -->
+<!--        <dependency>-->
+<!--            <groupId>com.fasterxml.jackson.jaxrs</groupId>-->
+<!--            <artifactId>jackson-jaxrs-json-provider</artifactId>-->
+<!--            <version>${jackson.version}</version>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>javax.xml.bind</groupId>
-            <artifactId>jaxb-api</artifactId>
-            <version>${jaxb.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-core</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.sun.xml.bind</groupId>
-            <artifactId>jaxb-impl</artifactId>
-            <version>2.3.0</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.activation</groupId>
-            <artifactId>activation</artifactId>
-            <version>1.1.1</version>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-jakarta-xmlbind-annotations</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!-- for ReverseIterator -->

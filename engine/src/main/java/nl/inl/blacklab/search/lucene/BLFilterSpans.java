@@ -19,8 +19,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.FilterSpans;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.FilterSpans;
+import org.apache.lucene.queries.spans.Spans;
 
 /**
  * A {@link Spans} implementation wrapping another spans instance, allowing to filter spans matches

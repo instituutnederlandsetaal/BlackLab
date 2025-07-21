@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Adjust relations spans to match source, target, or entire relation.

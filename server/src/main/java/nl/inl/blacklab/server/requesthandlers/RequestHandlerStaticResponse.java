@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;

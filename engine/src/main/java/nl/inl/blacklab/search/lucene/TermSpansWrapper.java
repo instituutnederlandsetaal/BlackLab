@@ -2,9 +2,9 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.FilterSpans;
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
+import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.queries.spans.TermSpans;
 
 /**
  * Wrap a TermSpans so it's a BLSpans.

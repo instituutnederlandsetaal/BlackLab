@@ -5,6 +5,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.StoredFieldsReader;
 import org.apache.lucene.index.FieldInfo;
@@ -125,7 +126,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
     public IndexInput openInputCorrectEndian(Directory directory, String fileName, IOContext ioContext) throws
             IOException {
         if (reverseEndian) {
-            throw new IllegalStateException("Should only be done for Lucene 9");
+            return EndiannessReverserUtil.openInput(directory, fileName, ioContext); // flip for Lucene 9
         } else {
             return directory.openInput(fileName, ioContext);
         }
@@ -166,14 +167,10 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         }
     }
 
-    // TODO: check if we have already implemented this mentioned optimization
-    // https://lucene.apache.org/core/9_0_0/changes/Changes.html
-    // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied
-    // StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.
     @Override
-    public void visitDocument(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
+    public void document(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
         // Visit each regular stored field.
-        delegate.visitDocument(docId, storedFieldVisitor);
+        delegate.document(docId, storedFieldVisitor);
 
         // Visit each content store field.
         for (FieldInfo fieldInfo: fieldInfos) {
@@ -204,8 +201,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        // TODO look into character encoding
-        byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
+        String contents = contentStore().getValue(docId, fieldInfo.name);
         if (contents != null)
             storedFieldVisitor.stringField(fieldInfo, contents);
     }

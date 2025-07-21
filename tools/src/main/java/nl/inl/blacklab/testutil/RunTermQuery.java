@@ -17,11 +17,11 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.spans.SpanQuery;
-import org.apache.lucene.search.spans.SpanTermQuery;
-import org.apache.lucene.search.spans.SpanWeight;
-import org.apache.lucene.search.spans.SpanWeight.Postings;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.SpanQuery;
+import org.apache.lucene.queries.spans.SpanTermQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
+import org.apache.lucene.queries.spans.SpanWeight.Postings;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.blacklab.exceptions.BlackLabException;

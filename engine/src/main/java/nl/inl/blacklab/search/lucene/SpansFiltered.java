@@ -3,11 +3,11 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
-import org.apache.lucene.search.ConjunctionDISI;
+import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Apply a document Filter to a Spans.
@@ -141,7 +141,7 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
             };
         } else {
             if (inner == null) {
-                approximation = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, in));
+                approximation = ConjunctionUtils.intersectIterators(List.of(acceptedDocs, in));
                 matchCost = in.positionsCost(); // underestimate
                 return new TwoPhaseIterator(approximation) {
                     @Override
@@ -161,7 +161,7 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
                 };
             } else {
                 DocIdSetIterator innerApprox = inner.approximation();
-                approximation = ConjunctionDISI.intersectIterators(List.of(acceptedDocs, innerApprox));
+                approximation = ConjunctionUtils.intersectIterators(List.of(acceptedDocs, innerApprox));
                 matchCost = inner.matchCost(); // overestimate
                 return new TwoPhaseIterator(approximation) {
                     @Override

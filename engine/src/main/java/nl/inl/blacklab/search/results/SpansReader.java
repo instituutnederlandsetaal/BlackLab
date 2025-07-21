@@ -7,8 +7,8 @@ import java.util.function.LongUnaryOperator;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.search.spans.SpanWeight.Postings;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.SpanWeight.Postings;
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabException;

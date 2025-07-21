@@ -3,9 +3,9 @@ package nl.inl.blacklab.analysis;
 import java.util.Collections;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.LowerCaseFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
-import org.apache.lucene.analysis.core.LowerCaseFilter;
 import org.apache.lucene.analysis.standard.StandardTokenizerFactory;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;

@@ -4,7 +4,7 @@
     <groupId>nl.inl.blacklab</groupId>
     <artifactId>blacklab-all</artifactId>
     <packaging>pom</packaging>
-    <version>4.0.1-SNAPSHOT</version>
+    <version>5.0.0-SNAPSHOT</version>
     <name>BlackLab Corpus Search</name>
     <description>The parent project for BlackLab Core and BlackLab Server.</description>
     <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
@@ -50,16 +50,16 @@
         <blacklab.version>${project.version}</blacklab.version>
 
         <!-- Library versions -->
-        <servlet.version>4.0.1</servlet.version>
-        <blacklab.luceneVersion>8.11.1</blacklab.luceneVersion>
-        <solr.version>8.11.1</solr.version>
+        <servlet.version>6.0.0</servlet.version>
+        <blacklab.luceneVersion>9.11.1</blacklab.luceneVersion>
+        <solr.version>9.8.1</solr.version>
         <log4j.version>2.24.3</log4j.version>
         <eclipse.collections.version>12.0.0.M3</eclipse.collections.version>
 
         <!-- servlet, rest, json, xml, yaml -->
-        <jackson.version>2.13.4</jackson.version>
-        <jersey.version>2.35</jersey.version>
-        <jaxb.version>2.3.1</jaxb.version>
+        <jackson.version>2.16.1</jackson.version>
+        <jersey.version>3.1.5</jersey.version>
+        <jaxb.version>4.0.4</jaxb.version>
 
         <!-- Java version -->
         <maven.compiler.release>17</maven.compiler.release>
@@ -69,7 +69,6 @@
         <pmd.version>3.16.0</pmd.version>
         <findbugs.version>3.0.5</findbugs.version>
         <javadoc.version>3.6.2</javadoc.version>
-
 
     </properties>
 
@@ -521,16 +520,16 @@
                     <artifactId>jmxtools</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.jms</groupId>
-                    <artifactId>jms</artifactId>
+                    <groupId>jakarta.jms</groupId>
+                    <artifactId>jakarta.jms-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.mail</groupId>
-                    <artifactId>mail</artifactId>
+                    <groupId>jakarta.mail</groupId>
+                    <artifactId>jakarta.mail-api</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>javax.activation</groupId>
-                    <artifactId>activation</artifactId>
+                    <groupId>jakarta.activation</groupId>
+                    <artifactId>jakarta.activation-api</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

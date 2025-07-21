@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Adjust the start and end of hits while matching.

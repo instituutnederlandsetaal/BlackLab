@@ -57,7 +57,8 @@ public class SortedDocValuesCacher {
                     if (curDocId == DocIdSetIterator.NO_MORE_DOCS)
                         break;
                     sourceNexted = true;
-                    BytesRef bytes = source.binaryValue();// equals to a.get(docId - targetDocBase)?
+                    // TODO optimize according to LUCENE-9796: https://lucene.apache.org/core/9_0_0/MIGRATE.html
+                    BytesRef bytes = source.lookupOrd(source.ordValue());// equals to a.get(docId - targetDocBase)?
                     String value = new String(bytes.bytes, bytes.offset, bytes.length, StandardCharsets.UTF_8);
                     cache.put(curDocId, value);
                 }

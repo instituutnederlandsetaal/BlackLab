@@ -83,12 +83,6 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            if (weight != null)
-                weight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return weight == null || weight.isCacheable(ctx);
         }

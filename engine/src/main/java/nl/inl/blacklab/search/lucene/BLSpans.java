@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.spans.Spans;
-import org.apache.lucene.search.spans.TermSpans;
+import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.queries.spans.TermSpans;
 
 /**
  * Base class for all our own Spans classes.

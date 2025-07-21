@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * Keeps track of attributes per unique relation id and writes them to the relation info
  * files so we can look them up later.
  */
-class PWPluginRelationInfo implements PWPlugin {
+public class PWPluginRelationInfo implements PWPlugin {
 
     /** Log all events to a log file? Useful while debugging. */
     private static final boolean ENABLE_DEBUG_LOG = false;
@@ -122,16 +122,16 @@ class PWPluginRelationInfo implements PWPlugin {
     /** How to encode/decode payload for relations */
     private final RelationsStrategy.PayloadCodec relPayloadCodec;
 
-    PWPluginRelationInfo(BlackLabPostingsWriter postingsWriter, RelationsStrategySeparateTerms relationsStrategy) throws IOException {
+    public PWPluginRelationInfo(BlackLabPostingsWriter postingsWriter, RelationsStrategySeparateTerms relationsStrategy) throws IOException {
         this.relationsStrategy = relationsStrategy;
         this.relPayloadCodec = relationsStrategy.getPayloadCodec();
 
-        outFieldsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_FIELDS_EXT);
-        outDocsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_DOCS_EXT);
-        outRelationsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_RELATIONS_EXT);
-        outAttrSetsFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_SETS_EXT);
-        outAttrNamesFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_NAMES_EXT);
-        outAttrValuesFile = postingsWriter.createOutput(BlackLab40PostingsFormat.RI_ATTR_VALUES_EXT);
+        outFieldsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_FIELDS_EXT);
+        outDocsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_DOCS_EXT);
+        outRelationsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_RELATIONS_EXT);
+        outAttrSetsFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_ATTR_SETS_EXT);
+        outAttrNamesFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_ATTR_NAMES_EXT);
+        outAttrValuesFile = postingsWriter.createOutput(BlackLabPostingsFormat.RI_ATTR_VALUES_EXT);
 
         // Open a log file
         if (ENABLE_DEBUG_LOG) {
@@ -376,7 +376,6 @@ class PWPluginRelationInfo implements PWPlugin {
         CodecUtil.writeFooter(outAttrSetsFile);
         CodecUtil.writeFooter(outAttrNamesFile);
         CodecUtil.writeFooter(outAttrValuesFile);
-
     }
 
     @Override

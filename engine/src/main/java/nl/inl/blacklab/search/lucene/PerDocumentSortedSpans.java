@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.lucene.search.spans.SpanCollector;
+import org.apache.lucene.queries.spans.SpanCollector;
 
 /**
  * Sort the given Spans per document, according to the given comparator.

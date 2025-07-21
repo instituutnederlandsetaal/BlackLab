@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload2.core.FileItem;
 
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -26,11 +26,11 @@ public class RequestHandlerAddFormat extends RequestHandler {
     public int handle(final ResponseStreamer rs) throws BlsException {
         debug(logger, "REQ add format: " + indexName);
 
-        List<FileItem> files = FileUploadHandler.getFiles(request);
+        List<? extends FileItem<?>> files = FileUploadHandler.getFiles(request);
         if (files.size() != 1)
             throw new BadRequest("CANNOT_CREATE_INDEX",
                     "Adding a format requires the request to contain a single file in the 'data' field.");
-        FileItem file = files.get(0);
+        FileItem<?> file = files.get(0);
         if (!file.getFieldName().equals("data"))
             throw new BadRequest("CANNOT_CREATE_INDEX",
                     "Adding a format requires the request to contain a single file in the 'data' field.");

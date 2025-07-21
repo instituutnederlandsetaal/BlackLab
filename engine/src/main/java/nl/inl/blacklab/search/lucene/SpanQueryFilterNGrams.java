@@ -142,11 +142,6 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            weight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return weight.isCacheable(ctx);
         }

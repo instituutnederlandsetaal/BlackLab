@@ -67,12 +67,6 @@ public class SpanQueryCaptureOverlappingSpans extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            queryWeight.extractTerms(terms);
-            spansWeight.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return queryWeight.isCacheable(ctx) && spansWeight.isCacheable(ctx);
         }

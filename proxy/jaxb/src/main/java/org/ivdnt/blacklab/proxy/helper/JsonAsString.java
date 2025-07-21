@@ -3,7 +3,7 @@ package org.ivdnt.blacklab.proxy.helper;
 import java.io.IOException;
 import java.io.StringWriter;
 
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 
 import nl.inl.util.Json;
 

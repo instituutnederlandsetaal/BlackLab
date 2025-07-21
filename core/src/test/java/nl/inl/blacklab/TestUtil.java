@@ -3,7 +3,7 @@ package nl.inl.blacklab;
 import java.io.IOException;
 
 import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.spans.Spans;
+import org.apache.lucene.queries.spans.Spans;
 import org.junit.Assert;
 
 import nl.inl.blacklab.search.lucene.SpansInBuckets;

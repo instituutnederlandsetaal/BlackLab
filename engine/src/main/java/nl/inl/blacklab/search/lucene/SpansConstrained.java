@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Arrays;
 
-import org.apache.lucene.search.spans.FilterSpans;
+import org.apache.lucene.queries.spans.FilterSpans;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorLeafReader;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;

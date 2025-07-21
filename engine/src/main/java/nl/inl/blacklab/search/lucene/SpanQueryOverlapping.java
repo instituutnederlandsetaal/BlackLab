@@ -75,12 +75,6 @@ public class SpanQueryOverlapping extends BLSpanQueryAbstract {
         }
 
         @Override
-        public void extractTerms(Set<Term> terms) {
-            left.extractTerms(terms);
-            right.extractTerms(terms);
-        }
-
-        @Override
         public boolean isCacheable(LeafReaderContext ctx) {
             return left.isCacheable(ctx) && right.isCacheable(ctx);
         }

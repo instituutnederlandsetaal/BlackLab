@@ -5,9 +5,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.annotation.XmlAnyElement;
-import javax.xml.bind.annotation.adapters.XmlAdapter;
+import jakarta.xml.bind.JAXBElement;
+import jakarta.xml.bind.annotation.XmlAnyElement;
+import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 import javax.xml.namespace.QName;
 
 import org.w3c.dom.Element;

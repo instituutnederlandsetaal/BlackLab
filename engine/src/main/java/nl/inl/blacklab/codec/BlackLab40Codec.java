@@ -1,6 +1,6 @@
 package nl.inl.blacklab.codec;
 
-import org.apache.lucene.codecs.lucene87.Lucene87Codec;
+import org.apache.lucene.backward_codecs.lucene87.Lucene87Codec;
 
 /**
  * The custom codec that BlackLab uses.

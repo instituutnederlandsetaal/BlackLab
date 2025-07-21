@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.store.DataOutput;
+
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**

@@ -23,7 +23,7 @@ public class BlackLab40PostingsWriter extends BlackLabPostingsWriter {
     public BlackLab40PostingsWriter(FieldsConsumer delegateFieldsConsumer, SegmentWriteState state,
             String delegatePostingsFormatName) {
         super(BlackLab40PostingsFormat.NAME, BlackLab40PostingsFormat.VERSION_START, BlackLab40PostingsFormat.VERSION_CURRENT,
-                delegateFieldsConsumer, state, delegatePostingsFormatName, false);
+                delegateFieldsConsumer, state, delegatePostingsFormatName, true);
     }
 
 }
