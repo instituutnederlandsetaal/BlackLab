@@ -1,6 +1,0 @@
-LUCENE 8/9 TOMCAT 9/10-jakarta DIFFERENCES
-- BlackLab50* classes added (lots of duplication) TODO
-- Lucene 8 uses big-endian, Lucene 9 little-endian (see PostingsReader/Writer.openInputCorrectEndian)
-- ramBytesUsed / getChildResources gone (Accountable)
-- knnVectors added (Codec class, related to vector search, not used by us)
-
