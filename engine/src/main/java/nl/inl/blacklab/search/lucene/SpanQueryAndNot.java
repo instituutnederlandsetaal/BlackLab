@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -188,7 +187,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
-        if (this.include.size() == 0 && this.exclude.size() == 0)
+        if (this.include.isEmpty() && this.exclude.isEmpty())
             throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
         checkAllCompatibleFields(this.include);
         checkAllCompatibleFields(this.exclude);
@@ -279,7 +278,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     return false;
                 }
                 return true;
-            }).collect(Collectors.toList());
+            }).toList();
             if (!rewrClNew.equals(rewrCl))
                 anyRewritten = true;
             rewrCl = rewrClNew;

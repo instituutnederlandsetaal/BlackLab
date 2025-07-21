@@ -29,7 +29,9 @@
 **/*.log
 
 # Test defines its own container and doesn't need to be included in the main container context
-/test
+# (no, a unit test uses files from /test)
+#/test
+/test/node_modules
 
 # Ignore docker files, we don't need these inside the container.
 **/Dockerfile

@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.indexers.config.process.ProcessingStepReplace;
@@ -34,8 +33,7 @@ public class TestProcessingStep {
 
         // Process using the new method
         t.reset();
-        List<String> resultNew = new ArrayList<>();
-        resultNew.addAll(script.perform(words.stream(), null).collect(Collectors.toList()));
+        List<String> resultNew = new ArrayList<>(script.perform(words.stream(), null).toList());
         System.out.println("Processed " + words.size() + " words using new method in " + t.elapsedDescription());
 
         // Compare results
