@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -27,9 +26,9 @@ public final class AnnotationInfo {
     private final Terms[] terms;
     private final Annotation cutoffAnnotation;
     private final BlackLabIndex index;
-    private final Map<List<String>, Integer> metaToId;
+    private final Object2IntOpenHashMap<List<String>> metaToId;
     private final Object2IntOpenCustomHashMap<int[]> wordToId;
-    private final AtomicInteger metaId = new AtomicInteger(0);
+    private int metaId = 1;
     private int wordId = 1;
     private final int[] groupedMetaIdx;
     private final int[] nonGroupedMetaIdx;
@@ -41,7 +40,8 @@ public final class AnnotationInfo {
         this.terms = Arrays.stream(annotations).map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
                 .toArray(Terms[]::new);
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
-        this.metaToId = new ConcurrentHashMap<>();
+        this.metaToId = new Object2IntOpenHashMap<>();
+        metaToId.defaultReturnValue(-1);
         this.wordToId = new Object2IntOpenCustomHashMap<>(IntArrays.HASH_STRATEGY);
         wordToId.defaultReturnValue(-1);
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
@@ -82,21 +82,22 @@ public final class AnnotationInfo {
         return metaToId;
     }
 
-    public Object2IntOpenCustomHashMap<int[]> getWordToId() {
+    public Map<int[], Integer> getWordToId() {
         return wordToId;
     }
 
     public int putOrGetMetaToId(final String[] meta) {
         // calculate key
-        // TODO compare with Arrays.asList(meta).stream(... etc.)
+        final int idToPut = metaId;
         final var key = getMetaKey(meta);
-        if (metaToId.containsKey(key)) {
-            // return ID if it exists
-            return metaToId.get(key);
+        final int id = metaToId.putIfAbsent(key, idToPut);
+        if (id == -1) {
+            // new ID was created
+            metaId++; // increment for next time
+            return idToPut;
+
         } else {
-            // otherwise, create ID and return
-            final int id = metaId.getAndIncrement();
-            metaToId.put(key, id);
+            // existing ID
             return id;
         }
     }

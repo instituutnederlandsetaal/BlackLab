@@ -14,8 +14,8 @@ import java.util.stream.Collectors;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.eclipse.collections.impl.map.mutable.ConcurrentHashMapUnsafe;
 
-import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -27,11 +27,6 @@ import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
-
-import org.eclipse.collections.impl.factory.Sets;
-import org.eclipse.collections.impl.map.mutable.ConcurrentHashMap;
-import org.eclipse.collections.impl.map.mutable.ConcurrentHashMapUnsafe;
-import org.eclipse.collections.impl.map.sorted.mutable.TreeSortedMap;
 
 /**
  * More optimized version of HitGroupsTokenFrequencies.
@@ -166,7 +161,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
                             Integer::sum,
                             ConcurrentSkipListMap::new
                     ));
-            System.out.println("  Sorted ConcurrentSkipListMap in " + t.elapsedDescription(true));
+            System.out.println("  Sorted entries in " + t.elapsedDescription(true));
             // Write chunk files, to be merged at the end
             final var chunkFile = chunkWriter.write(sorted);
             chunkFiles.add(chunkFile);
