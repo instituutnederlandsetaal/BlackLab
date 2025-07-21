@@ -167,10 +167,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         }
     }
 
-    // TODO: check if we have already implemented this mentioned optimization
-    // https://lucene.apache.org/core/9_0_0/changes/Changes.html
-    // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied
-    // StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.
     @Override
     public void document(int docId, StoredFieldVisitor storedFieldVisitor) throws IOException {
         // Visit each regular stored field.

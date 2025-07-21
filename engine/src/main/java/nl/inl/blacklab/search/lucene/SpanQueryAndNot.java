@@ -6,19 +6,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
-import org.apache.lucene.queries.spans.SpanWeight;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -187,7 +186,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
         super(include != null && !include.isEmpty() ? include.get(0).queryInfo : exclude != null && !exclude.isEmpty() ? exclude.get(0).queryInfo : null);
         this.include = include == null ? new ArrayList<>() : include;
         this.exclude = exclude == null ? new ArrayList<>() : exclude;
-        if (this.include.size() == 0 && this.exclude.size() == 0)
+        if (this.include.isEmpty() && this.exclude.isEmpty())
             throw new IllegalArgumentException("AND(NOT)/RSPAN query without clauses");
         checkAllCompatibleFields(this.include);
         checkAllCompatibleFields(this.exclude);
@@ -278,7 +277,7 @@ public class SpanQueryAndNot extends BLSpanQuery {
                     return false;
                 }
                 return true;
-            }).collect(Collectors.toList());
+            }).toList();
             if (!rewrClNew.equals(rewrCl))
                 anyRewritten = true;
             rewrCl = rewrClNew;

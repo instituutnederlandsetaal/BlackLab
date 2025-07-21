@@ -2,10 +2,8 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.Optional;
-import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.DocIdSet;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Explanation;
@@ -106,7 +104,6 @@ public class SingleDocIdFilter extends Query {
         };
     }
 
-    // LUCENE-3041: A query introspection API has been added. Queries should implement a visit() method, taking a QueryVisitor, and either pass the visitor down to any child queries, or call a visitX() or consumeX() method on it. All locations in the code that called Weight.extractTerms() have been changed to use this API, and the extractTerms() method has been deprecated.
     @Override
     public void visit(QueryVisitor visitor) {
         visitor.visitLeaf(this);

@@ -4,11 +4,3 @@ LUCENE 8/9 TOMCAT 9/10-jakarta DIFFERENCES
 - ramBytesUsed / getChildResources gone (Accountable)
 - knnVectors added (Codec class, related to vector search, not used by us)
 
-
-
-TODO
-- SingleDocIdFilter:111 visit(): implement/use elsewhere?  (also DocSetFilter)
-
-- look at optimizations:
-  - DocValuesUtil:82 optimization? (also SortedDocValuesCacher)
-  - OPTIMIZATION BlackLab40StoredFieldsReader:154: put largest text field value last?
