@@ -10,6 +10,4 @@ This directory contains various documents related to BlackLab development:
   - [Upcoming indexing refactor](./design/plan-indexing.md)
 - [BlackLab internals](./blacklab-internals.md), which describes the structure of the BlackLab project, important classes, etc.
 - [BCQL debug functions](./bcql-debug-funcs.md), which can help with diagnosing (performance) problems in BCQL queries.
-- Different index formats and the structure of their files:
-    - [index with external files (classic)](./index-formats/external.md) (separate forward index, content store, indexmetadata.yaml, version.dat)
-    - [integrated index format](./index-formats/integrated.md) (everything incorporated in the Lucene index; will eventually become the default for new indexes) 
+- BlackLab's index format and the structure of its files: [index format](./index-formats/integrated.md) 

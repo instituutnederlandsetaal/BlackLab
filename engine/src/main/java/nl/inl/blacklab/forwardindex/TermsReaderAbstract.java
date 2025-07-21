@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
 /**
- * Abstrct base class for TermsReader and TermsIntegrated.
+ * Abstract base class for TermsIntegrated.
  *
  * Each term gets a sensitive and insensitive sort position.
  * Multiple terms may get the same sort position, if those terms

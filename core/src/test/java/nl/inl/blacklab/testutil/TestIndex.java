@@ -1,7 +1,6 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,48 +37,34 @@ import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
 
-    /** Classic external index format */
-    private static TestIndex testIndexExternal;
-
     /** Integrated index format */
     private static TestIndex testIndexIntegrated;
 
-    /** External, pre-indexed (to test that we don't accidentally break file compatibility). */
-    private static TestIndex testIndexExternalPre;
+    /** Pre-indexed (to test that we don't accidentally break file compatibility). */
+    private static TestIndex testIndexPre;
 
     public static TestIndex get(IndexType indexType) {
         return new TestIndex(false, indexType);
     }
 
     private static synchronized TestIndex getPreindexed(IndexType indexType) {
-        if (indexType == IndexType.INTEGRATED)
-            throw new UnsupportedOperationException("Integrated index still in development, no preindexed version!");
-        if (testIndexExternalPre == null) {
-            String strType = indexType == IndexType.EXTERNAL_FILES ? "external" : "integrated";
-            try {
-                File indexDir = new File(TestIndex.class.getResource("/test-index-" + strType).toURI());
-                testIndexExternalPre = new TestIndex(indexDir);
-            } catch (URISyntaxException e) {
-                throw new IllegalArgumentException(e);
-            }
-        }
-        return testIndexExternalPre;
+        if (indexType == IndexType.EXTERNAL_FILES)
+            throw new UnsupportedOperationException("External index no longer supported!");
+        return testIndexPre;
     }
 
     public static synchronized TestIndex getReusable(IndexType indexType) {
-        if (testIndexExternal == null) {
+        if (indexType == IndexType.EXTERNAL_FILES)
+            throw new UnsupportedOperationException("External index no longer supported!");
+        if (testIndexIntegrated == null) {
             // Instantiate reusable testindexes
-            testIndexExternal = new TestIndex(false, IndexType.EXTERNAL_FILES);
             testIndexIntegrated = new TestIndex(false, IndexType.INTEGRATED);
             // Make sure files are cleaned up at the end
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-                testIndexExternal.close();
                 testIndexIntegrated.close();
             }));
         }
-        if (indexType == null)
-            indexType = BlackLab.implicitInstance().getDefaultIndexType();
-        return indexType == IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
+        return testIndexIntegrated;
     }
 
     public static TestIndex getWithTestDelete(IndexType indexType) {
@@ -88,8 +73,7 @@ public class TestIndex {
 
     public static Collection<TestIndex> typesForTests() {
         return List.of(
-                getPreindexed(BlackLabIndex.IndexType.EXTERNAL_FILES),
-                getReusable(BlackLabIndex.IndexType.EXTERNAL_FILES),
+                //getPreindexed(IndexType.INTEGRATED),
                 getReusable(BlackLabIndex.IndexType.INTEGRATED)
         );
     }

@@ -7,11 +7,10 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import nl.inl.blacklab.indexers.config.WarnOnce;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
-import nl.inl.util.TextContent;
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.util.TextContent;
 
 /**
  * Interface the DocIndexer gets to store documents.
@@ -70,14 +69,6 @@ public interface DocWriter {
     Map<String, String> indexerParameters();
 
     Optional<Function<String, File>> linkedFileResolver();
-
-    /**
-     * Add a field with its annotations to the forward index
-     * 
-     * @param field field to add
-     * @param currentDoc Lucene doc, for storing the fiid
-     */
-    void addToForwardIndex(AnnotatedFieldWriter field, BLInputDocument currentDoc);
 
     void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName, String contentStoreName);
 

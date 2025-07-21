@@ -200,9 +200,6 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
             // were gathered in lists while parsing.
             contentsField.addToDoc(currentDoc);
 
-            // Add field with all its annotations to the forward index
-            addToForwardIndex(contentsField);
-
             // If there's an external metadata fetcher, call it now so it can
             // add the metadata for this document and (optionally) store the
             // metadata document in the content store (and the corresponding id in the

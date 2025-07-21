@@ -97,7 +97,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (!(o instanceof ForwardIndexAccessorExternal that))
+        if (!(o instanceof ForwardIndexAccessorAbstract that))
             return false;
         return index.equals(that.index) && annotatedField.equals(that.annotatedField);
     }

@@ -14,7 +14,7 @@
   },
   "indices": {
     "test": {
-        "description": "",
+      "description": "",
       "displayName": "test",
       "documentFormat": "voice-tei",
       "status": "available",

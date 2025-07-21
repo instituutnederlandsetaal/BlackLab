@@ -7,14 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlTransient;
-
 import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -197,14 +196,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         if (!this.unknownCondition().equals(unknownCondition)) {
             ensureNotFrozen();
             this.custom.put("unknownCondition", unknownCondition.stringValue());
-        }
-    }
-
-    void setValues(JsonNode values) {
-        if (factory instanceof MetadataFieldValuesInMetadataFile.Factory) {
-            ensureNotFrozen();
-            ensureValuesCreated();
-            this.values.setValues(values);
         }
     }
 

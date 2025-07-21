@@ -45,12 +45,6 @@ The combined forward indexes also contain most of the contents of the documents,
 
 All annotations get a forward index by default, but you can [disable this if you want](https://blacklab.ivdnt.org/guide/index%20your%20data/annotations.html#disable-the-forward-index).
 
-In the older external indexes, each annotation has its own forward index directory. These directories are named `fi_contents%word`, `fi_contents%word`, etc. (again, assuming your annotated field is `contents`). The `version.dat` file in each forward index directory should contain either `fi||4` or `fi||5`. (these versions differ only in the collators used for sorting terms)
-
-The newer indexed integrate the forward index into the Lucene index.
-
-For more in-depth information about the layout of the non-Lucene files in a BlackLab index, see [External index file formats](index-formats/external.md) and [Integrated index file formats](index-formats/integrated.md).
-
 ### index metadata file
 
 Each index has index metadata, containing information about the structure of the index.

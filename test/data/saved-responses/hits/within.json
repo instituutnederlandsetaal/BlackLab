@@ -65,6 +65,14 @@
       },
       "matchInfos": {
         "u": {
+          "attributes": {
+            "id": [
+              "PRint602_u_36"
+            ],
+            "who": [
+              "#PRint602_S3"
+            ]
+          },
           "end": 246,
           "start": 226,
           "tagName": "u",
@@ -135,7 +143,7 @@
       },
       "matchInfos": {
         "u": {
-          "type": "span"
+          "type": "tag"
         }
       }
     },

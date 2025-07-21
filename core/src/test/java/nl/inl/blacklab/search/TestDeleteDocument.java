@@ -17,13 +17,11 @@ import nl.inl.blacklab.testutil.TestIndex;
 @RunWith(Parameterized.class)
 public class TestDeleteDocument {
 
-    static TestIndex testIndexExternal;
-
     static TestIndex testIndexIntegrated;
 
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<BlackLabIndex.IndexType> typeToUse() {
-        return List.of(BlackLabIndex.IndexType.EXTERNAL_FILES, BlackLabIndex.IndexType.INTEGRATED);
+        return List.of(BlackLabIndex.IndexType.INTEGRATED);
     }
 
     @Parameterized.Parameter
@@ -38,19 +36,17 @@ public class TestDeleteDocument {
 
     @BeforeClass
     public static void setUpClass() {
-        testIndexExternal = TestIndex.getWithTestDelete(BlackLabIndex.IndexType.EXTERNAL_FILES);
         testIndexIntegrated = TestIndex.getWithTestDelete(BlackLabIndex.IndexType.INTEGRATED);
     }
 
     @AfterClass
     public static void tearDownClass() {
-        testIndexExternal.close();
         testIndexIntegrated.close();
     }
 
     @Before
     public void setUp() {
-        testIndex = indexType == BlackLabIndex.IndexType.EXTERNAL_FILES ? testIndexExternal : testIndexIntegrated;
+        testIndex = testIndexIntegrated;
     }
 
     @Test

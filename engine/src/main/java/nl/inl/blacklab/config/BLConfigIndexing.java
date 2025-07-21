@@ -1,6 +1,5 @@
 package nl.inl.blacklab.config;
 
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.util.DownloadCache;
 
 public class BLConfigIndexing {
@@ -17,8 +16,6 @@ public class BLConfigIndexing {
     int downloadCacheMaxFileSizeMegs = 100;
     
     int zipFilesMaxOpen = 10;
-    
-    int maxMetadataValuesToStore = IndexMetadataExternal.maxMetadataValuesToStore();
     
     int numberOfThreads = 2;
 
@@ -103,12 +100,6 @@ public class BLConfigIndexing {
     @SuppressWarnings("unused")
     public void setZipFilesMaxOpen(int zipFilesMaxOpen) {
         this.zipFilesMaxOpen = zipFilesMaxOpen;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMaxMetadataValuesToStore(int maxMetadataValuesToStore) {
-        this.maxMetadataValuesToStore = maxMetadataValuesToStore;
-        IndexMetadataExternal.setMaxMetadataValuesToStore(maxMetadataValuesToStore);
     }
 
     public int getNumberOfThreads() {

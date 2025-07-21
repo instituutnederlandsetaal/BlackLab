@@ -94,10 +94,6 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
      */
     public void close() {
         synchronized (fis) {
-            for (AnnotationForwardIndex fi: fis.values()) {
-                if (fi instanceof AnnotationForwardIndexExternalWriter)
-                    ((AnnotationForwardIndexExternalWriter)fi).close();
-            }
             fis.clear();
             closed = true;
         }

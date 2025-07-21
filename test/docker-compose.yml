@@ -85,10 +85,8 @@ services:
     volumes:
       # We need access to the previous responses and be able to save responses for any new tests.
       - ./data/saved-responses:/app/data/saved-responses
-      - ./data/saved-responses-integrated:/app/data/saved-responses-integrated
       - ./data/saved-responses-solr:/app/data/saved-responses-solr
       - ./data/latest-test-output:/app/data/latest-test-output
-      - ./data/latest-test-output-integrated:/app/data/latest-test-output-integrated
       - ./data/latest-test-output-solr:/app/data/latest-test-output-solr
 
 

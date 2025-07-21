@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -266,15 +265,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                 firstValue = false;
             }
         }
-    }
-
-    /**
-     * Add the field, with all its properties, to the forward index.
-     *
-     * @param field field to add to the forward index
-     */
-    protected void addToForwardIndex(AnnotatedFieldWriter field) {
-        getDocWriter().addToForwardIndex(field, currentDoc);
     }
 
     /**

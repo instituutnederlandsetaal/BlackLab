@@ -130,9 +130,6 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             // lists while parsing.
             contentsField.addToDoc(currentDoc);
 
-            // Add field with all its annotations to the forward index
-            addToForwardIndex(contentsField);
-
             // If there's an external metadata fetcher, call it now so it can
             // add the metadata for this document and (optionally) store the
             // metadata

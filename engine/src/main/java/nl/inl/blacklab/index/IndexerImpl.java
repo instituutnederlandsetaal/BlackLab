@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -15,26 +14,17 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.Term;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoreExternal;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
-import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.FileProcessor;
@@ -389,53 +379,18 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void addToForwardIndex(AnnotatedFieldWriter fieldWriter, BLInputDocument currentDoc) {
-        if (getIndexType() == BlackLabIndex.IndexType.EXTERNAL_FILES) {
-            // External forward index: add to it (with the integrated forward index, this is handled in the codec)
-            ForwardIndex fi = indexWriter().forwardIndex(fieldWriter.field());
-            Map<Annotation, List<String>> annotations = new HashMap<>();
-            Map<Annotation, List<Integer>> posIncr = new HashMap<>();
-            for (AnnotationWriter annotationWriter: fieldWriter.annotationWriters()) {
-                if (annotationWriter.hasForwardIndex()) {
-                    Annotation annotation = annotationWriter.annotation();
-                    annotations.put(annotation, annotationWriter.values());
-                    posIncr.put(annotation, annotationWriter.positionIncrements());
-                }
-            }
-            ((ForwardIndexExternal) fi).addDocument(annotations, posIncr, ((BLInputDocumentLucene) currentDoc).getDocument());
-        }
-    }
-
-    @Override
     public void storeInContentStore(BLInputDocument currentDoc, TextContent document, String contentIdFieldName,
             String contentStoreName) {
-
-        if (getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
-            // Integrated index: store as a field in the document
-            AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
-            if (annotatedFields.exists(contentStoreName)) {
-                annotatedFields.get(contentStoreName).setContentStore(true);
-            }
-
-            String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
-            BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
-
-            currentDoc.addField(luceneFieldName, document.toString(), fieldType);
-
-        } else {
-            Field field = indexWriter.metadata().annotatedField(contentStoreName);
-            if (field == null)
-                field = indexWriter.metadata().metadataField(contentStoreName);
-
-            // TODO move store function into ContentStore
-            // this will require moving ContentStore into engine module so it can see BlInputDocument class.
-            ContentStore store = indexWriter.contentStore(field);
-
-            // External content store, with content id stored in the document
-            ContentStoreExternal contentStore = (ContentStoreExternal) store;
-            int contentId = contentStore.store(document);
-            currentDoc.addStoredNumericField(contentIdFieldName, contentId, false);
+        // Store as a field in the document (codec makes sure random access is possible)
+        AnnotatedFieldsImpl annotatedFields = indexWriter.metadata().annotatedFields();
+        if (annotatedFields.exists(contentStoreName)) {
+            annotatedFields.get(contentStoreName).setContentStore(true);
         }
+
+        String luceneFieldName = AnnotatedFieldNameUtil.contentStoreField(contentStoreName);
+        BLFieldType fieldType = indexWriter.indexObjectFactory().fieldTypeContentStore();
+
+        currentDoc.addField(luceneFieldName, document.toString(), fieldType);
     }
 
     @Override

@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-import jakarta.xml.bind.annotation.XmlTransient;
-
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.FieldType;
@@ -20,7 +20,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.codec.BlackLab40Codec;
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.codec.BlackLabCodec;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
@@ -48,7 +48,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
-import nl.inl.blacklab.codec.BlackLabCodec;
+import nl.inl.util.VersionFile;
 
 /**
  * A BlackLab index with all files included in the Lucene index.
@@ -186,6 +186,33 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      */
     public RelationsStrategy relationsStrategy = RelationsStrategy.ifNotRecorded();
 
+    /**
+     * If this directory contains any external index files/subdirs, delete them.
+     *
+     * Doesn't delete the Lucene index (Lucene does this when creating a new index in a dir).
+     *
+     * @param indexDir the directory to clean up
+     */
+    public static void deleteOldIndexFiles(File indexDir) {
+        if (VersionFile.exists(indexDir)) {
+            for (File f: Objects.requireNonNull(indexDir.listFiles())) {
+                if (f.getName().equals(VersionFile.FILE_NAME)) {
+                    if (!f.delete())
+                        logger.warn("Could not delete version file " + f);
+                } else if (f.getName().matches("(fi|cs)_.+|indexmetadata\\.(ya?ml|json)")) {
+                    try {
+                        if (f.isDirectory())
+                            FileUtils.deleteDirectory(f);
+                        else if (!f.delete())
+                            logger.warn("Could not delete index metadata file: " + f);
+                    } catch (IOException e) {
+                        logger.warn("Could not delete subdirectory " + f);
+                    }
+                }
+            }
+        }
+    }
+
     /** Get the strategy to use for indexing/searching relations. */
     @Override
     public RelationsStrategy getRelationsStrategy() {
@@ -201,7 +228,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         if (indexDir != null && createNewIndex) {
             if (indexDir.exists()) {
                 if (indexDir.isDirectory()) {
-                    BlackLabIndexExternal.deleteOldIndexFiles(indexDir);
+                    deleteOldIndexFiles(indexDir);
                 } else {
                     throw new ErrorOpeningIndex("Index directory " + indexDir + " is not a directory.");
                 }

@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
@@ -293,9 +294,13 @@ public final class BlackLabEngine implements AutoCloseable {
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
         IndexType indexType = determineIndexType(indexDir, false, null);
-        return indexType == IndexType.INTEGRATED ?
-            new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, false, false, null):
-            new BlackLabIndexExternal(this, indexDir, false, false, (File) null);
+        checkSupportedIndexType(indexDir, indexType);
+        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, false, false, null);
+    }
+
+    private static void checkSupportedIndexType(File indexDir, IndexType indexType) {
+        if (indexType == IndexType.EXTERNAL_FILES)
+            throw new IndexVersionMismatch("This index (" + indexDir + ") uses an older file format (with and external forward index) that is no longer supported by BlackLab. Use BlackLab 4.x to open it.");
     }
 
     /**
@@ -354,9 +359,7 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         indexType = determineIndexType(indexDir, forceCreateNew, indexType);
-        if (indexType == IndexType.EXTERNAL_FILES)
-            return new BlackLabIndexExternal(this, indexDir, true, forceCreateNew, indexTemplateFile);
-
+        checkSupportedIndexType(indexDir, indexType);
         if (indexTemplateFile != null)
             throw new IllegalArgumentException("Cannot use index template file with integrated index!");
         return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
@@ -415,9 +418,8 @@ public final class BlackLabEngine implements AutoCloseable {
         }
 
         indexType = determineIndexType(indexDir, createNewIndex, indexType);
-        return indexType == IndexType.INTEGRATED ?
-                new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, createNewIndex, config) :
-                new BlackLabIndexExternal(this, indexDir, true, createNewIndex, config);
+        checkSupportedIndexType(indexDir, indexType);
+        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
     }
 
     /**

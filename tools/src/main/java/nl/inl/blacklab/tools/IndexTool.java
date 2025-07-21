@@ -36,7 +36,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataExternal;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
@@ -384,10 +383,12 @@ public class IndexTool {
         }
     }
 
+    public static final String METADATA_FILE_NAME = "indexmetadata";
+
     private static void exportIndexInfo(File indexDir) {
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             String indexmetadata = index.metadata().getIndexMetadataAsString();
-            File indexMetadataFile = new File(indexDir, IndexMetadataExternal.METADATA_FILE_NAME + ".json");
+            File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME + ".json");
             System.out.println("Writing " + indexMetadataFile);
             FileUtils.write(indexMetadataFile, indexmetadata, StandardCharsets.UTF_8);
 
@@ -404,7 +405,7 @@ public class IndexTool {
 
     private static void importIndexInfo(File indexDir) {
         try (BlackLabIndexWriter index = BlackLab.openForWriting(indexDir, false)) {
-            File indexMetadataFile = new File(indexDir, IndexMetadataExternal.METADATA_FILE_NAME + ".json");
+            File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME + ".json");
             System.out.println("Reading " + indexMetadataFile);
             String indexmetadata = FileUtils.readFileToString(indexMetadataFile, StandardCharsets.UTF_8);
 

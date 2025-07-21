@@ -351,9 +351,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             // were gathered in lists while parsing.
             field.addToDoc(currentDoc);
 
-            // Add the field with all its annotations to the forward index
-            addToForwardIndex(field);
-
         }
 
         if (isStoreDocuments()) {
