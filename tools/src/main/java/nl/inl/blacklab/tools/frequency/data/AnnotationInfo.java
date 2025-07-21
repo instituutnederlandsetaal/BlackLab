@@ -74,6 +74,10 @@ public final class AnnotationInfo {
         return nonGroupedMetaIdx;
     }
 
+    public int[] getGroupedMetaIdx() {
+        return groupedMetaIdx;
+    }
+
     public Map<List<String>, Integer> getMetaToId() {
         return metaToId;
     }
