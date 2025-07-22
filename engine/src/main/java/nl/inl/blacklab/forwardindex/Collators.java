@@ -68,8 +68,8 @@ public class Collators {
             if (coll instanceof RuleBasedCollator) {
                 // Case- and accent-insensitive collator that doesn't
                 // ignore dash and space like the regular insensitive collator (V1) does.
-                String rules = ((RuleBasedCollator)coll).getRules().replaceAll(",'-'", ""); // don't ignore dash
-                rules = rules.replaceAll("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
+                String rules = ((RuleBasedCollator)coll).getRules().replace(",'-'", ""); // don't ignore dash
+                rules = rules.replace("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
                 try {
                     coll = new RuleBasedCollator(rules);
                 } catch (Exception e) {

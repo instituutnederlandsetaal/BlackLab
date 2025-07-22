@@ -39,7 +39,31 @@ public class InputFormatReader extends YamlJsonReader {
 
     private static final Logger logger = LogManager.getLogger(InputFormatReader.class);
 
+    // Keys used in multiple places
     public static final String KEY_PROCESSOR = "processor";
+    public static final String KEY_DISPLAY_NAME = "displayName";
+    public static final String KEY_NAME = "name";
+    public static final String KEY_NAME_PATH = "namePath";
+    public static final String KEY_VALUE = "value";
+    public static final String KEY_VALUE_PATH = "valuePath";
+    public static final String KEY_FOR_EACH_PATH = "forEachPath";
+    public static final String KEY_PROCESS = "process";
+    public static final String KEY_MAP_VALUES = "mapValues";
+    public static final String KEY_DESCRIPTION = "description";
+    public static final String KEY_TYPE = "type";
+    public static final String KEY_UI_TYPE = "uiType";
+    public static final String KEY_UNKNOWN_CONDITION = "unknownCondition";
+    public static final String KEY_UNKNOWN_VALUE = "unknownValue";
+    public static final String KEY_ANALYZER = "analyzer";
+    public static final String KEY_DISPLAY_ORDER = "displayOrder";
+    public static final String KEY_DISPLAY_VALUES = "displayValues";
+    public static final String KEY_SORT_VALUES = "sortValues";
+    public static final String KEY_PATH = "path";
+    public static final String KEY_DISPLAY_AS = "displayAs";
+    public static final String KEY_TOKEN_ID_PATH = "tokenIdPath";
+    public static final String KEY_ATTRIBUTES = "attributes";
+    public static final String KEY_ANNOTATIONS = "annotations";
+    public static final String KEY_FIELDS = "fields";
 
     /**
      * Reads a config from a YAML or JSON file.
@@ -103,10 +127,10 @@ public class InputFormatReader extends YamlJsonReader {
                 cfg.setVersion(integer(e));
                 logger.warn("Found version key in .blf.yaml file. This is ignored; it is better to remove it.");
                 break;
-            case "displayName":
+            case KEY_DISPLAY_NAME:
                 cfg.setDisplayName(str(e));
                 break;
-            case "description":
+            case KEY_DESCRIPTION:
                 cfg.setDescription(str(e));
                 break;
             case "helpUrl":
@@ -116,7 +140,7 @@ public class InputFormatReader extends YamlJsonReader {
                 throw new InvalidInputFormatConfig("Input format configuration inheritance (baseFormat key) was removed. " +
                         "Please copy the base format configuration to your own format and customize it.");
             }
-            case "type":
+            case KEY_TYPE:
                 cfg.setType(str(e));
                 break;
             case KEY_PROCESSOR:
@@ -205,10 +229,10 @@ public class InputFormatReader extends YamlJsonReader {
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
-            case "displayName":
+            case KEY_DISPLAY_NAME:
                 corpusConfig.setDisplayName(str(e));
                 break;
-            case "description":
+            case KEY_DESCRIPTION:
                 corpusConfig.setDescription(str(e));
                 break;
             case "contentViewable":
@@ -277,10 +301,10 @@ public class InputFormatReader extends YamlJsonReader {
             while (itGroup.hasNext()) {
                 Entry<String, JsonNode> e = itGroup.next();
                 switch (e.getKey()) {
-                case "name":
+                case KEY_NAME:
                     g.setName(str(e));
                     break;
-                case "fields":
+                case KEY_FIELDS:
                     readStringList(e, fields);
                     g.addFields(fields);
                     break;
@@ -316,10 +340,10 @@ public class InputFormatReader extends YamlJsonReader {
             while (itGroup.hasNext()) {
                 Entry<String, JsonNode> e = itGroup.next();
                 switch (e.getKey()) {
-                case "name":
+                case KEY_NAME:
                     g.setName(str(e));
                     break;
-                case "annotations":
+                case KEY_ANNOTATIONS:
                     readStringList(e, fields);
                     g.addAnnotations(fields);
                     break;
@@ -345,10 +369,10 @@ public class InputFormatReader extends YamlJsonReader {
             while (itField.hasNext()) {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
-                case "displayName":
+                case KEY_DISPLAY_NAME:
                     af.setDisplayName(str(e));
                     break;
-                case "description":
+                case KEY_DESCRIPTION:
                     af.setDescription(str(e));
                     break;
                 case "containerPath":
@@ -359,13 +383,13 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "tokenPositionIdPath": // old name, REMOVED
                     throw new InvalidInputFormatConfig("Encountered removed key 'tokenPositionIdPath' (rename to 'tokenIdPath') in annotated field " + fieldName + inFormat());
-                case "tokenIdPath":
+                case KEY_TOKEN_ID_PATH:
                     af.setTokenIdPath(str(e));
                     break;
                 case "punctPath":
                     af.setPunctPath(str(e));
                     break;
-                case "annotations":
+                case KEY_ANNOTATIONS:
                     readAnnotations(e, af);
                     break;
                 case "standoffAnnotations":
@@ -404,38 +428,38 @@ public class InputFormatReader extends YamlJsonReader {
             Entry<String, JsonNode> e = itAnnotation.next();
             boolean isSubannotation = parentAnnot != null;
             switch (e.getKey()) {
-            case "name":
+            case KEY_NAME:
                 String name = str(e);
                 String fullName = parentAnnot == null ? name : parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
                 annot.setName(warnSanitizeXmlElementName(fullName));
                 break;
-            case "value":
+            case KEY_VALUE:
                 annot.setValuePath(fixedStringToXpath(str(e)));
                 break;
-            case "valuePath":
+            case KEY_VALUE_PATH:
                 annot.setValuePath(str(e));
                 break;
             case "captureValuePaths":
                 ArrayNode paths = (ArrayNode) e.getValue();
                 paths.iterator().forEachRemaining((t) -> annot.addCaptureValuePath(t.asText()));
                 break;
-            case "forEachPath":
+            case KEY_FOR_EACH_PATH:
                 if (!isSubannotation)
                     throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath" + inFormat());
                 annot.setForEachPath(str(e));
                 break;
-            case "namePath":
+            case KEY_NAME_PATH:
                 if (!isSubannotation)
                     throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath" + inFormat());
                 annot.setName(str(e));
                 break;
-            case "process":
+            case KEY_PROCESS:
                 annot.setProcess(readProcess(e));
                 break;
-            case "displayName":
+            case KEY_DISPLAY_NAME:
                 annot.setDisplayName(str(e));
                 break;
-            case "description":
+            case KEY_DESCRIPTION:
                 annot.setDescription(str(e));
                 break;
             case "basePath":
@@ -448,7 +472,7 @@ public class InputFormatReader extends YamlJsonReader {
                     throw new InvalidInputFormatConfig("Subannotations may not have their own sensitivity settings" + inFormat());
                 annot.setSensitivity(AnnotationSensitivities.fromStringValue(str(e)));
                 break;
-            case "uiType":
+            case KEY_UI_TYPE:
                 annot.setUiType(str(e));
                 break;
             case "subannotations":
@@ -502,10 +526,10 @@ public class InputFormatReader extends YamlJsonReader {
                     s.setType(AnnotationType.SPAN);
                 }
                 switch (key) {
-                case "type":
+                case KEY_TYPE:
                     s.setType(AnnotationType.fromStringValue(str(e)));
                     break;
-                case "path":
+                case KEY_PATH:
                     s.setPath(str(e));
                     break;
                 case "refTokenPositionIdPath": // old name, REMOVED
@@ -524,10 +548,10 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case "spanNamePath": // REMOVED
                     throw new InvalidInputFormatConfig("Encountered removed key 'spanNamePath' (rename to 'valuePath')");
-                case "valuePath":
+                case KEY_VALUE_PATH:
                     s.setValuePath(str(e));
                     break;
-                case "annotations":
+                case KEY_ANNOTATIONS:
                     readAnnotations(e, s);
                     break;
                 case "relationClass":
@@ -557,13 +581,13 @@ public class InputFormatReader extends YamlJsonReader {
             while (itTag.hasNext()) {
                 Entry<String, JsonNode> e = itTag.next();
                 switch (e.getKey()) {
-                case "path":
+                case KEY_PATH:
                     t.setPath(str(e));
                     break;
-                case "displayAs":
+                case KEY_DISPLAY_AS:
                     t.setDisplayAs(str(e));
                     break;
-                case "tokenIdPath":
+                case KEY_TOKEN_ID_PATH:
                     t.setTokenIdPath(str(e));
                     break;
                 case "includeAttributes": // (removed, use attributes)
@@ -572,7 +596,7 @@ public class InputFormatReader extends YamlJsonReader {
                     throw new InvalidInputFormatConfig("excludeAttributes no longer allowed in .blf.yaml (use 'attributes' with exclude: true instead)");
                 case "extraAttributes": // (removed, renamed to attributes)
                     throw new InvalidInputFormatConfig("extraAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
-                case "attributes":
+                case KEY_ATTRIBUTES:
                     t.setAttributes(readExtraAttributes(e));
                     break;
                 default:
@@ -598,16 +622,16 @@ public class InputFormatReader extends YamlJsonReader {
             while (itExtraAttrEntry.hasNext()) {
                 Entry<String, JsonNode> eea = itExtraAttrEntry.next();
                 switch (eea.getKey()) {
-                case "name":
+                case KEY_NAME:
                     a.setName(str(eea));
                     break;
-                case "value":
+                case KEY_VALUE:
                     a.setValuePath(fixedStringToXpath(str(eea)));
                     break;
-                case "valuePath":
+                case KEY_VALUE_PATH:
                     a.setValuePath(str(eea));
                     break;
-                case "process":
+                case KEY_PROCESS:
                     a.setProcess(readProcess(eea));
                     break;
                 default:
@@ -649,7 +673,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "defaultAnalyzer":
                 b.setDefaultAnalyzer(str(e));
                 break;
-            case "fields":
+            case KEY_FIELDS:
                 readMetadataFields(e, b);
                 break;
             default:
@@ -674,7 +698,7 @@ public class InputFormatReader extends YamlJsonReader {
         Iterator<JsonNode> itFields = array(mfsEntry).elements();
         while (itFields.hasNext()) {
             JsonNode fld = itFields.next();
-            String name = fld.has("name") ? fld.get("name").asText() : null;
+            String name = fld.has(KEY_NAME) ? fld.get(KEY_NAME).asText() : null;
             ConfigMetadataField f;
             boolean existingField = false;
             if (name != null) {
@@ -690,58 +714,58 @@ public class InputFormatReader extends YamlJsonReader {
             while (itField.hasNext()) {
                 Entry<String, JsonNode> e = itField.next();
                 switch (e.getKey()) {
-                case "name":
+                case KEY_NAME:
                     f.setName(warnSanitizeXmlElementName(str(e)));
                     break;
-                case "namePath":
+                case KEY_NAME_PATH:
                     f.setName(str(e));
                     break;
-                case "value":
+                case KEY_VALUE:
                     f.setValuePath(fixedStringToXpath(str(e)));
                     break;
-                case "valuePath":
+                case KEY_VALUE_PATH:
                     f.setValuePath(str(e));
                     break;
-                case "forEachPath":
+                case KEY_FOR_EACH_PATH:
                     f.setForEachPath(str(e));
                     break;
-                case "process":
+                case KEY_PROCESS:
                     f.setProcess(readProcess(e));
                     break;
-                case "mapValues": // removed (use "map" processing stap with "table" param)
+                case KEY_MAP_VALUES: // removed (use "map" processing stap with "table" param)
                     throw new InvalidInputFormatConfig("'mapValues' no longer allowed in .blf.yaml (use 'map' processing step with 'table' param instead; see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html) " + inFormat());
-                case "displayName":
+                case KEY_DISPLAY_NAME:
                     f.setDisplayName(str(e));
                     break;
-                case "description":
+                case KEY_DESCRIPTION:
                     f.setDescription(str(e));
                     break;
-                case "type":
+                case KEY_TYPE:
                     f.setType(FieldType.fromStringValue(str(e)));
                     break;
-                case "uiType":
+                case KEY_UI_TYPE:
                     f.setUiType(str(e));
                     break;
-                case "unknownCondition":
+                case KEY_UNKNOWN_CONDITION:
                     f.setUnknownCondition(UnknownCondition.fromStringValue(str(e)));
                     break;
-                case "unknownValue":
+                case KEY_UNKNOWN_VALUE:
                     f.setUnknownValue(str(e));
                     break;
-                case "analyzer":
+                case KEY_ANALYZER:
                     f.setAnalyzer(str(e));
                     break;
-                case "displayOrder":
+                case KEY_DISPLAY_ORDER:
                     List<String> fields = new ArrayList<>();
                     readStringList(e, fields);
                     f.addDisplayOrder(fields);
                     break;
-                case "displayValues":
+                case KEY_DISPLAY_VALUES:
                     Map<String, String> values = new HashMap<>();
                     readStringMap(e, values);
                     f.addDisplayValues(values);
                     break;
-                case "sortValues":
+                case KEY_SORT_VALUES:
                     f.setSortValues(YamlJsonReader.bool(e));
                     break;
                 default:
@@ -810,16 +834,16 @@ public class InputFormatReader extends YamlJsonReader {
             while (itLinkValue.hasNext()) {
                 Entry<String, JsonNode> e = itLinkValue.next();
                 switch (e.getKey()) {
-                case "value":
+                case KEY_VALUE:
                     lv.setValuePath(fixedStringToXpath(str(e)));
                     break;
-                case "valuePath":
+                case KEY_VALUE_PATH:
                     lv.setValuePath(str(e));
                     break;
                 case "valueField":
                     lv.setValueField(str(e));
                     break;
-                case "process":
+                case KEY_PROCESS:
                     lv.setProcess(readProcess(e));
                     break;
                 default:

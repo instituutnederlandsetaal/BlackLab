@@ -8,7 +8,7 @@ import nl.inl.util.SearchTimer;
 
 /**
  * An entry in BlackLab's search cache.
- *
+ * <p>
  * Custom implementations of SearchCache can subclass this to implement custom logic.
  *
  * @param <R> the type of search result this search will yield
@@ -36,7 +36,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
 
     /**
      * Subclasses should implement this to start the search.
-     *
+     * <p>
      * Search entries initially haven't been started. We call unstarted searches 'queued',
      * because they are waiting for enough resources to be available to be started.
      * When there are, this method is called to start the search.
@@ -66,7 +66,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
 
     /**
      * How long since this search was created?
-     *
+     * <p>
      * This is used for cache management (e.g. aborting a search that's been
      * running too long), not for reporting processing time (because this value
      * is directly influences by what's in the cache).
@@ -85,7 +85,7 @@ public abstract class SearchCacheEntry<R extends SearchResult> implements Future
 
     /**
      * Peek at the result even if it's not yet finished.
-     *
+     * <p>
      * Used for running counts.
      *
      * @return the result so far, or null if not supported for this operation

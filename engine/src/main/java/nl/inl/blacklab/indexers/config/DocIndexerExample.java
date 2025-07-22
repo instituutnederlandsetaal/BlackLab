@@ -102,6 +102,7 @@ public class DocIndexerExample extends DocIndexerBase {
     private StringBuilder wholeDocument = new StringBuilder();
 
     public DocIndexerExample() {
+        // Empty constructor, required for plugin discovery.
     }
 
     @Override
@@ -194,7 +195,7 @@ public class DocIndexerExample extends DocIndexerBase {
 
     @Override
     public void close() {
-
+        // Close any resources we may have opened.
     }
 
     @Override

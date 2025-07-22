@@ -30,7 +30,7 @@ public class ConfigAttribute {
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
     public ConfigAttribute() {
-
+        // Default constructor for deserialization
     }
 
     public String getName() {

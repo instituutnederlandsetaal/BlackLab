@@ -35,10 +35,22 @@ import nl.inl.util.StringUtil;
 
 /**
  * Class to read files in (CHILDES) CHAT format.
- *
- * Ported from Python code by Jan Odijk, see https://github.com/UUDigitalHumanitieslab/chamd
+ * <p>
+ * Ported from Python code by Jan Odijk, see <a href="https://github.com/UUDigitalHumanitieslab/chamd">here</a>
  */
 public class DocIndexerChat extends DocIndexerConfig {
+
+    public static final String META_UTT_ID = "uttid";
+    public static final String META_ORIG_UTT = "origutt";
+    public static final String META_SPEAKER = "speaker";
+    public static final String META_ID = "id";
+    public static final String META_PARTICIPANTS = "participants";
+    public static final String META_LANGUAGES = "languages";
+    public static final String META_COLORWORDS = "colorwords";
+    public static final String META_OPTIONS = "options";
+    public static final String META_FONT = "font";
+    public static final String META_DATE = "date";
+    public static final String META_PARSEFILE = "parsefile";
 
     private BufferedReader reader;
 
@@ -194,7 +206,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     /**
      * Slice a string like Python.
-     *
+     * <p>
      * Negative indices are counted from the end of the string. Indices out of range
      * result in an empty string, not an exception.
      *
@@ -223,7 +235,7 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     /**
      * Slice a string like Python.
-     *
+     * <p>
      * Negative indices are counted from the end of the string. Indices out of range
      * result in an empty string, not an exception.
      *
@@ -295,12 +307,12 @@ public class DocIndexerChat extends DocIndexerConfig {
         // print(input("continue?"), file = logfile)
         if (parts.length >= 1) {
             yearStr = parts[0];
-            if (!yearStr.matches("[0-9]+"))
+            if (!yearStr.matches(ONE_OR_MORE_DIGITS))
                 errorFound = true;
         }
         if (parts.length >= 2) {
             monthStr = parts[1];
-            if (!monthStr.matches("[0-9]{1,2}"))
+            if (!monthStr.matches(DIGITS_ONE_OR_TWO))
                 errorFound = true;
         }
         if (parts.length < 1 || parts.length > 3)
@@ -406,15 +418,15 @@ public class DocIndexerChat extends DocIndexerConfig {
                     log("unknown metadata element encountered: " + el);
             }
         }
-        if (metadata.containsKey("uttid"))
-            blockMetadata.put("uttid", metadata.get("uttid").toString());
-        if (metadata.containsKey("origutt"))
-            blockMetadata.put("origutt", metadata.get("origutt").toString());
+        if (metadata.containsKey(META_UTT_ID))
+            blockMetadata.put(META_UTT_ID, metadata.get(META_UTT_ID).toString());
+        if (metadata.containsKey(META_ORIG_UTT))
+            blockMetadata.put(META_ORIG_UTT, metadata.get(META_ORIG_UTT).toString());
         String curcode = "";
-        if (metadata.containsKey("speaker")) {
-            curcode = metadata.get("speaker").toString();
-            blockMetadata.put("speaker", curcode);
-            Map<String, Object> participants = (Map<String, Object>) metadata.get("participants");
+        if (metadata.containsKey(META_SPEAKER)) {
+            curcode = metadata.get(META_SPEAKER).toString();
+            blockMetadata.put(META_SPEAKER, curcode);
+            Map<String, Object> participants = (Map<String, Object>) metadata.get(META_PARTICIPANTS);
             if (participants != null && participants.containsKey(curcode)) {
                 Map<String, Object> codeMap = (Map<String, Object>) participants.get(curcode);
                 for (Entry<String, Object> entry : codeMap.entrySet()) {
@@ -423,8 +435,8 @@ public class DocIndexerChat extends DocIndexerConfig {
                 }
             }
         }
-        if (metadata.containsKey("id")) {
-            Map<String, Object> mdid = (Map<String, Object>) metadata.get("id");
+        if (metadata.containsKey(META_ID)) {
+            Map<String, Object> mdid = (Map<String, Object>) metadata.get(META_ID);
             if (mdid != null) {
                 Map<String, Object> curcodeMap = (Map<String, Object>) mdid.get(curcode);
                 if (curcodeMap != null) {
@@ -479,7 +491,7 @@ public class DocIndexerChat extends DocIndexerConfig {
                 startBlock();
             }
             if (startChar == UTT_CHAR) {
-                metadata.put("uttid", uttId);
+                metadata.put(META_UTT_ID, uttId);
                 treatUtt(line, metadata);
 
                 int endspk = line.indexOf(':');
@@ -535,19 +547,19 @@ public class DocIndexerChat extends DocIndexerConfig {
             String cleanHeaderNameBase = slice(cleanHeaderName, 0, -3).trim();
             String headerParameter = slice(cleanHeaderName, -3);
             cleanHeaderName = cleanHeaderName.toLowerCase();
-            if (cleanHeaderName.equals("font")) {
+            if (cleanHeaderName.equals(META_FONT)) {
                 // (pass)
-            } else if (cleanHeaderName.equals("languages")) {
-                metadata.put("languages", entryList);
-            } else if (cleanHeaderName.equals("colorwords")) {
-                metadata.put("colorwords", entryList);
-            } else if (cleanHeaderName.equals("options")) {
+            } else if (cleanHeaderName.equals(META_LANGUAGES)) {
+                metadata.put(META_LANGUAGES, entryList);
+            } else if (cleanHeaderName.equals(META_COLORWORDS)) {
+                metadata.put(META_COLORWORDS, entryList);
+            } else if (cleanHeaderName.equals(META_OPTIONS)) {
                 // (pass)
-            } else if (cleanHeaderName.equals("participants")) {
+            } else if (cleanHeaderName.equals(META_PARTICIPANTS)) {
                 treatParticipants(entryList, metadata);
-            } else if (cleanHeaderName.equals("id")) {
+            } else if (cleanHeaderName.equals(META_ID)) {
                 treatId(entry, metadata);
-            } else if (cleanHeaderName.equals("date")) {
+            } else if (cleanHeaderName.equals(META_DATE)) {
                 metadata.put(cleanHeaderName, normalizeDate(cleanEntry));
             } else if (SIMPLE_HEADERNAMES.contains(cleanHeaderName)) {
                 metadata.put(cleanHeaderName, cleanEntry);
@@ -567,9 +579,9 @@ public class DocIndexerChat extends DocIndexerConfig {
                 counter.put(cleanHeaderName, counter.get(cleanHeaderName) + 1);
                 metadata.put(cleanHeaderName, counter.get(cleanHeaderName));
             } else if (PARTICIPANT_SPECIFIC_HEADERS.contains(cleanHeaderNameBase)) {
-                if (!metadata.containsKey("id"))
-                    metadata.put("id", new HashMap<String, Object>());
-                Map<String, Object> mdid = (Map<String, Object>) metadata.get("id");
+                if (!metadata.containsKey(META_ID))
+                    metadata.put(META_ID, new HashMap<String, Object>());
+                Map<String, Object> mdid = (Map<String, Object>) metadata.get(META_ID);
                 if (!mdid.containsKey(headerParameter))
                     mdid.put(headerParameter, new HashMap<String, String>());
                 Map<String, Object> hp = (Map<String, Object>) mdid.get(headerParameter);
@@ -611,9 +623,9 @@ public class DocIndexerChat extends DocIndexerConfig {
                 log("error in participants: too few elements " + entryList);
             }
             if (!code.isEmpty()) {
-                if (!metadata.containsKey("participants"))
-                    metadata.put("participants", new HashMap<String, Object>());
-                Map<String, Object> par = (Map<String, Object>) metadata.get("participants");
+                if (!metadata.containsKey(META_PARTICIPANTS))
+                    metadata.put(META_PARTICIPANTS, new HashMap<String, Object>());
+                Map<String, Object> par = (Map<String, Object>) metadata.get(META_PARTICIPANTS);
                 if (!par.containsKey(code))
                     par.put(code, new HashMap<String, String>());
                 Map<String, Object> codeMap = (Map<String, Object>) par.get(code);
@@ -645,9 +657,9 @@ public class DocIndexerChat extends DocIndexerConfig {
         if (code.isEmpty()) {
             log("error in id: no code element in " + entry);
         } else {
-            if (!metadata.containsKey("id"))
-                metadata.put("id", new HashMap<String, Object>());
-            Map<String, Object> mdid = (Map<String, Object>) metadata.get("id");
+            if (!metadata.containsKey(META_ID))
+                metadata.put(META_ID, new HashMap<String, Object>());
+            Map<String, Object> mdid = (Map<String, Object>) metadata.get(META_ID);
             if (!mdid.containsKey(code))
                 mdid.put(code, new HashMap<String, Object>());
             Map<String, Object> codeMap = (Map<String, Object>) mdid.get(code);
@@ -676,8 +688,8 @@ public class DocIndexerChat extends DocIndexerConfig {
         if (endSpk < 0)
             log("WARNING, No : in line: " + line);
         String code = line.substring(1, endSpk);
-        metadata.put("speaker", code);
-        metadata.put("origutt", line.substring(endSpk + 1, line.length() - 1));
+        metadata.put(META_SPEAKER, code);
+        metadata.put(META_ORIG_UTT, line.substring(endSpk + 1, line.length() - 1));
     }
 
     private void writeToCleanFile(String entry, String cleanEntry) {
@@ -717,11 +729,11 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final List<String> SKIP_HEADER_NAMES = List.of("exceptions");
     private static final List<String> PARTICIPANT_SPECIFIC_HEADERS = Arrays.asList("birth of", "birthplace of", "l1 of",
             "age of");
-    private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", "parsefile", "speaker",
-            "origutt");
+    private static final List<String> CREATED_MD_NAMES = Arrays.asList("charencoding", META_PARSEFILE, META_SPEAKER,
+            META_ORIG_UTT);
     private static final List<String> DO_NOT_PRINT_IN_HEADERS = Arrays.asList(
-            "id", "participants", "languages", "colorwords",
-            "options", "uttid", "parsefile", "speaker", "origutt");
+            META_ID, META_PARTICIPANTS, META_LANGUAGES, META_COLORWORDS,
+            META_OPTIONS, META_UTT_ID, META_PARSEFILE, META_SPEAKER, META_ORIG_UTT);
     private static final List<String> ALL_HEADERS = new ArrayList<>();
     private static final List<String> PRINT_IN_HEADERS = new ArrayList<>();
     private static final List<Character> START_CHARS_TO_CHECK = new ArrayList<>();
@@ -756,12 +768,8 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     static final String EMPTY_STRING = "";
 
-    static final int SKIP_LINES = 1;
-    static final int HEADER = 1;
-    static final int LCTR = 0;
-
-    static final String GT_REPL = "\u00A9"; // copyright sign
-    static final String LT_REPL = "\u00AE"; // Registered sign
+    static final String GT_REPL = "©"; // copyright sign
+    static final String LT_REPL = "®"; // Registered sign
     static final Pattern GT_REPL_SCOPED = Pattern.compile(scoped(GT_REPL));
     static final Pattern LT_REPL_SCOPED = Pattern.compile(scoped(LT_REPL));
     static final Pattern GT_REPL_UNSCOPED = Pattern.compile(GT_REPL);
@@ -819,9 +827,9 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     // JN fixed(?)
     private final Pattern CHECK_PATTERN = Pattern.compile(
-            "[]\\[\\\\()&%@/ =><_0^~\u2193\u2191\u21D7\u2197\u2192\u2198\u21D8\u221E" +
-                    "\u2248\u224B\u2261\u2219\u2308\u2309\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9" +
-                    "\u2581\u2594\u263A\u222C\u03AB123456789\u00B7\u22A5\u0001]");
+            "[]\\[\\\\()&%@/ =><_0^~↓↑⇗↗→↘⇘∞" +
+                    "≈≋≡∙⌈⌉⌊⌋∆∇⁎⁇°◉" +
+                    "▁▔☺∬Ϋ123456789·⊥\u0001]");
 
     // + should not occur except as compund marker black+board
     private final Pattern PLUS_PATTERN = Pattern.compile("\\W\\+|\\+\\W");
@@ -866,9 +874,9 @@ public class DocIndexerChat extends DocIndexerConfig {
     private static final Pattern CLITIC_LINK = Pattern.compile("~");
     // NOTE JN: used https://r12a.github.io/apps/conversion/ to convert unicode characters to escape sequences
     private static final Pattern CHAT_CA_SYMS = Pattern.compile(
-            "[\u2193\u2191\u21D7\u2197\u2192\u2198\u21D8\u221E\u2248\u224B\u2261\u2219\u2308\u2309" +
-                    "\u230A\u230B\u2206\u2207\u204E\u2047\u00B0\u25C9\u2581\u2594\u263A\u222C\u03AB\u222E\u00A7" +
-                    "\u223E\u21BB\u1F29\u201E\u2021\u0323\u02B0\u0304\u02940]");
+            "[↓↑⇗↗→↘⇘∞≈≋≡∙⌈⌉" +
+                    "⌊⌋∆∇⁎⁇°◉▁▔☺∬Ϋ∮§" +
+                    "∾↻Ἡ„‡̣ʰ̄ʔ0]");
     private static final Pattern TIME_ALIGN = Pattern.compile("\u0015[0123456789_ ]+\u0015");
 
     private String cleanText(String str) {

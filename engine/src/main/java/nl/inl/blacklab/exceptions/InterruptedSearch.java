@@ -2,11 +2,12 @@ package nl.inl.blacklab.exceptions;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 
 /**
  * Thrown in response to InterruptedException to indicate that a thread was interrupted.
- *
+ * <p>
  * E.g. BlackLab Search aborts searches that run for too long, causing this exception
  * to be thrown.
  */
@@ -18,7 +19,8 @@ public class InterruptedSearch extends RuntimeException {
         return new InterruptedSearch(DEFAULT_MESSAGE + " (cancelled)");
     }
 
-    private SearchCacheEntry<?> cacheEntry;
+    /** Cache entry for the search. Transient to exclude from serialization. */
+    private transient SearchCacheEntry<? extends SearchResult> cacheEntry;
 
     public InterruptedSearch(Throwable e) {
         super(DEFAULT_MESSAGE, e);
@@ -32,12 +34,8 @@ public class InterruptedSearch extends RuntimeException {
         super(message, e);
     }
 
-    public void setCacheEntry(SearchCacheEntry<?> cacheEntry) {
+    public void setCacheEntry(SearchCacheEntry<? extends SearchResult> cacheEntry) {
         this.cacheEntry = cacheEntry;
-    }
-
-    public SearchCacheEntry<?> getCacheEntry() {
-        return cacheEntry;
     }
 
     public String getReason() {

@@ -42,11 +42,11 @@ public class ConfigInputFormat {
         CONLL_U; // CoNLL-U format
 
         public static FileType fromStringValue(String str) {
-            return valueOf(str.toUpperCase().replaceAll("-", "_"));
+            return valueOf(str.toUpperCase().replace("-", "_"));
         }
 
         public String stringValue() {
-            return toString().toLowerCase().replaceAll("_", "-");
+            return toString().toLowerCase().replace("_", "-");
         }
     }
 
