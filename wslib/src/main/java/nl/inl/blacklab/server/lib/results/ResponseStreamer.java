@@ -189,10 +189,6 @@ public class ResponseStreamer {
     /** What version of responses to write. */
     private final ApiVersion apiVersion;
 
-    /** Include new API elements to help with the transition?
-     *  Will be true for API v4 and higher. */
-    private final boolean modernizeApi;
-
     /** Is this the new, incompatible API? (API v5+) */
     private final boolean isNewApi;
 
@@ -206,7 +202,6 @@ public class ResponseStreamer {
     private ResponseStreamer(DataStream ds, ApiVersion v) {
         this.ds = ds;
         this.apiVersion = v;
-        modernizeApi = apiVersion.getMajor() >= 4;
         isNewApi = apiVersion.getMajor() >= 5;
 
         // Some keys are changed in API v5.
@@ -247,8 +242,7 @@ public class ResponseStreamer {
             if (userInfo.isLoggedIn())
                 ds.entry("id", userInfo.getUserId());
             ds.entry("canCreateIndex", userInfo.canCreateIndex());
-            if (modernizeApi)
-                ds.entry("debugMode", debugMode);
+            ds.entry("debugMode", debugMode);
         }
         ds.endMap().endEntry();
     }
@@ -292,16 +286,14 @@ public class ResponseStreamer {
                 documentMetadataEntries(docInfo);
                 ds.endMap().endEntry();
             }
-            if (modernizeApi) {
-                ds.startEntry(KEY_TOKEN_COUNTS).startList();
-                for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
-                    ds.startItem(KEY_TOKEN_COUNT_ITEM).startMap();
-                    ds.entry(KEY_FIELD_NAME, entry.getKey());
-                    ds.entry(KEY_TOKEN_COUNT, entry.getValue());
-                    ds.endMap().endItem();
-                }
-                ds.endList().endEntry();
+            ds.startEntry(KEY_TOKEN_COUNTS).startList();
+            for (Map.Entry<String, Integer> entry: docInfo.getLengthInTokensPerField().entrySet()) {
+                ds.startItem(KEY_TOKEN_COUNT_ITEM).startMap();
+                ds.entry(KEY_FIELD_NAME, entry.getKey());
+                ds.entry(KEY_TOKEN_COUNT, entry.getValue());
+                ds.endMap().endItem();
             }
+            ds.endList().endEntry();
             if (!isNewApi && docInfo.getLengthInTokens() != null)
                 ds.dynEntry(KEY_DOC_LENGTH_TOKENS, docInfo.getLengthInTokens());
             ds.dynEntry(KEY_DOC_MAY_VIEW, docInfo.isMayView());
@@ -380,7 +372,7 @@ public class ResponseStreamer {
         }
 
         TextPattern textPattern = summaryFields.getTextPattern();
-        if (modernizeApi && textPattern != null) {
+        if (textPattern != null) {
             // Show how pattern was parsed
             ds.startEntry("pattern").startMap();
             if (ds.getType().equals(KEY_JSON)) {
@@ -736,57 +728,53 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
                 }
             }
-            if (modernizeApi) {
-                Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
-                if (foreignKwics != null) {
-                    ds.startEntry(KEY_OTHER_FIELDS).startMap();
-                    for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
-                        String field = e.getKey();
-                        Kwic kwic = e.getValue();
-                        ds.startDynEntry(field).startMap();
-                        {
-                            ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
-                            ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
-                            optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
-                            ds.startEntry(KEY_BEFORE);
-                            ds.contextList(kwic.annotations(), annotationsToList, kwic.before());
-                            ds.endEntry();
-                            ds.startEntry(KEY_MATCHING_PART_OF_HIT);
-                            ds.contextList(kwic.annotations(), annotationsToList, kwic.match());
-                            ds.endEntry();
-                            ds.startEntry(KEY_AFTER);
-                            ds.contextList(kwic.annotations(), annotationsToList, kwic.after());
-                            ds.endEntry();
-                        }
-                        ds.endMap().endDynEntry();
+            Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+            if (foreignKwics != null) {
+                ds.startEntry(KEY_OTHER_FIELDS).startMap();
+                for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
+                    String field = e.getKey();
+                    Kwic kwic = e.getValue();
+                    ds.startDynEntry(field).startMap();
+                    {
+                        ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
+                        ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());
+                        optMatchInfos(matchInfos, mi -> mi.getField().equals(field));
+                        ds.startEntry(KEY_BEFORE);
+                        ds.contextList(kwic.annotations(), annotationsToList, kwic.before());
+                        ds.endEntry();
+                        ds.startEntry(KEY_MATCHING_PART_OF_HIT);
+                        ds.contextList(kwic.annotations(), annotationsToList, kwic.match());
+                        ds.endEntry();
+                        ds.startEntry(KEY_AFTER);
+                        ds.contextList(kwic.annotations(), annotationsToList, kwic.after());
+                        ds.endEntry();
                     }
-                    ds.endMap().endEntry();
+                    ds.endMap().endDynEntry();
                 }
+                ds.endMap().endEntry();
             }
         }
         ds.endMap();
     }
 
     private void optMatchInfos(Map<String, MatchInfo> matchInfos, Predicate<MatchInfo> include) {
-        if (modernizeApi) {
-            Set<Map.Entry<String, MatchInfo>> filtered = matchInfos == null ? Collections.emptySet() :
-                    matchInfos.entrySet().stream()
-                            .filter(e ->
-                                    // don't include the autogenerated "foreign hit" match infos
-                                    !e.getKey().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT) &&
-                                    // make sure we should include this match info here
-                                    e.getValue() != null && include.test(e.getValue()))
-                            .collect(Collectors.toSet());
+        Set<Map.Entry<String, MatchInfo>> filtered = matchInfos == null ? Collections.emptySet() :
+                matchInfos.entrySet().stream()
+                        .filter(e ->
+                                // don't include the autogenerated "foreign hit" match infos
+                                !e.getKey().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT) &&
+                                        // make sure we should include this match info here
+                                        e.getValue() != null && include.test(e.getValue()))
+                        .collect(Collectors.toSet());
 
-            if (!filtered.isEmpty()) {
-                ds.startEntry(KEY_MATCH_INFOS).startMap();
-                for (Map.Entry<String, MatchInfo> e: filtered) {
-                    ds.startElEntry(e.getKey());
-                    matchInfo(ds, e.getValue());
-                    ds.endElEntry();
-                }
-                ds.endMap().endEntry();
+        if (!filtered.isEmpty()) {
+            ds.startEntry(KEY_MATCH_INFOS).startMap();
+            for (Map.Entry<String, MatchInfo> e: filtered) {
+                ds.startElEntry(e.getKey());
+                matchInfo(ds, e.getValue());
+                ds.endElEntry();
             }
+            ds.endMap().endEntry();
         }
     }
 
@@ -991,8 +979,7 @@ public class ResponseStreamer {
         ds
                 .entry(KEY_FIELD_NAME, fieldDesc.name())
                 .entry(KEY_FIELD_IS_ANNOTATED, true);
-        if (modernizeApi)
-            fieldCount(annotatedField.getCount());
+        fieldCount(annotatedField.getCount());
         if (isNewApi) {
             if (includeCustom)
                 customInfoEntry(fieldDesc.custom());
@@ -1008,9 +995,8 @@ public class ResponseStreamer {
         if (!isNewApi) {
             // Moved to custom
             ds.startEntry("displayOrder").startList();
-            boolean includeInternalAnnotationsWithDisplayOrder = !modernizeApi;
             annotations.stream()
-                    .filter(a -> includeInternalAnnotationsWithDisplayOrder || !a.isInternal())
+                    .filter(a -> !a.isInternal())
                     .map(Annotation::name)
                     .forEach(id -> ds.item(KEY_FIELD_NAME, id));
             ds.endList().endEntry();
@@ -1044,14 +1030,12 @@ public class ResponseStreamer {
                     .entry("isInternal", annotation.isInternal());
             if (ai.isShowValues()) {
                 TruncatableFreqList terms = ai.getTerms();
-                if (modernizeApi) {
-                    // Return both terms AND their frequencies
-                    ds.startEntry("terms").startMap();
-                    for (Map.Entry<String, Long> termEntry: terms.getValues().entrySet()) {
-                        ds.dynEntry(termEntry.getKey(), termEntry.getValue());
-                    }
-                    ds.endMap().endEntry();
+                // Return both terms AND their frequencies
+                ds.startEntry("terms").startMap();
+                for (Map.Entry<String, Long> termEntry: terms.getValues().entrySet()) {
+                    ds.dynEntry(termEntry.getKey(), termEntry.getValue());
                 }
+                ds.endMap().endEntry();
                 if (!isNewApi) {
                     // Return the list of terms
                     ds.startEntry(KEY_VALUES).startList();
@@ -1355,24 +1339,19 @@ public class ResponseStreamer {
     public void serverInfo(ResultServerInfo result) {
         ds.startMap();
         {
-            if (modernizeApi)
-                ds.entry("apiVersion", apiVersion.toString());
+            ds.entry("apiVersion", apiVersion.toString());
             ds.entry(KEY_BLACKLAB_BUILD_TIME, BlackLab.buildTime())
                     .entry(KEY_BLACKLAB_VERSION, BlackLab.version());
-            if (modernizeApi) {
-                String buildScmRevision = BlackLab.getBuildScmRevision();
-                if (StringUtils.isEmpty(buildScmRevision))
-                    buildScmRevision = "UNKNOWN";
-                ds.entry(KEY_BLACKLAB_SCM_REVISION, buildScmRevision);
-            }
+            String buildScmRevision = BlackLab.getBuildScmRevision();
+            if (StringUtils.isEmpty(buildScmRevision))
+                buildScmRevision = "UNKNOWN";
+            ds.entry(KEY_BLACKLAB_SCM_REVISION, buildScmRevision);
 
-            if (modernizeApi) {
-                ds.startEntry("corpora").startMap();
-                for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
-                    corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
-                }
-                ds.endMap().endEntry();
+            ds.startEntry("corpora").startMap();
+            for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
+                corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
             }
+            ds.endMap().endEntry();
             if (!isNewApi) {
                 ds.startEntry("indices").startMap();
                 for (ResultIndexStatus indexStatus: result.getIndexStatuses()) {
@@ -1382,12 +1361,6 @@ public class ResponseStreamer {
             }
 
             userInfo(result.getUserInfo(), result.isDebugMode());
-
-            if (!modernizeApi && result.isDebugMode()) {
-                ds.startEntry("cacheStatus");
-                ds.value(result.getParams().getSearchManager().getBlackLabCache().getStatus());
-                ds.endEntry();
-            }
         }
         ds.endMap();
     }
@@ -1478,22 +1451,18 @@ public class ResponseStreamer {
             indexSize(metadata);
             indexProgress(result.getProgress());
 
-            boolean inconsistentKeyNaming = !modernizeApi;
             ds.startEntry("versionInfo").startMap()
-                    .entry(inconsistentKeyNaming ? "blackLabBuildTime" : KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
-                    .entry(inconsistentKeyNaming ? "blackLabVersion" : KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion());
-            if (modernizeApi)
-                ds.entry(KEY_BLACKLAB_SCM_REVISION, metadata.indexBlackLabScmRevision());
+                    .entry(KEY_BLACKLAB_BUILD_TIME, metadata.indexBlackLabBuildTime())
+                    .entry(KEY_BLACKLAB_VERSION, metadata.indexBlackLabVersion());
+            ds.entry(KEY_BLACKLAB_SCM_REVISION, metadata.indexBlackLabScmRevision());
             ds.entry("indexFormat", metadata.indexFormat())
                     .entry("timeCreated", metadata.timeCreated())
                     .entry("timeModified", metadata.timeModified())
                     .endMap().endEntry();
 
-            if (modernizeApi) {
-                // New API; all except pidField moved to custom
-                MetadataField pidField = metadata.metadataFields().pidField();
-                ds.entry(MetadataFields.SPECIAL_FIELD_SETTING_PID, pidField == null ? "" : pidField.name());
-            }
+            // New API; all except pidField moved to custom
+            MetadataField pidField = metadata.metadataFields().pidField();
+            ds.entry(MetadataFields.SPECIAL_FIELD_SETTING_PID, pidField == null ? "" : pidField.name());
             if (!isNewApi) {
                 // Legacy API
                 ds.startEntry("fieldInfo").startMap()
@@ -1608,11 +1577,9 @@ public class ResponseStreamer {
         if (isNewApi)
             ds.startEntry(KEY_COUNT).startMap();
         ds.entry(KEY_TOKEN_COUNT, metadata.tokenCount());
-        if (modernizeApi) {
-            ds.entry(isNewApi ? KEY_SUBCORPUS_SIZE_DOCUMENTS : KEY_DOCUMENT_COUNT, metadata.documentCount());
-            if (metadata.documentVersionCount() > metadata.documentCount())
-                ds.entry(KEY_DOCUMENT_VERSION_COUNT, metadata.documentVersionCount());
-        }
+        ds.entry(isNewApi ? KEY_SUBCORPUS_SIZE_DOCUMENTS : KEY_DOCUMENT_COUNT, metadata.documentCount());
+        if (metadata.documentVersionCount() > metadata.documentCount())
+            ds.entry(KEY_DOCUMENT_VERSION_COUNT, metadata.documentVersionCount());
         if (isNewApi)
             ds.endMap().endEntry();
     }

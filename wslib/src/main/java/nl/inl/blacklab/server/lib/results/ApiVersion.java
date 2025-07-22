@@ -11,9 +11,6 @@ import org.apache.commons.lang3.StringUtils;
  */
 public enum ApiVersion {
 
-    /** Maintain response compatibility with BLS v3. */
-    V3_0(3,0),
-
     /** Fixes a few small annoyances such as inconsistent names, datatypes,
      *  field info where it doesn't belong, etc.
      *  Adds new keys to the response, but also leaves older keys, leading to
@@ -45,9 +42,6 @@ public enum ApiVersion {
 
     /** An experimental future version of the API, if there is one; the current one, otherwise */
     public static final ApiVersion EXPERIMENTAL = V5_0;
-
-    /** Latest in the version 3 series */
-    public static final ApiVersion V3_LATEST = V3_0;
 
     /** Latest in the version 4 series */
     public static final ApiVersion V4_LATEST = V4_0;
