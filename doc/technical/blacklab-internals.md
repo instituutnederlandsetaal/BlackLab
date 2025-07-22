@@ -17,11 +17,9 @@ The content store is the simplest to explain: it stores the original (e.g. XML) 
 
 It is also possible to retrieve snippets from the original document (XML is carefully kept wellformed), and even to generate the keyword-in-context (KWIC) view using the original content (normally the KWIC view is generated using the forward index, which is faster but doesn't preserve the original tag structure, e.g. sentence tags, named entity tags, etc.)
 
-In the future, we may want to make the content store optional, because users often have these documents available from another source, such as a webservice. The challenge in this case is to keep highlighting efficient (BlackLab stores its content such that the position information it gets from Lucene can be used directly to highlight the document).
+It is already possible to omit the content store (`store: false` in .blf.yaml file; applies to all annotated fields though). In the future, we may want to make it possible for BlackLab to retrieve the content from another source such as a webservice. The challenge in this case is to keep highlighting efficient (BlackLab stores its content such that the position information it gets from Lucene can be used directly to highlight the document).
 
-In older external indexes, the content store is found in the subdirectory `cs_contents` (at least, if your annotated field is named `contents`; you could even have multiple annotated fields). The content store subdirectory has its own `version.dat`, which should contain `fixedblock||1`.
-
-In the newer, integrated index, the content store is (as the name implies) integrated into the Lucene index.
+In the current index format (the "integrated index"), the content store is (as the name implies) integrated into the Lucene index.
 
 ### forward index
 
@@ -43,13 +41,13 @@ While it can make certain queries faster, deciding whether or not to use the for
 
 The combined forward indexes also contain most of the contents of the documents, but missing are the tags around an in between the words (bold and italic tags, paragraph and sentence tags, header and body tags, metadata tags, etc.).
 
-All annotations get a forward index by default, but you can [disable this if you want](https://blacklab.ivdnt.org/guide/index%20your%20data/annotations.html#disable-the-forward-index).
+All annotations get a forward index by default, but you can [disable this if you want](https://blacklab.ivdnt.org/guide/index-your-data/annotations.html#disable-the-forward-index).
 
 ### index metadata file
 
 Each index has index metadata, containing information about the structure of the index.
 
-Older external indexes store this in a file called `indexmetadata.yaml`. The newer integrated index format has a special Lucene document containing this metadata. You shouldn't normally need to access it, but if you do, run the IndexTool with `--help` to learn more.
+The current index format has a special Lucene document containing this metadata. You shouldn't normally need to access it, but if you do, run the IndexTool with `--help` to learn more.
 
 The index metadata contains information that BlackLab needs, such as:
 
@@ -80,7 +78,7 @@ TODO
 
 index configuration file (`.blf.yaml`) / DocIndexer
 
-See [here](https://blacklab.ivdnt.org/guide/index%20your%20data/).
+See [here](https://blacklab.ivdnt.org/guide/index-your-data/).
 
 ### Performance optimizations
 
@@ -94,7 +92,7 @@ These include:
 
 `ClauseCombiner` operations include:
 
-- "internalization" (making longer sequences that are better for optimization, but might need the resulting hit start/end to be adjusted, e.g. "[] x:A" to "x:([] A)", but with the start of x adjusted by +1)
+- "internalization" (making longer sequences that are better for optimization, but might need the resulting hit start/end to be adjusted, e.g. `[] x:A` to `x:([] A)`, but with the start of x adjusted by +1)
 - "anytoken expansion", i.e. making sure queries like `[] "fox"` are not resolved by finding all
   tokens in the corpus, then combining them with _fox_, but by finding _fox_ and adjusting the
   hit starts by -1.
