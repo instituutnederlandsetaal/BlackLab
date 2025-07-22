@@ -173,32 +173,14 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
 
             // Process fields
             for (String luceneField: fields) { // for each field
-
-                // Is this the relation annotation? Then we want to store relation info such as attribute values,
-                // so we can look them up for individual relations matched.
-                boolean storeRelationInfo = false;
-                String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(luceneField);
-                if (nameComponents.length > 1 && nameComponents[1].equals(
-                        AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
-                    // Yes, store relation info.
-                    storeRelationInfo = true;
-                }
-
-                // Should this field get a forward index?
-                boolean storeForwardIndex = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(
-                        fieldInfos.fieldInfo(luceneField));
-
-                // If we don't need to do any per-term processing, continue
-                if (!storeForwardIndex && !storeRelationInfo)
+                if (!forwardIndexOrRelationAnnotation(fieldInfos, luceneField)) {
+                    // We don't need to do any per-term processing.
                     continue;
-
-                // Determine what actions to perform for this field
-                List<PWPlugin> actions = new ArrayList<>();
-                for (PWPlugin action: plugins) {
-                    // Check if this applies to this field or not
-                    if (action.startField(fieldInfos.fieldInfo(luceneField)))
-                        actions.add(action); // yes
                 }
+
+                // Call the startField() method of each plugin to determine
+                // which actions to perform for this field.
+                List<PWPlugin> actions = startField(fieldInfos, luceneField);
                 if (actions.isEmpty())
                     continue; // nothing to do for this field
 
@@ -211,8 +193,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
                     if (term == null)
                         break;
 
-                    for (PWPlugin action: actions)
-                        action.startTerm(term);
+                    startTerm(actions, term);
 
                     // For each document containing this term...
                     postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
@@ -221,31 +202,90 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
                         if (docId == DocIdSetIterator.NO_MORE_DOCS)
                             break;
 
-                        // Go through each occurrence of term in this doc,
-                        // gathering the positions where this term occurs as a "primary value"
-                        // (the first value at this token position, which we will store in the
-                        //  forward index). Also determine docLength.
-                        int nOccurrences = postingsEnum.freq();
-                        for (PWPlugin action: actions)
-                            action.startDocument(docId, nOccurrences);
-                        for (int i = 0; i < nOccurrences; i++) {
-                            int position = postingsEnum.nextPosition();
-                            BytesRef payload = postingsEnum.getPayload();
-                            for (PWPlugin action: actions)
-                                action.termOccurrence(position, payload);
-                        }
-                        for (PWPlugin action: actions)
-                            action.endDocument();
+                        processDocument(postingsEnum, actions, docId);
                     }
-                    for (PWPlugin action: actions)
-                        action.endTerm();
+                    endTerm(actions);
                 }
-                for (PWPlugin action: actions)
-                    action.endField();
+                endField(actions);
             } // for each field
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }
+    }
+
+    private static void processDocument(PostingsEnum postingsEnum, List<PWPlugin> actions, int docId) throws IOException {
+        // Go through each occurrence of term in this doc,
+        // gathering the positions where this term occurs as a "primary value"
+        // (the first value at this token position, which we will store in the
+        //  forward index). Also determine docLength.
+        int nOccurrences = postingsEnum.freq();
+        startDocument(actions, docId, nOccurrences);
+        for (int i = 0; i < nOccurrences; i++) {
+            int position = postingsEnum.nextPosition();
+            BytesRef payload = postingsEnum.getPayload();
+            for (PWPlugin action: actions)
+                action.termOccurrence(position, payload);
+        }
+        endDocument(actions);
+    }
+
+    private static boolean forwardIndexOrRelationAnnotation(FieldInfos fieldInfos, String luceneField) {
+        // Is this the relation annotation? Then we want to store relation info such as attribute values,
+        // so we can look them up for individual relations matched.
+        boolean storeRelationInfo = isStoreRelationInfo(luceneField);
+
+        // Should this field get a forward index?
+        boolean storeForwardIndex = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(
+                fieldInfos.fieldInfo(luceneField));
+        return storeForwardIndex || storeRelationInfo;
+    }
+
+    private static void endField(List<PWPlugin> actions) throws IOException {
+        for (PWPlugin action: actions)
+            action.endField();
+    }
+
+    private static void endTerm(List<PWPlugin> actions) {
+        for (PWPlugin action: actions)
+            action.endTerm();
+    }
+
+    private static void endDocument(List<PWPlugin> actions) throws IOException {
+        for (PWPlugin action: actions)
+            action.endDocument();
+    }
+
+    private static void startDocument(List<PWPlugin> actions, int docId, int nOccurrences) {
+        for (PWPlugin action: actions)
+            action.startDocument(docId, nOccurrences);
+    }
+
+    private static void startTerm(List<PWPlugin> actions, BytesRef term) throws IOException {
+        for (PWPlugin action: actions)
+            action.startTerm(term);
+    }
+
+    private List<PWPlugin> startField(FieldInfos fieldInfos, String luceneField) {
+        List<PWPlugin> actions = new ArrayList<>();
+        for (PWPlugin action: plugins) {
+            // Check if this applies to this field or not
+            if (action.startField(fieldInfos.fieldInfo(luceneField)))
+                actions.add(action); // yes
+        }
+        return actions;
+    }
+
+    /** Is this the field in which we should store relation info?
+     *  E.g. contents%_relation@s */
+    private static boolean isStoreRelationInfo(String luceneField) {
+        boolean storeRelationInfo = false;
+        String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(luceneField);
+        if (nameComponents.length > 1 && nameComponents[1].equals(
+                AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
+            // Yes, store relation info.
+            storeRelationInfo = true;
+        }
+        return storeRelationInfo;
     }
 
     IndexOutput createOutput(String ext) throws IOException {
