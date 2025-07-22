@@ -3,7 +3,6 @@
     {
       "identity": "str:interview about conference experience and impressions of city",
       "identityDisplay": "interview about conference experience and impressions of city",
-      "numberOfTokens": 268,
       "properties": [
         {
           "name": "field:title",
@@ -14,12 +13,12 @@
       "subcorpusSize": {
         "documents": 1,
         "tokens": 268
-      }
+      },
+      "tokens": 268
     },
     {
       "identity": "str:service encounter about getting an address printed out",
       "identityDisplay": "service encounter about getting an address printed out",
-      "numberOfTokens": 164,
       "properties": [
         {
           "name": "field:title",
@@ -30,12 +29,12 @@
       "subcorpusSize": {
         "documents": 1,
         "tokens": 164
-      }
+      },
+      "tokens": 164
     },
     {
       "identity": "str:service encounter about visa application for family members",
       "identityDisplay": "service encounter about visa application for family members",
-      "numberOfTokens": 334,
       "properties": [
         {
           "name": "field:title",
@@ -46,18 +45,20 @@
       "subcorpusSize": {
         "documents": 1,
         "tokens": 334
-      }
+      },
+      "tokens": 334
     }
   ],
   "summary": {
-    "actualWindowSize": 3,
-    "countTime": "VALUE_REMOVED",
-    "largestGroupSize": 1,
-    "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "numberOfGroups": 3,
-    "numberOfHits": 17,
-    "numberOfHitsRetrieved": 17,
+    "params": {
+      "group": "field:title",
+      "indexname": "test",
+      "number": "30",
+      "op": "docs-grouped",
+      "patt": "\"a\"",
+      "sort": "field:pid",
+      "wordsaroundhit": "1"
+    },
     "pattern": {
       "bcql": "\"a\"",
       "fieldName": "contents",
@@ -67,27 +68,24 @@
         "value": "a"
       }
     },
-    "requestedWindowSize": 30,
-    "searchParam": {
-      "group": "field:title",
-      "indexname": "test",
-      "number": "30",
-      "op": "docs-grouped",
-      "patt": "\"a\"",
-      "sort": "field:pid",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 3,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 30
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "subcorpusSize": {
+    "resultsStats": {
       "documents": 3,
-      "tokens": 766
-    },
-    "tokensInMatchingDocuments": 766,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+      "hits": 17,
+      "largestGroupSize": 1,
+      "numberOfGroups": 3,
+      "status": "finished",
+      "subcorpusSize": {
+        "documents": 3,
+        "tokens": 766
+      },
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

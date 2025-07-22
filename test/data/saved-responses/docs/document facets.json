@@ -18,30 +18,24 @@
     ]
   },
   "summary": {
-    "actualWindowSize": 0,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "requestedWindowSize": 0,
-    "searchParam": {
+    "params": {
       "facets": "field:title",
       "indexname": "test",
       "number": "0",
       "op": "docs"
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "windowFirstResult": 0,
-    "windowHasNext": true,
-    "windowHasPrevious": false
+    "resultWindow": {
+      "actualSize": 0,
+      "firstResult": 0,
+      "hasNext": true,
+      "hasPrevious": false,
+      "requestedSize": 0
+    },
+    "resultsStats": {
+      "documents": 3,
+      "hits": 0,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

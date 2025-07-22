@@ -1,77 +1,49 @@
 {
   "docInfos": {
     "PBsve430": {
-      "fromInputFile": [
-        "PBsve430.xml"
-      ],
-      "lengthInTokens": 334,
       "mayView": true,
-      "pid": [
-        "PBsve430"
-      ],
-      "title": [
-        "service encounter about visa application for family members"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 334
+          "tokens": 334
         }
       ]
     },
     "PRint602": {
-      "fromInputFile": [
-        "PRint602.xml"
-      ],
-      "lengthInTokens": 268,
       "mayView": true,
-      "pid": [
-        "PRint602"
-      ],
-      "title": [
-        "interview about conference experience and impressions of city"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PRint602.xml"
+        ],
+        "pid": [
+          "PRint602"
+        ],
+        "title": [
+          "interview about conference experience and impressions of city"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 268
+          "tokens": 268
         }
       ]
     }
   },
   "hits": [
     {
-      "docPid": "PBsve430",
-      "end": 169,
-      "left": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_0"
-        ]
-      },
-      "match": {
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "are"
-        ]
-      },
-      "right": {
+      "after": {
         "lemma": [
           "live"
         ],
@@ -85,14 +57,9 @@
           "living"
         ]
       },
-      "start": 168
-    },
-    {
-      "docPid": "PRint602",
-      "end": 12,
-      "left": {
+      "before": {
         "lemma": [
-          "we"
+          ""
         ],
         "pos": [
           ""
@@ -101,9 +68,11 @@
           " "
         ],
         "word": [
-          "we"
+          "_0"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 169,
       "match": {
         "lemma": [
           "be"
@@ -118,7 +87,10 @@
           "are"
         ]
       },
-      "right": {
+      "start": 168
+    },
+    {
+      "after": {
         "lemma": [
           "do"
         ],
@@ -132,14 +104,9 @@
           "doing"
         ]
       },
-      "start": 11
-    },
-    {
-      "docPid": "PRint602",
-      "end": 58,
-      "left": {
+      "before": {
         "lemma": [
-          "you"
+          "we"
         ],
         "pos": [
           ""
@@ -148,9 +115,11 @@
           " "
         ],
         "word": [
-          "you"
+          "we"
         ]
       },
+      "docPid": "PRint602",
+      "end": 12,
       "match": {
         "lemma": [
           "be"
@@ -165,7 +134,10 @@
           "are"
         ]
       },
-      "right": {
+      "start": 11
+    },
+    {
+      "after": {
         "lemma": [
           "from"
         ],
@@ -177,42 +149,42 @@
         ],
         "word": [
           "from"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "you"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "you"
+        ]
+      },
+      "docPid": "PRint602",
+      "end": 58,
+      "match": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "are"
         ]
       },
       "start": 57
     },
     {
-      "docPid": "PRint602",
-      "end": 64,
-      "left": {
-        "lemma": [
-          "what"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "what"
-        ]
-      },
-      "match": {
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "are"
-        ]
-      },
-      "right": {
+      "after": {
         "lemma": [
           ""
         ],
@@ -226,14 +198,9 @@
           "y-"
         ]
       },
-      "start": 63
-    },
-    {
-      "docPid": "PRint602",
-      "end": 68,
-      "left": {
+      "before": {
         "lemma": [
-          "you"
+          "what"
         ],
         "pos": [
           ""
@@ -242,9 +209,11 @@
           " "
         ],
         "word": [
-          "you"
+          "what"
         ]
       },
+      "docPid": "PRint602",
+      "end": 64,
       "match": {
         "lemma": [
           "be"
@@ -259,7 +228,10 @@
           "are"
         ]
       },
-      "right": {
+      "start": 63
+    },
+    {
+      "after": {
         "lemma": [
           "do"
         ],
@@ -273,14 +245,9 @@
           "doing"
         ]
       },
-      "start": 67
-    },
-    {
-      "docPid": "PRint602",
-      "end": 118,
-      "left": {
+      "before": {
         "lemma": [
-          "or"
+          "you"
         ],
         "pos": [
           ""
@@ -289,9 +256,11 @@
           " "
         ],
         "word": [
-          "or"
+          "you"
         ]
       },
+      "docPid": "PRint602",
+      "end": 68,
       "match": {
         "lemma": [
           "be"
@@ -306,7 +275,10 @@
           "are"
         ]
       },
-      "right": {
+      "start": 67
+    },
+    {
+      "after": {
         "lemma": [
           "you"
         ],
@@ -318,14 +290,56 @@
         ],
         "word": [
           "you"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "or"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "or"
+        ]
+      },
+      "docPid": "PRint602",
+      "end": 118,
+      "match": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "are"
         ]
       },
       "start": 117
     },
     {
-      "docPid": "PRint602",
-      "end": 138,
-      "left": {
+      "after": {
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "before": {
         "lemma": [
           "you"
         ],
@@ -339,6 +353,8 @@
           "you"
         ]
       },
+      "docPid": "PRint602",
+      "end": 138,
       "match": {
         "lemma": [
           "be"
@@ -351,41 +367,20 @@
         ],
         "word": [
           "are"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "a"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "a"
         ]
       },
       "start": 137
     }
   ],
   "summary": {
-    "actualWindowSize": 7,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "[lemma=\"be\" & word=\"are\"]",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 2,
-    "numberOfDocsRetrieved": 2,
-    "numberOfHits": 7,
-    "numberOfHitsRetrieved": 7,
     "pattern": {
       "bcql": "[lemma=\"be\" & word=\"are\"]",
       "fieldName": "contents",
@@ -408,21 +403,18 @@
         "type": "and"
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "hits",
-      "patt": "[lemma=\"be\" & word=\"are\"]",
-      "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 7,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 2,
+      "hits": 7,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

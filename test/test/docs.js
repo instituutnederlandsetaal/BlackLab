@@ -32,7 +32,7 @@ function expectDocsUnchanged(testName, params, filter) {
     describe(`docs/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
-            .get('/test/docs')
+            .get(constants.URL_PREFIX + '/docs')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid",
@@ -67,20 +67,20 @@ expectDocsUnchanged('pattern and filter', '"the"', 'pid:PBsve435');
 
 // Doc metadata, contents
 expectUrlUnchanged('docs', 'document metadata',
-        '/test/docs/PBsve430');
+        constants.URL_PREFIX + '/docs/PBsve430');
 expectUrlUnchanged('docs', 'document contents',
-        '/test/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
+        constants.URL_PREFIX + '/docs/PBsve430/contents?patt=%22the%22', 'application/xml');
 
 // Doc snippet
 expectUrlUnchanged('docs', 'document snippet wordstart',
-        '/test/docs/PBsve430/snippet?wordstart=5&wordend=15');
+        constants.URL_PREFIX + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
 expectUrlUnchanged('docs', 'document snippet hitstart',
-        '/test/docs/PBsve430/snippet?hitstart=3&hitend=5&wordsaroundhit=2');
+        constants.URL_PREFIX + '/docs/PBsve430/snippet?hitstart=3&hitend=5&wordsaroundhit=2');
 
 // Doc facets
 expectUrlUnchanged('docs', 'document facets',
-        '/test/docs/?number=0&facets=field:title');
+        constants.URL_PREFIX + '/docs/?number=0&facets=field:title');
 
 // Docs CSV
 expectUrlUnchanged('docs', 'CSV results',
-        '/test/docs/', 'text/csv');
+        constants.URL_PREFIX + '/docs/', 'text/csv');

@@ -1,30 +1,43 @@
 {
   "docInfos": {
     "PBsve430": {
-      "fromInputFile": [
-        "PBsve430.xml"
-      ],
-      "lengthInTokens": 334,
       "mayView": true,
-      "pid": [
-        "PBsve430"
-      ],
-      "title": [
-        "service encounter about visa application for family members"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 334
+          "tokens": 334
         }
       ]
     }
   },
   "hits": [
     {
-      "docPid": "PBsve430",
-      "end": 1,
-      "left": {
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_1"
+        ]
+      },
+      "before": {
         "lemma": [
         ],
         "pos": [
@@ -34,6 +47,8 @@
         "word": [
         ]
       },
+      "docPid": "PBsve430",
+      "end": 1,
       "match": {
         "lemma": [
           ""
@@ -46,28 +61,26 @@
         ],
         "word": [
           "f_hallo"
-        ]
-      },
-      "right": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_1"
         ]
       },
       "start": 0
     },
     {
-      "docPid": "PBsve430",
-      "end": 2,
-      "left": {
+      "after": {
+        "lemma": [
+          "hello"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "hello"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -81,6 +94,8 @@
           "f_hallo"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 2,
       "match": {
         "lemma": [
           ""
@@ -93,28 +108,26 @@
         ],
         "word": [
           "_1"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "hello"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "hello"
         ]
       },
       "start": 1
     },
     {
-      "docPid": "PBsve430",
-      "end": 3,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -128,6 +141,8 @@
           "_1"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 3,
       "match": {
         "lemma": [
           "hello"
@@ -140,28 +155,26 @@
         ],
         "word": [
           "hello"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "i"
         ]
       },
       "start": 2
     },
     {
-      "docPid": "PBsve430",
-      "end": 4,
-      "left": {
+      "after": {
+        "lemma": [
+          "want"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "want"
+        ]
+      },
+      "before": {
         "lemma": [
           "hello"
         ],
@@ -175,6 +188,8 @@
           "hello"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 4,
       "match": {
         "lemma": [
           "i"
@@ -187,28 +202,26 @@
         ],
         "word": [
           "i"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "want"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "want"
         ]
       },
       "start": 3
     },
     {
-      "docPid": "PBsve430",
-      "end": 5,
-      "left": {
+      "after": {
+        "lemma": [
+          "to"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -222,6 +235,8 @@
           "i"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 5,
       "match": {
         "lemma": [
           "want"
@@ -234,28 +249,26 @@
         ],
         "word": [
           "want"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "to"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "to"
         ]
       },
       "start": 4
     },
     {
-      "docPid": "PBsve430",
-      "end": 6,
-      "left": {
+      "after": {
+        "lemma": [
+          "apply"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "apply"
+        ]
+      },
+      "before": {
         "lemma": [
           "want"
         ],
@@ -269,6 +282,8 @@
           "want"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 6,
       "match": {
         "lemma": [
           "to"
@@ -281,28 +296,26 @@
         ],
         "word": [
           "to"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "apply"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "apply"
         ]
       },
       "start": 5
     },
     {
-      "docPid": "PBsve430",
-      "end": 7,
-      "left": {
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_1"
+        ]
+      },
+      "before": {
         "lemma": [
           "to"
         ],
@@ -316,6 +329,8 @@
           "to"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 7,
       "match": {
         "lemma": [
           "apply"
@@ -328,28 +343,26 @@
         ],
         "word": [
           "apply"
-        ]
-      },
-      "right": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_1"
         ]
       },
       "start": 6
     },
     {
-      "docPid": "PBsve430",
-      "end": 8,
-      "left": {
+      "after": {
+        "lemma": [
+          "for"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "for"
+        ]
+      },
+      "before": {
         "lemma": [
           "apply"
         ],
@@ -363,6 +376,8 @@
           "apply"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 8,
       "match": {
         "lemma": [
           ""
@@ -375,28 +390,26 @@
         ],
         "word": [
           "_1"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "for"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "for"
         ]
       },
       "start": 7
     },
     {
-      "docPid": "PBsve430",
-      "end": 9,
-      "left": {
+      "after": {
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -410,6 +423,8 @@
           "_1"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 9,
       "match": {
         "lemma": [
           "for"
@@ -422,28 +437,26 @@
         ],
         "word": [
           "for"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "the"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "the"
         ]
       },
       "start": 8
     },
     {
-      "docPid": "PBsve430",
-      "end": 10,
-      "left": {
+      "after": {
+        "lemma": [
+          "visum"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "visa"
+        ]
+      },
+      "before": {
         "lemma": [
           "for"
         ],
@@ -457,6 +470,8 @@
           "for"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 10,
       "match": {
         "lemma": [
           "the"
@@ -469,28 +484,26 @@
         ],
         "word": [
           "the"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "visum"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "visa"
         ]
       },
       "start": 9
     },
     {
-      "docPid": "PBsve430",
-      "end": 11,
-      "left": {
+      "after": {
+        "lemma": [
+          "of"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "of"
+        ]
+      },
+      "before": {
         "lemma": [
           "the"
         ],
@@ -504,6 +517,8 @@
           "the"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 11,
       "match": {
         "lemma": [
           "visum"
@@ -516,28 +531,26 @@
         ],
         "word": [
           "visa"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "of"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "of"
         ]
       },
       "start": 10
     },
     {
-      "docPid": "PBsve430",
-      "end": 12,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "my"
+        ]
+      },
+      "before": {
         "lemma": [
           "visum"
         ],
@@ -551,6 +564,8 @@
           "visa"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 12,
       "match": {
         "lemma": [
           "of"
@@ -563,28 +578,26 @@
         ],
         "word": [
           "of"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "my"
         ]
       },
       "start": 11
     },
     {
-      "docPid": "PBsve430",
-      "end": 13,
-      "left": {
+      "after": {
+        "lemma": [
+          "family"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "family"
+        ]
+      },
+      "before": {
         "lemma": [
           "of"
         ],
@@ -598,6 +611,8 @@
           "of"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 13,
       "match": {
         "lemma": [
           "i"
@@ -610,28 +625,26 @@
         ],
         "word": [
           "my"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "family"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "family"
         ]
       },
       "start": 12
     },
     {
-      "docPid": "PBsve430",
-      "end": 14,
-      "left": {
+      "after": {
+        "lemma": [
+          "mhm"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "mhm"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -645,6 +658,8 @@
           "my"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 14,
       "match": {
         "lemma": [
           "family"
@@ -657,28 +672,26 @@
         ],
         "word": [
           "family"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "mhm"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "mhm"
         ]
       },
       "start": 13
     },
     {
-      "docPid": "PBsve430",
-      "end": 15,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "before": {
         "lemma": [
           "family"
         ],
@@ -692,6 +705,8 @@
           "family"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 15,
       "match": {
         "lemma": [
           "mhm"
@@ -704,28 +719,26 @@
         ],
         "word": [
           "mhm"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "i"
         ]
       },
       "start": 14
     },
     {
-      "docPid": "PBsve430",
-      "end": 16,
-      "left": {
+      "after": {
+        "lemma": [
+          "go"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "went"
+        ]
+      },
+      "before": {
         "lemma": [
           "mhm"
         ],
@@ -739,6 +752,8 @@
           "mhm"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 16,
       "match": {
         "lemma": [
           "i"
@@ -751,28 +766,26 @@
         ],
         "word": [
           "i"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "go"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "went"
         ]
       },
       "start": 15
     },
     {
-      "docPid": "PBsve430",
-      "end": 17,
-      "left": {
+      "after": {
+        "lemma": [
+          "to"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "to"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -786,6 +799,8 @@
           "i"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 17,
       "match": {
         "lemma": [
           "go"
@@ -798,28 +813,26 @@
         ],
         "word": [
           "went"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "to"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "to"
         ]
       },
       "start": 16
     },
     {
-      "docPid": "PBsve430",
-      "end": 18,
-      "left": {
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "before": {
         "lemma": [
           "go"
         ],
@@ -833,6 +846,8 @@
           "went"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 18,
       "match": {
         "lemma": [
           "to"
@@ -845,28 +860,26 @@
         ],
         "word": [
           "to"
-        ]
-      },
-      "right": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_0"
         ]
       },
       "start": 17
     },
     {
-      "docPid": "PBsve430",
-      "end": 19,
-      "left": {
+      "after": {
+        "lemma": [
+          "the"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "the"
+        ]
+      },
+      "before": {
         "lemma": [
           "to"
         ],
@@ -880,6 +893,8 @@
           "to"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 19,
       "match": {
         "lemma": [
           ""
@@ -892,28 +907,26 @@
         ],
         "word": [
           "_0"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "the"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "the"
         ]
       },
       "start": 18
     },
     {
-      "docPid": "PBsve430",
-      "end": 20,
-      "left": {
+      "after": {
+        "lemma": [
+          "district"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "district"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -927,6 +940,8 @@
           "_0"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 20,
       "match": {
         "lemma": [
           "the"
@@ -939,28 +954,26 @@
         ],
         "word": [
           "the"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "district"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "district"
         ]
       },
       "start": 19
     },
     {
-      "docPid": "PBsve430",
-      "end": 21,
-      "left": {
+      "after": {
+        "lemma": [
+          "office"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "office"
+        ]
+      },
+      "before": {
         "lemma": [
           "the"
         ],
@@ -974,6 +987,8 @@
           "the"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 21,
       "match": {
         "lemma": [
           "district"
@@ -986,28 +1001,26 @@
         ],
         "word": [
           "district"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "office"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "office"
         ]
       },
       "start": 20
     },
     {
-      "docPid": "PBsve430",
-      "end": 22,
-      "left": {
+      "after": {
+        "lemma": [
+          "and"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "and"
+        ]
+      },
+      "before": {
         "lemma": [
           "district"
         ],
@@ -1021,6 +1034,8 @@
           "district"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 22,
       "match": {
         "lemma": [
           "office"
@@ -1033,28 +1048,26 @@
         ],
         "word": [
           "office"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "and"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "and"
         ]
       },
       "start": 21
     },
     {
-      "docPid": "PBsve430",
-      "end": 23,
-      "left": {
+      "after": {
+        "lemma": [
+          "they"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "they"
+        ]
+      },
+      "before": {
         "lemma": [
           "office"
         ],
@@ -1068,6 +1081,8 @@
           "office"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 23,
       "match": {
         "lemma": [
           "and"
@@ -1080,28 +1095,26 @@
         ],
         "word": [
           "and"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "they"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "they"
         ]
       },
       "start": 22
     },
     {
-      "docPid": "PBsve430",
-      "end": 24,
-      "left": {
+      "after": {
+        "lemma": [
+          "tell"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "told"
+        ]
+      },
+      "before": {
         "lemma": [
           "and"
         ],
@@ -1115,6 +1128,8 @@
           "and"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 24,
       "match": {
         "lemma": [
           "they"
@@ -1127,28 +1142,26 @@
         ],
         "word": [
           "they"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "tell"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "told"
         ]
       },
       "start": 23
     },
     {
-      "docPid": "PBsve430",
-      "end": 25,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "me"
+        ]
+      },
+      "before": {
         "lemma": [
           "they"
         ],
@@ -1162,6 +1175,8 @@
           "they"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 25,
       "match": {
         "lemma": [
           "tell"
@@ -1174,28 +1189,26 @@
         ],
         "word": [
           "told"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "me"
         ]
       },
       "start": 24
     },
     {
-      "docPid": "PBsve430",
-      "end": 26,
-      "left": {
+      "after": {
+        "lemma": [
+          "that"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "before": {
         "lemma": [
           "tell"
         ],
@@ -1209,6 +1222,8 @@
           "told"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 26,
       "match": {
         "lemma": [
           "i"
@@ -1221,28 +1236,26 @@
         ],
         "word": [
           "me"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "that"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "that"
         ]
       },
       "start": 25
     },
     {
-      "docPid": "PBsve430",
-      "end": 27,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -1256,6 +1269,8 @@
           "me"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 27,
       "match": {
         "lemma": [
           "that"
@@ -1268,28 +1283,26 @@
         ],
         "word": [
           "that"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "i"
         ]
       },
       "start": 26
     },
     {
-      "docPid": "PBsve430",
-      "end": 28,
-      "left": {
+      "after": {
+        "lemma": [
+          "need"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "need"
+        ]
+      },
+      "before": {
         "lemma": [
           "that"
         ],
@@ -1303,6 +1316,8 @@
           "that"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 28,
       "match": {
         "lemma": [
           "i"
@@ -1315,28 +1330,26 @@
         ],
         "word": [
           "i"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "need"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "need"
         ]
       },
       "start": 27
     },
     {
-      "docPid": "PBsve430",
-      "end": 29,
-      "left": {
+      "after": {
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -1350,6 +1363,8 @@
           "i"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 29,
       "match": {
         "lemma": [
           "need"
@@ -1362,28 +1377,26 @@
         ],
         "word": [
           "need"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "a"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "a"
         ]
       },
       "start": 28
     },
     {
-      "docPid": "PBsve430",
-      "end": 30,
-      "left": {
+      "after": {
+        "lemma": [
+          "letter"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "letter"
+        ]
+      },
+      "before": {
         "lemma": [
           "need"
         ],
@@ -1397,6 +1410,8 @@
           "need"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 30,
       "match": {
         "lemma": [
           "a"
@@ -1409,28 +1424,26 @@
         ],
         "word": [
           "a"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "letter"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "letter"
         ]
       },
       "start": 29
     },
     {
-      "docPid": "PBsve430",
-      "end": 31,
-      "left": {
+      "after": {
+        "lemma": [
+          "mhm"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "mhm"
+        ]
+      },
+      "before": {
         "lemma": [
           "a"
         ],
@@ -1444,6 +1457,8 @@
           "a"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 31,
       "match": {
         "lemma": [
           "letter"
@@ -1456,56 +1471,42 @@
         ],
         "word": [
           "letter"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "mhm"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "mhm"
         ]
       },
       "start": 30
     },
     {
+      "after": {
+        "lemma": [
+          "mhm"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "mhm"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "letter"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "letter"
+        ]
+      },
       "docPid": "PBsve430",
       "end": 32,
-      "left": {
-        "lemma": [
-          "letter"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "letter"
-        ]
-      },
       "match": {
-        "lemma": [
-          "mhm"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "mhm"
-        ]
-      },
-      "right": {
         "lemma": [
           "mhm"
         ],
@@ -1522,9 +1523,21 @@
       "start": 31
     },
     {
-      "docPid": "PBsve430",
-      "end": 33,
-      "left": {
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "before": {
         "lemma": [
           "mhm"
         ],
@@ -1538,6 +1551,8 @@
           "mhm"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 33,
       "match": {
         "lemma": [
           "mhm"
@@ -1550,28 +1565,26 @@
         ],
         "word": [
           "mhm"
-        ]
-      },
-      "right": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_0"
         ]
       },
       "start": 32
     },
     {
-      "docPid": "PBsve430",
-      "end": 34,
-      "left": {
+      "after": {
+        "lemma": [
+          "that"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "that"
+        ]
+      },
+      "before": {
         "lemma": [
           "mhm"
         ],
@@ -1585,6 +1598,8 @@
           "mhm"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 34,
       "match": {
         "lemma": [
           ""
@@ -1597,28 +1612,26 @@
         ],
         "word": [
           "_0"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "that"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "that"
         ]
       },
       "start": 33
     },
     {
-      "docPid": "PBsve430",
-      "end": 35,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -1632,6 +1645,8 @@
           "_0"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 35,
       "match": {
         "lemma": [
           "that"
@@ -1644,28 +1659,26 @@
         ],
         "word": [
           "that"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "i"
         ]
       },
       "start": 34
     },
     {
-      "docPid": "PBsve430",
-      "end": 36,
-      "left": {
+      "after": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "'m"
+        ]
+      },
+      "before": {
         "lemma": [
           "that"
         ],
@@ -1679,6 +1692,8 @@
           "that"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 36,
       "match": {
         "lemma": [
           "i"
@@ -1691,28 +1706,26 @@
         ],
         "word": [
           "i"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "'m"
         ]
       },
       "start": 35
     },
     {
-      "docPid": "PBsve430",
-      "end": 37,
-      "left": {
+      "after": {
+        "lemma": [
+          "live"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "living"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -1726,6 +1739,8 @@
           "i"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 37,
       "match": {
         "lemma": [
           "be"
@@ -1738,28 +1753,26 @@
         ],
         "word": [
           "'m"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "live"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "living"
         ]
       },
       "start": 36
     },
     {
-      "docPid": "PBsve430",
-      "end": 38,
-      "left": {
+      "after": {
+        "lemma": [
+          "here"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "here"
+        ]
+      },
+      "before": {
         "lemma": [
           "be"
         ],
@@ -1773,6 +1786,8 @@
           "'m"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 38,
       "match": {
         "lemma": [
           "live"
@@ -1785,28 +1800,26 @@
         ],
         "word": [
           "living"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "here"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "here"
         ]
       },
       "start": 37
     },
     {
-      "docPid": "PBsve430",
-      "end": 39,
-      "left": {
+      "after": {
+        "lemma": [
+          "and"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "and"
+        ]
+      },
+      "before": {
         "lemma": [
           "live"
         ],
@@ -1820,6 +1833,8 @@
           "living"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 39,
       "match": {
         "lemma": [
           "here"
@@ -1832,28 +1847,26 @@
         ],
         "word": [
           "here"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "and"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "and"
         ]
       },
       "start": 38
     },
     {
-      "docPid": "PBsve430",
-      "end": 40,
-      "left": {
+      "after": {
+        "lemma": [
+          "pay"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "paying"
+        ]
+      },
+      "before": {
         "lemma": [
           "here"
         ],
@@ -1867,6 +1880,8 @@
           "here"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 40,
       "match": {
         "lemma": [
           "and"
@@ -1879,28 +1894,26 @@
         ],
         "word": [
           "and"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "pay"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "paying"
         ]
       },
       "start": 39
     },
     {
-      "docPid": "PBsve430",
-      "end": 41,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "my"
+        ]
+      },
+      "before": {
         "lemma": [
           "and"
         ],
@@ -1914,6 +1927,8 @@
           "and"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 41,
       "match": {
         "lemma": [
           "pay"
@@ -1926,28 +1941,26 @@
         ],
         "word": [
           "paying"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "my"
         ]
       },
       "start": 40
     },
     {
-      "docPid": "PBsve430",
-      "end": 42,
-      "left": {
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_0"
+        ]
+      },
+      "before": {
         "lemma": [
           "pay"
         ],
@@ -1961,6 +1974,8 @@
           "paying"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 42,
       "match": {
         "lemma": [
           "i"
@@ -1973,28 +1988,26 @@
         ],
         "word": [
           "my"
-        ]
-      },
-      "right": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_0"
         ]
       },
       "start": 41
     },
     {
-      "docPid": "PBsve430",
-      "end": 43,
-      "left": {
+      "after": {
+        "lemma": [
+          "rent"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "rent"
+        ]
+      },
+      "before": {
         "lemma": [
           "i"
         ],
@@ -2008,6 +2021,8 @@
           "my"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 43,
       "match": {
         "lemma": [
           ""
@@ -2020,28 +2035,26 @@
         ],
         "word": [
           "_0"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "rent"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "rent"
         ]
       },
       "start": 42
     },
     {
-      "docPid": "PBsve430",
-      "end": 44,
-      "left": {
+      "after": {
+        "lemma": [
+          "and"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "and"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -2055,6 +2068,8 @@
           "_0"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 44,
       "match": {
         "lemma": [
           "rent"
@@ -2067,28 +2082,12 @@
         ],
         "word": [
           "rent"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "and"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "and"
         ]
       },
       "start": 43
     },
     {
-      "docPid": "PBsve430",
-      "end": 45,
-      "left": {
+      "after": {
         "lemma": [
           "rent"
         ],
@@ -2102,6 +2101,22 @@
           "rent"
         ]
       },
+      "before": {
+        "lemma": [
+          "rent"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "rent"
+        ]
+      },
+      "docPid": "PBsve430",
+      "end": 45,
       "match": {
         "lemma": [
           "and"
@@ -2114,28 +2129,26 @@
         ],
         "word": [
           "and"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "rent"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "rent"
         ]
       },
       "start": 44
     },
     {
-      "docPid": "PBsve430",
-      "end": 46,
-      "left": {
+      "after": {
+        "lemma": [
+          "mhm"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "mhm"
+        ]
+      },
+      "before": {
         "lemma": [
           "and"
         ],
@@ -2149,6 +2162,8 @@
           "and"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 46,
       "match": {
         "lemma": [
           "rent"
@@ -2161,28 +2176,26 @@
         ],
         "word": [
           "rent"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "mhm"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "mhm"
         ]
       },
       "start": 45
     },
     {
-      "docPid": "PBsve430",
-      "end": 47,
-      "left": {
+      "after": {
+        "lemma": [
+          ""
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "_1"
+        ]
+      },
+      "before": {
         "lemma": [
           "rent"
         ],
@@ -2196,6 +2209,8 @@
           "rent"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 47,
       "match": {
         "lemma": [
           "mhm"
@@ -2208,28 +2223,26 @@
         ],
         "word": [
           "mhm"
-        ]
-      },
-      "right": {
-        "lemma": [
-          ""
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "_1"
         ]
       },
       "start": 46
     },
     {
-      "docPid": "PBsve430",
-      "end": 48,
-      "left": {
+      "after": {
+        "lemma": [
+          "may"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "may"
+        ]
+      },
+      "before": {
         "lemma": [
           "mhm"
         ],
@@ -2243,6 +2256,8 @@
           "mhm"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 48,
       "match": {
         "lemma": [
           ""
@@ -2255,28 +2270,26 @@
         ],
         "word": [
           "_1"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "may"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "may"
         ]
       },
       "start": 47
     },
     {
-      "docPid": "PBsve430",
-      "end": 49,
-      "left": {
+      "after": {
+        "lemma": [
+          "i"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "i"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -2290,6 +2303,8 @@
           "_1"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 49,
       "match": {
         "lemma": [
           "may"
@@ -2302,28 +2317,26 @@
         ],
         "word": [
           "may"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "i"
         ]
       },
       "start": 48
     },
     {
-      "docPid": "PBsve430",
-      "end": 50,
-      "left": {
+      "after": {
+        "lemma": [
+          "have"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "have"
+        ]
+      },
+      "before": {
         "lemma": [
           "may"
         ],
@@ -2337,6 +2350,8 @@
           "may"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 50,
       "match": {
         "lemma": [
           "i"
@@ -2349,41 +2364,20 @@
         ],
         "word": [
           "i"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "have"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "have"
         ]
       },
       "start": 49
     }
   ],
   "summary": {
-    "actualWindowSize": 50,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "[]",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "numberOfHits": 766,
-    "numberOfHitsRetrieved": 766,
     "pattern": {
       "bcql": "[]",
       "fieldName": "contents",
@@ -2394,21 +2388,18 @@
         "type": "anytoken"
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "hits",
-      "patt": "[]",
-      "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 50,
+      "firstResult": 0,
+      "hasNext": true,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": true,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 3,
+      "hits": 766,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

@@ -29,12 +29,12 @@ function sanitizeBlsResponse(response) {
                 timeModified: true
             }
         },
-        indices: { // API v3/4
-            test: {
-                timeModified: true
-            }
-        },
-        cacheStatus: 'DELETE',
+        // indices: { // API v3/4
+        //     test: {
+        //         timeModified: true
+        //     }
+        // },
+        // cacheStatus: 'DELETE',
 
         // Corpus information page
         versionInfo: {
@@ -55,7 +55,10 @@ function sanitizeBlsResponse(response) {
         // Hits/docs response
         summary: {
             searchTime: true,
-            countTime: true
+            countTime: true,
+            resultsStats: {
+                timeMs: true
+            }
         },
 
         // Top-level timeModified key on index status page (e.g. /test/status/)

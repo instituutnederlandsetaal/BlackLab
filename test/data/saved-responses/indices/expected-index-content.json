@@ -18,23 +18,24 @@
     {
       "docPid": "PBsve430",
       "docInfo": {
-        "fromInputFile": [
-          "testdocs"
-        ],
-        "pid": [
-          "PBsve430"
-        ],
-        "title": [
-          "service encounter about visa application for family members"
-        ],
+        "mayView": true,
+        "metadata": {
+          "fromInputFile": [
+            "testdocs"
+          ],
+          "pid": [
+            "PBsve430"
+          ],
+          "title": [
+            "service encounter about visa application for family members"
+          ]
+        },
         "tokenCounts": [
           {
           	"fieldName": "contents",
-          	"tokenCount": 334
+          	"tokens": 334
           }
-        ],
-        "lengthInTokens": 334,
-        "mayView": true
+        ]
       }
     }
   ]

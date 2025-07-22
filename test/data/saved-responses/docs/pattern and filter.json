@@ -2,21 +2,22 @@
   "docs": [
     {
       "docInfo": {
-        "fromInputFile": [
-          "PBsve435.xml"
-        ],
-        "lengthInTokens": 164,
         "mayView": true,
-        "pid": [
-          "PBsve435"
-        ],
-        "title": [
-          "service encounter about getting an address printed out"
-        ],
+        "metadata": {
+          "fromInputFile": [
+            "PBsve435.xml"
+          ],
+          "pid": [
+            "PBsve435"
+          ],
+          "title": [
+            "service encounter about getting an address printed out"
+          ]
+        },
         "tokenCounts": [
           {
             "fieldName": "contents",
-            "tokenCount": 164
+            "tokens": 164
           }
         ]
       },
@@ -24,7 +25,37 @@
       "numberOfHits": 9,
       "snippets": [
         {
-          "left": {
+          "after": {
+            "lemma": [
+              "address",
+              "so",
+              "can",
+              "you",
+              "print"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "address",
+              "so",
+              "can",
+              "you",
+              "print"
+            ]
+          },
+          "before": {
             "lemma": [
               "er",
               "now",
@@ -66,85 +97,11 @@
             ],
             "word": [
               "the"
-            ]
-          },
-          "right": {
-            "lemma": [
-              "address",
-              "so",
-              "can",
-              "you",
-              "print"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "word": [
-              "address",
-              "so",
-              "can",
-              "you",
-              "print"
             ]
           }
         },
         {
-          "left": {
-            "lemma": [
-              "so",
-              "can",
-              "you",
-              "print",
-              "er"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "word": [
-              "so",
-              "can",
-              "you",
-              "print",
-              "er"
-            ]
-          },
-          "match": {
-            "lemma": [
-              "the"
-            ],
-            "pos": [
-              ""
-            ],
-            "punct": [
-              " "
-            ],
-            "word": [
-              "the"
-            ]
-          },
-          "right": {
+          "after": {
             "lemma": [
               "new",
               "address",
@@ -173,10 +130,84 @@
               "me",
               "_0"
             ]
+          },
+          "before": {
+            "lemma": [
+              "so",
+              "can",
+              "you",
+              "print",
+              "er"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "so",
+              "can",
+              "you",
+              "print",
+              "er"
+            ]
+          },
+          "match": {
+            "lemma": [
+              "the"
+            ],
+            "pos": [
+              ""
+            ],
+            "punct": [
+              " "
+            ],
+            "word": [
+              "the"
+            ]
           }
         },
         {
-          "left": {
+          "after": {
+            "lemma": [
+              "address",
+              "for",
+              "i",
+              "",
+              "the"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "address",
+              "for",
+              "me",
+              "_1",
+              "the"
+            ]
+          },
+          "before": {
             "lemma": [
               "you",
               "print",
@@ -219,14 +250,16 @@
             "word": [
               "the"
             ]
-          },
-          "right": {
+          }
+        },
+        {
+          "after": {
             "lemma": [
-              "address",
+              "confirmation",
               "for",
-              "i",
-              "",
-              "the"
+              "you",
+              "visa",
+              "yeah"
             ],
             "pos": [
               "",
@@ -243,16 +276,14 @@
               " "
             ],
             "word": [
-              "address",
+              "confirmation",
               "for",
-              "me",
-              "_1",
-              "the"
+              "your",
+              "visa",
+              "yeah"
             ]
-          }
-        },
-        {
-          "left": {
+          },
+          "before": {
             "lemma": [
               "the",
               "address",
@@ -295,14 +326,16 @@
             "word": [
               "the"
             ]
-          },
-          "right": {
+          }
+        },
+        {
+          "after": {
             "lemma": [
-              "confirmation",
+              "",
               "for",
-              "you",
-              "visa",
-              "yeah"
+              "the",
+              "new",
+              "period"
             ],
             "pos": [
               "",
@@ -319,16 +352,14 @@
               " "
             ],
             "word": [
-              "confirmation",
+              "_0",
               "for",
-              "your",
-              "visa",
-              "yeah"
+              "the",
+              "new",
+              "period"
             ]
-          }
-        },
-        {
-          "left": {
+          },
+          "before": {
             "lemma": [
               "yeah",
               "yeah",
@@ -371,57 +402,21 @@
             "word": [
               "the"
             ]
-          },
-          "right": {
-            "lemma": [
-              "",
-              "for",
-              "the",
-              "new",
-              "period"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "word": [
-              "_0",
-              "for",
-              "the",
-              "new",
-              "period"
-            ]
           }
         }
       ]
     }
   ],
   "summary": {
-    "actualWindowSize": 1,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "filter": "pid:PBsve435",
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"the\"",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 9,
-    "numberOfHitsRetrieved": 9,
     "pattern": {
       "bcql": "\"the\"",
       "fieldName": "contents",
@@ -431,22 +426,18 @@
         "value": "the"
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "filter": "pid:PBsve435",
-      "indexname": "test",
-      "op": "docs",
-      "patt": "\"the\"",
-      "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 1,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 1,
+      "hits": 9,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

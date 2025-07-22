@@ -1,50 +1,58 @@
 {
   "docInfos": {
     "PBsve430": {
-      "fromInputFile": [
-        "PBsve430.xml"
-      ],
-      "lengthInTokens": 334,
       "mayView": true,
-      "pid": [
-        "PBsve430"
-      ],
-      "title": [
-        "service encounter about visa application for family members"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 334
+          "tokens": 334
         }
       ]
     }
   },
   "hits": [
     {
-      "captureGroups": [
-        {
-          "end": 197,
-          "name": "A",
-          "start": 196
-        }
-      ],
+      "after": {
+        "lemma": [
+          "and"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "and"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "is"
+        ]
+      },
       "docPid": "PBsve430",
       "end": 198,
-      "left": {
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "is"
-        ]
-      },
       "match": {
         "lemma": [
           "one",
@@ -74,9 +82,12 @@
           "type": "span"
         }
       },
-      "right": {
+      "start": 195
+    },
+    {
+      "after": {
         "lemma": [
-          "and"
+          "i"
         ],
         "pos": [
           ""
@@ -85,22 +96,10 @@
           " "
         ],
         "word": [
-          "and"
+          "i"
         ]
       },
-      "start": 195
-    },
-    {
-      "captureGroups": [
-        {
-          "end": 197,
-          "name": "A",
-          "start": 196
-        }
-      ],
-      "docPid": "PBsve430",
-      "end": 199,
-      "left": {
+      "before": {
         "lemma": [
           "be"
         ],
@@ -114,6 +113,8 @@
           "is"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 199,
       "match": {
         "lemma": [
           "one",
@@ -147,7 +148,10 @@
           "type": "span"
         }
       },
-      "right": {
+      "start": 195
+    },
+    {
+      "after": {
         "lemma": [
           "i"
         ],
@@ -161,32 +165,22 @@
           "i"
         ]
       },
-      "start": 195
-    },
-    {
-      "captureGroups": [
-        {
-          "end": 198,
-          "name": "A",
-          "start": 196
-        }
-      ],
+      "before": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "is"
+        ]
+      },
       "docPid": "PBsve430",
       "end": 199,
-      "left": {
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "is"
-        ]
-      },
       "match": {
         "lemma": [
           "one",
@@ -219,85 +213,11 @@
           "start": 196,
           "type": "span"
         }
-      },
-      "right": {
-        "lemma": [
-          "i"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "i"
-        ]
       },
       "start": 195
     },
     {
-      "captureGroups": [
-        {
-          "end": 198,
-          "name": "A",
-          "start": 196
-        }
-      ],
-      "docPid": "PBsve430",
-      "end": 200,
-      "left": {
-        "lemma": [
-          "be"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "is"
-        ]
-      },
-      "match": {
-        "lemma": [
-          "one",
-          "hundred",
-          "ninety",
-          "and",
-          "i"
-        ],
-        "pos": [
-          "",
-          "",
-          "",
-          "",
-          ""
-        ],
-        "punct": [
-          " ",
-          " ",
-          " ",
-          " ",
-          " "
-        ],
-        "word": [
-          "one",
-          "hundred",
-          "ninety",
-          "and",
-          "i"
-        ]
-      },
-      "matchInfos": {
-        "A": {
-          "end": 198,
-          "start": 196,
-          "type": "span"
-        }
-      },
-      "right": {
+      "after": {
         "lemma": [
           "be"
         ],
@@ -311,32 +231,92 @@
           "'m"
         ]
       },
+      "before": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "is"
+        ]
+      },
+      "docPid": "PBsve430",
+      "end": 200,
+      "match": {
+        "lemma": [
+          "one",
+          "hundred",
+          "ninety",
+          "and",
+          "i"
+        ],
+        "pos": [
+          "",
+          "",
+          "",
+          "",
+          ""
+        ],
+        "punct": [
+          " ",
+          " ",
+          " ",
+          " ",
+          " "
+        ],
+        "word": [
+          "one",
+          "hundred",
+          "ninety",
+          "and",
+          "i"
+        ]
+      },
+      "matchInfos": {
+        "A": {
+          "end": 198,
+          "start": 196,
+          "type": "span"
+        }
+      },
       "start": 195
     },
     {
-      "captureGroups": [
-        {
-          "end": 322,
-          "name": "A",
-          "start": 321
-        }
-      ],
+      "after": {
+        "lemma": [
+          "a"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "a"
+        ]
+      },
+      "before": {
+        "lemma": [
+          "this"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "this"
+        ]
+      },
       "docPid": "PBsve430",
       "end": 323,
-      "left": {
-        "lemma": [
-          "this"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "this"
-        ]
-      },
       "match": {
         "lemma": [
           "one",
@@ -366,33 +346,24 @@
           "type": "span"
         }
       },
-      "right": {
-        "lemma": [
-          "a"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "a"
-        ]
-      },
       "start": 320
     },
     {
-      "captureGroups": [
-        {
-          "end": 322,
-          "name": "A",
-          "start": 321
-        }
-      ],
-      "docPid": "PBsve430",
-      "end": 324,
-      "left": {
+      "after": {
+        "lemma": [
+          "lot"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "lot"
+        ]
+      },
+      "before": {
         "lemma": [
           "this"
         ],
@@ -406,6 +377,8 @@
           "this"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 324,
       "match": {
         "lemma": [
           "one",
@@ -439,33 +412,24 @@
           "type": "span"
         }
       },
-      "right": {
-        "lemma": [
-          "lot"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "lot"
-        ]
-      },
       "start": 320
     },
     {
-      "captureGroups": [
-        {
-          "end": 323,
-          "name": "A",
-          "start": 321
-        }
-      ],
-      "docPid": "PBsve430",
-      "end": 324,
-      "left": {
+      "after": {
+        "lemma": [
+          "lot"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "lot"
+        ]
+      },
+      "before": {
         "lemma": [
           "this"
         ],
@@ -479,6 +443,8 @@
           "this"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 324,
       "match": {
         "lemma": [
           "one",
@@ -512,9 +478,12 @@
           "type": "span"
         }
       },
-      "right": {
+      "start": 320
+    },
+    {
+      "after": {
         "lemma": [
-          "lot"
+          "thank"
         ],
         "pos": [
           ""
@@ -523,35 +492,25 @@
           " "
         ],
         "word": [
-          "lot"
+          "thanks"
         ]
       },
-      "start": 320
-    },
-    {
-      "captureGroups": [
-        {
-          "end": 323,
-          "name": "A",
-          "start": 321
-        }
-      ],
+      "before": {
+        "lemma": [
+          "this"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "this"
+        ]
+      },
       "docPid": "PBsve430",
       "end": 325,
-      "left": {
-        "lemma": [
-          "this"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "this"
-        ]
-      },
       "match": {
         "lemma": [
           "one",
@@ -588,40 +547,19 @@
           "start": 321,
           "type": "span"
         }
-      },
-      "right": {
-        "lemma": [
-          "thank"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "thanks"
-        ]
       },
       "start": 320
     }
   ],
   "summary": {
-    "actualWindowSize": 8,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "\"one\" A:([]{1,2}) []{1,2}",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 8,
-    "numberOfHitsRetrieved": 8,
     "pattern": {
       "bcql": "\"one\" (A:[]{1,2}) []{1,2}",
       "fieldName": "contents",
@@ -659,21 +597,18 @@
         }
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "hits",
-      "patt": "\"one\" A:([]{1,2}) []{1,2}",
-      "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 8,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 1,
+      "hits": 8,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

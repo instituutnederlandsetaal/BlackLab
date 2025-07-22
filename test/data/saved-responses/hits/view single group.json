@@ -1,30 +1,43 @@
 {
   "docInfos": {
     "PBsve430": {
-      "fromInputFile": [
-        "PBsve430.xml"
-      ],
-      "lengthInTokens": 334,
       "mayView": true,
-      "pid": [
-        "PBsve430"
-      ],
-      "title": [
-        "service encounter about visa application for family members"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 334
+          "tokens": 334
         }
       ]
     }
   },
   "hits": [
     {
-      "docPid": "PBsve430",
-      "end": 30,
-      "left": {
+      "after": {
+        "lemma": [
+          "letter"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "letter"
+        ]
+      },
+      "before": {
         "lemma": [
           "need"
         ],
@@ -38,6 +51,8 @@
           "need"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 30,
       "match": {
         "lemma": [
           "a"
@@ -50,28 +65,26 @@
         ],
         "word": [
           "a"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "letter"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "letter"
         ]
       },
       "start": 29
     },
     {
-      "docPid": "PBsve430",
-      "end": 52,
-      "left": {
+      "after": {
+        "lemma": [
+          "look"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "look"
+        ]
+      },
+      "before": {
         "lemma": [
           "have"
         ],
@@ -85,6 +98,8 @@
           "have"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 52,
       "match": {
         "lemma": [
           "a"
@@ -97,28 +112,26 @@
         ],
         "word": [
           "a"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "look"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "look"
         ]
       },
       "start": 51
     },
     {
-      "docPid": "PBsve430",
-      "end": 256,
-      "left": {
+      "after": {
+        "lemma": [
+          "visa"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "visa"
+        ]
+      },
+      "before": {
         "lemma": [
           "for"
         ],
@@ -132,6 +145,8 @@
           "for"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 256,
       "match": {
         "lemma": [
           "a"
@@ -144,28 +159,26 @@
         ],
         "word": [
           "a"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "visa"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "visa"
         ]
       },
       "start": 255
     },
     {
-      "docPid": "PBsve430",
-      "end": 324,
-      "left": {
+      "after": {
+        "lemma": [
+          "lot"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "lot"
+        ]
+      },
+      "before": {
         "lemma": [
           "thank"
         ],
@@ -179,6 +192,8 @@
           "thanks"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 324,
       "match": {
         "lemma": [
           "a"
@@ -191,28 +206,26 @@
         ],
         "word": [
           "a"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "lot"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "lot"
         ]
       },
       "start": 323
     },
     {
-      "docPid": "PBsve430",
-      "end": 327,
-      "left": {
+      "after": {
+        "lemma": [
+          "lot"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "lot"
+        ]
+      },
+      "before": {
         "lemma": [
           "thank"
         ],
@@ -226,6 +239,8 @@
           "thanks"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 327,
       "match": {
         "lemma": [
           "a"
@@ -238,52 +253,13 @@
         ],
         "word": [
           "a"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "lot"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "lot"
         ]
       },
       "start": 326
     }
   ],
   "summary": {
-    "actualWindowSize": 5,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
-    },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 5,
-    "numberOfHitsRetrieved": 5,
-    "pattern": {
-      "bcql": "\"a\"",
-      "fieldName": "contents",
-      "json": {
-        "bcqlFragment": "\"a\"",
-        "type": "regex",
-        "value": "a"
-      }
-    },
-    "requestedWindowSize": 50,
-    "searchParam": {
+    "params": {
       "group": "field:title",
       "indexname": "test",
       "op": "hits",
@@ -293,12 +269,27 @@
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "pattern": {
+      "bcql": "\"a\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"a\"",
+        "type": "regex",
+        "value": "a"
+      }
+    },
+    "resultWindow": {
+      "actualSize": 5,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
+    },
+    "resultsStats": {
+      "documents": 1,
+      "hits": 5,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

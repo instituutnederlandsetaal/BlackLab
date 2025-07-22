@@ -1,7 +1,23 @@
 {
-  "docPid": "PBsve430",
-  "end": 5,
-  "left": {
+  "after": {
+    "lemma": [
+      "to",
+      "apply"
+    ],
+    "pos": [
+      "",
+      ""
+    ],
+    "punct": [
+      " ",
+      " "
+    ],
+    "word": [
+      "to",
+      "apply"
+    ]
+  },
+  "before": {
     "lemma": [
       "",
       "hello"
@@ -19,6 +35,8 @@
       "hello"
     ]
   },
+  "docPid": "PBsve430",
+  "end": 5,
   "match": {
     "lemma": [
       "i",
@@ -35,24 +53,6 @@
     "word": [
       "i",
       "want"
-    ]
-  },
-  "right": {
-    "lemma": [
-      "to",
-      "apply"
-    ],
-    "pos": [
-      "",
-      ""
-    ],
-    "punct": [
-      " ",
-      " "
-    ],
-    "word": [
-      "to",
-      "apply"
     ]
   },
   "start": 3

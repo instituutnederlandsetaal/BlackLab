@@ -1,46 +1,23 @@
 {
-  "docFields": {
-    "pidField": "pid",
-    "titleField": "title"
-  },
   "docInfo": {
-    "fromInputFile": [
-      "PBsve430.xml"
-    ],
-    "lengthInTokens": 334,
     "mayView": true,
-    "pid": [
-      "PBsve430"
-    ],
-    "title": [
-      "service encounter about visa application for family members"
-    ],
+    "metadata": {
+      "fromInputFile": [
+        "PBsve430.xml"
+      ],
+      "pid": [
+        "PBsve430"
+      ],
+      "title": [
+        "service encounter about visa application for family members"
+      ]
+    },
     "tokenCounts": [
       {
         "fieldName": "contents",
-        "tokenCount": 334
+        "tokens": 334
       }
     ]
   },
-  "docPid": "PBsve430",
-  "metadataFieldDisplayNames": {
-    "fromInputFile": "From input file",
-    "pid": "Pid",
-    "title": "Title"
-  },
-  "metadataFieldGroups": [
-    {
-      "fields": [
-        "title"
-      ],
-      "name": "Title group"
-    },
-    {
-      "fields": [
-        "fromInputFile",
-        "pid"
-      ],
-      "name": "Other fields group"
-    }
-  ]
+  "docPid": "PBsve430"
 }

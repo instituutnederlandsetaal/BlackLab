@@ -28,7 +28,7 @@ function expectHitsUnchanged(testName, params) {
     describe(`hits/${testName}`, () => {
         it('response should match previous', done => {
             chai.request(constants.SERVER_URL)
-            .get('/test/hits')
+            .get(constants.URL_PREFIX + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid,hitposition", // fully defined sort
@@ -77,14 +77,14 @@ expectHitsUnchanged('view single group', {
 
 // Matching doc facets
 expectUrlUnchanged('hits', 'document facets',
-        '/test/hits/?patt=%22the%22&number=0&facets=field:pid');
+        constants.URL_PREFIX + '/hits/?patt=%22the%22&number=0&facets=field:pid');
 
 // Hits CSV
 expectUrlUnchanged('hits', 'CSV results',
-        '/test/hits/?patt=%22the%22', 'text/csv');
+        constants.URL_PREFIX + '/hits/?patt=%22the%22', 'text/csv');
 
 // /termfreq operation
 expectUrlUnchanged('hits', 'Termfreq word sensitive',
-        '/test/termfreq/?annotation=word&sensitive=true');
+        constants.URL_PREFIX + '/termfreq/?annotation=word&sensitive=true');
 expectUrlUnchanged('hits', 'Termfreq lemma insensitive',
-        '/test/termfreq/?annotation=lemma');
+        constants.URL_PREFIX + '/termfreq/?annotation=lemma');

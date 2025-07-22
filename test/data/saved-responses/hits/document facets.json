@@ -20,21 +20,13 @@
   "hits": [
   ],
   "summary": {
-    "actualWindowSize": 0,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "facets": "field:pid",
+      "indexname": "test",
+      "number": "0",
+      "op": "hits",
+      "patt": "\"the\""
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "numberOfHits": 21,
-    "numberOfHitsRetrieved": 21,
     "pattern": {
       "bcql": "\"the\"",
       "fieldName": "contents",
@@ -44,20 +36,18 @@
         "value": "the"
       }
     },
-    "requestedWindowSize": 0,
-    "searchParam": {
-      "facets": "field:pid",
-      "indexname": "test",
-      "number": "0",
-      "op": "hits",
-      "patt": "\"the\""
+    "resultWindow": {
+      "actualSize": 0,
+      "firstResult": 0,
+      "hasNext": true,
+      "hasPrevious": false,
+      "requestedSize": 0
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": true,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 3,
+      "hits": 21,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

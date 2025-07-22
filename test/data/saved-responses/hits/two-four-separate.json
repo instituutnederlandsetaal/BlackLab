@@ -1,30 +1,43 @@
 {
   "docInfos": {
     "PRint602": {
-      "fromInputFile": [
-        "PRint602.xml"
-      ],
-      "lengthInTokens": 268,
       "mayView": true,
-      "pid": [
-        "PRint602"
-      ],
-      "title": [
-        "interview about conference experience and impressions of city"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PRint602.xml"
+        ],
+        "pid": [
+          "PRint602"
+        ],
+        "title": [
+          "interview about conference experience and impressions of city"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 268
+          "tokens": 268
         }
       ]
     }
   },
   "hits": [
     {
-      "docPid": "PRint602",
-      "end": 99,
-      "left": {
+      "after": {
+        "lemma": [
+          "two"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "two"
+        ]
+      },
+      "before": {
         "lemma": [
           ""
         ],
@@ -38,21 +51,9 @@
           "a_[org1]"
         ]
       },
+      "docPid": "PRint602",
+      "end": 99,
       "match": {
-        "lemma": [
-          "two"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "two"
-        ]
-      },
-      "right": {
         "lemma": [
           "two"
         ],
@@ -69,9 +70,21 @@
       "start": 98
     },
     {
-      "docPid": "PRint602",
-      "end": 100,
-      "left": {
+      "after": {
+        "lemma": [
+          "thousand"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "thousand"
+        ]
+      },
+      "before": {
         "lemma": [
           "two"
         ],
@@ -85,6 +98,8 @@
           "two"
         ]
       },
+      "docPid": "PRint602",
+      "end": 100,
       "match": {
         "lemma": [
           "two"
@@ -97,56 +112,12 @@
         ],
         "word": [
           "two"
-        ]
-      },
-      "right": {
-        "lemma": [
-          "thousand"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "thousand"
         ]
       },
       "start": 99
     },
     {
-      "docPid": "PRint602",
-      "end": 102,
-      "left": {
-        "lemma": [
-          "thousand"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "thousand"
-        ]
-      },
-      "match": {
-        "lemma": [
-          "four"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "four"
-        ]
-      },
-      "right": {
+      "after": {
         "lemma": [
           ""
         ],
@@ -160,25 +131,48 @@
           "_0"
         ]
       },
+      "before": {
+        "lemma": [
+          "thousand"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "thousand"
+        ]
+      },
+      "docPid": "PRint602",
+      "end": 102,
+      "match": {
+        "lemma": [
+          "four"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "four"
+        ]
+      },
       "start": 101
     }
   ],
   "summary": {
-    "actualWindowSize": 3,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "\"two\"|\"four\"",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 3,
-    "numberOfHitsRetrieved": 3,
     "pattern": {
       "bcql": "\"two\" | \"four\"",
       "fieldName": "contents",
@@ -199,21 +193,18 @@
         "type": "or"
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "hits",
-      "patt": "\"two\"|\"four\"",
-      "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 3,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 1,
+      "hits": 3,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

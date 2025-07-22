@@ -19,7 +19,7 @@ function expectDocsGroupedUnchanged(testName, params) {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)
-            .get('/test/docs')
+            .get(constants.URL_PREFIX + '/docs')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid",

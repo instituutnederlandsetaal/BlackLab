@@ -1,30 +1,43 @@
 {
   "docInfos": {
     "PRint602": {
-      "fromInputFile": [
-        "PRint602.xml"
-      ],
-      "lengthInTokens": 268,
       "mayView": true,
-      "pid": [
-        "PRint602"
-      ],
-      "title": [
-        "interview about conference experience and impressions of city"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PRint602.xml"
+        ],
+        "pid": [
+          "PRint602"
+        ],
+        "title": [
+          "interview about conference experience and impressions of city"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 268
+          "tokens": 268
         }
       ]
     }
   },
   "hits": [
     {
-      "docPid": "PRint602",
-      "end": 152,
-      "left": {
+      "after": {
+        "lemma": [
+          "meet/meeting"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "meeting"
+        ]
+      },
+      "before": {
         "lemma": [
           "be"
         ],
@@ -38,6 +51,8 @@
           "'s"
         ]
       },
+      "docPid": "PRint602",
+      "end": 152,
       "match": {
         "lemma": [
           "a",
@@ -56,39 +71,18 @@
           "successful"
         ]
       },
-      "right": {
-        "lemma": [
-          "meet/meeting"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "meeting"
-        ]
-      },
       "start": 150
     }
   ],
   "summary": {
-    "actualWindowSize": 1,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "_FI2(\"a\", [lemma=\"successful\"])",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 1,
-    "numberOfHitsRetrieved": 1,
     "pattern": {
       "bcql": "_FI2(\"a\", [lemma=\"successful\"])",
       "fieldName": "contents",
@@ -111,21 +105,18 @@
         "type": "callfunc"
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "hits",
-      "patt": "_FI2(\"a\", [lemma=\"successful\"])",
-      "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 1,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 1,
+      "hits": 1,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

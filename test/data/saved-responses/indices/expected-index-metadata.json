@@ -1,13 +1,12 @@
 {
-  "indexName": "test-index-2857",
-  "displayName": "test-index-2857",
-  "description": "",
   "status": "available",
   "contentViewable": true,
-  "textDirection": "ltr",
+  "corpusName": "user:test-index-5582",
+  "count": {
+    "documents": 1,
+    "tokens": 334
+  },
   "documentFormat": "docuser:voice-tei",
-  "tokenCount": 334,
-  "documentCount": 1,
   "versionInfo": {
     "blacklabBuildTime": "UNKNOWN",
     "blacklabVersion": "UNKNOWN",
@@ -16,61 +15,37 @@
     "timeModified": "2022-02-17 16:04:26"
   },
   "pidField": "pid",
-  "fieldInfo": {
-    "pidField": "pid",
-    "titleField": "title",
-    "authorField": "",
-    "dateField": ""
-  },
   "mainAnnotatedField": "contents",
   "annotatedFields": {
     "contents": {
       "fieldName": "contents",
       "isAnnotatedField": true,
-      "displayName": "Contents",
-      "description": "Contents of the documents.",
       "hasContentStore": true,
-      "hasXmlTags": true,
+      "count": {
+        "documents": 1,
+        "tokens": 334
+      },
       "mainAnnotation": "word",
-      "tokenCount": 334,
-      "documentCount": 1,
-      "displayOrder": [
-        "word",
-        "lemma",
-        "pos"
-      ],
       "annotations": {
         "word": {
-          "displayName": "Word",
-          "description": "",
-          "uiType": "",
           "hasForwardIndex": true,
           "sensitivity": "SENSITIVE_AND_INSENSITIVE",
           "offsetsAlternative": "s",
           "isInternal": false
         },
         "lemma": {
-          "displayName": "Lemma",
-          "description": "",
-          "uiType": "",
           "hasForwardIndex": true,
           "sensitivity": "SENSITIVE_AND_INSENSITIVE",
           "offsetsAlternative": "",
           "isInternal": false
         },
         "pos": {
-          "displayName": "PoS",
-          "description": "",
-          "uiType": "",
           "hasForwardIndex": true,
           "sensitivity": "ONLY_INSENSITIVE",
           "offsetsAlternative": "",
           "isInternal": false
         },
         "punct": {
-          "displayName": "Punct",
-          "description": "",
-          "uiType": "",
           "hasForwardIndex": true,
           "sensitivity": "ONLY_INSENSITIVE",
           "offsetsAlternative": "",
@@ -83,14 +58,8 @@
     "fromInputFile": {
       "fieldName": "fromInputFile",
       "isAnnotatedField": false,
-      "displayName": "From input file",
-      "description": "",
-      "uiType": "",
       "type": "UNTOKENIZED",
       "analyzer": "DEFAULT",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
-      "displayValues": {},
       "fieldValues": {
         "testdocs": 1
       },
@@ -99,14 +68,8 @@
     "pid": {
       "fieldName": "pid",
       "isAnnotatedField": false,
-      "displayName": "Pid",
-      "description": "",
-      "uiType": "",
       "type": "TOKENIZED",
       "analyzer": "DEFAULT",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
-      "displayValues": {},
       "fieldValues": {
         "PBsve430": 1
       },
@@ -115,51 +78,12 @@
     "title": {
       "fieldName": "title",
       "isAnnotatedField": false,
-      "displayName": "Title",
-      "description": "",
-      "uiType": "",
       "type": "TOKENIZED",
       "analyzer": "DEFAULT",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
-      "displayValues": {},
       "fieldValues": {
         "service encounter about visa application for family members": 1
       },
       "valueListComplete": true
     }
-  },
-  "metadataFieldGroups": [
-    {
-      "fields": [
-        "title"
-      ],
-      "name": "Title group"
-    },
-    {
-      "fields": [
-        "fromInputFile",
-        "pid"
-      ],
-      "name": "Other fields group"
-    }
-  ],
-
-  "annotationGroups": {
-    "contents": [
-      {
-        "annotations": [
-          "word",
-          "lemma"
-        ],
-        "name": "Basic"
-      },
-      {
-        "annotations": [
-          "pos"
-        ],
-        "name": "Advanced"
-      }
-    ]
   }
 }

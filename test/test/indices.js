@@ -55,7 +55,7 @@ async function createIndex(indexName) {
     const inputFormat = TEST_CONFIG['input-format'].split('.')[0];
     const request = chai
             .request(constants.SERVER_URL)
-            .post('/')
+            .post('/corpora')
             .query({
                 'api': constants.TEST_API_VERSION,
                 'name': index_url,
@@ -71,7 +71,7 @@ async function getIndexStatus(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
             .request(constants.SERVER_URL)
-            .get("/" + indexUrl + "/status")
+            .get("/corpora/" + indexUrl + "/status")
             .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
     addDefaultHeaders(request);
@@ -82,7 +82,7 @@ async function addToIndex(indexName, payloadPath) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
             .request(constants.SERVER_URL)
-            .post('/' + indexUrl + '/docs')
+            .post('/corpora/' + indexUrl + '/docs')
             .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
             .attach('data', fs.readFileSync(payloadPath), 'testdocs');
@@ -94,7 +94,7 @@ async function getIndexContent(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName;
     let request = chai
             .request(constants.SERVER_URL)
-            .get("/" + indexUrl + "/docs")
+            .get("/corpora/" + indexUrl + "/docs")
             .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
     addDefaultHeaders(request);
@@ -118,7 +118,7 @@ async function getIndexMetadata(indexName) {
     const indexUrl = constants.BLACKLAB_USER + ":" + indexName
     const request = chai
             .request(constants.SERVER_URL)
-            .get("/" + indexUrl + "/")
+            .get("/corpora/" + indexUrl + "/")
             .query({ api: constants.TEST_API_VERSION })
             .set('Accept', 'application/json')
     addDefaultHeaders(request);
@@ -134,7 +134,7 @@ function queryIndex(indexName, pattern, filters, format = 'application/json') {
     const respFormat = format === "" ? "application/json" : format;
     const request = chai
             .request(constants.SERVER_URL)
-            .post("/" + indexUrl + "/")
+            .post("/corpora/" + indexUrl + "/")
             .query({ api: constants.TEST_API_VERSION })
             .buffer()
             .set('Accept', respFormat)
@@ -209,7 +209,7 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
 
             const expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH, READ_FILE_OPTS));
 
-            const keys = ['indexName', 'displayName', 'versionInfo', 'documentFormat']
+            const keys = ['corpusName', 'versionInfo', 'documentFormat']
             expect(clearKeys(keys, expectedMetadata)).to.be.deep.equal(clearKeys(keys, body));
         });
 

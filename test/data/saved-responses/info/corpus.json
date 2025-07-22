@@ -3,125 +3,59 @@
     "contents": {
       "annotations": {
         "lemma": {
-          "description": "",
-          "displayName": "Lemma",
           "hasForwardIndex": true,
           "isInternal": false,
           "offsetsAlternative": "",
-          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-          "uiType": ""
+          "sensitivity": "SENSITIVE_AND_INSENSITIVE"
         },
         "pos": {
-          "description": "",
-          "displayName": "PoS",
           "hasForwardIndex": true,
           "isInternal": false,
           "offsetsAlternative": "",
-          "sensitivity": "ONLY_INSENSITIVE",
-          "uiType": ""
+          "sensitivity": "ONLY_INSENSITIVE"
         },
         "punct": {
-          "description": "",
-          "displayName": "Punct",
           "hasForwardIndex": true,
           "isInternal": true,
           "offsetsAlternative": "",
-          "sensitivity": "ONLY_INSENSITIVE",
-          "uiType": ""
+          "sensitivity": "ONLY_INSENSITIVE"
         },
         "word": {
-          "description": "",
-          "displayName": "Word",
           "hasForwardIndex": true,
           "isInternal": false,
           "offsetsAlternative": "s",
-          "sensitivity": "SENSITIVE_AND_INSENSITIVE",
-          "uiType": ""
+          "sensitivity": "SENSITIVE_AND_INSENSITIVE"
         }
       },
-      "description": "Contents of the documents.",
-      "displayName": "Contents",
-      "displayOrder": [
-        "word",
-        "lemma",
-        "pos"
-      ],
-      "documentCount": 3,
+      "count": {
+        "documents": 3,
+        "tokens": 766
+      },
       "fieldName": "contents",
       "hasContentStore": true,
-      "hasXmlTags": true,
       "isAnnotatedField": true,
-      "mainAnnotation": "word",
-      "tokenCount": 766
+      "mainAnnotation": "word"
     }
-  },
-  "annotationGroups": {
-    "contents": [
-      {
-        "annotations": [
-          "word",
-          "lemma"
-        ],
-        "name": "Basic"
-      },
-      {
-        "annotations": [
-          "pos"
-        ],
-        "name": "Advanced"
-      }
-    ]
   },
   "contentViewable": true,
-  "description": "",
-  "displayName": "test",
-  "documentCount": 3,
-  "documentFormat": "voice-tei",
-  "fieldInfo": {
-    "authorField": "",
-    "dateField": "",
-    "pidField": "pid",
-    "titleField": "title"
+  "corpusName": "test",
+  "count": {
+    "documents": 3,
+    "tokens": 766
   },
-  "indexName": "test",
+  "documentFormat": "voice-tei",
   "mainAnnotatedField": "contents",
-  "metadataFieldGroups": [
-    {
-      "fields": [
-        "title"
-      ],
-      "name": "Title group"
-    },
-    {
-      "fields": [
-        "fromInputFile",
-        "pid"
-      ],
-      "name": "Other fields group"
-    }
-  ],
   "metadataFields": {
     "fromInputFile": {
       "analyzer": "DEFAULT",
-      "description": "",
-      "displayName": "From input file",
-      "displayValues": {
-      },
       "fieldName": "fromInputFile",
       "fieldValues": "VALUE_REMOVED",
       "isAnnotatedField": false,
       "type": "UNTOKENIZED",
-      "uiType": "",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
       "valueListComplete": true
     },
     "pid": {
       "analyzer": "DEFAULT",
-      "description": "",
-      "displayName": "Pid",
-      "displayValues": {
-      },
       "fieldName": "pid",
       "fieldValues": {
         "PBsve430": 1,
@@ -130,17 +64,10 @@
       },
       "isAnnotatedField": false,
       "type": "TOKENIZED",
-      "uiType": "",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
       "valueListComplete": true
     },
     "title": {
       "analyzer": "DEFAULT",
-      "description": "",
-      "displayName": "Title",
-      "displayValues": {
-      },
       "fieldName": "title",
       "fieldValues": {
         "interview about conference experience and impressions of city": 1,
@@ -149,16 +76,11 @@
       },
       "isAnnotatedField": false,
       "type": "TOKENIZED",
-      "uiType": "",
-      "unknownCondition": "NEVER",
-      "unknownValue": "unknown",
       "valueListComplete": true
     }
   },
   "pidField": "pid",
   "status": "available",
-  "textDirection": "ltr",
-  "tokenCount": 766,
   "versionInfo": {
     "blacklabBuildTime": "VALUE_REMOVED",
     "blacklabScmRevision": "UNKNOWN",

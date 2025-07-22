@@ -1,37 +1,43 @@
 {
   "docInfos": {
     "PBsve430": {
-      "fromInputFile": [
-        "PBsve430.xml"
-      ],
-      "lengthInTokens": 334,
       "mayView": true,
-      "pid": [
-        "PBsve430"
-      ],
-      "title": [
-        "service encounter about visa application for family members"
-      ],
+      "metadata": {
+        "fromInputFile": [
+          "PBsve430.xml"
+        ],
+        "pid": [
+          "PBsve430"
+        ],
+        "title": [
+          "service encounter about visa application for family members"
+        ]
+      },
       "tokenCounts": [
         {
           "fieldName": "contents",
-          "tokenCount": 334
+          "tokens": 334
         }
       ]
     }
   },
   "hits": [
     {
-      "captureGroups": [
-        {
-          "end": 197,
-          "name": "A",
-          "start": 196
-        }
-      ],
-      "docPid": "PBsve430",
-      "end": 197,
-      "left": {
+      "after": {
+        "lemma": [
+          "ninety"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "ninety"
+        ]
+      },
+      "before": {
         "lemma": [
           "be"
         ],
@@ -45,6 +51,8 @@
           "is"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 197,
       "match": {
         "lemma": [
           "one",
@@ -70,33 +78,24 @@
           "type": "span"
         }
       },
-      "right": {
-        "lemma": [
-          "ninety"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "ninety"
-        ]
-      },
       "start": 195
     },
     {
-      "captureGroups": [
-        {
-          "end": 322,
-          "name": "A",
-          "start": 321
-        }
-      ],
-      "docPid": "PBsve430",
-      "end": 322,
-      "left": {
+      "after": {
+        "lemma": [
+          "thank"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "thanks"
+        ]
+      },
+      "before": {
         "lemma": [
           "this"
         ],
@@ -110,6 +109,8 @@
           "this"
         ]
       },
+      "docPid": "PBsve430",
+      "end": 322,
       "match": {
         "lemma": [
           "one",
@@ -135,39 +136,18 @@
           "type": "span"
         }
       },
-      "right": {
-        "lemma": [
-          "thank"
-        ],
-        "pos": [
-          ""
-        ],
-        "punct": [
-          " "
-        ],
-        "word": [
-          "thanks"
-        ]
-      },
       "start": 320
     }
   ],
   "summary": {
-    "actualWindowSize": 2,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "\"one\" A:[]",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 2,
-    "numberOfHitsRetrieved": 2,
     "pattern": {
       "bcql": "\"one\" (A:[])",
       "fieldName": "contents",
@@ -199,21 +179,18 @@
         }
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "hits",
-      "patt": "\"one\" A:[]",
-      "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 2,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 1,
+      "hits": 2,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

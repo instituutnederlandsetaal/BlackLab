@@ -1,14 +1,13 @@
 package nl.inl.blacklab.server.requesthandlers;
 
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.ThreadContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -60,6 +59,10 @@ public class UserRequestBls implements UserRequest {
 
         // Parse the URL path
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
+        if (servletPath.equals("corpora")) {
+            servletPath = "";
+            this.newEndpoint = true;
+        }
         if (servletPath.startsWith("corpora/")) {
             // Strip "corpora/" prefix, but remember it (new API)
             servletPath = servletPath.substring("corpora/".length());

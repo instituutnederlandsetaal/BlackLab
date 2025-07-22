@@ -7,14 +7,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
@@ -162,7 +161,8 @@ public abstract class RequestHandler {
         boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
         boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
         if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
-            throw new UnsupportedOperationException("Old API not supported with current settings. Migrate to " +
+            throw new UnsupportedOperationException("Old API (" + userRequest.getRequest().getServletPath() + "/" + userRequest.getRequest().getPathInfo() +
+                    ") not supported with current settings. Migrate to " +
                     "new /corpora/... endpoints, or use api=4 for backward compat.");
         String method = request.getMethod();
         boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);

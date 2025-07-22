@@ -2,21 +2,22 @@
   "docs": [
     {
       "docInfo": {
-        "fromInputFile": [
-          "PBsve430.xml"
-        ],
-        "lengthInTokens": 334,
         "mayView": true,
-        "pid": [
-          "PBsve430"
-        ],
-        "title": [
-          "service encounter about visa application for family members"
-        ],
+        "metadata": {
+          "fromInputFile": [
+            "PBsve430.xml"
+          ],
+          "pid": [
+            "PBsve430"
+          ],
+          "title": [
+            "service encounter about visa application for family members"
+          ]
+        },
         "tokenCounts": [
           {
             "fieldName": "contents",
-            "tokenCount": 334
+            "tokens": 334
           }
         ]
       },
@@ -24,7 +25,37 @@
       "numberOfHits": 3,
       "snippets": [
         {
-          "left": {
+          "after": {
+            "lemma": [
+              "tell",
+              "i",
+              "that",
+              "i",
+              "need"
+            ],
+            "pos": [
+              "",
+              "",
+              "",
+              "",
+              ""
+            ],
+            "punct": [
+              " ",
+              " ",
+              " ",
+              " ",
+              " "
+            ],
+            "word": [
+              "told",
+              "me",
+              "that",
+              "i",
+              "need"
+            ]
+          },
+          "before": {
             "lemma": [
               "",
               "the",
@@ -67,14 +98,16 @@
             "word": [
               "they"
             ]
-          },
-          "right": {
+          }
+        },
+        {
+          "after": {
             "lemma": [
-              "tell",
-              "i",
-              "that",
-              "i",
-              "need"
+              "have",
+              "it",
+              "mhm",
+              "",
+              "for"
             ],
             "pos": [
               "",
@@ -91,16 +124,14 @@
               " "
             ],
             "word": [
-              "told",
-              "me",
-              "that",
-              "i",
-              "need"
+              "had",
+              "it",
+              "mhm",
+              "_14",
+              "for"
             ]
-          }
-        },
-        {
-          "left": {
+          },
+          "before": {
             "lemma": [
               "this",
               "i",
@@ -143,14 +174,16 @@
             "word": [
               "they"
             ]
-          },
-          "right": {
+          }
+        },
+        {
+          "after": {
             "lemma": [
-              "have",
-              "it",
-              "mhm",
               "",
-              "for"
+              "she",
+              "tell",
+              "i",
+              "that"
             ],
             "pos": [
               "",
@@ -167,16 +200,14 @@
               " "
             ],
             "word": [
-              "had",
-              "it",
-              "mhm",
-              "_14",
-              "for"
+              "the-",
+              "she",
+              "told",
+              "me",
+              "that"
             ]
-          }
-        },
-        {
-          "left": {
+          },
+          "before": {
             "lemma": [
               "yah",
               "for",
@@ -219,57 +250,20 @@
             "word": [
               "they"
             ]
-          },
-          "right": {
-            "lemma": [
-              "",
-              "she",
-              "tell",
-              "i",
-              "that"
-            ],
-            "pos": [
-              "",
-              "",
-              "",
-              "",
-              ""
-            ],
-            "punct": [
-              " ",
-              " ",
-              " ",
-              " ",
-              " "
-            ],
-            "word": [
-              "the-",
-              "she",
-              "told",
-              "me",
-              "that"
-            ]
           }
         }
       ]
     }
   ],
   "summary": {
-    "actualWindowSize": 1,
-    "countTime": "VALUE_REMOVED",
-    "docFields": {
-      "pidField": "pid",
-      "titleField": "title"
+    "params": {
+      "indexname": "test",
+      "op": "docs",
+      "patt": "\"they\"",
+      "sort": "field:pid",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
     },
-    "metadataFieldDisplayNames": {
-      "fromInputFile": "From input file",
-      "pid": "Pid",
-      "title": "Title"
-    },
-    "numberOfDocs": 1,
-    "numberOfDocsRetrieved": 1,
-    "numberOfHits": 3,
-    "numberOfHitsRetrieved": 3,
     "pattern": {
       "bcql": "\"they\"",
       "fieldName": "contents",
@@ -279,21 +273,18 @@
         "value": "they"
       }
     },
-    "requestedWindowSize": 50,
-    "searchParam": {
-      "indexname": "test",
-      "op": "docs",
-      "patt": "\"they\"",
-      "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 1,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 50
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "windowFirstResult": 0,
-    "windowHasNext": false,
-    "windowHasPrevious": false
+    "resultsStats": {
+      "documents": 1,
+      "hits": 3,
+      "status": "finished",
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }

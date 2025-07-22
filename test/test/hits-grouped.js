@@ -19,7 +19,7 @@ function expectHitsGroupedUnchanged(testName, params) {
         it('response should match previous', done => {
             chai
             .request(constants.SERVER_URL)
-            .get('/test/hits')
+            .get(constants.URL_PREFIX + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "size,identity",

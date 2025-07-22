@@ -31,17 +31,17 @@ expectUrlUnchanged('info', 'server', '/'); // ?api=exp&custom=true
 expectUrlUnchanged('info', 'input formats', '/input-formats');
 
 // Corpus info
-expectUrlUnchanged('info', 'corpus', '/test/');
-expectUrlUnchanged('info', 'corpus status', '/test/status');
+expectUrlUnchanged('info', 'corpus', constants.URL_PREFIX + '/');
+expectUrlUnchanged('info', 'corpus status', constants.URL_PREFIX + '/status');
 
 // Field info with list of values
 expectUrlUnchanged('info', 'annotated field info with values',
-        '/test/fields/contents?listvalues=lemma');
+        constants.URL_PREFIX + '/fields/contents?listvalues=lemma');
 expectUrlUnchanged('info', 'metadata field info with values',
-        '/test/fields/title');
+        constants.URL_PREFIX + '/fields/title');
 
 // Autocomplete
 expectUrlUnchanged('info', 'autocomplete metadata field',
-        '/test/autocomplete/title?term=a');
+        constants.URL_PREFIX + '/autocomplete/title?term=a');
 expectUrlUnchanged('info', 'autocomplete annotated field',
-        '/test/autocomplete/contents/lemma?term=b');
+        constants.URL_PREFIX + '/autocomplete/contents/lemma?term=b');

@@ -21,6 +21,8 @@ const LATEST_TEST_OUTPUT_PATH = `${LATEST_TEST_OUTPUT_BASE_PATH}${OPT_INDEX_TYPE
 
 const TEST_API_VERSION = undefined; // (if undefined, automatically uses current stable version)
 
+const URL_PREFIX = '/corpora/test';
+
 module.exports = {
     SERVER_URL,
     BLACKLAB_USER,
@@ -28,5 +30,6 @@ module.exports = {
     TEST_DATA_ROOT,
     SAVED_RESPONSES_PATH,
     LATEST_TEST_OUTPUT_PATH,
-    TEST_API_VERSION
+    TEST_API_VERSION,
+    URL_PREFIX
 };

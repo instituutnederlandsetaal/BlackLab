@@ -362,14 +362,15 @@
     }
   ],
   "summary": {
-    "actualWindowSize": 30,
-    "countTime": "VALUE_REMOVED",
-    "largestGroupSize": 43,
-    "numberOfDocs": 3,
-    "numberOfDocsRetrieved": 3,
-    "numberOfGroups": 210,
-    "numberOfHits": 766,
-    "numberOfHitsRetrieved": 766,
+    "params": {
+      "group": "hit:word:i",
+      "indexname": "test",
+      "number": "30",
+      "op": "hits-grouped",
+      "patt": "[]",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
     "pattern": {
       "bcql": "[]",
       "fieldName": "contents",
@@ -380,27 +381,24 @@
         "type": "anytoken"
       }
     },
-    "requestedWindowSize": 30,
-    "searchParam": {
-      "group": "hit:word:i",
-      "indexname": "test",
-      "number": "30",
-      "op": "hits-grouped",
-      "patt": "[]",
-      "sort": "size,identity",
-      "wordsaroundhit": "1"
+    "resultWindow": {
+      "actualSize": 30,
+      "firstResult": 0,
+      "hasNext": true,
+      "hasPrevious": false,
+      "requestedSize": 30
     },
-    "searchTime": "VALUE_REMOVED",
-    "stillCounting": false,
-    "stoppedCountingHits": false,
-    "stoppedRetrievingHits": false,
-    "subcorpusSize": {
+    "resultsStats": {
       "documents": 3,
-      "tokens": 766
-    },
-    "tokensInMatchingDocuments": 766,
-    "windowFirstResult": 0,
-    "windowHasNext": true,
-    "windowHasPrevious": false
+      "hits": 766,
+      "largestGroupSize": 43,
+      "numberOfGroups": 210,
+      "status": "finished",
+      "subcorpusSize": {
+        "documents": 3,
+        "tokens": 766
+      },
+      "timeMs": "VALUE_REMOVED"
+    }
   }
 }
