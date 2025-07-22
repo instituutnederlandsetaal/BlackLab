@@ -6,14 +6,11 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 public interface Indexer {
@@ -44,34 +41,6 @@ public interface Indexer {
      */
     static Indexer create(BlackLabIndexWriter writer, String formatIdentifier) throws DocumentFormatNotFound {
         return new IndexerImpl(writer, formatIdentifier);
-    }
-
-    /**
-     * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
-     *   {@link #openForWriting(File, boolean, String)} instead
-     */
-    @Deprecated
-    static Indexer createNewIndex(File directory, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return openIndex(directory, true, formatIdentifier);
-    }
-
-    /**
-     * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
-     *   {@link #openForWriting(File, boolean, String)} instead
-     */
-    @Deprecated
-    static Indexer openIndex(File directory) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        return openIndex(directory, false, null);
-    }
-
-    /**
-     * @deprecated use {@link #create(BlackLabIndexWriter, String)} with
-     *   {@link #openForWriting(File, boolean, String)} instead
-     */
-    @Deprecated
-    static Indexer openIndex(File directory, boolean createNewIndex, String formatIdentifier) throws DocumentFormatNotFound, ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, createNewIndex, formatIdentifier);
-        return new IndexerImpl(indexWriter, formatIdentifier);
     }
 
     Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;
@@ -220,13 +189,6 @@ public interface Indexer {
      * @return index writer
      */
     BlackLabIndexWriter indexWriter();
-
-    /**
-     * Set parameters we would like to be passed to the DocIndexer class
-     *
-     * @param indexerParam the parameters
-     */
-    void setIndexerParam(Map<String, String> indexerParam);
 
     /**
      * Set the directories to search for linked files.

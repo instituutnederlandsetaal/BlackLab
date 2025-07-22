@@ -112,23 +112,6 @@ public final class LuceneUtil {
     }
 
     /**
-     * Parse a query in the Lucene query language format (QueryParser supplied with
-     * Lucene).
-     *
-     * @param luceneQuery the query string
-     * @param analyzer analyzer to use
-     * @param defaultField default search field
-     * @return the query
-     * @throws ParseException on syntax error
-     * @deprecated prefer {@link #parseLuceneQuery(BlackLabIndex, String, Analyzer, String)}, which is field type aware
-     */
-    @Deprecated
-    public static Query parseLuceneQuery(String luceneQuery, Analyzer analyzer, String defaultField)
-            throws ParseException {
-        return parseLuceneQuery(null, luceneQuery, analyzer, defaultField);
-    }
-
-    /**
      * Get all words between the specified start and end positions from the term
      * vector.
      *

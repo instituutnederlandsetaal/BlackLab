@@ -2,7 +2,6 @@ package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -59,14 +58,6 @@ public interface DocWriter {
      * @return the listener
      */
     IndexListener listener();
-    
-    /**
-     * Get the parameters we would like to be passed to the DocIndexer class.
-     *
-     * Used by DocIndexer classes to get their parameters.
-     * @return the parameters
-     */
-    Map<String, String> indexerParameters();
 
     Optional<Function<String, File>> linkedFileResolver();
 

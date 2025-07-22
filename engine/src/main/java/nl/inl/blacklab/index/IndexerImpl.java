@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -124,11 +123,6 @@ class IndexerImpl implements DocWriter, Indexer {
      * correct type of DocIndexer.
      */
     private String formatIdentifier;
-
-    /**
-     * Parameters we should pass to our DocIndexers upon instantiation.
-     */
-    private Map<String, String> indexerParam;
 
     /** How to index metadata fields (tokenized) */
     private BLFieldType metadataFieldTypeTokenized;
@@ -460,23 +454,6 @@ class IndexerImpl implements DocWriter, Indexer {
             return maxNumberOfDocsToIndex;
         int docsDone = indexWriter.writer().getNumberOfDocs();
         return Math.max(0, maxNumberOfDocsToIndex - docsDone);
-    }
-
-    @Override
-    public void setIndexerParam(Map<String, String> indexerParam) {
-        this.indexerParam = indexerParam;
-    }
-
-    /**
-     * Get the parameters we would like to be passed to the DocIndexer class.
-     *
-     * Used by DocIndexer classes to get their parameters.
-     *
-     * @return the parameters
-     */
-    @Override
-    public Map<String, String> indexerParameters() {
-        return indexerParam;
     }
 
     @Override

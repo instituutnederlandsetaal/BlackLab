@@ -187,11 +187,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         return annotPunct;
     }
 
-    @Deprecated
-    protected AnnotationWriter propPunct() {
-        return punctAnnotation();
-    }
-
     protected void setPreventNextDefaultPunctuation() {
         preventNextDefaultPunctuation = true;
     }

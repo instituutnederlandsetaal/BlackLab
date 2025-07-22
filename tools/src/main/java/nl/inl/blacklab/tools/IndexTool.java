@@ -12,10 +12,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.text.WordUtils;
@@ -36,7 +34,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
-import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 
@@ -45,18 +42,11 @@ import nl.inl.util.LuceneUtil;
  */
 public class IndexTool {
 
-    static final Map<String, String> indexerParam = new TreeMap<>();
-
     private IndexTool() {
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
-
-        // If the current directory contains indexer.properties, read it
-        File propFile = new File(".", "indexer.properties");
-        if (propFile.canRead())
-            readParametersFromPropertiesFile(propFile);
 
         // Parse command line
         int maxDocsToIndex = 0;
@@ -73,17 +63,7 @@ public class IndexTool {
         boolean createEmptyIndex = false;
         for (int i = 0; i < args.length; i++) {
             String arg = args[i].trim();
-            if (arg.startsWith("---")) {
-                String name = arg.substring(3);
-                if (i + 1 == args.length) {
-                    System.err.println("Passing parameter to indexer: argument needed!");
-                    usage();
-                    return;
-                }
-                i++;
-                String value = args[i];
-                indexerParam.put(name, value);
-            } else if (arg.startsWith("--")) {
+            if (arg.startsWith("--")) {
                 String name = arg.substring(2);
                 switch (name) {
                 case "index-type":
@@ -154,21 +134,6 @@ public class IndexTool {
                     System.err.println("Option --create is deprecated; use create command (--help for details)");
                     forceCreateNew = true;
                     break;
-                case "indexparam":
-                    if (i + 1 == args.length) {
-                        System.err.println("--indexparam option needs argument");
-                        usage();
-                        return;
-                    }
-                    propFile = new File(args[i + 1]);
-                    if (!propFile.canRead()) {
-                        System.err.println("Cannot read " + propFile);
-                        usage();
-                        return;
-                    }
-                    readParametersFromPropertiesFile(propFile);
-                    i++;
-                    break;
                 case "help":
                     usage();
                     return;
@@ -179,7 +144,7 @@ public class IndexTool {
                 }
                 }
             } else {
-                if (command.length() == 0 && commands.contains(arg)) {
+                if (command.isEmpty() && commands.contains(arg)) {
                     command = arg;
                     addingFiles = command.equals("add") || command.equals("create");
                 } else if (indexDir == null) {
@@ -266,9 +231,6 @@ public class IndexTool {
             dirs.add(2, inputDirParent);
         if (indexDirParent != null && !dirs.contains(indexDirParent))
             dirs.add(indexDirParent);
-        propFile = FileUtil.findFile(dirs, "indexer", List.of("properties"));
-        if (propFile != null && propFile.canRead())
-            readParametersFromPropertiesFile(propFile);
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
         String strGlob = File.separator;
@@ -277,12 +239,6 @@ public class IndexTool {
         }
         System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
                 (formatIdentifier != null ? " (using format " + formatIdentifier + ")" : "(using autodetected format)"));
-        if (!indexerParam.isEmpty()) {
-            System.out.println("Indexer parameters:");
-            for (Map.Entry<String, String> e : indexerParam.entrySet()) {
-                System.out.println("  " + e.getKey() + ": " + e.getValue());
-            }
-        }
 
         // Make sure BlackLab can find our format configuration files
         // (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats, $HOME/.blacklab/formats
@@ -331,7 +287,6 @@ public class IndexTool {
         indexer.setNumberOfThreadsToUse(numberOfThreadsToUse);
         if (forceCreateNew)
             indexer.indexWriter().metadata().setDocumentFormat(formatIdentifier);
-        indexer.setIndexerParam(indexerParam);
         if (maxDocsToIndex > 0)
             indexer.setMaxNumberOfDocsToIndex(maxDocsToIndex);
         indexer.setLinkedFileDirs(linkedFileDirs);
@@ -359,19 +314,12 @@ public class IndexTool {
         }
     }
 
-    private static void readParametersFromPropertiesFile(File propFile) {
-        Properties p = readPropertiesFromFile(propFile);
-        for (Map.Entry<Object, Object> e : p.entrySet()) {
-            indexerParam.put(e.getKey().toString(), e.getValue().toString());
-        }
-    }
-
-    public static final String METADATA_FILE_NAME = "indexmetadata";
+    public static final String METADATA_FILE_NAME = "indexmetadata.json";
 
     private static void exportIndexInfo(File indexDir) {
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             String indexmetadata = index.metadata().getIndexMetadataAsString();
-            File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME + ".json");
+            File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME);
             System.out.println("Writing " + indexMetadataFile);
             FileUtils.write(indexMetadataFile, indexmetadata, StandardCharsets.UTF_8);
 
@@ -388,7 +336,7 @@ public class IndexTool {
 
     private static void importIndexInfo(File indexDir) {
         try (BlackLabIndexWriter index = BlackLab.openForWriting(indexDir, false)) {
-            File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME + ".json");
+            File indexMetadataFile = new File(indexDir, METADATA_FILE_NAME);
             System.out.println("Reading " + indexMetadataFile);
             String indexmetadata = FileUtils.readFileToString(indexMetadataFile, StandardCharsets.UTF_8);
 

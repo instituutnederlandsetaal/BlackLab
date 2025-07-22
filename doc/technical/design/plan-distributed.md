@@ -36,13 +36,13 @@ The global forward index API with global term ids and sort order would not be ne
 
 How would we approach this:
 
-+ Remove the old external index format code. It relies on global forward index and global term ids and cannot (and should not) be supported going forward.
+- [x] Remove the old external index format code. It relies on global forward index and global term ids and cannot (and should not) be supported going forward.
 
-- Implement:
-  - `SpansSorted` (gather and sorts its hits and keeps track of the sort value per hit (CollationKey?), for later merging)
-  - `GroupedSpans` (gathers and groups hits into several `Spans`, keeping track of the group identities). 
+- [ ] Implement:
+  - [ ] `SpansSorted` (gather and sorts its hits and keeps track of the sort value per hit (CollationKey?), for later merging)
+  - [ ] `GroupedSpans` (gathers and groups hits into several `Spans`, keeping track of the group identities). 
   
-  The first implementations will be proofs-of-concept and will use existing classes like `Hits`, `Kwics` etc. internally.
+  The first implementations could be proofs-of-concept and using existing classes like `Hits`, `Kwics` etc. internally.
 
 - Implement merging:
   - `HitsFromQuerySorted` merges hits from several `SpansSorted` instances

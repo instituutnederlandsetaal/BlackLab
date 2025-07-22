@@ -206,20 +206,26 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         }
     }
 
-    @Deprecated
     public AnnotationSensitivities getSensitivitySetting(String annotationName) {
         // See if it's specified in a parameter
         String strSensitivity = getParameter(annotationName + "_sensitivity");
         if (strSensitivity != null) {
-            AnnotationSensitivities s = switch (strSensitivity) {
-                case "i" -> AnnotationSensitivities.ONLY_INSENSITIVE;
-                case "s" -> AnnotationSensitivities.ONLY_SENSITIVE;
-                case "si", "is" -> AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
-                case "all" -> AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
-                default -> null;
-            };
-            if (s != null)
-                return s;
+            switch (strSensitivity) {
+                case "i" -> {
+                    return AnnotationSensitivities.ONLY_INSENSITIVE;
+                }
+                case "s" -> {
+                    return AnnotationSensitivities.ONLY_SENSITIVE;
+                }
+                case "si", "is" -> {
+                    return AnnotationSensitivities.SENSITIVE_AND_INSENSITIVE;
+                }
+                case "all" -> {
+                    return AnnotationSensitivities.CASE_AND_DIACRITICS_SEPARATE;
+                }
+                default -> {
+                }
+            }
         }
 
         // Not in parameter (or unrecognized value), use default based on
@@ -317,26 +323,6 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
             return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             return defaultValue;
-        }
-    }
-
-    /**
-     * Set the DocWriter object.
-     *
-     * We use this to add documents to the index.
-     *
-     * Called by Indexer when the DocIndexer is instantiated.
-     *
-     * @param docWriter our DocWriter object
-     */
-    @Override
-    public void setDocWriter(DocWriter docWriter) {
-        super.setDocWriter(docWriter);
-        if (docWriter != null) {
-            // Get our parameters from the indexer
-            Map<String, String> indexerParameters = docWriter.indexerParameters();
-            if (indexerParameters != null)
-                setParameters(indexerParameters);
         }
     }
 
