@@ -29,7 +29,7 @@ class ParserCorpusQl extends Parser {
      */
     @Override
     public TextPattern parse(BlackLabIndex index, String query) throws InvalidQuery {
-        return CorpusQueryLanguageParser.parse(query);
+        return CorpusQueryLanguageParser.parse(query, index.mainAnnotatedField().mainAnnotation().name());
     }
 
     @Override

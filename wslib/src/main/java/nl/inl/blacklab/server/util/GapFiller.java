@@ -106,7 +106,7 @@ public class GapFiller {
                     result.append(replaced);
                 }
             }
-            TextPattern tp = CorpusQueryLanguageParser.parse(result.toString());
+            TextPattern tp = CorpusQueryLanguageParser.parse(result.toString(), "word");
             results.add(tp);
         }
         return new TextPatternOr(results.toArray(new TextPattern[0]));

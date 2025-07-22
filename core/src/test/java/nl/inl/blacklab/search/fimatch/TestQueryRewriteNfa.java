@@ -49,7 +49,7 @@ public class TestQueryRewriteNfa {
     static TextPattern getPatternFromCql(String cqlQuery) {
         cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
         try {
-            return CorpusQueryLanguageParser.parse(cqlQuery);
+            return CorpusQueryLanguageParser.parse(cqlQuery, "word");
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);
         }

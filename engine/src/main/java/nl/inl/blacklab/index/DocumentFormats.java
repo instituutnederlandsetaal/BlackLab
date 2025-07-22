@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -25,6 +23,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.indexers.config.DocIndexerBase;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.FileUtil;
@@ -52,7 +51,6 @@ public class DocumentFormats {
 
         // We also add these in a specific order, so that format files in the default directories
         // may override builtin formats.
-        addLegacyDocIndexers();
         addStandardConfigFormats(); // load formats built in to BL and from standard directories
         addConfigFormatsInDefaultDirectories();
     }
@@ -76,7 +74,7 @@ public class DocumentFormats {
         return inputFormat;
     }
 
-    public static InputFormat add(String formatIdentifier, Class<? extends DocIndexerLegacy> docIndexerClass) {
+    public static InputFormat add(String formatIdentifier, Class<? extends DocIndexerBase> docIndexerClass) {
         return add(new InputFormatClass(formatIdentifier, docIndexerClass));
     }
 
@@ -154,20 +152,6 @@ public class DocumentFormats {
             }
         }
         return null;
-    }
-
-    private static void addLegacyDocIndexers() {
-        try {
-            // If the legacy docindexers JAR is included on the classpath, register them
-            Class<?> cls = Class.forName("nl.inl.blacklab.index.LegaDocIndexerRegisterer");
-            Method m = cls.getMethod("register");
-            m.invoke(null);
-        } catch (ClassNotFoundException e) {
-            // OK, JAR not on classpath
-        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException |
-                 InvocationTargetException e) {
-            throw new IllegalStateException("Unable to register legacy doc indexers", e);
-        }
     }
 
     private static void addStandardConfigFormats() {

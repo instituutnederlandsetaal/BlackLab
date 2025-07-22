@@ -676,8 +676,8 @@ public class TestSearches {
             "A:[]* -nmod-> B:[]* :: A.word > B.word"
         );
         for (String query: queries) {
-            TextPattern p1 = CorpusQueryLanguageParser.parse(query);
-            TextPattern p2 = CorpusQueryLanguageParser.parse(query);
+            TextPattern p1 = CorpusQueryLanguageParser.parse(query, "word");
+            TextPattern p2 = CorpusQueryLanguageParser.parse(query, "word");
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
             BlackLabIndex index = testIndex.index();
@@ -717,7 +717,7 @@ public class TestSearches {
     }
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
-        TextPattern tp = CorpusQueryLanguageParser.parse("\"" + bcqlPattern + "\"");
+        TextPattern tp = CorpusQueryLanguageParser.parse("\"" + bcqlPattern + "\"", "word");
         Assert.assertTrue(tp instanceof TextPatternTerm);
         BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
@@ -739,7 +739,7 @@ public class TestSearches {
     }
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
-        TextPattern patt = CorpusQueryLanguageParser.parse(query);
+        TextPattern patt = CorpusQueryLanguageParser.parse(query, "word");
         BLSpanQuery blQuery = patt.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));

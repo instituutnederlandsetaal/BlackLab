@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
@@ -30,10 +29,6 @@ public class CorpusQueryLanguageParser {
         CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
         parser.setDefaultAnnotation(defaultAnnotation);
         return parser.parseQuery(query);
-    }
-
-    public static TextPattern parse(String query) throws InvalidQuery {
-        return parse(query, AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME);
     }
 
     /** Allow strings to be quoted using single quotes? */

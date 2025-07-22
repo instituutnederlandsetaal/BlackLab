@@ -11,7 +11,6 @@ import org.apache.lucene.search.WildcardQuery;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -83,12 +82,12 @@ public class ContextualQueryLanguageParser {
     CompleteQuery contains(BlackLabIndex index, String field, String value) {
 
         boolean isContentsSearch = false;
-        String annotation = AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME;
+        String annotation = index.mainAnnotatedField().mainAnnotation().name();
         boolean isProperty;
         if (index != null && !index.getClass().getSimpleName().startsWith("Mock"))
             isProperty = index.mainAnnotatedField().annotations().exists(field);
         else
-            isProperty = field.equals(AnnotatedFieldNameUtil.DEFAULT_MAIN_ANNOT_NAME) || field.equals("lemma") || field.equals("pos"); // common case
+            isProperty = field.equals(index.mainAnnotatedField().mainAnnotation().name()) || field.equals("lemma") || field.equals("pos"); // common case
         if (isProperty) {
             isContentsSearch = true;
             annotation = field;

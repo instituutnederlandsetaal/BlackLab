@@ -4,8 +4,6 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.Constants;
-
 /**
  * Some utility functions for dealing with annotated field names.
  */
@@ -18,9 +16,6 @@ public final class AnnotatedFieldNameUtil {
      *  (could also be read from the forward index - maybe drop this field in the future?)
      */
     public static final String BOOKKEEP_LENGTH_TOKENS = "length_tokens";
-
-    /** Used as a default value if no name has been specified (legacy indexers only) */
-    public static final String DEFAULT_MAIN_ANNOT_NAME = Constants.DEFAULT_MAIN_ANNOT_NAME;
 
     public static final String RELATIONS_ANNOT_NAME = "_relation";
 

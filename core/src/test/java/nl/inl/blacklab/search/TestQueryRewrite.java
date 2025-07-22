@@ -50,7 +50,7 @@ public class TestQueryRewrite {
     static TextPattern getPatternFromCql(String cqlQuery) {
         try {
             cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
-            return CorpusQueryLanguageParser.parse(cqlQuery);
+            return CorpusQueryLanguageParser.parse(cqlQuery, "word");
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);
         }

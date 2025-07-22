@@ -38,9 +38,6 @@
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
-
-        <!-- Older DocIndexers -->
-        <module>contrib/legacy-docindexers</module>
     </modules>
 
     <properties>

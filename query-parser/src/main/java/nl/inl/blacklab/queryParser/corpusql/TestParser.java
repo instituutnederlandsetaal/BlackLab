@@ -23,7 +23,7 @@ public class TestParser {
                 break;
             }
             try {
-                TextPattern result = CorpusQueryLanguageParser.parse(expr);
+                TextPattern result = CorpusQueryLanguageParser.parse(expr, "word");
                 System.out.println("Result: " + result + "\n");
             } catch (InvalidQuery e) {
                 e.printStackTrace(System.err);

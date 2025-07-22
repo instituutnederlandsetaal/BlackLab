@@ -68,7 +68,7 @@ public class IndexTool {
                 switch (name) {
                 case "index-type":
                     if (i + 1 == args.length || !List.of("integrated", "external").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--index-type needs a parameter: integrated (the default) or external (legacy index type).");
+                        System.err.println("--index-type only supports 'integrated' (the default); don't use this option.");
                         usage();
                         return;
                     }

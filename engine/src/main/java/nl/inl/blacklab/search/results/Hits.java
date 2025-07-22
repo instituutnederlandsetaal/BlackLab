@@ -280,9 +280,6 @@ public interface Hits extends Results<Hit, HitProperty> {
 
     boolean hasMatchInfo();
 
-    @Deprecated
-    default boolean hasCapturedGroups() { return hasMatchInfo(); }
-
     Concordances concordances(ContextSize contextSize, ConcordanceType type);
 
     Kwics kwics(ContextSize contextSize);

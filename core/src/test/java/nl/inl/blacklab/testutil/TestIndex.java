@@ -287,7 +287,8 @@ public class TestIndex {
      */
     public Hits find(String pattern, Query filter) {
         try {
-            return index.find(CorpusQueryLanguageParser.parse(pattern).toQuery(QueryInfo.create(index),
+            return index.find(CorpusQueryLanguageParser.parse(pattern, "word")
+                        .toQuery(QueryInfo.create(index),
                     filter, false, false), null);
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);

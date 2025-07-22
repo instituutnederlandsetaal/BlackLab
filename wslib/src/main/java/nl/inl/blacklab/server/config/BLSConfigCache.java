@@ -22,9 +22,6 @@ public class BLSConfigCache {
     /** Maximum autodetect value for minFreeMemForSearchMegs */
     public static final int FREE_MEM_SEARCH_AUTO_MAX = 500;
 
-    @Deprecated
-    int maxSizeMegs = 100;
-
     /** Maximum number of cache entries to keep.
      *
      * Please note that memory use per cache entry may vary wildly.
@@ -54,11 +51,6 @@ public class BLSConfigCache {
 
     /** Cache implementation to use. */
     private String implementation = "";
-
-    @Deprecated
-    public void setMaxSizeMegs(int maxSizeMegs) {
-        logger.warn("Ignoring deprecated configuration option: cache.maxSizeMegs (use targetFreeMemMegs instead)");
-    }
 
     public int getMaxNumberOfJobs() {
         return maxNumberOfJobs;

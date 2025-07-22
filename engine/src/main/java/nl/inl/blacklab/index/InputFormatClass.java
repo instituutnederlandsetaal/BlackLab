@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.indexers.config.DocIndexerBase;
 import nl.inl.util.FileReference;
 
 /**
@@ -16,7 +17,7 @@ public class InputFormatClass implements InputFormat {
 
     protected final String formatIdentifier;
 
-    private final Class<? extends DocIndexerLegacy> docIndexerClass;
+    private final Class<? extends DocIndexerBase> docIndexerClass;
 
     @Override
     public String getIdentifier() {
@@ -25,12 +26,12 @@ public class InputFormatClass implements InputFormat {
 
     @Override
     public String getDisplayName() {
-        return DocIndexerLegacy.getDisplayName(docIndexerClass);
+        return docIndexerClass.getSimpleName();
     }
 
     @Override
     public String getDescription() {
-        return DocIndexerLegacy.getDescription(docIndexerClass);
+        return "The " + getDisplayName() + " indexer";
     }
 
     @Override
@@ -40,14 +41,10 @@ public class InputFormatClass implements InputFormat {
 
     @Override
     public boolean isVisible() {
-        return DocIndexerLegacy.isVisible(docIndexerClass);
+        return true;
     }
 
-    public Class<? extends DocIndexerLegacy> getDocIndexerClass() {
-        return docIndexerClass;
-    }
-
-    public InputFormatClass(String formatIdentifier, Class<? extends DocIndexerLegacy> docIndexerClass) {
+    public InputFormatClass(String formatIdentifier, Class<? extends DocIndexerBase> docIndexerClass) {
         assert !StringUtils.isEmpty(formatIdentifier);
         this.formatIdentifier = formatIdentifier;
         this.docIndexerClass = docIndexerClass;

@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import nl.inl.blacklab.Constants;
-
 /**
  * The different webservice parameters and their default values.
  * <p>
@@ -158,7 +156,7 @@ public enum WebserviceParameter {
         defaultValues.put(NUMBER_OF_RESULTS, "50");
         defaultValues.put(OMIT_EMPTY_CAPTURES, "no");
         defaultValues.put(PATTERN_LANGUAGE, "default");
-        defaultValues.put(PROPERTY, Constants.DEFAULT_MAIN_ANNOT_NAME); // deprecated, use "annotation" now
+        defaultValues.put(PROPERTY, "word"); // deprecated, use "annotation" now
         defaultValues.put(REL_SEPARATE_SPANS, "yes");
         defaultValues.put(SENSITIVE, "no");
         defaultValues.put(LIMIT_VALUES, "" + DEF_VAL_LIMIT_VALUES);

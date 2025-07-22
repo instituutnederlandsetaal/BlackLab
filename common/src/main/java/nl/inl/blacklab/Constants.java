@@ -27,9 +27,6 @@ public class Constants {
      */
     public static final int JAVA_MAX_HASHMAP_SIZE = Integer.MAX_VALUE / 4;
 
-    /** Used as a default value if no name has been specified (legacy indexers only) */
-    public static final String DEFAULT_MAIN_ANNOT_NAME = "word";
-
     /** Key in Solr response that contains the BlackLab response
         (also used by the proxy to retrieve the BlackLab response from the Solr response) */
     public static final String SOLR_BLACKLAB_SECTION_NAME = "blacklab";

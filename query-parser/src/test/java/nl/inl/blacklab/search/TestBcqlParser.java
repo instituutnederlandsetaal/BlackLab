@@ -16,7 +16,7 @@ public class TestBcqlParser {
     @Test
     public void testEscapedQuote() throws IOException, InvalidQuery {
         String pattern = "[lemma=\"\\\"\"]";
-        TextPattern tp = CorpusQueryLanguageParser.parse(pattern);
+        TextPattern tp = CorpusQueryLanguageParser.parse(pattern, "word");
         Assert.assertTrue(tp instanceof TextPatternTerm);
         Assert.assertEquals("\"", ((TextPatternTerm) tp).getValue());
     }
@@ -24,7 +24,7 @@ public class TestBcqlParser {
     @Test
     public void testParseAlignmentQuery() throws IOException, InvalidQuery {
         String pattern = "[word='the'] =verse-alignment=>nl [word='het']";
-        TextPattern tp = CorpusQueryLanguageParser.parse(pattern);
+        TextPattern tp = CorpusQueryLanguageParser.parse(pattern, "word");
         Assert.assertEquals(TextPatternRelationMatch.class, tp.getClass());
     }
 }

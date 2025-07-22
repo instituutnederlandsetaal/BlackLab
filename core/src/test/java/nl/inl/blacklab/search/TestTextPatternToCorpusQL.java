@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 public class TestTextPatternToCorpusQL {
 
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
-        TextPattern p = CorpusQueryLanguageParser.parse(input);
+        TextPattern p = CorpusQueryLanguageParser.parse(input, "word");
         String cql = TextPatternSerializerCql.serialize(p);
         Assert.assertEquals(expected, cql);
     }

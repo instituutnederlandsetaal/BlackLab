@@ -86,7 +86,7 @@ public class BatchQuery {
                 try {
                     Timer t = new Timer();
                     System.out.print(query + "\t");
-                    Hits hits = index.find(CorpusQueryLanguageParser.parse(query).toQuery(QueryInfo.create(index)), null);
+                    Hits hits = index.find(CorpusQueryLanguageParser.parse(query, index.mainAnnotatedField().mainAnnotation().name()).toQuery(QueryInfo.create(index)), null);
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {
                         System.out.print("\t" + hits.size() + "\t" + t.elapsed());

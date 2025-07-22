@@ -50,11 +50,6 @@ public abstract class DocIndexerAbstract implements DocIndexer {
      */
     protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
 
-    /**
-     * Parameters passed to this indexer
-     */
-    protected final Map<String, String> parameters = new HashMap<>();
-
     /** How many documents we've processed */
     private int numberOfDocsDone = 0;
 

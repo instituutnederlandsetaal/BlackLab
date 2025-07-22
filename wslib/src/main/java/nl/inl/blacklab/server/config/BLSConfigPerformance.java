@@ -69,11 +69,6 @@ public class BLSConfigPerformance {
         this.maxThreadsPerSearch = maxThreadsPerSearch;
     }
 
-    @Deprecated
-    public void setMaxPausedSearches(int maxPausedSearches) {
-        logger.warn("Ignoring deprecated configuration option: performance.maxPausedSearches");
-    }
-
     public int getMaxRunningJobsPerUser() {
         return maxRunningJobsPerUser;
     }
@@ -81,16 +76,6 @@ public class BLSConfigPerformance {
     @SuppressWarnings("unused")
     public void setMaxRunningJobsPerUser(int maxRunningJobsPerUser) {
         this.maxRunningJobsPerUser = maxRunningJobsPerUser;
-    }
-
-    @Deprecated
-    public void setPausingEnabled(boolean pausingEnabled) {
-        logger.warn("Ignoring deprecated configuration option: performance.pausingEnabled");
-    }
-
-    @Deprecated
-    public void setAbandonedCountPauseTimeSec(int abandonedCountPauseTimeSec) {
-        logger.warn("Ignoring deprecated configuration option: performance.abandonedCountPauseTimeSec");
     }
 
     public int getAbandonedCountAbortTimeSec() {
