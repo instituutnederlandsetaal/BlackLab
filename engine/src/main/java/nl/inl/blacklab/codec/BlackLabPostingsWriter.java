@@ -193,24 +193,30 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
                     if (term == null)
                         break;
 
-                    startTerm(actions, term);
-
-                    // For each document containing this term...
-                    postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
-                    while (true) {
-                        int docId = postingsEnum.nextDoc();
-                        if (docId == DocIdSetIterator.NO_MORE_DOCS)
-                            break;
-
-                        processDocument(postingsEnum, actions, docId);
-                    }
-                    endTerm(actions);
+                    postingsEnum = handleTerm(actions, term, postingsEnum, termsEnum);
                 }
                 endField(actions);
             } // for each field
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }
+    }
+
+    private static PostingsEnum handleTerm(List<PWPlugin> actions, BytesRef term, PostingsEnum postingsEnum,
+            TermsEnum termsEnum) throws IOException {
+        startTerm(actions, term);
+
+        // For each document containing this term...
+        postingsEnum = termsEnum.postings(postingsEnum, PostingsEnum.POSITIONS | PostingsEnum.PAYLOADS);
+        while (true) {
+            int docId = postingsEnum.nextDoc();
+            if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                break;
+
+            processDocument(postingsEnum, actions, docId);
+        }
+        endTerm(actions);
+        return postingsEnum;
     }
 
     private static void processDocument(PostingsEnum postingsEnum, List<PWPlugin> actions, int docId) throws IOException {
