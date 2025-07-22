@@ -4,7 +4,7 @@ import java.util.Optional;
 
 /**
  * All of the operations a BlackLab webservice supports.
- *
+ * <p>
  * Also records the BlackLab Server URL path and HTTP method.
  * The path doesn't apply to Solr, because Solr always uses the same path
  * and gets all info via parameters.
@@ -37,17 +37,17 @@ public enum WebserviceOperation {
     LIST_INPUT_FORMATS("list-input-formats", BlsPath.INPUT_FORMATS),
     INPUT_FORMAT_INFO("input-format-info", BlsPath.INPUT_FORMATS),
     INPUT_FORMAT_XSLT("input-format-xslt", BlsPath.INPUT_FORMATS),
-    WRITE_INPUT_FORMAT("write-input-format", "POST", BlsPath.INPUT_FORMATS),
-    DELETE_INPUT_FORMAT("delete-input-format", "DELETE", BlsPath.INPUT_FORMATS),
+    WRITE_INPUT_FORMAT("write-input-format", HttpMethod.POST, BlsPath.INPUT_FORMATS),
+    DELETE_INPUT_FORMAT("delete-input-format", HttpMethod.DELETE, BlsPath.INPUT_FORMATS),
 
-    ADD_TO_CORPUS("add-to-corpus", "POST", BlsPath.EMPTY),
-    DELETE_DOCUMENT("delete-document", "DELETE", BlsPath.DOCS),
+    ADD_TO_CORPUS("add-to-corpus", HttpMethod.POST, BlsPath.EMPTY),
+    DELETE_DOCUMENT("delete-document", HttpMethod.DELETE, BlsPath.DOCS),
 
     CACHE_INFO("cache-info", BlsPath.CACHE_INFO),
-    CACHE_CLEAR("cache-clear", "POST", BlsPath.CACHE_CLEAR),
+    CACHE_CLEAR("cache-clear", HttpMethod.POST, BlsPath.CACHE_CLEAR),
 
-    CREATE_CORPUS("create-corpus", "POST", BlsPath.EMPTY),
-    DELETE_CORPUS("delete-corpus", "DELETE", BlsPath.EMPTY),
+    CREATE_CORPUS("create-corpus", HttpMethod.POST, BlsPath.EMPTY),
+    DELETE_CORPUS("delete-corpus", HttpMethod.DELETE, BlsPath.EMPTY),
 
     STATIC_RESPONSE("static-response", BlsPath.EMPTY), // internal, used by BLS
     NONE("none", BlsPath.EMPTY);
@@ -56,7 +56,7 @@ public enum WebserviceOperation {
 
     private final BlsPath blsPath;
 
-    private final String httpMethod;
+    private final HttpMethod httpMethod;
 
     public static Optional<WebserviceOperation> fromValue(String name) {
         for (WebserviceOperation t: values()) {
@@ -67,10 +67,10 @@ public enum WebserviceOperation {
     }
 
     WebserviceOperation(String value, BlsPath blsPath) {
-        this(value, "GET", blsPath);
+        this(value, HttpMethod.GET, blsPath);
     }
 
-    WebserviceOperation(String value, String httpMethod, BlsPath blsPath) {
+    WebserviceOperation(String value, HttpMethod httpMethod, BlsPath blsPath) {
         this.value = value;
         this.blsPath = blsPath;
         this.httpMethod = httpMethod;
@@ -89,7 +89,8 @@ public enum WebserviceOperation {
         return blsPath.path();
     }
 
-    public String getHttpMethod() {
+    @SuppressWarnings("unused")
+    public HttpMethod getHttpMethod() {
         return httpMethod;
     }
 }

@@ -24,17 +24,17 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
  * The annotations might be "headword", "pos" (part of speech), "namedentity"
  * (whether or not the word is (part of) a named entity like a location or
  * place), etc.
- *
+ * <p>
  * Annotated fields are implemented by indexing a field in Lucene for each
  * annotation. For example, if annotated field "contents" has annotations "headword"
  * and "pos", there would be 3 Lucene fields for the annotated field: "contents",
  * "contents%headword@s" and "contents%pos@s" (@s means sensitive; multiple sensitivity
  * alternatives may be indexed for an annotation).
- *
+ * <p>
  * The main field ("contents" in the above example) may include offset
  * information if you want (e.g. for highlighting). All Lucene fields will
  * include position information (for use with SpanQueries).
- *
+ * <p>
  * N.B. It is crucial that everything stays in synch, so you should call all the
  * appropriate add*() methods for each annotation and each token, or use the
  * correct position increments to keep everything synched up. The same goes for
@@ -44,6 +44,8 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 public class AnnotatedFieldWriter {
 
     protected static final Logger logger = LogManager.getLogger(AnnotatedFieldWriter.class);
+
+    public static final String MSG_IS_DISCOURAGED_REASON = "' is discouraged (field/annotation names should be valid XML element names)";
 
     private final Map<String, AnnotationWriter> annotations = new HashMap<>();
 
@@ -76,7 +78,7 @@ public class AnnotatedFieldWriter {
 
     /**
      * Construct a AnnotatedFieldWriter object with a main annotation.
-     *
+     * <p>
      * NOTE: right now, the main annotation will always have a forward index.
      * Maybe make this configurable?
      *
@@ -93,11 +95,9 @@ public class AnnotatedFieldWriter {
         relationsStrategy = docWriter.getRelationsStrategy();
         relationAnnotationName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
-            logger.warn("Field name '" + name
-                    + "' is discouraged (field/annotation names should be valid XML element names)");
+            logger.warn("Field name '" + name + MSG_IS_DISCOURAGED_REASON);
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(mainAnnotationName))
-            logger.warn("Annotation name '" + mainAnnotationName
-                    + "' is discouraged (field/annotation names should be valid XML element names)");
+            logger.warn("Annotation name '" + mainAnnotationName + MSG_IS_DISCOURAGED_REASON);
         boolean includeOffsets = true;
         fieldName = name;
         this.needsPrimaryValuePayloads = needsPrimaryValuePayloads;
@@ -113,8 +113,7 @@ public class AnnotatedFieldWriter {
     public AnnotationWriter addAnnotation(String name, AnnotationSensitivities sensitivity, boolean includePayloads,
             boolean createForwardIndex) {
         if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
-            logger.warn("Annotation name '" + name
-                    + "' is discouraged (field/annotation names should be valid XML element names)");
+            logger.warn("Annotation name '" + name + MSG_IS_DISCOURAGED_REASON);
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads,
                 needsPrimaryValuePayloads);
         if (noForwardIndexAnnotations.contains(name) || !createForwardIndex) {
@@ -124,13 +123,9 @@ public class AnnotatedFieldWriter {
         return p;
     }
 
-    public AnnotationWriter addAnnotation(String name, AnnotationSensitivities sensitivity, boolean createForwardIndex) {
-        return addAnnotation(name, sensitivity, false, createForwardIndex);
-    }
-
     /**
      * Add a final start/end char identical to the one before.
-     *
+     * <p>
      * Used for the final dummy token. When this is added, we've processed other
      * fields in the meantime, so our character position is unavailable.
      */
