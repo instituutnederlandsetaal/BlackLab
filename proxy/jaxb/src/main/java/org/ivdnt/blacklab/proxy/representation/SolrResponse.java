@@ -33,9 +33,4 @@ public class SolrResponse {
                 ", blacklab=" + blacklab +
                 '}';
     }
-
-    @Override
-    public SolrResponse clone() throws CloneNotSupportedException {
-        return (SolrResponse)super.clone();
-    }
 }

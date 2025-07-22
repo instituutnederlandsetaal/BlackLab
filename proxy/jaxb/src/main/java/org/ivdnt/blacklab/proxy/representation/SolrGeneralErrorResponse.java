@@ -60,9 +60,4 @@ public class SolrGeneralErrorResponse {
     public void setStatus(String status) {
         this.status = status;
     }
-
-    @Override
-    public SolrGeneralErrorResponse clone() throws CloneNotSupportedException {
-        return (SolrGeneralErrorResponse)super.clone();
-    }
 }

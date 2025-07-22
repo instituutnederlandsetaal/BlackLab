@@ -47,7 +47,7 @@ class HitComparators {
         List<String> parts = PropertySerializeUtil.splitPartsList(hitProp);
         String type = parts.get(0).toLowerCase();
         boolean reverse = false;
-        if (type.length() > 0 && type.charAt(0) == '-') {
+        if (!type.isEmpty() && type.charAt(0) == '-') {
             reverse = true;
             type = type.substring(1);
         }
@@ -61,7 +61,7 @@ class HitComparators {
         default:
             // Context property. Find annotation and sensitivity.
             String annotation = infos.isEmpty() ? "" : infos.get(0);
-            if (annotation.length() == 0)
+            if (annotation.isEmpty())
                 throw new UnsupportedOperationException("Specify annotation for sort/group prop!");
             boolean sensitive = infos.size() <= 1 || infos.get(1).equals("s");
             switch (type) {
