@@ -11,7 +11,6 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -197,7 +196,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
         return Hits.list(queryInfo(), window, windowStats, null,
                 hitsCounted, docsRetrieved.getValue(), docsRetrieved.getValue(),
-                matchInfoDefs(), hasAscendingLuceneDocIds());
+                matchInfoDefs());
     }
 
     /**
@@ -259,8 +258,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         });
 
         return Hits.list(queryInfo(), sample, null, sampleParameters, sample.size(),
-                docsInSample.getValue(), docsInSample.getValue(), matchInfoDefs(),
-                hasAscendingLuceneDocIds());
+                docsInSample.getValue(), docsInSample.getValue(), matchInfoDefs());
     }
 
     /**
@@ -286,23 +284,8 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         long hitsCounted = hitsCountedSoFar();
         long docsRetrieved = docsProcessedSoFar();
         long docsCounted = docsCountedSoFar();
-        boolean ascendingLuceneDocIds = sortProp instanceof HitPropertyDocumentId && !sortProp.isReverse();
         return Hits.list(queryInfo(), sorted, null, null,
-                hitsCounted, docsRetrieved, docsCounted, matchInfoDefs(), ascendingLuceneDocIds);
-    }
-
-    /**
-     * Return a Hits object with these hits in ascending Lucene doc id order.
-     *
-     * Necessary for operations that make use of DocValues, which use sequential access.
-     *
-     * If already in ascending order, returns itself.
-     *
-     * @return hits in ascending Lucene doc id order
-     */
-    @Override
-    public Hits withAscendingLuceneDocIds() {
-        return hasAscendingLuceneDocIds() ? this : sort(new HitPropertyDocumentId());
+                hitsCounted, docsRetrieved, docsCounted, matchInfoDefs());
     }
 
     @Override
@@ -553,8 +536,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             1,
             1,
             1,
-            matchInfoDefs(),
-            true);
+            matchInfoDefs());
     }
 
     // Match info (captured groups, relations)

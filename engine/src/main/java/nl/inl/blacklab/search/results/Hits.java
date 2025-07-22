@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.results;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -69,8 +68,7 @@ public interface Hits extends Results<Hit, HitProperty> {
             long hitsCounted,
             long docsRetrieved,
             long docsCounted,
-            MatchInfoDefs matchInfoDefs,
-            boolean ascendingLuceneDocIds) {
+            MatchInfoDefs matchInfoDefs) {
         return new HitsList(
                 queryInfo,
                 hits,
@@ -79,8 +77,7 @@ public interface Hits extends Results<Hit, HitProperty> {
                 hitsCounted,
                 docsRetrieved,
                 docsCounted,
-                matchInfoDefs,
-                ascendingLuceneDocIds);
+                matchInfoDefs);
     }
 
     /**
@@ -143,30 +140,6 @@ public interface Hits extends Results<Hit, HitProperty> {
      */
     @Override
     Hits sort(HitProperty sortProp);
-
-    /**
-     * Is this Hits object sorted by Lucene doc ids?
-     *
-     * EXPERT USE. That is, will the next hit always have a doc id that is equal to
-     * or greater than the last? This is required if you're using DocValues.
-     *
-     * See also {@link #withAscendingLuceneDocIds()}.
-     *
-     * @return true if doc ids are ascending, false if not
-     */
-    boolean hasAscendingLuceneDocIds();
-
-    /**
-     * Return a Hits object with these hits in ascending Lucene doc id order.
-     *
-     * EXPERT USE. Necessary for operations that make use of DocValues,
-     * which use sequential access. If already in ascending order, returns itself.
-     *
-     * See also {@link #hasAscendingLuceneDocIds()}.
-     *
-     * @return hits in ascending Lucene doc id order
-     */
-    Hits withAscendingLuceneDocIds();
 
     @Override
     HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup);

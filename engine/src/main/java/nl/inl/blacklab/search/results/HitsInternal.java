@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.function.Consumer;
 
+import org.apache.lucene.queries.spans.Spans;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
@@ -9,14 +10,12 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
-import org.apache.lucene.queries.spans.Spans;
-
 /**
  * A list of simple hits.
  * <p>
  * Contrary to {@link Hits}, this only contains doc, start and end
  * for each hit, so no captured groups information, and no other
- * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
+ * bookkeeping (hit/doc retrieved/counted stats, etc.).
  * <p>
  * This is a read-only interface.
  */

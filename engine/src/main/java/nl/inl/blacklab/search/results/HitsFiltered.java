@@ -29,8 +29,6 @@ public class HitsFiltered extends HitsMutable {
 
     private int indexInSource = -1;
 
-    private final boolean ascendingLuceneDocIds;
-
     /**
      * Filter hits.
      *
@@ -41,7 +39,6 @@ public class HitsFiltered extends HitsMutable {
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
         super(hits.queryInfo());
         this.source = hits;
-        ascendingLuceneDocIds = source.hasAscendingLuceneDocIds();
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
         // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigated by
@@ -128,10 +125,5 @@ public class HitsFiltered extends HitsMutable {
     @Override
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;
-    }
-
-    @Override
-    public boolean hasAscendingLuceneDocIds() {
-        return ascendingLuceneDocIds;
     }
 }

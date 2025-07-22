@@ -68,19 +68,6 @@ How would we approach this:
 - Clean up, removing any now-unused classes.
 
 
-## Refactoring opportunities
-
-- [ ] Tasks:
-    - [ ] search for uses of `instanceof`; usually a smell of bad design
-          (but allowable for legacy exceptions that will go away eventually)
-    - [ ] addToForwardIndex shouldn't be a separate method in DocIndexers and Indexer; there should be an addDocument method that adds the document to all parts of the BlackLab index.
-    - [ ] Don't rely on BlackLab.defaultConfigDirs() in multiple places.
-      Specifically DocIndexerFactoryConfig: this should use an option from blacklab(-server).yaml,
-      with a sane default. Remove stuff like /vol1/... and /tmp/ from default config dirs.
-- [ ] Principles:
-  - [ ] refactor for looser coupling / improved testability.
-  - [ ] Use more clean interfaces instead of abstract classes for external API.
-
 ## Optimization opportunities
 
 The first implementation of the integrated index is slow, because we just want to make it work for now. There are a number of opportunities for optimizing it.
@@ -90,7 +77,6 @@ Because this is a completely new index format, we are free to change its layout 
 - [ ] ForwardIndexDocumentImpl does a lot of work (e.g. filling chunks list with a lot of nulls), but it regularly used to only read 1-2 tokens from a document; is it worth it at all? Could we use a more efficient implementation?
 - [ ] Use more efficient data structures in the various `*Integrated` classes, e.g. those from fastutil
 - [ ] Interesting (if old) [article](https://blog.thetaphi.de/2012/07/use-lucenes-mmapdirectory-on-64bit.html) about Lucene and memory-mapping. Recommends 1/4 of physical memory should be Java heap, rest for OS cache. Use `iotop` to check how much I/O swapping is occurring.
-- [x] [Compress the forward index?](https://github.com/instituutnederlandsetaal/BlackLab/issues/289), probably using VInt, etc. which Lucene incorporates and Mtas already uses.
 
 
 ## BlackLab Proxy

@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * <p>
  * Contrary to {@link Hits}, this only contains doc, start and end
  * for each hit, so no captured groups information, and no other
- * bookkeeping (hit/doc retrieved/counted stats, hasAscendingLuceneDocIds, etc.).
+ * bookkeeping (hit/doc retrieved/counted stats, etc.).
  */
 public interface HitsInternalMutable extends HitsInternal {
 

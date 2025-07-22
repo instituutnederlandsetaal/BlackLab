@@ -308,9 +308,4 @@ public class HitsFromQuery extends HitsMutable {
     protected long resultsProcessedTotal() {
         return hitsProcessedTotal();
     }
-
-    @Override
-    public boolean hasAscendingLuceneDocIds() {
-        return true; // not strictly true, but per-leafreader it is true, which is what matters (for DocValues).
-    }
 }

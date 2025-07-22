@@ -38,11 +38,6 @@ public class HitGroupWithoutResults extends HitGroup {
         public MaxStats maxStats() {
             return new MaxStats(maxHitsProcessed, maxHitsCounted);
         }
-
-        @Override
-        public boolean hasAscendingLuceneDocIds() {
-            return false;
-        }
     }
 
     public HitGroupWithoutResults(QueryInfo queryInfo, PropertyValue groupIdentity, long totalHits, int totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
