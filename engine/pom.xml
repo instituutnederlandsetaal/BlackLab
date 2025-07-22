@@ -134,12 +134,7 @@
         </dependency>
         
 
-        <!-- XML parsing (VTD and Saxon) -->
-        <dependency>
-            <groupId>com.ximpleware</groupId>
-            <artifactId>vtd-xml</artifactId>
-            <version>2.13.4</version>
-        </dependency>
+        <!-- XML parsing (Saxon) -->
         <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>

@@ -1,14 +1,10 @@
 package nl.inl.util;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
-
-import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 
 public class FileReferenceInputStream implements FileReference {
 
@@ -27,16 +23,6 @@ public class FileReferenceInputStream implements FileReference {
     @Override
     public String getPath() {
         return path;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        // NOTE: This only works if you haven't read from the InputStream yet!
-        try {
-            return IOUtils.toByteArray(is);
-        } catch (IOException e) {
-            throw new ErrorIndexingFile(e);
-        }
     }
 
     @Override

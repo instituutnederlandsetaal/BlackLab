@@ -13,7 +13,6 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -32,22 +31,11 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     private static final int TOKEN_ID_PREFIX_LENGTH = 7;
 
     /** Create a new XPath-based indexer.
-     * <p>
-     * Chooses XML processor based on the fileTypeOptions.
      *
-     * @param fileTypeOptions options, including what processor to use
      * @return indexer
      */
-    public static DocIndexerXPath<?> create(Map<String, String> fileTypeOptions) {
-        String xmlProcessorName = fileTypeOptions.getOrDefault(FT_OPT_PROCESSOR, "");
-        if (xmlProcessorName.isEmpty()) {
-            // See if the older version of the key is being used
-            xmlProcessorName = fileTypeOptions.getOrDefault(FT_OPT_PROCESSING,
-                    BlackLab.featureFlag(BlackLab.FEATURE_DEFAULT_XML_PROCESSOR));
-        }
-        if (xmlProcessorName.toLowerCase().matches(REGEX_PROCESSOR_SAXON))
-            return new DocIndexerSaxon();
-        return new DocIndexerVTD(); // VTD was the original default (v2 will automatically set Saxon as default)
+    public static DocIndexerSaxon create() {
+        return new DocIndexerSaxon();
     }
 
     /**

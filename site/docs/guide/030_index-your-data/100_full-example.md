@@ -15,12 +15,6 @@ description: The file format used by OpenSonar for document contents.
 ## (optional; not used by BlackLab; could be used in user interface)
 type: content
 
-## What XML processor to use
-## (optional; current default is VTD, but Saxon is recommended because it supports 
-##  XPath 3.1 and is faster. Future format file versions will probably default to Saxon)
-## (omit this setting when parsing CSV/TSV or some other file type)
-processor: saxon
-
 ## Each file type may have options associated with it (for now, only "tabular" does)
 ## We've shown the options for tabular he're but commented them out as we're describing
 ## an xml format here.

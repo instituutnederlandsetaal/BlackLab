@@ -17,41 +17,11 @@ This setting can also be changed for individual documents by setting a metadat f
 
 ## XPath support level
 
-BlackLab supports two different XML processors: VTD and Saxon. While currently VTD is still the default, we would recommend Saxon for most users going forward.
+BlackLab uses the Saxon library to process XML.
 
-VTD only supports XPath 1.0 and has some slight quirks (see below). Saxon uses more memory, but is often faster and supports XPath 3.1, which can make writing indexing configurations much easier.
+Saxon supports XPath 3.1, which is very powerful and can help when writing complex indexing configurations.
 
 Certain complex indexing features can be avoided when using Saxon; many things can be done in XPath directly. See [XPath examples](xpath-examples.md) to get an idea of the wide range of possibilities.
-
-To use Saxon, place this in your input format config (.blf.yaml) file (at the top level):
-
-```yaml
-processor: saxon
-```
-
-This works for the current development version and releases 4.0 and up.
-
-::: details Using Saxon with BlackLab 3.0.1 and older
-
-In older versions of BlackLab (release 3.0.1 and before), there is basic Saxon support, but there are quite a few features missing.
-
-It also didn't support the top-level `processor` key shown above; if you do want to use Saxon on these older releases, use:
-
-```yaml
-fileType: xml
-fileTypeOptions:
-  processing: saxon   # (instead of vtd, which is the default)
-```
-
-:::
-
-::: details Beware of VTD quirks
-
-If you do stick with the default processor VTD instead of switching to Saxon, be aware that in rare cases, a correct XPath may produce unexpected results. This one for example: `string(.//tei:availability[1]/@status='free')`. There's often a workaround for this, in this case changing it to `string(//tei:availability[1]/@status='free')` might fix it (although of course this means something slightly different, so do check thoroughly).
-
-A future version of BlackLab will change the default from VTD to Saxon.
-
-:::
 
 
 ## Unicode normalization

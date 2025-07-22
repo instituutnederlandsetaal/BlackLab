@@ -84,13 +84,6 @@ public interface FileReference {
     }
 
     /**
-     * Get contents as a byte array.
-     *
-     * (only used by the older VTD-XML indexer)
-     */
-    byte[] getBytes();
-
-    /**
      * Get an input stream to the file contents.
      * Call this if you only need to process the file ONCE.
      * Supported by all implementations.

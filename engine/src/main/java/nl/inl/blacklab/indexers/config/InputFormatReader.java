@@ -138,17 +138,13 @@ public class InputFormatReader extends YamlJsonReader {
                 break;
             case "baseFormat": {
                 throw new InvalidInputFormatConfig("Input format configuration inheritance (baseFormat key) was removed. " +
-                        "Please copy the base format configuration to your own format and customize it.");
+                        "Please copy the base format configuration to your own format and customize it. Found" + inFormat());
             }
             case KEY_TYPE:
                 cfg.setType(str(e));
                 break;
             case KEY_PROCESSOR:
-                // (we allow this at the top-level now because it's something most users will want to do while VTD
-                //  remains the default)
-                // Set the (XML) file processor to use, VTD or Saxon
-                cfg.setFileType(FileType.XML); // processor only supported for XML files right now
-                cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, str(e));
+                logger.warn("Encountered 'processor' key. This is ignored; it is better to remove it. Found" + inFormat());
                 break;
             case "fileType":
                 cfg.setFileType(FileType.fromStringValue(str(e)));

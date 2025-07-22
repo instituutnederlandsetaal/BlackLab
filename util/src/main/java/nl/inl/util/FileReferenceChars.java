@@ -4,16 +4,10 @@ import java.io.BufferedReader;
 import java.io.CharArrayReader;
 import java.io.File;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetEncoder;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.input.ReaderInputStream;
-
-import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 
 public class FileReferenceChars implements FileReference {
 
@@ -32,19 +26,6 @@ public class FileReferenceChars implements FileReference {
     @Override
     public String getPath() {
         return path;
-    }
-
-    @Override
-    public byte[] getBytes() {
-        // Replaces less efficient version:
-        // return new String(contents).getBytes(StandardCharsets.UTF_8);
-        try {
-            CharsetEncoder encoder = StandardCharsets.UTF_8.newEncoder();
-            ByteBuffer byteBuffer = encoder.encode(CharBuffer.wrap(contents));
-            return byteBuffer.array();
-        } catch (CharacterCodingException e) {
-            throw new ErrorIndexingFile(e);
-        }
     }
 
     @Override

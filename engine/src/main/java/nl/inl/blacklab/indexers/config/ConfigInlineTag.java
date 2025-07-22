@@ -152,9 +152,4 @@ public class ConfigInlineTag {
         }
         return allAttributes;
     }
-
-    public synchronized boolean hasDetailedAttributeConfig() {
-        // (used to warn that VTD indexer doesn't support this)
-        return !getAttributes().isEmpty() || !defaultIndexAttributes;
-    }
 }

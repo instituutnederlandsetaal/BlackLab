@@ -39,11 +39,6 @@ public class FileReferenceBytes implements FileReference {
     }
 
     @Override
-    public byte[] getBytes() {
-        return contents;
-    }
-
-    @Override
     public FileReference withCreateReader() {
         return this;
     }

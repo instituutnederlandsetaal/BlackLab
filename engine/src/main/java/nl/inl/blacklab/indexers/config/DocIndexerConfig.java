@@ -57,7 +57,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             }
         } else {
             docIndexer = switch (config.getFileType()) {
-                case XML -> DocIndexerXPath.create(config.getFileTypeOptions());
+                case XML -> DocIndexerXPath.create();
                 case TABULAR -> new DocIndexerTabular();
                 case TEXT -> new DocIndexerPlainText();
                 case CHAT -> new DocIndexerChat();

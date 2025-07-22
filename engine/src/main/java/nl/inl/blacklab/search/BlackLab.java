@@ -72,13 +72,6 @@ public final class BlackLab {
     /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
-    /** The default XML processing library to use. Valid values are "vtd" and "saxon".
-     *  VTD-XML, the current default, is memory-efficient but generally slower and doesn't support recent XPath.
-     *  Saxon uses more memory but is faster and has better XPath support.
-     *  The default will change to Saxon in the near future.
-     */
-    public static final String FEATURE_DEFAULT_XML_PROCESSOR = "defaultXmlProcessor";
-
     /** Force a merge after every document? Can be useful when debugging Lucene codec issues. */
     public static final String FEATURE_DEBUG_FORCE_MERGE = "debugForceMerge";
 

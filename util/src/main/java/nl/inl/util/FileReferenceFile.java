@@ -9,10 +9,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 
 public class FileReferenceFile implements FileReference {
@@ -31,17 +29,6 @@ public class FileReferenceFile implements FileReference {
     public String getPath() {
         try {
             return file.getCanonicalPath();
-        } catch (IOException e) {
-            throw new ErrorIndexingFile(e);
-        }
-    }
-
-    @Override
-    public byte[] getBytes() {
-        if (file.length() > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new IllegalArgumentException("Content doesn't fit in a byte array");
-        try {
-            return FileUtils.readFileToByteArray(file);
         } catch (IOException e) {
             throw new ErrorIndexingFile(e);
         }
