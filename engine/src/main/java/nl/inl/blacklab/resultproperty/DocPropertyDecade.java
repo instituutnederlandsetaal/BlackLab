@@ -80,13 +80,13 @@ public class DocPropertyDecade extends DocProperty {
     public int compare(DocResult a, DocResult b) {
         String strYearA = docPropStoredField.getFirstValue(a);
         String strYearB = docPropStoredField.getFirstValue(b);
-        if (strYearA.length() == 0) { // sort missing year at the end
-            if (strYearB.length() == 0)
+        if (strYearA.isEmpty()) { // sort missing year at the end
+            if (strYearB.isEmpty())
                 return 0;
             else
                 return reverse ? -1 : 1;
         }
-        if (strYearB.length() == 0) // sort missing year at the end
+        if (strYearB.isEmpty()) // sort missing year at the end
             return reverse ? 1 : -1;
 
         int year1 = parse(strYearA);
@@ -97,13 +97,13 @@ public class DocPropertyDecade extends DocProperty {
     public int compare(int docIdA, int docIdb) {
         String strYearA = docPropStoredField.getFirstValue(docIdA);
         String strYearB = docPropStoredField.getFirstValue(docIdb);
-        if (strYearA.length() == 0) { // sort missing year at the end
-            if (strYearB.length() == 0)
+        if (strYearA.isEmpty()) { // sort missing year at the end
+            if (strYearB.isEmpty())
                 return 0;
             else
                 return reverse ? -1 : 1;
         }
-        if (strYearB.length() == 0) // sort missing year at the end
+        if (strYearB.isEmpty()) // sort missing year at the end
             return reverse ? 1 : -1;
 
         int year1 = parse(strYearA);

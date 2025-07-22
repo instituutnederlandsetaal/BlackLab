@@ -70,7 +70,7 @@ public enum ApiVersion {
             return EXPERIMENTAL;
 
         // Skip optional v
-        if (s.length() > 0 && s.charAt(0) == 'v')
+        if (!s.isEmpty() && s.charAt(0) == 'v')
             s = s.substring(1);
 
         // Parse the string

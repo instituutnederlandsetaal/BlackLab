@@ -58,7 +58,7 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
         }
 
         boolean reverse = false;
-        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
+        if (!serialized.isEmpty() && serialized.charAt(0) == '-') {
             reverse = true;
             serialized = serialized.substring(1);
         }

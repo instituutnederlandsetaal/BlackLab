@@ -43,7 +43,7 @@ public final class LogUtil {
         final Configuration config = ctx.getConfiguration();
         boolean changed = false;
         Configurator.setRootLevel(level);
-        if (config.getAppenders().size() == 0) {
+        if (config.getAppenders().isEmpty()) {
             PatternLayout layout = PatternLayout.createLayout(PatternLayout.SIMPLE_CONVERSION_PATTERN,
                     null, config, null, null, true, false, null, null);
             Appender appender = ConsoleAppender.createAppender(layout, null, Target.SYSTEM_OUT, "Console", true, false,

@@ -35,7 +35,7 @@ public class AuthManager {
     }
 
     private void init(String authClass, Map<String, ?> authParam) throws ConfigurationException {
-        if (authClass.length() > 0) {
+        if (!authClass.isEmpty()) {
             try {
                 if (!authClass.contains(".")) {
                     // Allows us to abbreviate the built-in auth classes

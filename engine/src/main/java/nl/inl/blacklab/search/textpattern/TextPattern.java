@@ -94,7 +94,7 @@ public abstract class TextPattern implements TextPatternStruct {
     protected String clausesToString(List<TextPattern> clauses) {
         StringBuilder b = new StringBuilder();
         for (TextPattern clause : clauses) {
-            if (b.length() > 0)
+            if (!b.isEmpty())
                 b.append(", ");
             b.append(clause.toString());
         }

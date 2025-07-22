@@ -130,7 +130,7 @@ public class Index {
     }
 
     private void writeShareWithUsersFile() {
-        if (shareWithUsers.size() == 0) {
+        if (shareWithUsers.isEmpty()) {
             // We don't want to share with anyone. Delete the share file if it exists.
             if (shareWithUsersFile.exists()) {
                 if (!shareWithUsersFile.delete())

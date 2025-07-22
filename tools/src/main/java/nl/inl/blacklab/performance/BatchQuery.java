@@ -81,7 +81,7 @@ public class BatchQuery {
     
             for (String query : FileUtil.readLines(inputFile)) {
                 query = query.trim();
-                if (query.length() == 0 || query.charAt(0) == '#')
+                if (query.isEmpty() || query.charAt(0) == '#')
                     continue; // skip empty lines and #-comments
                 try {
                     Timer t = new Timer();

@@ -333,7 +333,7 @@ public class AnnotationWriter {
             // when we encounter an XML close tag. Note that we don't do this if we store character offsets, or we
             // lose the offsets for some positions.
             int lastIndex = values.size() - 1;
-            if (lastIndex >= 0 && values.get(lastIndex).length() == 0 && !includeOffsets &&
+            if (lastIndex >= 0 && values.get(lastIndex).isEmpty() && !includeOffsets &&
                     (!hasPayload() || payloads.get(lastIndex) == null)) {
                 // Change the last value and its position increment
                 values.set(lastIndex, value);

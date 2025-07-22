@@ -108,7 +108,7 @@ public class CorpusQueryLanguageParser {
 
     TextPattern annotationClause(String annot, TextPatternTerm value) {
         // Main annotation has a name. Use that.
-        if (annot == null || annot.length() == 0)
+        if (annot == null || annot.isEmpty())
             annot = defaultAnnotation;
         return value.withAnnotationAndSensitivity(annot, null);
     }

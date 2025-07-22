@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import jakarta.servlet.http.HttpServletResponse;
-
 import nl.inl.blacklab.server.exceptions.IllegalIndexName;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -126,7 +125,7 @@ public class RequestHandlerStaticResponse extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) {
-        if (internalErrorCode != null && internalErrorCode.length() > 0) {
+        if (internalErrorCode != null && !internalErrorCode.isEmpty()) {
             if (exception != null)
                 rs.getDataStream().internalError(exception, debugMode, internalErrorCode);
             else if (msg != null)

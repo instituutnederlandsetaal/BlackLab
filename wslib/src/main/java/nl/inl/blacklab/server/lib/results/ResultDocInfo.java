@@ -49,7 +49,7 @@ public class ResultDocInfo {
             throw new IllegalArgumentException("Must specify docPid!");
         if (document == null) {
             this.docPid = docPid;
-            if (docPid.length() == 0)
+            if (docPid.isEmpty())
                 throw new BadRequest("NO_DOC_ID", "Specify document pid.");
             int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
             if (luceneDocId < 0 || luceneDocId >= index.reader().maxDoc())

@@ -15,7 +15,7 @@ public class RequestHandlerDeleteIndex extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        if (indexName != null && indexName.length() > 0) {
+        if (indexName != null && !indexName.isEmpty()) {
             // Delete index
             try {
                 debug(logger, "REQ delete index: " + indexName);

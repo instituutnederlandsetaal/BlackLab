@@ -24,18 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
-import nl.inl.blacklab.search.lucene.BLSpanWeight;
-import nl.inl.blacklab.search.lucene.BLSpans;
-import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.lucene.SpanGuarantees;
-import nl.inl.blacklab.search.lucene.SpanGuaranteesAdapter;
-import nl.inl.blacklab.search.lucene.SpanQueryAnd;
-import nl.inl.blacklab.search.lucene.SpanQueryNoHits;
-
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
@@ -46,7 +34,6 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
-import org.apache.lucene.util.PriorityQueue;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -447,7 +434,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
                 }
             }
 
-            if (subSpans.size() == 0) {
+            if (subSpans.isEmpty()) {
                 return null;
             } else if (subSpans.size() == 1) {
                 //BL we need everything to be a BLSpans, or capturing (and optimizations) won't work properly

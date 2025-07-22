@@ -47,7 +47,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         List<String> parts = PropertySerializeUtil.splitPartsList(serialized);
         String type = parts.get(0).toLowerCase();
         boolean reverse = false;
-        if (type.length() > 0 && type.charAt(0) == '-') {
+        if (!type.isEmpty() && type.charAt(0) == '-') {
             reverse = true;
             type = type.substring(1);
         }

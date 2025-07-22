@@ -93,9 +93,9 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
         }
         if (opt.containsKey(FT_OPT_EXPECT_COLUMN_NAMES) && opt.get(FT_OPT_EXPECT_COLUMN_NAMES).equalsIgnoreCase("true"))
             tabularFormat = tabularFormat.withFirstRecordAsHeader();
-        if (opt.containsKey(FT_OPT_DELIMITER) && opt.get(FT_OPT_DELIMITER).length() > 0)
+        if (opt.containsKey(FT_OPT_DELIMITER) && !opt.get(FT_OPT_DELIMITER).isEmpty())
             tabularFormat = tabularFormat.withDelimiter(opt.get(FT_OPT_DELIMITER).charAt(0));
-        if (opt.containsKey(FT_OPT_QUOTE) && opt.get(FT_OPT_QUOTE).length() > 0)
+        if (opt.containsKey(FT_OPT_QUOTE) && !opt.get(FT_OPT_QUOTE).isEmpty())
             tabularFormat = tabularFormat.withQuote(opt.get(FT_OPT_QUOTE).charAt(0));
         else
             tabularFormat = tabularFormat.withQuote(null); // disable quotes altogether

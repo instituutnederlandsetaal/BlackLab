@@ -88,8 +88,8 @@ public final class AnnotatedFieldNameUtil {
      */
     static String bookkeepingField(String fieldName, String annotName, String bookkeepName) {
         String fieldAnnotName;
-        boolean annotGiven = annotName != null && annotName.length() > 0;
-        if (fieldName == null || fieldName.length() == 0) {
+        boolean annotGiven = annotName != null && !annotName.isEmpty();
+        if (fieldName == null || fieldName.isEmpty()) {
             if (annotGiven) {
                 fieldAnnotName = annotName;
             } else
@@ -99,7 +99,7 @@ public final class AnnotatedFieldNameUtil {
             fieldAnnotName = fieldName + (annotGiven ? ANNOT_SEP + annotName : "");
         }
 
-        if (bookkeepName == null || bookkeepName.length() == 0)
+        if (bookkeepName == null || bookkeepName.isEmpty())
             return fieldAnnotName;
         return fieldAnnotName + BOOKKEEPING_SEP + bookkeepName;
     }
@@ -125,17 +125,17 @@ public final class AnnotatedFieldNameUtil {
      */
     public static String annotationField(String fieldName, String annotName, String sensitivityName) {
         String fieldAnnotName;
-        boolean annotGiven = annotName != null && annotName.length() > 0;
+        boolean annotGiven = annotName != null && !annotName.isEmpty();
         if (!annotGiven) {
             throw new IllegalArgumentException("Must specify a annotation name");
         }
-        if (fieldName == null || fieldName.length() == 0) {
+        if (fieldName == null || fieldName.isEmpty()) {
             fieldAnnotName = annotName;
         } else {
             fieldAnnotName = fieldName + ANNOT_SEP + annotName;
         }
 
-        if (sensitivityName == null || sensitivityName.length() == 0) {
+        if (sensitivityName == null || sensitivityName.isEmpty()) {
             return fieldAnnotName;
         }
         return fieldAnnotName + SENSITIVITY_SEP + sensitivityName;
@@ -162,7 +162,7 @@ public final class AnnotatedFieldNameUtil {
      * @return the field annotation alternative name
      */
     public static String annotationSensitivity(String fieldAnnotName, String sensitivityName) {
-        if (sensitivityName == null || sensitivityName.length() == 0) {
+        if (sensitivityName == null || sensitivityName.isEmpty()) {
             throw new IllegalArgumentException("Must specify an sensitivity name");
         }
         return fieldAnnotName + SENSITIVITY_SEP + sensitivityName;

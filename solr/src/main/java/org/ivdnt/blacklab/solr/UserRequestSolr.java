@@ -66,7 +66,7 @@ public class UserRequestSolr implements UserRequest {
             return "UNKNOWN"; // test
         final HttpServletRequest req = rb.req.getHttpSolrCall().getReq();
         String header = req.getHeader("X-Forwarded-For");
-        if (header != null && header.length() > 0) header = req.getRemoteAddr();
+        if (header != null && !header.isEmpty()) header = req.getRemoteAddr();
         return header;
     }
 

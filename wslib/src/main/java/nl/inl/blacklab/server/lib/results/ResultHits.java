@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
-import nl.inl.blacklab.search.lucene.MatchInfo;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -17,8 +15,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -121,7 +119,7 @@ public class ResultHits {
         String groupBy = params.getGroupProps().orElse("");
         String viewGroup = params.getViewGroup().orElse("");
 
-        viewingGroup = groupBy.length() > 0 && viewGroup.length() > 0;
+        viewingGroup = !groupBy.isEmpty() && !viewGroup.isEmpty();
         boolean waitForTotal = params.getWaitForTotal();
         try {
             if (viewingGroup) {

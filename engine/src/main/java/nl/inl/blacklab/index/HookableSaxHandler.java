@@ -123,7 +123,7 @@ public class HookableSaxHandler extends DefaultHandler {
             super();
 
             // See if it's a relative or absolute path
-            if (expr.length() > 0 && expr.charAt(0) != '/') {
+            if (!expr.isEmpty() && expr.charAt(0) != '/') {
                 // Doesn't start with "/": relative path
                 isRelativePath = true;
             } else {
@@ -140,7 +140,7 @@ public class HookableSaxHandler extends DefaultHandler {
             // Split into parts
             String[] parts = expr.split("/");
             int numberOfElementParts = parts.length;
-            if (parts[numberOfElementParts - 1].length() == 0) {
+            if (parts[numberOfElementParts - 1].isEmpty()) {
                 throw new IllegalArgumentException("Double slash in simple-xpath expression");
             }
             if (parts[numberOfElementParts - 1].charAt(0) == '@') {
@@ -148,7 +148,7 @@ public class HookableSaxHandler extends DefaultHandler {
             }
             elementNames = new ArrayList<>();
             for (String part : parts) {
-                if (part.length() == 0) {
+                if (part.isEmpty()) {
                     throw new IllegalArgumentException("Double slash in simple-xpath expression");
                 }
                 if (part.charAt(0) == '@') {

@@ -19,7 +19,7 @@ public class AuthClarinEppn extends AuthRequestValue {
 
     public AuthClarinEppn(Map<String, Object> param) {
         super(AttributeType.ATTRIBUTE, "eppn");
-        if (param.size() > 0)
+        if (!param.isEmpty())
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 

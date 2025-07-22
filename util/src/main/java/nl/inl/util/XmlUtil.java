@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringWriter;
 
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -169,7 +167,7 @@ public class XmlUtil {
                     else if (entityName.startsWith("#x")) {
                         // Hex entity
                         whichEntity = (char) Integer.parseInt(entityName.substring(2), 16);
-                    } else if (entityName.length() > 0 && entityName.charAt(0) == '#') {
+                    } else if (!entityName.isEmpty() && entityName.charAt(0) == '#') {
                         // Decimal entity
                         whichEntity = (char) Integer.parseInt(entityName.substring(1), 10);
                     } else {

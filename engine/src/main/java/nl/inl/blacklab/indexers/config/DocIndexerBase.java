@@ -489,7 +489,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      */
     protected void endWord() {
         String punct;
-        if (punctuation.length() == 0)
+        if (punctuation.isEmpty())
             punct = addDefaultPunctuation && !preventNextDefaultPunctuation ? " " : "";
         else
             punct = punctuation.toString();

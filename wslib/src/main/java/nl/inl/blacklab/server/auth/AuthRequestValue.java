@@ -66,7 +66,7 @@ public class AuthRequestValue implements AuthMethod {
         String userId = getUserId(request);
 
         // Return the appropriate User object
-        if (userId == null || userId.length() == 0) {
+        if (userId == null || userId.isEmpty()) {
             return User.anonymous(sessionId);
         }
         return User.fromIdAndSessionId(userId, sessionId);

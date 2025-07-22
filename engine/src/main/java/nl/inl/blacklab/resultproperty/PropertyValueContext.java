@@ -41,7 +41,7 @@ public abstract class PropertyValueContext extends PropertyValue {
             token = "~"; // no token, effectively a "null" value
         else {
             token = terms.get(valueTokenId);
-            if (token.length() > 0 && token.charAt(0) == '~') {
+            if (!token.isEmpty() && token.charAt(0) == '~') {
                 // tilde in first position has to be escaped
                 // because of how null value is encoded
                 token = "~" + token;

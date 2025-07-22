@@ -188,7 +188,7 @@ public class IndexTool {
         }
 
         // Check the command
-        if (command.length() == 0) {
+        if (command.isEmpty()) {
             System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
             usage();
             return;
@@ -234,7 +234,7 @@ public class IndexTool {
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
         String strGlob = File.separator;
-        if (glob != null && glob.length() > 0 && !glob.equals("*")) {
+        if (glob != null && !glob.isEmpty() && !glob.equals("*")) {
             strGlob += glob;
         }
         System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
@@ -393,9 +393,9 @@ public class IndexTool {
             String url = inputFormat.getHelpUrl();
             if (!url.isEmpty())
                 url = "\n      (see " + url + ")";
-            if (displayName.length() > 0)
+            if (!displayName.isEmpty())
                 displayName = " (" + displayName + ")";
-            if (desc.length() > 0) {
+            if (!desc.isEmpty()) {
                 desc = "\n      " + WordUtils.wrap(desc, 75, "\n      ", false);
             }
             System.out.println("  " + name + displayName + desc + url);

@@ -274,7 +274,7 @@ public final class BlackLab {
         if (configDirs == null) {
             configDirs = new ArrayList<>();
             String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
-            if (strConfigDir != null && strConfigDir.length() > 0) {
+            if (strConfigDir != null && !strConfigDir.isEmpty()) {
                 File configDir = new File(strConfigDir);
                 if (configDir.exists()) {
                     if (!configDir.canRead())

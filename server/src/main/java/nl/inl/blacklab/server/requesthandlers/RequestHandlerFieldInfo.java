@@ -24,7 +24,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
     public int handle(ResponseStreamer rs) throws BlsException {
         int i = urlPathInfo.indexOf('/');
         String fieldName = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
-        if (fieldName.length() == 0) {
+        if (fieldName.isEmpty()) {
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Either specify a field name to show information about, or remove the 'fields' part to get general index information.");
         }

@@ -15,7 +15,7 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     public RequestHandlerListInputFormats(UserRequestBls userRequest) {
         super(userRequest, WebserviceOperation.LIST_INPUT_FORMATS);
-        isXsltRequest = urlResource != null && urlResource.length() > 0 && urlPathInfo != null
+        isXsltRequest = urlResource != null && !urlResource.isEmpty() && urlPathInfo != null
                 && urlPathInfo.equals("xslt");
     }
 
@@ -39,11 +39,11 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        if (urlResource != null && urlResource.length() > 0 && isXsltRequest) {
+        if (urlResource != null && !urlResource.isEmpty() && isXsltRequest) {
             params.setInputFormat(urlResource);
             WebserviceRequestHandler.opInputFormatXslt(params, rs);
         } else {
-            if (urlResource != null && urlResource.length() > 0) {
+            if (urlResource != null && !urlResource.isEmpty()) {
                 // Specific input format: either format information or XSLT request
                 params.setInputFormat(urlResource);
                 WebserviceRequestHandler.opInputFormatInfo(params, rs);

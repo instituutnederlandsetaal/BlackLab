@@ -210,7 +210,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     synchronized void detectMainAnnotation(IndexReader reader) {
         ensureNotFrozen();
-        if (mainAnnotationName != null && mainAnnotationName.length() > 0) {
+        if (mainAnnotationName != null && !mainAnnotationName.isEmpty()) {
             // Main annotation name was set from index metadata before we
             // had the annotation desc. available; use that now and don't do
             // any actual detecting.

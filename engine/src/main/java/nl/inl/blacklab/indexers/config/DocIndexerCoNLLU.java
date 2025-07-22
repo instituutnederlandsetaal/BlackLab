@@ -134,7 +134,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
             String line = StringUtil.trimWhitespace(origLine);
 
             // Is it empty?
-            if (line.length() == COL_ID) {
+            if (line.isEmpty()) {
                 if (inSentence) {
                     // Empty line ends sentence
                     inlineTag("s", false, null);

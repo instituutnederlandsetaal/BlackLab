@@ -117,7 +117,7 @@ public class SketchToXmlConverter {
 
     public boolean processLine(String line, Writer out) throws IOException {
         boolean shouldContinue = true;
-        if (line.length() >= 1 && line.charAt(0) == '<' && line.endsWith(">")) { // tag?
+        if (!line.isEmpty() && line.charAt(0) == '<' && line.endsWith(">")) { // tag?
             if (line.charAt(1) == '/') {
                 // end tag
                 if (line.equals("</s>")) {

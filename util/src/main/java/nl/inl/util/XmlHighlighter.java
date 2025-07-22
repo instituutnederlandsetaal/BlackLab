@@ -364,7 +364,7 @@ public class XmlHighlighter {
             TagLocation tagLocation = new TagLocation(TagType.EXISTING_TAG, matcher.start(), matcher.end());
 
             // Keep track of open tags, so we know if the tags are matched
-            boolean isOpenTag = matcher.group(1).length() == 0;
+            boolean isOpenTag = matcher.group(1).isEmpty();
             boolean isSelfClosing = isOpenTag && isSelfClosing(matcher.group());
             if (isOpenTag) {
                 if (!isSelfClosing) {

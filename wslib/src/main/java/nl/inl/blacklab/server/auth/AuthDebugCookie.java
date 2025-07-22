@@ -25,7 +25,7 @@ public class AuthDebugCookie implements AuthMethod {
 
     public AuthDebugCookie(Map<String, Object> param) {
         // doesn't take any parameters
-        if (param.size() > 0)
+        if (!param.isEmpty())
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
     }
 

@@ -96,7 +96,7 @@ public class ResultDocContents {
     }
 
     private void getDocContents() throws BlsException, InvalidQuery {
-        if (docPid.length() == 0)
+        if (docPid.isEmpty())
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
         isFullDocument = false;

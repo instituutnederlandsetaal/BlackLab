@@ -18,7 +18,7 @@ public class TestParser {
             System.out.print("CorpusQL> ");
             System.out.flush();
             String expr = stdin.readLine();
-            if (expr.length() == 0) {
+            if (expr.isEmpty()) {
                 System.out.println("EXIT");
                 break;
             }

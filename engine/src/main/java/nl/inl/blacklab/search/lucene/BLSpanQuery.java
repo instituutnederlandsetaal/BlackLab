@@ -96,7 +96,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
         StringBuilder b = new StringBuilder();
         int n = 0;
         for (T clause : clauses) {
-            if (b.length() > 0)
+            if (!b.isEmpty())
                 b.append(", ");
             b.append(prefix);
             b.append(clause.toString(field));

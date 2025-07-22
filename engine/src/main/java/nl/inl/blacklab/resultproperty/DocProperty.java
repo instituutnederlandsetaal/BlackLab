@@ -90,7 +90,7 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
             return deserializeMultiple(index, serialized);
 
         boolean reverse = false;
-        if (serialized.length() > 0 && serialized.charAt(0) == '-') {
+        if (!serialized.isEmpty() && serialized.charAt(0) == '-') {
             reverse = true;
             serialized = serialized.substring(1);
         }

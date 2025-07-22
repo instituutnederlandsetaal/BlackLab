@@ -7,13 +7,12 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 import java.util.TimeZone;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.server.datastream.DataFormat;
 
 /**
@@ -91,14 +90,14 @@ public class ServletUtil {
     public static DataFormat getOutputType(HttpServletRequest request) {
         // See if there was an explicit outputformat parameter. If so, use that.
         String outputTypeString = getParameter(request, "outputformat", "").toLowerCase();
-        if (outputTypeString.length() > 0) {
+        if (!outputTypeString.isEmpty()) {
             return DataFormat.fromString(outputTypeString, null);
         }
 
         // No explicit parameter. Check if the Accept header contains either json or xml
         String accept = request.getHeader("Accept");
         //logger.debug("Accept: " + accept);
-        if (accept != null && accept.length() > 0) {
+        if (accept != null && !accept.isEmpty()) {
             if (accept.contains("json"))
                 return DataFormat.JSON;
             if (accept.contains("xml"))

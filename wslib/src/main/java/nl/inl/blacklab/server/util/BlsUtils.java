@@ -47,7 +47,7 @@ public class BlsUtils {
 
     public static Query parseFilter(BlackLabIndex index, String filter,
             String filterLang, boolean required) throws BlsException {
-        if (filter == null || filter.length() == 0) {
+        if (filter == null || filter.isEmpty()) {
             if (required)
                 throw new BadRequest("NO_FILTER_GIVEN",
                         "Document filter required. Please specify 'filter' parameter.");
@@ -110,7 +110,7 @@ public class BlsUtils {
     }
 
     public static TextPattern parsePatt(BlackLabIndex index, String defaultAnnotation, String pattern, String language) throws BlsException {
-        if (pattern == null || pattern.length() == 0) {
+        if (pattern == null || pattern.isEmpty()) {
                 throw new BadRequest("NO_PATTERN_GIVEN",
                         "Text search pattern required. Please specify 'patt' parameter.");
         }

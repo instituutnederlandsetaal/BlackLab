@@ -252,7 +252,7 @@ public final class LuceneUtil {
      * @param handler called to handle terms found, until it returns false (or we run out of terms)
      */
     public static void getFieldTerms(IndexReader index, String fieldName, String startFrom, TermHandler handler) {
-    	boolean allTerms = startFrom == null || startFrom.length() == 0;
+    	boolean allTerms = startFrom == null || startFrom.isEmpty();
         if (allTerms) {
         	startFrom = "";
         }
@@ -296,7 +296,7 @@ public final class LuceneUtil {
      */
     public static List<String> findTermsByPrefix(IndexReader index, String fieldName,
             String prefix, boolean sensitive, long maxResults) {
-        boolean allTerms = prefix == null || prefix.length() == 0;
+        boolean allTerms = prefix == null || prefix.isEmpty();
         if (allTerms) {
             prefix = "";
             sensitive = true; // don't do unnecessary work in this case
