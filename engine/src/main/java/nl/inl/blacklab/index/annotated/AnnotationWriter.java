@@ -171,7 +171,8 @@ public class AnnotationWriter {
 
     TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
         boolean debugMode = AnnotationWriter.class.desiredAssertionStatus();
-        if (relationsStrategy instanceof RelationsStrategySeparateTerms && annotationName.equals("_relation")) {
+        if (relationsStrategy instanceof RelationsStrategySeparateTerms &&
+                annotationName.equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME)) {
             if (debugMode) {
                 // In debug mode, ensure that we've seen each relationId.
                 SortedSet<Integer> relIdsSeen = new TreeSet<>();

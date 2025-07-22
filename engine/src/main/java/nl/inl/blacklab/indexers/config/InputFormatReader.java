@@ -9,8 +9,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -42,10 +40,6 @@ public class InputFormatReader extends YamlJsonReader {
     private static final Logger logger = LogManager.getLogger(InputFormatReader.class);
 
     public static final String KEY_PROCESSOR = "processor";
-
-    interface BaseFormatFinder extends Function<String, Optional<ConfigInputFormat>> {
-        // (intentionally left blank)
-    }
 
     /**
      * Reads a config from a YAML or JSON file.
@@ -101,13 +95,13 @@ public class InputFormatReader extends YamlJsonReader {
 
     private void read(JsonNode root) {
         obj(root, "root node");
-        String baseFormat = null;
         Iterator<Entry<String, JsonNode>> it = root.fields();
         while (it.hasNext()) {
             Entry<String, JsonNode> e = it.next();
             switch (e.getKey()) {
             case "version":
                 cfg.setVersion(integer(e));
+                logger.warn("Found version key in .blf.yaml file. This is ignored; it is better to remove it.");
                 break;
             case "displayName":
                 cfg.setDisplayName(str(e));
@@ -119,18 +113,8 @@ public class InputFormatReader extends YamlJsonReader {
                 cfg.setHelpUrl(str(e));
                 break;
             case "baseFormat": {
-                // Apply base format
-                baseFormat = str(e);
-                logger.warn("Format " + descFormat() + " uses format inheritance (baseFormat: " + baseFormat + "), which is deprecated.");
-                Optional<InputFormat> optBaseFormat = DocumentFormats.getFormatOrError(baseFormat);
-                if (optBaseFormat.isEmpty())
-                    throw new InvalidInputFormatConfig(
-                            "Base format " + baseFormat + " not found" + inFormat());
-                if (!optBaseFormat.get().isConfigurationBased())
-                    throw new InvalidInputFormatConfig(
-                            "Base format " + baseFormat + " must be configuration-based" + inFormat());
-                cfg.setBaseFormat(optBaseFormat.get().getConfig());
-                break;
+                throw new InvalidInputFormatConfig("Input format configuration inheritance (baseFormat key) was removed. " +
+                        "Please copy the base format configuration to your own format and customize it.");
             }
             case "type":
                 cfg.setType(str(e));
@@ -195,15 +179,10 @@ public class InputFormatReader extends YamlJsonReader {
             }
         }
 
-        finalizeConfig(baseFormat);
+        finalizeConfig();
     }
 
-    private void finalizeConfig(String baseFormat) {
-        if (baseFormat != null) {
-            throw new InvalidInputFormatConfig("baseFormat found. Input format inheritance is no longer supported in " +
-                    "version 2 of the .blf.yaml file format. Copy and customize format instead.");
-        }
-        
+    private void finalizeConfig() {
         // Ensure that if we have any linked documents we want to store (like metadata), there exists an
         // annotated field where we can store it (even if it has no annotations).
         for (ConfigLinkedDocument ld: cfg.getLinkedDocuments().values()) {
@@ -378,10 +357,8 @@ public class InputFormatReader extends YamlJsonReader {
                 case "wordPath":
                     af.setWordPath(str(e));
                     break;
-                case "tokenPositionIdPath": // old name, DEPRECATED
-                    logger.warn("Encountered deprecated key 'tokenPositionIdPath' (rename to 'tokenIdPath') in annotated field " + fieldName + inFormat());
-                    af.setTokenIdPath(str(e));
-                    break;
+                case "tokenPositionIdPath": // old name, REMOVED
+                    throw new InvalidInputFormatConfig("Encountered removed key 'tokenPositionIdPath' (rename to 'tokenIdPath') in annotated field " + fieldName + inFormat());
                 case "tokenIdPath":
                     af.setTokenIdPath(str(e));
                     break;
@@ -531,10 +508,8 @@ public class InputFormatReader extends YamlJsonReader {
                 case "path":
                     s.setPath(str(e));
                     break;
-                case "refTokenPositionIdPath": // old name, DEPRECATED
-                    logger.warn("Encountered deprecated key 'refTokenPositionIdPath' (rename to 'tokenRefPath')");
-                    s.setTokenRefPath(str(e));
-                    break;
+                case "refTokenPositionIdPath": // old name, REMOVED
+                    throw new InvalidInputFormatConfig("Encountered removed key 'refTokenPositionIdPath' (rename to 'tokenRefPath')");
                 case "tokenRefPath":
                 case "spanStartPath":   // synonym, used for span annotation
                 case "sourcePath":      // synonym, used for relation annotation
@@ -547,10 +522,8 @@ public class InputFormatReader extends YamlJsonReader {
                 case "spanEndIsInclusive":
                     s.setSpanEndIsInclusive(bool(e));
                     break;
-                case "spanNamePath": // DEPRECATED
-                    logger.warn("Encountered deprecated key 'spanNamePath' (rename to 'valuePath')");
-                    s.setValuePath(str(e));
-                    break;
+                case "spanNamePath": // REMOVED
+                    throw new InvalidInputFormatConfig("Encountered removed key 'spanNamePath' (rename to 'valuePath')");
                 case "valuePath":
                     s.setValuePath(str(e));
                     break;
@@ -593,11 +566,11 @@ public class InputFormatReader extends YamlJsonReader {
                 case "tokenIdPath":
                     t.setTokenIdPath(str(e));
                     break;
-                case "includeAttributes": // (removed in v2, use attributes)
+                case "includeAttributes": // (removed, use attributes)
                     throw new InvalidInputFormatConfig("includeAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
-                case "excludeAttributes": // (removed in v2, use attributes)
+                case "excludeAttributes": // (removed, use attributes)
                     throw new InvalidInputFormatConfig("excludeAttributes no longer allowed in .blf.yaml (use 'attributes' with exclude: true instead)");
-                case "extraAttributes": // (deprecated, renamed to attributes)
+                case "extraAttributes": // (removed, renamed to attributes)
                     throw new InvalidInputFormatConfig("extraAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
                 case "attributes":
                     t.setAttributes(readExtraAttributes(e));
@@ -735,7 +708,7 @@ public class InputFormatReader extends YamlJsonReader {
                 case "process":
                     f.setProcess(readProcess(e));
                     break;
-                case "mapValues": // deprecated (use "map" processing stap with "table" param)
+                case "mapValues": // removed (use "map" processing stap with "table" param)
                     throw new InvalidInputFormatConfig("'mapValues' no longer allowed in .blf.yaml (use 'map' processing step with 'table' param instead; see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html)");
                 case "displayName":
                     f.setDisplayName(str(e));

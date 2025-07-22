@@ -88,10 +88,9 @@ If you forget to declare some or all of these namespaces, the document might ind
 
 ## Configuration versions 1 and 2
 
-There's an experimental version 2 of the `.blf.yaml` format. To try it out,
-add `version: 2` to the top of your format file.
+BlackLab 4 introduced a version 2 of the `.blf.yaml` format. On the development branch (future BlackLab 5), this will be the default, and the `version: 2` declaration at the top of the format file is no longer necessary.
 
-Version 2 of the format file introduces a few breaking changes to be aware of:
+Version 2 of the format file introduced a few breaking changes to be aware of:
 
 - default XML processor is now `saxon` (used to be `vtd`). Saxon is faster and supports modern XPath features, making it much more flexible.
 - `baseFormat` key (to inherit from a different format config) is no longer allowed. Instead, you should copy the format and customize it to suit your needs.
@@ -102,29 +101,4 @@ Version 2 of the format file introduces a few breaking changes to be aware of:
 - `append` processing step now has a `prefix` parameter in addition to the `separator` parameter. `separator` still defaults to a space, but is now only used to separate multiple metadata field values. `prefix` defaults to the empty string, and is used to prefix the value to be appended. This means you won't get an extra space by default when appending a value. Add `prefix: ' '` (or whatever you set as `separator`) for the old behaviour.
 - The `multipleValues`, `allowDuplicateValues` keys on an annotations have been removed. Both work automatically now: if your config produces multiple values for an annotation, they will be indexed, and any duplicates that may arise are automatically removed.
 - The `mapValues` key on metadata fields has been removed. Use the `map` processing step instead, which can be used anywhere where processing steps are allowed.
-
-
-## Extending formats (deprecated)
-
-> **NOTE: THIS FUNCTIONALITY IS DEPRECATED** <br/>
-> Don't rely on this feature as it is no longer supported in .blf.yaml format version 2. Instead, simply copy the format file and make any changes you need.
-
-It is possible to extend an existing format. This is done by specifying the "baseFormat" setting at the top-level. You should set it to the name of the format you wish to extend.
-
-It matters where baseFormat is placed, as it effectively copies values from the specified format when it is encountered. It's usually best to specify baseFormat somewhere at the top of the file. You can put it after 'name' and 'description' if you wish, as those settings are not copied.
-
-To be precise, setting baseFormat does the following:
-
-- copy type, fileType, documentPath, store, metadataDefaultAnalyzer
-- copy the corpusConfig settings
-- add all fileTypeOptions
-- add all namespace declarations
-- add all indexFieldAs entries
-- add all annotatedFields entries
-- add all metadata entries
-- add all linkedDocument entries
-
-In other words: setting a base format allows you to add or change file type options, namespace declarations, indexFieldAs entries, annotated fields or linked documents. You can also add (embedded) metadata sections.
-
-Note that most blocks are not "merged": if you want to change annotated field settings, you will have to redefine the entire annoted field in the "derived" configuration file; you can't just specify the setting you wish to override for that field. It is also not possible to make changes to existing metadata sections.
 

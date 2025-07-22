@@ -154,6 +154,8 @@ public class BLSConfig {
 
     @SuppressWarnings("unused")
     public void setConfigVersion(int configVersion) {
+        if (configVersion != 2)
+            throw new InvalidConfiguration("Unsupported config version: " + configVersion + ". Expected 2.");
         this.configVersion = configVersion;
     }
 

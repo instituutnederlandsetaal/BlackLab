@@ -38,7 +38,7 @@ public enum ApiVersion {
     private static final Pattern PATT_VERSION_STRING = Pattern.compile("(\\d+)(?:\\.(\\d+)(?:\\-(.*))?)?");
 
     /** What's considered the current version */
-    public static final ApiVersion CURRENT = V4_0;
+    public static final ApiVersion CURRENT = V5_0;
 
     /** An experimental future version of the API, if there is one; the current one, otherwise */
     public static final ApiVersion EXPERIMENTAL = V5_0;

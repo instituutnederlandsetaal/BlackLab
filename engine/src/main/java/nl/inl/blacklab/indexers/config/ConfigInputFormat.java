@@ -154,7 +154,7 @@ public class ConfigInputFormat {
     public void setVersion(int version) {
         if (version < MIN_VERSION || version > MAX_VERSION)
             throw new InvalidInputFormatConfig("Invalid version number: " + version);
-        // We ignore configVersion now.
+        // We ignore version now.
     }
 
     public String getOriginalFileContents() {
@@ -177,35 +177,6 @@ public class ConfigInputFormat {
         this.readFromFile = file;
         this.name = ConfigInputFormat.stripExtensions(file.getName());
         InputFormatReader.read(file, this);
-    }
-
-    /**
-     * Copy everything except name, displayName and description from the specified
-     * format.
-     * 
-     * @param baseFormat format to copy from
-     */
-    public void setBaseFormat(ConfigInputFormat baseFormat) {
-        type = baseFormat.getType();
-        fileType = baseFormat.getFileType();
-        if (baseFormat.getFileTypeOptions() != null)
-            fileTypeOptions.putAll(baseFormat.getFileTypeOptions());
-        corpusConfig = baseFormat.corpusConfig.copy();
-        namespaces.putAll(baseFormat.getNamespaces());
-        documentPath = baseFormat.getDocumentPath();
-        store = baseFormat.shouldStore();
-        indexFieldAs.putAll(baseFormat.getIndexFieldAs());
-        metadataDefaultAnalyzer = baseFormat.getMetadataDefaultAnalyzer();
-        metadataDefaultUnknownCondition = baseFormat.getMetadataDefaultUnknownCondition();
-        metadataDefaultUnknownValue = baseFormat.getMetadataDefaultUnknownValue();
-        for (ConfigMetadataBlock b : baseFormat.getMetadataBlocks()) {
-            addMetadataBlock(b.copy());
-        }
-        for (ConfigAnnotatedField f : baseFormat.getAnnotatedFields().values()) {
-            addAnnotatedField(f.copy());
-        }
-        linkedDocuments.putAll(baseFormat.getLinkedDocuments());
-        setVisible(baseFormat.isVisible());
     }
 
     /**

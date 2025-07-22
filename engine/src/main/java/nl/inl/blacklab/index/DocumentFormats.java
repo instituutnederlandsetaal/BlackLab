@@ -245,7 +245,7 @@ public class DocumentFormats {
                     }
 
                     // Add with file reference; format will be lazy-loaded when needed
-                    // (this ensures that baseFormats will be known about when a format needs it)
+                    // (this ensures that any other referenced format will be known about when a format needs it)
                     add(new InputFormatWithConfig(formatIdentifier, f));
                 }
             }

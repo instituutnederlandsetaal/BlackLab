@@ -3,8 +3,7 @@
 List available corpora and general information about the server environment, such as BlackLab version and whether a user is logged-in.
 
 **URL**
-- `/blacklab-server/` (API v4)
-- `/blacklab-server/?api=exp` (future API v5)
+- `/blacklab-server/`
 
 **Method** : `GET`
 

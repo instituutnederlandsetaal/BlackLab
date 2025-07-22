@@ -6,7 +6,7 @@ title: API reference
 
 ## API compatibility
 
-Use `api=3` or `api=4` to specify the API version to use. Differences from 3 to 4 are minor; some inconsistencies are fixed and some redundant information was removed from responses. Configure `parameters.api` in your `blacklab-server.yaml` to set the default version to use. Support for older version(s) is a transitionary measure and will eventually be dropped.
+Use `api=4` or `api=5` to specify the API version to use. Configure `parameters.api` in your `blacklab-server.yaml` to set the default version to use. Without either of these, the BlackLab version will determine the API version used. Support for older version(s) is a transitionary measure and will eventually be dropped.
 
 Full details can be found in [API versions](miscellaneous/api-versions).
 
