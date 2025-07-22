@@ -161,9 +161,10 @@ public abstract class RequestHandler {
         boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
         boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
         if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
-            throw new BadRequest("API_URL_MISMATCH", "Old API (" + userRequest.getRequest().getServletPath() + "/" + userRequest.getRequest().getPathInfo() +
-                    ") not supported with current settings. Migrate to " +
-                    "new /corpora/... endpoints, or use api=4 for backward compat.");
+            throw new BadRequest("API_URL_MISMATCH", "You're using an old URL (/CORPUSNAME/...), " +
+                    "but the API is set to 5 (the default for this BlackLab version). Either update the URL to " +
+                    "/corpora/CORPUSNAME/... or, to keep using the old URL for now, add api=4 to enable backward " +
+                    "compatibility. Please plan your migration to API v5; BlackLab 6 will no longer support API v4.");
         String method = request.getMethod();
         boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {

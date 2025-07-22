@@ -15,6 +15,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.InputFormatWithConfig;
@@ -1678,11 +1679,19 @@ public class ResponseStreamer {
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
             ds.startEntry("supportedInputFormats").startMap();
             for (InputFormat inputFormat: result.getFormats()) {
+                String displayName = null;
+                try {
+                    displayName = inputFormat.getDisplayName();
+                } catch (InvalidInputFormatConfig e) {
+                    // Invalid input format shouldn't break the response; just log and skip it
+                    logger.error(e.getMessage());
+                    continue;
+                }
                 ds.startAttrEntry("format", KEY_NAME, inputFormat.getIdentifier());
                 {
                     ds.startMap();
                     {
-                        ds.entry("displayName", inputFormat.getDisplayName())
+                        ds.entry("displayName", displayName)
                                 .entry("description", inputFormat.getDescription())
                                 .entry("helpUrl", inputFormat.getHelpUrl())
                                 .entry("configurationBased", inputFormat instanceof InputFormatWithConfig)

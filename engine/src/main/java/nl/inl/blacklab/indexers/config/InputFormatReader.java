@@ -709,7 +709,7 @@ public class InputFormatReader extends YamlJsonReader {
                     f.setProcess(readProcess(e));
                     break;
                 case "mapValues": // removed (use "map" processing stap with "table" param)
-                    throw new InvalidInputFormatConfig("'mapValues' no longer allowed in .blf.yaml (use 'map' processing step with 'table' param instead; see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html)");
+                    throw new InvalidInputFormatConfig("'mapValues' no longer allowed in .blf.yaml (use 'map' processing step with 'table' param instead; see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html) " + inFormat());
                 case "displayName":
                     f.setDisplayName(str(e));
                     break;
