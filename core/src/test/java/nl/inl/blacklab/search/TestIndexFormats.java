@@ -184,7 +184,7 @@ public class TestIndexFormats {
     @Test
     public void testMetadataAnnotatedField() {
         AnnotatedField field = index.metadata().annotatedFields().get("contents");
-        Assert.assertTrue(field.hasXmlTags());
+        Assert.assertTrue(field.hasRelationAnnotation());
         Assert.assertTrue(field.hasContentStore());
         Set<String> expectedAnnotations =
                 new HashSet<>(Arrays.asList("word", "lemma", "pos",

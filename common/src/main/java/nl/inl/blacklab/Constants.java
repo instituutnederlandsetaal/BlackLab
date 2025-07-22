@@ -5,8 +5,6 @@ package nl.inl.blacklab;
  */
 public class Constants {
 
-    public static final int MAX_LUCENE_VALUE_LENGTH = 32766;
-
     /** Utility class, don't instantiate */
     private Constants() {}
 
@@ -30,4 +28,7 @@ public class Constants {
     /** Key in Solr response that contains the BlackLab response
         (also used by the proxy to retrieve the BlackLab response from the Solr response) */
     public static final String SOLR_BLACKLAB_SECTION_NAME = "blacklab";
+
+    /** The maximum length for a token Lucene will accept */
+    public static final int MAX_LUCENE_VALUE_LENGTH = 32766;
 }

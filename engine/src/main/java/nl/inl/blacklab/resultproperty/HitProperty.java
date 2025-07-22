@@ -284,8 +284,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
         return Objects.hash(reverse);
     }
 
-    @Override
-    public List<HitProperty> props() {
+    private List<HitProperty> props() {
         return null;
     }
 

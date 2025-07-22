@@ -14,17 +14,6 @@ public interface Annotation {
 	/** @return this annotation's name */
 	String name();
 
-    /**
-     * What type of UI should be shown for this annotation?
-     * 
-     * Note that BlackLab doesn't do anything with this value; it is merely a convenience for the frontend.
-     * 
-     * @return desired UI type
-     */
-    String uiType();
-
-    String description();
-
 	boolean hasForwardIndex();
 
 	/**
@@ -57,8 +46,6 @@ public interface Annotation {
 	 */
 	AnnotationSensitivity sensitivity(MatchSensitivity sensitivity);
 
-    String displayName();
-
     /**
      * Is this 'annotation' internal to BlackLab?
      * 
@@ -90,8 +77,6 @@ public interface Annotation {
     
     @Override
     int hashCode();
-
-    void setSubAnnotation(Annotation parentAnnotation);
 
 	/**
 	 * Get the alternative that has the forward index.

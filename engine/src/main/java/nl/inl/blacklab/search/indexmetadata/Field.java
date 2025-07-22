@@ -6,16 +6,6 @@ public interface Field {
 	/** Get this field's name
 	 * @return this field's name */
 	String name();
-
-	/** Get this field's display name
-	 * @return this field's display name */
-    @Deprecated
-	String displayName();
-
-	/** Get this field's display name
-	 * @return this field's display name */
-    @Deprecated
-	String description();
 	
 	/** Is this field's content stored in a content store? 
 	 * @return true if it does, false if not */

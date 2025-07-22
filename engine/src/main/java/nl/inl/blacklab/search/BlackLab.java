@@ -87,19 +87,6 @@ public final class BlackLab {
     /**
      * Create a new engine instance.
      *
-     * @param searchThreads (ignored)
-     * @param maxThreadsPerSearch max. threads per search.
-     * @deprecated use {@link #createEngine(int)}
-     */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static BlackLabEngine createEngine(int searchThreads, int maxThreadsPerSearch) {
-        return createEngine(maxThreadsPerSearch);
-    }
-
-    /**
-     * Create a new engine instance.
-     *
      * @param maxThreadsPerSearch max. threads per search.
      */
     public static BlackLabEngine createEngine(int maxThreadsPerSearch) {
@@ -156,20 +143,6 @@ public final class BlackLab {
 
     public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
         return (BlackLabIndexWriter) implicitInstance.wrapIndexReader(indexName, reader, true);
-    }
-
-    /**
-     * Create an empty index.
-     *
-     * @param indexDir where to create the index
-     * @param config format configuration for this index; used to base the index
-     *            metadata on
-     * @return a BlackLabIndexWriter for the new index, in index mode
-     * @throws ErrorOpeningIndex if the index couldn't be opened 
-     */
-    @Deprecated
-    public static BlackLabIndexWriter create(File indexDir, ConfigInputFormat config) throws ErrorOpeningIndex {
-        return openForWriting(indexDir, true, config);
     }
     
     

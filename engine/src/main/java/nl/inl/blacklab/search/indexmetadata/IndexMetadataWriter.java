@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Used to write information about a BlackLab index, including its fields structure. */
@@ -59,15 +58,6 @@ public interface IndexMetadataWriter extends IndexMetadata {
      * @param contentViewable whether content may be freely viewed
      */
 	void setContentViewable(boolean contentViewable);
-
-    /**
-     * Used when creating an index to initialize textDirection setting. Do not use otherwise.
-     *
-     * @param textDirection text direction
-     * @deprecated use {@link #custom()} and set("textDirection", textDirection.getCode()) instead
-     */
-    @Deprecated
-    void setTextDirection(TextDirection textDirection);
 
     /**
      * Register a metadata field.

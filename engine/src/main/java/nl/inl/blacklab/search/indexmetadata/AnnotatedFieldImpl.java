@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
@@ -141,13 +140,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         return noForwardIndexAnnotations;
     }
 
-    /**
-     * @deprecated use {@link #custom()} and .get("displayOrder", Collections.emptyList()) instead
-     */
-    synchronized List<String> getDisplayOrder() {
-        return custom().get("displayOrder", Collections.emptyList());
-    }
-    
     // Methods that mutate data
     // ------------------------------------------------------
     
@@ -265,17 +257,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             if (annots.containsKey(mainAnnotationName))
                 mainAnnotation = annots.get(mainAnnotationName);
         }
-    }
-
-    void setNoForwardIndexAnnotations(Set<String> noForwardIndexAnnotations) {
-        ensureNotFrozen();
-        this.noForwardIndexAnnotations = noForwardIndexAnnotations;
-    }
-
-    @Deprecated
-    synchronized void setDisplayOrder(List<String> displayOrder) {
-        ensureNotFrozen();
-        custom.put("displayOrder", displayOrder);
     }
 
     @Override

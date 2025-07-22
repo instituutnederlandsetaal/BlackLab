@@ -45,19 +45,6 @@ public abstract class SearchHits extends SearchForResults<Hits> {
     }
 
     /**
-     * Group hits by a property and stores the grouped hits.
-     *
-     * @param groupBy what to group by
-     * @param maxResultsToGatherPerGroup how many results to gather per group
-     * @return resulting operation
-     * @deprecated use either {@link #groupWithStoredHits(HitProperty, long)} or {@link #groupStats(HitProperty, long)}
-     */
-    @Deprecated
-    public SearchHitGroups group(HitProperty groupBy, long maxResultsToGatherPerGroup) {
-        return groupWithStoredHits(groupBy, maxResultsToGatherPerGroup);
-    }
-
-    /**
      * Group hits by a property, calculating the number of hits per group.
      *
      * (May or may not also store hits with the group. If you need these to be stored, call

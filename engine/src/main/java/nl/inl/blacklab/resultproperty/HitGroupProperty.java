@@ -1,7 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.List;
-
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.util.PropertySerializeUtil;
@@ -96,11 +94,6 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
     @Override
     public String toString() {
         return serialize();
-    }
-
-    @Override
-    public List<HitGroupProperty> props() {
-        return null;
     }
 
 }

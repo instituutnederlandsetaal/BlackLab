@@ -99,19 +99,6 @@ public final class BlackLabEngine implements AutoCloseable {
     /** Was close() called on this engine? */
     private boolean wasClosed;
 
-    /**
-     * Create a new engine instance.
-     *
-     * @param searchThreads (ignored)
-     * @param maxThreadsPerSearch max. threads per search.
-     * @deprecated use {@link #BlackLabEngine(int)}
-     */
-    @SuppressWarnings("unused")
-    @Deprecated
-    BlackLabEngine(int searchThreads, int maxThreadsPerSearch) {
-        this(maxThreadsPerSearch);
-    }
-
     BlackLabEngine(int maxThreadsPerSearch) {
         synchronized (engines) {
             engines.add(this);

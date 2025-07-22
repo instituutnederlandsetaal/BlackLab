@@ -33,16 +33,6 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public String displayName() {
-        return null;
-    }
-
-    @Override
-    public String description() {
-        return null;
-    }
-
-    @Override
     public boolean hasContentStore() {
         return false;
     }

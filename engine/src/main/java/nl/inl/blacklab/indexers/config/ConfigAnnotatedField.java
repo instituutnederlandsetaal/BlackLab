@@ -98,14 +98,6 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         this.wordPath = wordPath;
     }
 
-    /**
-     * @deprecated renamed to {@link #setTokenIdPath(String)}
-     */
-    @Deprecated
-    public void setTokenPositionIdPath(String tokenIdPath) {
-        setTokenIdPath(tokenIdPath);
-    }
-
     public void setTokenIdPath(String tokenIdPath) {
         this.tokenIdPath = tokenIdPath;
     }
@@ -138,14 +130,6 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public String getWordsPath() {
         return wordPath;
-    }
-
-    /**
-     * @deprecated renamed to {@link #getTokenIdPath()}
-     */
-    @Deprecated
-    public String getTokenPositionIdPath() {
-        return getTokenIdPath();
     }
 
     public String getTokenIdPath() {

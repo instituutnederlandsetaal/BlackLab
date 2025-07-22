@@ -18,8 +18,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -116,21 +114,6 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     static boolean isIndex(Path indexDirPath) {
         return isIndex(indexDirPath.toFile());
-    }
-
-    /**
-     * Open an index for reading ("search mode").
-     * 
-     * @param blackLab our BlackLab instance
-     * @param indexDir the index directory
-     * @return index object
-     * @throws IndexVersionMismatch if the index format is no longer supported
-     * @throws ErrorOpeningIndex on any error
-     * @deprecated use {@link BlackLab#open(File)} or {@link BlackLabEngine#open(File)} instead
-     */
-    @Deprecated
-    static BlackLabIndex open(BlackLabEngine blackLab, File indexDir) throws ErrorOpeningIndex  {
-        return blackLab.open(indexDir);
     }
 
     // Basic stuff, low-level access to index

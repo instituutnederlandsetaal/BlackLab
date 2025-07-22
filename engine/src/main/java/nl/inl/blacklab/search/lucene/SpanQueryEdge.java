@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -126,11 +125,6 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
     @Override
     public String toString(String field) {
         return "EDGE(" + clausesToString(field) + ", " + (trailingEdge ? "R" : "L") + ")";
-    }
-
-    @Deprecated
-    public boolean isRightEdge() {
-        return isTrailingEdge();
     }
 
     public boolean isTrailingEdge() {

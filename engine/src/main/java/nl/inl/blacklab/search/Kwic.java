@@ -52,12 +52,6 @@ public class Kwic {
         return Collections.unmodifiableList(fragment.tokens.subList(0, hitStart * fragment.annotations.size()));
     }
 
-    /** @deprecated use {@link #before()} */
-    @Deprecated
-    public List<String> left() {
-        return before();
-    }
-
     /**
      * Get the left context of a specific annotation
      * 
@@ -66,12 +60,6 @@ public class Kwic {
      */
     public List<String> before(Annotation annotation) {
         return singlePropertyContext(annotation, 0, hitStart);
-    }
-
-    /** @deprecated use {@link #before(Annotation)} */
-    @Deprecated
-    public List<String> left(Annotation annotation) {
-        return before(annotation);
     }
 
     public List<String> match() {
@@ -95,12 +83,6 @@ public class Kwic {
                 .unmodifiableList(fragment.tokens.subList(hitEnd * fragment.annotations.size(), fragment.tokens.size()));
     }
 
-    /** @deprecated use {@link #after()} */
-    @Deprecated
-    public List<String> right() {
-        return after();
-    }
-
     /**
      * Get the right context of a specific annotation
      * 
@@ -109,12 +91,6 @@ public class Kwic {
      */
     public List<String> after(Annotation annotation) {
         return singlePropertyContext(annotation, hitEnd, fragment.tokens.size() / fragment.annotations.size());
-    }
-
-    /** @deprecated use {@link #after(Annotation)} */
-    @Deprecated
-    public List<String> right(Annotation annotation) {
-        return after(annotation);
     }
 
     /**

@@ -1,14 +1,10 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import jakarta.xml.bind.annotation.XmlTransient;
-
-import org.apache.commons.lang3.StringUtils;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.util.StringUtil;
 
 public abstract class FieldImpl implements Field, Freezable {
     /** Field's name */
@@ -48,49 +44,11 @@ public abstract class FieldImpl implements Field, Freezable {
         return fieldName;
     }
 
-    /**
-     * @deprecated use {@link #custom()} and .put("displayName", "...") instead
-     */
-    @Deprecated
-    public void setDisplayName(String displayName) {
-        putCustom("displayName", displayName);
-    }
-
     void putCustom(String name, Object value) {
         if (!value.equals(custom.get(name))) {
             ensureNotFrozen();
             custom.put(name, value);
         }
-    }
-
-    /**
-     * @deprecated use {@link #custom()} and .get("displayName", "") instead
-     */
-    @Deprecated
-    @Override
-    public String displayName() {
-        String displayName = custom.get("displayName", "");
-        if (StringUtils.isEmpty(displayName)) {
-            displayName = StringUtil.camelCaseToDisplayable(fieldName, true);
-        }
-        return displayName;
-    }
-
-    /**
-     * @deprecated use {@link #custom()} and .put("description", "...") instead
-     */
-    @Deprecated
-    public void setDescription(String description) {
-        putCustom("description", description);
-    }
-
-    /**
-     * @deprecated use {@link #custom()} and .get("description", "") instead
-     */
-    @Deprecated
-    @Override
-    public String description() {
-        return custom.get("description", "");
     }
 
     @Override

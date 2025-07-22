@@ -23,9 +23,6 @@ public interface AnnotatedField extends Field {
 	    return annotations().get(name);
 	}
 
-    @Deprecated
-	default boolean hasXmlTags() { return hasRelationAnnotation(); }
-
     boolean hasRelationAnnotation();
 
     RelationsStats getRelationsStats(BlackLabIndex index, long limitValues);

@@ -436,10 +436,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         switch (nodeType) {
         case TextPattern.NT_AND:
             return new TextPatternAnd((List<TextPattern>) args.get(KEY_CLAUSES));
-        case TextPattern.NT_ANDNOT:
-            return new TextPatternAndNot(
-                    (List<TextPattern>) args.get(KEY_INCLUDE),
-                    (List<TextPattern>) args.get(KEY_EXCLUDE));
         case TextPattern.NT_ANYTOKEN:
             return new TextPatternAnyToken((int)args.get(KEY_MIN), (int)args.getOrDefault(KEY_MAX, MAX_UNLIMITED));
         case TextPattern.NT_CAPTURE:

@@ -36,16 +36,6 @@ public class MockAnnotation implements Annotation {
     }
 
     @Override
-    public String uiType() {
-        return null;
-    }
-
-    @Override
-    public String description() {
-        return null;
-    }
-
-    @Override
     public boolean hasForwardIndex() {
         return false;
     }
@@ -67,11 +57,6 @@ public class MockAnnotation implements Annotation {
 
     @Override
     public AnnotationSensitivity sensitivity(MatchSensitivity sensitivity) {
-        return null;
-    }
-
-    @Override
-    public String displayName() {
         return null;
     }
 
@@ -98,11 +83,6 @@ public class MockAnnotation implements Annotation {
     @Override
     public Set<String> subannotationNames() {
         return Collections.emptySet();
-    }
-
-    @Override
-    public void setSubAnnotation(Annotation parentAnnotation) {
-        throw new UnsupportedOperationException();
     }
 
     @Override

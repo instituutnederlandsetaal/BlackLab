@@ -194,7 +194,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
     
     @Override
-    public List<HitProperty> props() {
+    public List<HitProperty> propsList() {
         return Collections.unmodifiableList(properties);
     }
 

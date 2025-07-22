@@ -213,13 +213,8 @@ public abstract class DocProperty implements ResultProperty<DocResult>, Comparat
     }
 
     @Override
-    public List<DocProperty> props() {
-        return null;
-    }
-
-    @Override
     public List<DocProperty> propsList() {
-        return isCompound() ? props() : List.of(this);
+        return List.of(this);
     }
 
 }

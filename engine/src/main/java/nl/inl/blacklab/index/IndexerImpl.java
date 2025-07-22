@@ -16,11 +16,9 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
-import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.indexers.config.WarnOnce;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
@@ -153,33 +151,6 @@ class IndexerImpl implements DocWriter, Indexer {
 
     /** To ensure certain warnings are only issued once */
     WarnOnce warnOnce = new WarnOnce(logger);
-
-    /**
-     * Construct Indexer
-     *
-     * @param directory the main BlackLab index directory
-     * @param create if true, creates a new index; otherwise, appends to existing
-     *            index. When creating a new index, a formatIdentifier should
-     *            also be supplied. Otherwise adding new data to the index isn't
-     *            possible, as we can't construct a DocIndexer to do the actual
-     *            indexing without a valid formatIdentifier.
-     * @param formatIdentifier (optional) determines how this Indexer will index any
-     *            new data added to it. If omitted, when opening an existing index,
-     *            the formatIdentifier in its metadata (as "documentFormat") is used
-     *            instead. When creating a new index, this format will be stored as
-     *            the default for that index, it will still be
-     *            used by this Indexer however.
-     * @throws DocumentFormatNotFound if no formatIdentifier was specified and
-     *             autodetection failed
-     * @deprecated use {@link IndexerImpl(BlackLabIndexWriter, String, File)} with
-     *   {@link #openForWriting(File, boolean, String)} instead
-     */
-    @Deprecated
-    IndexerImpl(File directory, boolean create, String formatIdentifier)
-            throws DocumentFormatNotFound, ErrorOpeningIndex {
-        BlackLabIndexWriter indexWriter = BlackLab.openForWriting(directory, create, formatIdentifier);
-        init(indexWriter, formatIdentifier);
-    }
 
     /**
      * Open an indexer for the provided writer.

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.Comparator;
-import java.util.List;
 
 import nl.inl.blacklab.search.results.Group;
 
@@ -97,9 +96,4 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
         return true;
     }
 
-    @Override
-    public List<? extends GroupProperty<T, G>> props() {
-        return null;
-    }
-    
 }

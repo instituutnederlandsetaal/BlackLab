@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.indexmetadata;
 import java.io.File;
 import java.util.Map;
 
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.results.CorpusSize;
 
 /**
@@ -56,37 +55,10 @@ public interface IndexMetadata extends Freezable {
     CustomProps custom();
 
 	/**
-	 * Get the display name for the index.
-	 *
-	 * If no display name was specified, returns the name of the index directory.
-	 *
-	 * @return the display name
-     * @deprecated use {@link #custom()} and get("displayName", "") instead
-	 */
-    @Deprecated
-	String displayName();
-
-	/**
-	 * Get a description of the index, if specified
-	 * @return the description
-     * @deprecated use {@link #custom()} and get("description", "") instead
-	 */
-    @Deprecated
-	String description();
-
-	/**
 	 * Is the content freely viewable by all users, or is it restricted?
 	 * @return true if the full content may be retrieved by anyone
 	 */
 	boolean contentViewable();
-
-    /**
-     * What's the text direction of this corpus?
-     * @return text direction
-     * @deprecated use {@link #custom()} and get("textDirection", "ltr") instead
-     */
-    @Deprecated
-	TextDirection textDirection();
 
 	/**
 	 * What format(s) is/are the documents in?

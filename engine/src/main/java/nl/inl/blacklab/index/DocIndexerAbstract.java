@@ -176,7 +176,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                 missing = true;
             else if (currentValue.isEmpty() || currentValue.stream().allMatch(String::isEmpty))
                 empty = true;
-            UnknownCondition cond = fd.unknownCondition();
+            UnknownCondition cond = UnknownCondition.fromStringValue(fd.custom().get("unknownCondition", "never"));
             boolean useUnknownValue = false;
             switch (cond) {
             case EMPTY:
@@ -199,7 +199,7 @@ public abstract class DocIndexerAbstract implements DocIndexer {
                         ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
                     }
                 }
-                unknownValuesToUse.put(fd.name(), fd.unknownValue());
+                unknownValuesToUse.put(fd.name(), fd.custom().get("unknownValue", "unknown"));
             }
         }
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {

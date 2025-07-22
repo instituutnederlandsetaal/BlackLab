@@ -1,7 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.List;
-
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocResult;
 
@@ -67,8 +65,4 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
         return serialize();
     }
 
-    @Override
-    public List<DocGroupProperty> props() {
-        return null;
-    }
 }

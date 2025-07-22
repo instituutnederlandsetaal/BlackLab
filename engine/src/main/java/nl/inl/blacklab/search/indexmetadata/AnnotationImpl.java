@@ -10,15 +10,13 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlTransient;
-
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.LuceneUtil;
@@ -149,39 +147,9 @@ public class AnnotationImpl implements Annotation, Freezable {
         return offsetsSensitivity;
     }
 
-    /**
-     * @deprecated use {@link #custom()} with .get("displayName", name) instead
-     */
-    @Deprecated
-    @Override
-    public String displayName() {
-        String displayName = custom.get("displayName", "");
-        if (!displayName.isEmpty())
-            return displayName;
-        return StringUtils.capitalize(name);
-    }
-
     @Override
     public boolean isInternal() {
         return isInternal;
-    }
-
-    /**
-     * @deprecated use {@link #custom()} with .get("uiType", name) instead
-     */
-    @Deprecated
-    @Override
-    public String uiType() {
-        return custom.get("uiType", "");
-    }
-
-    /**
-     * @deprecated use {@link #custom()} with .get("description", name) instead
-     */
-    @Deprecated
-    @Override
-    public String description() {
-        return custom.get("description", "");
     }
     
     // Methods that mutate data
@@ -226,15 +194,6 @@ public class AnnotationImpl implements Annotation, Freezable {
         }
     }
 
-    /**
-     * @deprecated use {@link #custom()} with .put("displayName", ...) instead
-     */
-    @Deprecated
-    public void setDisplayName(String displayName) {
-        ensureNotFrozen();
-        this.custom.put("displayName", displayName);
-    }
-
     void addAlternative(MatchSensitivity matchSensitivity) {
         AnnotationSensitivity sensitivity = new AnnotationSensitivityImpl(this, matchSensitivity);
         if (!sensitivitiesMap.containsKey(matchSensitivity)) {
@@ -265,25 +224,6 @@ public class AnnotationImpl implements Annotation, Freezable {
     private boolean nameImpliesInternal() {
         return name != null && (isRelationAnnotation() ||
                 name.equals(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME));
-    }
-
-    /**
-     * @deprecated use {@link #custom()} with .put("uiType", ...) instead
-     */
-    @Deprecated
-    public void setUiType(String uiType) {
-        ensureNotFrozen();
-        custom.put("uiType", uiType);
-    }
-
-
-    /**
-     * @deprecated use {@link #custom()} with .put("uiType", ...) instead
-     */
-    @Deprecated
-    public void setDescription(String description) {
-        ensureNotFrozen();
-        custom.put("description", description);
     }
     
     @Override
@@ -321,22 +261,6 @@ public class AnnotationImpl implements Annotation, Freezable {
     @Override
     public Set<String> subannotationNames() {
         return subannotations;
-    }
-    
-    /**
-     * Indicate that this is a subannotation.
-     * 
-     * @param parentAnnotation our parent annotation, e.g. "pos" for "pos_number"
-     */
-    @Override
-    public void setSubAnnotation(Annotation parentAnnotation) {
-        ensureNotFrozen();
-        this.mainAnnotation = parentAnnotation;
-    }
-
-    public void setSubannotationNames(List<String> names) {
-        subannotations.clear();
-        subannotations.addAll(names);
     }
 
     @Override

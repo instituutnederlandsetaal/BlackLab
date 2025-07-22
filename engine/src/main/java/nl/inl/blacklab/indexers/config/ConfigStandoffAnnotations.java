@@ -103,22 +103,6 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.path = path;
     }
 
-    /**
-     * @deprecated renamed to { @link {@link #getTokenRefPath() }
-     */
-    @Deprecated
-    public String getRefTokenPositionIdPath() {
-        return getTokenRefPath();
-    }
-
-    /**
-     * @deprecated renamed to { @link {@link #setTokenRefPath(String) }
-     */
-    @Deprecated
-    public void setRefTokenPositionIdPath(String path) {
-        setTokenRefPath(path);
-    }
-
     public String getTokenRefPath() {
         return tokenRefPath;
     }

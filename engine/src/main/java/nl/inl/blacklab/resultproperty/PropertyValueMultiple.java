@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -70,13 +71,15 @@ public class PropertyValueMultiple extends PropertyValue {
     }
 
     @Override
-    public boolean isCompound() {
-        return true;
+    public List<PropertyValue> valuesList() {
+        return List.of(value);
     }
 
-    @Override
-    public List<PropertyValue> values() {
-        return List.of(value);
+    public List<String> propValues() {
+        List<String> l = new ArrayList<>();
+        for (PropertyValue v: valuesList())
+            l.addAll(v.propValues());
+        return l;
     }
 
     /**

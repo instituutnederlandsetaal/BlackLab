@@ -161,7 +161,7 @@ public abstract class RequestHandler {
         boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
         boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
         if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
-            throw new UnsupportedOperationException("Old API (" + userRequest.getRequest().getServletPath() + "/" + userRequest.getRequest().getPathInfo() +
+            throw new BadRequest("API_URL_MISMATCH", "Old API (" + userRequest.getRequest().getServletPath() + "/" + userRequest.getRequest().getPathInfo() +
                     ") not supported with current settings. Migrate to " +
                     "new /corpora/... endpoints, or use api=4 for backward compat.");
         String method = request.getMethod();
@@ -462,10 +462,6 @@ public abstract class RequestHandler {
         if (indexName.isEmpty() || !indexMan.indexExists(indexName))
             return Optional.empty();
         return Optional.of(indexMan.getIndex(indexName));
-    }
-
-    protected BlackLabIndex blIndex() throws BlsException {
-        return index().map(Index::blIndex).orElse(null);
     }
 
     public User getUser() {

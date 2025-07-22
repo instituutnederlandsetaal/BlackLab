@@ -219,16 +219,6 @@ public class ContextSize {
     public int after() {
         return after;
     }
-
-    @Deprecated
-    public int left() {
-        return before();
-    }
-
-    @Deprecated
-	public int right() {
-	    return after();
-	}
 	
 	/**
 	 * Should the hit itself be included in the context or not?

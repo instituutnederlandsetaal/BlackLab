@@ -1,15 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.commons.lang3.StringUtils;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -101,37 +92,9 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         return type;
     }
 
-    /**
-     * @deprecated Use {@link #custom()} with .get("displayOrder", Collections.emptyList()) instead.
-     */
-    @Override
-    @Deprecated
-    public List<String> displayOrder() {
-        return custom.get("displayOrder", Collections.emptyList());
-    }
-
     @Override
     public String analyzerName() {
         return analyzer;
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .get("unknownValue", "unknown") instead.
-     */
-    @Override
-    @Deprecated
-    public String unknownValue() {
-        return custom.get("unknownValue", "unknown");
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .get("unknownCondition", "never") instead.
-     */
-    @Override
-    @Deprecated
-    public UnknownCondition unknownCondition() {
-        String strUnknownCondition = custom.get("unknownCondition", UnknownCondition.NEVER.stringValue());
-        return UnknownCondition.fromStringValue(strUnknownCondition);
     }
 
     @Override
@@ -139,24 +102,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         if (values == null || !values.canTruncateTo(maxValues))
             values = factory.create(name(), type, maxValues);
         return values.truncated(maxValues);
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .get("displayValues", Collections.emptyMap()) instead.
-     */
-    @Override
-    @Deprecated
-    public Map<String, String> displayValues() {
-        return custom.get("displayValues", Collections.emptyMap());
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .get("uiType", "") instead.
-     */
-    @Override
-    @Deprecated
-    public String uiType() {
-        return custom.get("uiType", "");
     }
     
     @Override
@@ -174,55 +119,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         if (this.analyzer == null || !this.analyzer.equals(analyzer)) {
             ensureNotFrozen();
             this.analyzer = analyzer;
-        }
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .put("unknownValue", ...) instead.
-     */
-    @Deprecated
-    public void setUnknownValue(String unknownValue) {
-        if (!this.unknownValue().equals(unknownValue)) {
-            ensureNotFrozen();
-            custom.put("unknownValue", unknownValue);
-        }
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .put("unknownCondition", unknownCondition.stringValue()) instead.
-     */
-    @Deprecated
-    public void setUnknownCondition(UnknownCondition unknownCondition) {
-        if (!this.unknownCondition().equals(unknownCondition)) {
-            ensureNotFrozen();
-            this.custom.put("unknownCondition", unknownCondition.stringValue());
-        }
-    }
-
-    /**
-     * @deprecated Use {@link #custom()} with .put("displayValue", ...) instead.
-     */
-    @Deprecated
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    void setDisplayValues(JsonNode displayValues) {
-        ensureNotFrozen();
-        Map<String, String> map = new HashMap<>();
-        Iterator<Entry<String, JsonNode>> it = displayValues.fields();
-        while (it.hasNext()) {
-            Entry<String, JsonNode> entry = it.next();
-            String value = entry.getKey();
-            String displayValue = entry.getValue().textValue();
-            map.put(value, displayValue);
-        }
-        custom.put("displayValues", map);
-    }
-
-    void setValueListComplete(boolean valueListComplete) {
-        if (this.values.shouldAddValuesWhileIndexing()) {
-            // We're reading values from indexmetadata.yaml (old external index)
-            ensureNotFrozen();
-            ensureValuesCreated();
-            this.values.setComplete(valueListComplete);
         }
     }
 
@@ -255,16 +151,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         ensureNotFrozen();
         ensureValuesCreated();
         values.removeValue(value);
-    }
-
-    /**
-     * Reset the information that is dependent on input data (i.e. list of values,
-     * etc.) because we're going to (re-)index the data.
-     */
-    public void resetForIndexing() {
-        ensureNotFrozen();
-        ensureValuesCreated();
-        values.reset();
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName, MetadataFieldValues.Factory factory) {

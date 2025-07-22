@@ -186,7 +186,7 @@ public class WebserviceOperations {
     public static Map<String, String> getMetaDisplayNames(BlackLabIndex index) {
         Map<String, String> metaDisplayNames = new LinkedHashMap<>();
         for (MetadataField f: index.metadata().metadataFields()) {
-            String displayName = f.displayName();
+            String displayName = f.custom().get("displayName", "");
             if (!f.name().equals("lengthInTokens") && !f.name().equals("mayView")) {
                 metaDisplayNames.put(f.name(),displayName);
             }

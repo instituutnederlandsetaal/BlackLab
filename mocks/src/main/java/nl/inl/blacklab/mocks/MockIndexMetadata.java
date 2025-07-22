@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -81,23 +80,8 @@ public class MockIndexMetadata implements IndexMetadata {
     }
 
     @Override
-    public String displayName() {
-        return null;
-    }
-
-    @Override
-    public String description() {
-        return null;
-    }
-
-    @Override
     public boolean contentViewable() {
         return false;
-    }
-
-    @Override
-    public TextDirection textDirection() {
-        return null;
     }
 
     @Override

@@ -14,16 +14,15 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlTransient;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 
 /**
@@ -185,22 +184,6 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     }
 
     @Override
-    public MetadataField special(String specialFieldType) {
-        if (specialFieldType.equals("pid"))
-            return pidField == null ? null : get(pidField);
-        String field = topLevelCustom.get(specialFieldType + "Field", "");
-
-        // TODO: if field is set but field doesn't exist, that seems like a bug...
-        if (!field.isEmpty() && !metadataFieldInfos.containsKey(field)) {
-            logger.warn(
-                    "Special field " + specialFieldType + " is set to " + field + ", but that field doesn't exist.");
-            return null;
-        }
-
-        return field.isEmpty() ? null : get(field);
-    }
-
-    @Override
     public MetadataField pidField() {
         return pidField == null ? null : get(pidField);
     }
@@ -269,41 +252,12 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     }
 
     @Override
-    public void resetForIndexing() {
-        ensureNotFrozen();
-        for (MetadataFieldImpl f: metadataFieldInfos.values()) {
-            f.resetForIndexing();
-        }
-    }
-
-    @Override
-    public void setDefaultUnknownCondition(String unknownCondition) {
-        ensureNotFrozen();
-        this.defaultUnknownCondition = unknownCondition;
-    }
-
-    @Override
-    public void setDefaultUnknownValue(String value) {
-        ensureNotFrozen();
-        this.defaultUnknownValue = value;
-    }
-
-    @Override
     public void clearSpecialFields() {
         ensureNotFrozen();
         pidField = null;
         topLevelCustom.put("titleField", null);
         topLevelCustom.put("authorField", null);
         topLevelCustom.put("dateField", null);
-    }
-
-    @Override
-    public void setSpecialField(String specialFieldType, String fieldName) {
-        ensureNotFrozen();
-        if (specialFieldType.equals("pid")) // TODO: get rid of this special case?
-            setPidField(fieldName);
-        else
-            topLevelCustom.put(specialFieldType + "Field", fieldName);
     }
 
     public void setPidField(String pidField) {

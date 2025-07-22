@@ -932,8 +932,8 @@ public class ResponseStreamer {
                 customInfoEntry(fd.custom());
         } else {
             // Legacy fields, now moved to custom section
-            ds.entry("displayName", fd.displayName())
-                    .entry("description", fd.description())
+            ds.entry("displayName", fd.custom().get("displayName", ""))
+                    .entry("description", fd.custom().get("description", ""))
                     .entry("uiType", fd.custom().get("uiType"));
             Object unknownCondition = fd.custom().get("unknownCondition");
             if (unknownCondition != null)
@@ -985,12 +985,12 @@ public class ResponseStreamer {
                 customInfoEntry(fieldDesc.custom());
         } else {
             // Legacy fields, now moved to custom section
-            ds.entry("displayName", fieldDesc.displayName())
-                    .entry("description", fieldDesc.description());
+            ds.entry("displayName", fieldDesc.custom().get("displayName", ""))
+                    .entry("description", fieldDesc.custom().get("description", ""));
         }
         ds.entry("hasContentStore", fieldDesc.hasContentStore());
         if (!isNewApi)
-            ds.entry("hasXmlTags", fieldDesc.hasXmlTags());
+            ds.entry("hasXmlTags", fieldDesc.hasRelationAnnotation());
         ds.entry("mainAnnotation", annotations.main().name());
         if (!isNewApi) {
             // Moved to custom
@@ -1020,9 +1020,9 @@ public class ResponseStreamer {
             } else {
                 // Legacy fields, now moved to custom section
                 ds
-                        .entry("displayName", annotation.displayName())
-                        .entry("description", annotation.description())
-                        .entry("uiType", annotation.uiType());
+                        .entry("displayName", annotation.custom().get("displayName", ""))
+                        .entry("description", annotation.custom().get("description", ""))
+                        .entry("uiType", annotation.custom().get("uiType", ""));
             }
             ds.entry("hasForwardIndex", annotation.hasForwardIndex())
                     .entry("sensitivity", sensitivity)

@@ -137,9 +137,9 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     public boolean isCompound() {
         return true;
     }
-    
+
     @Override
-    public List<DocProperty> props() {
+    public List<DocProperty> propsList() {
         return Collections.unmodifiableList(criteria);
     }
 

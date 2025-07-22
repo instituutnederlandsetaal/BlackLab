@@ -40,9 +40,4 @@ public class BLSConfigProtocol {
         this.accessControlAllowOrigin = accessControlAllowOrigin;
     }
 
-    @Deprecated
-    public void setUseOldElementNames(boolean useOldElementNames) {
-        logger.warn("IMPORTANT: Found deprecated setting useOldElementNames. This setting doesn't do anything anymore and will eventually be removed.");
-    }
-
 }

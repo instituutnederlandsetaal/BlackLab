@@ -11,10 +11,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlTransient;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
@@ -27,6 +23,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -44,7 +43,6 @@ import nl.inl.blacklab.indexers.config.ConfigLinkedDocument;
 import nl.inl.blacklab.indexers.config.ConfigMetadataBlock;
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
-import nl.inl.blacklab.indexers.config.TextDirection;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -476,16 +474,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     }
 
     /**
-     * Get a description of the index, if specified
-     *
-     * @return the description
-     */
-    @Override
-    public String description() {
-        return custom().get("description", "");
-    }
-
-    /**
      * Is the content freely viewable by all users, or is it restricted?
      *
      * @return true if the full content may be retrieved by anyone
@@ -493,18 +481,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public boolean contentViewable() {
         return contentViewable;
-    }
-
-    /**
-     * What's the text direction of this corpus?
-     *
-     * @return text direction
-     * @deprecated use {@link #custom()} and get("textDirection", "ltr") instead
-     */
-    @Override
-    @Deprecated
-    public TextDirection textDirection() {
-        return TextDirection.fromCode(custom.get("textDirection", "ltr"));
     }
 
     /**
@@ -698,34 +674,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     public void setContentViewable(boolean contentViewable) {
         ensureNotFrozen();
         this.contentViewable = contentViewable;
-    }
-
-    /**
-     * Used when creating an index to initialize textDirection setting. Do not use
-     * otherwise.
-     *
-     * @param textDirection text direction
-     * @deprecated use {@link #custom()} and set("textDirection", textDirection.getCode()) instead
-     */
-    @Override
-    @Deprecated
-    public void setTextDirection(TextDirection textDirection) {
-        ensureNotFrozen();
-        custom.put("textDirection", textDirection.getCode());
-    }
-
-    /**
-     * Get the display name for the index.
-     *
-     * If no display name was specified, returns the name of the index directory.
-     *
-     * @return the display name
-     */
-    @Override
-    public String displayName() {
-        String displayName = custom.get("displayName", "");
-        return !StringUtils.isEmpty(displayName) ? displayName :
-                StringUtils.capitalize(IndexMetadata.indexNameFromDirectory(index.indexDirectory()));
     }
 
     @Override

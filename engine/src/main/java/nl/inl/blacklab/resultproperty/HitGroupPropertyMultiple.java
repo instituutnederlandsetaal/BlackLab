@@ -145,7 +145,7 @@ public class HitGroupPropertyMultiple extends HitGroupProperty implements Iterab
     }
 
     @Override
-    public List<HitGroupProperty> props() {
+    public List<HitGroupProperty> propsList() {
         return Collections.unmodifiableList(criteria);
     }
 

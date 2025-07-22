@@ -85,17 +85,6 @@ public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.S
     }
 
     /**
-     * If this is ResultPropertyMultiple, get the list of properties.
-     *
-     * @return list of properties or null if it is not ResultPropertyMultiple
-     * @deprecated use propsList() which always returns a list, never null
-     */
-    @Deprecated
-    default List<? extends ResultProperty<T>> props() {
-        return null;
-    }
-
-    /**
      * Return the list of properties.
      *
      * If this is ResultPropertyMultiple, the list will contain multiple items,
@@ -104,7 +93,7 @@ public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.S
      * @return list of properties
      */
     default List<? extends ResultProperty<T>> propsList() {
-        return isCompound() ? props() : List.of(this);
+        return List.of(this);
     }
 
     String serializeReverse();

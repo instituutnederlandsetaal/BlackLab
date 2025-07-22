@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -94,21 +93,6 @@ public abstract class PropertyValue implements Comparable<Object> {
 
     @Override
     public abstract String toString();
-    
-    public boolean isCompound() {
-        return false;
-    }
-
-    /**
-     * If this is PropertyValueMultiple, get the list of PropertyValues.
-     *
-     * @return list of values or null if it is not PropertyValueMultiple
-     * @deprecated use valuesList() which always returns a list, never null
-     */
-    @Deprecated
-    public List<PropertyValue> values() {
-        return null;
-    }
 
     /**
      * Return the list of values.
@@ -119,18 +103,11 @@ public abstract class PropertyValue implements Comparable<Object> {
      * @return list of values
      */
     public List<PropertyValue> valuesList() {
-        return isCompound() ? values() : List.of(this);
+        return List.of(this);
     }
 
     public List<String> propValues() {
-        List<String> l = new ArrayList<>();
-        if (isCompound()) {
-            for (PropertyValue v: valuesList())
-                l.addAll(v.propValues());
-        } else {
-            l.add(toString());
-        }
-        return l;
+        return List.of(toString());
     }
     
     public abstract Object value();
