@@ -1,8 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.Map;
-
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -12,13 +9,13 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  * 
  * @param <T> result type, e.g. Hit for groups of hits
  */
-public interface ResultGroups<T> {
+public interface ResultGroups {
 
     /**
      * What were these results grouped on?
      * @return group criteria
      */
-    ResultProperty<T> groupCriteria();
+    ResultProperty groupCriteria();
     
     /**
      * Get the total number of results that were grouped
@@ -68,22 +65,5 @@ public interface ResultGroups<T> {
     default AnnotatedField field() {
         return queryInfo().field();
     }
-    
-    Group<T> get(PropertyValue prop);
-    
-    Group<T> get(long i);
-    
-    /**
-     * Get an instance of this grouping with fewer stored results per group.
-     * 
-     * This won't affect the group sizes, just the number of results that are
-     * stored per group.
-     * 
-     * @param maximumNumberOfResultsPerGroup maximum number of results to store, or -1 for the same
-     * @return new grouping with fewer stored results
-     */
-    ResultGroups<T> withFewerStoredResults(int maximumNumberOfResultsPerGroup);
-    
-    Map<PropertyValue, ? extends Group<T>> getGroupMap();
 
 }

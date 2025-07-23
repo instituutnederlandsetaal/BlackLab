@@ -141,7 +141,8 @@ public class ResultDocContents {
         if (isFullDocument) {
             // Whole document. Use the highlightDocument method, which takes document versions in
             // a parallel corpus into account (cuts out part of the original input file).
-            AnnotatedField field = hits == null ? fieldToShow : hits.field();
+            AnnotatedField field;
+            field = hits == null ? fieldToShow : hits.queryInfo().field();
             content = DocUtil.highlightDocument(index, field, docId, hitsInDoc);
         } else {
             // Part of the document by token positions.

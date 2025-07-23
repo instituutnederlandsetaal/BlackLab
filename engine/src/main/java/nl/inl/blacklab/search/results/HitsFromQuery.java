@@ -32,10 +32,6 @@ public class HitsFromQuery extends HitsMutable {
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     private static final int HIT_POLLING_TIME_MS = 50;
 
-    protected final AtomicLong globalDocsProcessed = new AtomicLong();
-    protected final AtomicLong globalDocsCounted = new AtomicLong();
-    protected final AtomicLong globalHitsProcessed = new AtomicLong();
-    protected final AtomicLong globalHitsCounted = new AtomicLong();
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
     protected final AtomicLong requestedHitsToProcess = new AtomicLong();
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
@@ -50,6 +46,40 @@ public class HitsFromQuery extends HitsMutable {
     protected final Lock ensureHitsReadLock = new ReentrantLock();
     protected final List<SpansReader> spansReaders = new ArrayList<>();
     protected boolean allSourceSpansFullyRead = false;
+
+    protected final ResultsStatsPassive hitsStats;
+
+    protected final ResultsStatsPassive docsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
+        @Override
+        public boolean processedAtLeast(long lowerBound) {
+            while (!resultsStats().done() && docsStats().processedSoFar() < lowerBound) {
+                ensureResultsRead(hitsInternal.size() + 1);
+            }
+            return docsStats().processedSoFar() >= lowerBound;
+        }
+
+        @Override
+        public long allProcessed() {
+            ensureResultsRead(-1);
+            return docsStats().processedSoFar();
+        }
+
+        @Override
+        public long allCounted() {
+            ensureResultsRead(-1);
+            return docsStats().countedSoFar();
+        }
+    });
+
+    @Override
+    public ResultsStats resultsStats() {
+        return hitsStats;
+    }
+
+    @Override
+    public ResultsStats docsStats() {
+        return docsStats;
+    }
 
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
@@ -73,6 +103,26 @@ public class HitsFromQuery extends HitsMutable {
             configuredMaxHitsToProcess = configuredMaxHitsToCount;
         this.maxHitsToProcess = configuredMaxHitsToProcess;
         this.maxHitsToCount = configuredMaxHitsToCount;
+
+        hitsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
+            @Override
+            public boolean processedAtLeast(long lowerBound) {
+                ensureResultsRead(lowerBound);
+                return resultsStats().processedSoFar() >= lowerBound;
+            }
+
+            @Override
+            public long allProcessed() {
+                ensureResultsRead(-1);
+                return resultsStats().processedSoFar();
+            }
+
+            @Override
+            public long allCounted() {
+                ensureResultsRead(-1);
+                return resultsStats().countedSoFar();
+            }
+        }, maxHitsToProcess, maxHitsToCount);
 
         try {
             // Override FI match threshold? (debug use only!)
@@ -117,12 +167,10 @@ public class HitsFromQuery extends HitsMutable {
                     leafReaderContext,
                     this.hitQueryContext,
                     this.hitsInternalMutable,
-                        this.globalDocsProcessed,
-                    this.globalDocsCounted,
-                    this.globalHitsProcessed,
-                    this.globalHitsCounted,
                     this.requestedHitsToProcess,
-                    this.requestedHitsToCount
+                    this.requestedHitsToCount,
+                    hitsStats,
+                    docsStats
                 );
                 spansReaders.add(spansReader);
 
@@ -140,8 +188,7 @@ public class HitsFromQuery extends HitsMutable {
                     // Now figure out if we have capture groups
                     // Needs to be null if unused!
                     if (hitQueryContextForThisSpans.numberOfMatchInfos() > 0) {
-                        matchInfoDefs = hitQueryContextForThisSpans.getMatchInfoDefs();
-                        hitsInternalMutable.setMatchInfoDefs(matchInfoDefs);
+                        hitsInternalMutable.setMatchInfoDefs(hitQueryContextForThisSpans.getMatchInfoDefs());
                     }
 
                     hasInitialized = true;
@@ -149,21 +196,27 @@ public class HitsFromQuery extends HitsMutable {
             }
 
             if (spansReaders.isEmpty())
-                allSourceSpansFullyRead = true;
+                setDone();
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
     }
 
+    void setDone() {
+        allSourceSpansFullyRead = true;
+        hitsStats.setDone();
+        docsStats.setDone();
+    }
+
     @Override
     protected void ensureResultsRead(long number) {
-        final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number, maxHitsToCount);
+        // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
+        final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number + FETCH_HITS_MIN, maxHitsToCount);
 
         if (allSourceSpansFullyRead || (hitsInternalMutable.size() >= clampedNumber)) {
             return;
         }
 
-        // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
         // NOTE: we first update to process, then to count. If we do it the other way around, and spansReaders
         //       are running, they might check in between the two statements and conclude that they don't need to save
         //       hits anymore, only count them.
@@ -232,83 +285,19 @@ public class HitsFromQuery extends HitsMutable {
             if (hasLock) {
                 // Remove all SpansReaders that have finished.
                 spansReaders.removeIf(spansReader -> spansReader.isDone);
-                this.allSourceSpansFullyRead = spansReaders.isEmpty();
+                if (spansReaders.isEmpty())
+                    setDone(); // all spans have been read, so we're done
                 ensureHitsReadLock.unlock();
             }
         }
     }
 
     @Override
-    public MaxStats maxStats() {
-        return new MaxStats(this.globalHitsCounted.get() >= this.maxHitsToProcess, this.globalHitsCounted.get() >= this.maxHitsToCount);
-    }
-
-    @Override
-    public boolean doneProcessingAndCounting() {
-        return allSourceSpansFullyRead || (maxStats().hitsCountedExceededMaximum() && maxStats().hitsProcessedExceededMaximum());
-    }
-
-    @Override
-    protected long docsCountedSoFar() {
-        return this.globalDocsCounted.get();
-    }
-
-    @Override
-    protected long docsCountedTotal() {
-        ensureAllResultsRead();
-        return this.globalDocsCounted.get();
-    }
-
-    @Override
-    protected long docsProcessedSoFar() {
-        return this.globalDocsProcessed.get();
-    }
-
-    @Override
-    protected long docsProcessedTotal() {
-        ensureAllResultsRead();
-        return this.globalDocsProcessed.get();
-    }
-
-    @Override
-    protected long hitsCountedSoFar() {
-        return this.globalHitsCounted.get();
-    }
-
-    @Override
-    protected long hitsCountedTotal() {
-        ensureAllResultsRead();
-        return this.globalHitsCounted.get();
-    }
-
-    @Override
-    protected long hitsProcessedSoFar() {
-        return this.globalHitsProcessed.get();
-    }
-
-    @Override
-    protected long hitsProcessedTotal() {
-        ensureAllResultsRead();
-        return this.globalHitsProcessed.get();
-    }
-
-    @Override
-    protected long resultsCountedSoFar() {
-        return hitsCountedSoFar();
-    }
-
-    @Override
-    protected long resultsCountedTotal() {
-        return hitsCountedTotal();
-    }
-
-    @Override
-    protected long resultsProcessedSoFar() {
-        return hitsProcessedSoFar();
-    }
-
-    @Override
-    protected long resultsProcessedTotal() {
-        return hitsProcessedTotal();
+    public String toString() {
+        return "HitsFromQuery{" +
+                "hitQueryContext=" + hitQueryContext +
+                ", hitsStats=" + hitsStats +
+                ", docsStats=" + docsStats +
+                '}';
     }
 }

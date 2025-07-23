@@ -14,7 +14,7 @@ public class HitPropertyDoc extends HitProperty {
 
     HitPropertyDoc(HitPropertyDoc prop, Hits hits, boolean invert) {
         super(prop, hits, invert);
-        this.index = hits.index();
+        this.index = hits.queryInfo().index();
     }
 
     public HitPropertyDoc(BlackLabIndex index) {

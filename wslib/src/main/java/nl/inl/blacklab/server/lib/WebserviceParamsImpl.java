@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -25,7 +26,6 @@ import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -565,13 +565,13 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public SearchHitGroups hitsGroupedStats() throws BlsException {
         return hitsSample()
-                .groupStats(getHitGroupProperty(), Results.NO_LIMIT)
+                .groupStats(getHitGroupProperty(), Constants.RESULTS_NO_LIMIT)
                 .sort(hitGroupSortSettings().sortBy());
     }
 
     @Override
     public SearchHitGroups hitsGroupedWithStoredHits() throws BlsException {
-        return hitsSample().groupWithStoredHits(getHitGroupProperty(), Results.NO_LIMIT)
+        return hitsSample().groupWithStoredHits(getHitGroupProperty(), Constants.RESULTS_NO_LIMIT)
                 .sort(hitGroupSortSettings().sortBy());
     }
 
@@ -590,7 +590,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     public SearchDocGroups docsGrouped() throws BlsException {
         DocGroupSettings docGroupSettings = docGroupSettings();
         assert docGroupSettings != null;
-        return docs().group(docGroupSettings.groupBy(), Results.NO_LIMIT).sort(docGroupSortSettings().sortBy());
+        return docs().group(docGroupSettings.groupBy(), Constants.RESULTS_NO_LIMIT).sort(docGroupSortSettings().sortBy());
     }
 
     @Override

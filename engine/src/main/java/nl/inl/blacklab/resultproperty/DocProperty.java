@@ -20,7 +20,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  * Some DocProperty instances use synchronization for threadsafety, e.g. DocPropertyStoredField,
  * because they store DocValues instances, which may only be used from one thread at a time.
  */
-public abstract class DocProperty implements ResultProperty<DocResult>, Comparator<DocResult> {
+public abstract class DocProperty implements ResultProperty, Comparator<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
     /** Reverse comparison result or not? */

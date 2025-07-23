@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * but in some places, it makes sense to place hits in separate objects: when
  * caching or sorting hits, or just for convenience in client code.
  */
-public interface Hit extends Result<Hit> {
+public interface Hit extends Comparable<Hit> {
     
     /**
      * Create a hit.

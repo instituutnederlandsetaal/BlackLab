@@ -5,27 +5,79 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Random;
+import java.util.Set;
+import java.util.TreeSet;
 
-import nl.inl.blacklab.resultproperty.ResultProperty;
+import nl.inl.blacklab.Constants;
 
-public abstract class ResultsList<T, P extends ResultProperty<T>> extends ResultsAbstract<T, P> {
+public abstract class ResultsList<T> extends ResultsAbstract {
 
-    /**
-     * The results.
-     */
+    /** The results. */
     protected List<T> results;
 
     protected ResultsList(QueryInfo queryInfo) {
         super(queryInfo);
         results = new ArrayList<>();
     }
-    
+
+    // Perform simple generic sampling operation
+    protected static <U> List<U> doSample(ResultsList<U> source, SampleParameters sampleParameters) {
+        // We can later provide an optimized version that uses a HitsSampleCopy or somesuch
+        // (this class could save memory by only storing the hits we're interested in)
+
+        if (source.size() > Constants.JAVA_MAX_ARRAY_SIZE) {
+            // TODO: we might want to enable this, because the whole point of sampling is to make sense
+            //       of huge result sets without having to look at every hit.
+            //       Ideally, old seeds would keep working as well (although that may not be practical,
+            //       and not likely to be a huge issue)
+            throw new UnsupportedOperationException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
+        }
+
+        List<U> results = new ArrayList<>();
+
+        Random random = new Random(sampleParameters.seed());
+        long numberOfHitsToSelect = sampleParameters.numberOfHits(source.size());
+        if (numberOfHitsToSelect > source.size())
+            numberOfHitsToSelect = source.size(); // default to all hits in this case
+        // Choose the hits
+        Set<Long> chosenHitIndices = new TreeSet<>();
+        for (int i = 0; i < numberOfHitsToSelect; i++) {
+            // Choose a hit we haven't chosen yet
+            long hitIndex;
+            do {
+                hitIndex = random.nextInt((int)Math.min(Constants.JAVA_MAX_ARRAY_SIZE, source.size()));
+            } while (chosenHitIndices.contains(hitIndex));
+            chosenHitIndices.add(hitIndex);
+        }
+
+        // Add the hits in order of their index
+        for (Long hitIndex : chosenHitIndices) {
+            U hit = source.get(hitIndex);
+            results.add(hit);
+        }
+        return results;
+    }
+
+    protected static <U> List<U> doWindow(ResultsList<U> results, long first, long number) {
+        if (first < 0 || first != 0 && !results.resultsStats().waitUntil().processedAtLeast(first + 1)) {
+            return Collections.emptyList();
+        }
+
+        // Auto-clamp number
+        long actualSize = number;
+        if (!results.resultsStats().waitUntil().processedAtLeast(first + actualSize))
+            actualSize = results.size() - first;
+
+        // Make sublist (copy results from List.subList() to avoid lingering references large lists)
+        return new ArrayList<>(results.resultsSubList(first, first + actualSize));
+    }
+
     /**
      * Return an iterator over these hits.
      *
      * @return the iterator
      */
-    @Override
     public Iterator<T> iterator() {
         // Construct a custom iterator that iterates over the hits in the hits
         // list, but can also take into account the Spans object that may not have
@@ -59,32 +111,13 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
         };
     }
     
-    @Override
     public synchronized T get(long i) {
         ensureResultsRead(i + 1);
         if (i >= results.size())
             return null;
         return results.get((int)i);
     }
-    
-    @Override
-    protected boolean resultsProcessedAtLeast(long lowerBound) {
-        ensureResultsRead(lowerBound);
-        return results.size() >= lowerBound;
-    }
-    
-    @Override
-    protected long resultsProcessedTotal() {
-        ensureAllResultsRead();
-        return results.size();
-    }
-    
-    @Override
-    protected long resultsProcessedSoFar() {
-        return results.size();
-    }
-    
-    
+
     /**
      * Get part of the list of results.
      * 
@@ -102,18 +135,5 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
         if (toIndex > results.size())
             toIndex = results.size();
         return results.subList((int)fromIndex, (int)toIndex);
-    }
-
-    /**
-     * Get the list of results.
-     *
-     * Clients shouldn't use this. Used internally for certain performance-sensitive
-     * operations like sorting.
-     *
-     * @return the list of hits
-     */
-    protected List<T> resultsList() {
-        ensureAllResultsRead();
-        return Collections.unmodifiableList(results);
     }
 }

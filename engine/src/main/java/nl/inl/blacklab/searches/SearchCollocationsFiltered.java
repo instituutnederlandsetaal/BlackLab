@@ -3,7 +3,6 @@ package nl.inl.blacklab.searches;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
-import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -14,11 +13,11 @@ public class SearchCollocationsFiltered extends SearchCollocations {
 
     private final SearchCollocations source;
 
-    private final ResultProperty<TermFrequency> property;
+    private final ResultProperty property;
 
     private final PropertyValue value;
 
-    public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty<TermFrequency> property, PropertyValue value) {
+    public SearchCollocationsFiltered(QueryInfo queryInfo, SearchCollocations source, ResultProperty property, PropertyValue value) {
         super(queryInfo);
         this.source = source;
         this.property = property;

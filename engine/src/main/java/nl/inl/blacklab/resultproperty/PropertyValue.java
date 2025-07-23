@@ -39,7 +39,7 @@ public abstract class PropertyValue implements Comparable<Object> {
      * @return the HitPropValue object, or null if it could not be deserialized
      */
     public static PropertyValue deserialize(Hits hits, String serialized) {
-        return deserialize(hits.index(), hits.field(), serialized);
+        return deserialize(hits.queryInfo().index(), hits.queryInfo().field(), serialized);
     }
     
     /**

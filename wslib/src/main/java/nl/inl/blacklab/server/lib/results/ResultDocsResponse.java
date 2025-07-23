@@ -24,8 +24,8 @@ import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultDocsResponse {
     private final Collection<Annotation> annotationsToList;
@@ -89,7 +89,7 @@ public class ResultDocsResponse {
             throw WebserviceOperations.translateSearchException(e);
         }
 
-        PropertyValue viewGroupVal = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
+        PropertyValue viewGroupVal = PropertyValue.deserialize(groups.queryInfo().index(), groups.queryInfo().field(), viewGroup);
         if (viewGroupVal == null) {
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Parameter 'viewgroup' has an illegal value: " + viewGroup);
         }
@@ -188,7 +188,7 @@ public class ResultDocsResponse {
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
-                null, null, window.windowStats(), docResults.field().name(),
+                null, null, window.windowStats(), docResults.queryInfo().field().name(),
                 Collections.emptyList());
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;

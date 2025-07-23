@@ -18,6 +18,7 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -41,9 +42,8 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsStatic;
+import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
@@ -128,7 +128,7 @@ public class ResultHits {
                 cacheEntry = res.getLeft();
                 hits = res.getRight();
                 // The hits are already complete - get the stats directly.
-                hitsStats = hits.hitsStats();
+                hitsStats = hits.resultsStats();
                 docsStats = hits.docsStats();
             } else {
                 // Regular hits request.
@@ -147,16 +147,16 @@ public class ResultHits {
                     docsStats = searchDocCount.executeAsync().peek();
                     // Wait until all hits have been counted.
                     if (waitForTotal) {
-                        hitsStats.countedTotal();
-                        docsStats.countedTotal();
+                        hitsStats.waitUntil().allCounted();
+                        docsStats.waitUntil().allCounted();
                     }
                 } catch (InterruptedSearch e) {
                     // Our count was probably aborted.
                     logger.debug("Error getting count(s)", e);
                     if (hitsStats == null)
-                        hitsStats = ResultsStatsStatic.INVALID;
+                        hitsStats = ResultsStatsSaved.INVALID;
                     if (docsStats == null)
-                        docsStats = ResultsStatsStatic.INVALID;
+                        docsStats = ResultsStatsSaved.INVALID;
                     throw e;
                 }
             }
@@ -180,7 +180,7 @@ public class ResultHits {
     private static SearchHits getQueryForHitsInSpecificGroupOnly(WebserviceParams params, PropertyValue viewGroupVal,
             HitGroups hitsGrouped) throws BlsException, InvalidQuery {
         // see if we can enhance this query
-        if (hitsGrouped.isSample())
+        if (hitsGrouped.sampleParameters() != null)
             return null;
 
         HitProperty groupByProp = hitsGrouped.groupCriteria();
@@ -285,7 +285,7 @@ public class ResultHits {
             // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
             // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
             SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) params.hitsSample()
-                    .groupWithStoredHits(hitGroups.groupCriteria(), Results.NO_LIMIT);
+                    .groupWithStoredHits(hitGroups.groupCriteria(), Constants.RESULTS_NO_LIMIT);
             // now run the separate grouping search, making sure not to actually store the hits.
             // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
             // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.
@@ -329,7 +329,7 @@ public class ResultHits {
 
     public void finishSearch() {
         WindowSettings windowSettings = params.windowSettings();
-        if (!hits.hitsStats().processedAtLeast(windowSettings.first()))
+        if (!hits.resultsStats().waitUntil().processedAtLeast(windowSettings.first()))
             throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
 
         cacheEntryWindow = null;
@@ -353,7 +353,7 @@ public class ResultHits {
         totalTokens = -1;
         CorpusSize subcorpusSize = null;
         if (params.getIncludeSubcorpusSize()) {
-            subcorpusSize = hits.perDocResults(Results.NO_LIMIT)
+            subcorpusSize = hits.perDocResults(Constants.RESULTS_NO_LIMIT)
                     .subcorpusSize();
             // Determine total number of tokens in result set
             totalTokens = subcorpusSize.getTotalCount().getTokens();
@@ -386,10 +386,10 @@ public class ResultHits {
             if (def.getTargetField() != null)
                 otherFields.add(def.getTargetField());
         }
-        otherFields.remove(hits.field().name());
+        otherFields.remove(hits.queryInfo().field().name());
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
                 getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
-                hits.field().name(), otherFields);
+                hits.queryInfo().field().name(), otherFields);
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
                 getDocIdToPid());
     }

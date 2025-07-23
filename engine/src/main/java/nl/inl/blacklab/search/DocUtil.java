@@ -171,7 +171,7 @@ public class DocUtil {
                                    // subtract one
         }
 
-        characterOffsets(index, docId, hits.field(), starts, ends, true);
+        characterOffsets(index, docId, hits.queryInfo().field(), starts, ends, true);
 
         List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
@@ -256,7 +256,7 @@ public class DocUtil {
     public static String highlightContent(BlackLabIndex index, int docId, Hits hits, int startAtWord, int endAtWord) {
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
-        AnnotatedField field = hits.field();
+        AnnotatedField field = hits.queryInfo().field();
         int[] startEndCharPos = startEndWordToCharPos(index, docId, field, startAtWord, lastWord);
 
         // Get content by char positions
@@ -271,11 +271,11 @@ public class DocUtil {
     private static String highlightContent(BlackLabIndex index, int docId, Hits hits, boolean fixUnbalancedTags,
             int highlightFromOffset, String content) {
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
-        ResultsStats hitsStats = hits.hitsStats();
-        if (hitsStats.processedAtLeast(1) || fixUnbalancedTags) {
+        ResultsStats hitsStats = hits.resultsStats();
+        if (hitsStats.waitUntil().processedAtLeast(1) || fixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitSpans = null;
-            if (hitsStats.processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
+            if (hitsStats.waitUntil().processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
                 hitSpans = getCharacterOffsets(index, docId, hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());

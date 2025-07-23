@@ -16,14 +16,14 @@ public class ResultSummaryCommonFields {
     private final Index.IndexStatus indexStatus;
     private final SearchTimings timings;
     private final MatchInfoDefs matchInfoDefs;
-    private final ResultGroups<?> groups;
+    private final ResultGroups groups;
     private final WindowStats window;
     private final String searchField;
     private final Collection<String> otherFields;
 
     ResultSummaryCommonFields(WebserviceParams searchParam, Index.IndexStatus indexStatus,
             SearchTimings timings, MatchInfoDefs matchInfoDefs,
-            ResultGroups<?> groups, WindowStats window, String searchField, Collection<String> otherFields) {
+            ResultGroups groups, WindowStats window, String searchField, Collection<String> otherFields) {
         this.searchParam = searchParam;
         if (searchParam.hasPattern())
             this.textPattern = searchParam.pattern().orElse(null);
@@ -56,7 +56,7 @@ public class ResultSummaryCommonFields {
         return matchInfoDefs;
     }
 
-    public ResultGroups<?> getGroups() {
+    public ResultGroups getGroups() {
         return groups;
     }
 

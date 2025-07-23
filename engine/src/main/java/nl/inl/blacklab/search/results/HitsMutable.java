@@ -34,4 +34,9 @@ public abstract class HitsMutable extends HitsAbstract {
         hitsInternalMutable = hits == null ? HitsInternal.create(queryInfo.field().name(), matchInfoDefs, -1, true, true) : hits;
     }
 
+    @Override
+    public WindowStats windowStats() {
+        return null;
+    }
+
 }

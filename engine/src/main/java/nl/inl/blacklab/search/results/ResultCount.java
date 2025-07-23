@@ -2,7 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 
-public class ResultCount extends ResultsStats implements SearchResult {
+public class ResultCount extends ResultsStats {
 
     public enum CountType {
         RESULTS, // number of results
@@ -17,7 +17,42 @@ public class ResultCount extends ResultsStats implements SearchResult {
     /** Type of results we're counting, to report in toString() */
     private final CountType type;
 
-    public ResultCount(Results<?, ?> count, CountType type) {
+    public ResultCount(Results count, CountType type) {
+        super();
+        setWaitUntil(new ResultsAwaiter() {
+            @Override
+            public boolean processedAtLeast(long lowerBound) {
+                update();
+                try {
+                    return ResultCount.this.count.waitUntil().processedAtLeast(lowerBound);
+                } catch(InterruptedSearch e) {
+                    wasInterrupted = true;
+                    throw e;
+                }
+            }
+
+            @Override
+            public long allProcessed() {
+                update();
+                try {
+                    return ResultCount.this.count.waitUntil().allProcessed();
+                } catch(InterruptedSearch e) {
+                    wasInterrupted = true;
+                    throw e;
+                }
+            }
+
+            @Override
+            public long allCounted() {
+                update();
+                try {
+                    return ResultCount.this.count.waitUntil().allCounted();
+                } catch(InterruptedSearch e) {
+                    wasInterrupted = true;
+                    throw e;
+                }
+            }
+        });
         this.type = type;
         switch (type) {
         case RESULTS:
@@ -25,13 +60,13 @@ public class ResultCount extends ResultsStats implements SearchResult {
             break;
         case HITS:
             if (count instanceof Hits) {
-                this.count = ((Hits) count).hitsStats();
+                this.count = count.resultsStats();
             } else if (count instanceof HitGroups) {
                 long n = ((HitGroups) count).sumOfGroupSizes();
-                this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
+                this.count = new ResultsStatsSaved(n, n, MaxStats.NOT_EXCEEDED);
             } else if (count instanceof DocResults) {
                 long n = ((DocResults) count).sumOfGroupSizes();
-                this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
+                this.count = new ResultsStatsSaved(n, n, MaxStats.NOT_EXCEEDED);
             } else if (count instanceof DocGroups) {
                 throw new UnsupportedOperationException("Cannot get hits count from DocGroups");
             }
@@ -45,7 +80,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
                 this.count = count.resultsStats();
             } else if (count instanceof DocGroups) {
                 long n = ((DocGroups) count).sumOfGroupSizes();
-                this.count = new ResultsStatsStatic(n, n, MaxStats.NOT_EXCEEDED);
+                this.count = new ResultsStatsSaved(n, n, MaxStats.NOT_EXCEEDED);
             }
             break;
         }
@@ -53,7 +88,7 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     private void update() {
-        if (!count.isStatic() && count.done()) {
+        if (!count.isSavedCount() && count.done()) {
             // We were monitoring the count from a results object that stores all the results.
             // In order to allow that to be garbage collected when possible, disengage from
             // the search object and save the totals.
@@ -73,43 +108,10 @@ public class ResultCount extends ResultsStats implements SearchResult {
     }
 
     @Override
-    public long processedTotal() {
-        update();
-        try {
-            return count.processedTotal();
-        } catch(InterruptedSearch e) {
-            wasInterrupted = true;
-            throw e;
-        }
-    }
-
-    @Override
-    public boolean processedAtLeast(long lowerBound) {
-        update();
-        try {
-            return count.processedAtLeast(lowerBound);
-        } catch(InterruptedSearch e) {
-            wasInterrupted = true;
-            throw e;
-        }
-    }
-
-    @Override
     public long countedSoFar() {
         update();
         try {
             return count.countedSoFar();
-        } catch(InterruptedSearch e) {
-            wasInterrupted = true;
-            throw e;
-        }
-    }
-
-    @Override
-    public long countedTotal() {
-        update();
-        try {
-            return count.countedTotal();
         } catch(InterruptedSearch e) {
             wasInterrupted = true;
             throw e;
@@ -136,11 +138,6 @@ public class ResultCount extends ResultsStats implements SearchResult {
             wasInterrupted = true;
             throw e;
         }
-    }
-
-    @Override
-    public boolean wasInterrupted() {
-        return wasInterrupted;
     }
 
     @Override

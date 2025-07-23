@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  * A group of results, with its group identity and the results themselves, that
  * you can access randomly (i.e. you can obtain a list of Hit objects)
  */
-public class HitGroup extends Group<Hit> {
+public class HitGroup extends Group {
     public static HitGroup empty(QueryInfo queryInfo, PropertyValue groupIdentity, long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, totalSize);
     }

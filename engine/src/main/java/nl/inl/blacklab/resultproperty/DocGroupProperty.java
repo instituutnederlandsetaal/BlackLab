@@ -1,13 +1,14 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Comparator;
+
 import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocResult;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup> {
+public abstract class DocGroupProperty extends GroupProperty implements Comparator<DocGroup> {
 
     public static DocGroupProperty deserialize(String serialized) {
         if (serialized == null || serialized.isEmpty())
@@ -36,7 +37,6 @@ public abstract class DocGroupProperty extends GroupProperty<DocResult, DocGroup
         super();
     }
 
-    @Override
     public abstract PropertyValue get(DocGroup result);
 
     /**

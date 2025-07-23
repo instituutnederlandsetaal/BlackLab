@@ -34,7 +34,7 @@ public class Kwics {
             throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
     
         // Get the concordances
-        kwics = retrieveKwics(hits, contextSize, hits.field());
+        kwics = retrieveKwics(hits, contextSize, hits.queryInfo().field());
 
         // Get the concordances for other fields (for parallel corpora), if there are any
         foreignKwics = retrieveForeignKwics(hits, contextSize);
@@ -43,7 +43,7 @@ public class Kwics {
     private Map<Hit, Map<String, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
         Map<Hit, Map<String, Kwic>> foreignKwics = null;
         Map<String, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
-        String defaultField = hits.field().name();
+        String defaultField = hits.queryInfo().field().name();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
             Map<String, int[]> minMaxPerField = null; // start and end of the "foreign match"
@@ -56,7 +56,7 @@ public class Kwics {
                     MatchInfo.Def def = defIt.hasNext() ? defIt.next() : null; // null should only happen in testing...
                     boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
                             def != null && def.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
-                    minMaxPerField = updateMinMaxForMatchInfo(hits.index(), mi, defaultField, minMaxPerField,
+                    minMaxPerField = updateMinMaxForMatchInfo(hits.queryInfo().index(), mi, defaultField, minMaxPerField,
                             afisPerField, isTargetHit);
                 }
 
@@ -178,7 +178,7 @@ public class Kwics {
     private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
         // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
         // (this convention originates from how we write our XML structure)
-        ForwardIndex forwardIndex = hits.index().forwardIndex(field);
+        ForwardIndex forwardIndex = hits.queryInfo().index().forwardIndex(field);
         List<AnnotationForwardIndex> forwardIndexes = getAnnotationForwardIndexes(forwardIndex);
 
         // Iterate over hits and fetch KWICs per document

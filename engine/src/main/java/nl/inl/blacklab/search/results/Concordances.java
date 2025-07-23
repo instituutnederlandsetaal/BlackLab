@@ -103,10 +103,10 @@ public class Concordances {
         // Get the relevant character offsets (overwrites the startsOfWords and endsOfWords
         // arrays)
         AnnotatedField field = queryInfo.field();
-        DocUtil.characterOffsets(hits.index(), docId, field, startsOfWords, endsOfWords, true);
+        DocUtil.characterOffsets(hits.queryInfo().index(), docId, field, startsOfWords, endsOfWords, true);
 
         // Make all the concordances
-        List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
+        List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.queryInfo().index(), docId, field, startsOfWords, endsOfWords, hl);
         int i = 0;
         for (Hit hit: hits) {
             conc.put(hit, newConcs.get(i));
@@ -131,7 +131,7 @@ public class Concordances {
         for (Hit key: hits) {
             HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsInternal.create(hits.field().name(), hits.matchInfoDefs(), -1, totalHits, false);
+                hitsInDoc = HitsInternal.create(hits.queryInfo().field().name(), hits.matchInfoDefs(), -1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);

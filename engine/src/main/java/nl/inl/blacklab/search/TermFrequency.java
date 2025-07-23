@@ -1,11 +1,9 @@
 package nl.inl.blacklab.search;
 
-import nl.inl.blacklab.search.results.Result;
-
 /**
  * One token and its frequency in some context.
  */
-public class TermFrequency implements Result<TermFrequency> {
+public class TermFrequency implements Comparable<TermFrequency> {
 
     /** What token this frequency is for */
     public final String term;

@@ -76,7 +76,6 @@ public class TestHookableSaxParser {
             builder.append("$");
         }
 
-//		@Override
 //		public void attribute(String name, String value) {
 //			builder.append("@");
 //		}

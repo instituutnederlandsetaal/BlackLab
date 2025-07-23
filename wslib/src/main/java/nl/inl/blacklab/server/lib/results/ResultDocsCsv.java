@@ -45,7 +45,7 @@ public class ResultDocsCsv {
             docs = params.docs().execute();
 
             if (viewGroup != null) {
-                PropertyValue groupId = PropertyValue.deserialize(groups.index(), groups.field(), viewGroup);
+                PropertyValue groupId = PropertyValue.deserialize(groups.queryInfo().index(), groups.queryInfo().field(), viewGroup);
                 if (groupId == null)
                     throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                 DocGroup group = groups.get(groupId);
@@ -75,7 +75,7 @@ public class ResultDocsCsv {
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
             long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
-            if (!docs.resultsStats().processedAtLeast(first))
+            if (!docs.resultsStats().waitUntil().processedAtLeast(first))
                 first = 0;
 
             long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();

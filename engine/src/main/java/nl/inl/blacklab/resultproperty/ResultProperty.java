@@ -1,6 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,9 +7,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * Property of some result (i.e. hit, group, groupOfGroups)
- * @param <T> type of result
  */
-public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.SerializableProperty {
+public interface ResultProperty extends PropertySerializeUtil.SerializableProperty {
 
     /**
      * Strip sensitivity information.
@@ -47,7 +45,7 @@ public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.S
      * 
      * @return a new hit property with the sort order reversed
      */
-    ResultProperty<T> reverse();
+    ResultProperty reverse();
 
     /**
      * Is the comparison reversed?
@@ -92,7 +90,7 @@ public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.S
      *
      * @return list of properties
      */
-    default List<? extends ResultProperty<T>> propsList() {
+    default List<? extends ResultProperty> propsList() {
         return List.of(this);
     }
 

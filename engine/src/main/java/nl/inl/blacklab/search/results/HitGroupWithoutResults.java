@@ -14,14 +14,18 @@ public class HitGroupWithoutResults extends HitGroup {
         protected final boolean maxHitsProcessed;
         protected final boolean maxHitsCounted;
 
+        private final ResultsStatsSaved hitsStats;
+        private final ResultsStatsSaved docsStats;
+
         public HitsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
             super(queryInfo, true);
-            this.hitsCounted = totalHits;
-            this.docsCounted = totalDocuments;
-            this.docsRetrieved = 0;
 
             this.maxHitsProcessed = maxHitsProcessed;
             this.maxHitsCounted = maxHitsCounted;
+
+            MaxStats maxStats = MaxStats.get(maxHitsProcessed, maxHitsCounted);
+            hitsStats = new ResultsStatsSaved(0, totalHits, maxStats);
+            docsStats = new ResultsStatsSaved(0, totalDocuments, maxStats);
         }
 
         @Override
@@ -30,17 +34,43 @@ public class HitGroupWithoutResults extends HitGroup {
         }
 
         @Override
-        public boolean doneProcessingAndCounting() {
-            return true;
+        public ResultsStats resultsStats() {
+            return hitsStats;
         }
 
         @Override
+        public ResultsStats docsStats() {
+            return docsStats;
+        }
+
         public MaxStats maxStats() {
-            return new MaxStats(maxHitsProcessed, maxHitsCounted);
+            return hitsStats.maxStats();
+        }
+
+        @Override
+        public WindowStats windowStats() {
+            return null;
+        }
+
+        @Override
+        public String toString() {
+            return "HitsWithoutResults{" +
+                    "maxHitsProcessed=" + maxHitsProcessed +
+                    ", maxHitsCounted=" + maxHitsCounted +
+                    ", hitsStats=" + hitsStats +
+                    ", docsStats=" + docsStats +
+                    '}';
         }
     }
 
     public HitGroupWithoutResults(QueryInfo queryInfo, PropertyValue groupIdentity, long totalHits, int totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
         super(groupIdentity, new HitsWithoutResults(queryInfo, totalHits, totalDocuments, maxHitsCounted, maxHitsProcessed), totalHits);
+    }
+
+    @Override
+    public String toString() {
+        return "HitGroupWithoutResults{" +
+                "groupIdentity=" + groupIdentity +
+                '}';
     }
 }

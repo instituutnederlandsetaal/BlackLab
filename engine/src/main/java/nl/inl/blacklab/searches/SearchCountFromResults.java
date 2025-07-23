@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.results.ResultsStatsDelegate;
  * A search operation that yields a count as its result.
  * @param <T> result type, e.g. Hit
  */
-public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount {
+public class SearchCountFromResults<T extends Results> extends SearchCount {
 
     /**
      * The search we're doing a count for.
@@ -43,7 +43,7 @@ public class SearchCountFromResults<T extends Results<?, ?>> extends SearchCount
         // This runs synchronously, so SearchCountFromResults will not be finished until
         // the entire count it finished. You can peek at the running count in the meantime,
         // however.
-        resultCount.processedTotal();
+        resultCount.waitUntil().allProcessed();
 
         return resultCount;
     }

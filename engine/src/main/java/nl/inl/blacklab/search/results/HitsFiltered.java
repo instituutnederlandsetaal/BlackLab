@@ -30,6 +30,10 @@ public class HitsFiltered extends HitsMutable {
 
     private int indexInSource = -1;
 
+    private final ResultsStatsPassive hitsStats;
+
+    private final ResultsStatsPassive docsStats;
+
     /**
      * Filter hits.
      *
@@ -46,11 +50,61 @@ public class HitsFiltered extends HitsMutable {
         // implementing a ForwardIndex that stores documents linearly, making it just a single read.
         filterProperty = property.copyWith(hits);
         this.filterValue = value;
+        hitsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
+            @Override
+            public boolean processedAtLeast(long lowerBound) {
+                ensureResultsRead(lowerBound);
+                return resultsStats().processedSoFar() >= lowerBound;
+            }
+
+            @Override
+            public long allProcessed() {
+                ensureResultsRead(-1);
+                return resultsStats().processedSoFar();
+            }
+
+            @Override
+            public long allCounted() {
+                ensureResultsRead(-1);
+                return resultsStats().countedSoFar();
+            }
+        });
+        docsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
+            @Override
+            public boolean processedAtLeast(long lowerBound) {
+                while (!resultsStats().done() && docsStats().processedSoFar() < lowerBound) {
+                    ensureResultsRead(hitsInternal.size() + 1);
+                }
+                return docsStats().processedSoFar() >= lowerBound;
+            }
+
+            @Override
+            public long allProcessed() {
+                ensureResultsRead(-1);
+                return docsStats().processedSoFar();
+            }
+
+            @Override
+            public long allCounted() {
+                ensureResultsRead(-1);
+                return docsStats().countedSoFar();
+            }
+        });
+    }
+
+    @Override
+    public ResultsStats resultsStats() {
+        return hitsStats;
+    }
+
+    @Override
+    public ResultsStats docsStats() {
+        return docsStats;
     }
 
     @Override
     public String toString() {
-        return "HitsFilter#" + hitsObjId;
+        return "HitsFilter";
     }
 
     /**
@@ -91,20 +145,21 @@ public class HitsFiltered extends HitsMutable {
 
                     // Advance to next hit
                     indexInSource++;
-                    if (source.hitsStats().processedAtLeast((long)indexInSource + 1)) {
+                    if (source.resultsStats().waitUntil().processedAtLeast((long)indexInSource + 1)) {
                         source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
                             hitsInternalMutable.add(hit);
-                            hitsCounted++;
+                            hitsStats.increment(true);
                             if (hit.doc() != previousHitDoc) {
-                                docsCounted++;
-                                docsRetrieved++;
+                                docsStats.increment(true);
                                 previousHitDoc = hit.doc();
                             }
                         }
                     } else {
                         doneFiltering = true;
+                        hitsStats.setDone(source.resultsStats().maxStats());
+                        docsStats.setDone(source.docsStats().maxStats());
                         filterProperty.disposeContext(); // we don't need the context information anymore, free memory
                         source = null; // allow this to be GC'ed
                     }
@@ -118,13 +173,4 @@ public class HitsFiltered extends HitsMutable {
         }
     }
 
-    @Override
-    public boolean doneProcessingAndCounting() {
-        return doneFiltering;
-    }
-
-    @Override
-    public MaxStats maxStats() {
-        return MaxStats.NOT_EXCEEDED;
-    }
 }

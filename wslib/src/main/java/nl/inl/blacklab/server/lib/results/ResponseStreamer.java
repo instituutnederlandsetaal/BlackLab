@@ -62,7 +62,7 @@ import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsStatic;
+import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -446,7 +446,7 @@ public class ResponseStreamer {
         }
     }
 
-    private void summaryGroupStats(ResultGroups<?> groups) {
+    private void summaryGroupStats(ResultGroups groups) {
         if (groups != null) {
             ds.entry(KEY_NUMBER_OF_GROUPS, groups.size());
             ds.entry(KEY_LARGEST_GROUP_SIZE, groups.largestGroupSize());
@@ -475,16 +475,16 @@ public class ResponseStreamer {
         }
     }
 
-    private void summaryResultsStats(ResultSummaryNumHits result, ResultGroups<?> groups) {
+    private void summaryResultsStats(ResultSummaryNumHits result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ResultsStats hitsStats = result.getHitsStats();
-        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.countedTotal() : hitsStats.countedSoFar());
-        long hitsProcessed = result.isWaitForTotal() ? hitsStats.processedTotal() : hitsStats.processedSoFar();
+        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.waitUntil().allCounted() : hitsStats.countedSoFar());
+        long hitsProcessed = result.isWaitForTotal() ? hitsStats.waitUntil().allProcessed() : hitsStats.processedSoFar();
         ResultsStats docsStats = result.getDocsStats();
         if (docsStats == null)
-            docsStats = ResultsStatsStatic.INVALID;
-        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.countedTotal() : docsStats.countedSoFar());
-        long docsProcessed = result.isWaitForTotal() ? docsStats.processedTotal() : docsStats.processedSoFar();
+            docsStats = ResultsStatsSaved.INVALID;
+        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.waitUntil().allCounted() : docsStats.countedSoFar());
+        long docsProcessed = result.isWaitForTotal() ? docsStats.waitUntil().allProcessed() : docsStats.processedSoFar();
 
         CorpusSize subcorpusSize = result.getSubcorpusSize();
         if (isNewApi) {
@@ -532,7 +532,7 @@ public class ResponseStreamer {
             ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
     }
 
-    public void summaryNumDocs(ResultSummaryNumDocs result, ResultGroups<?> groups) {
+    public void summaryNumDocs(ResultSummaryNumDocs result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         DocResults docResults = result.getDocResults();
         if (isNewApi) {
@@ -617,13 +617,13 @@ public class ResponseStreamer {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> matchInfos = null;
                 if (hits.hasMatchInfo()) {
-                    matchInfos = hits.getMatchInfoMap(hit, params.getOmitEmptyCaptures());
+                    matchInfos = Hits.getMatchInfoMap(hits, hit, params.getOmitEmptyCaptures());
                     if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, hits.field().name(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                hit(docPid, hit, hits.queryInfo().field().name(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
             ds.endItem();
@@ -647,11 +647,11 @@ public class ResponseStreamer {
     public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
         Hits hits = result.getHits();
-        if (!hits.hitsStats().processedAtLeast(1))
+        if (!hits.resultsStats().waitUntil().processedAtLeast(1))
             throw new IllegalStateException("Hit for snippet not found");
         Hit hit = hits.get(0);
         hits = hits.size() > 1 ? hits.window(hit) : hits; // make sure we only have 1 hit
-        Map<String, MatchInfo> matchInfo = hits.getMatchInfoMap(hit);
+        Map<String, MatchInfo> matchInfo = Hits.getMatchInfoMap(hits, hit, false);
         ContextSize context = result.getContext();
         ConcordanceContext concordanceContext = result.isOrigContent() ?
                 ConcordanceContext.concordances(hits.concordances(context, ConcordanceType.CONTENT_STORE)) :
@@ -661,7 +661,7 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        String searchField = result.getHits().field().name();
+        String searchField = result.getHits().queryInfo().field().name();
         outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }

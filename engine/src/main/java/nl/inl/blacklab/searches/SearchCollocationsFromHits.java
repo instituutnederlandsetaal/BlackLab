@@ -5,6 +5,7 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -27,7 +28,8 @@ public class SearchCollocationsFromHits extends SearchCollocations {
 
     @Override
     public TermFrequencyList executeInternal(ActiveSearch<TermFrequencyList> activeSearch) throws InvalidQuery {
-        return executeChildSearch(activeSearch, source).collocations(annotation, contextSize, sensitivity);
+        Hits hits = executeChildSearch(activeSearch, source);
+        return hits.collocations(annotation, contextSize, sensitivity, true);
     }
 
     @Override

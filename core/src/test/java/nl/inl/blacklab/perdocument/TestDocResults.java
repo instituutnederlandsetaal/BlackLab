@@ -3,11 +3,11 @@ package nl.inl.blacklab.perdocument;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Results;
 
 public class TestDocResults {
 
@@ -19,7 +19,7 @@ public class TestDocResults {
 
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
             Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
-            DocResults drs = hits.perDocResults(Results.NO_LIMIT);
+            DocResults drs = hits.perDocResults(Constants.RESULTS_NO_LIMIT);
     
             int[] expDoc = { 1, 2, 3 };
             int[] expHits = { 2, 1, 2 };

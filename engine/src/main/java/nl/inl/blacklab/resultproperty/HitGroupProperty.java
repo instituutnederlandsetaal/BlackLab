@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.Hit;
+import java.util.Comparator;
+
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -8,7 +9,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
+public abstract class HitGroupProperty extends GroupProperty implements Comparator<HitGroup> {
 
     HitGroupProperty(HitGroupProperty prop, boolean invert) {
         super(prop, invert);
@@ -18,7 +19,6 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
         super();
     }
 
-    @Override
     public abstract PropertyValue get(HitGroup result);
 
     /**
@@ -30,9 +30,6 @@ public abstract class HitGroupProperty extends GroupProperty<Hit, HitGroup> {
      */
     @Override
     public abstract int compare(HitGroup a, HitGroup b);
-
-    @Override
-    public abstract String serialize();
 
     /**
      * Used by subclasses to add a dash for reverse when serializing

@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
@@ -14,7 +15,6 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.Results;
 
 public class TestResultsGrouper {
     final int[] doc   = { 1, 2, 1, 3, 2, 1 };
@@ -31,7 +31,7 @@ public class TestResultsGrouper {
         index.setIndexSearcher(indexSearcher);
         Hits hits = Hits.list(QueryInfo.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
-        HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
+        HitGroups grouper = hits.group(crit, Constants.RESULTS_NO_LIMIT);
 
         Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);

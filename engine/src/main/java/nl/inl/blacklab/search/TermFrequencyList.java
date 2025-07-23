@@ -9,9 +9,11 @@ import java.util.Map;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
+import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsList;
+import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.results.SampleParameters;
 
 /**
@@ -21,9 +23,11 @@ import nl.inl.blacklab.search.results.SampleParameters;
  * also set the total frequency explicitly (after all entries have been added)
  * if you want to calculate relative frequencies based on a different total.
  */
-public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty<TermFrequency>> {
+public class TermFrequencyList extends ResultsList<TermFrequency> implements Iterable<TermFrequency> {
 
     long totalFrequency;
+
+    private ResultsStats stats;
 
     public TermFrequencyList(QueryInfo queryInfo, Map<String, Integer> wordFreq, boolean sort) {
         super(queryInfo);
@@ -36,7 +40,8 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
             results.add(new TermFrequency(e.getKey(), e.getValue()));
         }
         if (sort) {
-            results.sort(Comparator.naturalOrder());
+            Comparator<TermFrequency> c = Comparator.naturalOrder();
+            results.sort(c);
         }
         calculateTotalFrequency();
     }
@@ -56,11 +61,12 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         for (TermFrequency fr: results) {
             totalFrequency += fr.frequency;
         }
+        stats = new ResultsStatsSaved(results.size(), results.size(), MaxStats.NOT_EXCEEDED);
     }
 
     @Override
-    public long size() {
-        return results.size();
+    public ResultsStats resultsStats() {
+        return stats;
     }
 
     @Override
@@ -104,35 +110,20 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         // NOP
     }
 
-    @Override
-    public ResultGroups<TermFrequency> group(ResultProperty<TermFrequency> criteria,
-                                             long maxResultsToStorePerGroup) {
+    public TermFrequencyList filter(ResultProperty property, PropertyValue value) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public TermFrequencyList filter(ResultProperty<TermFrequency> property, PropertyValue value) {
+    public TermFrequencyList sort(ResultProperty sortProp) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public TermFrequencyList sort(ResultProperty<TermFrequency> sortProp) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public TermFrequencyList window(long first, long windowSize) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
     public TermFrequencyList sample(SampleParameters sampleParameters) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean doneProcessingAndCounting() {
-        return true;
     }
 
     @Override
@@ -140,4 +131,10 @@ public class TermFrequencyList extends ResultsList<TermFrequency, ResultProperty
         return results.size();
     }
 
+    @Override
+    public String toString() {
+        return "TermFrequencyList{" +
+                "totalFrequency=" + totalFrequency +
+                '}';
+    }
 }

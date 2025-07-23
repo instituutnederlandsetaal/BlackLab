@@ -6,9 +6,9 @@ import java.util.Map;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.queries.spans.SpanQuery;
 import org.apache.lucene.queries.spans.SpanWeight;
+import org.apache.lucene.search.IndexSearcher;
 
 /**
  * Base class for our SpanWeight classes. Ensures that getSpans returns a
@@ -24,7 +24,6 @@ public abstract class BLSpanWeight extends SpanWeight {
     @Override
     public abstract BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException;
     
-//	@Override
 //	public boolean isCacheable(LeafReaderContext ctx) {
 //		// OPT look into SpanWeight.isCacheable() and implement properly
 //		return false;

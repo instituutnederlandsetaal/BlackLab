@@ -2,7 +2,6 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
-import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -22,7 +21,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @param sortBy what to sort by
      * @return resulting operation
      */
-    public SearchCollocations sortBy(ResultProperty<TermFrequency> sortBy) {
+    public SearchCollocations sortBy(ResultProperty sortBy) {
         return new SearchCollocationsSorted(queryInfo(), this, sortBy);
     }
 
@@ -43,7 +42,7 @@ public abstract class SearchCollocations extends AbstractSearch<TermFrequencyLis
      * @param value value to keep
      * @return resulting operation
      */
-    public SearchCollocations filter(ResultProperty<TermFrequency> property, PropertyValue value) {
+    public SearchCollocations filter(ResultProperty property, PropertyValue value) {
         return new SearchCollocationsFiltered(queryInfo(), this, property, value);
     }
 

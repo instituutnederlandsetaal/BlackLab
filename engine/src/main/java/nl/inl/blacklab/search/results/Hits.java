@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  *
  * This interface is read-only.
  */
-public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
+public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -60,26 +60,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
         return new HitsList(queryInfo, hits, matchInfoDefs);
     }
 
-    static Hits list(
-            QueryInfo queryInfo,
-            HitsInternal hits,
-            WindowStats windowStats,
-            SampleParameters sampleParameters,
-            long hitsCounted,
-            long docsRetrieved,
-            long docsCounted,
-            MatchInfoDefs matchInfoDefs) {
-        return new HitsList(
-                queryInfo,
-                hits,
-                windowStats,
-                sampleParameters,
-                hitsCounted,
-                docsRetrieved,
-                docsCounted,
-                matchInfoDefs);
-    }
-
     /**
      * Return a Hits object with a single hit
      *
@@ -103,9 +83,28 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
         return new HitsList(queryInfo, HitsInternal.emptySingleton(queryInfo.field().name(), null), null);
     }
 
-    default String fieldName() {
-        return field().name();
+    static Map<String, MatchInfo> getMatchInfoMap(Hits hits, Hit hit, boolean omitEmptyCaptures) {
+        MatchInfo[] matchInfo = hit.matchInfo();
+        if (matchInfo == null)
+            return Collections.emptyMap();
+        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
+        Map<String, MatchInfo> map = new HashMap<>();
+        for (int i = 0; i < matchInfo.length; i++) {
+            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
+                continue;
+            if (matchInfo[i] != null) {
+                map.put(matchInfoDefs.get(i).getName(), matchInfo[i]);
+            }
+        }
+        return map;
     }
+
+    /**
+     * If this is a hits window, return the window stats.
+     *
+     * @return window stats, or null if this is not a hits window
+     */
+    WindowStats windowStats();
 
     /**
      * Get a window into this list of hits.
@@ -121,7 +120,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
      * @param windowSize size of the window
      * @return the window
      */
-    @Override
     Hits window(long first, long windowSize);
 
     /**
@@ -130,7 +128,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
      * @param sampleParameters sample parameters
      * @return the sample
      */
-    @Override
     Hits sample(SampleParameters sampleParameters);
 
     /**
@@ -142,10 +139,8 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
      * @param sortProp the hit property to sort on
      * @return a new Hits object with the same hits, sorted in the specified way
      */
-    @Override
     Hits sort(HitProperty sortProp);
 
-    @Override
     HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup);
 
     /**
@@ -155,7 +150,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
      * @param value    value to select on, e.g. 'the'
      * @return filtered hits
      */
-    @Override
     Hits filter(HitProperty property, PropertyValue value);
 
     @Override
@@ -196,20 +190,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
     void getEphemeral(long i, EphemeralHit hit);
 
     /**
-     * Did we exceed the maximum number of hits to process/count?
-     * <p>
-     * NOTE: this is only valid for the original Hits instance (that
-     * executes the query), and not for any derived Hits instance (window, sorted, filtered, ...).
-     * <p>
-     * The reason that this is not part of QueryInfo is that this creates a brittle
-     * link between derived Hits instances and the original Hits instances, which by now
-     * may have been aborted, leaving the max stats in a frozen, incorrect state.
-     *
-     * @return our max stats, or {@link MaxStats#NOT_EXCEEDED} if not available for this instance
-     */
-    MaxStats maxStats();
-
-    /**
      * Count occurrences of context words around hit.
      *
      * @param annotation  what annotation to get collocations for
@@ -219,29 +199,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
      * @return the frequency of each occurring token
      */
     TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort);
-
-    /**
-     * Count occurrences of context words around hit.
-     * <p>
-     * Sorts the results from most to least frequent.
-     *
-     * @param annotation  what annotation to get collocations for
-     * @param contextSize how many words around the hits to use
-     * @param sensitivity what sensitivity to use
-     * @return the frequency of each occurring token
-     */
-    TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity);
-
-    /**
-     * Count occurrences of context words around hit.
-     * <p>
-     * Matches case- and diacritics-sensitively, and sorts the results from most to least frequent.
-     *
-     * @param annotation  what annotation to get collocations for
-     * @param contextSize how many words around the hits to use
-     * @return the frequency of each occurring token
-     */
-    TermFrequencyList collocations(Annotation annotation, ContextSize contextSize);
 
     /**
      * Return a per-document view of these hits.
@@ -260,8 +217,6 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
     Concordances concordances(ContextSize contextSize);
 
     Hits getHitsInDoc(int docId);
-
-    ResultsStats hitsStats();
 
     ResultsStats docsStats();
 
@@ -321,21 +276,11 @@ public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
      */
     HitsInternal getInternalHits();
 
-    default Map<String, MatchInfo> getMatchInfoMap(Hit hit) {
-        return getMatchInfoMap(hit, false);
+    /** This exists to satisfy the HitsForHitProps interface needed for HitProps to work with HitsInternal as well */
+    default String fieldName() {
+        return queryInfo().field().name();
     }
 
-    default Map<String, MatchInfo> getMatchInfoMap(Hit hit, boolean omitEmptyCaptures) {
-        MatchInfo[] matchInfo = hit.matchInfo();
-        if (matchInfo == null)
-            return Collections.emptyMap();
-        Map<String, MatchInfo> map = new HashMap<>();
-        for (int i = 0; i < matchInfo.length; i++) {
-            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
-                continue;
-            if (matchInfo[i] != null)
-                map.put(matchInfoDefs().get(i).getName(), matchInfo[i]);
-        }
-        return map;
-    }
+    long size();
+
 }

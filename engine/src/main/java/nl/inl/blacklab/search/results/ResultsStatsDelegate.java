@@ -89,18 +89,8 @@ public class ResultsStatsDelegate extends ResultsStats {
     }
 
     @Override
-    public long processedTotal() {
-        return realStats().processedTotal();
-    }
-
-    @Override
-    public long countedTotal() {
-        return realStats().countedTotal();
-    }
-
-    @Override
-    public boolean processedAtLeast(long lowerBound) {
-        return realStats().processedAtLeast(lowerBound);
+    public ResultsAwaiter waitUntil() {
+        return realStats().waitUntil();
     }
 
     @Override
@@ -119,11 +109,11 @@ public class ResultsStatsDelegate extends ResultsStats {
     }
 
     @Override
-    public boolean isStatic() {
+    public boolean isSavedCount() {
         if (future.isCancelled())
             throw InterruptedSearch.cancelled();
         if (future.isDone())
-            return realStats().isStatic();
+            return stats().isSavedCount();
         return false;
     }
 

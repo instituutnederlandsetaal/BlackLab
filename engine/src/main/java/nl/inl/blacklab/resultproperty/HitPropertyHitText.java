@@ -48,7 +48,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
-        if (annotation.field() == hits.field()) {
+        if (annotation.field() == hits.queryInfo().field()) {
             // Regular hit; use start and end offsets from the hit itself
             fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
                 starts[hitIndex] = hit.start();

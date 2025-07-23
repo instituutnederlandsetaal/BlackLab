@@ -8,6 +8,10 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  */
 public class HitsList extends HitsAbstract {
 
+    private final ResultsStats hitsStats;
+
+    private final ResultsStatsSaved docsStats;
+
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
 
@@ -26,23 +30,23 @@ public class HitsList extends HitsAbstract {
     protected HitsList(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo, hits, matchInfoDefs);
 
-        hitsCounted = this.hitsInternal.size();
-
         // Count docs and check if doc ids are ascending
         int prevDoc = -1;
         IntIterator it = this.hitsInternal.docsIterator();
+        int docsCounted = 0;
         while (it.hasNext()) {
             int docId = it.nextInt();
             if (docId != prevDoc) {
-                docsRetrieved++;
                 docsCounted++;
                 prevDoc = docId;
             }
         }
+        hitsStats = new ResultsStatsSaved(hitsInternal.size());
+        docsStats = new ResultsStatsSaved(docsCounted);
     }
 
     /**
-     * Construct a HitsImmutable from all its components.
+     * Construct a HitsList from all its components.
      *
      * Should only be used internally.
      */
@@ -51,21 +55,29 @@ public class HitsList extends HitsAbstract {
                        HitsInternal hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
-                       long hitsCounted,
-                       long docsRetrieved,
-                       long docsCounted,
-                       MatchInfoDefs matchInfoDefs) {
-        super(queryInfo, hits, matchInfoDefs);
+                       ResultsStats hitsStats,
+                       ResultsStats docsStats) {
+        super(queryInfo, hits, null);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
-        this.hitsCounted = hitsCounted;
-        this.docsRetrieved = docsRetrieved;
-        this.docsCounted = docsCounted;
+        assert hitsStats.processedSoFar() == hits.size();
+        this.hitsStats = hitsStats.save();
+        this.docsStats = docsStats.save();
+    }
+
+    @Override
+    public ResultsStats resultsStats() {
+        return hitsStats;
+    }
+
+    @Override
+    public ResultsStats docsStats() {
+        return docsStats;
     }
 
     @Override
     public String toString() {
-        return "HitsImmutable#" + hitsObjId + " (hits.size()=" + size() + ")";
+        return "HitsList";
     }
 
     /**
@@ -80,12 +92,6 @@ public class HitsList extends HitsAbstract {
         // immutable, results have always been read
     }
 
-    @Override
-    public boolean doneProcessingAndCounting() {
-        return true;
-    }
-
-    @Override
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
@@ -95,7 +101,6 @@ public class HitsList extends HitsAbstract {
         return windowStats;
     }
 
-    @Override
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;
     }

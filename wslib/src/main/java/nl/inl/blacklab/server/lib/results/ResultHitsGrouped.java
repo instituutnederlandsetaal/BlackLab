@@ -136,7 +136,7 @@ public class ResultHitsGrouped {
         }
 
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
-                timings, matchInfoDefs, getGroups(), getWindow(), groups.field().name(),
+                timings, matchInfoDefs, getGroups(), getWindow(), groups.queryInfo().field().name(),
                 otherFields);
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize());

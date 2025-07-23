@@ -51,6 +51,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
@@ -323,11 +324,12 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        Annotation annotation = hits.field().mainAnnotation();
+        Annotation annotation = hits.queryInfo().field().mainAnnotation();
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
         ensureHasSensitivity(annotation, sensitivity);
-        return hits.collocations(annotation, params.getContext(), sensitivity);
+        ContextSize contextSize = params.getContext();
+        return hits.collocations(annotation, contextSize, sensitivity, true);
     }
 
     private static void ensureHasSensitivity(Annotation annotation, MatchSensitivity sensitivity) {
@@ -782,7 +784,7 @@ public class WebserviceOperations {
     }
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
-            SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups<?> groups, WindowStats window,
+            SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups, WindowStats window,
             String searchField, Collection<String> otherFields) {
         return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoDefs,groups, window,
                 searchField, otherFields);

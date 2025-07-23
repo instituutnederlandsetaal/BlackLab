@@ -181,7 +181,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
     protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
-        this.index = hits == null ? prop.index : hits.index();
+        this.index = hits == null ? prop.index : hits.queryInfo().index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
         this.terms = index.annotationForwardIndex(this.annotation).terms();
 //        if (hits != null && !hits.field().equals(this.annotation.field())) {

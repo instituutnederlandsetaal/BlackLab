@@ -6,15 +6,15 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 
 /**
  * Applies grouping to the results in a DocResults object.
  */
-public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, DocGroup>> implements ResultGroups<DocResult> {
-    
+public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, Iterable<DocGroup> {
+
     /**
      * Construct a DocGroups from a list of groups.
      * 
@@ -41,9 +41,11 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
     public static final int MAX_NUMBER_OF_GROUPS = Constants.JAVA_MAX_HASHMAP_SIZE;
 
+    private final ResultsStatsSaved stats;
+
     private long largestGroupSize = 0;
 
-    private int totalResults = 0;
+    private long totalResults = 0;
     
     private long resultObjects = 0;
 
@@ -52,7 +54,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     private final WindowStats windowStats;
     
     private final SampleParameters sampleParameters;
-    
+
     protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
         super(queryInfo);
 
@@ -70,26 +72,28 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
             results.add(group);
             this.groups.put(group.identity(), group);
         }
+        stats = new ResultsStatsSaved(results.size(), results.size(), MaxStats.NOT_EXCEEDED);
     }
 
     @Override
+    public ResultsStats resultsStats() {
+        return stats;
+    }
+
     public WindowStats windowStats() {
         return windowStats;
     }
 
-    @Override
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
 
-    @Override
     public DocGroup get(PropertyValue groupId) {
         return groups.get(groupId);
     }
     
-    @Override
-    public DocGroups sort(GroupProperty<DocResult, DocGroup> sortProp) {
-        ensureAllResultsRead();
+    public DocGroups sort(DocGroupProperty sortProp) {
+        ensureResultsRead(-1);
         List<DocGroup> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
         return new DocGroups(
@@ -101,13 +105,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
        );
     }
 
-    @Override
-    public ResultGroups<DocGroup> group(GroupProperty<DocResult, DocGroup> criteria, long maxResultsToStorePerGroup) {
-        throw new UnsupportedOperationException("Cannot group DocGroups");
-    }
-
-    @Override
-    public DocGroups filter(GroupProperty<DocResult, DocGroup> property, PropertyValue value) {
+    public DocGroups filter(DocGroupProperty property, PropertyValue value) {
         return new DocGroups(
             this.queryInfo(), 
             this.results.stream().filter(group -> property.get(group).equals(value)).toList(),
@@ -132,10 +130,9 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
         return groupBy;
     }
     
-    @Override
     public DocGroups window(long first, long number) {
-        List<DocGroup> resultsWindow = ResultsAbstract.doWindow(this, first, number);
-        boolean hasNext = resultsProcessedAtLeast(first + resultsWindow.size() + 1);
+        List<DocGroup> resultsWindow = doWindow(this, first, number);
+        boolean hasNext = resultsStats().waitUntil().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats);
     }
@@ -145,43 +142,29 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
         // NOP
     }
 
-    @Override
-    public DocGroups withFewerStoredResults(int maximumNumberOfResultsPerGroup) {
-        if (maximumNumberOfResultsPerGroup < 0)
-            maximumNumberOfResultsPerGroup = Constants.JAVA_MAX_ARRAY_SIZE;
-        List<DocGroup> truncatedGroups = new ArrayList<>();
-        for (DocGroup group: results) {
-            List<DocResult> truncatedList = group.storedResults().window(0, maximumNumberOfResultsPerGroup).results;
-            DocGroup newGroup = DocGroup.fromList(queryInfo(), group.identity(), truncatedList, group.size(), group.totalTokens());
-            truncatedGroups.add(newGroup);
-        }
-        return DocGroups.fromList(queryInfo(), truncatedGroups, groupBy, null, windowStats);
-    }
-
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
      * @param sampleParameters sample parameters 
      * @return the sample
      */
-    @Override
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), ResultsAbstract.doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
+        return DocGroups.fromList(queryInfo(), doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
     }
     
-    @Override
-    public boolean doneProcessingAndCounting() {
-        return true;
-    }
-    
-    @Override
-    public Map<PropertyValue, DocGroup> getGroupMap() {
-        return groups;
-    }
-
     @Override
     public long numberOfResultObjects() {
         return resultObjects;
     }
 
+    @Override
+    public String toString() {
+        return "DocGroups{" +
+                "totalResults=" + totalResults +
+                ", groupBy=" + groupBy +
+                ", windowStats=" + windowStats +
+                ", sampleParameters=" + sampleParameters +
+                ", largestGroupSize=" + largestGroupSize +
+                '}';
+    }
 }

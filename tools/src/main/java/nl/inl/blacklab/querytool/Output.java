@@ -14,7 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
 
-import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -35,9 +34,10 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Concordances;
+import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Kwics;
@@ -310,7 +310,7 @@ class Output {
      */
     public void groups(HitGroups groups, long firstResult, long resultsPerPage) {
         for (long i = firstResult; i < groups.size() && i < firstResult + resultsPerPage; i++) {
-            Group<Hit> g = groups.get(i);
+            HitGroup g = groups.get(i);
             line(String.format("%4d. %5d %s", i + 1, g.size(), g.identity().toString()));
         }
         line(groups.size() + " groups");
@@ -491,7 +491,7 @@ class Output {
         if (!isShowConc()) {
             if (queryTool.isDetermineTotalNumberOfHits() || total.resultsStats().done()) {
                 // Wait until all collected and show total number of hits, no concordances
-                line(total.resultsStats().processedTotal() + " hits");
+                line(total.resultsStats().waitUntil().allProcessed() + " hits");
             } else {
                 // No total; just show how many so far
                 long i = total.resultsStats().processedSoFar();
@@ -508,9 +508,9 @@ class Output {
         for (Hit hit: window) {
             HitToShow hitToShow;
             if (kwics != null) {
-                Map<String, MatchInfo> matchInfo = window.hasMatchInfo() ? window.getMatchInfoMap(hit) :
-                        Collections.emptyMap();
-                hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
+                Map<String, MatchInfo> matchInfo;
+                matchInfo = window.hasMatchInfo() ? Hits.getMatchInfoMap(window, hit, false) : Collections.emptyMap();
+                hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.queryInfo().field());
 
                 Map<String, Kwic> fkwics = kwics.getForeignKwics(hit);
                 if (fkwics != null) {
@@ -570,20 +570,20 @@ class Output {
 
         // Summarize
         String msg;
-        ResultsStats hitsStats = total.hitsStats();
+        ResultsStats hitsStats = total.resultsStats();
         if (!queryTool.isDetermineTotalNumberOfHits()) {
             msg = hitsStats.countedSoFar() + " hits counted so far (total not determined)";
         } else {
-            long numberRetrieved = hitsStats.processedTotal();
+            long numberRetrieved = hitsStats.waitUntil().allProcessed();
             ResultsStats docsStats = total.docsStats();
-            String hitsInDocs = numberRetrieved + " hits in " + docsStats.processedTotal() + " documents";
-            if (window.maxStats().hitsProcessedExceededMaximum()) {
-                if (window.maxStats().hitsCountedExceededMaximum()) {
-                    msg = hitsInDocs + " retrieved, more than " + hitsStats.countedTotal() + " ("
-                            + docsStats.countedTotal() + " docs) total";
+            String hitsInDocs = numberRetrieved + " hits in " + docsStats.waitUntil().allProcessed() + " documents";
+            if (window.resultsStats().maxStats().hitsProcessedExceededMaximum()) {
+                if (window.resultsStats().maxStats().hitsCountedExceededMaximum()) {
+                    msg = hitsInDocs + " retrieved, more than " + hitsStats.waitUntil().allCounted() + " ("
+                            + docsStats.waitUntil().allCounted() + " docs) total";
                 } else {
-                    msg = hitsInDocs + " retrieved, " + hitsStats.countedTotal() + " (" + docsStats.countedTotal()
-                            + " docs) total";
+                    msg = hitsInDocs + " retrieved, " + hitsStats.waitUntil().allCounted() + " (" +
+                            docsStats.waitUntil().allCounted() + " docs) total";
                 }
             } else {
                 msg = hitsInDocs;
@@ -621,7 +621,7 @@ class Output {
 
         Map<String, MatchInfo> matchInfo = null;
         if (window.hasMatchInfo())
-            matchInfo = window.getMatchInfoMap(hit);
+            matchInfo = Hits.getMatchInfoMap(window, hit, false);
         hitToShow = new HitToShow(hit.doc(), left, hitText, right, matchInfo);
         return hitToShow;
     }
@@ -631,8 +631,8 @@ class Output {
         // Compile hits display info and calculate necessary width of left context column
         String titleField = index.metadata().custom().get("titleField", "");
         long hitNr = window.windowStats().first() + 1;
-        for (Group<Hit> result : window) {
-            int docId = ((PropertyValueDoc)result.identity()).value();
+        for (DocResult result: window) {
+            int docId = result.identity().value();
             Document d = index.luceneDoc(docId);
             String title = d.get(titleField);
             if (title == null)

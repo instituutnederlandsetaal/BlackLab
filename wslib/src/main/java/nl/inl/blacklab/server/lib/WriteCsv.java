@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
@@ -29,7 +30,6 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
@@ -87,13 +87,13 @@ public class WriteCsv {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Long.toString(group.storedResults().hitsStats().countedSoFar()));
+                row.add(Long.toString(group.storedResults().resultsStats().countedSoFar()));
 
                 if (metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpusResults.query(), metadataGroupProperties, docPropValues);
-                    long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                    long numberOfDocsInGroup = group.storedResults().docsStats().waitUntil().allCounted();
 
                     row.add(Long.toString(numberOfDocsInGroup));
                     CorpusSize.Count totalCount = groupSubcorpusSize.getTotalCount();
@@ -144,7 +144,7 @@ public class WriteCsv {
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                hits.hitsStats().countedTotal(); // block for a bit
+                hits.resultsStats().waitUntil().allCounted(); // block for a bit
                 summaryCsvHits(params, printer, row.size(), hits, groups, subcorpusResults.subcorpusSize(),
                         rs);
             }
@@ -271,7 +271,7 @@ public class WriteCsv {
             CSVPrinter printer,
             int numColumns,
             WebserviceParams searchParam,
-            ResultGroups<T> groups,
+            ResultGroups groups,
             CorpusSize subcorpusSize,
             ResponseStreamer rs
     ) {
@@ -313,7 +313,7 @@ public class WriteCsv {
      * @param subcorpusSize (optional) if available
      */
     private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, Hits hits,
-            ResultGroups<Hit> groups, CorpusSize subcorpusSize, ResponseStreamer rs) {
+            ResultGroups groups, CorpusSize subcorpusSize, ResponseStreamer rs) {
         addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize, rs);
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
         writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS, hits.size());
@@ -339,7 +339,7 @@ public class WriteCsv {
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
         writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, docResults.size());
         writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS,
-                docResults.stream().mapToLong(Group::size).sum());
+                StreamSupport.stream(docResults.spliterator(), false).mapToLong(DocResult::size).sum());
     }
 
     public static String docGroups(WebserviceParams params, DocResults inputDocsForGroups, DocGroups groups,

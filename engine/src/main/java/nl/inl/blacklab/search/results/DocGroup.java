@@ -9,7 +9,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  * you're grouping on author name, the group identity might be the string "Harry
  * Mulisch".
  */
-public class DocGroup extends Group<DocResult> {
+public class DocGroup extends Group {
     
     public static DocGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, List<DocResult> storedResults, long totalDocuments, long totalTokens) {
         return new DocGroup(queryInfo, groupIdentity, storedResults, totalDocuments, totalTokens);

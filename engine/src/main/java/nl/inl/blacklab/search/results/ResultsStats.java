@@ -2,17 +2,34 @@ package nl.inl.blacklab.search.results;
 
 public abstract class ResultsStats implements SearchResult {
 
-    /** Used to return from cache entry if search hasn't been started yet. */
-    public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
+    /** Object to help us wait for various things, such as all results having been processed. */
+    public interface ResultsAwaiter {
+        boolean processedAtLeast(long lowerBound);
+        long allProcessed();
+        long allCounted();
+    }
+
+    public static class ThrowingResultsAwaiter implements ResultsAwaiter {
+        public static final ThrowingResultsAwaiter INSTANCE = new ThrowingResultsAwaiter();
+
         @Override
         public boolean processedAtLeast(long lowerBound) {
-            throw new IllegalStateException("cannot access results so far, search not started");
+            throw new UnsupportedOperationException();
         }
 
         @Override
-        public long processedTotal() {
-            throw new IllegalStateException("cannot access total, search not started");
+        public long allProcessed() {
+            throw new UnsupportedOperationException();
         }
+
+        @Override
+        public long allCounted() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /** Used to return from cache entry if search hasn't been started yet. */
+    public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
 
         @Override
         public long processedSoFar() {
@@ -22,11 +39,6 @@ public abstract class ResultsStats implements SearchResult {
         @Override
         public long countedSoFar() {
             return 0;
-        }
-
-        @Override
-        public long countedTotal() {
-            throw new IllegalStateException("cannot access total, search not started");
         }
 
         @Override
@@ -45,32 +57,32 @@ public abstract class ResultsStats implements SearchResult {
         }
     };
 
-    /**
-     * Block until this many hits have been processed.
-     *
-     * Returns false if there's not enough hits to process.
-     *
-     * @param lowerBound number of hits to wait for
-     * @return true if this many hits are now available, false if not
-     */
-    public abstract boolean processedAtLeast(long lowerBound);
-
-    /**
-     * This is an alias of resultsProcessedTotal().
-     *
-     * @return number of hits processed total
-     */
-    public long size() {
-        return processedTotal();
+    protected ResultsStats() {
+        this(ThrowingResultsAwaiter.INSTANCE);
     }
 
-    public abstract long processedTotal();
+    protected ResultsStats(ResultsAwaiter waitUntil) {
+        this.waitUntil = waitUntil;
+    }
+
+    protected void setWaitUntil(ResultsAwaiter waitUntil) {
+        this.waitUntil = waitUntil;
+    }
+
+    private ResultsAwaiter waitUntil;
+
+    /**
+     * Get the progress awaiter object, that we can ask to wait until e.g. all hits have been processed.
+     *
+     * @return an object that can be used to wait for certain conditions
+     */
+    public ResultsAwaiter waitUntil() {
+        return waitUntil;
+    }
 
     public abstract long processedSoFar();
 
     public abstract long countedSoFar();
-
-    public abstract long countedTotal();
 
     public abstract boolean done();
 
@@ -84,8 +96,8 @@ public abstract class ResultsStats implements SearchResult {
      *
      * @return static instance of current stats
      */
-    public ResultsStats save() {
-        return new ResultsStatsStatic(processedSoFar(), countedSoFar(), maxStats());
+    public ResultsStatsSaved save() {
+        return new ResultsStatsSaved(processedSoFar(), countedSoFar(), maxStats());
     }
 
     /**
@@ -93,7 +105,7 @@ public abstract class ResultsStats implements SearchResult {
      *
      * @return true if this is a static (saved) count, false if it is dynamically linked to a search
      */
-    public boolean isStatic() {
+    public boolean isSavedCount() {
         return false;
     }
 
@@ -103,18 +115,6 @@ public abstract class ResultsStats implements SearchResult {
      * @return max stats
      */
     public abstract MaxStats maxStats();
-
-    /**
-     * Was this count interrupted?
-     *
-     * This can happen if you implement a system that aborts long-running or memory-hungry searches.
-     * If so, the total counts may not reflect reality.
-     *
-     * @return true if the count was interrupted, false if not
-     */
-    public boolean wasInterrupted() {
-        return false;
-    }
 
     @Override
     public abstract String toString();

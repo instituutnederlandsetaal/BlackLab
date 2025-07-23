@@ -1,21 +1,17 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.util.Comparator;
-
-import nl.inl.blacklab.search.results.Group;
-
 /**
  * Abstract base class for a property of a group op results.
  * 
  * @param <T> type of result, e.g. Hit
  * @param <G> group type, e.g. HitGroup
  */
-public abstract class GroupProperty<T, G extends Group<T>> implements ResultProperty<G>, Comparator<G> {
+public abstract class GroupProperty implements ResultProperty {
 
     /** Reverse comparison result or not? */
     protected final boolean reverse;
     
-    GroupProperty(GroupProperty<T, G> prop, boolean invert) {
+    GroupProperty(GroupProperty prop, boolean invert) {
         this.reverse = invert ? !prop.reverse : prop.reverse;
     }
 
@@ -33,11 +29,6 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     protected boolean sortDescendingByDefault() {
         return false;
     }
-
-    public abstract PropertyValue get(G result);
-
-    @Override
-    public abstract int compare(G a, G b);
 
     @Override
     public abstract String serialize();
@@ -67,7 +58,7 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
      * @return reversed group property 
      */
     @Override
-    public abstract GroupProperty<T, G> reverse();
+    public abstract GroupProperty reverse();
 
     @Override
     public String toString() {
@@ -90,7 +81,7 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
             return false;
         if (getClass() != obj.getClass())
             return false;
-        GroupProperty<?, ?> other = (GroupProperty<?, ?>) obj;
+        GroupProperty other = (GroupProperty) obj;
         if (reverse != other.reverse)
             return false;
         return true;

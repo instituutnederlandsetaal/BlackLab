@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsStatic;
+import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultSummaryNumHits {
@@ -22,7 +22,7 @@ public class ResultSummaryNumHits {
     }
 
     public ResultsStats getHitsStats() {
-        return hitsStats == null ? ResultsStatsStatic.INVALID : hitsStats;
+        return hitsStats == null ? ResultsStatsSaved.INVALID : hitsStats;
     }
 
     public ResultsStats getDocsStats() {

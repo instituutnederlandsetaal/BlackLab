@@ -54,16 +54,16 @@ class SpansReader implements Runnable {
     LeafReaderContext leafReaderContext;
 
     // Global counters, shared between instances of SpansReader in order to coordinate progress
-    final AtomicLong globalDocsProcessed;
-    final AtomicLong globalDocsCounted;
-    final AtomicLong globalHitsProcessed;
-    final AtomicLong globalHitsCounted;
+    ResultsStatsPassive hitsStats;
+    ResultsStatsPassive docsStats;
+
     /** Target number of hits to store in the {@link #globalResults} list */
     final AtomicLong globalHitsToProcess;
     /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
     final AtomicLong globalHitsToCount;
     /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
     private final HitsInternalMutable globalResults;
+
 
     // Internal state
     boolean isDone;
@@ -116,10 +116,6 @@ class SpansReader implements Runnable {
      * @param leafReaderContext     leaf reader we're running on
      * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
      * @param globalResults         global results object (must be locked before writing)
-     * @param globalDocsProcessed   global docs retrieved counter
-     * @param globalDocsCounted     global docs counter (includes ones that weren't retrieved because of max. settings)
-     * @param globalHitsProcessed   global hits retrieved counter
-     * @param globalHitsCounted     global hits counter (includes ones that weren't retrieved because of max. settings)
      * @param globalHitsToProcess   how many more hits to retrieve
      * @param globalHitsToCount     how many more hits to count
      */
@@ -129,12 +125,10 @@ class SpansReader implements Runnable {
         HitQueryContext sourceHitQueryContext,
 
         HitsInternalMutable globalResults,
-            AtomicLong globalDocsProcessed,
-        AtomicLong globalDocsCounted,
-        AtomicLong globalHitsProcessed,
-        AtomicLong globalHitsCounted,
         AtomicLong globalHitsToProcess,
-        AtomicLong globalHitsToCount
+        AtomicLong globalHitsToCount,
+        ResultsStatsPassive hitsStats,
+        ResultsStatsPassive docsStats
     ) {
         this.spans = null; // inverted for uninitialized version
         this.weight = weight;
@@ -145,12 +139,11 @@ class SpansReader implements Runnable {
         this.leafReaderContext = leafReaderContext;
 
         this.globalResults = globalResults;
-        this.globalDocsProcessed = globalDocsProcessed;
-        this.globalDocsCounted = globalDocsCounted;
-        this.globalHitsProcessed = globalHitsProcessed;
-        this.globalHitsCounted = globalHitsCounted;
         this.globalHitsToCount = globalHitsToCount;
         this.globalHitsToProcess = globalHitsToProcess;
+
+        this.hitsStats = hitsStats;
+        this.docsStats = docsStats;
 
         this.isInitialized = false;
         this.isDone = false;
@@ -288,47 +281,44 @@ class SpansReader implements Runnable {
                 if (!isSameAsLast) {
                     // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     // Otherwise, don't store it either. We're done, just return.
-                    final boolean abortBeforeCounting = this.globalHitsCounted.getAndUpdate(incrementCountUnlessAtMax)
+                    final boolean abortBeforeCounting = this.hitsStats.getAndUpdateCount(incrementCountUnlessAtMax)
                             >= this.globalHitsToCount.get();
                     if (abortBeforeCounting)
                         return;
-                }
 
-                // only if unique hit and previous value (which is returned) was not yet at the limit
-                // (and thus we actually incremented) do we store this hit.
-                final boolean storeThisHit = !isSameAsLast &&
-                        this.globalHitsProcessed.getAndUpdate(incrementProcessUnlessAtMax) < this.globalHitsToProcess.get();
+                    // only if unique hit and previous value (which is returned) was not yet at the limit
+                    // (and thus we actually incremented) do we store this hit.
+                    final boolean storeThisHit = this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMax)
+                            < this.globalHitsToProcess.get();
 
-                if (doc != prevDoc) {
-                    globalDocsCounted.incrementAndGet();
+                    if (doc != prevDoc) {
+                        docsStats.increment(storeThisHit);
+                        if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
+                            // We've built up a batch of hits. Add them to the global results.
+                            // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
+                            //
+                            // [NOTE JN: does this matter? and if so, doesn't it also matter that docId increases throughout the
+                            //     master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
+                            //     require these properties to hold.]
+                            //     Contexts, used for sort/group by context words, does need increasing doc ids
+                            //     per leaf reader, but that property is guaranteed to hold because we don't
+                            //     re-order hits from a single leaf reader, we just randomly merge them with hits
+                            //     from other leafreaders without changing their order.
+                            //
+                            //     Still, all of the above is a smell indicating that we should try to perform more
+                            //     operations per leaf reader instead of merging results from leaf readers at an early
+                            //     stage like we do here.]
+
+                            addToGlobalResults(results);
+                            results.clear();
+                        }
+                    }
+
                     if (storeThisHit) {
-                        globalDocsProcessed.incrementAndGet();
+                        assert start >= 0;
+                        assert end >= 0;
+                        results.add(doc, start, end, matchInfo);
                     }
-                    if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
-                        // We've built up a batch of hits. Add them to the global results.
-                        // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                        //
-                        // [NOTE JN: does this matter? and if so, doesn't it also matter that docId increases throughout the
-                        //     master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
-                        //     require these properties to hold.]
-                        //     Contexts, used for sort/group by context words, does need increasing doc ids
-                        //     per leaf reader, but that property is guaranteed to hold because we don't
-                        //     re-order hits from a single leaf reader, we just randomly merge them with hits
-                        //     from other leafreaders without changing their order.
-                        //
-                        //     Still, all of the above is a smell indicating that we should try to perform more
-                        //     operations per leaf reader instead of merging results from leaf readers at an early
-                        //     stage like we do here.]
-
-                        addToGlobalResults(results);
-                        results.clear();
-                    }
-                }
-
-                if (storeThisHit) {
-                    assert start >= 0;
-                    assert end >= 0;
-                    results.add(doc, start, end, matchInfo);
                 }
 
                 hasPrefetchedHit = advanceSpansToNextHit(liveDocs);

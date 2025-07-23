@@ -12,15 +12,15 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
  * 
  * @param <T> result type, e.g. Hit 
  */
-public abstract class Group<T> implements Result<Group<T>> {
+public abstract class Group {
     
     protected final PropertyValue groupIdentity;
 
-    private final Results<T, ? extends ResultProperty<T>> storedResults;
+    private final Results storedResults;
     
     private final long totalSize;
 
-    protected Group(PropertyValue groupIdentity, Results<T, ? extends ResultProperty<T>> storedResults, long totalSize) {
+    protected Group(PropertyValue groupIdentity, Results storedResults, long totalSize) {
         this.groupIdentity = groupIdentity;
         this.storedResults = storedResults;
         this.totalSize = totalSize;
@@ -39,7 +39,7 @@ public abstract class Group<T> implements Result<Group<T>> {
         return groupIdentity;
     }
     
-    public Results<T, ? extends ResultProperty<T>> storedResults() {
+    public Results storedResults() {
         return storedResults;
     }
     
@@ -56,8 +56,7 @@ public abstract class Group<T> implements Result<Group<T>> {
         return getClass().getSimpleName() + "(id=" + identity() + ", size=" + size() + ")";
     }
 
-    @Override
-    public int compareTo(Group<T> o) {
+    public int compareTo(Group o) {
         return identity().compareTo(o.identity());
     }
 

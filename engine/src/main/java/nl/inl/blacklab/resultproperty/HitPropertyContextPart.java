@@ -191,7 +191,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
         int smaller = Math.min(part.first, part.last);
         int larger = Math.max(part.first, part.last);
         StartEndSetter func;
-        if (annotation.field() == hits.field()) {
+        if (annotation.field() == hits.queryInfo().field()) {
             // Regular hit; use start and end offsets from the hit itself
             func = fetchContextRegular(smaller, larger);
         } else {

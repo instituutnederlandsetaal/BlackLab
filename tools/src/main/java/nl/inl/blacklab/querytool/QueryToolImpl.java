@@ -21,6 +21,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
@@ -53,13 +54,12 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
-import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
@@ -971,7 +971,7 @@ public class QueryToolImpl {
         if (collocations == null) {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
-                AnnotatedField field = hits.field();
+                AnnotatedField field = hits.queryInfo().field();
                 collocAnnotation = field.mainAnnotation();
             }
 
@@ -984,7 +984,7 @@ public class QueryToolImpl {
         Hits currentHitSet = getCurrentHitSet();
         if (docs == null) {
             if (currentHitSet != null)
-                docs = currentHitSet.perDocResults(Results.NO_LIMIT);
+                docs = currentHitSet.perDocResults(Constants.RESULTS_NO_LIMIT);
             else if (filterQuery != null) {
                 docs = index.queryDocuments(filterQuery);
             } else {
@@ -1031,8 +1031,8 @@ public class QueryToolImpl {
     private Hits getCurrentHitSet() {
         Hits hitsToShow = hits;
         if (showWhichGroup >= 0) {
-            Group<Hit> g = groups.get(showWhichGroup);
-            hitsToShow = (Hits)g.storedResults();
+            HitGroup g = groups.get(showWhichGroup);
+            hitsToShow = g.storedResults();
         }
         return hitsToShow;
     }

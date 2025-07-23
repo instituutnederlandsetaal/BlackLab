@@ -51,7 +51,7 @@ public class TestHitPropertySerialize {
         PropertyValue val, val1;
         String exp;
 
-        val1 = new PropertyValueContextWords(hits.index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, new int[] { 2 }, null,
+        val1 = new PropertyValueContextWords(hits.queryInfo().index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, new int[] { 2 }, null,
                 false);
         exp = "cws:contents%lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());

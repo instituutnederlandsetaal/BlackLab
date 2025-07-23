@@ -188,7 +188,7 @@ public class Contexts {
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
-            fis.add(hits.index().annotationForwardIndex(annotation));
+            fis.add(hits.queryInfo().index().annotationForwardIndex(annotation));
         }
 
         // Get the context
@@ -245,7 +245,7 @@ public class Contexts {
      * @return the frequency of each occurring token
      */
     public static synchronized TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
-        BlackLabIndex index = hits.index();
+        BlackLabIndex index = hits.queryInfo().index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();
         if (contextSize == null)

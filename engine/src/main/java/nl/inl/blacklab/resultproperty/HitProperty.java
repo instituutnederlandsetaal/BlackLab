@@ -12,20 +12,18 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
  * Abstract base class for a property of a hit, like document title, hit text,
  * right context, etc.
  */
-public abstract class HitProperty implements ResultProperty<Hit>, LongComparator {
+public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    public static HitProperty deserialize(Results<Hit, HitProperty> hits, String serialized, ContextSize contextSize) {
-        return deserialize(hits.index(), hits.field(), serialized, contextSize);
+    public static HitProperty deserialize(Hits hits, String serialized, ContextSize contextSize) {
+        return deserialize(hits.queryInfo().index(), hits.queryInfo().field(), serialized, contextSize);
     }
 
     /**
