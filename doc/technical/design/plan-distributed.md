@@ -39,10 +39,10 @@ How would we approach this:
 - [x] Remove the old external index format code. It relies on global forward index and global term ids and cannot (and should not) be supported going forward.
 
 - [ ] Implement:
-  - [ ] `SpansSorted` (gather and sorts its hits and keeps track of the sort value per hit (CollationKey?), for later merging)
-  - [ ] `GroupedSpans` (gathers and groups hits into several `Spans`, keeping track of the group identities). 
-  
-  The first implementations could be proofs-of-concept and using existing classes like `Hits`, `Kwics` etc. internally.
+  - [ ] Gather hits from a single index segment into a `HitsInternal` object.
+  - [ ] Ensure several of these can be merged into another `HitsInternal` object _dynamically_, while the hits are being gathered (in the case where no sort has been requested).
+  - [ ] Add a subclass that gathers hits from a single segment, sorts them, and allows them to be merged based on the sort value later.
+  - [ ] Follow a similar approach for grouping.
 
 - Implement merging:
   - `HitsFromQuerySorted` merges hits from several `SpansSorted` instances

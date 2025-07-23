@@ -6,7 +6,6 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.util.ThreadAborter;
 
 public interface Results<T, P extends ResultProperty<T>> extends SearchResult, Iterable<T> {
     /**
@@ -39,8 +38,6 @@ public interface Results<T, P extends ResultProperty<T>> extends SearchResult, I
     BlackLabIndex index();
 
     int resultsObjId();
-
-    ThreadAborter threadAborter();
 
     /**
      * If this is a hits window, return the window stats.

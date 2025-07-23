@@ -5,10 +5,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongUnaryOperator;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.DocIdSetIterator;
-import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.queries.spans.SpanWeight.Postings;
 import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -67,7 +67,6 @@ class SpansReader implements Runnable {
 
     // Internal state
     boolean isDone;
-    private final ThreadAborter threadAborter = ThreadAborter.create();
     private boolean isInitialized;
     /* only valid after initialize() */
     private int docBase; 
@@ -336,7 +335,7 @@ class SpansReader implements Runnable {
                 prevDoc = doc;
 
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states
-                threadAborter.checkAbort();
+                ThreadAborter.checkAbort();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -6,7 +6,7 @@ import java.util.Arrays;
 import org.apache.lucene.queries.spans.SpanCollector;
 
 /**
- * Sort the given Spans per document, according to the given comparator.
+ * Sort the given Spans per document, either by start or end point.
  */
 final class PerDocumentSortedSpans extends BLFilterDocsSpans<SpansInBuckets> {
 

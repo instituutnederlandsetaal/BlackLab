@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.HitsInternal;
 import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.ThreadAborter;
 
 /**
  * Base class for HitPropertyHitText, LeftContext, RightContext.
@@ -260,7 +261,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
                 final int curDoc = ha.doc(i);
                 if (curDoc != prevDoc) {
-                    try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
+                    try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
                     fetchContextForDoc(setStartEnd, prevDoc, firstHitInCurrentDoc, i);
                     // start a new document

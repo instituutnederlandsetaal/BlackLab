@@ -6,6 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.util.ThreadAborter;
 
 /**
  * A Hits object that filters another.
@@ -86,7 +87,7 @@ public class HitsFiltered extends HitsMutable {
                 EphemeralHit hit = new EphemeralHit();
                 while (!doneFiltering && (readAllHits || hitsInternalMutable.size() < number)) {
                  // Abort if asked
-                    threadAborter.checkAbort();
+                    ThreadAborter.checkAbort();
 
                     // Advance to next hit
                     indexInSource++;

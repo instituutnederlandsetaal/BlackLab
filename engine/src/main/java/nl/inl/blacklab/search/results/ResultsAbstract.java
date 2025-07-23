@@ -14,7 +14,6 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.util.ThreadAborter;
 
 /**
  * A list of results of some type.
@@ -86,12 +85,6 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
     /** Information about the original query: index, field, max settings, max stats. */
     private final QueryInfo queryInfo;
 
-    /**
-     * Helper object for pausing threads (making sure queries
-     * don't hog the CPU for way too long).
-     */
-    protected final ThreadAborter threadAborter;
-
     private final ResultsStats resultsStats = new ResultsStats() {
         @Override
         public boolean processedAtLeast(long lowerBound) {
@@ -136,8 +129,6 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
 
     protected ResultsAbstract(QueryInfo queryInfo) {
         this.queryInfo = queryInfo;
-//        queryInfo.ensureResultsObjectIdSet(hitsObjId); // if we're the original query, set the id.
-        threadAborter = ThreadAborter.create();
     }
 
     /**
@@ -176,11 +167,6 @@ public abstract class ResultsAbstract<T, P extends ResultProperty<T>> implements
     @Override
     public int resultsObjId() {
         return hitsObjId;
-    }
-
-    @Override
-    public ThreadAborter threadAborter() {
-        return threadAborter;
     }
 
     /**

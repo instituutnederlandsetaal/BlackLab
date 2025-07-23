@@ -10,7 +10,7 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  * Wrap a Spans to retrieve hits per document, so we can process all matches in
  * a document efficiently.
  *
- * Hits are sorted by the given comparator.
+ * Hits are sorted by either start or end point.
  */
 class SpansInBucketsPerDocumentSorted extends SpansInBucketsPerDocument {
 
