@@ -53,7 +53,9 @@ public class HitsFromQuery extends HitsMutable {
 
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
-        super(queryInfo.optOverrideField(sourceQuery), HitsInternal.create(-1, true, true), null);
+        super(queryInfo.optOverrideField(sourceQuery),
+                HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field().name(),
+                        null, -1, true, true), null);
         hitQueryContext = new HitQueryContext(null, sourceQuery.getField(), new MatchInfoDefs()); // each spans will get a copy
         QueryTimings timings = queryInfo().timings();
         timings.start();
@@ -139,6 +141,7 @@ public class HitsFromQuery extends HitsMutable {
                     // Needs to be null if unused!
                     if (hitQueryContextForThisSpans.numberOfMatchInfos() > 0) {
                         matchInfoDefs = hitQueryContextForThisSpans.getMatchInfoDefs();
+                        hitsInternalMutable.setMatchInfoDefs(matchInfoDefs);
                     }
 
                     hasInitialized = true;

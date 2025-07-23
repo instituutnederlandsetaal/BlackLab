@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A mutable list of simple hits, used internally.
@@ -23,5 +24,7 @@ public interface HitsInternalMutable extends HitsInternal {
      * Remove all hits.
      */
     void clear();
+
+    void setMatchInfoDefs(MatchInfoDefs matchInfoDefs);
 
 }

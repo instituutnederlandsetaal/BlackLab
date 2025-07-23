@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  *
  * This interface is read-only.
  */
-public interface Hits extends Results<Hit, HitProperty> {
+public interface Hits extends Results<Hit, HitProperty>, HitsForHitProps {
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -53,7 +53,7 @@ public interface Hits extends Results<Hit, HitProperty> {
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
 
-        return new HitsList(queryInfo, new HitsInternalLock32(lDocs, lStarts, lEnds, null), null);
+        return new HitsList(queryInfo, new HitsInternalLock32(queryInfo.field().name(), null, lDocs, lStarts, lEnds, null), null);
     }
 
     static Hits list(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
@@ -100,7 +100,11 @@ public interface Hits extends Results<Hit, HitProperty> {
      * @return hits found
      */
     static Hits empty(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsInternal.EMPTY_SINGLETON, null);
+        return new HitsList(queryInfo, HitsInternal.emptySingleton(queryInfo.field().name(), null), null);
+    }
+
+    default String fieldName() {
+        return field().name();
     }
 
     /**

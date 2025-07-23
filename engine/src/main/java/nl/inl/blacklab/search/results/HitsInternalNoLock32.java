@@ -15,6 +15,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A HitsInternal implementation that does no locking and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
@@ -61,16 +62,20 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
+    private final String field;
+    private MatchInfoDefs matchInfoDefs;
     protected final IntList docs;
     protected final IntList starts;
     protected final IntList ends;
     protected final ObjectList<MatchInfo[]> matchInfos;
 
-    HitsInternalNoLock32() {
-        this(-1);
+    HitsInternalNoLock32(String field, MatchInfoDefs matchInfoDefs) {
+        this(field, matchInfoDefs, -1);
     }
 
-    HitsInternalNoLock32(int initialCapacity) {
+    HitsInternalNoLock32(String field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
+        this.field = field;
+        this.matchInfoDefs = matchInfoDefs;
         if (initialCapacity < 0) {
             // Use default initial capacities
             this.docs = new IntArrayList();
@@ -85,17 +90,33 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
-    HitsInternalNoLock32(IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+    HitsInternalNoLock32(String field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size() != starts.size() || docs.size() != ends.size() || (matchInfos != null && matchInfos.size() != docs.size()))
             throw new IllegalArgumentException("Passed differently sized hit component arrays to Hits object");
-
+        this.field = field;
+        this.matchInfoDefs = matchInfoDefs;
         this.docs = docs;
         this.starts = starts;
         this.ends = ends;
         this.matchInfos = matchInfos == null ? new ObjectArrayList<>() : matchInfos;
         assert HitsInternal.debugCheckAllReasonable(this);
+    }
+
+    @Override
+    public String fieldName() {
+        return field;
+    }
+
+    @Override
+    public MatchInfoDefs matchInfoDefs() {
+        return matchInfoDefs;
+    }
+
+    @Override
+    public void setMatchInfoDefs(MatchInfoDefs matchInfoDefs) {
+        this.matchInfoDefs = matchInfoDefs;
     }
 
     @Override
@@ -273,7 +294,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
             IntArrays.parallelQuickSort(indices, p::compare);
         }
 
-        HitsInternalMutable r = HitsInternal.create(docs.size(), false, false);
+        HitsInternalMutable r = HitsInternal.create(field, matchInfoDefs, docs.size(), false, false);
         if (matchInfos.isEmpty()) {
             for (int index: indices) {
                 r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index), null);

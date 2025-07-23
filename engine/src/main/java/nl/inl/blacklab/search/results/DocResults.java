@@ -309,7 +309,7 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
-                        docHits = HitsInternal.create(-1, true, false);
+                        docHits = HitsInternal.create(field().name(), matchInfoDefs, -1, true, false);
                     }
 
                     docHits.add(h);

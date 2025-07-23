@@ -17,7 +17,7 @@ public abstract class HitsMutable extends HitsAbstract {
      * @param queryInfo query info for corresponding query
      */
     protected HitsMutable(QueryInfo queryInfo) {
-        this(queryInfo, HitsInternal.create(-1, true, true), null);
+        this(queryInfo, HitsInternal.create(queryInfo.field().name(), null, -1, true, true), null);
     }
 
     /**
@@ -31,7 +31,7 @@ public abstract class HitsMutable extends HitsAbstract {
      */
     protected HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo, hits, matchInfoDefs);
-        hitsInternalMutable = hits == null ? HitsInternal.create(-1, true, true) : hits;
+        hitsInternalMutable = hits == null ? HitsInternal.create(queryInfo.field().name(), matchInfoDefs, -1, true, true) : hits;
     }
 
 }

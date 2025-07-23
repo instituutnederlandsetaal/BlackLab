@@ -9,6 +9,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A list of simple hits.
@@ -19,10 +20,15 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * <p>
  * This is a read-only interface.
  */
-public interface HitsInternal extends Iterable<EphemeralHit> {
+public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
+
+    @Override
+    String fieldName();
 
     /** An empty HitsInternalRead object. */
-    HitsInternal EMPTY_SINGLETON = new HitsInternalNoLock32();
+    static HitsInternal emptySingleton(String field, MatchInfoDefs matchInfoDefs) {
+        return new HitsInternalNoLock32(field, matchInfoDefs);
+    }
 
     /**
      * Create an empty HitsInternal with an initial capacity.
@@ -32,21 +38,21 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
-    static HitsInternalMutable create(long initialCapacity, boolean allowHugeLists, boolean mustLock) {
-        return create(initialCapacity, allowHugeLists ? Long.MAX_VALUE : Constants.JAVA_MAX_ARRAY_SIZE, mustLock);
+    static HitsInternalMutable create(String field, MatchInfoDefs matchInfoDefs, long initialCapacity, boolean allowHugeLists, boolean mustLock) {
+        return create(field, matchInfoDefs, initialCapacity, allowHugeLists ? Long.MAX_VALUE : Constants.JAVA_MAX_ARRAY_SIZE, mustLock);
     }
 
-    static HitsInternalMutable create(long initialCapacity, long maxCapacity, boolean mustLock) {
+    static HitsInternalMutable create(String field, MatchInfoDefs matchInfoDefs, long initialCapacity, long maxCapacity, boolean mustLock) {
         if (maxCapacity > Constants.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
             if (mustLock)
-                return new HitsInternalLock(initialCapacity);
-            return new HitsInternalNoLock(initialCapacity);
+                return new HitsInternalLock(field, matchInfoDefs, initialCapacity);
+            return new HitsInternalNoLock(field, matchInfoDefs, initialCapacity);
         }
         if (initialCapacity > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("initialCapacity=" + initialCapacity + " > " + Constants.JAVA_MAX_ARRAY_SIZE + " && !allowHugeLists");
         if (mustLock)
-            return new HitsInternalLock32((int)initialCapacity);
-        return new HitsInternalNoLock32((int)initialCapacity);
+            return new HitsInternalLock32(field, matchInfoDefs, (int)initialCapacity);
+        return new HitsInternalNoLock32(field, matchInfoDefs, (int)initialCapacity);
     }
 
     /**
@@ -156,6 +162,11 @@ public interface HitsInternal extends Iterable<EphemeralHit> {
      * @return sorted hits
      */
     HitsInternal sort(HitProperty p);
+
+    @Override
+    default HitsInternal getInternalHits() {
+        return this;
+    }
 
     /**
      * For iterating through the hits using EphemeralHit

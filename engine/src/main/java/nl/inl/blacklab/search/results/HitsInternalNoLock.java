@@ -18,6 +18,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A HitsInternal implementation that does no locking and can handle huge result sets.
@@ -66,12 +67,16 @@ class HitsInternalNoLock implements HitsInternalMutable {
         }
     }
 
+    private String field;
+    private MatchInfoDefs matchInfoDefs;
     protected final IntBigList docs;
     protected final IntBigList starts;
     protected final IntBigList ends;
     protected final ObjectBigList<MatchInfo[]> matchInfos;
 
-    HitsInternalNoLock(long initialCapacity) {
+    HitsInternalNoLock(String field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
+        this.field = field;
+        this.matchInfoDefs = matchInfoDefs;
         if (initialCapacity < 0) {
             // Use default initial capacities
             docs = new IntBigArrayBigList();
@@ -84,6 +89,21 @@ class HitsInternalNoLock implements HitsInternalMutable {
             ends = new IntBigArrayBigList(initialCapacity);
             matchInfos = new ObjectBigArrayBigList<>(initialCapacity);
         }
+    }
+
+    @Override
+    public String fieldName() {
+        return field;
+    }
+
+    @Override
+    public MatchInfoDefs matchInfoDefs() {
+        return matchInfoDefs;
+    }
+
+    @Override
+    public void setMatchInfoDefs(MatchInfoDefs matchInfoDefs) {
+        this.matchInfoDefs = matchInfoDefs;
     }
 
     @Override
@@ -287,7 +307,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
             }
 
             // Now use the sorted indices to fill a new HitsInternal with the actual hits
-            r = HitsInternal.create(size, true, false);
+            r = HitsInternal.create(field, matchInfoDefs, size, true, false);
             for (final long[] segment: indices) {
                 if (matchInfos.isEmpty()) {
                     for (long l: segment) {
@@ -307,7 +327,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
 
             IntArrays.quickSort(indices, p::compare);
 
-            r = HitsInternal.create(size, false, false);
+            r = HitsInternal.create(field, matchInfoDefs, size, false, false);
             if (matchInfos.isEmpty()) {
                 for (int index: indices) {
                     r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index), null);

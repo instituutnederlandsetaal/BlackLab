@@ -6,6 +6,7 @@ import java.util.function.Consumer;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A HitsInternal implementation that locks and can handle huge result sets.
@@ -14,8 +15,8 @@ class HitsInternalLock extends HitsInternalNoLock {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    HitsInternalLock(long initialCapacity) {
-        super(initialCapacity);
+    HitsInternalLock(String field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
+        super(field, matchInfoDefs, initialCapacity);
     }
 
     @Override

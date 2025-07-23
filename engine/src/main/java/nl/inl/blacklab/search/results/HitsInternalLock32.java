@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
  * A HitsInternal implementation that locks and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
@@ -25,12 +26,12 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    HitsInternalLock32(int initialCapacity) {
-        super(initialCapacity);
+    HitsInternalLock32(String field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
+        super(field, matchInfoDefs, initialCapacity);
     }
 
-    HitsInternalLock32(IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
-        super(docs, starts, ends, matchInfos);
+    HitsInternalLock32(String field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+        super(field, matchInfoDefs, docs, starts, ends, matchInfos);
     }
 
     @Override

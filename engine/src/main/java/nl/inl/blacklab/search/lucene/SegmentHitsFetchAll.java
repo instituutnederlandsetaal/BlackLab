@@ -40,7 +40,7 @@ public abstract class SegmentHitsFetchAll implements SegmentHits {
             matchInfos = new MatchInfo[context.numberOfMatchInfos()];
         }
         try {
-            hits = HitsInternal.create(-1, true, false);
+            hits = HitsInternal.create(context.getField(), context.getMatchInfoDefs(), -1, true, false);
             while (true) {
                 int doc = clause.nextDoc();
                 if (doc == DocIdSetIterator.NO_MORE_DOCS)
