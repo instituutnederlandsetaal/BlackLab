@@ -1,13 +1,20 @@
 package nl.inl.blacklab.tools.frequency.data;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
+import it.unimi.dsi.fastutil.objects.ObjectSets;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -16,6 +23,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
+import nl.inl.util.LuceneUtil;
+
+import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.util.BytesRef;
 
 /**
  * Info about an annotation we're grouping on.
@@ -26,12 +38,11 @@ public final class AnnotationInfo {
     private final Terms[] terms;
     private final Annotation cutoffAnnotation;
     private final BlackLabIndex index;
-    private final Object2IntOpenHashMap<List<String>> metaToId;
-    private final Object2IntOpenCustomHashMap<int[]> wordToId;
-    private int metaId = 1;
-    private int wordId = 1;
+    private final IdMap metaToId;
+    private final IdMap wordToId;
     private final int[] groupedMetaIdx;
     private final int[] nonGroupedMetaIdx;
+    private final FreqMetadata freqMetadata;
 
     public AnnotationInfo(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
         this.index = index;
@@ -40,14 +51,32 @@ public final class AnnotationInfo {
         this.terms = Arrays.stream(annotations).map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
                 .toArray(Terms[]::new);
         this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
-        this.metaToId = new Object2IntOpenHashMap<>();
-        metaToId.defaultReturnValue(-1);
-        this.wordToId = new Object2IntOpenCustomHashMap<>(IntArrays.HASH_STRATEGY);
-        wordToId.defaultReturnValue(-1);
+        this.metaToId = new IdMap();
+        this.wordToId = new IdMap();
+        this.freqMetadata = new FreqMetadata(index, fCfg);
         this.groupedMetaIdx = fCfg.metadataFields().stream().filter(MetadataConfig::outputAsId)
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
+
         this.nonGroupedMetaIdx = fCfg.metadataFields().stream().filter(m -> !m.outputAsId())
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
+    }
+
+    public static Set<String> UniqueTermsFromField(IndexReader reader, String field) throws IOException {
+        final var values = new ObjectLinkedOpenHashSet<String>();
+        for (final var ctx : reader.leaves()) {
+            final var terms = ctx.reader().terms(field);
+            if (terms != null) {
+                final var it = terms.iterator();
+                BytesRef cur;
+                while ((cur = it.next()) != null) {
+                    final String term = cur.toString();
+                    values.add(term);
+                }
+            }
+
+        }
+        // return a sorted set for consistent ordering
+        return values;
     }
 
     public Terms[] getTerms() {
@@ -78,50 +107,15 @@ public final class AnnotationInfo {
         return groupedMetaIdx;
     }
 
-    public Map<List<String>, Integer> getMetaToId() {
+    public IdMap getMetaToId() {
         return metaToId;
     }
 
-    public Map<int[], Integer> getWordToId() {
+    public IdMap getWordToId() {
         return wordToId;
     }
 
-    public int putOrGetMetaToId(final String[] meta) {
-        // calculate key
-        final int idToPut = metaId;
-        final var key = getMetaKey(meta);
-        final int id = metaToId.putIfAbsent(key, idToPut);
-        if (id == -1) {
-            // new ID was created
-            metaId++; // increment for next time
-            return idToPut;
-
-        } else {
-            // existing ID
-            return id;
-        }
-    }
-
-    public int putOrGetWordId(final int[] tokens) {
-        // calculate key
-        final int idToPut = wordId;
-        final int id = wordToId.putIfAbsent(tokens, idToPut);
-        if (id == -1) {
-            // new ID was created
-            wordId++; // increment for next time
-            return idToPut;
-
-        } else {
-            // existing ID
-            return id;
-        }
-    }
-
-    private ArrayList<String> getMetaKey(final String[] meta) {
-        final var key = new ArrayList<String>(groupedMetaIdx.length);
-        for (int i = 0; i < groupedMetaIdx.length; i++) {
-            key.add(i, meta[groupedMetaIdx[i]]);
-        }
-        return key;
+    public FreqMetadata getFreqMetadata() {
+        return freqMetadata;
     }
 }

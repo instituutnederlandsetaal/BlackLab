@@ -9,7 +9,7 @@ import java.util.Arrays;
 public final class GroupId implements Comparable<GroupId>, Serializable {
     private final int[] tokenIds;
     private final int[] tokenSortPositions;
-    private final String[] metadataValues;
+    private final int[] metadataValues;
     private final int hash;
 
     /**
@@ -27,7 +27,7 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
         return tokenIds;
     }
 
-    public String[] getMetadataValues() {
+    public int[] getMetadataValues() {
         return metadataValues;
     }
 

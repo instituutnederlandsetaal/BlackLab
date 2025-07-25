@@ -2,7 +2,12 @@ package nl.inl.blacklab.tools.frequency.writers;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.concurrent.ConcurrentSkipListMap;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
 import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
@@ -18,11 +23,20 @@ public final class MetaGroupWriter extends FreqListWriter {
         final var t = new Timer();
 
         final var file = getFile();
-        final var map = aInfo.getMetaToId();
+        final var map = aInfo.getMetaToId().getMap();
+        // sort map for consistent output
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
-                k.add(0, String.valueOf(v)); // add ID as first column
-                csv.writeRecord(k);
+                final var record = new ArrayList<String>();
+                record.add(String.valueOf(v)); // add ID as first column
+                for (int i = 0; i < k.length; i++) {
+                    // add metadata value for this index
+                    final int[] idxSelection = aInfo.getGroupedMetaIdx();
+                    final String name = fCfg.metadataFields().get(idxSelection[i]).name();
+                    final String metaValue = aInfo.getFreqMetadata().getValue(name, k[i]);
+                    record.add(metaValue);
+                }
+                csv.writeRecord(record);
             });
         } catch (final IOException e) {
             throw reportIOException(e);
@@ -32,7 +46,7 @@ public final class MetaGroupWriter extends FreqListWriter {
     }
 
     private File getFile() {
-        final String fileName = fCfg.getReportName() + "_metadata_group" + getExt();
+        final String fileName = fCfg.getReportName() + "_metadata" + getExt();
         return new File(bCfg.getOutputDir(), fileName);
     }
 }

@@ -20,7 +20,7 @@ public final class AnnotationWriter extends FreqListWriter {
         final var t = new Timer();
 
         final var file = getFile();
-        final var map = aInfo.getWordToId();
+        final var map = aInfo.getWordToId().getMap();
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
                 final var record = new ArrayList<String>();

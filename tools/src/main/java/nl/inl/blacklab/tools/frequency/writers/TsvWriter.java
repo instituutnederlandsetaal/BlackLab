@@ -81,8 +81,7 @@ public final class TsvWriter extends FreqListWriter {
         final int[] tokenIds = groupId.getTokenIds();
         if (bCfg.isDatabaseFormat()) {
             // When writing database format, simply register to get an ID and write that.
-            // first convert to arraylist b
-            final int wordID = aInfo.putOrGetWordId(tokenIds);
+            final int wordID = aInfo.getWordToId().putOrGet(tokenIds);
             record.add(Integer.toString(wordID));
         } else {
             // for each annotation construct a string for the ngram
@@ -109,20 +108,28 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     private void addMetadataToRecord(final GroupId groupId, final List<String> record) {
-        final String[] metadataValues = groupId.getMetadataValues();
+        final int[] metadataValues = groupId.getMetadataValues();
         if (bCfg.isDatabaseFormat() && aInfo.getGroupedMetaIdx().length > 0) {
             // first write out non-grouped metadata
             final int[] idx = aInfo.getNonGroupedMetaIdx();
             for (final int i: idx) {
                 // add metadata value for this index
-                record.add(metadataValues[i]);
+                final String name = fCfg.metadataFields().get(i).name();
+                final String metaValue = aInfo.getFreqMetadata().getValue(name, metadataValues[i]);
+                record.add(metaValue);
             }
             // then, write the group ID of the grouped metadata
-            final int metaId = aInfo.putOrGetMetaToId(groupId.getMetadataValues());
+            final int metaId = aInfo.getMetaToId().putOrGet(groupId.getMetadataValues(), aInfo.getGroupedMetaIdx());
             record.add(Integer.toString(metaId));
         } else {
-            if (metadataValues != null)
-                Collections.addAll(record, metadataValues);
+            if (metadataValues != null) {
+                for (int i = 0; i < fCfg.metadataFields().size(); i++) {
+                    final String name = fCfg.metadataFields().get(i).name();
+                    final String metaValue = aInfo.getFreqMetadata().getValue(name, metadataValues[i]);
+                    record.add(metaValue);
+                }
+            }
+
         }
     }
 

@@ -106,9 +106,11 @@ final public class DocumentIndexBasedBuilder {
 
     @Nullable
     private DocumentMetadata getDocumentMetadata() {
-        final var metaValues = new ArrayList<String>();
+        final int numFields = fCfg.metadataFields().size();
+        final var metaValues = new int[numFields];
         // for each metadata field defined in the config
-        for (final var metaCfg: fCfg.metadataFields()) {
+        for (int i = 0; i < numFields; i++) {
+            final MetadataConfig metaCfg = fCfg.metadataFields().get(i);
             // get its value
             String fieldValue = doc.get(metaCfg.name());
             // and if it's null
@@ -121,14 +123,14 @@ final public class DocumentIndexBasedBuilder {
                     return null;
                 }
             }
+            // retrieve the id for this value
+            final int id = aInfo.getFreqMetadata().getIdx(metaCfg.name(), fieldValue);
             // add the processed value
-            metaValues.add(fieldValue);
+            metaValues[i] = id;
         }
-        // to array
-        final String[] aMetaValues = metaValues.toArray(new String[0]);
         // precompute, it's the same for all hits in document
-        final int hash = Arrays.hashCode(aMetaValues);
-        return new DocumentMetadata(aMetaValues, hash);
+        final int hash = Arrays.hashCode(metaValues);
+        return new DocumentMetadata(metaValues, hash);
     }
 
     private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta,

@@ -18,7 +18,7 @@ public final class LookupTableWriter extends FreqListWriter {
     }
 
     private File getFile(final Annotation annotation) {
-        final String fileName = fCfg.getReportName() + "_" + annotation.name() + "_lookup" + getExt();
+        final String fileName = fCfg.getReportName() + "_" + annotation.name() + getExt();
         return new File(bCfg.getOutputDir(), fileName);
     }
 
