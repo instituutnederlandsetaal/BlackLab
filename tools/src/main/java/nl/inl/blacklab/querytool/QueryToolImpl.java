@@ -21,7 +21,6 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
@@ -60,6 +59,7 @@ import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
@@ -984,7 +984,7 @@ public class QueryToolImpl {
         Hits currentHitSet = getCurrentHitSet();
         if (docs == null) {
             if (currentHitSet != null)
-                docs = currentHitSet.perDocResults(Constants.RESULTS_NO_LIMIT);
+                docs = currentHitSet.perDocResults(Results.NO_LIMIT);
             else if (filterQuery != null) {
                 docs = index.queryDocuments(filterQuery);
             } else {

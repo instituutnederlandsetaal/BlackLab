@@ -2,8 +2,6 @@ package nl.inl.blacklab.search.results;
 
 import java.util.Objects;
 
-import nl.inl.blacklab.Constants;
-
 /** Settings for our initial search, including how many hits we want to process/count at most. */
 public final class SearchSettings {
     
@@ -23,7 +21,7 @@ public final class SearchSettings {
     public static final int DEFAULT_MAX_PROCESS = 10_000_000;
     
     /** How many hits to count by default */
-    public static final int DEFAULT_MAX_COUNT = Constants.RESULTS_NO_LIMIT;
+    public static final int DEFAULT_MAX_COUNT = Results.NO_LIMIT;
     
     /**
      * Stop processing hits after this number. (Results.NO_LIMIT = don't stop

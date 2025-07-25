@@ -21,7 +21,6 @@
         <module>engine</module>
         <module>query-parser</module>
         <module>tools</module>
-        <module>mocks</module>
         <module>convert-and-tag</module>
         <module>wslib</module>
 

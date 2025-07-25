@@ -5,11 +5,6 @@ package nl.inl.blacklab;
  */
 public class Constants {
 
-    /**
-     * When setting how many hits to retrieve/count/store in group, this means "no limit".
-     */
-    public static final int RESULTS_NO_LIMIT = -1;
-
     /** Utility class, don't instantiate */
     private Constants() {}
 

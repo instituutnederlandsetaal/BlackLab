@@ -18,7 +18,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -43,6 +42,7 @@ import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -286,7 +286,7 @@ public class ResultHits {
             // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
             // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
             SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) params.hitsSample()
-                    .groupWithStoredHits(hitGroups.groupCriteria(), Constants.RESULTS_NO_LIMIT);
+                    .groupWithStoredHits(hitGroups.groupCriteria(), Results.NO_LIMIT);
             // now run the separate grouping search, making sure not to actually store the hits.
             // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
             // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.
@@ -354,7 +354,7 @@ public class ResultHits {
         totalTokens = -1;
         CorpusSize subcorpusSize = null;
         if (params.getIncludeSubcorpusSize()) {
-            subcorpusSize = hits.perDocResults(Constants.RESULTS_NO_LIMIT)
+            subcorpusSize = hits.perDocResults(Results.NO_LIMIT)
                     .subcorpusSize();
             // Determine total number of tokens in result set
             totalTokens = subcorpusSize.getTotalCount().getTokens();

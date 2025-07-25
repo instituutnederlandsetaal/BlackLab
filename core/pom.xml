@@ -50,13 +50,6 @@
             <version>${project.version}</version>
         </dependency>
 
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab-mocks</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--            <scope>test</scope>-->
-<!--        </dependency>-->
-
         <!-- Some of our tests depend on engine's test classes (e.g. MockTerms) -->
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
