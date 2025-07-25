@@ -202,6 +202,10 @@ public class QueryExecutionContext {
         return sensitivity.luceneField();
     }
 
+    public AnnotationSensitivity luceneFieldRef() {
+        return sensitivity;
+    }
+
     public BlackLabIndex index() {
         return index;
     }

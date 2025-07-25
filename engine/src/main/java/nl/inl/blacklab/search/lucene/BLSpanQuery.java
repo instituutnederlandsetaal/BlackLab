@@ -18,6 +18,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -34,10 +35,20 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 
+    /** Information such as our index, our search logger, etc. */
+    protected QueryInfo queryInfo;
+
+    private final AnnotatedField annotatedField;
+
     protected SpanGuarantees guarantees;
 
     protected BLSpanQuery(QueryInfo queryInfo) {
+        this(queryInfo, queryInfo.field());
+    }
+
+    protected BLSpanQuery(QueryInfo queryInfo, AnnotatedField annotatedField) {
         this.queryInfo = queryInfo;
+        this.annotatedField = annotatedField;
     }
     
     /**
@@ -117,9 +128,6 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     public static String inf(int max) {
         return max == MAX_UNLIMITED ? "INF" : Integer.toString(max);
     }
-
-    /** Information such as our index, our search logger, etc. */
-    protected QueryInfo queryInfo;
 
     public static boolean isAnyNGram(BLSpanQuery matchTarget) {
         return isAnyNGram(matchTarget, 0);
@@ -320,6 +328,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     public String getField() {
         // Return only base name of annotated field!
         return AnnotatedFieldNameUtil.getBaseName(getRealField());
+    }
+
+    public AnnotatedField getAnnotatedField() {
+        // Return the annotated field that this query is searching in.
+        return annotatedField;
     }
 
     /**

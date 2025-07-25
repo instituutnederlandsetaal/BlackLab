@@ -10,12 +10,13 @@ import java.util.Map.Entry;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
@@ -25,6 +26,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestNfaFromQuery {
 
@@ -203,7 +205,7 @@ public class TestNfaFromQuery {
     }
 
     private static BLSpanTermQuery term(String w) {
-        return new BLSpanTermQuery(null, new Term("contents%word@i", w));
+        return new BLSpanTermQuery(QueryInfo.create(new MockBlackLabIndex()), new Term("contents%word@i", w));
     }
 
     private static SpanQuerySequence seq(BLSpanQuery... clauses) {
@@ -219,7 +221,7 @@ public class TestNfaFromQuery {
     }
 
     private static SpanQueryAnyToken any(int min, int max) {
-        return new SpanQueryAnyToken(null, min, max, "contents%word@i");
+        return new SpanQueryAnyToken(QueryInfo.create(new MockBlackLabIndex()), min, max, "contents%word@i");
     }
 
     private static BLSpanQuery exp(BLSpanQuery clause, Direction direction, int min, int max) {

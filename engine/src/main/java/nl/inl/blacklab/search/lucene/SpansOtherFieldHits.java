@@ -5,6 +5,8 @@ import java.util.Arrays;
 
 import org.apache.lucene.queries.spans.FilterSpans;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /**
  * Gets the hits in other fields (from the matchInfo).
  *
@@ -18,7 +20,7 @@ import org.apache.lucene.queries.spans.FilterSpans;
  */
 class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
 
-    private final String targetField;
+    private final AnnotatedField targetField;
 
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
@@ -32,7 +34,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     private MatchInfo[] matchInfo;
 
     /** What field is our clause in? */
-    private final String clauseField;
+    private final AnnotatedField clauseField;
 
     /**
      * Constructs a SpansRelationSpanAdjust.
@@ -41,7 +43,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
      * @param targetField other field to get hits for
      *
      */
-    public SpansOtherFieldHits(BLSpans in, String targetField, String clauseField) {
+    public SpansOtherFieldHits(BLSpans in, AnnotatedField targetField, AnnotatedField clauseField) {
         super(in, SpanQueryOtherFieldHits.createGuarantees());
         this.targetField = targetField;
         this.clauseField = clauseField;
@@ -132,7 +134,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
     }
 
     @Override
-    public String getOverriddenField() {
+    public AnnotatedField getOverriddenField() {
         return targetField;
     }
 

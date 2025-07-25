@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.queries.spans.TermSpans;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /**
  * Base class for all our own Spans classes.
  * <p>
@@ -83,7 +85,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
 
     /** If we're querying a parallel corpus, this may indicate that this part of the hit
      *  comes from a different anntotated field, e.g. contents__nl. */
-    private String overriddenField = null;
+    private AnnotatedField overriddenField = null;
 
     protected BLSpans(SpanGuarantees guarantees) {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
@@ -121,7 +123,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *
      * @return the overridden field, or null if none
      */
-    public String getOverriddenField() {
+    public AnnotatedField getOverriddenField() {
         return overriddenField;
     }
 

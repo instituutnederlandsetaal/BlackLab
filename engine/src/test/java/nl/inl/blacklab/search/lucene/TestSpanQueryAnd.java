@@ -4,7 +4,9 @@ import org.apache.lucene.index.Term;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestSpanQueryAnd {
 
@@ -20,9 +22,10 @@ public class TestSpanQueryAnd {
 
     @Test
     public void testAnnotatedFieldDifferentProperties() {
-        BLSpanTermQuery first = new BLSpanTermQuery(null, new Term(AnnotatedFieldNameUtil.annotationField("contents",
+        QueryInfo queryInfo = QueryInfo.create(new MockBlackLabIndex());
+        BLSpanTermQuery first = new BLSpanTermQuery(queryInfo, new Term(AnnotatedFieldNameUtil.annotationField("contents",
                 "prop1"), "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(null, new Term(AnnotatedFieldNameUtil.annotationField("contents",
+        BLSpanTermQuery second = new BLSpanTermQuery(queryInfo, new Term(AnnotatedFieldNameUtil.annotationField("contents",
                 "prop2"), "bla"));
 
         // No exception here because both are properties of annotated field "field"

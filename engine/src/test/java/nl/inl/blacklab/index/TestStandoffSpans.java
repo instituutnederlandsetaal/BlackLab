@@ -85,7 +85,7 @@ public class TestStandoffSpans {
         AnnotationSensitivity annotationSensitivity = relAnnotation.hasSensitivity(MatchSensitivity.SENSITIVE) ?
                 relAnnotation.sensitivity(MatchSensitivity.SENSITIVE) :
                 relAnnotation.sensitivity(MatchSensitivity.INSENSITIVE);
-        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), annotationSensitivity.luceneField(), "character", null, null);
+        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), annotationSensitivity, "character", null, null);
         Hits results = s.find(query).execute();
         Assert.assertEquals(2, results.size());
         Assert.assertEquals(0, results.get(0).start());

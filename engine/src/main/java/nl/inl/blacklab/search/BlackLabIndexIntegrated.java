@@ -38,6 +38,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
@@ -254,7 +255,11 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
                 // Also determine the relations strategy used when indexing,
                 // so we can use the same one for searching.
                 if (!createNewIndex && isRelationsField(fi) && !relStratSet) {
-                    relationsStrategy = getRelationsStrategy(fi);
+                    try {
+                        relationsStrategy = getRelationsStrategy(fi);
+                    } catch (Exception e) {
+                        throw new ErrorOpeningIndex(e.getMessage(), e);
+                    }
                     // We only need to determine the relations strategy once per segment, even if there's multiple annotated fields
                     relStratSet = true;
                 }
@@ -301,7 +306,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
-    public BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex,
+    public BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs) {
         // Note: tags are always indexed as a forward relation (source always occurs before target)
         RelationInfo.SpanMode spanMode = switch (adjust) {

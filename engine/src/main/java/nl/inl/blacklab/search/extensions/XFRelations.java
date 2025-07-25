@@ -6,7 +6,9 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -68,9 +70,10 @@ public class XFRelations implements ExtensionFunctionClass {
 
     public static BLSpanQuery createRelationQuery(QueryInfo queryInfo, QueryExecutionContext context, String relationType,
             BLSpanQuery matchTarget, SpanQueryRelations.Direction direction, String captureAs,
-            RelationInfo.SpanMode spanMode, String targetField) {
+            RelationInfo.SpanMode spanMode, AnnotatedField targetField) {
         // Do we need to match a target, or don't we care?
-        String field = context.withRelationAnnotation().luceneField();
+        AnnotationSensitivity field = context.withRelationAnnotation()
+                .luceneFieldRef();
         if (BLSpanQuery.isAnyNGram(matchTarget))
             matchTarget = null;
         if (matchTarget != null) {
@@ -81,7 +84,7 @@ public class XFRelations implements ExtensionFunctionClass {
             ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
-                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.field().name());
+                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.field());
 
                 // @@@ TODO ensure the correct field is returned (source field)
             }
@@ -140,12 +143,12 @@ public class XFRelations implements ExtensionFunctionClass {
             throw new IllegalArgumentException("rfield() requires a query and a field or version name as arguments");
         BLSpanQuery relations = (BLSpanQuery) args.get(0);
         String fieldOrVersion = (String)args.get(1);
-        String fieldName = queryInfo.index().annotatedFields().getByFieldOrVersionName(fieldOrVersion).name();
-        if (relations.getField().equals(fieldName)) {
+        AnnotatedField field = queryInfo.index().annotatedFields().getByFieldOrVersionName(fieldOrVersion);
+        if (relations.getAnnotatedField() == field) {
             // Nothing to do, just return query unchanged
             return relations;
         }
-        return new SpanQueryOtherFieldHits(relations, fieldName);
+        return new SpanQueryOtherFieldHits(relations, field);
     }
 
     /**
@@ -180,7 +183,7 @@ public class XFRelations implements ExtensionFunctionClass {
         BLSpanQuery query = (BLSpanQuery)args.get(0);
         String captureAs = context.ensureUniqueCapture((String)args.get(1));
         String relationType = RelationUtil.optPrependDefaultClass((String) args.get(2), context);
-        String field = context.withRelationAnnotation().luceneField();
+        AnnotationSensitivity field = context.withRelationAnnotation().luceneFieldRef();
         return new SpanQueryCaptureRelationsWithinSpan(queryInfo, field, query, null, captureAs, relationType);
     }
 

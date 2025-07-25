@@ -5,6 +5,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
@@ -15,7 +16,7 @@ class HitsInternalLock extends HitsInternalNoLock {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    HitsInternalLock(String field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
+    HitsInternalLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
         super(field, matchInfoDefs, initialCapacity);
     }
 

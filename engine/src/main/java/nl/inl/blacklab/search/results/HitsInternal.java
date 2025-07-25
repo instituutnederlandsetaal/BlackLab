@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
@@ -23,10 +24,10 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
 
     @Override
-    String fieldName();
+    AnnotatedField field();
 
     /** An empty HitsInternalRead object. */
-    static HitsInternal emptySingleton(String field, MatchInfoDefs matchInfoDefs) {
+    static HitsInternal emptySingleton(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
         return new HitsInternalNoLock32(field, matchInfoDefs);
     }
 
@@ -38,11 +39,11 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
-    static HitsInternalMutable create(String field, MatchInfoDefs matchInfoDefs, long initialCapacity, boolean allowHugeLists, boolean mustLock) {
+    static HitsInternalMutable create(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity, boolean allowHugeLists, boolean mustLock) {
         return create(field, matchInfoDefs, initialCapacity, allowHugeLists ? Long.MAX_VALUE : Constants.JAVA_MAX_ARRAY_SIZE, mustLock);
     }
 
-    static HitsInternalMutable create(String field, MatchInfoDefs matchInfoDefs, long initialCapacity, long maxCapacity, boolean mustLock) {
+    static HitsInternalMutable create(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity, long maxCapacity, boolean mustLock) {
         if (maxCapacity > Constants.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
             if (mustLock)
                 return new HitsInternalLock(field, matchInfoDefs, initialCapacity);

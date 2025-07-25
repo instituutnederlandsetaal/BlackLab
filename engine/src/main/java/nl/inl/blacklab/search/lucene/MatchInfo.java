@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /**
  * Information about a match (captured while matching).
  *
@@ -53,14 +55,14 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
      *  If this is not a parallel corpus, this will always be the field that was searched.
      *  Never null.
      */
-    private final String field;
+    private final AnnotatedField field;
 
-    MatchInfo(String field) {
+    MatchInfo(AnnotatedField field) {
         assert field != null;
         this.field = field;
     }
 
-    public String getField() {
+    public AnnotatedField getField() {
         return field;
     }
 
@@ -147,12 +149,12 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         private Type type;
 
         /** What field is this match info for? Never null. */
-        private final String field;
+        private final AnnotatedField field;
 
         /** Target field of (list of) relations, or null if same as source or not applicable. */
-        private final String targetField;
+        private final AnnotatedField targetField;
 
-        public Def(int index, String name, Type type, String field, String targetField) {
+        public Def(int index, String name, Type type, AnnotatedField field, AnnotatedField targetField) {
             assert index >= 0 : "Match info may not have negative index";
             this.index = index;
             this.name = name;
@@ -174,11 +176,11 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
             return type;
         }
 
-        public String getField() {
+        public AnnotatedField getField() {
             return field;
         }
 
-        public String getTargetField() {
+        public AnnotatedField getTargetField() {
             return targetField;
         }
 

@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -14,11 +13,11 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
- * Adjust relation spans to match source, target, or entire relation.
+ * Determine foreign hits from a specific field.
  */
 public class SpanQueryOtherFieldHits extends BLSpanQuery {
 
@@ -30,9 +29,9 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
 
     private final BLSpanQuery clause;
 
-    private final String targetField;
+    private final AnnotatedField targetField;
 
-    public SpanQueryOtherFieldHits(BLSpanQuery clause, String targetField) {
+    public SpanQueryOtherFieldHits(BLSpanQuery clause, AnnotatedField targetField) {
         super(clause.queryInfo);
         this.clause = clause;
         this.targetField = targetField;
@@ -86,7 +85,7 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return new SpansOtherFieldHits(spans, targetField, clause.getField());
+            return new SpansOtherFieldHits(spans, targetField, clause.getAnnotatedField());
         }
     }
 
@@ -121,14 +120,14 @@ public class SpanQueryOtherFieldHits extends BLSpanQuery {
     @Override
     public String getField() {
         if (targetField != null)
-            return AnnotatedFieldNameUtil.getBaseName(targetField);
-        return clause.getField();
+            return targetField.name();
+        return clause.getAnnotatedField().name();
     }
 
     @Override
     public String getRealField() {
         if (targetField != null)
-            return targetField;
+            return targetField.name(); // not strictly correct (should be a full Lucene field name with annotation and sensitivity)
         return clause.getRealField();
     }
 

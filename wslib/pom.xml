@@ -35,12 +35,12 @@
             <artifactId>blacklab-convert-and-tag-indexer</artifactId>
             <version>${project.version}</version>
         </dependency>
-        <dependency>
-            <groupId>${project.parent.groupId}</groupId>
-            <artifactId>blacklab-mocks</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>${project.parent.groupId}</groupId>-->
+<!--            <artifactId>blacklab-mocks</artifactId>-->
+<!--            <version>${project.version}</version>-->
+<!--            <scope>test</scope>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>${project.parent.groupId}</groupId>

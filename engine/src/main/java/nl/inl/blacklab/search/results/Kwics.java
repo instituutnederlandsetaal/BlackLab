@@ -27,7 +27,7 @@ public class Kwics {
     private final Map<Hit, Kwic> kwics;
 
     /** KWICs in other fields (for parallel corpora), or null if none. */
-    private Map<Hit, Map<String, Kwic>> foreignKwics = null;
+    private Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
 
     public Kwics(Hits hits, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
@@ -40,13 +40,13 @@ public class Kwics {
         foreignKwics = retrieveForeignKwics(hits, contextSize);
     }
 
-    private Map<Hit, Map<String, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
-        Map<Hit, Map<String, Kwic>> foreignKwics = null;
-        Map<String, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
-        String defaultField = hits.queryInfo().field().name();
+    private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
+        Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
+        Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
+        AnnotatedField defaultField = hits.queryInfo().field();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
-            Map<String, int[]> minMaxPerField = null; // start and end of the "foreign match"
+            Map<AnnotatedField, int[]> minMaxPerField = null; // start and end of the "foreign match"
             MatchInfo[] matchInfo = hit.matchInfo();
             if (matchInfo != null) {
                 Iterator<MatchInfo.Def> defIt = hits.matchInfoDefs().currentList().iterator();
@@ -61,8 +61,8 @@ public class Kwics {
                 }
 
                 if (minMaxPerField != null) {
-                    Map<String, Kwic> kwics = new HashMap<>();
-                    for (Map.Entry<String, int[]> e: minMaxPerField.entrySet()) {
+                    Map<AnnotatedField, Kwic> kwics = new HashMap<>();
+                    for (Map.Entry<AnnotatedField, int[]> e: minMaxPerField.entrySet()) {
                         int[] minMax = e.getValue();
                         int matchStart = minMax[0];
                         int matchEnd = minMax[1];
@@ -73,7 +73,7 @@ public class Kwics {
                             snippetStart = matchStart - contextSize.getMaxSnippetLength() / 2;
                         }
 
-                        String field = e.getKey();
+                        AnnotatedField field = e.getKey();
                         List<AnnotationForwardIndex> afis = afisPerField.get(field);
                         Hits singleHit = Hits.singleton(hits.queryInfo(), hit.doc(), matchStart, matchEnd);
                         ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd, true,
@@ -105,15 +105,15 @@ public class Kwics {
      * @param afisPerField the AnnotationForwardIndex for each foreign field we've seen will be added to this
      * @return updated map of min/max positions per field
      */
-    private static Map<String, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, MatchInfo mi, String defaultField,
-            Map<String, int[]> minMaxPerField, Map<String, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
-        String field = mi.getField();
+    private static Map<AnnotatedField, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, MatchInfo mi, AnnotatedField defaultField,
+            Map<AnnotatedField, int[]> minMaxPerField, Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
+        AnnotatedField field = mi.getField();
         boolean isTag = mi.getType() == MatchInfo.Type.INLINE_TAG; // not "real" relations, don't influence foreign hits
-        if (!field.equals(defaultField)) { // foreign KWICs only
+        if (field != defaultField) { // foreign KWICs only
             // By default, just use the match info span
             // (which, in case of a cross-field relation, is the source span)
             afisPerField.computeIfAbsent(field, k -> getAnnotationForwardIndexes(
-                    index.forwardIndex(index.annotatedField(field))));
+                    index.forwardIndex(field)));
             if (isTargetHit) {
                 // Special __@target capture that is actually the foreign hit we're looking for.
                 // Keep track of the min/max positions of the match in each foreign field
@@ -125,11 +125,11 @@ public class Kwics {
         }
         if (mi instanceof RelationInfo rmi && !isTag) {
             // Relation targets (not just sources) should influence field context
-            String targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
-            if (!targetField.equals(defaultField)) { // foreign KWICs only
+            AnnotatedField targetField = rmi.getTargetField() == null ? field : rmi.getTargetField();
+            if (targetField != defaultField) { // foreign KWICs only
                 afisPerField.computeIfAbsent(targetField, k ->
                         getAnnotationForwardIndexes(
-                                index.forwardIndex(index.annotatedField(targetField))));
+                                index.forwardIndex(targetField)));
             }
         }
         return minMaxPerField;
@@ -159,7 +159,7 @@ public class Kwics {
      * @param hit the hit
      * @return foreign KWICs for this hit, or null if none
      */
-    public Map<String, Kwic> getForeignKwics(Hit hit) {
+    public Map<AnnotatedField, Kwic> getForeignKwics(Hit hit) {
         return foreignKwics == null ? null : foreignKwics.get(hit);
     }
 

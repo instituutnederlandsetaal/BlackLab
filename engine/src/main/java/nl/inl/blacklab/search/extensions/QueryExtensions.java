@@ -290,7 +290,7 @@ public class QueryExtensions {
                     defVal = SpanQueryAnyToken.anyNGram(context.queryInfo(), context.luceneField());
                 } else if (defVal == QueryExtensions.VALUE_ANY_SPAN) {
                     // Special case: any span (usually meaning "don't care")
-                    defVal = context.index().tagQuery(context.queryInfo(), context.withRelationAnnotation().luceneField(),
+                    defVal = context.index().tagQuery(context.queryInfo(), context.withRelationAnnotation().luceneFieldRef(),
                             RelationUtil.ANY_TYPE_REGEX, null, TextPatternTags.Adjust.FULL_TAG, null);
                 }
                 if (i >= newArgs.size()) {

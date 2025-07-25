@@ -1,5 +1,6 @@
 package nl.inl.blacklab.mocks;
 
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -16,6 +17,14 @@ public class MockAnnotatedField implements AnnotatedField {
     final String name;
     
     private final List<Annotation> annotations;
+
+    public MockAnnotatedField() {
+        this("test");
+    }
+
+    public MockAnnotatedField(String name) {
+        this(name, Collections.emptyList());
+    }
     
     public MockAnnotatedField(String name, List<Annotation> annotations) {
         this.name = name;

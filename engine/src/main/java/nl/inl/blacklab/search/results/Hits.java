@@ -11,6 +11,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -53,7 +54,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
 
-        return new HitsList(queryInfo, new HitsInternalLock32(queryInfo.field().name(), null, lDocs, lStarts, lEnds, null), null);
+        return new HitsList(queryInfo, new HitsInternalLock32(queryInfo.field(), null, lDocs, lStarts, lEnds, null), null);
     }
 
     static Hits list(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
@@ -80,7 +81,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      * @return hits found
      */
     static Hits empty(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsInternal.emptySingleton(queryInfo.field().name(), null), null);
+        return new HitsList(queryInfo, HitsInternal.emptySingleton(queryInfo.field(), null), null);
     }
 
     static Map<String, MatchInfo> getMatchInfoMap(Hits hits, Hit hit, boolean omitEmptyCaptures) {
@@ -277,8 +278,8 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
     HitsInternal getInternalHits();
 
     /** This exists to satisfy the HitsForHitProps interface needed for HitProps to work with HitsInternal as well */
-    default String fieldName() {
-        return queryInfo().field().name();
+    default AnnotatedField field() {
+        return queryInfo().field();
     }
 
     long size();

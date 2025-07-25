@@ -49,12 +49,12 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
-    default BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex, Map<String, String> attributes,
+    default BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex, Map<String, String> attributes,
             String captureAs) {
         return tagQuery(queryInfo, luceneField, tagNameRegex, attributes, TextPatternTags.Adjust.FULL_TAG, captureAs);
     }
 
-    BLSpanQuery tagQuery(QueryInfo queryInfo, String luceneField, String tagNameRegex, Map<String, String> attributes,
+    BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex, Map<String, String> attributes,
             TextPatternTags.Adjust adjust, String captureAs);
 
     /** Get our index type (always integrated now). */

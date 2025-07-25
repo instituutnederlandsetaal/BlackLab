@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /**
  * Definitions of match information (captured groups) for a query.
  *
@@ -17,7 +19,7 @@ import java.util.function.Predicate;
 public class MatchInfoDefs {
     public static final MatchInfoDefs EMPTY = new MatchInfoDefs() {
         @Override
-        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
+        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
             throw new UnsupportedOperationException("Cannot add to DUMMY MatchInfoDefs");
         }
     };
@@ -36,7 +38,7 @@ public class MatchInfoDefs {
         this.defs.addAll(defs);
     }
 
-    synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
+    synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
         MatchInfo.Def e = new MatchInfo.Def(defs.size(), name, type, field, targetField);
         defs.add(e);
         return e;
@@ -46,7 +48,7 @@ public class MatchInfoDefs {
         return defs.get(i);
     }
 
-    public synchronized MatchInfo.Def register(String name, MatchInfo.Type type, String field, String targetField) {
+    public synchronized MatchInfo.Def register(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
         Optional<MatchInfo.Def> mi = defs.stream()
                 .filter(mid -> mid.getName().equals(name))
                 .findFirst();

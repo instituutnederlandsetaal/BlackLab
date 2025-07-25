@@ -84,9 +84,9 @@ public class HitsFromQuery extends HitsMutable {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
-                HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field().name(),
+                HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(),
                         null, -1, true, true), null);
-        hitQueryContext = new HitQueryContext(null, sourceQuery.getField(), new MatchInfoDefs()); // each spans will get a copy
+        hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field(), new MatchInfoDefs()); // each spans will get a copy
         QueryTimings timings = queryInfo().timings();
         timings.start();
         final BlackLabIndex index = queryInfo.index();

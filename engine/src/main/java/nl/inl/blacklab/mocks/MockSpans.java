@@ -178,7 +178,7 @@ public class MockSpans extends BLSpans {
         this.payloads = new BytesRef[aEnd.length];
         for (int i = 0; i < aEnd.length; i++) {
             RelationInfo relInfo = RelationInfo.create(false, aStart[i], aStart[i],
-                    aEnd[i], aEnd[i], 0, "test", false);
+                    aEnd[i], aEnd[i], 0, new MockAnnotatedField(), false);
             BytesRef payload = relationsStrategy.getPayloadCodec().serialize(relInfo);
             if (aIsPrimary != null)
                 payload = PayloadUtils.addIsPrimary(aIsPrimary[i], payload);

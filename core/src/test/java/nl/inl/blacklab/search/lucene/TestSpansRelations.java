@@ -5,13 +5,14 @@ import java.util.concurrent.Callable;
 import org.junit.Test;
 
 import nl.inl.blacklab.TestUtil;
+import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public class TestSpansRelations {
 
     private SpansRelations tagRelationQuery(BLSpans a, boolean hasPrimaryValueIndicators) {
-        return new SpansRelations("contents", "test", a,
+        return new SpansRelations(new MockAnnotatedField("test"), "test", a,
                 hasPrimaryValueIndicators, SpanQueryRelations.Direction.FORWARD,
                 RelationInfo.SpanMode.FULL_SPAN, "", null, RelationsStrategy.forNewIndex());
     }

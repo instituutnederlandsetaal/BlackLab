@@ -131,7 +131,7 @@ public class Concordances {
         for (Hit key: hits) {
             HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsInternal.create(hits.queryInfo().field().name(), hits.matchInfoDefs(), -1, totalHits, false);
+                hitsInDoc = HitsInternal.create(hits.queryInfo().field(), hits.matchInfoDefs(), -1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);

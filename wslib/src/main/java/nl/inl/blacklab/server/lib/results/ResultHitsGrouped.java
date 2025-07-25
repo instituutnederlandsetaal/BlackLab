@@ -15,6 +15,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
@@ -129,14 +130,14 @@ public class ResultHitsGrouped {
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
         MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
-        Set<String> otherFields = new HashSet<>();
+        Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             if (def.getTargetField() != null)
                 otherFields.add(def.getTargetField());
         }
 
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
-                timings, matchInfoDefs, getGroups(), getWindow(), groups.queryInfo().field().name(),
+                timings, matchInfoDefs, getGroups(), getWindow(), groups.queryInfo().field(),
                 otherFields);
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize());

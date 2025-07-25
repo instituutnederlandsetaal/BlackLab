@@ -17,6 +17,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
@@ -67,14 +68,14 @@ class HitsInternalNoLock implements HitsInternalMutable {
         }
     }
 
-    private String field;
+    private AnnotatedField field;
     private MatchInfoDefs matchInfoDefs;
     protected final IntBigList docs;
     protected final IntBigList starts;
     protected final IntBigList ends;
     protected final ObjectBigList<MatchInfo[]> matchInfos;
 
-    HitsInternalNoLock(String field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
+    HitsInternalNoLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
         this.field = field;
         this.matchInfoDefs = matchInfoDefs;
         if (initialCapacity < 0) {
@@ -92,7 +93,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     @Override
-    public String fieldName() {
+    public AnnotatedField field() {
         return field;
     }
 

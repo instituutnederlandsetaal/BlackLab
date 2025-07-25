@@ -85,8 +85,8 @@ public class TextPatternRelationMatch extends TextPattern {
         BLSpanQuery targetQuery = targetNoDefVal.translate(targetContext);
 
         return SpanQueryCaptureRelationsBetweenSpans.Target.get(
-                context.queryInfo(), context.withRelationAnnotation().luceneField(), targetQuery,
-                targetContext.field().name(), captureName, relationType, opInfo.isOptionalMatch(),
+                context.queryInfo(), context.withRelationAnnotation().luceneFieldRef(), targetQuery,
+                targetContext.field(), captureName, relationType, opInfo.isOptionalMatch(),
                 null, null);
     }
 

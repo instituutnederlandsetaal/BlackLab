@@ -17,6 +17,7 @@ import org.apache.lucene.store.ByteArrayDataInput;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -74,7 +75,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     private final boolean spansMayIncludeRoots = true;
 
-    private final String sourceField;
+    private final AnnotatedField sourceField;
 
     /**
      * Construct SpansRelations.
@@ -90,7 +91,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * @param spanMode                      what span to return for the relations found
      * @param captureAs                     name to capture the relation info as, or empty not to capture
      */
-    public SpansRelations(String sourceField, String relationType, BLSpans relationsMatches,
+    public SpansRelations(AnnotatedField sourceField, String relationType, BLSpans relationsMatches,
             boolean payloadIndicatesPrimaryValues, Direction direction, RelationInfo.SpanMode spanMode,
             String captureAs, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
         super(relationsMatches,
@@ -113,8 +114,8 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         String relClass = RelationUtil.classFromFullType(relationType);
         boolean isInlineTag = relClass.equals(RelationUtil.CLASS_INLINE_TAG);
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
-        String targetField = StringUtils.isEmpty(version) ? sourceField :
-                AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField(), version);
+        AnnotatedField targetField = StringUtils.isEmpty(version) ? sourceField :
+                context.index().annotatedField(AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField().name(), version));
 
         // When capturing relations, remember that we're producing hits in a different field.
         // (used with parallel corpora)
@@ -185,7 +186,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             if (info.mayHaveInfoInRelationIndex()) {
                 // Get them from relation info index
                 int infoRelationId = info.getRelationId();
-                String f = relInfo.relationsField(info.getField());
+                String f = relInfo.relationsField(info.getField().name());
                 attributes = relInfo.getAttributes(f, docId, infoRelationId);
             } else {
                 // No extra info was stored, no need to check

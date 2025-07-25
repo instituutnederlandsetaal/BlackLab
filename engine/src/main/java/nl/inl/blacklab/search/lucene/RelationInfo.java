@@ -6,9 +6,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.store.DataOutput;
-
-import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
@@ -20,20 +18,20 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
  */
 public class RelationInfo extends MatchInfo implements RelationLikeInfo {
 
-    public static RelationInfo create() {
-        return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, "", "", false);
+    public static RelationInfo create(AnnotatedField sourceField) {
+        return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, sourceField, null, false);
     }
 
-    public static RelationInfo createWithFields(String sourceField, String targetField) {
+    public static RelationInfo createWithFields(AnnotatedField sourceField, AnnotatedField targetField) {
         return new RelationInfo(false, -1, -1, -1, -1, RELATION_ID_NO_INFO, null, null, sourceField, targetField, false);
     }
 
-    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, boolean hasExtraInfoStored) {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, null, null, "", "", hasExtraInfoStored);
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, AnnotatedField sourceField, boolean hasExtraInfoStored) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, null, null, sourceField, null, hasExtraInfoStored);
     }
 
-    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType, boolean hasExtraInfoStored) {
-        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, "", "", hasExtraInfoStored);
+    public static RelationInfo create(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd, int relationId, String fullRelationType, AnnotatedField sourceField, boolean hasExtraInfoStored) {
+        return new RelationInfo(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, relationId, fullRelationType, null, sourceField, null, hasExtraInfoStored);
     }
 
     /**
@@ -47,7 +45,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
      * @param field field this tag is from
      * @return the relation info object
      */
-    public static RelationInfo createTag(int start, int end, String tagName, String field) {
+    public static RelationInfo createTag(int start, int end, String tagName, AnnotatedField field) {
         return new RelationInfo(false, start, start, end, end,
                 RELATION_ID_NO_INFO, tagName, null, field, field,
                 false);
@@ -153,15 +151,15 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     private Map<String, List<String>> attributes;
 
     /** Field this points to (for non-parallel corpora, this will always be identical to source field). */
-    private final String targetField;
+    private final AnnotatedField targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
-            int relationId, String fullRelationType, Map<String, List<String>> attributes, String sourceField, String targetField, boolean hasExtraInfoStored) {
+            int relationId, String fullRelationType, Map<String, List<String>> attributes, AnnotatedField sourceField, AnnotatedField targetField, boolean hasExtraInfoStored) {
         super(sourceField);
         this.fullRelationType = fullRelationType;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
-        assert sourceField != null;
-        assert targetField != null;
+//        assert sourceField != null;
+//        assert targetField != null;
         this.targetField = targetField;
         this.onlyHasTarget = onlyHasTarget;
         if (onlyHasTarget && (sourceStart != targetStart || sourceEnd != targetEnd) && (sourceStart != targetStart || sourceEnd != targetStart)) {
@@ -244,7 +242,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     @Override
-    public String getTargetField() {
+    public AnnotatedField getTargetField() {
         return targetField;
     }
 

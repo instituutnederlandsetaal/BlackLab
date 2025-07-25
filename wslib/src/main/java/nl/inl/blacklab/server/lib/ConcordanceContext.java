@@ -5,6 +5,7 @@ import java.util.Map;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
@@ -52,7 +53,7 @@ public class ConcordanceContext {
         return kwics.get(hit);
     }
 
-    public Map<String, Kwic> getForeignKwics(Hit hit) {
+    public Map<AnnotatedField, Kwic> getForeignKwics(Hit hit) {
         return kwics.getForeignKwics(hit);
     }
 }

@@ -30,6 +30,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.SingleDocIdFilter;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -380,16 +381,16 @@ public class ResultHits {
                 getHitsStats(), getDocsStats(),
                 params.getWaitForTotal(), searchTimings, subcorpusSize);
         MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
-        Set<String> otherFields = new HashSet<>();
+        Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             otherFields.add(def.getField());
             if (def.getTargetField() != null)
                 otherFields.add(def.getTargetField());
         }
-        otherFields.remove(hits.queryInfo().field().name());
+        otherFields.remove(hits.queryInfo().field());
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
                 getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
-                hits.queryInfo().field().name(), otherFields);
+                hits.queryInfo().field(), otherFields);
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
                 getDocIdToPid());
     }

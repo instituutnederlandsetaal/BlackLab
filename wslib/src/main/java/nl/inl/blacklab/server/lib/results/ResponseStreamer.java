@@ -387,12 +387,12 @@ public class ResponseStreamer {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out
             }
-            String searchField = summaryFields.getSearchField();
-            ds.entry(KEY_FIELD_NAME, searchField);
+            AnnotatedField searchField = summaryFields.getSearchField();
+            ds.entry(KEY_FIELD_NAME, searchField.name());
             if (!summaryFields.getOtherFields().isEmpty()) {
                 ds.startEntry(KEY_OTHER_FIELDS).startList();
-                for (String field: summaryFields.getOtherFields()) {
-                    ds.item(KEY_FIELD_NAME, field);
+                for (AnnotatedField field: summaryFields.getOtherFields()) {
+                    ds.item(KEY_FIELD_NAME, field.name());
                 }
                 ds.endList().endEntry();
             }
@@ -406,10 +406,10 @@ public class ResponseStreamer {
                     ds.startDynEntry(def.getName()).startMap();
                     {
                         ds.entry(KEY_MATCH_INFO_TYPE, def.getType().jsonName());
-                        if (!def.getField().equals(searchField))
-                            ds.entry(KEY_FIELD_NAME, def.getField());
-                        if (def.getTargetField() != null && !def.getTargetField().equals(searchField))
-                            ds.entry(KEY_TARGET_FIELD, def.getTargetField());
+                        if (def.getField() != searchField)
+                            ds.entry(KEY_FIELD_NAME, def.getField().name());
+                        if (def.getTargetField() != null && def.getTargetField() != searchField)
+                            ds.entry(KEY_TARGET_FIELD, def.getTargetField().name());
                     }
                     ds.endMap().endDynEntry();
                 }
@@ -623,7 +623,7 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, hits.queryInfo().field().name(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                hit(docPid, hit, hits.queryInfo().field(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
             ds.endItem();
@@ -631,7 +631,7 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, Hit hit, String searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, Hit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
@@ -661,12 +661,12 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        String searchField = result.getHits().queryInfo().field().name();
+        AnnotatedField searchField = result.getHits().queryInfo().field();
         outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, String searchField, Map<String, MatchInfo> matchInfos,
+    private void outputHitOrSnippet(String docPid, Hit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;
@@ -729,13 +729,13 @@ public class ResponseStreamer {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
                 }
             }
-            Map<String, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
+            Map<AnnotatedField, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
             if (foreignKwics != null) {
                 ds.startEntry(KEY_OTHER_FIELDS).startMap();
-                for (Map.Entry<String, Kwic> e: foreignKwics.entrySet()) {
-                    String field = e.getKey();
+                for (Map.Entry<AnnotatedField, Kwic> e: foreignKwics.entrySet()) {
+                    AnnotatedField field = e.getKey();
                     Kwic kwic = e.getValue();
-                    ds.startDynEntry(field).startMap();
+                    ds.startDynEntry(field.name()).startMap();
                     {
                         ds.entry(KEY_SPAN_START, kwic.hitStart() + kwic.fragmentStartInDoc());
                         ds.entry(KEY_SPAN_END, kwic.hitEnd() + kwic.fragmentStartInDoc());

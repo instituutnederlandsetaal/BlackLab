@@ -61,7 +61,7 @@ public interface RelationsStrategy {
      * @param attributes attribute values to match
      * @return query to find the relations
      */
-    BLSpanQuery getRelationsQuery(QueryInfo queryInfo, String relationFieldName, String relationTypeRegex, Map<String, String> attributes);
+    BLSpanQuery getRelationsQuery(QueryInfo queryInfo, AnnotationSensitivity relationField, String relationTypeRegex, Map<String, String> attributes);
 
     BytesRef getPayload(RelationInfo relationInfo);
 

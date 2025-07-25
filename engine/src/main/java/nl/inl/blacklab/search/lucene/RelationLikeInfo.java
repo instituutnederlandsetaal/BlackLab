@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /** A MatchInfo that is either a relation or a list of relations
  *  (which we sometimes want to treat like a single relation, i.e. taking
  *   the min/max from all of the relations in the list)
@@ -15,9 +17,9 @@ public interface RelationLikeInfo {
 
     int getTargetEnd();
 
-    String getField();
+    AnnotatedField getField();
 
-    String getTargetField();
+    AnnotatedField getTargetField();
 
     boolean isCrossFieldRelation();
 }

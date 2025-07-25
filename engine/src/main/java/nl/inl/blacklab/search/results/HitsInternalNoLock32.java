@@ -14,6 +14,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
@@ -62,18 +63,18 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
-    private final String field;
+    private final AnnotatedField field;
     private MatchInfoDefs matchInfoDefs;
     protected final IntList docs;
     protected final IntList starts;
     protected final IntList ends;
     protected final ObjectList<MatchInfo[]> matchInfos;
 
-    HitsInternalNoLock32(String field, MatchInfoDefs matchInfoDefs) {
+    HitsInternalNoLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
         this(field, matchInfoDefs, -1);
     }
 
-    HitsInternalNoLock32(String field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
+    HitsInternalNoLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
         this.field = field;
         this.matchInfoDefs = matchInfoDefs;
         if (initialCapacity < 0) {
@@ -90,7 +91,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
-    HitsInternalNoLock32(String field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+    HitsInternalNoLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size() != starts.size() || docs.size() != ends.size() || (matchInfos != null && matchInfos.size() != docs.size()))
@@ -105,7 +106,7 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     }
 
     @Override
-    public String fieldName() {
+    public AnnotatedField field() {
         return field;
     }
 

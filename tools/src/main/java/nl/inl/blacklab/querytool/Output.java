@@ -512,17 +512,14 @@ class Output {
                 matchInfo = window.hasMatchInfo() ? Hits.getMatchInfoMap(window, hit, false) : Collections.emptyMap();
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.queryInfo().field());
 
-                Map<String, Kwic> fkwics = kwics.getForeignKwics(hit);
+                Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
                 if (fkwics != null) {
-                    for (Map.Entry<String, Kwic> e: fkwics.entrySet()) {
-                        String fieldName = e.getKey();
-                        AnnotatedField annotatedField = index.metadata().annotatedFields().get(fieldName);
-                        if (annotatedField == null)
-                            throw new IllegalStateException("No annotated field with name '" + fieldName);
+                    for (Map.Entry<AnnotatedField, Kwic> e: fkwics.entrySet()) {
+                        AnnotatedField annotatedField = e.getKey();
                         Kwic kwic = e.getValue();
                         Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
                                 hit.matchInfo());
-                        hitToShow.addForeign(fieldName, showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
+                        hitToShow.addForeign(annotatedField, showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
                     }
                 }
             } else {
@@ -558,8 +555,8 @@ class Output {
                 line(String.format(format, hitNr, hit.left, hit.hitText, hit.right));
             else
                 line(String.format(format, hitNr, hit.doc, hit.left, hit.hitText, hit.right));
-            for (Map.Entry<String, HitToShow> e: hit.foreignHits.entrySet()) {
-                String fieldName = e.getKey();
+            for (Map.Entry<AnnotatedField, HitToShow> e: hit.foreignHits.entrySet()) {
+                String fieldName = e.getKey().name();
                 HitToShow fhit = e.getValue();
                 line(String.format("    %s: %s%s%s", fieldName, fhit.left, fhit.hitText, fhit.right));
             }
@@ -675,7 +672,7 @@ class Output {
         /**
          * Hits in other fields (parallel corpora)
          */
-        public final Map<String, HitToShow> foreignHits = new TreeMap<>();
+        public final Map<AnnotatedField, HitToShow> foreignHits = new TreeMap<>();
 
         public HitToShow(int doc, String left, String hitText, String right, Map<String, MatchInfo> matchInfos) {
             super();
@@ -686,8 +683,8 @@ class Output {
             this.matchInfos = matchInfos;
         }
 
-        public void addForeign(String fieldName, HitToShow hitToShow) {
-            foreignHits.put(fieldName, hitToShow);
+        public void addForeign(AnnotatedField field, HitToShow hitToShow) {
+            foreignHits.put(field, hitToShow);
         }
     }
 }

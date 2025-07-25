@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.Collection;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.WindowStats;
@@ -18,12 +19,12 @@ public class ResultSummaryCommonFields {
     private final MatchInfoDefs matchInfoDefs;
     private final ResultGroups groups;
     private final WindowStats window;
-    private final String searchField;
-    private final Collection<String> otherFields;
+    private final AnnotatedField searchField;
+    private final Collection<AnnotatedField> otherFields;
 
     ResultSummaryCommonFields(WebserviceParams searchParam, Index.IndexStatus indexStatus,
             SearchTimings timings, MatchInfoDefs matchInfoDefs,
-            ResultGroups groups, WindowStats window, String searchField, Collection<String> otherFields) {
+            ResultGroups groups, WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
         this.searchParam = searchParam;
         if (searchParam.hasPattern())
             this.textPattern = searchParam.pattern().orElse(null);
@@ -64,11 +65,11 @@ public class ResultSummaryCommonFields {
         return window;
     }
 
-    public String getSearchField() {
+    public AnnotatedField getSearchField() {
         return searchField;
     }
 
-    public Collection<String> getOtherFields() {
+    public Collection<AnnotatedField> getOtherFields() {
         return otherFields;
     }
 }

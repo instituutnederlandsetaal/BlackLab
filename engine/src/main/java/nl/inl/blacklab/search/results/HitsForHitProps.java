@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /** A minimal Hits/HitsInternal interface that is all that HitProperty needs. */
@@ -10,7 +11,7 @@ public interface HitsForHitProps {
      *
      * @return field
      */
-    String fieldName();
+    AnnotatedField field();
 
     /**
      * Type of each of our match infos.

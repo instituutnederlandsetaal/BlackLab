@@ -8,6 +8,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public class TestMatchInfo {
@@ -46,16 +47,17 @@ public class TestMatchInfo {
                 sourceEnd = targetEnd;
             }
             RelationInfo matchInfo = RelationInfo.create(onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd,
-                    relationId, false);
+                    relationId, new MockAnnotatedField(), false);
 
             // Encode the payload
             byte[] payload = payloadCodec.serialize(matchInfo).bytes;
 
             // Decode it again
-            RelationInfo decoded = RelationInfo.create();
+            RelationInfo decoded = RelationInfo.create(new MockAnnotatedField());
             payloadCodec.deserialize(sourceStart, new ByteArrayDataInput(payload), decoded);
 
             Assert.assertEquals(matchInfo, decoded);
         }
     }
+
 }

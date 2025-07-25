@@ -23,8 +23,9 @@ public class TestSearchBehavior {
         // the source of the interrupt continues before the target thread receives it sometimes, so this is a way to block until it's been received.
         CountDownLatch waitForSpansReaderToBeInterrupted = new CountDownLatch(1);
 
-        BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
+        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
+        HitsFromQuery h = new HitsFromQuery(queryInfo, patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
@@ -75,8 +76,9 @@ public class TestSearchBehavior {
     /** Test that an exception thrown from the SpansReader in a worker thread is correctly propagated to the main HitsFromQueryParallel thread */
     @Test
     public void testParallelSearchException() {
-        BLSpanTermQuery patternQuery = new BLSpanTermQuery(null, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(QueryInfo.create(testIndex.index()), patternQuery, SearchSettings.defaults());
+        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
+        BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
+        HitsFromQuery h = new HitsFromQuery(queryInfo, patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");

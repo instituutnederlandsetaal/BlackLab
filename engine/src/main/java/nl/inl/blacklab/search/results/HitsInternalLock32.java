@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
@@ -26,11 +27,11 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
 
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    HitsInternalLock32(String field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
+    HitsInternalLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
         super(field, matchInfoDefs, initialCapacity);
     }
 
-    HitsInternalLock32(String field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+    HitsInternalLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         super(field, matchInfoDefs, docs, starts, ends, matchInfos);
     }
 

@@ -9,6 +9,7 @@ import org.apache.lucene.util.BytesRef;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.mocks.MockAnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 
@@ -67,7 +68,7 @@ public class TestPayloadUtils {
         for (int i = 0; i < starts.length; i++) {
             // Integrated index type: writes start and end position
             BytesRef b = payloadCodec.inlineTagPayload(starts[i], ends[i], 0, true);
-            RelationInfo r = RelationInfo.create();
+            RelationInfo r = RelationInfo.create(new MockAnnotatedField());
             payloadCodec.deserialize(starts[i], new ByteArrayDataInput(b.bytes), r);
             Assert.assertEquals(starts[i], r.getSpanStart());
             Assert.assertEquals(starts[i], r.getSourceStart());

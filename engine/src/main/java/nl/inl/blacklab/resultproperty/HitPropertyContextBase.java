@@ -145,13 +145,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
      * @return the annotation to use
      */
-    protected static Annotation annotationOverrideField(BlackLabIndex index, Annotation annotation, String overrideField) {
+    protected static Annotation annotationOverrideField(BlackLabIndex index, Annotation annotation, AnnotatedField overrideField) {
         if (overrideField != null && !overrideField.equals(annotation.field().name())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
-            AnnotatedField annotatedField = index.annotatedField(overrideField);
-            if (annotatedField == null)
-                throw new IllegalArgumentException("Unknown field: " + overrideField);
-            annotation = annotatedField.annotation(annotation.name());
+            annotation = overrideField.annotation(annotation.name());
         }
         return annotation;
     }
@@ -179,7 +176,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected final BlackLabIndex index;
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, AnnotatedField overrideField) {
         super(prop, hits, invert);
         this.index = hits == null ? prop.index : hits.queryInfo().index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);

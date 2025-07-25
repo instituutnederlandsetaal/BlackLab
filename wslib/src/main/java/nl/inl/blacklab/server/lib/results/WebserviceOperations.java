@@ -785,7 +785,7 @@ public class WebserviceOperations {
 
     public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
             SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups, WindowStats window,
-            String searchField, Collection<String> otherFields) {
+            AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
         return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoDefs,groups, window,
                 searchField, otherFields);
     }

@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search.lucene;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /**
  * Provides per-hit query-wide context, such as captured groups.
  * <p>
@@ -10,6 +13,9 @@ package nl.inl.blacklab.search.lucene;
  */
 public class HitQueryContext {
 
+    /** The index we're searching. */
+    private final BlackLabIndex index;
+
     /** Root of the BLSpans tree for this query. */
     private BLSpans rootSpans;
 
@@ -18,16 +24,17 @@ public class HitQueryContext {
     private final MatchInfoDefs matchInfoDefs;
 
     /** Default field for this query (the primary field we search in; or only field for non-parallel corpora) */
-    private final String defaultField;
+    private final AnnotatedField defaultField;
 
-    /** The field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
-    private final String field;
+    /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
+    private final AnnotatedField field;
 
-    public HitQueryContext(BLSpans spans, String defaultField, MatchInfoDefs matchInfoDefs) {
-        this(spans, defaultField, defaultField, matchInfoDefs);
+    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField, MatchInfoDefs matchInfoDefs) {
+        this(index, spans, defaultField, defaultField, matchInfoDefs);
     }
 
-    private HitQueryContext(BLSpans spans, String defaultField, String field, MatchInfoDefs matchInfoDefs) {
+    private HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField, AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+        this.index = index;
         this.rootSpans = spans;
         this.defaultField = defaultField;
         assert field != null;
@@ -35,14 +42,18 @@ public class HitQueryContext {
         this.matchInfoDefs = matchInfoDefs;
     }
 
-    public HitQueryContext withSpans(BLSpans spans) {
-        return new HitQueryContext(spans, defaultField, field, matchInfoDefs);
+    public BlackLabIndex index() {
+        return index;
     }
 
-    public HitQueryContext withField(String overriddenField) {
+    public HitQueryContext withSpans(BLSpans spans) {
+        return new HitQueryContext(index, spans, defaultField, field, matchInfoDefs);
+    }
+
+    public HitQueryContext withField(AnnotatedField overriddenField) {
         HitQueryContext result = this;
         if (overriddenField != null) {
-            result = new HitQueryContext(rootSpans, defaultField, overriddenField, matchInfoDefs);
+            result = new HitQueryContext(index, rootSpans, defaultField, overriddenField, matchInfoDefs);
         }
         return result;
     }
@@ -84,7 +95,7 @@ public class HitQueryContext {
      * @param targetField for relation and list of relations: the target field, or empty string if not applicable
      * @return the group's assigned index
      */
-    public int registerMatchInfo(String name, MatchInfo.Type type, String field, String targetField) {
+    public int registerMatchInfo(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
         return matchInfoDefs.register(name, type, field, targetField).getIndex();
     }
 
@@ -126,11 +137,11 @@ public class HitQueryContext {
      *
      * @return the field this part of the query searches
      */
-    public String getField() {
+    public AnnotatedField getField() {
         return field;
     }
 
-    public String getDefaultField() {
+    public AnnotatedField getDefaultField() {
         return defaultField;
     }
 

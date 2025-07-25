@@ -342,7 +342,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
-                        docHits = HitsInternal.create(queryInfo().field().name(), matchInfoDefs, -1, true, false);
+                        docHits = HitsInternal.create(queryInfo().field(), matchInfoDefs, -1, true, false);
                     }
 
                     docHits.add(h);
