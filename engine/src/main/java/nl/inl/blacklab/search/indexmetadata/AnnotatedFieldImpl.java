@@ -121,8 +121,8 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     AnnotatedFieldImpl() {
     }
 
-    public AnnotatedFieldImpl(String name) {
-        super(name);
+    public AnnotatedFieldImpl(BlackLabIndex index, String name) {
+        super(index, name);
     }
 
     @Override

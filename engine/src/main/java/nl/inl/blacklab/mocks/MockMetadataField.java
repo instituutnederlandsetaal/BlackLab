@@ -1,11 +1,19 @@
 package nl.inl.blacklab.mocks;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 
 public record MockMetadataField(String name) implements MetadataField {
+
+    private static final BlackLabIndex index = new MockBlackLabIndex();
+
+    @Override
+    public BlackLabIndex index() {
+        return index;
+    }
 
     @Override
     public boolean hasContentStore() {

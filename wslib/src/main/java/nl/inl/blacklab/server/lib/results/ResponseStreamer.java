@@ -623,7 +623,7 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, hits.queryInfo().field(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                hit(docPid, hit, hits.field(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
             ds.endItem();
@@ -661,7 +661,7 @@ public class ResponseStreamer {
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        AnnotatedField searchField = result.getHits().queryInfo().field();
+        AnnotatedField searchField = result.getHits().field();
         outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }

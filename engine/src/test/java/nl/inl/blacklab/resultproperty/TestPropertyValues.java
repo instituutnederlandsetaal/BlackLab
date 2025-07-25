@@ -10,6 +10,7 @@ import org.junit.Test;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -38,7 +39,8 @@ public class TestPropertyValues {
     @Test
     public void testPropertyValueContextWords() {
         MatchSensitivity sensitivity = MatchSensitivity.INSENSITIVE;
-        AnnotatedField field = new AnnotatedFieldImpl("contents");
+        MockBlackLabIndex index = new MockBlackLabIndex();
+        AnnotatedField field = new AnnotatedFieldImpl(index, "contents");
         Annotation annotation = new AnnotationImpl(field, "lemma");
         PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(terms, annotation, sensitivity,
                 new int[]{2, 3, 3}, null, false, false);

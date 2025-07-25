@@ -45,7 +45,7 @@ public class ResultDocsCsv {
             docs = params.docs().execute();
 
             if (viewGroup != null) {
-                PropertyValue groupId = PropertyValue.deserialize(groups.queryInfo().index(), groups.queryInfo().field(), viewGroup);
+                PropertyValue groupId = PropertyValue.deserialize(groups.queryInfo().index(), groups.field(), viewGroup);
                 if (groupId == null)
                     throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
                 DocGroup group = groups.get(groupId);

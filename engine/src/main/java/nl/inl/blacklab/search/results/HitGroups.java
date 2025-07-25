@@ -121,7 +121,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = HitsInternal.create(hits.queryInfo().field(), hits.matchInfoDefs(), -1, hits.size(), false);
+                group = HitsInternal.create(hits.field(), hits.matchInfoDefs(), -1, hits.size(), false);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {

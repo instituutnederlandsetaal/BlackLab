@@ -89,7 +89,7 @@ public class ResultDocsResponse {
             throw WebserviceOperations.translateSearchException(e);
         }
 
-        PropertyValue viewGroupVal = PropertyValue.deserialize(groups.queryInfo().index(), groups.queryInfo().field(), viewGroup);
+        PropertyValue viewGroupVal = PropertyValue.deserialize(groups.queryInfo().index(), groups.field(), viewGroup);
         if (viewGroupVal == null) {
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Parameter 'viewgroup' has an illegal value: " + viewGroup);
         }
@@ -188,7 +188,7 @@ public class ResultDocsResponse {
         SearchTimings timings = new SearchTimings(search.timer().time(), totalTime);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus, timings,
-                null, null, window.windowStats(), docResults.queryInfo().field(),
+                null, null, window.windowStats(), docResults.field(),
                 Collections.emptyList());
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;

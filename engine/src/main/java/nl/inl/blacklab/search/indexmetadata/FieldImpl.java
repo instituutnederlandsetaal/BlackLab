@@ -11,6 +11,9 @@ public abstract class FieldImpl implements Field, Freezable {
     @XmlTransient
     protected String fieldName;
 
+    @XmlTransient
+    protected BlackLabIndex index;
+
     /** Does the field have an associated content store? */
     @JsonProperty("hasContentStore")
     protected boolean contentStore;
@@ -30,8 +33,14 @@ public abstract class FieldImpl implements Field, Freezable {
     FieldImpl() {
     }
 
-    FieldImpl(String fieldName) {
+    FieldImpl(BlackLabIndex index, String fieldName) {
+        this.index = index;
         this.fieldName = fieldName;
+    }
+
+    @Override
+    public BlackLabIndex index() {
+        return index;
     }
 
     /**
@@ -97,6 +106,7 @@ public abstract class FieldImpl implements Field, Freezable {
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {
         ensureNotFrozen();
         this.fieldName = fieldName;
+        this.index = index;
     }
 
     @Override

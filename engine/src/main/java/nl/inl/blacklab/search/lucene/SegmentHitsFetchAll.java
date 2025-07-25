@@ -34,13 +34,13 @@ public abstract class SegmentHitsFetchAll implements SegmentHits {
     }
 
     protected HitsInternalMutable gatherHits(BLSpans clause, HitQueryContext context) {
-        final HitsInternalMutable hits;
-        MatchInfo[] matchInfos = null;
-        if (context.numberOfMatchInfos() > 0) {
-            matchInfos = new MatchInfo[context.numberOfMatchInfos()];
-        }
         try {
-            hits = HitsInternal.create(context.getField(), context.getMatchInfoDefs(), -1, true, false);
+            MatchInfo[] matchInfos = null;
+            if (context.numberOfMatchInfos() > 0) {
+                matchInfos = new MatchInfo[context.numberOfMatchInfos()];
+            }
+            final HitsInternalMutable hits = HitsInternal.create(context.getField(), context.getMatchInfoDefs(), -1,
+                    true, false);
             while (true) {
                 int doc = clause.nextDoc();
                 if (doc == DocIdSetIterator.NO_MORE_DOCS)

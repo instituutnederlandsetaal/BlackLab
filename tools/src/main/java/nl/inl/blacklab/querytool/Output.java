@@ -510,7 +510,7 @@ class Output {
             if (kwics != null) {
                 Map<String, MatchInfo> matchInfo;
                 matchInfo = window.hasMatchInfo() ? Hits.getMatchInfoMap(window, hit, false) : Collections.emptyMap();
-                hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.queryInfo().field());
+                hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
                 Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
                 if (fkwics != null) {

@@ -91,7 +91,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
             }
             stats.increment(true);
-            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(queryInfo.index(), globalDocId), 0.0f, 0));
+            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(globalDocId), 0.0f, 0));
         }
 
 		@Override
@@ -333,7 +333,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     int curDoc = h.doc();
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
-                            PropertyValueDoc doc = new PropertyValueDoc(queryInfo().index(), lastDocId);
+                            PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
                             Hits hits = Hits.list(queryInfo(), docHits, matchInfoDefs);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
@@ -342,7 +342,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
-                        docHits = HitsInternal.create(queryInfo().field(), matchInfoDefs, -1, true, false);
+                        docHits = HitsInternal.create(field(), matchInfoDefs, -1, true, false);
                     }
 
                     docHits.add(h);
@@ -355,7 +355,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         partialDocId = lastDocId;
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
-                        PropertyValueDoc doc = new PropertyValueDoc(queryInfo().index(), lastDocId);
+                        PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
                         Hits hits = Hits.list(queryInfo(), docHits, matchInfoDefs);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
@@ -401,7 +401,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         Map<PropertyValue, Long> groupTokenSizes = new HashMap<>();
 
-        String tokenLengthFieldName = queryInfo().field().name();
+        String tokenLengthFieldName = field().name();
         DocPropertyAnnotatedFieldLength fieldLengthProp = new DocPropertyAnnotatedFieldLength(queryInfo().index(), tokenLengthFieldName);
 
         for (DocResult r : this) {
@@ -565,7 +565,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                    String queryField = queryInfo().field().name();
+                    String queryField = field().name();
                     List<AnnotatedField> tokenLengthFields = queryInfo().index().annotatedFields().stream().toList();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         LeafReader reader = r.reader();
@@ -618,7 +618,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 // Slow approach: get the stored field value from each Document
                 // (note that DocPropertyAnnotatedFieldLength already excludes the dummy closing token)
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
-                String queryFieldName = queryInfo().field().name();
+                String queryFieldName = field().name();
                 numberOfTokens = 0;
                 for (AnnotatedField field: queryInfo().index().annotatedFields()) {
                     DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), field.name());

@@ -66,7 +66,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     public MockBlackLabIndex() {
         super();
-        indexMetadata = new MockIndexMetadata();
+        indexMetadata = new MockIndexMetadata(this);
         analyzer = BuiltinAnalyzers.STANDARD.getAnalyzer();
         searchSettings = SearchSettings.defaults();
 

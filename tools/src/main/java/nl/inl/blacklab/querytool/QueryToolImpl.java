@@ -34,9 +34,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
-import nl.inl.blacklab.resultproperty.HitPropertyLeftContext;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
-import nl.inl.blacklab.resultproperty.HitPropertyRightContext;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
@@ -868,17 +866,13 @@ public class QueryToolImpl {
         case "hit":
             crit = new HitPropertyHitText(index, annotation);
             break;
+        case "left":
         case HitPropertyBeforeHit.ID:
             crit = new HitPropertyBeforeHit(index, annotation, null, numberOfContextTokens);
             break;
-        case HitPropertyLeftContext.ID:
-            crit = new HitPropertyLeftContext(index, annotation, null, numberOfContextTokens);
-            break;
+        case "right":
         case HitPropertyAfterHit.ID:
             crit = new HitPropertyAfterHit(index, annotation, null, numberOfContextTokens);
-            break;
-        case HitPropertyRightContext.ID:
-            crit = new HitPropertyRightContext(index, annotation, null, numberOfContextTokens);
             break;
         case HitPropertyDocumentId.ID:
             crit = new HitPropertyDocumentId();
@@ -971,7 +965,7 @@ public class QueryToolImpl {
         if (collocations == null) {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
-                AnnotatedField field = hits.queryInfo().field();
+                AnnotatedField field = hits.field();
                 collocAnnotation = field.mainAnnotation();
             }
 

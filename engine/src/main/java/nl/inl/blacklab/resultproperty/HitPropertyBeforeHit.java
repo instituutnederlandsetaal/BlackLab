@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 
 /**
  * A hit property for sorting on a number of tokens before a hit.
@@ -34,7 +34,7 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
         return hitProp;
     }
 
-    HitPropertyBeforeHit(HitPropertyBeforeHit prop, Hits hits, boolean invert) {
+    HitPropertyBeforeHit(HitPropertyBeforeHit prop, HitsForHitProps hits, boolean invert) {
         super(prop, hits, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
@@ -73,13 +73,13 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, boolean invert) {
+    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
         return new HitPropertyBeforeHit(this, newHits, invert);
     }
 
     @Override
     public void fetchContext() {
-        if (annotation.field() == hits.queryInfo().field()) {
+        if (annotation.field() == hits.field()) {
             // Regular hit; use start and end offsets from the hit itself
             fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
                 starts[hitIndex] = Math.max(0, hit.start() - numberOfTokens);

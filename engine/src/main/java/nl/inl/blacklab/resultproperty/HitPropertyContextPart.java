@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 
 /**
  * A hit property for sorting on a number of tokens before a hit.
@@ -153,7 +153,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     /** Description of the context to use (starting point, direction, start/end index) */
     private ContextPart part;
 
-    HitPropertyContextPart(HitPropertyContextPart prop, Hits hits, boolean invert) {
+    HitPropertyContextPart(HitPropertyContextPart prop, HitsForHitProps hits, boolean invert) {
         super(prop, hits, invert, null);
         this.part = prop.part;
     }
@@ -182,7 +182,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, boolean invert) {
+    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
         return new HitPropertyContextPart(this, newHits, invert);
     }
 
@@ -191,7 +191,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
         int smaller = Math.min(part.first, part.last);
         int larger = Math.max(part.first, part.last);
         StartEndSetter func;
-        if (annotation.field() == hits.queryInfo().field()) {
+        if (annotation.field() == hits.field()) {
             // Regular hit; use start and end offsets from the hit itself
             func = fetchContextRegular(smaller, larger);
         } else {

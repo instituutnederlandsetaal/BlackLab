@@ -121,7 +121,7 @@ public class WriteCsv {
         Hits hits = resultHitsCsv.getHits();
         HitGroups groups = resultHitsCsv.getGroups();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
-        final Annotation mainTokenProperty = hits.queryInfo().field().mainAnnotation();
+        final Annotation mainTokenProperty = hits.field().mainAnnotation();
         try {
             // Build the table headers
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.

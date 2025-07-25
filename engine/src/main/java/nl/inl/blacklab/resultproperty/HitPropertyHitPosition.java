@@ -1,6 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 
 /**
  * A hit property for sorting on hit token position. Usually to be combined with
@@ -10,7 +10,7 @@ public class HitPropertyHitPosition extends HitProperty {
 
     public static final String ID = "hitposition";
 
-    HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, boolean invert) {
+    HitPropertyHitPosition(HitPropertyHitPosition prop, HitsForHitProps hits, boolean invert) {
         super(prop, hits, invert);
     }
     
@@ -19,7 +19,7 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, boolean invert) {
+    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
         return new HitPropertyHitPosition(this, newHits, invert);
     }
 

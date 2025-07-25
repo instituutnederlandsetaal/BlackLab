@@ -324,7 +324,7 @@ public class WebserviceOperations {
      * @return collocations
      */
     public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        Annotation annotation = hits.queryInfo().field().mainAnnotation();
+        Annotation annotation = hits.field().mainAnnotation();
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
         ensureHasSensitivity(annotation, sensitivity);

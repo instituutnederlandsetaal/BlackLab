@@ -19,7 +19,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
 
     public static MetadataFieldImpl fromConfig(ConfigMetadataField config,
             MetadataFieldsImpl metadataFields) {
-        MetadataFieldImpl field = new MetadataFieldImpl(config.getName(), config.getType(),
+        MetadataFieldImpl field = new MetadataFieldImpl(null, config.getName(), config.getType(),
                 metadataFields.getMetadataFieldValuesFactory());
 
         // Custom properties
@@ -68,8 +68,8 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     MetadataFieldImpl() {
     }
 
-    MetadataFieldImpl(String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
-        super(fieldName);
+    MetadataFieldImpl(BlackLabIndex index, String fieldName, FieldType type, MetadataFieldValues.Factory factory) {
+        super(index, fieldName);
         this.type = type;
         this.factory = factory;
         ensureValuesCreated();

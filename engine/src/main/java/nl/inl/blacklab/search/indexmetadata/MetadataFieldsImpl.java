@@ -24,6 +24,7 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
+import nl.inl.blacklab.search.BlackLabIndex;
 
 /**
  * The metadata fields in an index.
@@ -33,6 +34,10 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     private static final Logger logger = LogManager.getLogger(MetadataFieldsImpl.class);
+
+    /** Our index */
+    @XmlTransient
+    private BlackLabIndex index;
 
     /** All non-annotated fields in our index (metadata fields) and their types. */
     @JsonProperty("fields")
@@ -96,7 +101,8 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         metadataFieldInfos = new TreeMap<>();
     }
 
-    MetadataFieldsImpl(MetadataFieldValues.Factory metadataFieldValuesFactory) {
+    MetadataFieldsImpl(BlackLabIndex index, MetadataFieldValues.Factory metadataFieldValuesFactory) {
+        this.index = index;
         this.metadataFieldValuesFactory = metadataFieldValuesFactory;
         metadataFieldInfos = new TreeMap<>();
     }
@@ -144,7 +150,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
                 // This allows us to handle the situation where not all metadata fields were registered
                 // before indexing, and unregistered tokenized metadata fields were added during indexing.
                 // (metadata can't change while indexing for integrated index)
-                return registerImplicit(fieldName);
+                return registerImplicit(index, fieldName);
             } else {
                 // Old behaviour: just throw an exception
                 throw new IllegalArgumentException("Metadata field '" + fieldName + "' not found!");
@@ -153,11 +159,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return d;
     }
 
-    private MetadataFieldImpl registerImplicit(String fieldName) {
+    private MetadataFieldImpl registerImplicit(BlackLabIndex index, String fieldName) {
         return implicitFields.computeIfAbsent(fieldName,
                 __ -> {
                     logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
-                    return new MetadataFieldImpl(fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
+                    return new MetadataFieldImpl(index, fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
                 }
         );
     }
@@ -215,7 +221,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
                     // field whose configuration should match the default.
                     // With throwOnMissingField set to false, get() will also return a
                     // default config for missing fields.
-                    return registerImplicit(fieldName);
+                    return registerImplicit(index, fieldName);
                 }
                 // Not registered yet; do so now.
                 ensureNotFrozen();
@@ -225,7 +231,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
                     // (probably better to register this field properly, but this works for now)
                     fieldType = FieldType.UNTOKENIZED;
                 }
-                mf = new MetadataFieldImpl(fieldName, fieldType, metadataFieldValuesFactory);
+                mf = new MetadataFieldImpl(index, fieldName, fieldType, metadataFieldValuesFactory);
                 mf.putCustom("unknownCondition", defaultUnknownCondition());
                 mf.putCustom("unknownValue", defaultUnknownValue());
                 metadataFieldInfos.put(fieldName, mf);
@@ -296,13 +302,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return new ArrayList<>(metadataFieldInfos.keySet());
     }
 
-    public void fixAfterDeserialization(IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
+    public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
+        this.index = index;
         setTopLevelCustom(metadata.custom());
 
         metadataFieldValuesFactory = factory;
-//        for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
-//            e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);
-//        }
 
         // Find DocValues for all metadata fields in parallel
         metadataFieldInfos.entrySet().parallelStream().

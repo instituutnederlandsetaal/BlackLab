@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
@@ -25,6 +26,9 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
 
     @Override
     AnnotatedField field();
+
+    @Override
+    BlackLabIndex index();
 
     /** An empty HitsInternalRead object. */
     static HitsInternal emptySingleton(AnnotatedField field, MatchInfoDefs matchInfoDefs) {

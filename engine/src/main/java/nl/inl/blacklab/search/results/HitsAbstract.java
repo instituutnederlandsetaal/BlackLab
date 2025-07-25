@@ -105,7 +105,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
         // Copy the hits we're interested in.
         MutableLong docsRetrieved = new MutableLong(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsInternalMutable window = HitsInternal.create(queryInfo().field(), matchInfoDefs(), number, number,
+        HitsInternalMutable window = HitsInternal.create(field(), matchInfoDefs(), number, number,
                 false);
 
         this.hitsInternal.withReadLock(h -> {
@@ -171,7 +171,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
         }
 
         MutableInt docsInSample = new MutableInt(0);
-        HitsInternalMutable sample = HitsInternal.create(queryInfo().field(), matchInfoDefs(), numberOfHitsToSelect,
+        HitsInternalMutable sample = HitsInternal.create(field(), matchInfoDefs(), numberOfHitsToSelect,
                 numberOfHitsToSelect, false);
 
         this.hitsInternal.withReadLock(hr -> {
@@ -322,7 +322,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     @Override
     public Hits getHitsInDoc(int docId) {
         ensureResultsRead(-1);
-        HitsInternalMutable hitsInDoc = HitsInternal.create(queryInfo().field(), matchInfoDefs(), -1, size(),
+        HitsInternalMutable hitsInDoc = HitsInternal.create(field(), matchInfoDefs(), -1, size(),
                 false);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsInternal) {
@@ -338,7 +338,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     /** Assumes this hit is within our lists. */
     @Override
     public Hits window(Hit hit) {
-        HitsInternalMutable r = HitsInternal.create(queryInfo().field(), matchInfoDefs(), 1, false, false);
+        HitsInternalMutable r = HitsInternal.create(field(), matchInfoDefs(), 1, false, false);
         r.add(hit);
 
         return new HitsList(

@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -16,7 +16,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private final DocPropertyStoredField docPropStoredField;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, boolean invert) {
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, HitsForHitProps hits, boolean invert) {
         super(prop, hits, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
@@ -34,7 +34,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, boolean invert) {
+    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
         return new HitPropertyDocumentStoredField(this, newHits, invert);
     }
 

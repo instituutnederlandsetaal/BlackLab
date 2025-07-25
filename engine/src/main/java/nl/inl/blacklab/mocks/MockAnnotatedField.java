@@ -13,20 +13,31 @@ import nl.inl.blacklab.search.indexmetadata.CustomProps;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 
 public class MockAnnotatedField implements AnnotatedField {
-    
-    final String name;
+
+    private final String name;
     
     private final List<Annotation> annotations;
 
+    private BlackLabIndex index;
+
     public MockAnnotatedField() {
-        this("test");
+        this((BlackLabIndex) null);
+    }
+
+    public MockAnnotatedField(BlackLabIndex index) {
+        this(index, "test");
     }
 
     public MockAnnotatedField(String name) {
-        this(name, Collections.emptyList());
+        this(null, name);
+    }
+
+    public MockAnnotatedField(BlackLabIndex index, String name) {
+        this(index, name, Collections.emptyList());
     }
     
-    public MockAnnotatedField(String name, List<Annotation> annotations) {
+    public MockAnnotatedField(BlackLabIndex index, String name, List<Annotation> annotations) {
+        this.index = index == null ? new MockBlackLabIndex() : index;
         this.name = name;
         this.annotations = annotations;
         for (Annotation a: annotations) {
@@ -39,6 +50,11 @@ public class MockAnnotatedField implements AnnotatedField {
     @Override
     public String name() {
         return this.name;
+    }
+
+    @Override
+    public BlackLabIndex index() {
+        return index;
     }
 
     @Override

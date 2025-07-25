@@ -119,9 +119,9 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
 
         case HitPropertyHitText.ID:
         case HitPropertyBeforeHit.ID:
-        case HitPropertyLeftContext.ID:
         case HitPropertyAfterHit.ID:
-        case HitPropertyRightContext.ID:
+        case "left":      // deprecated
+        case "right":     // deprecated
         case "wordleft":  // deprecated
         case "wordright": // deprecated
         case "context":   // deprecated

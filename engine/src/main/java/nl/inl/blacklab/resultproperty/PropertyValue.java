@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -38,8 +38,8 @@ public abstract class PropertyValue implements Comparable<Object> {
      * @param serialized the serialized object
      * @return the HitPropValue object, or null if it could not be deserialized
      */
-    public static PropertyValue deserialize(Hits hits, String serialized) {
-        return deserialize(hits.queryInfo().index(), hits.queryInfo().field(), serialized);
+    public static PropertyValue deserialize(HitsForHitProps hits, String serialized) {
+        return deserialize(hits.index(), hits.field(), serialized);
     }
     
     /**
@@ -67,7 +67,7 @@ public abstract class PropertyValue implements Comparable<Object> {
             case "dec" -> PropertyValueDecade.deserialize(infos.isEmpty() ? "unknown" : infos.get(0));
             case "int" -> PropertyValueInt.deserialize(infos.isEmpty() ? "-1" : infos.get(0));
             case "str" -> new PropertyValueString(infos.isEmpty() ? "" : infos.get(0));
-            case "doc" -> PropertyValueDoc.deserialize(index, infos.isEmpty() ? "NO_DOC_ID_SPECIFIED" : infos.get(0));
+            case "doc" -> PropertyValueDoc.deserialize(infos.isEmpty() ? "NO_DOC_ID_SPECIFIED" : infos.get(0));
             default -> {
                 logger.debug("Unknown HitPropValue '" + type + "'");
                 yield null;

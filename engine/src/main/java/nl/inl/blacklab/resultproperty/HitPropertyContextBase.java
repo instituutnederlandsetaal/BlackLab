@@ -20,7 +20,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 import nl.inl.blacklab.search.results.HitsInternal;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.ThreadAborter;
@@ -176,9 +176,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected final BlackLabIndex index;
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, AnnotatedField overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, HitsForHitProps hits, boolean invert, AnnotatedField overrideField) {
         super(prop, hits, invert);
-        this.index = hits == null ? prop.index : hits.queryInfo().index();
+        this.index = hits == null ? prop.index : hits.index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
         this.terms = index.annotationForwardIndex(this.annotation).terms();
 //        if (hits != null && !hits.field().equals(this.annotation.field())) {

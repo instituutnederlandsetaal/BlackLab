@@ -142,7 +142,7 @@ public class ResultDocContents {
             // Whole document. Use the highlightDocument method, which takes document versions in
             // a parallel corpus into account (cuts out part of the original input file).
             AnnotatedField field;
-            field = hits == null ? fieldToShow : hits.queryInfo().field();
+            field = hits == null ? fieldToShow : hits.field();
             content = DocUtil.highlightDocument(index, field, docId, hitsInDoc);
         } else {
             // Part of the document by token positions.

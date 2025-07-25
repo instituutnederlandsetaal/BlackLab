@@ -9,12 +9,11 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigStandoffAnnotations;
@@ -22,6 +21,10 @@ import nl.inl.blacklab.search.BlackLabIndex;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
+
+    /** Our index */
+    @XmlTransient
+    private BlackLabIndex index;
 
     /** The annotated fields in our index */
     @JsonProperty("fields")
@@ -47,6 +50,11 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     FreezeStatus freezeStatus = new FreezeStatus();
 
     public AnnotatedFieldsImpl() {
+        this(null);
+    }
+
+    public AnnotatedFieldsImpl(BlackLabIndex index) {
+        this.index = index;
         annotatedFields = new TreeMap<>();
     }
 
@@ -143,6 +151,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {
+        this.index = index;
         setTopLevelCustom(metadata.custom());
 
         for (Map.Entry<String, AnnotatedFieldImpl> e: annotatedFields.entrySet()) {
@@ -157,7 +166,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
 
     @Override
     public void addFromConfig(ConfigAnnotatedField f) {
-        AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(f.getName());
+        AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(index, f.getName());
         annotatedField.putCustom("displayName", f.getDisplayName());
         annotatedField.putCustom("description", f.getDescription());
         List<String> displayOrder = new ArrayList<>();

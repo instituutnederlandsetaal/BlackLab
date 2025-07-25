@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -22,9 +23,9 @@ public class MockIndexMetadata implements IndexMetadata {
     
     private final FreezeStatus frozen = new FreezeStatus();
 
-    public MockIndexMetadata() {
+    public MockIndexMetadata(BlackLabIndex index) {
         List<Annotation> annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
-        MockAnnotatedField contents = new MockAnnotatedField("contents", annot);
+        MockAnnotatedField contents = new MockAnnotatedField(index, "contents", annot);
         fields = List.of(contents);
     }
 

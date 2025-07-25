@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+
 /** Shared base interface between metadata and annotated fields */
 public interface Field {
 	
@@ -26,4 +28,6 @@ public interface Field {
     String contentsFieldName();
 
     CustomProps custom();
+
+    BlackLabIndex index();
 }

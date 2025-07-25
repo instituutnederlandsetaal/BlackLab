@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 /**
  * A list of results of some type.
  *
@@ -27,6 +30,16 @@ public abstract class ResultsAbstract implements Results {
     @Override
     public QueryInfo queryInfo() {
         return queryInfo;
+    }
+
+    @Override
+    public AnnotatedField field() {
+        return queryInfo.field();
+    }
+
+    @Override
+    public BlackLabIndex index() {
+        return queryInfo.index();
     }
 
     public abstract String toString();

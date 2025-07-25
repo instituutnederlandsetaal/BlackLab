@@ -1,5 +1,8 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+
 public interface Results extends SearchResult {
 
     /**
@@ -16,6 +19,10 @@ public interface Results extends SearchResult {
      * @return query info
      */
     QueryInfo queryInfo();
+
+    AnnotatedField field();
+
+    BlackLabIndex index();
 
     ResultsStats resultsStats();
 

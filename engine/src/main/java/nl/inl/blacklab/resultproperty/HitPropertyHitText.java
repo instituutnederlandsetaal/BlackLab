@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 
 /**
  * A hit property for grouping on the text actually matched.
@@ -21,7 +21,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         return new HitPropertyHitText(index, i.annotation, i.sensitivity);
     }
 
-    HitPropertyHitText(HitPropertyHitText prop, Hits hits, boolean invert) {
+    HitPropertyHitText(HitPropertyHitText prop, HitsForHitProps hits, boolean invert) {
         super(prop, hits, invert, null);
     }
 
@@ -42,13 +42,13 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, boolean invert) {
+    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
         return new HitPropertyHitText(this, newHits, invert);
     }
 
     @Override
     public void fetchContext() {
-        if (annotation.field() == hits.queryInfo().field()) {
+        if (annotation.field() == hits.field()) {
             // Regular hit; use start and end offsets from the hit itself
             fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
                 starts[hitIndex] = hit.start();

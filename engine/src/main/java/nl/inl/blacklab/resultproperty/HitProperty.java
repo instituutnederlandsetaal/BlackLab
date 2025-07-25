@@ -12,7 +12,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -22,8 +22,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    public static HitProperty deserialize(Hits hits, String serialized, ContextSize contextSize) {
-        return deserialize(hits.queryInfo().index(), hits.queryInfo().field(), serialized, contextSize);
+    public static HitProperty deserialize(HitsForHitProps hits, String serialized, ContextSize contextSize) {
+        return deserialize(hits.index(), hits.field(), serialized, contextSize);
     }
 
     /**
@@ -74,17 +74,13 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         case HitPropertyHitText.ID:
             result = HitPropertyHitText.deserializeProp(index, field, infos);
             break;
+        case "left": // deprecated
         case HitPropertyBeforeHit.ID:
             result = HitPropertyBeforeHit.deserializeProp(index, field, infos, contextSize);
             break;
-        case HitPropertyLeftContext.ID:
-            result = HitPropertyLeftContext.deserializeProp(index, field, infos, contextSize);
-            break;
+        case "right": // deprecated
         case HitPropertyAfterHit.ID:
             result = HitPropertyAfterHit.deserializeProp(index, field, infos, contextSize);
-            break;
-        case HitPropertyRightContext.ID:
-            result = HitPropertyRightContext.deserializeProp(index, field, infos, contextSize);
             break;
         case "wordleft":
             // deprecated, use e.g. before:lemma:s:1
@@ -160,7 +156,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     }
 
     /** The Hits object we're looking at */
-    protected final Hits hits;
+    protected final HitsForHitProps hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
@@ -184,7 +180,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new hits to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, Hits hits, boolean invert) {
+    HitProperty(HitProperty prop, HitsForHitProps hits, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.reverse = prop.reverse;
         if (invert)
@@ -243,7 +239,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new Hits to use
      * @return the new HitProperty object
      */
-    public HitProperty copyWith(Hits hits) {
+    public HitProperty copyWith(HitsForHitProps hits) {
         // If the filter property requires contexts, fetch them now.
         HitProperty result = copyWith(hits, false);
         return result;
@@ -257,7 +253,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param invert  true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(Hits newHits, boolean invert);
+    public abstract HitProperty copyWith(HitsForHitProps newHits, boolean invert);
 
     @Override
     public boolean isReverse() {

@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsForHitProps;
 
 /**
  * A hit property for grouping on a matched group.
@@ -47,7 +47,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     /** If set: use the first tag/relation with this name in the match info list */
     private boolean relNameIsFullRelType = false;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, boolean invert) {
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, HitsForHitProps hits, boolean invert) {
         super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
@@ -72,7 +72,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @param groupName the match info group name
      * @return the field name
      */
-    private static AnnotatedField determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
+    private static AnnotatedField determineMatchInfoField(HitsForHitProps hits, String groupName, RelationInfo.SpanMode spanMode) {
         return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
                 .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
@@ -101,7 +101,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, boolean invert) {
+    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
         return new HitPropertyCaptureGroup(this, newHits, invert);
     }
 

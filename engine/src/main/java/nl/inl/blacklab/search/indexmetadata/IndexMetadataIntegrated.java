@@ -206,7 +206,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
         annotatedFields.fixAfterDeserialization(index, this);
         MetadataFieldValues.Factory factory = createMetadataFieldValuesFactory();
-        metadataFields.fixAfterDeserialization(this, factory);
+        metadataFields.fixAfterDeserialization(index, this, factory);
         if (!index.indexMode())
             freeze();
     }
@@ -276,7 +276,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     protected MetadataFieldsImpl metadataFields = null;
 
     /** Our annotated fields */
-    protected final AnnotatedFieldsImpl annotatedFields = new AnnotatedFieldsImpl();
+    protected AnnotatedFieldsImpl annotatedFields;
 
     /** How many documents are in our index? */
     @XmlTransient
@@ -324,8 +324,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     private IndexMetadataIntegrated(BlackLabIndex index, ConfigInputFormat config) {
         this.index = index;
-        metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
+        metadataFields = new MetadataFieldsImpl(index, createMetadataFieldValuesFactory());
         metadataFields.setTopLevelCustom(custom); // for special fields, metadata groups
+        annotatedFields = new AnnotatedFieldsImpl(index);
         annotatedFields.setTopLevelCustom(custom); // for annotation groups
 
         this.indexWriter = index.indexMode() ? (BlackLabIndexWriter)index : null;
@@ -565,7 +566,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         if (annotatedFields.exists(name))
             cfd = ((AnnotatedFieldImpl) annotatedField(name));
         if (cfd == null) {
-            cfd = new AnnotatedFieldImpl(name);
+            cfd = new AnnotatedFieldImpl(index, name);
             annotatedFields.put(name, cfd);
         }
         return cfd;

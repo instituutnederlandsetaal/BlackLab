@@ -81,7 +81,7 @@ public class ResultDocsGrouped {
         SearchTimings timings = new SearchTimings(groupSearch.timer().time(), 0);
         Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         summaryFields = WebserviceOperations.summaryCommonFields(params,
-                indexStatus, timings, null, groups, ourWindow, docResults.queryInfo().field(),
+                indexStatus, timings, null, groups, ourWindow, docResults.field(),
                 Collections.emptyList());
 
         numResultDocs = null;

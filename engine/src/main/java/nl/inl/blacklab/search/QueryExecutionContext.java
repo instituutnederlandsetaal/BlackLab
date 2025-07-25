@@ -220,7 +220,7 @@ public class QueryExecutionContext {
         // Otherwise determine the default for this index and use that
         return defaultRelationClass != null ?
                 defaultRelationClass :
-                index().getRelationsStats(queryInfo().field(), WebserviceParameter.DEF_VAL_LIMIT_VALUES)
+                index().getRelationsStats(field(), WebserviceParameter.DEF_VAL_LIMIT_VALUES)
                         .getDefaultClass();
     }
 

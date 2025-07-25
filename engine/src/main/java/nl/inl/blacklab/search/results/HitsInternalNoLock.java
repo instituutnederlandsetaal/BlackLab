@@ -17,6 +17,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
@@ -95,6 +96,11 @@ class HitsInternalNoLock implements HitsInternalMutable {
     @Override
     public AnnotatedField field() {
         return field;
+    }
+
+    @Override
+    public BlackLabIndex index() {
+        return field.index();
     }
 
     @Override
@@ -273,6 +279,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
 
     @Override
     public HitsInternal sort(HitProperty p) {
+        p = p.copyWith(this);
         HitsInternalMutable r;
         long size = docs.size64();
         if (size > Constants.JAVA_MAX_ARRAY_SIZE) {

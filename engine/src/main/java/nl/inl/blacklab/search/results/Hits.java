@@ -11,7 +11,6 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -276,11 +275,6 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      * @return internal hits object.
      */
     HitsInternal getInternalHits();
-
-    /** This exists to satisfy the HitsForHitProps interface needed for HitProps to work with HitsInternal as well */
-    default AnnotatedField field() {
-        return queryInfo().field();
-    }
 
     long size();
 

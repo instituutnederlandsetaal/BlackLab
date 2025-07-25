@@ -34,7 +34,7 @@ public class Kwics {
             throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
     
         // Get the concordances
-        kwics = retrieveKwics(hits, contextSize, hits.queryInfo().field());
+        kwics = retrieveKwics(hits, contextSize, hits.field());
 
         // Get the concordances for other fields (for parallel corpora), if there are any
         foreignKwics = retrieveForeignKwics(hits, contextSize);
@@ -43,7 +43,7 @@ public class Kwics {
     private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
         Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
         Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
-        AnnotatedField defaultField = hits.queryInfo().field();
+        AnnotatedField defaultField = hits.field();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
             Map<AnnotatedField, int[]> minMaxPerField = null; // start and end of the "foreign match"

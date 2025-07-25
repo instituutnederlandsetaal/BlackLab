@@ -171,7 +171,7 @@ public class DocUtil {
                                    // subtract one
         }
 
-        characterOffsets(index, docId, hits.queryInfo().field(), starts, ends, true);
+        characterOffsets(index, docId, hits.field(), starts, ends, true);
 
         List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
@@ -256,7 +256,7 @@ public class DocUtil {
     public static String highlightContent(BlackLabIndex index, int docId, Hits hits, int startAtWord, int endAtWord) {
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
-        AnnotatedField field = hits.queryInfo().field();
+        AnnotatedField field = hits.field();
         int[] startEndCharPos = startEndWordToCharPos(index, docId, field, startAtWord, lastWord);
 
         // Get content by char positions

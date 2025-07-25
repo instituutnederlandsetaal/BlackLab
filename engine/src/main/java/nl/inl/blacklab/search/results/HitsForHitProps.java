@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
@@ -70,4 +71,5 @@ public interface HitsForHitProps {
      */
     HitsInternal getInternalHits();
 
+    BlackLabIndex index();
 }

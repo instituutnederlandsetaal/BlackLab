@@ -387,10 +387,10 @@ public class ResultHits {
             if (def.getTargetField() != null)
                 otherFields.add(def.getTargetField());
         }
-        otherFields.remove(hits.queryInfo().field());
+        otherFields.remove(hits.field());
         summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
                 getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
-                hits.queryInfo().field(), otherFields);
+                hits.field(), otherFields);
         listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
                 getDocIdToPid());
     }

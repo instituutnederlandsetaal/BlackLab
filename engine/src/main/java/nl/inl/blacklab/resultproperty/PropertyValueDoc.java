@@ -1,6 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /** Property value that represents a BlackLab document */
@@ -13,7 +12,7 @@ public class PropertyValueDoc extends PropertyValue {
         return docId;
     }
 
-    public PropertyValueDoc(BlackLabIndex index, int id) {
+    public PropertyValueDoc(int id) {
         this.docId = id;
     }
 
@@ -37,7 +36,7 @@ public class PropertyValueDoc extends PropertyValue {
         return false;
     }
 
-    public static PropertyValue deserialize(BlackLabIndex index, String strDocId) {
+    public static PropertyValue deserialize(String strDocId) {
         int id;
         try {
             id = Integer.parseInt(strDocId);
@@ -45,7 +44,7 @@ public class PropertyValueDoc extends PropertyValue {
             logger.warn("PropertyValueDoc.deserialize(): '" + strDocId + "' is not a valid integer.");
             id = -1;
         }
-        return new PropertyValueDoc(index, id);
+        return new PropertyValueDoc(id);
     }
 
     @Override
