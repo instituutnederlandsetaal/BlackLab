@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 
-import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.search.TwoPhaseIterator;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
@@ -293,16 +293,8 @@ class SpansBuffered extends BLSpans {
             return;
         if (indexInBuffer == READING_FROM_CLAUSE)
             clause.getMatchInfo(matchInfo);
-        else {
-            MatchInfo[] thisMatchInfo = buffer.matchInfos(indexInBuffer);
-            if (thisMatchInfo != null) {
-                int n = Math.min(matchInfo.length, thisMatchInfo.length);
-                for (int i = 0; i < n; i++) {
-                    if (thisMatchInfo[i] != null) // don't overwrite other clause's captures!
-                        matchInfo[i] = thisMatchInfo[i];
-                }
-            }
-        }
+        else
+            MatchInfo.mergeInto(matchInfo, buffer.matchInfos(indexInBuffer));
     }
 
     @Override

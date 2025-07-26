@@ -10,7 +10,6 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
@@ -69,73 +68,6 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
      * @param cons operation to perform
      */
     void withReadLock(Consumer<HitsInternal> cons);
-
-    /**
-     * Get a Hit object.
-     * <p>
-     * Avoid this method if possible, as it instantiates an object.
-     *
-     * @param index hit index
-     * @return hit object
-     */
-    Hit get(long index);
-
-    /**
-     * Get an ephemeral Hit object.
-     * <p>
-     * Writes the doc, start and end values to the specified mutable
-     * hit object.
-     * <p>
-     * Useful in a hot loop or somesuch.
-     * The intent of this function is to allow retrieving many hits without needing to allocate so many short lived objects.
-     * Example:
-     *
-     * <pre>
-     * EphemeralHitImpl h = new EphemeralHitImpl();
-     * int size = hits.size();
-     * for (int i = 0; i < size; ++i) {
-     *     hits.getEphemeral(i, h);
-     *     // use h now
-     * }
-     * </pre>
-     *
-     * @param index hit index
-     * @param h     hit object
-     */
-    void getEphemeral(long index, EphemeralHit h);
-
-    /**
-     * Get the doc id for a hit.
-     *
-     * @param index hit index
-     * @return doc id
-     */
-    int doc(long index);
-
-    /**
-     * Get the start position for a hit.
-     *
-     * @param index hit index
-     * @return start position
-     */
-    int start(long index);
-
-    /**
-     * Get the end position for a hit.
-     *
-     * @param index hit index
-     * @return end position
-     */
-    int end(long index);
-
-    /**
-     * Get extra information for a match, such as captured groups and relations.
-     * <p>
-     * Only available if the query captures such information.
-     *
-     * @return extra information for a match, or null if none available
-     */
-    MatchInfo[] matchInfo(long index);
 
     long size();
 

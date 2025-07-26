@@ -71,7 +71,7 @@ public class HitPropertyAlignments extends HitProperty {
 
     @Override
     public PropertyValue get(long hitIndex) {
-        MatchInfo[] matchInfos = hits.get(hitIndex).matchInfo();
+        MatchInfo[] matchInfos = hits.matchInfos(hitIndex);
         int n = 0;
         if (matchInfos != null) {
             // NOTE: below conditional should prevent synchronized method call if not necessary.
@@ -81,7 +81,7 @@ public class HitPropertyAlignments extends HitProperty {
                     targetHitGroupIndexes;
             // Count the number of alignments found for this hit
             for (int targetHitGroupIndex: targetHitGroupIndexes1) {
-                MatchInfo targetMatchInfo = targetHitGroupIndex < matchInfos.length ? matchInfos[targetHitGroupIndex] : null;
+                MatchInfo targetMatchInfo = MatchInfo.get(matchInfos, targetHitGroupIndex);
                 if (targetMatchInfo != null)
                     n++;
             }

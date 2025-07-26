@@ -3,9 +3,9 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.Objects;
 
+import org.apache.lucene.queries.spans.Spans;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.Spans;
 
 /**
  * Base class for retrieving lists ("buckets") of related matches
@@ -199,14 +199,7 @@ public abstract class SpansInBuckets extends DocIdSetIterator implements SpanGua
     public void getMatchInfo(int indexInBucket, MatchInfo[] matchInfo) {
         if (!doMatchInfo)
             return;
-        MatchInfo[] thisMatchInfo = bucket.matchInfos(indexInBucket);
-        if (thisMatchInfo != null) {
-            int n = Math.min(matchInfo.length, thisMatchInfo.length);
-            for (int i = 0; i < n; i++) {
-                if (thisMatchInfo[i] != null) // don't overwrite other clause's captures!
-                    matchInfo[i] = thisMatchInfo[i];
-            }
-        }
+        MatchInfo.mergeInto(matchInfo, bucket.matchInfos(indexInBucket));
     }
 
     public boolean hasMatchInfo() {

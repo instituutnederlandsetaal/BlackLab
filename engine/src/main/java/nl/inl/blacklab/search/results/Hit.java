@@ -33,7 +33,7 @@ public interface Hit extends Comparable<Hit> {
                 if (end() == o.end()) {
                     // Hits are identical in terms of doc, start and end.
                     // Compare their MatchInfos.
-                    return Arrays.compare(matchInfo(), o.matchInfo());
+                    return Arrays.compare(matchInfos(), o.matchInfos());
                 }
                 return end() - o.end();
             }
@@ -65,8 +65,26 @@ public interface Hit extends Comparable<Hit> {
      *
      * Only available if the query captured such information.
      *
+     * CAUTION: the returned array may vary in length depending on the segment the hit came from.
+     * If the first BLSpans captures fewer match infos than subsequent ones (e.g. because certain
+     * terms don't occur in that index segment, so an entire subclause was optimized away), some
+     * match infos weren't registered yet, so the array allocated is shorter. Use { @link #matchInfos(int)} to
+     * guard against this.
+     *
      * @return extra information for this hit, or null if none available
      */
-    MatchInfo[] matchInfo();
+    MatchInfo[] matchInfos();
 
+    default MatchInfo matchInfos(int groupIndex) {
+        if (groupIndex < 0)
+            throw new IndexOutOfBoundsException("Group index must be non-negative: " + groupIndex);
+        MatchInfo[] matchInfo = matchInfos();
+        if (matchInfo == null || groupIndex >= matchInfo.length) {
+            // matchInfo[] can be shorted for some hits than others, in rare cases where the first BLSpans
+            // captures fewer match infos than subsequent ones (e.g. because certain terms don't occur in that
+            // index segment, so an entire subclause was optimized away).
+            return null;
+        }
+        return matchInfo[groupIndex];
+    }
 }

@@ -76,7 +76,7 @@ public class TestHitProperties {
     @Test
     public void testHitPropCaptureGroup() {
         Hits hits = testIndex.find(" A:'the' ");
-        HitProperty p = new HitPropertyCaptureGroup(index, null, MatchSensitivity.SENSITIVE, "A", RelationInfo.SpanMode.FULL_SPAN);
+        HitProperty p = new HitPropertyCaptureGroup(index, index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE, "A", RelationInfo.SpanMode.FULL_SPAN);
         HitGroups g = hits.group(p, Results.NO_LIMIT);
         HitGroup group = g.get(new PropertyValueContextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE,
                 new int[] { term("the") }, null, false));

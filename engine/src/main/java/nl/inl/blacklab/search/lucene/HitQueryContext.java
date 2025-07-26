@@ -29,8 +29,8 @@ public class HitQueryContext {
     /** The annotated field this part of the query searches. For parallel corpora, this may differ from defaultField. Never null. */
     private final AnnotatedField field;
 
-    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField, MatchInfoDefs matchInfoDefs) {
-        this(index, spans, defaultField, defaultField, matchInfoDefs);
+    public HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField) {
+        this(index, spans, defaultField, defaultField, new MatchInfoDefs());
     }
 
     private HitQueryContext(BlackLabIndex index, BLSpans spans, AnnotatedField defaultField, AnnotatedField field, MatchInfoDefs matchInfoDefs) {
@@ -39,6 +39,7 @@ public class HitQueryContext {
         this.defaultField = defaultField;
         assert field != null;
         this.field = field;
+        assert matchInfoDefs != null;
         this.matchInfoDefs = matchInfoDefs;
     }
 

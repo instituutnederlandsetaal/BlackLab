@@ -47,7 +47,7 @@ public class Kwics {
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
             Map<AnnotatedField, int[]> minMaxPerField = null; // start and end of the "foreign match"
-            MatchInfo[] matchInfo = hit.matchInfo();
+            MatchInfo[] matchInfo = hit.matchInfos();
             if (matchInfo != null) {
                 Iterator<MatchInfo.Def> defIt = hits.matchInfoDefs().currentList().iterator();
                 for (MatchInfo mi: matchInfo) {

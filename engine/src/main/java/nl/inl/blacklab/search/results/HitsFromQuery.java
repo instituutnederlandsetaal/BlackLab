@@ -23,7 +23,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.CurrentThreadExecutorService;
 
@@ -86,7 +85,8 @@ public class HitsFromQuery extends HitsMutable {
         super(queryInfo.optOverrideField(sourceQuery),
                 HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(),
                         null, -1, true, true), null);
-        hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field(), new MatchInfoDefs()); // each spans will get a copy
+        hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy
+        hitsInternalMutable.setMatchInfoDefs(hitQueryContext.getMatchInfoDefs());
         QueryTimings timings = queryInfo().timings();
         timings.start();
         final BlackLabIndex index = queryInfo.index();
@@ -157,12 +157,12 @@ public class HitsFromQuery extends HitsMutable {
             BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
             timings.record("createWeight");
 
-            // We must always initialize one spansReader upfront, so global state for Capture Groups and context are created.
-            // We then store get these global objects from the initialized SpansReader, and pass them to the rest of the (stil uninitialized) SpansReaders.
-            // Yes, this is a smell. If/when refactoring this, don't forget to update the comments in SpansReader accordingly.
-            boolean hasInitialized = false;
+//            // We must always initialize one spansReader upfront, so global state for Capture Groups and context are created.
+//            // We then store get these global objects from the initialized SpansReader, and pass them to the rest of the (still uninitialized) SpansReaders.
+//            // Yes, this is a smell. If/when refactoring this, don't forget to update the comments in SpansReader accordingly.
+//            boolean hasInitialized = false;
             for (LeafReaderContext leafReaderContext : reader.leaves()) {
-                SpansReader spansReader = new SpansReader(
+                spansReaders.add(new SpansReader(
                     weight,
                     leafReaderContext,
                     this.hitQueryContext,
@@ -171,28 +171,20 @@ public class HitsFromQuery extends HitsMutable {
                     this.requestedHitsToCount,
                     hitsStats,
                     docsStats
-                );
-                spansReaders.add(spansReader);
+                ));
 
-                if (!hasInitialized) {
-                    // We haven't initialized the HitQueryContext and CapturedGroups yet,
-                    // because this is the first SpansReader (or at least the first one that
-                    // contains at least one hit). Initialize them now.
-
-                    // NOTE: this will initialize our HitQueryContext with any capture group names!
-                    spansReader.initialize();
-                    if (spansReader.isDone)
-                        continue;
-                    HitQueryContext hitQueryContextForThisSpans = spansReader.getHitContext();
-
-                    // Now figure out if we have capture groups
-                    // Needs to be null if unused!
-                    if (hitQueryContextForThisSpans.numberOfMatchInfos() > 0) {
-                        hitsInternalMutable.setMatchInfoDefs(hitQueryContextForThisSpans.getMatchInfoDefs());
-                    }
-
-                    hasInitialized = true;
-                }
+//                if (!hasInitialized) {
+//                    // We haven't initialized the HitQueryContext and CapturedGroups yet,
+//                    // because this is the first SpansReader (or at least the first one that
+//                    // contains at least one hit). Initialize them now.
+//
+//                    // NOTE: this will initialize our HitQueryContext with any capture group names!
+//                    spansReader.initialize();
+//                    if (spansReader.isDone)
+//                        continue;
+//
+//                    hasInitialized = true;
+//                }
             }
 
             if (spansReaders.isEmpty())

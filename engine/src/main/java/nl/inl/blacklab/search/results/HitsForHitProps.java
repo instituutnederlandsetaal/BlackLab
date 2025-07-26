@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /** A minimal Hits/HitsInternal interface that is all that HitProperty needs. */
@@ -61,6 +62,10 @@ public interface HitsForHitProps {
      * @return document id
      */
     int end(long index);
+
+    MatchInfo[] matchInfos(long hitIndex);
+
+    MatchInfo matchInfo(long hitIndex, int matchInfoIndex);
 
     /**
      * Get the internal hits object.

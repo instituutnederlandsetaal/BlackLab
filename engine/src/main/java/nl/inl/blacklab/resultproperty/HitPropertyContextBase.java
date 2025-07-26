@@ -54,7 +54,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
      */
     protected int[] getForeignHitStartEnd(Hit hit, String fieldName) {
         assert hit != null : "Need a hit";
-        MatchInfo[] matchInfos = hit.matchInfo();
+        MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos == null)
             return new int[] { 0, 0 };
         int[] startEnd = { Integer.MAX_VALUE, Integer.MIN_VALUE };

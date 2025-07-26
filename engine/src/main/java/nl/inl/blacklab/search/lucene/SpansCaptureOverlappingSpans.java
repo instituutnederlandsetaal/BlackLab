@@ -171,11 +171,7 @@ class SpansCaptureOverlappingSpans extends BLFilterSpans<BLSpans> {
     @Override
     public void getMatchInfo(MatchInfo[] matchInfo) {
         // We've already gathered matchInfo in accept(); just copy it over
-        int n = Math.min(matchInfo.length, this.matchInfo.length);
-        for (int i = 0; i < n; i++) {
-            if (this.matchInfo[i] != null)
-                matchInfo[i] = this.matchInfo[i];
-        }
+        MatchInfo.mergeInto(matchInfo, this.matchInfo);
     }
 
     @Override

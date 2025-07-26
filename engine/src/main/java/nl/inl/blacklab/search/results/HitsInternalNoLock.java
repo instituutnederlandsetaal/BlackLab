@@ -153,8 +153,8 @@ class HitsInternalNoLock implements HitsInternalMutable {
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
-        if (hit.matchInfo() != null) {
-            matchInfos.add(hit.matchInfo());
+        if (hit.matchInfos() != null) {
+            matchInfos.add(hit.matchInfos());
         } else {
             // Either all hits have matchInfo, or none do.
             assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
@@ -248,7 +248,15 @@ class HitsInternalNoLock implements HitsInternalMutable {
     }
 
     @Override
-    public MatchInfo[] matchInfo(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
+    public MatchInfo[] matchInfos(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
+
+    @Override
+    public MatchInfo matchInfo(long index, int matchInfoIndex) {
+        if (matchInfos.isEmpty())
+            return null;
+        MatchInfo[] matchInfo = matchInfos.get((int) index);
+        return matchInfoIndex < matchInfo.length ? matchInfo[matchInfoIndex] : null;
+    }
 
     @Override
     public long size() {

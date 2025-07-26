@@ -5,7 +5,6 @@ import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -65,12 +64,6 @@ public class HitPropertySpanAttribute extends HitProperty {
         relNameIsFullRelType = prop.relNameIsFullRelType;
         attributeName = prop.attributeName;
         sensitivity = prop.sensitivity;
-
-        // Determine group index. We don't use the one from prop (if any), because
-        // index might be different for different hits object.
-        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
-        if (groupIndex < 0)
-            throw new MatchInfoNotFound(groupName);
     }
 
     public HitPropertySpanAttribute(String groupName, String attributeName,
@@ -110,7 +103,16 @@ public class HitPropertySpanAttribute extends HitProperty {
 
     @Override
     public PropertyValueString get(long hitIndex) {
-        MatchInfo matchInfo = hits.get(hitIndex).matchInfo()[groupIndex];
+        if (groupIndex < 0) {
+            // Determine group index. Done lazily because the group might only be registered
+            // when the second index segment is processed, for example.
+            groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
+            if (groupIndex < 0) {
+                // Match info not registered (yet). Return empty value.
+                return PropertyValueString.NO_VALUE;
+            }
+        }
+        MatchInfo matchInfo = hits.get(hitIndex).matchInfos(groupIndex);
         if (matchInfo == null)
             return PropertyValueString.NO_VALUE;
 

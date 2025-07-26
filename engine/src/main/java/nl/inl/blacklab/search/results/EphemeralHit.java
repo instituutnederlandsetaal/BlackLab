@@ -35,7 +35,7 @@ public class EphemeralHit implements Hit {
     }
 
     @Override
-    public MatchInfo[] matchInfo() { return matchInfo; }
+    public MatchInfo[] matchInfos() { return matchInfo; }
 
     @Override
     public boolean equals(Object o) {

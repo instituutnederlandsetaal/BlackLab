@@ -10,6 +10,39 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 public abstract class MatchInfo implements Comparable<MatchInfo> {
 
+    /** Get a match info by index.
+     * <p>
+     * Because the array length can vary because of how matching happens
+     * (different segments may capture different match info), this method
+     * will return null if the index is out of bounds.
+     */
+    public static MatchInfo get(MatchInfo[] matchInfo, int index) {
+        assert index >= 0 : "Match info index must be non-negative, got " + index;
+        return index < matchInfo.length ? matchInfo[index] : null;
+    }
+
+    /**
+     * Merge the match info from one array into another.
+     * <p>
+     * This will overwrite the target array's match info with the
+     * match info from the toMerge array if the toMerge array has
+     * a non-null value at that index.
+     * <p>
+     * It will also take the length of both arrays into account.
+     *
+     * @param target
+     * @param toMerge
+     */
+    public static void mergeInto(MatchInfo[] target, MatchInfo[] toMerge) {
+        if (toMerge != null) {
+            int n = Math.min(target.length, toMerge.length);
+            for (int i = 0; i < n; i++) {
+                if (toMerge[i] != null) // don't overwrite other clause's captures!
+                    target[i] = toMerge[i];
+            }
+        }
+    }
+
     /**
      * The type of match info.
      */

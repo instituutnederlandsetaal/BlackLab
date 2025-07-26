@@ -518,7 +518,7 @@ class Output {
                         AnnotatedField annotatedField = e.getKey();
                         Kwic kwic = e.getValue();
                         Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
-                                hit.matchInfo());
+                                hit.matchInfos());
                         hitToShow.addForeign(annotatedField, showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
                     }
                 }

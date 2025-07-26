@@ -84,7 +84,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
     }
 
     static Map<String, MatchInfo> getMatchInfoMap(Hits hits, Hit hit, boolean omitEmptyCaptures) {
-        MatchInfo[] matchInfo = hit.matchInfo();
+        MatchInfo[] matchInfo = hit.matchInfos();
         if (matchInfo == null)
             return Collections.emptyMap();
         MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
@@ -242,39 +242,6 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
     Concordances concordances(ContextSize contextSize, ConcordanceType type);
 
     Kwics kwics(ContextSize contextSize);
-
-    /**
-     * Get Lucene document id for the specified hit
-     *
-     * @param index hit index
-     * @return document id
-     */
-    int doc(long index);
-
-    /**
-     * Get start position for the specified hit
-     *
-     * @param index hit index
-     * @return document id
-     */
-    int start(long index);
-
-    /**
-     * Get end position for the specified hit
-     *
-     * @param index hit index
-     * @return document id
-     */
-    int end(long index);
-
-    /**
-     * Get the internal hits object.
-     *
-     * CAUTION: only use this if you know what you're doing!
-     *
-     * @return internal hits object.
-     */
-    HitsInternal getInternalHits();
 
     long size();
 

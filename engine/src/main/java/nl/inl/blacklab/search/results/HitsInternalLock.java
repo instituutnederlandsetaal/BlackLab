@@ -66,7 +66,7 @@ class HitsInternalLock extends HitsInternalNoLock {
             docs.add(hit.doc());
             starts.add(hit.start());
             ends.add(hit.end());
-            matchInfos.add(hit.matchInfo());
+            matchInfos.add(hit.matchInfos());
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -190,6 +190,31 @@ class HitsInternalLock extends HitsInternalNoLock {
         try {
             // Don't call super method, this is faster (hot code)
             return this.ends.getInt(index);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public MatchInfo[] matchInfos(long index) {
+        lock.readLock().lock();
+        try {
+            // Don't call super method, this is faster (hot code)
+            return this.matchInfos.isEmpty() ? null : this.matchInfos.get((int)index);
+        } finally {
+            lock.readLock().unlock();
+        }
+    }
+
+    @Override
+    public MatchInfo matchInfo(long index, int matchInfoIndex) {
+        lock.readLock().lock();
+        try {
+            // Don't call super method, this is faster (hot code)
+            if (matchInfos.isEmpty())
+                return null;
+            MatchInfo[] matchInfo = matchInfos.get((int) index);
+            return matchInfoIndex < matchInfo.length ? matchInfo[matchInfoIndex] : null;
         } finally {
             lock.readLock().unlock();
         }

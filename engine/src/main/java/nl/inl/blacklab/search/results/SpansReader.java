@@ -79,8 +79,16 @@ class SpansReader implements Runnable {
      * <p>
      * TODO: update this comment (CapturedGroups doesn't exist anymore, match info was integrated into hits)
      * <p>
-     * HitsFromQueryParallel will immediately initialize one SpansReader (meaning its Spans object and HitQueryContext
-     * are set) and leave the other ones to self-initialize when needed.
+     * SpansReader will self-initialize (meaning its Spans object and HitQueryContext are set).
+     *
+     * All SpansReaders share an instance of MatchInfoDefs (via the hit query context, of which each SpansReader gets
+     * a personalized copy, but with the same shared MatchInfoDefs instance).
+     *
+     * SpansReaders will register their match infos with the MatchInfoDefs instance. Often the first SpansReader will
+     * register all match infos, but sometimes the first SpansReader only matches some match infos, and subsequent
+     * SpansReaders will register additional match infos. This is dealt with later (when merging two matchInfo[] arrays
+     * of different length).
+     *
      * <p>
      * It is done this way because of an initialization order issue with capture groups.
      * <p>
@@ -160,7 +168,7 @@ class SpansReader implements Runnable {
     public boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
         long prev = hits.size() - 1;
         return hits.size() > 0 && doc == hits.doc(prev) && start == hits.start(prev) && end == hits.end(prev) &&
-                MatchInfo.areEqual(matchInfo, hits.matchInfo(prev));
+                MatchInfo.areEqual(matchInfo, hits.matchInfos(prev));
     }
 
     void initialize() {

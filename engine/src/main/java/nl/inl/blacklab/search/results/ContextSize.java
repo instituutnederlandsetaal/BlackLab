@@ -188,7 +188,7 @@ public class ContextSize {
     }
 
     private static MatchInfo findTag(Hit hit, String matchInfoName, MatchInfoDefs matchInfoDefs) {
-        MatchInfo[] matchInfos = hit.matchInfo();
+        MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos != null) {
             // Return the match info group with the specified name
             Optional<MatchInfo.Def> mid = matchInfoDefs.currentListFiltered(d -> d.getName().equals(matchInfoName)).stream().findFirst();

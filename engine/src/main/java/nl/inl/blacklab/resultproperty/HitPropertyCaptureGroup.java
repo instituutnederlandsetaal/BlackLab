@@ -3,7 +3,6 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
-import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -21,6 +20,9 @@ import nl.inl.blacklab.search.results.HitsForHitProps;
 public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     public static final String ID = "capture"; //TODO: deprecate, change to matchinfo? (to synch with response)
+
+    /** Returned if match info not registered (yet) */
+    private final PropertyValueContextWords emptyValue;
 
     static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeInfos(index, field, infos);
@@ -52,34 +54,9 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
-        // Determine group index. We don't use the one from prop (if any), because
-        // index might be different for different hits object.
-        groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
-        if (groupIndex < 0)
-            throw new MatchInfoNotFound(groupName);
-        
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
-    }
-
-    /**
-     * Determine what field the given match info is from.
-     *
-     * Only relevant for parallel corpora, where you can capture information from
-     * other fields.
-     *
-     * @param hits     the hits object
-     * @param groupName the match info group name
-     * @return the field name
-     */
-    private static AnnotatedField determineMatchInfoField(HitsForHitProps hits, String groupName, RelationInfo.SpanMode spanMode) {
-        return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
-                .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
-                .findFirst().orElse(null);
-    }
-
-    public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
-        this(index, annotation, sensitivity, "", RelationInfo.SpanMode.FULL_SPAN);
+        emptyValue = prop.emptyValue;
     }
 
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName, RelationInfo.SpanMode spanMode) {
@@ -98,6 +75,23 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         }
 
         this.spanMode = spanMode;
+        emptyValue = new PropertyValueContextWords(index, annotation, sensitivity, new int[0], new int[0], false);
+    }
+
+    /**
+     * Determine what field the given match info is from.
+     *
+     * Only relevant for parallel corpora, where you can capture information from
+     * other fields.
+     *
+     * @param hits     the hits object
+     * @param groupName the match info group name
+     * @return the field name
+     */
+    private static AnnotatedField determineMatchInfoField(HitsForHitProps hits, String groupName, RelationInfo.SpanMode spanMode) {
+        return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
+                .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
+                .findFirst().orElse(null);
     }
 
     @Override
@@ -107,8 +101,19 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     @Override
     public void fetchContext() {
+        if (groupIndex < 0) {
+            // Determine group index. Done lazily because the group might only be registered
+            // when the second index segment is processed, for example.
+            groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
+        }
         fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
-            MatchInfo group = hit.matchInfo()[groupIndex];
+            if (groupIndex < 0) {
+                // Match info not registered (yet). Return empty value.
+                // Might be registered later in the matching process.
+                starts[indexInArrays] = 0;
+                ends[indexInArrays] = 0;
+            }
+            MatchInfo group = hit.matchInfos(groupIndex);
             
             if (relNameInList != null && group instanceof RelationListInfo relList) {
                 if (relNameIsFullRelType) {

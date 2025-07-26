@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
@@ -413,6 +414,18 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     public int end(long index) {
         ensureResultsRead(index + 1);
         return hitsInternal.end(index);
+    }
+
+    @Override
+    public MatchInfo[] matchInfos(long hitIndex) {
+        ensureResultsRead(hitIndex + 1);
+        return hitsInternal.matchInfos(hitIndex);
+    }
+
+    @Override
+    public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
+        ensureResultsRead(hitIndex + 1);
+        return hitsInternal.matchInfo(hitIndex, matchInfoIndex);
     }
 
     @Override

@@ -59,7 +59,7 @@ public final class HitImpl implements Hit {
     }
 
     @Override
-    public MatchInfo[] matchInfo() {
+    public MatchInfo[] matchInfos() {
         return matchInfo;
     }
 

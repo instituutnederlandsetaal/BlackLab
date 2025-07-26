@@ -28,22 +28,18 @@ public class PropertyValueContextWords extends PropertyValueContext {
      */
     private boolean reverseOnDisplay;
 
-    /** Our index (may be null for tests) */
-    private BlackLabIndex index;
-
     public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, int[] sortOrder, boolean reverseOnDisplay) {
         super(index.annotationForwardIndex(annotation).terms(), annotation);
         init(sensitivity, value, sortOrder, reverseOnDisplay);
-        this.index = index;
     }
 
     PropertyValueContextWords(Terms terms, Annotation annotation, MatchSensitivity sensitivity, int[] value,
-            int[] sortOrder, boolean reverseOnDisplay, boolean alternateField) {
+            int[] sortOrder, boolean reverseOnDisplay) {
         super(terms, annotation);
-        valueSortOrder = init(sensitivity, value, sortOrder, reverseOnDisplay);
+        init(sensitivity, value, sortOrder, reverseOnDisplay);
     }
 
-    private int[] init(MatchSensitivity sensitivity, int[] value, int[] sortOrder,
+    private void init(MatchSensitivity sensitivity, int[] value, int[] sortOrder,
             boolean reverseOnDisplay) {
         this.sensitivity = sensitivity;
         this.valueTokenId = value;
@@ -54,8 +50,6 @@ public class PropertyValueContextWords extends PropertyValueContext {
             this.valueSortOrder = sortOrder;
         }
         this.reverseOnDisplay = reverseOnDisplay;
-        this.index = null;
-        return valueSortOrder;
     }
 
     @Override
@@ -80,11 +74,6 @@ public class PropertyValueContextWords extends PropertyValueContext {
     public static PropertyValue deserialize(BlackLabIndex index, AnnotatedField field, List<String> infos, boolean reverseOnDisplay) {
         List<String> infosTerms = infos.subList(2, infos.size());
         return deserializeInternal(index, field, infos, infosTerms, reverseOnDisplay);
-    }
-
-    public static PropertyValue deserializeSingleWord(BlackLabIndex index, AnnotatedField field, List<String> infos) {
-        List<String> infosTerms = infos.size() > 2 ? infos.subList(2, 3) : List.of("");
-        return deserializeInternal(index, field, infos, infosTerms, false);
     }
 
     private static PropertyValueContextWords deserializeInternal(BlackLabIndex index, AnnotatedField field,
