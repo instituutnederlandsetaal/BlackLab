@@ -18,21 +18,20 @@ public final class SearchSettings {
     }
     
     /** How many hits to process by default */
-    public static final int DEFAULT_MAX_PROCESS = 10_000_000;
+    public static final long DEFAULT_MAX_PROCESS = 10_000_000;
     
     /** How many hits to count by default */
-    public static final int DEFAULT_MAX_COUNT = Results.NO_LIMIT;
+    public static final long DEFAULT_MAX_COUNT = Results.NO_LIMIT;
     
     /**
-     * Stop processing hits after this number. (Results.NO_LIMIT = don't stop
-     * processing)
+     * Stop processing hits after this number.
      * 
      * Even if we stop processing, we can still keep counting.
      */
     private final long maxHitsToProcess;
 
     /**
-     * Stop counting hits after this number. (ResultsNO_LIMIT = don't stop counting)
+     * Stop counting hits after this number.
      */
     private final long maxHitsToCount;
     
@@ -40,26 +39,18 @@ public final class SearchSettings {
     private final long fiMatchFactor;
 
     /**
-     * Get settings
+     * Get settings.
+     *
+     * NOTE: if maxHitsToProcess is greater than maxHitsToCount,
+     * it will be set to maxHitsToCount.
+     *
      * @param maxHitsToProcess how many hits to process at most
      * @param maxHitsToCount how many hits to count at most
      */
     private SearchSettings(long maxHitsToProcess, long maxHitsToCount, long fiMatchFactor) {
-        this.maxHitsToProcess = maxHitsToProcess;
-        this.maxHitsToCount = maxHitsToCount;
+        this.maxHitsToCount = maxHitsToCount < 0 ? Results.NO_LIMIT : maxHitsToCount;
+        this.maxHitsToProcess = maxHitsToProcess < 0 ? maxHitsToCount : Math.min(maxHitsToCount, maxHitsToProcess);
         this.fiMatchFactor = fiMatchFactor;
-    }
-    
-    public SearchSettings withMaxHitsToProcess(long n) {
-        return get(n, maxHitsToCount, fiMatchFactor);
-    }
-
-    public SearchSettings withMaxHitsToCount(long n) {
-        return get(maxHitsToProcess, n, fiMatchFactor);
-    }
-
-    public SearchSettings withFiMatchFactor(long n) {
-        return get(maxHitsToProcess, maxHitsToCount, n);
     }
 
     /** @return the maximum number of hits to retrieve. */

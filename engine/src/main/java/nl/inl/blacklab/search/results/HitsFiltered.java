@@ -43,6 +43,8 @@ public class HitsFiltered extends HitsMutable {
      */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
         super(hits.queryInfo());
+        if (hits == null)
+            throw new IllegalArgumentException("HitsFiltered must be constructed with valid hits object (got null)");
         this.source = hits;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
@@ -50,46 +52,8 @@ public class HitsFiltered extends HitsMutable {
         // implementing a ForwardIndex that stores documents linearly, making it just a single read.
         filterProperty = property.copyWith(hits);
         this.filterValue = value;
-        hitsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
-            @Override
-            public boolean processedAtLeast(long lowerBound) {
-                ensureResultsRead(lowerBound);
-                return resultsStats().processedSoFar() >= lowerBound;
-            }
-
-            @Override
-            public long allProcessed() {
-                ensureResultsRead(-1);
-                return resultsStats().processedSoFar();
-            }
-
-            @Override
-            public long allCounted() {
-                ensureResultsRead(-1);
-                return resultsStats().countedSoFar();
-            }
-        });
-        docsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
-            @Override
-            public boolean processedAtLeast(long lowerBound) {
-                while (!resultsStats().done() && docsStats().processedSoFar() < lowerBound) {
-                    ensureResultsRead(hitsInternal.size() + 1);
-                }
-                return docsStats().processedSoFar() >= lowerBound;
-            }
-
-            @Override
-            public long allProcessed() {
-                ensureResultsRead(-1);
-                return docsStats().processedSoFar();
-            }
-
-            @Override
-            public long allCounted() {
-                ensureResultsRead(-1);
-                return docsStats().countedSoFar();
-            }
-        });
+        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this));
+        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
     }
 
     @Override

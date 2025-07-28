@@ -24,11 +24,10 @@ public class HitsList extends HitsAbstract {
      * Does not copy the list, but reuses it.
      *
      * @param queryInfo query info
-     * @param hits the list of hits to wrap, or null for a new list
-     * @param matchInfoDefs names of our match infos (e.g. capture groups)
+     * @param hits the list of hits to wrap
      */
     protected HitsList(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
-        super(queryInfo, hits, matchInfoDefs);
+        super(queryInfo, hits);
 
         // Count docs and check if doc ids are ascending
         int prevDoc = -1;
@@ -57,7 +56,7 @@ public class HitsList extends HitsAbstract {
                        SampleParameters sampleParameters,
                        ResultsStats hitsStats,
                        ResultsStats docsStats) {
-        super(queryInfo, hits, null);
+        super(queryInfo, hits);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
         assert hitsStats.processedSoFar() == hits.size();

@@ -25,7 +25,7 @@ public class ResultsStatsSaved extends ResultsStats {
     }
 
     public ResultsStatsSaved(long processed, long counted, MaxStats maxStats) {
-        setWaitUntil(new ResultsAwaiter() {
+        setResultsAwaiter(new ResultsAwaiter() {
             @Override
             public boolean processedAtLeast(long lowerBound) {
                 return processed >= lowerBound;

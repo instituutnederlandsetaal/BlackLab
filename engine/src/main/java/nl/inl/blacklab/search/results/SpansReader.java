@@ -31,7 +31,21 @@ class SpansReader implements Runnable {
     /** How many hits should we collect (at least) before we add them to the global results? */
     private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
 
-    BLSpanWeight weight; // Weight is set when this is uninitialized, spans is set otherwise
+    /** Everything that's only relevant before initialization */
+    class SpansReaderBeforeInit {
+        BLSpanWeight weight;
+
+        HitQueryContext sourceHitQueryContext; // Set when uninitialized (needed to construct own hitQueryContext)
+
+        public SpansReaderBeforeInit(BLSpanWeight weight, HitQueryContext hitQueryContext) {
+            this.weight = weight;
+            this.sourceHitQueryContext = hitQueryContext;
+        }
+    }
+
+    // Relevant when SpansReader is uninitialized; discarded afterwards
+    private SpansReaderBeforeInit beforeInit;
+
     BLSpans spans; // usually lazy initialization - takes a long time to set up and holds a large amount of memory.
                    // Set to null after we're finished
 
@@ -47,7 +61,6 @@ class SpansReader implements Runnable {
      * TODO refactor or improve documentation in HitQueryContext, the internal backing array is now shared between
      *   instances of it, and is modified in copyWith(spans), which seems...dirty and it's prone to errors.
      */
-    HitQueryContext sourceHitQueryContext; // Set when uninitialized (needed to construct own hitQueryContext)
     HitQueryContext hitQueryContext; // Set after initialization. Set to null after we're finished
 
     // Used to check if doc has been removed from the index. Set to null after we're finished.
@@ -77,48 +90,17 @@ class SpansReader implements Runnable {
     /**
      * Construct an uninitialized SpansReader that will retrieve its own Spans object on when it's ran.
      * <p>
-     * TODO: update this comment (CapturedGroups doesn't exist anymore, match info was integrated into hits)
+     * SpansReader will self-initialize (meaning its Spans object and HitQueryContext are set). This is done
+     * because SpansReaders can hold a lot of memory and time to set up and only a few are active at a time.
      * <p>
-     * SpansReader will self-initialize (meaning its Spans object and HitQueryContext are set).
-     *
      * All SpansReaders share an instance of MatchInfoDefs (via the hit query context, of which each SpansReader gets
      * a personalized copy, but with the same shared MatchInfoDefs instance).
-     *
+     * <p>
      * SpansReaders will register their match infos with the MatchInfoDefs instance. Often the first SpansReader will
      * register all match infos, but sometimes the first SpansReader only matches some match infos, and subsequent
      * SpansReaders will register additional match infos. This is dealt with later (when merging two matchInfo[] arrays
      * of different length).
-     *
      * <p>
-     * It is done this way because of an initialization order issue with capture groups.
-     * <p>
-     * The issue is as follows:
-     * - we want to lazy-initialize Spans objects:
-     *   1. because they hold a lot of memory for large indexes.
-     *   2. because only a few SpansReaders are active at a time.
-     *   3. because they take a long time to setup.
-     *   4. because we might not even need them all if a hits limit has been set.
-     * <p>
-     * So if we pre-create them all, we're doing a lot of upfront work we possibly don't need to.
-     * We'd also hold a lot of ram hostage (>10GB in some cases!) because all Spans objects exist
-     * simultaneously even though we're not using them simultaneously.
-     * However, in order to know whether a query (such as A:([pos="A.*"]) "ship") uses/produces capture groups (and how many groups)
-     * we need to call BLSpans::setHitQueryContext(...) and then check the number capture group names in the HitQueryContext afterwards.
-     * <p>
-     * No why we need to know this:
-     * <p>
-     * - To construct the CaptureGroupsImpl we need to know the number of capture groups.
-     * - To construct the SpansReaders we need to have already created the CaptureGroupsImpl, as it's shared between all of the SpansReaders.
-     * So to summarise: there is an order issue.
-     * - we want to lazy-init the Spans.
-     * - but we need the capture groups object.
-     * - for that we need at least one Spans object created.
-     * <p>
-     * Hence the explicit initialization of the first SpansReader by HitsFromQueryParallel.
-     * <p>
-     * This will create one of the Spans objects so we can create and set the CapturedGroups object in this
-     * first SpansReader. Then the rest of the SpansReaders receive the same CapturedGroups object and can
-     * lazy-initialize when needed.
      *
      * @param weight                span weight we're querying
      * @param leafReaderContext     leaf reader we're running on
@@ -138,11 +120,10 @@ class SpansReader implements Runnable {
         ResultsStatsPassive hitsStats,
         ResultsStatsPassive docsStats
     ) {
-        this.spans = null; // inverted for uninitialized version
-        this.weight = weight;
+        this.beforeInit = new SpansReaderBeforeInit(weight, sourceHitQueryContext);
+        this.spans = null;
 
         this.hitQueryContext = null;
-        this.sourceHitQueryContext = sourceHitQueryContext;
 
         this.leafReaderContext = leafReaderContext;
 
@@ -165,23 +146,21 @@ class SpansReader implements Runnable {
      * @param end   the end position
      * @param matchInfo the match info
      */
-    public boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
+    private boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
         long prev = hits.size() - 1;
         return hits.size() > 0 && doc == hits.doc(prev) && start == hits.start(prev) && end == hits.end(prev) &&
                 MatchInfo.areEqual(matchInfo, hits.matchInfos(prev));
     }
 
-    void initialize() {
+    private void initialize() {
         try {
             this.isInitialized = true;
             this.docBase = this.leafReaderContext.docBase;
-            BLSpans spansForWeight = this.weight.getSpans(this.leafReaderContext,
-                    Postings.OFFSETS); // do we need to synchronize this call between SpansReaders?
+            BLSpans spansForWeight = this.beforeInit.weight.getSpans(this.leafReaderContext, Postings.OFFSETS);
             if (spansForWeight == null) { // This is normal, sometimes a section of the index does not contain hits.
                 this.isDone = true;
                 return;
             }
-            this.weight = null;
             // If the resulting spans are not known to be sorted and unique, ensure that now.
             this.spans = BLSpans.ensureSortedUnique(spansForWeight);
 
@@ -191,9 +170,9 @@ class SpansReader implements Runnable {
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 
-            this.hitQueryContext = this.sourceHitQueryContext.withSpans(this.spans);
+            this.hitQueryContext = this.beforeInit.sourceHitQueryContext.withSpans(this.spans);
             this.spans.setHitQueryContext(this.hitQueryContext);
-            this.sourceHitQueryContext = null;
+            this.beforeInit = null;
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
@@ -220,14 +199,13 @@ class SpansReader implements Runnable {
         // No more matches in this document. Find first match in next matching document.
         while (true) {
             assert twoPhaseApproximation.docID() != DocIdSetIterator.NO_MORE_DOCS;
-            int docPrev = twoPhaseApproximation.docID();
-            int doc1 = twoPhaseApproximation.nextDoc();
-            if (doc1 == DocIdSetIterator.NO_MORE_DOCS) {
+            doc = twoPhaseApproximation.nextDoc();
+            if (doc == DocIdSetIterator.NO_MORE_DOCS) {
                 // We're done.
                 return false;
             }
             boolean actualMatch = twoPhaseIt == null || twoPhaseIt.matches();
-            if (actualMatch && (liveDocs == null || liveDocs.get(doc1))) {
+            if (actualMatch && (liveDocs == null || liveDocs.get(doc))) {
                 // Document matches. Put us at the first match.
                 int startPos = spans.nextStartPosition();
                 assert startPos >= 0;
@@ -304,19 +282,6 @@ class SpansReader implements Runnable {
                         if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
                             // We've built up a batch of hits. Add them to the global results.
                             // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                            //
-                            // [NOTE JN: does this matter? and if so, doesn't it also matter that docId increases throughout the
-                            //     master list? Probably not, unless we wrap the Hits inside a Spans again, which generally
-                            //     require these properties to hold.]
-                            //     Contexts, used for sort/group by context words, does need increasing doc ids
-                            //     per leaf reader, but that property is guaranteed to hold because we don't
-                            //     re-order hits from a single leaf reader, we just randomly merge them with hits
-                            //     from other leafreaders without changing their order.
-                            //
-                            //     Still, all of the above is a smell indicating that we should try to perform more
-                            //     operations per leaf reader instead of merging results from leaf readers at an early
-                            //     stage like we do here.]
-
                             addToGlobalResults(results);
                             results.clear();
                         }
@@ -360,9 +325,5 @@ class SpansReader implements Runnable {
 
     void addToGlobalResults(HitsInternal hits) {
         globalResults.addAll(hits);
-    }
-
-    public HitQueryContext getHitContext() {
-        return hitQueryContext;
     }
 }

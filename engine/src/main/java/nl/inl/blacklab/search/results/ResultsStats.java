@@ -65,7 +65,7 @@ public abstract class ResultsStats implements SearchResult {
         this.waitUntil = waitUntil;
     }
 
-    protected void setWaitUntil(ResultsAwaiter waitUntil) {
+    protected void setResultsAwaiter(ResultsAwaiter waitUntil) {
         this.waitUntil = waitUntil;
     }
 

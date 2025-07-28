@@ -81,13 +81,11 @@ public class ResultDocsCsv {
             long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();
             if (params.optNumberOfResultsToShow().isPresent()) {
                 long requested = params.optNumberOfResultsToShow().get();
-                if (number >= 0 || requested >= 0) { // clamp
+                if (requested >= 0) { // clamp
                     number = Math.min(requested, number);
                 }
             }
-
-            if (number >= 0)
-                docs = docs.window(first, number);
+            docs = docs.window(first, number);
         }
     }
 

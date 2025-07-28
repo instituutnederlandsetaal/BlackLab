@@ -100,17 +100,12 @@ public class ResultHitsCsv {
                 first = 0;
 
             long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();
-            if (number < 0)
-                number = Long.MAX_VALUE;
             if (params.optNumberOfResultsToShow().isPresent()) {
                 long requested = params.optNumberOfResultsToShow().get();
-                if (requested < 0)
-                    requested = Long.MAX_VALUE;
-                number = Math.min(requested, number);
+                if (requested >= 0)
+                    number = Math.min(requested, number);
             }
-
-            if (number >= 0)
-                hits = hits.window(first, number);
+            hits = hits.window(first, number);
         }
 
         annotationsToWrite = WebserviceOperations.getAnnotationsToWrite(params);

@@ -12,14 +12,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
@@ -33,42 +31,33 @@ public class HitsFromQuery extends HitsMutable {
 
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
     protected final AtomicLong requestedHitsToProcess = new AtomicLong();
+
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
     protected final AtomicLong requestedHitsToCount = new AtomicLong();
+
     /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
     protected final long maxHitsToProcess;
+
     /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
     protected final long maxHitsToCount;
 
-    // state
+    /** Query context, keeping track of e.g. match info defitions */
     protected final HitQueryContext hitQueryContext;
+
+    /** Used to make sure that only 1 thread can be fetching hits at a time. */
     protected final Lock ensureHitsReadLock = new ReentrantLock();
+
+    /** Objects getting the actual hits from each index segment and adding them to the global results list. */
     protected final List<SpansReader> spansReaders = new ArrayList<>();
+
+    /** If true, we're done. */
     protected boolean allSourceSpansFullyRead = false;
 
+    /** Keeps track of hits encountered. */
     protected final ResultsStatsPassive hitsStats;
 
-    protected final ResultsStatsPassive docsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
-        @Override
-        public boolean processedAtLeast(long lowerBound) {
-            while (!resultsStats().done() && docsStats().processedSoFar() < lowerBound) {
-                ensureResultsRead(hitsInternal.size() + 1);
-            }
-            return docsStats().processedSoFar() >= lowerBound;
-        }
-
-        @Override
-        public long allProcessed() {
-            ensureResultsRead(-1);
-            return docsStats().processedSoFar();
-        }
-
-        @Override
-        public long allCounted() {
-            ensureResultsRead(-1);
-            return docsStats().countedSoFar();
-        }
-    });
+    /** Keeps track of docs encountered. */
+    protected final ResultsStatsPassive docsStats;
 
     @Override
     public ResultsStats resultsStats() {
@@ -84,14 +73,11 @@ public class HitsFromQuery extends HitsMutable {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
                 HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(),
-                        null, -1, true, true), null);
+                        null, -1, true, true));
         hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy
         hitsInternalMutable.setMatchInfoDefs(hitQueryContext.getMatchInfoDefs());
         QueryTimings timings = queryInfo().timings();
         timings.start();
-        final BlackLabIndex index = queryInfo.index();
-        final IndexReader reader = index.reader();
-        BLSpanQuery optimizedQuery;
 
         // Ensure max. count >= max. process >= 0
         // After this both will be above 0 and process will never exceed count
@@ -104,28 +90,12 @@ public class HitsFromQuery extends HitsMutable {
         this.maxHitsToProcess = configuredMaxHitsToProcess;
         this.maxHitsToCount = configuredMaxHitsToCount;
 
-        hitsStats = new ResultsStatsPassive(new ResultsStats.ResultsAwaiter() {
-            @Override
-            public boolean processedAtLeast(long lowerBound) {
-                ensureResultsRead(lowerBound);
-                return resultsStats().processedSoFar() >= lowerBound;
-            }
-
-            @Override
-            public long allProcessed() {
-                ensureResultsRead(-1);
-                return resultsStats().processedSoFar();
-            }
-
-            @Override
-            public long allCounted() {
-                ensureResultsRead(-1);
-                return resultsStats().countedSoFar();
-            }
-        }, maxHitsToProcess, maxHitsToCount);
+        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this), maxHitsToProcess, maxHitsToCount);
+        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
 
         try {
             // Override FI match threshold? (debug use only!)
+            BLSpanQuery optimizedQuery;
             synchronized (ClauseCombinerNfa.class) {
                 long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
                 if (searchSettings.fiMatchFactor() != -1) {
@@ -138,11 +108,11 @@ public class HitsFromQuery extends HitsMutable {
                 if (traceOptimization)
                     logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
 
-                optimizedQuery = sourceQuery.optimize(reader);
+                optimizedQuery = sourceQuery.optimize(queryInfo.index().reader());
                 if (traceOptimization)
                     logger.debug("Query after optimize(): " + optimizedQuery);
 
-                optimizedQuery = optimizedQuery.rewrite(reader);
+                optimizedQuery = optimizedQuery.rewrite(queryInfo.index().reader());
                 if (traceOptimization)
                     logger.debug("Query after rewrite(): " + optimizedQuery);
 
@@ -154,14 +124,10 @@ public class HitsFromQuery extends HitsMutable {
             timings.record("rewrite");
 
             // This call can take a long time
-            BLSpanWeight weight = optimizedQuery.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+            BLSpanWeight weight = optimizedQuery.createWeight(queryInfo.index().searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
             timings.record("createWeight");
 
-//            // We must always initialize one spansReader upfront, so global state for Capture Groups and context are created.
-//            // We then store get these global objects from the initialized SpansReader, and pass them to the rest of the (still uninitialized) SpansReaders.
-//            // Yes, this is a smell. If/when refactoring this, don't forget to update the comments in SpansReader accordingly.
-//            boolean hasInitialized = false;
-            for (LeafReaderContext leafReaderContext : reader.leaves()) {
+            for (LeafReaderContext leafReaderContext : queryInfo.index().reader().leaves()) {
                 spansReaders.add(new SpansReader(
                     weight,
                     leafReaderContext,
@@ -172,19 +138,6 @@ public class HitsFromQuery extends HitsMutable {
                     hitsStats,
                     docsStats
                 ));
-
-//                if (!hasInitialized) {
-//                    // We haven't initialized the HitQueryContext and CapturedGroups yet,
-//                    // because this is the first SpansReader (or at least the first one that
-//                    // contains at least one hit). Initialize them now.
-//
-//                    // NOTE: this will initialize our HitQueryContext with any capture group names!
-//                    spansReader.initialize();
-//                    if (spansReader.isDone)
-//                        continue;
-//
-//                    hasInitialized = true;
-//                }
             }
 
             if (spansReaders.isEmpty())
@@ -236,6 +189,10 @@ public class HitsFromQuery extends HitsMutable {
                     ? queryInfo().index().blackLab().searchExecutorService()
                     : new CurrentThreadExecutorService();
 
+            // Distribute the SpansReaders over the threads.
+            // E.g. if we have 10 SpansReaders and 3 threads, we will have
+            // SpansReader 0, 3, 6 and 9 in thread 1, etc.
+            // This way, each thread will get a roughly equal number of SpansReaders to run.
             final AtomicLong i = new AtomicLong();
             pendingResults = spansReaders
                 .stream()
@@ -246,7 +203,7 @@ public class HitsFromQuery extends HitsMutable {
                 .collect(Collectors.toList()); // gather the futures
 
             // Wait for workers to complete.
-            // This will throw InterrupedException if this (HitsFromQueryParallel) thread is interruped while waiting.
+            // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
             // NOTE: the worker will not automatically abort, so we should also interrupt our workers should that happen.
             // The workers themselves won't ever throw InterruptedException, it would be wrapped in ExecutionException.
             // (Besides, we're the only thread that can call interrupt() on our worker anyway, and we don't ever do that.

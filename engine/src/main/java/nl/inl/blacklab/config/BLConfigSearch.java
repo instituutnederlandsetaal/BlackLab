@@ -3,6 +3,7 @@ package nl.inl.blacklab.config;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchSettings;
 
 public class BLConfigSearch {
@@ -45,7 +46,7 @@ public class BLConfigSearch {
 
     @SuppressWarnings("unused")
     public void setMaxHitsToRetrieve(int maxHitsToRetrieve) {
-        this.maxHitsToRetrieve = maxHitsToRetrieve;
+        this.maxHitsToRetrieve = maxHitsToRetrieve < 0 ? Results.NO_LIMIT : maxHitsToRetrieve;
     }
 
     public long getMaxHitsToCount() {
@@ -54,7 +55,7 @@ public class BLConfigSearch {
 
     @SuppressWarnings("unused")
     public void setMaxHitsToCount(long maxHitsToCount) {
-        this.maxHitsToCount = maxHitsToCount;
+        this.maxHitsToCount = maxHitsToCount < 0 ? Results.NO_LIMIT : maxHitsToCount;
     }
 
     public long getFiMatchFactor() {

@@ -1,15 +1,26 @@
 package nl.inl.blacklab.search.results;
 
+import java.io.IOException;
 import java.util.function.Consumer;
 
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.queries.spans.SpanWeight;
 import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.search.DocIdSetIterator;
+import org.apache.lucene.search.TwoPhaseIterator;
+import org.apache.lucene.util.Bits;
 
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.BLSpans;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
@@ -23,14 +34,57 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  */
 public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
 
+    /** Gather all hits for this query from this segment. */
+    static HitsInternalMutable gatherAll(BLSpanWeight weight, LeafReaderContext lrc, HitQueryContext context) {
+        final HitsInternalMutable hits = create(context.getField(), context.getMatchInfoDefs(), -1,
+                true, false);
+        try {
+            BLSpans clause = weight.getSpans(lrc, SpanWeight.Postings.OFFSETS);
+            if (clause == null) {
+                // No hits in this segment
+                return hits;
+            }
+            TwoPhaseIterator twoPhaseIt = clause.asTwoPhaseIterator();
+            DocIdSetIterator twoPhaseApprox = twoPhaseIt == null ? clause : twoPhaseIt.approximation();
+            Bits liveDocs = lrc.reader().getLiveDocs();
+            MatchInfo[] matchInfos = null;
+            if (context.numberOfMatchInfos() > 0) {
+                matchInfos = new MatchInfo[context.numberOfMatchInfos()];
+            }
+            while (true) {
+                // Find the next probably-matching document.
+                int doc = twoPhaseApprox.nextDoc();
+                if (doc == DocIdSetIterator.NO_MORE_DOCS)
+                    break;
+                boolean actualMatch = twoPhaseIt == null || twoPhaseIt.matches();
+                boolean docIsLive = liveDocs == null || liveDocs.get(doc);
+                if (actualMatch && docIsLive) {
+                    // Live document that actually matches. Fetch the hits.
+                    while (true) {
+                        int start = clause.nextStartPosition();
+                        if (start == Spans.NO_MORE_POSITIONS)
+                            break;
+                        int end = clause.endPosition();
+                        if (clause.hasMatchInfo())
+                            clause.getMatchInfo(matchInfos);
+                        hits.add(lrc.docBase + doc, start, end, matchInfos);
+                    }
+                }
+            }
+            return hits;
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
+    }
+
     @Override
     AnnotatedField field();
 
     @Override
     BlackLabIndex index();
 
-    /** An empty HitsInternalRead object. */
-    static HitsInternal emptySingleton(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+    /** An empty list of hits. */
+    static HitsInternal empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
         return new HitsInternalNoLock32(field, matchInfoDefs);
     }
 

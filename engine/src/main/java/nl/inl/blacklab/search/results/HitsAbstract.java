@@ -47,8 +47,8 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
     protected HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
-        this(queryInfo, readOnly ? HitsInternal.emptySingleton(queryInfo.field(), null) :
-                HitsInternal.create(queryInfo.field(), null, -1, true, true), null);
+        this(queryInfo, readOnly ? HitsInternal.empty(queryInfo.field(), null) :
+                HitsInternal.create(queryInfo.field(), null, -1, true, true));
     }
 
     /**
@@ -58,12 +58,13 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * {@link #HitsAbstract(QueryInfo, boolean)}.
      *
      * @param queryInfo query info for corresponding query
-     * @param hits hits array to use for this object. The array is used as-is, not copied.
+     * @param hits hits to use for this object. Used as-is, not copied.
      */
-    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
+    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits) {
         super(queryInfo);
-        this.hitsInternal = hits == null ? HitsInternal.create(queryInfo.field(),
-                matchInfoDefs, -1, true, true) : hits;
+        if (hits == null)
+            throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
+        this.hitsInternal = hits;
     }
 
     /**

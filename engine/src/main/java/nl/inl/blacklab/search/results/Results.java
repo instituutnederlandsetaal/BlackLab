@@ -8,7 +8,7 @@ public interface Results extends SearchResult {
     /**
      * When setting how many hits to retrieve/count/store in group, this means "no limit".
      */
-    int NO_LIMIT = -1;
+    long NO_LIMIT = Long.MAX_VALUE;
 
     /**
      * Get information about the original query.

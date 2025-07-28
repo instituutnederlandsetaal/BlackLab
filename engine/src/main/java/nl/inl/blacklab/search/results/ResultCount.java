@@ -19,7 +19,7 @@ public class ResultCount extends ResultsStats {
 
     public ResultCount(Results count, CountType type) {
         super();
-        setWaitUntil(new ResultsAwaiter() {
+        setResultsAwaiter(new ResultsAwaiter() {
             @Override
             public boolean processedAtLeast(long lowerBound) {
                 update();

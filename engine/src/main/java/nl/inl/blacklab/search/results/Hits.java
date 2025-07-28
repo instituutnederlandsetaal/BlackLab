@@ -80,7 +80,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      * @return hits found
      */
     static Hits empty(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsInternal.emptySingleton(queryInfo.field(), null), null);
+        return new HitsList(queryInfo, HitsInternal.empty(queryInfo.field(), null), null);
     }
 
     static Map<String, MatchInfo> getMatchInfoMap(Hits hits, Hit hit, boolean omitEmptyCaptures) {

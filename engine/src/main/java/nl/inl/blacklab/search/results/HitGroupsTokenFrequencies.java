@@ -301,7 +301,7 @@ public class HitGroupsTokenFrequencies {
                     //       code is that it can perform this operation faster and using less memory, and the setting
                     //       exists to manage server load, so maybe we can ignore it here? I guess then we might need
                     //       another setting that can limit this operation as well.
-                    final long maxHitsToCount = searchSettings.maxHitsToCount() > 0 ? searchSettings.maxHitsToCount() : Long.MAX_VALUE;
+                    final long maxHitsToCount = searchSettings.maxHitsToCount();
                     //final IntUnaryOperator incrementUntilMax = (v) -> v < maxHitsToCount ? v + 1 : v;
                     final String fieldName = queryInfo.field().name();
                     final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
