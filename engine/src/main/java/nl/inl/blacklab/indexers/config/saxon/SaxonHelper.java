@@ -38,35 +38,24 @@ public class SaxonHelper {
         return XPATH_FACTORY.get();
     }
 
-//    static class XIncludeFilter extends XMLFilterImpl {
-//        public XIncludeFilter(XMLReader parent, File includeDir) {
-//            super(parent);
-//            this.includeDir = includeDir;
-//            setEntityResolver(new XIncludeResolverSeparate(includeDir));
-//        }
-//    }
-
     /** Parse the document, using the given content handler.
      *
      * @param reader document to parse
      * @param handler content handler to use
      * @return parsed document
      */
-    public static TreeInfo parseDocument(Reader reader, ContentHandler handler/*, File includeDir*/) throws ParserConfigurationException,
+    public static TreeInfo parseDocument(Reader reader, ContentHandler handler) throws ParserConfigurationException,
             SAXException, XPathException {
         // make sure our content handler doesn't get overwritten by saxon
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         parserFactory.setXIncludeAware(true);
         SAXParser parser = parserFactory.newSAXParser();
         XMLReader xmlReader = parser.getXMLReader();
-
-//        xmlReader = new XIncludeFilter(reader, includeDir);
-
         xmlReader.setContentHandler(handler);
-        XMLReader wrapper = new CharPosTrackingXMLReader(xmlReader);
+        XMLReader trackingReader = new CharPosTrackingXMLReader(xmlReader);
         // regular parsing with line numbering enabled
         InputSource inputSrc = new InputSource(reader);
-        Source source = new SAXSource(wrapper, inputSrc);
+        Source source = new SAXSource(trackingReader, inputSrc);
         Configuration config = ((XPathFactoryImpl) XPATH_FACTORY.get()).getConfiguration();
         config.setLineNumbering(true);
         return config.buildDocumentTree(source);
