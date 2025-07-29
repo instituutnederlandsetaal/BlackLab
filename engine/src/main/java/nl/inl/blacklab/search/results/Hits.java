@@ -69,7 +69,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      * @param end         end of hit
      * @return hits object
      */
-    static Hits singleton(QueryInfo queryInfo, int luceneDocId, int start, int end) {
+    static Hits singleHit(QueryInfo queryInfo, int luceneDocId, int start, int end) {
         return list(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
     }
 

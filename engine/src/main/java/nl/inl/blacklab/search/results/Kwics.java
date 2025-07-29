@@ -75,7 +75,7 @@ public class Kwics {
 
                         AnnotatedField field = e.getKey();
                         List<AnnotationForwardIndex> afis = afisPerField.get(field);
-                        Hits singleHit = Hits.singleton(hits.queryInfo(), hit.doc(), matchStart, matchEnd);
+                        Hits singleHit = Hits.singleHit(hits.queryInfo(), hit.doc(), matchStart, matchEnd);
                         ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd, true,
                                 contextSize.getMaxSnippetLength());
                         Contexts.makeKwicsSingleDocForwardIndex(singleHit, afis, thisContext,

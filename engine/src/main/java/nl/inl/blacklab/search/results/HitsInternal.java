@@ -85,7 +85,7 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
 
     /** An empty list of hits. */
     static HitsInternal empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        return new HitsInternalNoLock32(field, matchInfoDefs);
+        return new HitsInternalNoLock32(field, matchInfoDefs, -1);
     }
 
     /**
@@ -123,6 +123,7 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
      */
     void withReadLock(Consumer<HitsInternal> cons);
 
+    /** How many hits does this contains? */
     long size();
 
     /**
@@ -152,7 +153,7 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
      * @param p sort property
      * @return sorted hits
      */
-    HitsInternal sort(HitProperty p);
+    HitsInternal sorted(HitProperty p);
 
     @Override
     default HitsInternal getInternalHits() {

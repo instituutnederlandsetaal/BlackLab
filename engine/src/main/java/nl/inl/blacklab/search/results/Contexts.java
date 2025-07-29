@@ -184,7 +184,6 @@ public class Contexts {
 
         // Make sure all hits have been read and get access to internal hits
         HitsInternal ha = hits.getInternalHits();
-        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
@@ -213,6 +212,7 @@ public class Contexts {
          */
         BigList<int[]> contexts = new ObjectBigArrayBigList<>(hits.size());
 
+        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
         if (size > 0) {
             for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
                 final int curDoc = ha.doc(i);

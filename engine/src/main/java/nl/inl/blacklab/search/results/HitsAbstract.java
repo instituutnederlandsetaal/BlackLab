@@ -212,7 +212,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
         // Perform the actual sort.
         ensureResultsRead(-1);
-        HitsInternal sorted = this.hitsInternal.sort(sortProp); // TODO use wrapper objects
+        HitsInternal sorted = this.hitsInternal.sorted(sortProp); // TODO use wrapper objects
         sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
         return new HitsList(queryInfo(), sorted, null, null,

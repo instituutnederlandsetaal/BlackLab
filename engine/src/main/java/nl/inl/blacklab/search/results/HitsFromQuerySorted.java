@@ -94,7 +94,7 @@ public class HitsFromQuerySorted extends HitsAbstract {
                 Future<HitsInternal> f = executorService.submit(() -> {
                     // Gather and sort all hits for this segment.
                     HitsInternalMutable hits = HitsInternal.gatherAll(weight, leafReaderContext, hitQueryContext);
-                    hits.sort(sortBy);
+                    hits.sorted(sortBy);
                     return hits;
                 });
                 pendingResults.add(f);

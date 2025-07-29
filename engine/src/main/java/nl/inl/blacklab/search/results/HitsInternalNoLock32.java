@@ -1,20 +1,14 @@
 package nl.inl.blacklab.search.results;
 
-import java.text.CollationKey;
 import java.util.NoSuchElementException;
-import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueString;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
@@ -33,29 +27,35 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  * These tests are not representative of real-world usage, but on huge result sets this will
  * likely save a few seconds.
  */
-class HitsInternalNoLock32 implements HitsInternalMutable {
+class HitsInternalNoLock32 extends HitsInternalAbstract {
 
-    private class Iterator implements HitsInternal.Iterator {
+    /**
+     * Class to iterate over hits.
+     * <p>
+     * NOTE: contrary to expectation, implementing this class using iterators
+     * over docs, starts and ends makes it slower.
+     */
+    private class HitIterator implements HitsInternal.Iterator {
         private int pos = 0;
+
         private final EphemeralHit hit = new EphemeralHit();
 
-        public Iterator() {
+        public HitIterator() {
         }
 
         @Override
         public boolean hasNext() {
             // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
-            return HitsInternalNoLock32.this.docs.size() > pos;
+            return docs.size() > pos;
         }
 
         @Override
         public EphemeralHit next() {
             try {
-                hit.doc_ = HitsInternalNoLock32.this.docs.getInt(pos);
-                hit.start_ = HitsInternalNoLock32.this.starts.getInt(pos);
-                hit.end_ = HitsInternalNoLock32.this.ends.getInt(pos);
-                hit.matchInfo = HitsInternalNoLock32.this.matchInfos.isEmpty() ? null :
-                        HitsInternalNoLock32.this.matchInfos.get(pos);
+                hit.doc_ = docs.getInt(pos);
+                hit.start_ = starts.getInt(pos);
+                hit.end_ = ends.getInt(pos);
+                hit.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(pos);
                 ++pos;
                 return hit;
             } catch (IndexOutOfBoundsException e) {
@@ -64,66 +64,38 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
-    private final AnnotatedField field;
-    private MatchInfoDefs matchInfoDefs;
     protected final IntList docs;
     protected final IntList starts;
     protected final IntList ends;
     protected final ObjectList<MatchInfo[]> matchInfos;
 
-    HitsInternalNoLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        this(field, matchInfoDefs, -1);
-    }
-
     HitsInternalNoLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
-        this.field = field;
-        this.matchInfoDefs = matchInfoDefs;
+        super(field, matchInfoDefs);
         if (initialCapacity < 0) {
             // Use default initial capacities
-            this.docs = new IntArrayList();
-            this.starts = new IntArrayList();
-            this.ends = new IntArrayList();
-            this.matchInfos = new ObjectArrayList<>();
+            docs = new IntArrayList();
+            starts = new IntArrayList();
+            ends = new IntArrayList();
+            matchInfos = new ObjectArrayList<>();
         } else {
-            this.docs = new IntArrayList(initialCapacity);
-            this.starts = new IntArrayList(initialCapacity);
-            this.ends = new IntArrayList(initialCapacity);
-            this.matchInfos = new ObjectArrayList<>(initialCapacity);
+            docs = new IntArrayList(initialCapacity);
+            starts = new IntArrayList(initialCapacity);
+            ends = new IntArrayList(initialCapacity);
+            matchInfos = new ObjectArrayList<>(initialCapacity);
         }
     }
 
     HitsInternalNoLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+        super(field, matchInfoDefs);
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size() != starts.size() || docs.size() != ends.size() || (matchInfos != null && matchInfos.size() != docs.size()))
             throw new IllegalArgumentException("Passed differently sized hit component arrays to Hits object");
-        this.field = field;
-        this.matchInfoDefs = matchInfoDefs;
         this.docs = docs;
         this.starts = starts;
         this.ends = ends;
         this.matchInfos = matchInfos == null ? new ObjectArrayList<>() : matchInfos;
         assert HitsInternal.debugCheckAllReasonable(this);
-    }
-
-    @Override
-    public AnnotatedField field() {
-        return field;
-    }
-
-    @Override
-    public BlackLabIndex index() {
-        return field.index();
-    }
-
-    @Override
-    public MatchInfoDefs matchInfoDefs() {
-        return matchInfoDefs;
-    }
-
-    @Override
-    public void setMatchInfoDefs(MatchInfoDefs matchInfoDefs) {
-        this.matchInfoDefs = matchInfoDefs;
     }
 
     @Override
@@ -170,38 +142,50 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         }
     }
 
-    public void addAll(HitsInternalNoLock32 hits) {
-        assert HitsInternal.debugCheckAllReasonable(hits);
-        docs.addAll(hits.docs);
-        starts.addAll(hits.starts);
-        ends.addAll(hits.ends);
-        matchInfos.addAll(hits.matchInfos);
+    @Override
+    public void addAllNoLock(HitsInternal hits) {
+        if (hits instanceof HitsInternalLock hil) {
+            // We have to lock this.
+            hil.withReadLock(hil2 -> {
+                addAllNoLockSource(hil);
+            });
+        } else if (hits instanceof HitsInternalLock32 hil32) {
+            // We have to lock this.
+            hits.withReadLock(hil32_2 -> {
+                addAllNoLockSource(hil32);
+            });
+        } else if (hits instanceof HitsInternalNoLock hinl) {
+            // No need to lock
+            addAllNoLockSource(hinl);
+        } else if (hits instanceof HitsInternalNoLock32 hinl32) {
+            // No need to lock
+            addAllNoLockSource(hinl32);
+        }
+    }
+
+    private void addAllNoLockSource(HitsInternalNoLock hil) {
+        assert HitsInternal.debugCheckAllReasonable(hil);
+        docs.addAll(hil.docs);
+        starts.addAll(hil.starts);
+        ends.addAll(hil.ends);
+        matchInfos.addAll(hil.matchInfos);
         assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
     }
 
-    @Override
-    public void addAll(HitsInternal hits) {
-        hits.withReadLock(hr -> {
-            for (EphemeralHit h: hr) {
-                assert HitsInternal.debugCheckReasonableHit(h);
-                docs.add(h.doc_);
-                starts.add(h.start_);
-                ends.add(h.end_);
-                if (h.matchInfo != null) {
-                    matchInfos.add(h.matchInfo);
-                } else {
-                    // Either all hits have matchInfo, or none do.
-                    assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
-                }
-            }
-        });
+    private void addAllNoLockSource(HitsInternalNoLock32 hil) {
+        assert HitsInternal.debugCheckAllReasonable(hil);
+        docs.addAll(hil.docs);
+        starts.addAll(hil.starts);
+        ends.addAll(hil.ends);
+        matchInfos.addAll(hil.matchInfos);
+        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
     }
 
     /**
      * Clear the arrays.
      */
     @Override
-    public void clear() {
+    public void clearNoLock() {
         docs.clear();
         starts.clear();
         ends.clear();
@@ -209,15 +193,9 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     }
 
     @Override
-    public void withReadLock(Consumer<HitsInternal> cons) {
-        cons.accept(this);
-    }
-
-    @Override
-    public HitImpl get(long index) {
+    public Hit get(long index) {
         MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-        HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
-                matchInfo);
+        Hit hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
         assert HitsInternal.debugCheckReasonableHit(hit);
         return hit;
     }
@@ -274,10 +252,19 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
     }
 
     @Override
-    public long size() {
+    public long sizeNoLock() {
         return docs.size();
     }
 
+    /**
+     * Expert use: get the internal docs array.
+     * The array is not locked, so care should be taken when reading it.
+     * Best to wrap usage of this function and the returned in a withReadLock call.
+     * <p>
+     * NOTE JN: only used in HitsList constructor; eliminate entirely?
+     *
+     * @return list of document ids
+     */
     @Override
     public IntIterator docsIterator() {
         return docs.intIterator();
@@ -285,41 +272,13 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
 
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
     @Override
-    public HitsInternal.Iterator iterator() {
-        return new Iterator();
+    public Iterator iterator() {
+        return new HitIterator();
     }
 
     @Override
-    public HitsInternal sort(HitProperty p) {
-        p = p.copyWith(this);
-        int[] indices = new int[docs.size()];
-        for (int i = 0; i < indices.length; ++i)
-            indices[i] = i;
-
-        IntArrays.quickSort(indices, p::compare);
-
-        // Sort the indices using the given HitProperty
-        if (p.getValueType() == PropertyValueString.class) {
-            // Collator.compare() is synchronized and therefore slow.
-            // It is faster to calculate all the collationkeys first, then parallel sort them.
-            CollationKey[] sortValues = new CollationKey[docs.size()];
-            for (int i = 0; i < sortValues.length; ++i)
-                sortValues[i] = PropertyValue.collator.getCollationKey(p.get(i).toString());
-            IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));
-        } else {
-            IntArrays.parallelQuickSort(indices, p::compare);
-        }
-
-        HitsInternalMutable r = HitsInternal.create(field, matchInfoDefs, docs.size(), false, false);
-        if (matchInfos.isEmpty()) {
-            for (int index: indices) {
-                r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index), null);
-            }
-        } else {
-            for (int index: indices) {
-                r.add(docs.getInt(index), starts.getInt(index), ends.getInt(index), matchInfos.get(index));
-            }
-        }
-        return r;
+    public HitsInternal sortedNoLock(HitProperty p) {
+        return sort32(p);
     }
+
 }

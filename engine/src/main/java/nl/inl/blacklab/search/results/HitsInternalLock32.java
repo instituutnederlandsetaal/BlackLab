@@ -1,13 +1,10 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
@@ -25,14 +22,14 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  */
 class HitsInternalLock32 extends HitsInternalNoLock32 {
 
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
-
     HitsInternalLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
         super(field, matchInfoDefs, initialCapacity);
+        lock = new ReentrantReadWriteLock();
     }
 
     HitsInternalLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
         super(field, matchInfoDefs, docs, starts, ends, matchInfos);
+        lock = new ReentrantReadWriteLock();
     }
 
     @Override
@@ -85,50 +82,8 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         }
     }
 
-    public void addAll(HitsInternalLock32 hits) {
-        this.lock.writeLock().lock();
-        try {
-            super.addAll(hits);
-        } finally {
-            this.lock.writeLock().unlock();
-        }
-    }
-
     @Override
-    public void addAll(HitsInternal hits) {
-        this.lock.writeLock().lock();
-        try {
-            super.addAll(hits);
-        } finally {
-            this.lock.writeLock().unlock();
-        }
-    }
-
-    /**
-     * Clear the arrays.
-     */
-    @Override
-    public void clear() {
-        lock.writeLock().lock();
-        try {
-            super.clear();
-        } finally {
-            lock.writeLock().unlock();
-        }
-    }
-
-    @Override
-    public void withReadLock(Consumer<HitsInternal> cons) {
-        lock.readLock().lock();
-        try {
-            super.withReadLock(cons);
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public HitImpl get(long index) {
+    public Hit get(long index) {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -142,20 +97,6 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         }
     }
 
-    /**
-     * Copy values into the ephemeral hit, for use in a hot loop or somesuch.
-     * The intent of this function is to allow retrieving many hits without needing to allocate so many short lived objects.
-     * Example:
-     *
-     * <pre>
-     * EphemeralHitImpl h = new EphemeralHitImpl();
-     * int size = hits.size();
-     * for (int i = 0; i < size; ++i) {
-     *     hits.getEphemeral(i, h);
-     *     // use h now
-     * }
-     * </pre>
-     */
     @Override
     public void getEphemeral(long index, EphemeralHit h) {
         lock.readLock().lock();
@@ -197,9 +138,9 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     public int end(long index) {
         lock.readLock().lock();
         try {
+            // Don't call super method, this is faster (hot code)
             return this.ends.getInt((int)index);
         } finally {
-            // Don't call super method, this is faster (hot code)
             lock.readLock().unlock();
         }
     }
@@ -226,26 +167,6 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
             return matchInfoIndex < matchInfo.length ? matchInfo[matchInfoIndex] : null;
         } finally {
             lock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public long size() {
-        lock.readLock().lock();
-        try {
-            return super.size();
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    @Override
-    public HitsInternal sort(HitProperty p) {
-        this.lock.readLock().lock();
-        try {
-            return super.sort(p);
-        } finally {
-            this.lock.readLock().unlock();
         }
     }
 }

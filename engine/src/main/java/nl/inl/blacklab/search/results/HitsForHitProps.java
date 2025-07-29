@@ -70,6 +70,8 @@ public interface HitsForHitProps {
     /**
      * Get the internal hits object.
      *
+     * If this is a lazy hits object, this will cause all hits to be fetched.
+     *
      * CAUTION: only use this if you know what you're doing!
      *
      * @return internal hits object.

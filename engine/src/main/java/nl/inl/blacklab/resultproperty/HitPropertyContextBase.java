@@ -80,7 +80,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     /** Used by fetchContext() to get required context part boundaries for a hit */
     @FunctionalInterface
-    interface StartEndSetter {
+    public interface StartEndSetter {
         void setStartEnd(int[] starts, int[] ends, int indexInArrays, Hit hit);
     }
 
