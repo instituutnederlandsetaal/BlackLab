@@ -5,6 +5,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.ivdnt.blacklab.proxy.logic.Requests;
+import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
+import org.ivdnt.blacklab.proxy.resources.ProxyResponse;
+
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
@@ -12,11 +17,6 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.ResponseBuilder;
 import jakarta.ws.rs.ext.ExceptionMapper;
-
-import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.ivdnt.blacklab.proxy.logic.Requests;
-import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
-import org.ivdnt.blacklab.proxy.resources.ProxyResponse;
 
 /**
  * A catch-all for exceptions.
@@ -47,14 +47,12 @@ public class GenericExceptionMapper implements ExceptionMapper<Exception> {
 
 		// Handle standard jersey exceptions, these are thrown when a page with an invalid url is requested,
 		//	a page parameter contains an invalid value, etc.
-        if (exception instanceof Requests.BlsRequestException) {
-            Requests.BlsRequestException blsEx = (Requests.BlsRequestException) exception;
+        if (exception instanceof Requests.BlsRequestException blsEx) {
             ErrorResponse.Desc err = blsEx.getResponse().getError();
             return ProxyResponse.error(blsEx.getStatus(), err.getCode(), err.getMessage(), err.getStackTrace());
-        } else if (exception instanceof WebApplicationException) {
-			WebApplicationException appEx = (WebApplicationException) exception;
+        } else if (exception instanceof WebApplicationException appEx) {
 
-			// Preserve the original response, containing (among others) the http status code.
+            // Preserve the original response, containing (among others) the http status code.
 			response = Response.fromResponse(appEx.getResponse());
 			message = new ResponseMessage("Message", appEx);
 

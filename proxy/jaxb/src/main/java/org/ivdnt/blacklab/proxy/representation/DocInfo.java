@@ -44,8 +44,7 @@ public class DocInfo {
                 throws IOException {
             if (elObj == null)
                 return;
-            if (elObj instanceof DocInfo) {
-                DocInfo el = (DocInfo) elObj;
+            if (elObj instanceof DocInfo el) {
                 jgen.writeStartObject();
                 for (Map.Entry<String, MetadataValues> v: el.metadata.entrySet()) {
                     jgen.writeArrayFieldStart(v.getKey());
@@ -63,8 +62,7 @@ public class DocInfo {
                     provider.defaultSerializeValue(el.tokenCounts, jgen);
                 }
                 jgen.writeEndObject();
-            } else if (elObj instanceof DocInfoAdapter.DocInfoWrapper) {
-                DocInfoAdapter.DocInfoWrapper el = ((DocInfoAdapter.DocInfoWrapper) elObj);
+            } else if (elObj instanceof DocInfoAdapter.DocInfoWrapper el) {
                 jgen.writeStartObject();
                 Long lengthInTokens = null;
                 Boolean mayView = null;
