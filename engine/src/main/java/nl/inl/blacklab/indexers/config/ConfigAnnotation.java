@@ -54,9 +54,6 @@ public class ConfigAnnotation {
      */
     private AnnotationSensitivities sensitivity = AnnotationSensitivities.DEFAULT;
 
-    /** XPaths to capture the value of, to substitute for $1-$9 in valuePath */
-    private final List<String> captureValuePaths = new ArrayList<>();
-
     /**
      * Our subannotations. Note that only 1 level of subannotations is processed
      * (i.e. there's no subsubannotations), although we could process more levels if
@@ -124,7 +121,6 @@ public class ConfigAnnotation {
         result.setSensitivity(sensitivity);
         result.setUiType(uiType);
         result.setBasePath(basePath);
-        result.captureValuePaths.addAll(captureValuePaths);
         for (ConfigAnnotation a : subannotations) {
             result.addSubAnnotation(a.copy());
         }
@@ -158,14 +154,6 @@ public class ConfigAnnotation {
 
     public int getValuePathInt() {
         return valuePathInt;
-    }
-
-    public List<String> getCaptureValuePaths() {
-        return Collections.unmodifiableList(captureValuePaths);
-    }
-
-    public void addCaptureValuePath(String captureValuePath) {
-        captureValuePaths.add(captureValuePath);
     }
 
     public List<ConfigAnnotation> getSubAnnotations() {

@@ -338,7 +338,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, T word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler) {
-        String valuePath = determineValuePath(annotation, word);
+        String valuePath = annotation.getValuePath();
         if (valuePath != null) {
             // Find annotation matches, process and dedupe and index them.
             List<String> unprocessedValues = findAnnotationMatches(annotation, valuePath, word);
@@ -348,33 +348,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         } else {
             // No valuePath given. Assume this will be captured using forEach.
         }
-    }
-
-    /**
-     * Determine the valuePath for an annotation at the current word.
-     * <p>
-     * The reason this can vary per word is the captureValuePath feature.
-     * This will capture a value from the current word and substitute it
-     * into the valuePath, allowing us to look up information elsewhere in the
-     * document.
-     * <p>
-     * This is probably no longer needed when using Saxon, which has better
-     * support for advanced XPath features.
-     *
-     * @param annotation annotation we're processing
-     * @return the valuePath with any substitutions made
-     */
-    protected String determineValuePath(ConfigAnnotation annotation, T context) {
-        String valuePath = annotation.getValuePath();
-        // TODO: warn about eventual deprecation
-        // Substitute any captured values into the valuePath?
-        int i = 1;
-        for (String captureValuePath : annotation.getCaptureValuePaths()) {
-            String value = xpathValue(captureValuePath, context);
-            valuePath = valuePath.replace("$" + i, value);
-            i++;
-        }
-        return valuePath;
     }
 
     /**

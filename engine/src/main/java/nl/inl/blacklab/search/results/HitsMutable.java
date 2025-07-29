@@ -25,7 +25,6 @@ public abstract class HitsMutable extends HitsAbstract {
      *
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
-     * @param matchInfoDefs names of match info to store
      */
     protected HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits) {
         super(queryInfo, hits);

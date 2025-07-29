@@ -436,9 +436,7 @@ public class InputFormatReader extends YamlJsonReader {
                 annot.setValuePath(str(e));
                 break;
             case "captureValuePaths":
-                ArrayNode paths = (ArrayNode) e.getValue();
-                paths.iterator().forEachRemaining((t) -> annot.addCaptureValuePath(t.asText()));
-                break;
+                throw new InvalidInputFormatConfig("captureValuePaths no longer allowed. Use XPath to solve this or keep using BlackLab 4 for now.");
             case KEY_FOR_EACH_PATH:
                 if (!isSubannotation)
                     throw new InvalidInputFormatConfig("Only subannotations may have forEachPath/namePath" + inFormat());

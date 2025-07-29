@@ -27,119 +27,73 @@ annotatedFields:
       sensitivity: sensitive_insensitive
 
     - name: lemma
-      captureValuePaths:
-      - "@xml:id"
       valuePath: "@lemma | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@lemma"
       sensitivity: sensitive_insensitive
 
     - name: abbr
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:abbr | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:abbr"
 
     - name: poss
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:poss | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:poss"
 
     - name: prontype
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:prontype | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:prontype"
 
     - name: case
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:case | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:case"
 
     - name: pos
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:pos | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:pos"
 
     - name: aux
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:aux | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:aux"
 
     - name: tense
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:tense | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:tense"
 
     - name: voice
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:voice | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:voice"
 
     - name: number
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:number | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:number"
 
     - name: person
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:person | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:person"
 
     - name: verbform
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:verbform | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:verbform"
 
     - name: numtype
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:numtype | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:numtype"
 
     - name: degree
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:degree | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:degree"
 
     - name: mood
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:mood | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:mood"
 
     - name: gender
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:gender | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:gender"
 
     - name: pronoun
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:pronoun | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:pronoun"
 
     - name: diminutive
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:diminutive | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:diminutive"
 
     - name: inflection
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:inflection | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:inflection"
 
     - name: valency
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:valency | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:valency"
 
     - name: construction
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:construction | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:construction"
 
     - name: convertedfrom
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:convertedfrom | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:convertedfrom"
 
     - name: predicate
-      captureValuePaths: 
-      - "@xml:id"
       valuePath: "@fa:predicate | following-sibling::tei:join[position()=1 and '$1'!='' and contains(concat(@target,' '),'#$1 ')]/@fa:predicate"
 
 
