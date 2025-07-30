@@ -106,8 +106,8 @@ public class TermFrequencyList extends ResultsList<TermFrequency> implements Ite
     }
 
     @Override
-    protected void ensureResultsRead(long number) {
-        // NOP
+    protected boolean ensureResultsRead(long number) {
+        return size() >= number; // all results have been read
     }
 
     public TermFrequencyList filter(ResultProperty property, PropertyValue value) {

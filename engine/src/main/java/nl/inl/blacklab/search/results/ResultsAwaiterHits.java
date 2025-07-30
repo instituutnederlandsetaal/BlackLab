@@ -10,8 +10,7 @@ class ResultsAwaiterHits implements ResultsStats.ResultsAwaiter {
 
     @Override
     public boolean processedAtLeast(long lowerBound) {
-        results.ensureResultsRead(lowerBound);
-        return results.resultsStats().processedSoFar() >= lowerBound;
+        return results.ensureResultsRead(lowerBound);
     }
 
     @Override

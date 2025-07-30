@@ -29,8 +29,8 @@ public class HitGroupWithoutResults extends HitGroup {
         }
 
         @Override
-        protected void ensureResultsRead(long number) {
-            // NOP
+        protected boolean ensureResultsRead(long number) {
+            return size() >= number; // all results have been read (always 0 in this case)
         }
 
         @Override

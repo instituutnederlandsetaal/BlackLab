@@ -50,8 +50,9 @@ public abstract class ResultsAbstract implements Results {
      * @param number the minimum number of results that will have been read when this
      *            method returns (unless there are fewer hits than this); if
      *            negative, reads all hits
+     * @return true if the requested number of results were read, false if there are fewer results
      */
-    protected abstract void ensureResultsRead(long number);
+    protected abstract boolean ensureResultsRead(long number);
 
     @Override
     public long size() {

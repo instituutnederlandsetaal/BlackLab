@@ -90,8 +90,7 @@ public abstract class ResultsList<T> extends ResultsAbstract {
             @Override
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
-                ensureResultsRead((long)index + 2);
-                return results.size() >= index + 2;
+                return ensureResultsRead((long)index + 2);
             }
 
             @Override
@@ -112,10 +111,10 @@ public abstract class ResultsList<T> extends ResultsAbstract {
     }
     
     public synchronized T get(long i) {
-        ensureResultsRead(i + 1);
-        if (i >= results.size())
-            return null;
-        return results.get((int)i);
+        if (ensureResultsRead(i + 1)) {
+            return results.get((int)i);
+        }
+        return null;
     }
 
     /**
@@ -127,13 +126,16 @@ public abstract class ResultsList<T> extends ResultsAbstract {
      * The returned list is a view backed by the results list.
      * 
      * If toIndex is out of range, no exception is thrown, but a smaller list is returned.
-     * 
+     *
+     * @param fromIndex the index of the first hit to return (inclusive)
+     * @paream toIndex the index of the last hit to return (exclusive)
      * @return the list of hits
      */
     protected List<T> resultsSubList(long fromIndex, long toIndex) {
-        ensureResultsRead(toIndex);
-        if (toIndex > results.size())
+        if (!ensureResultsRead(toIndex)) {
+            // Not enough hits; adjust toIndex
             toIndex = results.size();
+        }
         return results.subList((int)fromIndex, (int)toIndex);
     }
 }

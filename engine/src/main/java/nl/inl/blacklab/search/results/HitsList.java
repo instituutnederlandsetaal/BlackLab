@@ -87,8 +87,8 @@ public class HitsList extends HitsAbstract {
      *            negative, reads all hits
      */
     @Override
-    protected final void ensureResultsRead(long number) {
-        // immutable, results have always been read
+    protected final boolean ensureResultsRead(long number) {
+        return size() >= number; // all results have been read
     }
 
     public SampleParameters sampleParameters() {

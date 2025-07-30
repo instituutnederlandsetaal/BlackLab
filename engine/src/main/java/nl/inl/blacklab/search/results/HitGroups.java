@@ -187,8 +187,8 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
     }
 
     @Override
-    protected void ensureResultsRead(long number) {
-        // NOP
+    protected boolean ensureResultsRead(long number) {
+        return size() >= number; // all results have been read
     }
 
     public HitGroups sort(HitGroupProperty sortProp) {

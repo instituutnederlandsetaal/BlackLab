@@ -198,8 +198,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
     ResultsStats.ResultsAwaiter waitUntil = new ResultsStats.ResultsAwaiter() {
         @Override
         public boolean processedAtLeast(long lowerBound) {
-            ensureResultsRead(lowerBound);
-            return results.size() >= lowerBound;
+            return ensureResultsRead(lowerBound);
         }
 
         @Override
@@ -304,13 +303,14 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * and add the hits.
      *
      * @param number the number of results we want to ensure have been read, or
-     *            negative for all results
+     *               negative for all results
+     * @return
      */
     @Override
-    protected void ensureResultsRead(long number) {
+    protected boolean ensureResultsRead(long number) {
         try {
-            if (resultsStats().done() || (number >= 0 && results.size() > number))
-                return;
+            if (resultsStats().done() || (number >= 0 && results.size() >= number))
+                return results.size() >= number;
 
             while (!ensureResultsReadLock.tryLock()) {
                 /*
@@ -320,7 +320,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 */
                 Thread.sleep(50);
                 if (resultsStats().done() || (number >= 0 && results.size() >= number))
-                    return;
+                    return results.size() >= number;
             }
 
             try {
@@ -370,6 +370,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
             Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         }
+        return results.size() >= number;
     }
 
     private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {

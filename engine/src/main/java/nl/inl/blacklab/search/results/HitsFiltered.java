@@ -79,11 +79,11 @@ public class HitsFiltered extends HitsMutable {
      *            negative, reads all hits
      */
     @Override
-    protected void ensureResultsRead(long number) {
+    protected boolean ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
-            if (doneFiltering || number >= 0 && hitsInternalMutable.size() > number)
-                return;
+            if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
+                return hitsInternalMutable.size() >= number;
 
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
@@ -98,7 +98,7 @@ public class HitsFiltered extends HitsMutable {
                  */
                 Thread.sleep(50);
                 if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
-                    return;
+                    return hitsInternalMutable.size() >= number;
             }
             try {
                 boolean readAllHits = number < 0;
@@ -135,6 +135,6 @@ public class HitsFiltered extends HitsMutable {
             Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         }
+        return hitsInternalMutable.size() >= number;
     }
-
 }

@@ -94,9 +94,8 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
         // Auto-clamp number
         // take care not to always call size(), as that blocks until we're done!
         // Instead, first call ensureResultsRead so we block until we have either have enough or finish
-        this.ensureResultsRead(first + windowSize);
+        boolean enoughHitsForFullWindow = this.ensureResultsRead(first + windowSize);
         // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
-        boolean enoughHitsForFullWindow = resultsStats().waitUntil().processedAtLeast(first + windowSize);
         long number;
         if (enoughHitsForFullWindow)
             number = windowSize;
