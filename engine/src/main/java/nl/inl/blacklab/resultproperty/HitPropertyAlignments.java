@@ -7,7 +7,7 @@ import java.util.Objects;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.HitsForHitProps;
+import nl.inl.blacklab.search.results.HitsSimple;
 
 /**
  * A hit property for grouping on an attribute of a matched span.
@@ -25,7 +25,7 @@ public class HitPropertyAlignments extends HitProperty {
         return new HitPropertyAlignments();
     }
 
-    HitPropertyAlignments(HitPropertyAlignments prop, HitsForHitProps hits, boolean invert) {
+    HitPropertyAlignments(HitPropertyAlignments prop, HitsSimple hits, boolean invert) {
         super(prop, hits, invert);
     }
 
@@ -59,7 +59,7 @@ public class HitPropertyAlignments extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
+    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
         return new HitPropertyAlignments(this, newHits, invert);
     }
 

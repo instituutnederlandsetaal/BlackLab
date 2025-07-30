@@ -24,7 +24,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
 
     HitsInternalAbstract(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
         this.field = field;
-        this.matchInfoDefs = matchInfoDefs;
+        this.matchInfoDefs = matchInfoDefs == null ? MatchInfoDefs.EMPTY : matchInfoDefs;
     }
 
     @Override
@@ -86,6 +86,35 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     }
 
     abstract HitsInternal sortedNoLock(HitProperty p);
+
+    @Override
+    public HitsSimple sublist(long first, long windowSize) {
+        if (lock != null) {
+            lock.readLock().lock();
+            try {
+                return sublistNoLock(first, windowSize);
+            } finally {
+                lock.readLock().unlock();
+            }
+        } else {
+            return sublistNoLock(first, windowSize);
+        }
+    }
+
+    public HitsSimple sublistNoLock(long start, long windowSize) {
+        long end = start + windowSize;
+        if (end > size())
+            end = size();
+        if (start < 0 || end < 0 || start > end)
+            throw new IndexOutOfBoundsException("Window start " + start + " with size " + windowSize + " is out of bounds (size: " + size() + ")");
+        HitsInternalMutable window = HitsInternal.create(field, matchInfoDefs, end - start, false, false);
+        EphemeralHit h = new EphemeralHit();
+        for (long i = start; i < end; ++i) {;
+            getEphemeral(i, h);
+            window.add(h);
+        }
+        return window;
+    }
 
     public HitsInternalMutable sort32(HitProperty p) {
         if (size() > Constants.JAVA_MAX_ARRAY_SIZE)
@@ -153,5 +182,9 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         }
     }
 
+    @Override
+    public HitsSimple getFinishedHits() {
+        return lock != null ? nonlocking() : this;
+    }
 
 }

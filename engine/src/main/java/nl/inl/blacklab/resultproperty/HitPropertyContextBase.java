@@ -20,8 +20,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsForHitProps;
-import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.ThreadAborter;
 
@@ -176,7 +175,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected final BlackLabIndex index;
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, HitsForHitProps hits, boolean invert, AnnotatedField overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, HitsSimple hits, boolean invert, AnnotatedField overrideField) {
         super(prop, hits, invert);
         this.index = hits == null ? prop.index : hits.index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
@@ -248,15 +247,14 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     protected synchronized void fetchContext(StartEndSetter setStartEnd) {
-        HitsInternal ha = hits.getInternalHits();
-        contextTermId = new ObjectBigArrayBigList<>(ha.size());
-        contextSortOrder = new ObjectBigArrayBigList<>(ha.size());
-        final long size = ha.size();
-        int prevDoc = size == 0 ? -1 : ha.doc(0);
+        final long size = hits.size();
+        contextTermId = new ObjectBigArrayBigList<>(size);
+        contextSortOrder = new ObjectBigArrayBigList<>(size);
+        int prevDoc = size == 0 ? -1 : hits.doc(0);
         long firstHitInCurrentDoc = 0;
         if (size > 0) {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-                final int curDoc = ha.doc(i);
+                final int curDoc = hits.doc(i);
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:

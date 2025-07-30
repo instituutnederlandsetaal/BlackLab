@@ -55,6 +55,7 @@ import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.Results;
@@ -401,7 +402,7 @@ public class QueryToolImpl {
             if (currentHitSet == null) {
                 output.error("No set of hits for highlighting.");
             } else {
-                Hits hitsInDoc = hits.getHitsInDoc(docId);
+                HitsSimple hitsInDoc = hits.getHitsInDoc(docId);
                 output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
             }
             break;
@@ -787,14 +788,12 @@ public class QueryToolImpl {
         Timer t = new Timer();
         timings.start();
 
-        Hits hitsToSort = getCurrentHitSet();
-
         HitProperty crit = getCrit(sortBy, annotationName, -1);
         if (crit == null) {
             output.error("Invalid hit sort criterium: " + sortBy
                     + " (valid are: match, before, after, doc, <metadatafield>)");
         } else {
-            sortedHits = hitsToSort.sort(crit);
+            sortedHits = getCurrentHitSet().sorted(crit);
             firstResult = 0;
             timings.record("sort");
             showResultsPage();

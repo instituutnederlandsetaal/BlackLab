@@ -76,7 +76,7 @@ public class ResultHitsCsv {
                         HitProperty sortProp = HitProperty.deserialize(hits, sortBy, params.getContext());
                         if (sortProp == null)
                             throw new BadRequest("ERROR_IN_SORT_VALUE", "Cannot deserialize sort value: " + sortBy);
-                        hits = hits.sort(sortProp);
+                        hits = hits.sorted(sortProp);
                     }
                 }
             } else {

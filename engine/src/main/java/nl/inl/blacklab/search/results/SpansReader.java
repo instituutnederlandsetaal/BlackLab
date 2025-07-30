@@ -232,7 +232,7 @@ class SpansReader implements Runnable {
 
         final int numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
-        final HitsInternalMutable results = HitsInternal.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, true);
+        final HitsInternalMutable results = HitsInternal.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
         final LongUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
         final LongUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.

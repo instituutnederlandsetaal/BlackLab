@@ -18,7 +18,7 @@ public class HitGroupWithoutResults extends HitGroup {
         private final ResultsStatsSaved docsStats;
 
         public HitsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
-            super(queryInfo, true);
+            super(queryInfo, HitsInternal.empty(queryInfo.field(), null), false);
 
             this.maxHitsProcessed = maxHitsProcessed;
             this.maxHitsCounted = maxHitsCounted;
@@ -41,15 +41,6 @@ public class HitGroupWithoutResults extends HitGroup {
         @Override
         public ResultsStats docsStats() {
             return docsStats;
-        }
-
-        public MaxStats maxStats() {
-            return hitsStats.maxStats();
-        }
-
-        @Override
-        public WindowStats windowStats() {
-            return null;
         }
 
         @Override

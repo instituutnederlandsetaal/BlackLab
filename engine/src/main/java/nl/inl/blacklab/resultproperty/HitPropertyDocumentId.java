@@ -1,6 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.HitsForHitProps;
+import nl.inl.blacklab.search.results.HitsSimple;
 
 /**
  * A hit property for grouping per document id.
@@ -12,7 +12,7 @@ public class HitPropertyDocumentId extends HitProperty {
 
     public static final String ID = "docid";
 
-    HitPropertyDocumentId(HitPropertyDocumentId prop, HitsForHitProps hits, boolean invert) {
+    HitPropertyDocumentId(HitPropertyDocumentId prop, HitsSimple hits, boolean invert) {
         super(prop, hits, invert);
     }
 
@@ -26,7 +26,7 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
+    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
         return new HitPropertyDocumentId(this, newHits, invert);
     }
 

@@ -23,8 +23,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
-                HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(),
-                        null, -1, true, true), searchSettings);
+                HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
         BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
 
         for (LeafReaderContext leafReaderContext : queryInfo.index().reader().leaves()) {

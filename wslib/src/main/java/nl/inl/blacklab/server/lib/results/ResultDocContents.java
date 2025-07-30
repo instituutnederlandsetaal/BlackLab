@@ -14,7 +14,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -131,10 +132,10 @@ public class ResultDocContents {
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
-        Hits hitsInDoc;
+        HitsSimple hitsInDoc;
         AnnotatedField fieldToShow = params.getAnnotatedField();
         if (hits == null) {
-            hitsInDoc = Hits.empty(QueryInfo.create(index, fieldToShow));
+            hitsInDoc = HitsInternal.empty(fieldToShow, null);
         } else {
             hitsInDoc = hits.getHitsInDoc(docId);
         }

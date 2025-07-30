@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.HitsForHitProps;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -40,7 +40,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     /** The properties we're combining */
     final List<HitProperty> properties;
     
-    HitPropertyMultiple(HitPropertyMultiple mprop, HitsForHitProps newHits, boolean invert) {
+    HitPropertyMultiple(HitPropertyMultiple mprop, HitsSimple newHits, boolean invert) {
         super(mprop, null, invert);
         int n = mprop.properties.size();
         this.properties = new ArrayList<>();
@@ -101,7 +101,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
+    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
         return new HitPropertyMultiple(this, newHits, invert);
     }
 

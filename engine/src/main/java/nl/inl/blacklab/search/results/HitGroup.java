@@ -37,7 +37,7 @@ public class HitGroup extends Group {
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
             MatchInfoDefs matchInfoDefs, long totalSize) {
-        super(groupIdentity, Hits.list(queryInfo, storedResults, matchInfoDefs), totalSize);
+        super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
     }
 
     /**

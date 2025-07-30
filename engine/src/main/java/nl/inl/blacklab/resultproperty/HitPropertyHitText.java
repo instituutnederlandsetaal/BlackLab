@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsForHitProps;
+import nl.inl.blacklab.search.results.HitsSimple;
 
 /**
  * A hit property for grouping on the text actually matched.
@@ -21,7 +21,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         return new HitPropertyHitText(index, i.annotation, i.sensitivity);
     }
 
-    HitPropertyHitText(HitPropertyHitText prop, HitsForHitProps hits, boolean invert) {
+    HitPropertyHitText(HitPropertyHitText prop, HitsSimple hits, boolean invert) {
         super(prop, hits, invert, null);
     }
 
@@ -42,7 +42,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
+    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
         return new HitPropertyHitText(this, newHits, invert);
     }
 

@@ -29,7 +29,7 @@ public class Kwics {
     /** KWICs in other fields (for parallel corpora), or null if none. */
     private Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
 
-    public Kwics(Hits hits, ContextSize contextSize) {
+    public Kwics(HitsSimple hits, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
     
@@ -40,7 +40,7 @@ public class Kwics {
         foreignKwics = retrieveForeignKwics(hits, contextSize);
     }
 
-    private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
+    private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(HitsSimple hits, ContextSize contextSize) {
         Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
         Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
         AnnotatedField defaultField = hits.field();
@@ -56,7 +56,7 @@ public class Kwics {
                     MatchInfo.Def def = defIt.hasNext() ? defIt.next() : null; // null should only happen in testing...
                     boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
                             def != null && def.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
-                    minMaxPerField = updateMinMaxForMatchInfo(hits.queryInfo().index(), mi, defaultField, minMaxPerField,
+                    minMaxPerField = updateMinMaxForMatchInfo(hits.index(), mi, defaultField, minMaxPerField,
                             afisPerField, isTargetHit);
                 }
 
@@ -75,7 +75,7 @@ public class Kwics {
 
                         AnnotatedField field = e.getKey();
                         List<AnnotationForwardIndex> afis = afisPerField.get(field);
-                        Hits singleHit = Hits.singleHit(hits.queryInfo(), hit.doc(), matchStart, matchEnd);
+                        HitsSimple singleHit = HitsInternal.single(hits.field(), hits.matchInfoDefs(), hit.doc(), matchStart, matchEnd);
                         ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd, true,
                                 contextSize.getMaxSnippetLength());
                         Contexts.makeKwicsSingleDocForwardIndex(singleHit, afis, thisContext,
@@ -175,10 +175,10 @@ public class Kwics {
      *
      * @return the KWICs
      */
-    private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
+    private static Map<Hit, Kwic> retrieveKwics(HitsSimple hits, ContextSize contextSize, AnnotatedField field) {
         // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
         // (this convention originates from how we write our XML structure)
-        ForwardIndex forwardIndex = hits.queryInfo().index().forwardIndex(field);
+        ForwardIndex forwardIndex = hits.index().forwardIndex(field);
         List<AnnotationForwardIndex> forwardIndexes = getAnnotationForwardIndexes(forwardIndex);
 
         // Iterate over hits and fetch KWICs per document
@@ -190,7 +190,7 @@ public class Kwics {
             if (lastDocId != -1 && curDocId != lastDocId) {
                 // We've reached a new document, so process the previous one
                 Contexts.makeKwicsSingleDocForwardIndex(
-                        hits.window(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId),
+                        hits.sublist(firstIndexWithCurrentDocId, i - firstIndexWithCurrentDocId),
                         forwardIndexes, contextSize, kwics::put);
                 firstIndexWithCurrentDocId = i; // remember start of the new document
             }
@@ -198,7 +198,7 @@ public class Kwics {
         }
         // Last document
         Contexts.makeKwicsSingleDocForwardIndex(
-                hits.window(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId),
+                hits.sublist(firstIndexWithCurrentDocId, hits.size() - firstIndexWithCurrentDocId),
                 forwardIndexes, contextSize, kwics::put);
 
         return kwics;

@@ -23,7 +23,7 @@ public class SearchHitsSorted extends SearchHits {
     public Hits executeInternal(ActiveSearch<Hits> activeSearch) throws InvalidQuery {
         QueryTimings timings = queryInfo().timings().start();
         try {
-            return executeChildSearch(activeSearch, source).sort(property);
+            return executeChildSearch(activeSearch, source).sorted(property);
         } finally {
             timings.record("sort");
         }

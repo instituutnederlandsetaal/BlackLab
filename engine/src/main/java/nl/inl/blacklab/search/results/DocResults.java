@@ -334,7 +334,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
-                            Hits hits = Hits.list(queryInfo(), docHits, matchInfoDefs);
+                            Hits hits = Hits.list(queryInfo(), docHits);
                             long size = docHits.size();
                             addDocResultToList(doc, hits, size);
                         }
@@ -356,7 +356,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
-                        Hits hits = Hits.list(queryInfo(), docHits, matchInfoDefs);
+                        Hits hits = Hits.list(queryInfo(), docHits);
                         addDocResultToList(doc, hits, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;

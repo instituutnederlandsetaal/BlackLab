@@ -41,30 +41,21 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     /** Our internal list of simple hits. */
     protected final HitsInternal hitsInternal;
 
-    /** Construct an empty Hits object.
-     *
-     * @param queryInfo query info for corresponding query
-     * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
-     */
-    protected HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
-        this(queryInfo, readOnly ? HitsInternal.empty(queryInfo.field(), null) :
-                HitsInternal.create(queryInfo.field(), null, -1, true, true));
-    }
+    /** Mutable interface to our list of hits, if mutation is allowed. */
+    protected final HitsInternalMutable hitsInternalMutable;
 
     /**
      * Construct a Hits object from a hits array.
      *
-     * NOTE: if you pass null, a new, mutable HitsArray is used. For an immutable empty Hits object, use
-     * {@link #HitsAbstract(QueryInfo, boolean)}.
-     *
      * @param queryInfo query info for corresponding query
      * @param hits hits to use for this object. Used as-is, not copied.
      */
-    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits) {
+    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits, boolean mutable) {
         super(queryInfo);
         if (hits == null)
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
         this.hitsInternal = hits;
+        this.hitsInternalMutable = mutable ? (HitsInternalMutable)hits : null;
     }
 
     /**
@@ -204,7 +195,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public Hits sort(HitProperty sortProp) {
+    public Hits sorted(HitProperty sortProp) {
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
         sortProp = sortProp.copyWith(this);
@@ -321,16 +312,15 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     //--------------------------------------------------------------------
 
     @Override
-    public Hits getHitsInDoc(int docId) {
+    public HitsSimple getHitsInDoc(int docId) {
         ensureResultsRead(-1);
         HitsInternalMutable hitsInDoc = HitsInternal.create(field(), matchInfoDefs(), -1, size(),
                 false);
-        // all hits read, no lock needed.
-        for (EphemeralHit h : this.hitsInternal) {
+        for (EphemeralHit h: this.hitsInternal) {
             if (h.doc() == docId)
                 hitsInDoc.add(h);
         }
-        return new HitsList(queryInfo(), hitsInDoc, matchInfoDefs());
+        return hitsInDoc;
     }
 
     // Deriving other Hits / Results instances
@@ -356,7 +346,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
     @Override
     public MatchInfoDefs matchInfoDefs() {
-        return hitsInternal.matchInfoDefs() == null ? MatchInfoDefs.EMPTY : hitsInternal.matchInfoDefs();
+        return hitsInternal.matchInfoDefs();
     }
 
     @Override
@@ -429,8 +419,13 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     }
 
     @Override
-    public HitsInternal getInternalHits() {
+    public HitsSimple getFinishedHits() {
         ensureResultsRead(-1);
-        return hitsInternal;
+        return hitsInternal.getFinishedHits();
+    }
+
+    @Override
+    public WindowStats windowStats() {
+        return null;
     }
 }

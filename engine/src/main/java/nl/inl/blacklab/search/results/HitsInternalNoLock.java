@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
-import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrays;
@@ -88,6 +87,30 @@ class HitsInternalNoLock extends HitsInternalAbstract {
             ends = new IntBigArrayBigList(initialCapacity);
             matchInfos = new ObjectBigArrayBigList<>(initialCapacity);
         }
+    }
+
+    /**
+     * Create a HitsInternalNoLock with these lists.
+     *
+     * The lists are referenced, not copied. Used by HitsInternal.nonlocking().
+     *
+     * @param field          field
+     * @param matchInfoDefs  match info definitions
+     * @param docs          document ids
+     * @param starts        hit start positions
+     * @param ends          hit end positions
+     * @param matchInfos    match info for each hit, or empty if no match info
+     */
+    HitsInternalNoLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntBigList docs, IntBigList starts, IntBigList ends, ObjectBigList<MatchInfo[]> matchInfos) {
+        super(field, matchInfoDefs);
+        if (docs == null || starts == null || ends == null)
+            throw new NullPointerException();
+        if (docs.size64() != starts.size64() || docs.size64() != ends.size64() || ((matchInfos != null && !matchInfos.isEmpty()) && matchInfos.size64() != docs.size64()))
+            throw new IllegalArgumentException("Passed differently sized hit component arrays to Hits object");
+        this.docs = docs;
+        this.starts = starts;
+        this.ends = ends;
+        this.matchInfos = matchInfos;
     }
 
     @Override
@@ -244,20 +267,6 @@ class HitsInternalNoLock extends HitsInternalAbstract {
     @Override
     public long sizeNoLock() {
         return docs.size64();
-    }
-
-    /**
-     * Expert use: get the internal docs array.
-     * The array is not locked, so care should be taken when reading it.
-     * Best to wrap usage of this function and the returned in a withReadLock call.
-     * <p>
-     * NOTE JN: only used in HitsList constructor; eliminate entirely?
-     *
-     * @return list of document ids
-     */
-    @Override
-    public IntIterator docsIterator() {
-        return docs.intIterator();
     }
 
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */

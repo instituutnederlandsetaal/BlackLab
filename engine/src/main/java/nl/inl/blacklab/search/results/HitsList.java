@@ -1,8 +1,5 @@
 package nl.inl.blacklab.search.results;
 
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-
 /**
  * An immutable list of hits.
  */
@@ -26,15 +23,14 @@ public class HitsList extends HitsAbstract {
      * @param queryInfo query info
      * @param hits the list of hits to wrap
      */
-    protected HitsList(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
-        super(queryInfo, hits);
+    protected HitsList(QueryInfo queryInfo, HitsInternal hits) {
+        super(queryInfo, hits, false);
 
-        // Count docs and check if doc ids are ascending
+        // Count docs
         int prevDoc = -1;
-        IntIterator it = this.hitsInternal.docsIterator();
         int docsCounted = 0;
-        while (it.hasNext()) {
-            int docId = it.nextInt();
+        for (long i = 0; i < hits.size(); i++) {
+            int docId = hits.doc(i);
             if (docId != prevDoc) {
                 docsCounted++;
                 prevDoc = docId;
@@ -56,7 +52,7 @@ public class HitsList extends HitsAbstract {
                        SampleParameters sampleParameters,
                        ResultsStats hitsStats,
                        ResultsStats docsStats) {
-        super(queryInfo, hits);
+        super(queryInfo, hits, false);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
         assert hitsStats.processedSoFar() == hits.size();

@@ -10,12 +10,12 @@ import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.Bits;
 
-import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -32,12 +32,11 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  * <p>
  * This is a read-only interface.
  */
-public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
+public interface HitsInternal extends Iterable<EphemeralHit>, HitsSimple {
 
     /** Gather all hits for this query from this segment. */
     static HitsInternalMutable gatherAll(BLSpanWeight weight, LeafReaderContext lrc, HitQueryContext context) {
-        final HitsInternalMutable hits = create(context.getField(), context.getMatchInfoDefs(), -1,
-                true, false);
+        final HitsInternalMutable hits = create(context.getField(), context.getMatchInfoDefs(), -1, true, false);
         try {
             BLSpans clause = weight.getSpans(lrc, SpanWeight.Postings.OFFSETS);
             if (clause == null) {
@@ -77,14 +76,8 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
         }
     }
 
-    @Override
-    AnnotatedField field();
-
-    @Override
-    BlackLabIndex index();
-
     /** An empty list of hits. */
-    static HitsInternal empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+    static HitsInternalMutable empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
         return new HitsInternalNoLock32(field, matchInfoDefs, -1);
     }
 
@@ -113,6 +106,23 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
         return new HitsInternalNoLock32(field, matchInfoDefs, (int)initialCapacity);
     }
 
+    static HitsInternalMutable fromLists(AnnotatedField field,
+            int[] docs, int[] starts, int[] ends) {
+        IntList lDocs = new IntArrayList(docs);
+        IntList lStarts = new IntArrayList(starts);
+        IntList lEnds = new IntArrayList(ends);
+        return new HitsInternalNoLock32(field, null, lDocs, lStarts, lEnds, null);
+    }
+
+    static HitsSimple single(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
+        if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
+            throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
+        }
+        HitsInternalMutable hits = create(field, matchInfoDefs, 1, false, false);
+        hits.add(doc, matchStart, matchEnd, null);
+        return hits;
+    }
+
     /**
      * Perform an operation with read lock.
      * <p>
@@ -122,19 +132,6 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
      * @param cons operation to perform
      */
     void withReadLock(Consumer<HitsInternal> cons);
-
-    /** How many hits does this contains? */
-    long size();
-
-    /**
-     * Iterate over the doc ids of the hits.
-     * <p>
-     * NOTE: iterating does not lock the arrays, to do that,
-     * it should be performed in a {@link #withReadLock} callback.
-     *
-     * @return iterator over the doc ids
-     */
-    IntIterator docsIterator();
 
     /**
      * Iterate over the hits.
@@ -147,6 +144,11 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
     @Override
     Iterator iterator();
 
+    @Override
+    default java.util.Iterator<EphemeralHit> ephemeralIterator() {
+        return iterator();
+    }
+
     /**
      * Return a new object with sorted hits.
      *
@@ -156,7 +158,18 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsForHitProps {
     HitsInternal sorted(HitProperty p);
 
     @Override
-    default HitsInternal getInternalHits() {
+    default HitsSimple getFinishedHits() {
+        return this;
+    }
+
+    /**
+     * Return a non-locking version of this HitsInternal.
+     *
+     * CAUTION: this will use the same lists as this HitsInternal,
+     * it just won't use any locking. Make sure no locking is required
+     * anymore (for example, because all the hits have been added).
+     */
+    default HitsSimple nonlocking() {
         return this;
     }
 

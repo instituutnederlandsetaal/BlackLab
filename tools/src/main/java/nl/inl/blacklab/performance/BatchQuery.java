@@ -7,7 +7,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.FileUtil;
 import nl.inl.util.Timer;
@@ -86,7 +86,7 @@ public class BatchQuery {
                 try {
                     Timer t = new Timer();
                     System.out.print(query + "\t");
-                    Hits hits = index.find(CorpusQueryLanguageParser.parse(query, index.mainAnnotatedField().mainAnnotation().name()).toQuery(QueryInfo.create(index)), null);
+                    HitsSimple hits = index.find(CorpusQueryLanguageParser.parse(query, index.mainAnnotatedField().mainAnnotation().name()).toQuery(QueryInfo.create(index)), null);
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {
                         System.out.print("\t" + hits.size() + "\t" + t.elapsed());

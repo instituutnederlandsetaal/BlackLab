@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.util.CurrentThreadExecutorService;
 
-public abstract class HitsFromQueryAbstract extends HitsMutable {
+public abstract class HitsFromQueryAbstract extends HitsAbstract {
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     protected static final int HIT_POLLING_TIME_MS = 50;
@@ -52,7 +52,7 @@ public abstract class HitsFromQueryAbstract extends HitsMutable {
     protected int numThreads;
 
     public HitsFromQueryAbstract(QueryInfo queryInfo, HitsInternalMutable hits, SearchSettings searchSettings) {
-        super(queryInfo, hits);
+        super(queryInfo, hits, true);
         maxHitsToProcess = searchSettings.maxHitsToProcess();
         maxHitsToCount = searchSettings.maxHitsToCount();
         hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy

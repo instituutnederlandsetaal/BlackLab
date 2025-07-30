@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsForHitProps;
+import nl.inl.blacklab.search.results.HitsSimple;
 
 /**
  * A hit property for sorting on a number of tokens after a hit.
@@ -34,7 +34,7 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         return hitProp;
     }
 
-    HitPropertyAfterHit(HitPropertyAfterHit prop, HitsForHitProps hits, boolean invert) {
+    HitPropertyAfterHit(HitPropertyAfterHit prop, HitsSimple hits, boolean invert) {
         super(prop, hits, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
@@ -74,7 +74,7 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsForHitProps newHits, boolean invert) {
+    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
         return new HitPropertyAfterHit(this, newHits, invert);
     }
 

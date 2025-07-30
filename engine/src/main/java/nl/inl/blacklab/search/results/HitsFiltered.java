@@ -11,7 +11,7 @@ import nl.inl.util.ThreadAborter;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends HitsMutable {
+public class HitsFiltered extends HitsAbstract {
 
     private final Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -42,9 +42,7 @@ public class HitsFiltered extends HitsMutable {
      * @param value value to filter with
      */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
-        super(hits.queryInfo());
-        if (hits == null)
-            throw new IllegalArgumentException("HitsFiltered must be constructed with valid hits object (got null)");
+        super(hits.queryInfo(), HitsInternal.create(hits.field(), hits.matchInfoDefs(), -1, true, true), true);
         this.source = hits;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.

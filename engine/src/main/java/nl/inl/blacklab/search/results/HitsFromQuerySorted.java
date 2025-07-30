@@ -22,18 +22,19 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
     private final HitProperty sortBy;
 
     /** Sorted hits from each segment to merge */
-    private List<HitsInternal> segmentHits;
+    private List<HitsSimple> segmentHits;
 
     protected HitsFromQuerySorted(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings, HitProperty sortBy) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
-        super(queryInfo.optOverrideField(sourceQuery), HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(),
-                null, -1, true, true), searchSettings);
+        super(queryInfo.optOverrideField(sourceQuery), /*@@@@WRONG*/(HitsInternalMutable)HitsInternal.empty(queryInfo.optOverrideField(sourceQuery).field(),
+                null), searchSettings);
         this.sortBy = sortBy;
         weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
     }
 
     @Override
     protected boolean ensureResultsRead(long number) {
+        // Make sure the hits from all segments are gathered and sorted, so we can merge them.
         if (segmentHits == null && number > 0) {
             segmentHits = gatherFromAllSegments(sortBy);
         }
@@ -44,9 +45,9 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
         return resultsStats().processedSoFar() >= number;
     }
 
-    private List<HitsInternal> gatherFromAllSegments(HitProperty sortBy) {
-        List<Future<List<HitsInternal>>> pendingResults = null;
-        List<HitsInternal> segmentHits = new ArrayList<>();
+    private List<HitsSimple> gatherFromAllSegments(HitProperty sortBy) {
+        List<Future<List<HitsSimple>>> pendingResults = null;
+        List<HitsSimple> segmentHits = new ArrayList<>();
         try {
 
             // This is the blocking portion, start worker threads, then wait for them to finish.
@@ -64,7 +65,7 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
                     .map(list -> executorService.submit(() -> list.stream().map((lrc) -> {
                         // Gather and sort all hits for this segment.
                         HitsInternalMutable hits = HitsInternal.gatherAll(weight, lrc, hitQueryContext);
-                        return hits.sorted(sortBy);
+                        return (HitsSimple)hits.sorted(sortBy);
                     }).toList())) // now submit one task per sublist
                     .toList(); // gather the futures
             // Wait for workers to complete.
@@ -73,7 +74,7 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
             // The workers themselves won't ever throw InterruptedException, it would be wrapped in ExecutionException.
             // (Besides, we're the only thread that can call interrupt() on our worker anyway, and we don't ever do that.
             //  Technically, it could happen if the Executor were to shut down, but it would still result in an ExecutionException anyway.)
-            for (Future<List<HitsInternal>> p: pendingResults)
+            for (Future<List<HitsSimple>> p: pendingResults)
                 segmentHits.addAll(p.get());
             return segmentHits;
         } catch (InterruptedException e) {

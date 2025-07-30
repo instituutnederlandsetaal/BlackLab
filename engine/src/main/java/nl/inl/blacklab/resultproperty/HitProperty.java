@@ -12,7 +12,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.HitsForHitProps;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -22,7 +22,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    public static HitProperty deserialize(HitsForHitProps hits, String serialized, ContextSize contextSize) {
+    public static HitProperty deserialize(HitsSimple hits, String serialized, ContextSize contextSize) {
         return deserialize(hits.index(), hits.field(), serialized, contextSize);
     }
 
@@ -156,7 +156,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     }
 
     /** The Hits object we're looking at */
-    protected final HitsForHitProps hits;
+    protected final HitsSimple hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
@@ -180,7 +180,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new hits to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, HitsForHitProps hits, boolean invert) {
+    HitProperty(HitProperty prop, HitsSimple hits, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.reverse = prop.reverse;
         if (invert)
@@ -239,7 +239,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new Hits to use
      * @return the new HitProperty object
      */
-    public HitProperty copyWith(HitsForHitProps hits) {
+    public HitProperty copyWith(HitsSimple hits) {
         // If the filter property requires contexts, fetch them now.
         HitProperty result = copyWith(hits, false);
         return result;
@@ -253,7 +253,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param invert  true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(HitsForHitProps newHits, boolean invert);
+    public abstract HitProperty copyWith(HitsSimple newHits, boolean invert);
 
     @Override
     public boolean isReverse() {

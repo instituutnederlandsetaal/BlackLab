@@ -5,8 +5,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -22,7 +20,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  *
  * This interface is read-only.
  */
-public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
+public interface Hits extends Results, HitsSimple, Iterable<Hit> {
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -48,16 +46,11 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      * @return hits found
      */
     static Hits list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
-
-        IntList lDocs = new IntArrayList(docs);
-        IntList lStarts = new IntArrayList(starts);
-        IntList lEnds = new IntArrayList(ends);
-
-        return new HitsList(queryInfo, new HitsInternalLock32(queryInfo.field(), null, lDocs, lStarts, lEnds, null), null);
+        return new HitsList(queryInfo, HitsInternal.fromLists(queryInfo.field(), docs, starts, ends));
     }
 
-    static Hits list(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
-        return new HitsList(queryInfo, hits, matchInfoDefs);
+    static Hits list(QueryInfo queryInfo, HitsInternal hits) {
+        return new HitsList(queryInfo, hits);
     }
 
     /**
@@ -80,10 +73,10 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      * @return hits found
      */
     static Hits empty(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsInternal.empty(queryInfo.field(), null), null);
+        return new HitsList(queryInfo, HitsInternal.empty(queryInfo.field(), null));
     }
 
-    static Map<String, MatchInfo> getMatchInfoMap(Hits hits, Hit hit, boolean omitEmptyCaptures) {
+    static Map<String, MatchInfo> getMatchInfoMap(HitsSimple hits, Hit hit, boolean omitEmptyCaptures) {
         MatchInfo[] matchInfo = hit.matchInfos();
         if (matchInfo == null)
             return Collections.emptyMap();
@@ -122,6 +115,11 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      */
     Hits window(long first, long windowSize);
 
+    /** A simple sublist of hits, without guaranteeing the extra stats etc. that a normal hits window has. */
+    default HitsSimple sublist(long first, long windowSize) {
+        return window(first, windowSize);
+    }
+
     /**
      * Take a sample of hits by wrapping an existing Hits object.
      *
@@ -130,16 +128,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      */
     Hits sample(SampleParameters sampleParameters);
 
-    /**
-     * Return a new Hits object with these hits sorted by the given property.
-     * <p>
-     * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same result set.
-     *
-     * @param sortProp the hit property to sort on
-     * @return a new Hits object with the same hits, sorted in the specified way
-     */
-    Hits sort(HitProperty sortProp);
+    Hits sorted(HitProperty sortProp);
 
     HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup);
 
@@ -216,7 +205,7 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
      */
     Concordances concordances(ContextSize contextSize);
 
-    Hits getHitsInDoc(int docId);
+    HitsSimple getHitsInDoc(int docId);
 
     ResultsStats docsStats();
 
@@ -243,6 +232,9 @@ public interface Hits extends Results, HitsForHitProps, Iterable<Hit> {
 
     Kwics kwics(ContextSize contextSize);
 
-    long size();
-
+    @Override
+    default boolean isEmpty() {
+        boolean atLeastOneHit = resultsStats().waitUntil().processedAtLeast(1);
+        return !atLeastOneHit;
+    }
 }

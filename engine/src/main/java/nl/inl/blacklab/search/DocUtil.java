@@ -17,8 +17,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 
@@ -158,7 +157,7 @@ public class DocUtil {
         }
     }
 
-    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
+    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, HitsSimple hits) {
         if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
@@ -253,7 +252,7 @@ public class DocUtil {
      * @param endAtWord ending token position in contents (first token not to be returned)
      * @return (part of) the content with highlighting.
      */
-    public static String highlightContent(BlackLabIndex index, int docId, Hits hits, int startAtWord, int endAtWord) {
+    public static String highlightContent(BlackLabIndex index, int docId, HitsSimple hits, int startAtWord, int endAtWord) {
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
         AnnotatedField field = hits.field();
@@ -268,14 +267,13 @@ public class DocUtil {
         return highlightContent(index, docId, hits, fixUnbalancedTags, highlightFromOffset, content);
     }
 
-    private static String highlightContent(BlackLabIndex index, int docId, Hits hits, boolean fixUnbalancedTags,
+    private static String highlightContent(BlackLabIndex index, int docId, HitsSimple hits, boolean fixUnbalancedTags,
             int highlightFromOffset, String content) {
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
-        ResultsStats hitsStats = hits.resultsStats();
-        if (hitsStats.waitUntil().processedAtLeast(1) || fixUnbalancedTags) {
+        if (!hits.isEmpty() || fixUnbalancedTags) {
             // Find the character offsets for the hits and highlight
             List<HitCharSpan> hitSpans = null;
-            if (hitsStats.waitUntil().processedAtLeast(1)) // if hits == null, we still want the highlighter to make it well-formed
+            if (!hits.isEmpty()) // if hits == null, we still want the highlighter to make it well-formed
                 hitSpans = getCharacterOffsets(index, docId, hits);
             XmlHighlighter hl = new XmlHighlighter();
             hl.setUnbalancedTagsStrategy(index.defaultUnbalancedTagsStrategy());
@@ -296,7 +294,7 @@ public class DocUtil {
      * @param hits hits to highlight
      * @return document with highlighting
      */
-    public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
+    public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, HitsSimple hits) {
         String contents = index.contentAccessor(contentsField).getDocumentContents(docId);
         return highlightContent(index, docId, hits, false, 0, contents);
     }

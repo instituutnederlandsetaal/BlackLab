@@ -153,4 +153,9 @@ class HitsInternalLock extends HitsInternalNoLock {
             lock.readLock().unlock();
         }
     }
+
+    @Override
+    public HitsSimple nonlocking() {
+        return new HitsInternalNoLock(field(), matchInfoDefs(), docs, starts, ends, matchInfos);
+    }
 }

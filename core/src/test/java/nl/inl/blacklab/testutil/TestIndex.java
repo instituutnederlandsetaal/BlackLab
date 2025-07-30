@@ -258,7 +258,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String query, HitProperty sortBy) {
-        Hits hits = find(query, null).sort(sortBy);
+        Hits hits = find(query, null).sorted(sortBy);
         return getConcordances(hits, word);
     }
     

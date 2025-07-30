@@ -304,7 +304,7 @@ public class ResultHits {
         String sortBy = params.getSortProps().orElse(null);
         HitProperty sortProp = HitProperty.deserialize(hits, sortBy, params.getContext());
         if (sortProp != null)
-            hits = hits.sort(sortProp);
+            hits = hits.sorted(sortProp);
 
         return Pair.of(jobHitGroups, hits);
     }

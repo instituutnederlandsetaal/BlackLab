@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -62,7 +63,7 @@ public class Contexts {
      * @param kwicConsumer where to add the KWICs
      */
     static void makeKwicsSingleDocForwardIndex(
-            Hits hits,
+            HitsSimple hits,
             List<AnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
             BiConsumer<Hit, Kwic> kwicConsumer
@@ -72,7 +73,7 @@ public class Contexts {
         assert !forwardIndexes.isEmpty();
 
         // Get the contexts (arrays of term ids) and make the KWICs by looking up the terms
-        int[][] contexts = getContextWordsSingleDocument(hits.getInternalHits(), 0, hits.size(),
+        int[][] contexts = getContextWordsSingleDocument(hits, 0, hits.size(),
                 contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
@@ -82,7 +83,9 @@ public class Contexts {
                 .map(AnnotationForwardIndex::terms)
                 .toList();
         int hitIndex = 0;
-        for (Hit h: hits) {
+        Iterator<EphemeralHit> it = hits.ephemeralIterator();
+        while (it.hasNext()) {
+            Hit h = it.next().toHit();
             int[] hitContext = contexts[hitIndex];
             int contextLength = hitContext[Contexts.LENGTH_INDEX];
             List<String> tokens = new ArrayList<>(contextLength * numberOfAnnotations);
@@ -113,7 +116,7 @@ public class Contexts {
      * @param contextSize how many words of context we want
      * @param contextSources forward indices to get context from
      */
-    private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end,
+    private static int[][] getContextWordsSingleDocument(HitsSimple hits, long start, long end,
             ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
@@ -174,28 +177,28 @@ public class Contexts {
     /**
      * Retrieve context words for the hits.
      *
-     * @param hits hits to find contexts for
+     * @param hits2 hits to find contexts for
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    private static BigList<int[]> getContexts(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
+    private static BigList<int[]> getContexts(HitsSimple hits, List<Annotation> annotations, ContextSize contextSize) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        // Make sure all hits have been read and get access to internal hits
-        HitsInternal ha = hits.getInternalHits();
+        // Make sure all hits have been read and get the most efficient interface
+        hits = hits.getFinishedHits();
 
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
-            fis.add(hits.queryInfo().index().annotationForwardIndex(annotation));
+            fis.add(hits.index().annotationForwardIndex(annotation));
         }
 
         // Get the context
         // Group hits per document
 
         // setup first iteration
-        final long size = ha.size(); // TODO ugly, might be slow because of required locking
-        int prevDoc = size == 0 ? -1 : ha.doc(0);
+        final long size = hits.size(); // TODO ugly, might be slow because of required locking
+        int prevDoc = size == 0 ? -1 : hits.doc(0);
         int firstHitInCurrentDoc = 0;
 
         /*
@@ -215,11 +218,11 @@ public class Contexts {
         MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
         if (size > 0) {
             for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-                final int curDoc = ha.doc(i);
+                final int curDoc = hits.doc(i);
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
-                    int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, matchInfoDefs);
+                    int[][] docContextArray = getContextWordsSingleDocument(hits, firstHitInCurrentDoc, i, contextSize, fis, matchInfoDefs);
                     Collections.addAll(contexts, docContextArray);
                     // start a new document
                     prevDoc = curDoc;
@@ -227,7 +230,7 @@ public class Contexts {
                 }
             }
             // Process hits in final document
-            int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, hits.size(), contextSize, fis, matchInfoDefs);
+            int[][] docContextArray = getContextWordsSingleDocument(hits, firstHitInCurrentDoc, hits.size(), contextSize, fis, matchInfoDefs);
             Collections.addAll(contexts, docContextArray);
         }
         return contexts;
@@ -245,7 +248,7 @@ public class Contexts {
      * @return the frequency of each occurring token
      */
     public static synchronized TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
-        BlackLabIndex index = hits.queryInfo().index();
+        BlackLabIndex index = hits.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();
         if (contextSize == null)
