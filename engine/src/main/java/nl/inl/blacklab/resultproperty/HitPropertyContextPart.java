@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -153,8 +155,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     /** Description of the context to use (starting point, direction, start/end index) */
     private ContextPart part;
 
-    HitPropertyContextPart(HitPropertyContextPart prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert, null);
+    HitPropertyContextPart(HitPropertyContextPart prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert, null);
         this.part = prop.part;
     }
 
@@ -182,8 +184,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyContextPart(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertyContextPart(this, newHits, lrc, invert);
     }
 
     @Override

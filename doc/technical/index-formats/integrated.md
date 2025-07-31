@@ -190,10 +190,10 @@ This file will have an extension of `.blfi.fields`.
 
 ### termorder - indexbuffers for a sorted view on the terms
 
-- int[number of terms n]: termID2InsensitivePos - sort positions of the terms (i.e. what position would the term have after sorting the list of terms insensitively)
-- int[number of terms n]: insensitivePos2TermID - what term would be at this position if the list was sorted?
-- int[number of terms n]: termID2SensitivePos - sort positions of the terms (i.e. what position would the term have after sorting the list of terms sensitively) 
-- int[number of terms n]: sensitivePos2TermID - what term would be at this position if the list was sorted? 
+- int[number of terms n]: termID2InsensitivePos - sort position (insensitive) of each term; i.e. the first item is the sort position of term id 0, the second item is the sort position of term id 1, etc.
+- int[number of terms n]: insensitivePos2TermID - all term ids in alphabetical order (insensitive); i.e. the first item is the term id with the lowest sort position; the last item is the term id with the highest sort position.
+- int[number of terms n]: termID2SensitivePos - sort position (sensitive) of each term; i.e. the first item is the sort position of term id 0, the second item is the sort position of term id 1, etc.
+- int[number of terms n]: sensitivePos2TermID - all term ids in alphabetical order (sensitive); i.e. the first item is the term id with the lowest sort position; the last item is the term id with the highest sort position. 
 
 ### termindex - where to find term strings
 

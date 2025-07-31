@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -34,8 +36,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         return hitProp;
     }
 
-    HitPropertyAfterHit(HitPropertyAfterHit prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert, null);
+    HitPropertyAfterHit(HitPropertyAfterHit prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
@@ -74,8 +76,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyAfterHit(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertyAfterHit(this, newHits, lrc, invert);
     }
 
     @Override

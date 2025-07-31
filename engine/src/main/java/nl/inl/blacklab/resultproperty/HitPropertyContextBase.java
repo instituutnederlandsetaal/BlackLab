@@ -5,14 +5,18 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.ArrayUtils;
+import org.apache.lucene.index.LeafReaderContext;
 
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -35,6 +39,37 @@ public abstract class HitPropertyContextBase extends HitProperty {
      *  when we construct a displayable value)
      */
     protected boolean compareInReverse;
+
+    /** [GLOBAL] forward index for annotation */
+    protected AnnotationForwardIndex globalAnnotationForwardIndex;
+
+    /** [GLOBAL] Terms for our annotation */
+    protected Terms globalAnnotationTerms;
+
+    /** [SEGMENT] Lucene field */
+    private String segmentLuceneField;
+
+    /** [SEGMENT] forward index */
+    private ForwardIndexSegmentReader segmentForwardIndex;
+
+    /** [SEGMENT] terms for our annotation */
+    private TermsSegmentReader segmentAnnotationTerms;
+
+    /** Stores the relevant context tokens for each hit index */
+    protected BigList<int[]> contextTermId;
+
+    /** Stores the sort order for the relevant context tokens for each hit index */
+    protected BigList<int[]> contextSortOrder;
+
+    protected Annotation annotation;
+
+    protected final MatchSensitivity sensitivity;
+
+    protected final String name;
+
+    protected final String serializeName;
+
+    protected final BlackLabIndex index;
 
     /**
      * Find a "foreign hit" in a parallel corpus.
@@ -82,15 +117,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
     public interface StartEndSetter {
         void setStartEnd(int[] starts, int[] ends, int indexInArrays, Hit hit);
     }
-
-    /** Forward index we're looking at */
-    protected AnnotationForwardIndex afi;
-
-    /** Stores the relevant context tokens for each hit index */
-    protected BigList<int[]> contextTermId;
-
-    /** Stores the sort order for the relevant context tokens for each hit index */
-    protected BigList<int[]> contextSortOrder;
 
     /** Information deserialized from extra parameters.
      *
@@ -162,29 +188,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
         // just ignore extra param by default when deserializing
     }
 
-    protected Terms terms;
-
-    protected Annotation annotation;
-
-    protected final MatchSensitivity sensitivity;
-
-    protected final String name;
-
-    protected final String serializeName;
-
-    protected final BlackLabIndex index;
-
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, HitsSimple hits, boolean invert, AnnotatedField overrideField) {
-        super(prop, hits, invert);
+    protected HitPropertyContextBase(HitPropertyContextBase prop, HitsSimple hits, LeafReaderContext lrc, boolean invert, AnnotatedField overrideField) {
+        super(prop, hits, lrc, invert);
         this.index = hits == null ? prop.index : hits.index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
-        this.terms = index.annotationForwardIndex(this.annotation).terms();
-//        if (hits != null && !hits.field().equals(this.annotation.field())) {
-//            throw new IllegalArgumentException(
-//                    "Hits passed to HitProperty must be in the field it was declared with! (declared with "
-//                            + this.annotation.field().name() + ", hits has " + hits.field().name() + "; class=" + getClass().getName() + ")");
-//        }
         this.sensitivity = prop.sensitivity;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
@@ -204,10 +212,20 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.serializeName = serializeName;
         this.index = index;
         this.annotation = annotation == null ? index.mainAnnotatedField().mainAnnotation() : annotation;
-        this.terms = index.annotationForwardIndex(this.annotation).terms();
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
         initForwardIndex();
+    }
+
+    void initForwardIndex() {
+        if (lrc != null) {
+            segmentLuceneField = annotation.sensitivity(sensitivity).luceneField();
+            segmentForwardIndex = BlackLabIndexIntegrated.forwardIndex(lrc);
+            segmentAnnotationTerms = segmentForwardIndex.terms(segmentLuceneField);
+        } else {
+            globalAnnotationForwardIndex = index.annotationForwardIndex(annotation);
+            globalAnnotationTerms = globalAnnotationForwardIndex.terms();
+        }
     }
 
     public Annotation getAnnotation() {
@@ -240,10 +258,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         result = prime * result + ((index == null) ? 0 : index.hashCode());
         result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
         return result;
-    }
-
-    void initForwardIndex() {
-        afi = index.annotationForwardIndex(annotation);
     }
 
     protected synchronized void fetchContext(StartEndSetter setStartEnd) {
@@ -291,16 +305,32 @@ public abstract class HitPropertyContextBase extends HitProperty {
             setStartEnd.setStartEnd(startsOfSnippets, endsOfSnippets, j, hit);
         }
 
-        // Retrieve term ids
-        List<int[]> listTermIds = afi.retrievePartsInt(docId, startsOfSnippets, endsOfSnippets);
-        // Also determine sort orders so we don't have to do that for each compare
-        for (int[] termIds : listTermIds) {
-            if (compareInReverse)
-                ArrayUtils.reverse(termIds);
-            contextTermId.add(termIds);
-            int[] sortOrder = new int[termIds.length];
-            terms.toSortOrder(termIds, sortOrder, sensitivity);
-            contextSortOrder.add(sortOrder);
+        if (globalAnnotationForwardIndex != null) {
+            // [GLOBAL] Retrieve term ids
+            List<int[]> listTermIds = globalAnnotationForwardIndex.retrievePartsInt(docId, startsOfSnippets,
+                    endsOfSnippets);
+            // Also determine sort orders so we don't have to do that for each compare
+            for (int[] termIds: listTermIds) {
+                if (compareInReverse)
+                    ArrayUtils.reverse(termIds);
+                contextTermId.add(termIds);
+                int[] sortOrder = new int[termIds.length];
+                globalAnnotationTerms.toSortOrder(termIds, sortOrder, sensitivity);
+                contextSortOrder.add(sortOrder);
+            }
+        } else {
+            // [SEGMENT] Retrieve term ids
+            List<int[]> listTermIds = segmentForwardIndex.retrieveParts(segmentLuceneField, docId,
+                    startsOfSnippets, endsOfSnippets);
+            // Also determine sort orders so we don't have to do that for each compare
+            for (int[] termIds: listTermIds) {
+                if (compareInReverse)
+                    ArrayUtils.reverse(termIds);
+                contextTermId.add(termIds);
+                int[] sortOrder = new int[termIds.length];
+                //segmentAnnotationTerms.toSortOrder(termIds, sortOrder, sensitivity);
+                contextSortOrder.add(sortOrder);
+            }
         }
     }
 

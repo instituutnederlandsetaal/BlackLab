@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.LeafReaderContext;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
@@ -21,6 +22,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  */
 public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
+
+    LeafReaderContext lrc = null;
 
     public static HitProperty deserialize(HitsSimple hits, String serialized, ContextSize contextSize) {
         return deserialize(hits.index(), hits.field(), serialized, contextSize);
@@ -180,8 +183,9 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new hits to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, HitsSimple hits, boolean invert) {
+    HitProperty(HitProperty prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
+        this.lrc = lrc;
         this.reverse = prop.reverse;
         if (invert)
             this.reverse = !this.reverse;
@@ -228,7 +232,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     
     @Override
     public HitProperty reverse() {
-        return copyWith(hits, true);
+        return copyWith(hits, null, true);
     }
 
     /**
@@ -241,19 +245,30 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      */
     public HitProperty copyWith(HitsSimple hits) {
         // If the filter property requires contexts, fetch them now.
-        HitProperty result = copyWith(hits, false);
-        return result;
+        return copyWith(hits, lrc, false);
     }
 
     /**
      * Produce a copy of this HitProperty object with a different Hits and Contexts
      * object.
      *
-     * @param newHits new Hits to use, or null to inherit
-     * @param invert  true if we should invert the previous sort order; false to keep it the same
+     * @param newHits           new Hits to use, or null to inherit
+     * @param leafReaderContext
+     * @param invert            true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(HitsSimple newHits, boolean invert);
+    public abstract HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext, boolean invert);
+
+    /**
+     * Produce a copy of this HitProperty object with a different Hits and Contexts
+     * object.
+     *
+     * @param newHits new Hits to use, or null to inherit
+     * @return the new HitProperty object
+     */
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext) {
+        return copyWith(newHits, leafReaderContext, false);
+    }
 
     @Override
     public boolean isReverse() {

@@ -17,6 +17,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.BlockTimer;
 
@@ -171,24 +172,23 @@ public class TermsIntegrated extends TermsReaderAbstract {
             return;
         }
         segmentTerms.setTermsIntegrated(this, lrc.ord);
-        TermsIntegratedSegment s = new TermsIntegratedSegment(BlackLabCodecUtil.getPostingsReader(lrc),
-                luceneField, lrc.ord);
+        BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
+        try (TermsIntegratedSegment s = new TermsIntegratedSegment(postingsReader, luceneField, lrc.ord)) {
+            Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
+            int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
+            while (it.hasNext()) {
+                // Make sure this can be interrupted if e.g. a commandline utility completes
+                // before this initialization is finished.
+                if (Thread.interrupted())
+                    throw new InterruptedException();
 
-        Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
-        int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
-        while (it.hasNext()) {
-            // Make sure this can be interrupted if e.g. a commandline utility completes
-            // before this initialization is finished.
-            if (Thread.interrupted())
-                throw new InterruptedException();
-
-            TermsIntegratedSegment.TermInSegment t = it.next();
-            TermInIndex tii = globalTermIds.computeIfAbsent(t.term, __ -> new TermInIndex(t.term, globalTermIds.size()));
-            // Remember the mapping from segment id to global id
-            segmentToGlobal[t.id] = tii.globalTermId;
+                TermsIntegratedSegment.TermInSegment t = it.next();
+                TermInIndex tii = globalTermIds.computeIfAbsent(t.term,
+                        __ -> new TermInIndex(t.term, globalTermIds.size()));
+                // Remember the mapping from segment id to global id
+                segmentToGlobal[t.id] = tii.globalTermId;
+            }
         }
-
-        s.close();
     }
 
     private int[] determineSort(TermInIndex[] terms, Comparator<TermInIndex> cmp) {

@@ -36,7 +36,7 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
     protected boolean ensureResultsRead(long number) {
         // Make sure the hits from all segments are gathered and sorted, so we can merge them.
         if (segmentHits == null && number > 0) {
-            segmentHits = gatherFromAllSegments(sortBy);
+            segmentHits = gatherAndSortForAllSegments(sortBy);
         }
 
         // TODO: we need to merge hits from the segments here.
@@ -45,7 +45,7 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
         return resultsStats().processedSoFar() >= number;
     }
 
-    private List<HitsSimple> gatherFromAllSegments(HitProperty sortBy) {
+    private List<HitsSimple> gatherAndSortForAllSegments(HitProperty sortBy) {
         List<Future<List<HitsSimple>>> pendingResults = null;
         List<HitsSimple> segmentHits = new ArrayList<>();
         try {
@@ -65,7 +65,7 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
                     .map(list -> executorService.submit(() -> list.stream().map((lrc) -> {
                         // Gather and sort all hits for this segment.
                         HitsInternalMutable hits = HitsInternal.gatherAll(weight, lrc, hitQueryContext);
-                        return (HitsSimple)hits.sorted(sortBy);
+                        return (HitsSimple)hits.sorted(sortBy.copyWith(hits, lrc));
                     }).toList())) // now submit one task per sublist
                     .toList(); // gather the futures
             // Wait for workers to complete.

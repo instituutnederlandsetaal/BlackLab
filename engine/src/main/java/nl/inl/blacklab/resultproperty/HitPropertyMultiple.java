@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -41,7 +43,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     final List<HitProperty> properties;
     
     HitPropertyMultiple(HitPropertyMultiple mprop, HitsSimple newHits, boolean invert) {
-        super(mprop, null, invert);
+        super(mprop, null, null, invert);
         int n = mprop.properties.size();
         this.properties = new ArrayList<>();
         for (int i = 0; i < n; i++) {
@@ -101,7 +103,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext, boolean invert) {
         return new HitPropertyMultiple(this, newHits, invert);
     }
 

@@ -106,19 +106,6 @@ public class TermsIntegratedSegment implements AutoCloseable {
         /** Ord (ordinal) of the segment */
         private final int ord;
 
-        /**
-         * File with the iteration order.
-         * All term IDS are local to this segment.
-         * for reference, the file contains the following mappings:
-         *     int[n] termID2InsensitivePos    ( offset [0*n*int] )
-         *     int[n] insensitivePos2TermID    ( offset [1*n*int] )
-         *     int[n] termID2SensitivePos      ( offset [2*n*int] )
-         *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
-         */
-        private final IndexInput termID2SensitivePosFile;
-
-        private final IndexInput termID2InsensitivePosFile;
-
         /** File containing the strings */
         private final IndexInput termStringFile;
 
@@ -142,15 +129,26 @@ public class TermsIntegratedSegment implements AutoCloseable {
                 // clone these file accessors, as they are not threadsafe
                 // while this code was written these file handles were only ever used in one thread,
                 // but doing this ensures we don't break things in the future.
-                this.termID2SensitivePosFile = segment._termOrderFile.clone();
-                this.termID2InsensitivePosFile = segment._termOrderFile.clone();
+                /**
+                 * File with the iteration order.
+                 * All term IDS are local to this segment.
+                 * for reference, the file contains the following mappings:
+                 *     int[n] termID2InsensitivePos    ( offset [0*n*int] )
+                 *     int[n] insensitivePos2TermID    ( offset [1*n*int] )
+                 *     int[n] termID2SensitivePos      ( offset [2*n*int] )
+                 *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
+                 */
+                IndexInput termID2SensitivePosFile = segment._termOrderFile.clone();
+                IndexInput termID2InsensitivePosFile = segment._termOrderFile.clone();
+
                 this.termStringFile = segment._termsFile.clone();
 
                 this.i = 0;
                 this.n = field.getNumberOfTerms();
 
-                this.termID2SensitivePosFile.seek(((long)n)*Integer.BYTES*2+field.getTermOrderOffset());
-                this.termID2InsensitivePosFile.seek(field.getTermOrderOffset());
+                termID2InsensitivePosFile.seek(field.getTermOrderOffset());
+                long insensitiveArraysLength = ((long) n) * Integer.BYTES * 2;
+                termID2SensitivePosFile.seek(insensitiveArraysLength + field.getTermOrderOffset());
 
                 // All fields share the same strings file.  Move to the start of our section in the file.
                 IndexInput stringoffsets = segment._termIndexFile.clone();

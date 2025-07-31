@@ -3,6 +3,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -49,8 +51,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     /** If set: use the first tag/relation with this name in the match info list */
     private boolean relNameIsFullRelType = false;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
@@ -95,8 +97,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyCaptureGroup(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertyCaptureGroup(this, newHits, lrc, invert);
     }
 
     @Override

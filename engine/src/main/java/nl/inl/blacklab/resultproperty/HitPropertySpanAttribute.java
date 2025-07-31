@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -57,8 +58,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     /** The sensitivity of the match */
     private final MatchSensitivity sensitivity;
 
-    HitPropertySpanAttribute(HitPropertySpanAttribute prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertySpanAttribute(HitPropertySpanAttribute prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert);
         groupName = prop.groupName;
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
@@ -86,8 +87,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertySpanAttribute(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertySpanAttribute(this, newHits, lrc, invert);
     }
 
     @Override

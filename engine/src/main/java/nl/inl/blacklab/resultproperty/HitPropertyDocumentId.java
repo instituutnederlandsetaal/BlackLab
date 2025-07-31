@@ -1,5 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.results.HitsSimple;
 
 /**
@@ -12,8 +14,8 @@ public class HitPropertyDocumentId extends HitProperty {
 
     public static final String ID = "docid";
 
-    HitPropertyDocumentId(HitPropertyDocumentId prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertyDocumentId(HitPropertyDocumentId prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert);
     }
 
     public HitPropertyDocumentId() {
@@ -26,8 +28,8 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyDocumentId(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertyDocumentId(this, newHits, lrc, invert);
     }
 
     @Override

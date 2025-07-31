@@ -1,5 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.results.HitsSimple;
 
 /**
@@ -10,8 +12,8 @@ public class HitPropertyHitPosition extends HitProperty {
 
     public static final String ID = "hitposition";
 
-    HitPropertyHitPosition(HitPropertyHitPosition prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertyHitPosition(HitPropertyHitPosition prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert);
     }
     
     public HitPropertyHitPosition() {
@@ -19,8 +21,8 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyHitPosition(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertyHitPosition(this, newHits, lrc, invert);
     }
 
     @Override

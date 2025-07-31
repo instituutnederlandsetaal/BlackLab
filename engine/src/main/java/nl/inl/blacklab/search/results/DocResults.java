@@ -232,7 +232,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      */
     protected DocResults(QueryInfo queryInfo, HitsSimple hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
-        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, false);
+        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
         this.matchInfoDefs = hits.matchInfoDefs();
         this.sourceHitsIterator = hits.ephemeralIterator();
         stats.setDone(false); // we're still actively gathering hits, unlike with the other constructors

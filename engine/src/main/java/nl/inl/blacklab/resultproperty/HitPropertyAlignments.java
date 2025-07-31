@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -25,8 +27,8 @@ public class HitPropertyAlignments extends HitProperty {
         return new HitPropertyAlignments();
     }
 
-    HitPropertyAlignments(HitPropertyAlignments prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertyAlignments(HitPropertyAlignments prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+        super(prop, hits, lrc, invert);
     }
 
     private synchronized List<Integer> getTargetHitGroupIndexes() {
@@ -59,8 +61,8 @@ public class HitPropertyAlignments extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyAlignments(this, newHits, invert);
+    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        return new HitPropertyAlignments(this, newHits, lrc, invert);
     }
 
     @Override
