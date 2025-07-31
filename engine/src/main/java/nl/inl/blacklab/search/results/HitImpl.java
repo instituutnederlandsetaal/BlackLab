@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 public final class HitImpl implements Hit {
 
     /** The Lucene doc this hits occurs in */
-    private final int doc;
+    final int doc;
 
     /**
      * End of this hit's span (in word positions).
@@ -21,13 +21,13 @@ public final class HitImpl implements Hit {
      * Note that this actually points to the first word not in the hit (just like
      * Spans).
      */
-    private final int end;
+    final int end;
 
     /** Start of this hit's span (in word positions) */
-    private final int start;
+    final int start;
 
     /** Match info for this hit, or null if none */
-    private final MatchInfo[] matchInfo;
+    final MatchInfo[] matchInfo;
 
     /**
      * Construct a hit object
@@ -72,15 +72,24 @@ public final class HitImpl implements Hit {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (o == null)
             return false;
-        HitImpl hit = (HitImpl) o;
-        return doc == hit.doc && end == hit.end && start == hit.start && Arrays.equals(matchInfo, hit.matchInfo);
+        if (o instanceof EphemeralHit that) {
+            return doc == that.doc_ && start == that.start_ && end == that.end_ && Arrays.equals(matchInfo,
+                    that.matchInfo);
+        } else if (o instanceof HitImpl hit) {
+            return doc == hit.doc && start == hit.start && end == hit.end && Arrays.equals(matchInfo,
+                    hit.matchInfo);
+        } else if (o instanceof Hit hit) {
+            return doc == hit.doc() && start == hit.start() && end == hit.end() && Arrays.equals(matchInfo,
+                    hit.matchInfos());
+        }
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(doc, end, start);
+        int result = Objects.hash(doc, start, end);
         result = 31 * result + Arrays.hashCode(matchInfo);
         return result;
     }

@@ -3,6 +3,7 @@ package nl.inl.blacklab.testutil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -30,8 +31,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.UtilsForTesting;
@@ -247,7 +249,7 @@ public class TestIndex {
      */
     public List<String> findConc(String query) {
         Hits hits = find(query, null);
-        return getConcordances(hits, word);
+        return getConcordances(hits.getHits(), word);
     }
 
     /**
@@ -259,12 +261,12 @@ public class TestIndex {
      */
     public List<String> findConc(String query, HitProperty sortBy) {
         Hits hits = find(query, null).sorted(sortBy);
-        return getConcordances(hits, word);
+        return getConcordances(hits.getHits(), word);
     }
     
     public List<String> findConc(String query, HitProperty prop, PropertyValue value) {
         Hits hits = find(query, null).filter(prop, value);
-        return getConcordances(hits, word);
+        return getConcordances(hits.getHits(), word);
     }
 
     /**
@@ -275,7 +277,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String pattern, Query filter) {
-        return getConcordances(find(pattern, filter), word);
+        return getConcordances(find(pattern, filter).getHits(), word);
     }
 
     /**
@@ -312,7 +314,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(BLSpanQuery query) {
-        return getConcordances(index.find(query, null), word);
+        return getConcordances(index.find(query, null).getHits(), word);
     }
 
     /**
@@ -321,10 +323,12 @@ public class TestIndex {
      * @param hits the hits to display
      * @return the left, match and right values for the "word" annotation
      */
-    static List<String> getConcordances(Hits hits, Annotation word) {
+    static List<String> getConcordances(HitsSimple hits, Annotation word) {
         List<String> results = new ArrayList<>();
         Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
-        for (Hit hit : hits) {
+        Iterator<EphemeralHit> it = hits.ephemeralIterator();
+        while (it.hasNext()) {
+            EphemeralHit hit = it.next();
             Kwic kwic = kwics.get(hit);
             String left = StringUtils.join(kwic.before(word), " ");
             String match = StringUtils.join(kwic.match(word), " ");

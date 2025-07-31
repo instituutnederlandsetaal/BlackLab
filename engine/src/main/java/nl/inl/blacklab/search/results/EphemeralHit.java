@@ -15,7 +15,7 @@ public class EphemeralHit implements Hit {
     int end_ = -1;
     MatchInfo[] matchInfo = null;
 
-    Hit toHit() {
+    public Hit toHit() {
         return new HitImpl(doc_, start_, end_, matchInfo);
     }
 
@@ -41,11 +41,19 @@ public class EphemeralHit implements Hit {
     public boolean equals(Object o) {
         if (this == o)
             return true;
-        if (o == null || getClass() != o.getClass())
+        if (o == null)
             return false;
-        EphemeralHit that = (EphemeralHit) o;
-        return doc_ == that.doc_ && start_ == that.start_ && end_ == that.end_ && Arrays.equals(matchInfo,
-                that.matchInfo);
+        if (o instanceof EphemeralHit that) {
+            return doc_ == that.doc_ && start_ == that.start_ && end_ == that.end_ && Arrays.equals(matchInfo,
+                    that.matchInfo);
+        } else if (o instanceof HitImpl hitImpl) {
+            return doc_ == hitImpl.doc && start_ == hitImpl.start && end_ == hitImpl.end && Arrays.equals(matchInfo,
+                    hitImpl.matchInfo);
+        } else if (o instanceof Hit hit) {
+            return doc_ == hit.doc() && start_ == hit.start() && end_ == hit.end() && Arrays.equals(matchInfo,
+                    hit.matchInfos());
+        }
+        return false;
     }
 
     @Override

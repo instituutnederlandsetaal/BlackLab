@@ -130,7 +130,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
      * @return document results
      */
-    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
+    public static DocResults fromHits(QueryInfo queryInfo, HitsSimple hits, long maxHitsToStorePerDoc) {
         return new DocResults(queryInfo, hits, maxHitsToStorePerDoc);
     }
 
@@ -148,7 +148,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
     /**
      * Iterator in our source hits object
      */
-    private Iterator<Hit> sourceHitsIterator;
+    private Iterator<EphemeralHit> sourceHitsIterator;
 
     /**
      * A partial list of hits in a doc, because we stopped iterating through the
@@ -230,11 +230,11 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param hits the hits to view per-document
      * @param maxHitsToStorePerDoc hits to store per document
      */
-    protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
+    protected DocResults(QueryInfo queryInfo, HitsSimple hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, false);
         this.matchInfoDefs = hits.matchInfoDefs();
-        this.sourceHitsIterator = hits.iterator();
+        this.sourceHitsIterator = hits.ephemeralIterator();
         stats.setDone(false); // we're still actively gathering hits, unlike with the other constructors
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
@@ -329,7 +329,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 int lastDocId = partialDocId;
 
                 while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
-                    Hit h = sourceHitsIterator.next();
+                    Hit h = sourceHitsIterator.next().toHit();
                     int curDoc = h.doc();
                     if (curDoc != lastDocId) {
                         if (docHits != null) {

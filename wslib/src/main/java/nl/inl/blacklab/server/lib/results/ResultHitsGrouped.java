@@ -129,7 +129,7 @@ public class ResultHitsGrouped {
 
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
-        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
+        MatchInfoDefs matchInfoDefs = hits.getHits().matchInfoDefs();
         Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             if (def.getTargetField() != null)

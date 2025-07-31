@@ -116,7 +116,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         return window;
     }
 
-    public HitsInternalMutable sort32(HitProperty p) {
+    HitsInternalMutable sort32(HitProperty p) {
         if (size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new IllegalArgumentException("This method cannot sort more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits at once");
         p = p.copyWith(this);
@@ -164,6 +164,11 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     }
 
     @Override
+    public boolean hasMatchInfo() {
+        return matchInfoDefs != null && matchInfoDefs.currentSize() > 0;
+    }
+
+    @Override
     public void setMatchInfoDefs(MatchInfoDefs matchInfoDefs) {
         this.matchInfoDefs = matchInfoDefs;
     }
@@ -183,7 +188,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     }
 
     @Override
-    public HitsSimple getFinishedHits() {
+    public HitsSimple getStatic() {
         return lock != null ? nonlocking() : this;
     }
 

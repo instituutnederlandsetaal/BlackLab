@@ -56,9 +56,11 @@ import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -611,13 +613,16 @@ public class ResponseStreamer {
         Hits hits = result.getHits();
 
         ds.startEntry("hits").startList();
-        for (Hit hit : hits) {
+        HitsSimple hitsList = hits.getHits().getStatic();
+        Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
+        while (it.hasNext()) {
+            Hit hit = it.next().toHit();
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> matchInfos = null;
-                if (hits.hasMatchInfo()) {
-                    matchInfos = Hits.getMatchInfoMap(hits, hit, params.getOmitEmptyCaptures());
+                if (hitsList.hasMatchInfo()) {
+                    matchInfos = HitsSimple.getMatchInfoMap(hitsList, hit, params.getOmitEmptyCaptures());
                     if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
@@ -646,22 +651,22 @@ public class ResponseStreamer {
      */
     public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
-        Hits hits = result.getHits();
-        if (!hits.resultsStats().waitUntil().processedAtLeast(1))
+        HitsSimple hitsList = result.getHits();
+        if (hitsList.isEmpty())
             throw new IllegalStateException("Hit for snippet not found");
-        Hit hit = hits.get(0);
-        hits = hits.size() > 1 ? hits.window(hit) : hits; // make sure we only have 1 hit
-        Map<String, MatchInfo> matchInfo = Hits.getMatchInfoMap(hits, hit, false);
+        hitsList = hitsList.size() > 1 ? hitsList.sublist(0, 1) : hitsList;
+        Hit hit = hitsList.get(0);
+        Map<String, MatchInfo> matchInfo = HitsSimple.getMatchInfoMap(hitsList, hit, false);
         ContextSize context = result.getContext();
         ConcordanceContext concordanceContext = result.isOrigContent() ?
-                ConcordanceContext.concordances(hits.concordances(context, ConcordanceType.CONTENT_STORE)) :
-                ConcordanceContext.kwics(hits.kwics(context));
+                ConcordanceContext.concordances(hitsList.concordances(context, ConcordanceType.CONTENT_STORE)) :
+                ConcordanceContext.kwics(hitsList.kwics(context));
         List<Annotation> annotationsToList = result.getAnnotsToWrite();
         //boolean includeContext = result.isHit(); // i.e. did we specify hitstart/hitend (include context) or
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        AnnotatedField searchField = result.getHits().field();
+        AnnotatedField searchField = hitsList.field();
         outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }

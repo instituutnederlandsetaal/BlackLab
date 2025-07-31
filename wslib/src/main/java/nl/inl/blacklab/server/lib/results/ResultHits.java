@@ -41,6 +41,7 @@ import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -302,7 +303,7 @@ public class ResultHits {
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
         String sortBy = params.getSortProps().orElse(null);
-        HitProperty sortProp = HitProperty.deserialize(hits, sortBy, params.getContext());
+        HitProperty sortProp = HitProperty.deserialize(hits.getHits(), sortBy, params.getContext());
         if (sortProp != null)
             hits = hits.sorted(sortProp);
 
@@ -364,12 +365,13 @@ public class ResultHits {
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
         ContextSettings contextSettings = params.contextSettings();
-        concordanceContext = ConcordanceContext.get(window, contextSettings.concType(), contextSettings.size());
+        HitsSimple windowHits = window.getHits().getStatic();
+        concordanceContext = ConcordanceContext.get(windowHits, contextSettings.concType(), contextSettings.size());
         kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 
         Map<Integer, Document> luceneDocs = new HashMap<>();
         BlackLabIndex index = params.blIndex();
-        docIdToPid = WebserviceOperations.collectDocsAndPids(index, window, luceneDocs);
+        docIdToPid = WebserviceOperations.collectDocsAndPids(index, windowHits, luceneDocs);
         Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
         docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
 
@@ -380,7 +382,7 @@ public class ResultHits {
         summaryNumHits = WebserviceOperations.numResultsSummaryHits(
                 getHitsStats(), getDocsStats(),
                 params.getWaitForTotal(), searchTimings, subcorpusSize);
-        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
+        MatchInfoDefs matchInfoDefs = hits.getHits().matchInfoDefs();
         Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             otherFields.add(def.getField());

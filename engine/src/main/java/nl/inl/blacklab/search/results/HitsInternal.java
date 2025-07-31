@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -142,10 +143,10 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsSimple {
      * @return iterator
      */
     @Override
-    Iterator iterator();
+    Iterator<EphemeralHit> iterator();
 
     @Override
-    default java.util.Iterator<EphemeralHit> ephemeralIterator() {
+    default Iterator<EphemeralHit> ephemeralIterator() {
         return iterator();
     }
 
@@ -158,7 +159,7 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsSimple {
     HitsInternal sorted(HitProperty p);
 
     @Override
-    default HitsSimple getFinishedHits() {
+    default HitsSimple getStatic() {
         return this;
     }
 
@@ -171,13 +172,6 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsSimple {
      */
     default HitsSimple nonlocking() {
         return this;
-    }
-
-    /**
-     * For iterating through the hits using EphemeralHit
-     */
-    interface Iterator extends java.util.Iterator<EphemeralHit> {
-
     }
 
     static boolean debugCheckAllReasonable(HitsInternal hits) {

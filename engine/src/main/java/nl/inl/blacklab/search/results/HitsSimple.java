@@ -1,15 +1,35 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /** A minimal Hits/HitsInternal interface that is all that HitProperty needs. */
 public interface HitsSimple {
+
+    static Map<String, MatchInfo> getMatchInfoMap(HitsSimple hits, Hit hit, boolean omitEmptyCaptures) {
+        MatchInfo[] matchInfo = hit.matchInfos();
+        if (matchInfo == null)
+            return Collections.emptyMap();
+        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
+        Map<String, MatchInfo> map = new HashMap<>();
+        for (int i = 0; i < matchInfo.length; i++) {
+            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
+                continue;
+            if (matchInfo[i] != null) {
+                map.put(matchInfoDefs.get(i).getName(), matchInfo[i]);
+            }
+        }
+        return map;
+    }
 
     /**
      * Get the field these hits are from.
@@ -96,7 +116,7 @@ public interface HitsSimple {
      *
      * @return internal hits object.
      */
-    HitsSimple getFinishedHits();
+    HitsSimple getStatic();
 
     /**
      * Get a sublist of hits, starting at the specified index.
@@ -128,4 +148,41 @@ public interface HitsSimple {
      * @return a new hits object with the same hits, sorted in the specified way
      */
     HitsSimple sorted(HitProperty sortProp);
+
+    boolean hasMatchInfo();
+
+    /**
+     * Create concordances from the forward index.
+     *
+     * @param contextSize desired context size
+     * @return concordances
+     */
+    default Concordances concordances(ContextSize contextSize) {
+        return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
+    }
+
+    default Concordances concordances(ContextSize contextSize, ConcordanceType type) {
+        if (contextSize == null)
+            contextSize = index().defaultContextSize();
+        if (type == null)
+            type = ConcordanceType.FORWARD_INDEX;
+        return new Concordances(getStatic(), type, contextSize);
+    }
+
+    default Kwics kwics(ContextSize contextSize) {
+        if (contextSize == null)
+            contextSize = index().defaultContextSize();
+        return new Kwics(getStatic(), contextSize);
+    }
+
+    default HitsSimple getHitsInDoc(int docId) {
+        HitsInternalMutable hitsInDoc = HitsInternal.create(field(), matchInfoDefs(), -1, size(), false);
+        Iterator<EphemeralHit> it = ephemeralIterator();
+        while (it.hasNext()) {
+            EphemeralHit h = it.next();
+            if (h.doc() == docId)
+                hitsInDoc.add(h.toHit());
+        }
+        return hitsInDoc;
+    }
 }

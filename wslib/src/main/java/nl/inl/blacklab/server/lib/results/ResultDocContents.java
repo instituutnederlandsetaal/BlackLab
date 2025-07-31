@@ -137,7 +137,7 @@ public class ResultDocContents {
         if (hits == null) {
             hitsInDoc = HitsInternal.empty(fieldToShow, null);
         } else {
-            hitsInDoc = hits.getHitsInDoc(docId);
+            hitsInDoc = hits.getHits().getHitsInDoc(docId);
         }
         if (isFullDocument) {
             // Whole document. Use the highlightDocument method, which takes document versions in

@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,10 +37,12 @@ import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.ResultsStats;
@@ -502,14 +505,17 @@ class Output {
 
         // Compile hits display info and calculate necessary width of left context column
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
-        Concordances concordances = window.concordances(queryTool.getContextSize(), queryTool.getConcType());
+        Concordances concordances = window.getHits().concordances(queryTool.getContextSize(), queryTool.getConcType());
         Kwics kwics = queryTool.getConcType() == ConcordanceType.FORWARD_INDEX ? concordances.getKwics() : null;
         List<HitToShow> toShow = new ArrayList<>();
-        for (Hit hit: window) {
+        HitsSimple windowHits = window.getHits();
+        Iterator<EphemeralHit> it = windowHits.ephemeralIterator();
+        while (it.hasNext()) {
+            EphemeralHit hit = it.next();
             HitToShow hitToShow;
             if (kwics != null) {
                 Map<String, MatchInfo> matchInfo;
-                matchInfo = window.hasMatchInfo() ? Hits.getMatchInfoMap(window, hit, false) : Collections.emptyMap();
+                matchInfo = windowHits.hasMatchInfo() ? HitsSimple.getMatchInfoMap(windowHits, hit, false) : Collections.emptyMap();
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
                 Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
@@ -523,7 +529,7 @@ class Output {
                     }
                 }
             } else {
-                hitToShow = showHitFromContentStore(hit, concordances, window, queryTool.isStripXml());
+                hitToShow = showHitFromContentStore(hit, concordances, windowHits, queryTool.isStripXml());
             }
             toShow.add(hitToShow);
             if (leftContextMaxSize < hitToShow.left.length())
@@ -605,7 +611,7 @@ class Output {
         return new HitToShow(hit.doc(), before, match, after, matchInfo);
     }
 
-    private HitToShow showHitFromContentStore(Hit hit, Concordances concordances, Hits window,
+    private HitToShow showHitFromContentStore(Hit hit, Concordances concordances, HitsSimple window,
             boolean stripXML) {
         HitToShow hitToShow;
         Concordance conc = concordances.get(hit);
@@ -618,7 +624,7 @@ class Output {
 
         Map<String, MatchInfo> matchInfo = null;
         if (window.hasMatchInfo())
-            matchInfo = Hits.getMatchInfoMap(window, hit, false);
+            matchInfo = HitsSimple.getMatchInfoMap(window, hit, false);
         hitToShow = new HitToShow(hit.doc(), left, hitText, right, matchInfo);
         return hitToShow;
     }

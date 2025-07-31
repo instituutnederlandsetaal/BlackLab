@@ -18,7 +18,8 @@ import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsSimple;
 
 public class TestHitPropertySerialize {
 
@@ -26,7 +27,7 @@ public class TestHitPropertySerialize {
 
     private static final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private static final Hits hits = Hits.empty(mockIndex.createDefaultQueryInfo());
+    private static final HitsSimple hits = HitsInternal.empty(mockIndex.mainAnnotatedField(), null);
 
     private static Annotation lemmaAnnotation;
 
@@ -51,7 +52,7 @@ public class TestHitPropertySerialize {
         PropertyValue val, val1;
         String exp;
 
-        val1 = new PropertyValueContextWords(hits.queryInfo().index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, new int[] { 2 }, null,
+        val1 = new PropertyValueContextWords(hits.index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, new int[] { 2 }, null,
                 false);
         exp = "cws:contents%lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());

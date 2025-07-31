@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -34,7 +35,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
      * NOTE: contrary to expectation, implementing this class using iterators
      * over docs, starts and ends makes it slower.
      */
-    private class HitIterator implements HitsInternal.Iterator {
+    private class HitIterator implements Iterator<EphemeralHit> {
         private int pos = 0;
 
         private final EphemeralHit hit = new EphemeralHit();
@@ -270,7 +271,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
 
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
     @Override
-    public Iterator iterator() {
+    public Iterator<EphemeralHit> iterator() {
         return new HitIterator();
     }
 

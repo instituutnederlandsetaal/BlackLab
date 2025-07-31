@@ -185,9 +185,6 @@ public class Contexts {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        // Make sure all hits have been read and get the most efficient interface
-        hits = hits.getFinishedHits();
-
         List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
             fis.add(hits.index().annotationForwardIndex(annotation));
@@ -256,7 +253,7 @@ public class Contexts {
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
 
-        Iterable<int[]> contexts = getContexts(hits, List.of(annotation), contextSize);
+        Iterable<int[]> contexts = getContexts(hits.getHits().getStatic(), List.of(annotation), contextSize);
         MutableIntIntMap countPerWord = IntIntMaps.mutable.empty();
         for (int[] context: contexts) {
             // Count words

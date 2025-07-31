@@ -1,16 +1,19 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
+import java.util.Iterator;
 
-import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsInternal;
+import nl.inl.blacklab.search.results.HitsSimple;
 
 public class TestHits {
 
@@ -20,10 +23,12 @@ public class TestHits {
         int[] aStart = { 1, 2 };
         int[] aEnd = { 2, 3 };
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.list(index.createDefaultQueryInfo(), aDoc, aStart, aEnd);
+            HitsSimple hits = HitsInternal.fromLists(index.mainAnnotatedField(), aDoc, aStart, aEnd);
     
             int i = 0;
-            for (Hit hit : hits) {
+            Iterator<EphemeralHit> it = hits.ephemeralIterator();
+            while (it.hasNext()) {
+                Hit hit = it.next();
                 Assert.assertEquals(aDoc[i], hit.doc());
                 Assert.assertEquals(aStart[i], hit.start());
                 Assert.assertEquals(aEnd[i], hit.end());

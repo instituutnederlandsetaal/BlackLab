@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -107,13 +108,16 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
             throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
 
-        criteria = criteria.copyWith(hits);
+        HitsSimple hitsList = hits.getHits().getStatic();
+        criteria = criteria.copyWith(hitsList);
 
         Map<PropertyValue, HitsInternalMutable> groupLists = new HashMap<>();
         Map<PropertyValue, Integer> groupSizes = new HashMap<>();
         resultObjects = 0;
         int i = 0;
-        for (Hit hit: hits) {
+        Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
+        while (it.hasNext()) {
+            EphemeralHit hit = it.next();
             PropertyValue identity = criteria.get(i);
             HitsInternalMutable group = groupLists.get(identity);
             if (group == null) {
@@ -121,11 +125,11 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
-                group = HitsInternal.create(hits.field(), hits.matchInfoDefs(), -1, hits.size(), false);
+                group = HitsInternal.create(hits.field(), hitsList.matchInfoDefs(), -1, hitsList.size(), false);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
-                group.add(hit);
+                group.add(hit.toHit());
                 resultObjects++;
             }
             Integer groupSize = groupSizes.get(identity);
@@ -143,7 +147,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
             PropertyValue groupId = e.getKey();
             HitsInternal hitList = e.getValue();
             Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hits.matchInfoDefs(), groupSize);
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hitsList.matchInfoDefs(), groupSize);
             groups.put(groupId, group);
             results.add(group);
         }
@@ -295,9 +299,11 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         long docsRetrieved = 0;
         
         MutableIntSet docs = new IntHashSet();
-        for (HitGroup h : sample) {
+        for (HitGroup h: sample) {
             hitsCounted += h.size();
-            for (Hit hh : h.storedResults()) {
+            Iterator<EphemeralHit> it = h.storedResults().getHits().ephemeralIterator();
+            while (it.hasNext()) {
+                EphemeralHit hh = it.next();
                 ++hitsRetrieved;
                 if (docs.add(hh.doc())) 
                     ++docsRetrieved;

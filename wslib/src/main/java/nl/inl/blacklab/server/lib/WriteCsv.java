@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,10 +31,11 @@ import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResult;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -150,8 +152,11 @@ public class WriteCsv {
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
-            Kwics kwics = hits.kwics(params.contextSettings().size());
-            for (Hit hit : hits) {
+            HitsSimple hitsList = hits.getHits();
+            Kwics kwics = hitsList.kwics(params.contextSettings().size());
+            Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
+            while (it.hasNext()) {
+                EphemeralHit hit = it.next();
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {
                     doc = index.luceneDoc(hit.doc());

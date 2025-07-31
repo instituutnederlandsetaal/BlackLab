@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.Kwics;
 
 public class ConcordanceContext {
@@ -22,7 +22,7 @@ public class ConcordanceContext {
         return new ConcordanceContext(null, concordances);
     }
 
-    public static ConcordanceContext get(Hits hits, ConcordanceType concordanceType, ContextSize contextSize) {
+    public static ConcordanceContext get(HitsSimple hits, ConcordanceType concordanceType, ContextSize contextSize) {
         ConcordanceContext concordanceContext;
         if (concordanceType == ConcordanceType.CONTENT_STORE)
             concordanceContext = ConcordanceContext.concordances(

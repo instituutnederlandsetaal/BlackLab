@@ -369,9 +369,9 @@ public class QueryToolImpl {
             if (hitId >= currentHitSet.size()) {
                 output.error("Hit number out of range.");
             } else {
-                Hits singleHit = currentHitSet.window(hitId, 1);
+                HitsSimple singleHit = currentHitSet.getHits().sublist(hitId, 1);
                 Concordances concordances = singleHit.concordances(snippetSize, concType);
-                Hit h = currentHitSet.get(hitId);
+                Hit h = currentHitSet.getHits().get(hitId);
                 Concordance conc = concordances.get(h);
                 String[] concParts;
                 if (stripXML)
@@ -402,7 +402,7 @@ public class QueryToolImpl {
             if (currentHitSet == null) {
                 output.error("No set of hits for highlighting.");
             } else {
-                HitsSimple hitsInDoc = hits.getHitsInDoc(docId);
+                HitsSimple hitsInDoc = hits.getHits().getHitsInDoc(docId);
                 output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
             }
             break;
@@ -887,7 +887,7 @@ public class QueryToolImpl {
                 crit = new HitPropertyDocumentStoredField(index, critType);
             } else {
                 // Regular BLS serialized hit property. Decode it.
-                crit = HitProperty.deserialize(hits, critType, contextSize);
+                crit = HitProperty.deserialize(hits.getHits(), critType, contextSize);
             }
             break;
         }

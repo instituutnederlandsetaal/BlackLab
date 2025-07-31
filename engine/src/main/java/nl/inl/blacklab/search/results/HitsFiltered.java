@@ -42,13 +42,13 @@ public class HitsFiltered extends HitsAbstract {
      * @param value value to filter with
      */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
-        super(hits.queryInfo(), HitsInternal.create(hits.field(), hits.matchInfoDefs(), -1, true, true), true);
+        super(hits.queryInfo(), HitsInternal.create(hits.field(), hits.getHits().matchInfoDefs(), -1, true, true), true);
         this.source = hits;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
         // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigated by
         // implementing a ForwardIndex that stores documents linearly, making it just a single read.
-        filterProperty = property.copyWith(hits);
+        filterProperty = property.copyWith(hits.getHits());
         this.filterValue = value;
         hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this));
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
@@ -101,6 +101,7 @@ public class HitsFiltered extends HitsAbstract {
             try {
                 boolean readAllHits = number < 0;
                 EphemeralHit hit = new EphemeralHit();
+                HitsSimple hitsList = source.getHits();
                 while (!doneFiltering && (readAllHits || hitsInternalMutable.size() < number)) {
                  // Abort if asked
                     ThreadAborter.checkAbort();
@@ -108,7 +109,7 @@ public class HitsFiltered extends HitsAbstract {
                     // Advance to next hit
                     indexInSource++;
                     if (source.resultsStats().waitUntil().processedAtLeast((long)indexInSource + 1)) {
-                        source.getEphemeral(indexInSource, hit);
+                        hitsList.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
                             hitsInternalMutable.add(hit);

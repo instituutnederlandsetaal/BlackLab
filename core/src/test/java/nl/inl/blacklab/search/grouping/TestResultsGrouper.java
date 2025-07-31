@@ -38,9 +38,9 @@ public class TestResultsGrouper {
         HitGroup group1 = grouper.get(one);
         Assert.assertEquals(one, group1.identity());
         Assert.assertEquals(3, group1.size());
-        Assert.assertEquals(1, group1.storedResults().get(0).doc());
-        Assert.assertEquals(1, group1.storedResults().get(1).doc());
-        Assert.assertEquals(1, group1.storedResults().get(2).doc());
+        Assert.assertEquals(1, group1.storedResults().getHits().get(0).doc());
+        Assert.assertEquals(1, group1.storedResults().getHits().get(1).doc());
+        Assert.assertEquals(1, group1.storedResults().getHits().get(2).doc());
         PropertyValueInt two = new PropertyValueInt(2);
         Assert.assertEquals(2, grouper.get(two).size());
         PropertyValueInt three = new PropertyValueInt(3);

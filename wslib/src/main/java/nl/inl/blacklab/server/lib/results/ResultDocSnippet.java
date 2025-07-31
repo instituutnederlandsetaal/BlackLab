@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
@@ -120,8 +121,8 @@ public class ResultDocSnippet {
         return params;
     }
 
-    public Hits getHits() {
-        return hits;
+    public HitsSimple getHits() {
+        return hits.getHits();
     }
 
     public boolean isHit() {

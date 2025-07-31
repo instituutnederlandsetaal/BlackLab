@@ -7,6 +7,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.FileUtil;
@@ -79,14 +80,16 @@ public class BatchQuery {
             }
             System.out.println();
     
-            for (String query : FileUtil.readLines(inputFile)) {
-                query = query.trim();
-                if (query.isEmpty() || query.charAt(0) == '#')
+            for (String strQuery : FileUtil.readLines(inputFile)) {
+                strQuery = strQuery.trim();
+                if (strQuery.isEmpty() || strQuery.charAt(0) == '#')
                     continue; // skip empty lines and #-comments
                 try {
                     Timer t = new Timer();
-                    System.out.print(query + "\t");
-                    HitsSimple hits = index.find(CorpusQueryLanguageParser.parse(query, index.mainAnnotatedField().mainAnnotation().name()).toQuery(QueryInfo.create(index)), null);
+                    System.out.print(strQuery + "\t");
+                    BLSpanQuery query = CorpusQueryLanguageParser.parse(strQuery,
+                            index.mainAnnotatedField().mainAnnotation().name()).toQuery(QueryInfo.create(index));
+                    HitsSimple hits = index.find(query, null).getHits();
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {
                         System.out.print("\t" + hits.size() + "\t" + t.elapsed());
@@ -94,7 +97,7 @@ public class BatchQuery {
                     System.out.println();
                 } catch (Exception e) {
                     e.printStackTrace(System.err);
-                    System.err.println("Error with query " + query + "; skipping...");
+                    System.err.println("Error with query " + strQuery + "; skipping...");
                 }
             }
         }

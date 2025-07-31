@@ -1,18 +1,11 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
@@ -20,7 +13,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  *
  * This interface is read-only.
  */
-public interface Hits extends Results, HitsSimple, Iterable<Hit> {
+public interface Hits extends Results {
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -76,21 +69,12 @@ public interface Hits extends Results, HitsSimple, Iterable<Hit> {
         return new HitsList(queryInfo, HitsInternal.empty(queryInfo.field(), null));
     }
 
-    static Map<String, MatchInfo> getMatchInfoMap(HitsSimple hits, Hit hit, boolean omitEmptyCaptures) {
-        MatchInfo[] matchInfo = hit.matchInfos();
-        if (matchInfo == null)
-            return Collections.emptyMap();
-        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
-        Map<String, MatchInfo> map = new HashMap<>();
-        for (int i = 0; i < matchInfo.length; i++) {
-            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
-                continue;
-            if (matchInfo[i] != null) {
-                map.put(matchInfoDefs.get(i).getName(), matchInfo[i]);
-            }
-        }
-        return map;
-    }
+    /**
+     * Get access to the hits in this list.
+     *
+     * @return the hits interface
+     */
+    HitsSimple getHits();
 
     /**
      * If this is a hits window, return the window stats.
@@ -114,11 +98,6 @@ public interface Hits extends Results, HitsSimple, Iterable<Hit> {
      * @return the window
      */
     Hits window(long first, long windowSize);
-
-    /** A simple sublist of hits, without guaranteeing the extra stats etc. that a normal hits window has. */
-    default HitsSimple sublist(long first, long windowSize) {
-        return window(first, windowSize);
-    }
 
     /**
      * Take a sample of hits by wrapping an existing Hits object.
@@ -145,40 +124,6 @@ public interface Hits extends Results, HitsSimple, Iterable<Hit> {
     long numberOfResultObjects();
 
     /**
-     * Iterate over Hit objects.
-     *
-     * This will return Hit objects that may be stored.
-     * See {@link #ephemeralIterator()} for a faster version that
-     * returns temporary Hit objects.
-     *
-     * @return iterator
-     */
-    @Override
-    Iterator<Hit> iterator();
-
-    /**
-     * Iterate over Hit objects.
-     *
-     * This will return temporary Hit objects that must not be stored.
-     * See {@link #iterator()} for a slower version that returns
-     * Hit objects that may be stored.
-     *
-     * @return iterator
-     */
-    Iterator<EphemeralHit> ephemeralIterator();
-
-    @Override
-    Hit get(long i);
-
-    /**
-     * Copy hit information into a temporary object.
-     *
-     * @param i index of the desired hit
-     * @param hit object to copy values to
-     */
-    void getEphemeral(long i, EphemeralHit hit);
-
-    /**
      * Count occurrences of context words around hit.
      *
      * @param annotation  what annotation to get collocations for
@@ -197,16 +142,6 @@ public interface Hits extends Results, HitsSimple, Iterable<Hit> {
      */
     DocResults perDocResults(long maxHits);
 
-    /**
-     * Create concordances from the forward index.
-     *
-     * @param contextSize desired context size
-     * @return concordances
-     */
-    Concordances concordances(ContextSize contextSize);
-
-    HitsSimple getHitsInDoc(int docId);
-
     ResultsStats docsStats();
 
     /**
@@ -218,23 +153,4 @@ public interface Hits extends Results, HitsSimple, Iterable<Hit> {
      * @return hit window
      */
     Hits window(Hit hit);
-
-    /**
-     * Type of each of our match infos.
-     *
-     * @return list of match info definitions
-     */
-    MatchInfoDefs matchInfoDefs();
-
-    boolean hasMatchInfo();
-
-    Concordances concordances(ContextSize contextSize, ConcordanceType type);
-
-    Kwics kwics(ContextSize contextSize);
-
-    @Override
-    default boolean isEmpty() {
-        boolean atLeastOneHit = resultsStats().waitUntil().processedAtLeast(1);
-        return !atLeastOneHit;
-    }
 }

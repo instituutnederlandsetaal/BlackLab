@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.document.Document;
@@ -14,8 +15,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Concordances;
 import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
@@ -46,11 +48,14 @@ public class ResultDocResult {
             ContextSettings contextSettings = params.contextSettings();
             Concordances theConcordances = null;
             Kwics theKwics = null;
+            HitsSimple hitsList = hits.getHits();
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-                theConcordances = hits.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
+                theConcordances = hitsList.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else
-                theKwics = hits.kwics(index.defaultContextSize());
-            for (Hit hit: hits) {
+                theKwics = hitsList.kwics(index.defaultContextSize());
+            Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
+            while (it.hasNext()) {
+                EphemeralHit hit = it.next();
                 // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                 if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                     // Add concordance from original XML

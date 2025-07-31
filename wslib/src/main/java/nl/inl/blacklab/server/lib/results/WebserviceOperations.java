@@ -56,8 +56,9 @@ import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.DocGroup;
 import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
+import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
@@ -303,11 +304,13 @@ public class WebserviceOperations {
      * @param hits hits we want the doc pids for
      * @param luceneDocs map of doc id to Lucene document, to look up the pids
      */
-    public static Map<Integer, String> collectDocsAndPids(BlackLabIndex index, Hits hits,
+    public static Map<Integer, String> collectDocsAndPids(BlackLabIndex index, HitsSimple hits,
             Map<Integer, Document> luceneDocs) {
         // Collect Lucene docs (for writing docInfos later) and find pids
         Map<Integer, String> docIdToPid = new HashMap<>();
-        for (Hit hit : hits) {
+        Iterator<EphemeralHit> it = hits.ephemeralIterator();
+        while (it.hasNext()) {
+            EphemeralHit hit = it.next();
             Document document = luceneDocs.computeIfAbsent(hit.doc(),
                     __ -> index.luceneDoc(hit.doc()));
             String docPid = getDocumentPid(index, hit.doc(), document);
