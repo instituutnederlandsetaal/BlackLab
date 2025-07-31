@@ -7,7 +7,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

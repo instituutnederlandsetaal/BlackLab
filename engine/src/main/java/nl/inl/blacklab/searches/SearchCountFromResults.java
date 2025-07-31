@@ -4,11 +4,11 @@ import java.util.concurrent.Future;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultCount;
-import nl.inl.blacklab.search.results.ResultCount.CountType;
 import nl.inl.blacklab.search.results.Results;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsDelegate;
+import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult;
+import nl.inl.blacklab.search.results.stats.ResultStatsFromOtherResult.CountType;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsDelegate;
 
 /**
  * A search operation that yields a count as its result.
@@ -35,7 +35,7 @@ public class SearchCountFromResults<T extends Results> extends SearchCount {
     @Override
     public ResultsStats executeInternal(ActiveSearch<ResultsStats> activeSearch) throws InvalidQuery {
         // Start the search and construct the count object
-        ResultsStats resultCount = new ResultCount(executeChildSearch(activeSearch, source), type);
+        ResultsStats resultCount = new ResultStatsFromOtherResult(executeChildSearch(activeSearch, source), type);
         if (activeSearch != null && activeSearch.peek() != null)
             ((ResultsStatsDelegate) activeSearch.peek()).setRealStats(resultCount);
 
@@ -43,7 +43,7 @@ public class SearchCountFromResults<T extends Results> extends SearchCount {
         // This runs synchronously, so SearchCountFromResults will not be finished until
         // the entire count it finished. You can peek at the running count in the meantime,
         // however.
-        resultCount.waitUntil().allProcessed();
+        resultCount.processedTotal();
 
         return resultCount;
     }

@@ -20,7 +20,7 @@ import org.apache.lucene.store.IndexInput;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 
 public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
 
@@ -177,7 +177,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
             switch (storedFieldVisitor.needsField(fieldInfo)) {
             case YES:
                 // Visit this field.
-                if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
+                if (BLFieldTypeLucene.isContentStoreField(fieldInfo)) {
                     visitContentStoreDocument(docId, fieldInfo, storedFieldVisitor);
                 }
                 break;

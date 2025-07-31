@@ -20,12 +20,12 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.index.Index;
@@ -67,7 +67,7 @@ public class ResultHitsGrouped {
         indexStatus = indexMan.getIndex(params.getCorpusName()).getStatus();
 
         SearchCacheEntry<HitGroups> search;
-        Hits hits = params.hitsSample().execute(); // we need these later to get the match info defs
+        HitResults hitResults = params.hitsSample().execute(); // we need these later to get the match info defs
         try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
             search = params.hitsGroupedStats().executeAsync();
@@ -129,7 +129,7 @@ public class ResultHitsGrouped {
 
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
-        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
+        MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
         Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             if (def.getTargetField() != null)

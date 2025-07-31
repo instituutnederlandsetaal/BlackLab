@@ -6,19 +6,25 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.HitPropertyHitPosition;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -28,15 +34,19 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
+
+    /** Create an index with multiple segments? */
+    private static final boolean MULTI_SEGMENT = true;
 
     /** Integrated index format */
     private static TestIndex testIndexIntegrated;
@@ -178,6 +188,13 @@ public class TestIndex {
             try {
                 // Index each of our test "documents".
                 for (int i = 0; i < TEST_DATA.length; i++) {
+                    if (MULTI_SEGMENT && i == 1) {
+                        // Close and re-open the indexer to create a new segment.
+                        indexer.close();
+                        indexWriter = BlackLab.openForWriting(indexDir, false, (ConfigInputFormat)null);
+                        indexer = Indexer.create(indexWriter);
+                        indexer.setListener(new IndexListenerAbortOnError()); // throw on error
+                    }
                     indexer.index("test" + (i + 1), TEST_DATA[i].getBytes());
                 }
                 if (testDelete) {
@@ -186,7 +203,9 @@ public class TestIndex {
                     indexer.close();
                     indexWriter = BlackLab.openForWriting(indexDir, false, (ConfigInputFormat)null);
                     indexer = Indexer.create(indexWriter);
-                    String luceneField = indexer.indexWriter().metadata().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
+                    indexer.setListener(new IndexListenerAbortOnError()); // throw on error
+                    String luceneField = indexer.indexWriter().metadata().mainAnnotatedField().mainAnnotation()
+                            .sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));
                 }
             } finally {
@@ -246,8 +265,8 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String query) {
-        Hits hits = find(query, null);
-        return getConcordances(hits, word);
+        HitResults hitResults = find(query, null);
+        return getConcordances(hitResults.getHits(), word);
     }
 
     /**
@@ -258,13 +277,13 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String query, HitProperty sortBy) {
-        Hits hits = find(query, null).sorted(sortBy);
-        return getConcordances(hits, word);
+        HitResults hitResults = find(query, null).sorted(sortBy);
+        return getConcordances(hitResults.getHits(), word);
     }
     
     public List<String> findConc(String query, HitProperty prop, PropertyValue value) {
-        Hits hits = find(query, null).filter(prop, value);
-        return getConcordances(hits, word);
+        HitResults hitResults = find(query, null).filter(prop, value);
+        return getConcordances(hitResults.getHits(), word);
     }
 
     /**
@@ -275,7 +294,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String pattern, Query filter) {
-        return getConcordances(find(pattern, filter), word);
+        return getConcordances(find(pattern, filter).getHits(), word);
     }
 
     /**
@@ -285,11 +304,12 @@ public class TestIndex {
      * @param filter how to filter the query
      * @return the resulting BlackLab text pattern
      */
-    public Hits find(String pattern, Query filter) {
+    public HitResults find(String pattern, Query filter) {
         try {
-            return index.find(CorpusQueryLanguageParser.parse(pattern, "word")
-                        .toQuery(QueryInfo.create(index),
-                    filter, false, false), null);
+            BLSpanQuery query = CorpusQueryLanguageParser.parse(pattern, "word")
+                    .toQuery(QueryInfo.create(index), filter, false, false);
+            return index.find(query, null)
+                    .sorted(new HitPropertyMultiple(new HitPropertyDoc(index), new HitPropertyHitPosition()));
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);
         }
@@ -301,7 +321,7 @@ public class TestIndex {
      * @param pattern CorpusQL pattern to find
      * @return the resulting BlackLab text pattern
      */
-    public Hits find(String pattern) {
+    public HitResults find(String pattern) {
         return find(pattern, null);
     }
 
@@ -312,7 +332,7 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(BLSpanQuery query) {
-        return getConcordances(index.find(query, null), word);
+        return getConcordances(index.find(query, null).getHits(), word);
     }
 
     /**
@@ -324,7 +344,7 @@ public class TestIndex {
     static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
         Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
-        for (Hit hit : hits) {
+        for (EphemeralHit hit: hits) {
             Kwic kwic = kwics.get(hit);
             String left = StringUtils.join(kwic.before(word), " ");
             String match = StringUtils.join(kwic.match(word), " ");
@@ -333,6 +353,12 @@ public class TestIndex {
             results.add(conc.trim());
         }
         return results;
+    }
+
+    public Terms getTermsSegment(Annotation annotation) {
+        LeafReaderContext lrc = index.getLeafReaderContext(0);
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        return BLTerms.forSegment(lrc, luceneField).reader();
     }
 
 }

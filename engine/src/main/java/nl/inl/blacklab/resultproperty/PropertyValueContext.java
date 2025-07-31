@@ -1,7 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public abstract class PropertyValueContext extends PropertyValue {
@@ -9,11 +9,6 @@ public abstract class PropertyValueContext extends PropertyValue {
     protected final Terms terms;
 
     protected final Annotation annotation;
-
-    PropertyValueContext(BlackLabIndex index, Annotation annotation) {
-        this.annotation = annotation;
-        this.terms = index == null ? null : index.annotationForwardIndex(annotation).terms();
-    }
 
     PropertyValueContext(Terms terms, Annotation annotation) {
         this.annotation = annotation;
@@ -23,7 +18,7 @@ public abstract class PropertyValueContext extends PropertyValue {
     public static int deserializeToken(Terms terms, String term) {
         int termId;
         if (term.equals("~"))
-            termId = Terms.NO_TERM; // no token, effectively a "null" value
+            termId = Constants.NO_TERM; // no token, effectively a "null" value
         else {
             if (term.startsWith("~~")) {
                 // tilde in first position has to be escaped
@@ -48,6 +43,19 @@ public abstract class PropertyValueContext extends PropertyValue {
             }
         }
         return token;
+    }
+
+    public static String serializeTerm(String value) {
+        if (value == null)
+            value = "~"; // no token, effectively a "null" value
+        else {
+            if (!value.isEmpty() && value.charAt(0) == '~') {
+                // tilde in first position has to be escaped
+                // because of how null value is encoded
+                value = "~" + value;
+            }
+        }
+        return value;
     }
 
     @Override

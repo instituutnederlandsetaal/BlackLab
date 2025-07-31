@@ -1,7 +1,7 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /**
  * A search operation that yields a count as its result.

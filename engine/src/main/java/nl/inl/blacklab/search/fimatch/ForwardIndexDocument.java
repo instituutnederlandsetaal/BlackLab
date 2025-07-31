@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 @NotThreadSafe
 public interface ForwardIndexDocument {
 
-    public int getSegmentDocId();
+    int getSegmentDocId();
 
     /**
      * Return token at specified position.
@@ -26,15 +26,13 @@ public interface ForwardIndexDocument {
     int getTokenSegmentTermId(int annotIndex, int pos);
 
     /**
-     * Return token at specified position.
-     *
-     * NOTE: returns global term id!
+     * Return the (segment-specific) sort position for a token at the specified position.
      *
      * @param annotIndex annotation to read
-     * @param pos position to read
-     * @return token at this position
+     * @param tokenPosition position of the token in the document
+     * @return sort position of this token
      */
-    int getTokenGlobalTermId(int annotIndex, int pos);
+    int getTokenSegmentSortPosition(int annotIndex, int pos, MatchSensitivity sensitivity);
 
     /**
      * Return string for term id

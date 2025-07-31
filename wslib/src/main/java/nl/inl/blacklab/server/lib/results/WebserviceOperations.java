@@ -51,16 +51,17 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.ResultsStats;
 import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.search.results.docs.DocGroup;
+import nl.inl.blacklab.search.results.docs.DocGroups;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -307,7 +308,7 @@ public class WebserviceOperations {
             Map<Integer, Document> luceneDocs) {
         // Collect Lucene docs (for writing docInfos later) and find pids
         Map<Integer, String> docIdToPid = new HashMap<>();
-        for (Hit hit : hits) {
+        for (EphemeralHit hit: hits) {
             Document document = luceneDocs.computeIfAbsent(hit.doc(),
                     __ -> index.luceneDoc(hit.doc()));
             String docPid = getDocumentPid(index, hit.doc(), document);
@@ -320,16 +321,16 @@ public class WebserviceOperations {
      * Calculate collocations from hits.
      *
      * @param params operation parameters
-     * @param hits hits
+     * @param hitResults hits
      * @return collocations
      */
-    public static TermFrequencyList getCollocations(WebserviceParams params, Hits hits) {
-        Annotation annotation = hits.field().mainAnnotation();
+    public static TermFrequencyList getCollocations(WebserviceParams params, HitResults hitResults) {
+        Annotation annotation = hitResults.field().mainAnnotation();
         boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
         MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
         ensureHasSensitivity(annotation, sensitivity);
         ContextSize contextSize = params.getContext();
-        return hits.collocations(annotation, contextSize, sensitivity, true);
+        return hitResults.collocations(annotation, contextSize, sensitivity, true);
     }
 
     private static void ensureHasSensitivity(Annotation annotation, MatchSensitivity sensitivity) {
@@ -511,8 +512,8 @@ public class WebserviceOperations {
 
     public static TermFrequencyList calculateCollocations(WebserviceParams params) {
         ResultHits resultHits = new ResultHits(params, false);
-        Hits hits = resultHits.getHits();
-        return getCollocations(params, hits);
+        HitResults hitResults = resultHits.getHits();
+        return getCollocations(params, hitResults);
     }
 
     public static ResultHits getResultHits(WebserviceParams params) {
@@ -760,7 +761,7 @@ public class WebserviceOperations {
         return new ResultDocSnippet(params);
     }
 
-    public static ResultListOfHits listOfHits(WebserviceParams params, Hits window, ConcordanceContext concordanceContext,
+    public static ResultListOfHits listOfHits(WebserviceParams params, HitResults window, ConcordanceContext concordanceContext,
             Map<Integer, String> docIdToPid) {
         return new ResultListOfHits(params, window, concordanceContext, docIdToPid);
     }

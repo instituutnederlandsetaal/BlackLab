@@ -1,8 +1,14 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
+
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -11,6 +17,16 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
+
+    static Terms getTerms(Annotation annotation, LeafReaderContext lrc) {
+        if (lrc == null)
+            return annotation.field().index().forwardIndex(annotation).terms(); // use global terms
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        return BLTerms.forSegment(lrc, luceneField).reader();
+    }
+
+    /** Segment our term ids came from (will be null if this is a global value, or if arrays are length 0) */
+    private LeafReaderContext lrc;
 
     /** Term ids for this value */
     int[] valueTokenId;
@@ -26,34 +42,37 @@ public class PropertyValueContextWords extends PropertyValueContext {
      * front to back (e.g. right to left for English), but display should still
      * be from back to front.
      */
-    private boolean reverseOnDisplay;
+    boolean reverseOnDisplay;
 
-    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, int[] sortOrder, boolean reverseOnDisplay) {
-        super(index.annotationForwardIndex(annotation).terms(), annotation);
-        init(sensitivity, value, sortOrder, reverseOnDisplay);
+    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
+            LeafReaderContext lrc, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
+        super(getTerms(annotation, lrc), annotation);
+        init(sensitivity, lrc, termIds, sortPositions, reverseOnDisplay);
     }
 
-    PropertyValueContextWords(Terms terms, Annotation annotation, MatchSensitivity sensitivity, int[] value,
-            int[] sortOrder, boolean reverseOnDisplay) {
+    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
+            Terms terms, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
         super(terms, annotation);
-        init(sensitivity, value, sortOrder, reverseOnDisplay);
+        init(sensitivity, null, termIds, sortPositions, reverseOnDisplay);
     }
 
-    private void init(MatchSensitivity sensitivity, int[] value, int[] sortOrder,
+    private void init(MatchSensitivity sensitivity, LeafReaderContext lrc, int[] termIds, int[] sortPositions,
             boolean reverseOnDisplay) {
         this.sensitivity = sensitivity;
-        this.valueTokenId = value;
-        if (sortOrder == null) {
-            this.valueSortOrder = new int[value.length];
-            terms.toSortOrder(value, valueSortOrder, sensitivity);
+        this.lrc = lrc;
+        this.valueTokenId = termIds;
+        if (sortPositions == null) {
+            this.valueSortOrder = new int[termIds.length];
+            this.terms.idsToSortOrder(termIds, valueSortOrder, sensitivity);
         } else {
-            this.valueSortOrder = sortOrder;
+            this.valueSortOrder = sortPositions;
         }
         this.reverseOnDisplay = reverseOnDisplay;
     }
 
     @Override
     public int compareTo(Object o) {
+        assert lrc == ((PropertyValueContextWords)o).lrc;
         return Arrays.compare(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
     }
 
@@ -66,8 +85,9 @@ public class PropertyValueContextWords extends PropertyValueContext {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj instanceof PropertyValueContextWords)
+        if (obj instanceof PropertyValueContextWords) {
             return Arrays.equals(valueSortOrder, ((PropertyValueContextWords) obj).valueSortOrder);
+        }
         return false;
     }
 
@@ -87,43 +107,33 @@ public class PropertyValueContextWords extends PropertyValueContext {
         for (int i = 0; i < terms.size(); i++) {
             ids[i] = deserializeToken(termsObj, terms.get(i));
         }
-        return new PropertyValueContextWords(index, annotation, sensitivity, ids, null, reverseOnDisplay);
+        return new PropertyValueContextWords(annotation, sensitivity, termsObj, ids, null, reverseOnDisplay);
     }
 
     // get displayable string version; note that we lowercase this if this is case-insensitive
     @Override
     public String toString() {
-        StringBuilder b = new StringBuilder();
-        if (reverseOnDisplay) {
-            for (int i = valueTokenId.length - 1; i >= 0; i--) {
-                int v = valueTokenId[i];
-                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
-                if (!word.isEmpty()) {
-                    if (!b.isEmpty())
-                        b.append(" ");
-                    b.append(word);
-                }
-            }
-        } else {
-            for (int v : valueTokenId) {
-                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
-                if (!word.isEmpty()) {
-                    if (!b.isEmpty())
-                        b.append(" ");
-                    b.append(word);
-                }
-            }
+        List<String> parts = new ArrayList<>();
+        int n = valueTokenId.length;
+        for (int i = 0; i < n; i++) {
+            int v = valueTokenId[i];
+            String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
+            if (!word.isEmpty())
+                parts.add(word);
         }
-        return b.toString();
+        if (reverseOnDisplay)
+            Collections.reverse(parts);
+        return StringUtils.join(parts, " ");
     }
 
     @Override
     public String serialize() {
-        String[] parts = new String[valueTokenId.length + 3];
+        int length = valueTokenId.length;
+        String[] parts = new String[length + 3];
         parts[0] = reverseOnDisplay ? "cwsr" : "cws";
         parts[1] = annotation.fieldAndAnnotationName();
         parts[2] = sensitivity.luceneFieldSuffix();
-        for (int i = 0; i < valueTokenId.length; i++) {
+        for (int i = 0; i < length; i++) {
             String term = serializeTerm(terms, valueTokenId[i]);
             parts[i + 3] = term;
         }
@@ -131,7 +141,24 @@ public class PropertyValueContextWords extends PropertyValueContext {
     }
 
     @Override
-    public int[] value() {
+    public Object value() {
         return valueTokenId;
+    }
+
+    boolean isGlobal() {
+        return lrc == null;
+    }
+
+    @Override
+    public PropertyValue toGlobal() {
+        if (isGlobal())
+            throw new IllegalStateException("Don't call toGlobal on already-global value!");
+        int[] globalTermIds = Arrays.copyOf(valueTokenId, valueTokenId.length);
+        terms.convertToGlobalTermIds(globalTermIds);
+        int[] globalSortOrder = new int[globalTermIds.length];
+        Terms globalTerms = terms.getGlobalTerms();
+        globalTerms.idsToSortOrder(globalTermIds, globalSortOrder, sensitivity);
+        return new PropertyValueContextWords(annotation, sensitivity,
+                globalTerms, globalTermIds, globalSortOrder, reverseOnDisplay);
     }
 }

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.DocGroup;
+import nl.inl.blacklab.search.results.docs.DocGroup;
 
 public class DocGroupPropertySize extends DocGroupProperty {
 

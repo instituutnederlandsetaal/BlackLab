@@ -26,17 +26,18 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.docs.DocGroup;
+import nl.inl.blacklab.search.results.docs.DocGroups;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
@@ -61,7 +62,7 @@ public class WriteCsv {
 
     public static String hitsGroupsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
         HitGroups groups = resultHitsCsv.getGroups();
-        Hits inputHitsForGroups = resultHitsCsv.getHits();
+        HitResults inputHitsForGroups = resultHitsCsv.getHits();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
         WebserviceParams params = resultHitsCsv.getParams();
 
@@ -93,7 +94,7 @@ public class WriteCsv {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpusResults.query(), metadataGroupProperties, docPropValues);
-                    long numberOfDocsInGroup = group.storedResults().docsStats().waitUntil().allCounted();
+                    long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
                     CorpusSize.Count totalCount = groupSubcorpusSize.getTotalCount();
@@ -118,10 +119,10 @@ public class WriteCsv {
     public static String hitsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
         WebserviceParams params = resultHitsCsv.getParams();
         BlackLabIndex index = params.blIndex();
-        Hits hits = resultHitsCsv.getHits();
+        HitResults hitResults = resultHitsCsv.getHits();
         HitGroups groups = resultHitsCsv.getGroups();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
-        final Annotation mainTokenProperty = hits.field().mainAnnotation();
+        final Annotation mainTokenProperty = hitResults.field().mainAnnotation();
         try {
             // Build the table headers
             // The first few columns are fixed, and an additional columns is appended per annotation of tokens in this corpus.
@@ -144,14 +145,15 @@ public class WriteCsv {
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                hits.resultsStats().waitUntil().allCounted(); // block for a bit
-                summaryCsvHits(params, printer, row.size(), hits, groups, subcorpusResults.subcorpusSize(),
+                hitResults.resultsStats().countedTotal(); // block for a bit
+                summaryCsvHits(params, printer, row.size(), hitResults, groups, subcorpusResults.subcorpusSize(),
                         rs);
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
-            Kwics kwics = hits.kwics(params.contextSettings().size());
-            for (Hit hit : hits) {
+            Hits hitsList = hitResults.getHits();
+            Kwics kwics = hitsList.kwics(params.contextSettings().size());
+            for (EphemeralHit hit: hitsList) {
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {
                     doc = index.luceneDoc(hit.doc());
@@ -308,16 +310,16 @@ public class WriteCsv {
      *
      * @param printer CSV printer
      * @param numColumns number of columns
-     * @param hits hits to summarize
+     * @param hitResults hits to summarize
      * @param groups (optional) if grouped
      * @param subcorpusSize (optional) if available
      */
-    private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, Hits hits,
+    private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, HitResults hitResults,
             ResultGroups groups, CorpusSize subcorpusSize, ResponseStreamer rs) {
         addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize, rs);
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
-        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS, hits.size());
-        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, hits.docsStats().countedSoFar());
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS, hitResults.size());
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, hitResults.docsStats().countedSoFar());
     }
 
     /**

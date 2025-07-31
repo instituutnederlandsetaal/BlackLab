@@ -6,8 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +23,8 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -30,6 +34,8 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
+import nl.inl.blacklab.codec.LeafReaderLookup;
+import nl.inl.blacklab.codec.LeafReaderLookupArray;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -40,6 +46,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.TermsIntegratedRef;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -53,11 +60,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -161,6 +168,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     /** Was this index closed? */
     private boolean closed;
 
+    /** Index of segments by their doc base (the number to add to get global docId) */
+    protected final LeafReaderLookup leafReaderLookup;
+
     // Constructors
     //---------------------------------------------------------------
 
@@ -213,6 +223,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 // No IndexReader opened yet; do so now.
                 openIndex(createNewIndex);
             }
+            assert this.reader != null;
 
             // Determine the index structure
             if (traceIndexOpening())
@@ -226,6 +237,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (traceIndexOpening())
                 logger.debug("    (got index metadata)");
 
+            // Ensure quick lookup of the segment we need
+            leafReaderLookup = new LeafReaderLookupArray(this.reader);
+
             // TODO abstract away this special solrMode parameter (which is used to avoid closing the reader if we're in solr mode)
             // we should abstract out the creation of the objects that depend on the analyzer
             // (such as the lucene writer) into the IndexObjectFactory
@@ -233,6 +247,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // we have and trust that it will do the right thing.
             finishOpeningIndex(indexDir, createNewIndex, solrMode);
             logger.debug("    (done with finishOpeningIndex)");
+
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {
@@ -277,6 +292,15 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return BlackLab.config().getLog().getTrace().isIndexOpening();
     }
 
+    @Override
+    public LeafReaderContext getLeafReaderContext(int docId) {
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        if (lrc == null) {
+            throw new IllegalArgumentException("No segment found for docId: " + docId);
+        }
+        return lrc;
+    }
+
     // Methods for querying the index
     //---------------------------------------------------------------
 
@@ -311,22 +335,33 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return indexMetadata;
     }
 
-    @Override
-    public void forEachDocument(DocTask task) {
-        final int maxDoc = reader().maxDoc();
-        final Bits liveDocs = MultiBits.getLiveDocs(reader());
-        int skipDocId = metadata().metadataDocId();
-        for (int docId = 0; docId < maxDoc; docId++) {
-            boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
-            if (isLiveDoc && docId != skipDocId) {
-                task.perform(this, docId);
-            }
-        }
+    public LeafReaderLookup getLeafReaderLookup() {
+        return leafReaderLookup;
     }
 
     @Override
-    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
-        return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
+    public void forEachDocument(boolean parallel, DocTask task) {
+        List<LeafReaderContext> leaves = reader.leaves();
+        Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
+        int metadataDocId = metadata().metadataDocId();
+        stream.forEach(lrc -> {
+            LeafReader reader1 = lrc.reader();
+            Bits liveDocs = reader1.getLiveDocs();
+            int maxDoc = reader1.maxDoc();
+            task.startSegment(lrc);
+            for (int docId = 0; docId < maxDoc; docId++) {
+                boolean isMetadataDoc = lrc.docBase + docId == metadataDocId;
+                boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
+                if (!isMetadataDoc && isLiveDoc) { // Only count live documents
+                    task.document(lrc, docId);
+                }
+            }
+        });
+    }
+
+    @Override
+    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
+        return HitResults.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override
@@ -421,13 +456,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
         return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true), documentFilterQuery);
-    }
-
-    public boolean canDoNfaMatching() {
-        if (forwardIndices.isEmpty())
-            return false;
-        ForwardIndex fi = forwardIndices.values().iterator().next();
-        return fi.canDoNfaMatching();
     }
 
     protected void checkCanOpenIndex(boolean createNewIndex) throws IllegalArgumentException {
@@ -569,6 +597,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         analyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
     }
 
+    protected Directory getIndexDirectory() {
+        return ((DirectoryReader) reader()).directory();
+    }
+
     @Override
     public void close() {
         synchronized(this) {
@@ -577,6 +609,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             closed = true;
         }
         try {
+            TermsIntegratedRef.remove(getIndexDirectory());
             blackLab.removeIndex(this);
             if (shouldCloseIndex) {
                 reader.close();
@@ -748,11 +781,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     protected abstract ForwardIndex createForwardIndex(AnnotatedField field);
-
-    @Override
-    public ContentStore contentStore(Field field) {
-        return contentAccessor(field).getContentStore();
-    }
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {

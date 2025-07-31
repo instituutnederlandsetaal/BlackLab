@@ -6,7 +6,7 @@ import java.util.Map;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 
 interface FreqListOutput {
 

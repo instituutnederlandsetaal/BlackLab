@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,6 +14,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -45,26 +45,10 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getAnnotationNumber(String annotationName) {
+        public int getAnnotationIndex(String annotationName) {
             if (annotationName.equals("word"))
                 return 0;
             throw new IllegalArgumentException("Unknown annotation " + annotationName);
-        }
-
-        @Override
-        public void getGlobalTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
-                MatchSensitivity sensitivity) {
-            if (annotNumber != 0)
-                throw new IllegalArgumentException("Unknown annotation " + annotNumber);
-            if (sensitivity.isCaseSensitive()) {
-                results.add(terms.get(annotValue));
-                return;
-            }
-            for (Entry<String, Integer> e : terms.entrySet()) {
-                if (e.getKey().equalsIgnoreCase(annotValue)) {
-                    results.add(e.getValue());
-                }
-            }
         }
 
         public int numberOfAnnotations() {
@@ -76,14 +60,43 @@ public class TestNfaFromQuery {
             return new ForwardIndexAccessorLeafReader() {
 
                 @Override
-                public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
-                    throw new UnsupportedOperationException();
-                    //return MockForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
-                }
+                public Terms terms(int annotIndex) {
+                    return new Terms() {
+                        @Override
+                        public String get(int id) {
+                            for (Entry<String, Integer> e : terms.entrySet()) {
+                                if (e.getValue() == id)
+                                    return e.getKey();
+                            }
+                            return null; // should not happen
+                        }
 
-                @Override
-                public String getTermString(int annotIndex, int segmentTermId) {
-                    return MockForwardIndexAccessor.this.getTermString(annotIndex, segmentTermId);
+                        @Override
+                        public int idToSortPosition(int id, MatchSensitivity sensitivity) {
+                            return id; // wrong, but not used for sorting in these tests
+                        }
+
+                        @Override
+                        public int termToSortPosition(String term, MatchSensitivity sensitivity) {
+                            // Wrong (we return id, not sort pos), but we only need equal words to have the same sort position for these tests.
+                            return terms.get(term);
+                        }
+
+                        @Override
+                        public int numberOfTerms() {
+                            return terms.size();
+                        }
+
+                        @Override
+                        public int indexOf(String word) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
                 }
 
                 /**
@@ -100,7 +113,7 @@ public class TestNfaFromQuery {
                 }
 
                 @Override
-                public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+                public ForwardIndexDocument getForwardIndexDoc(int segmentDocId) {
                     if (segmentDocId != 0)
                         throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return new ForwardIndexDocumentIntArray(termIds);
@@ -111,15 +124,6 @@ public class TestNfaFromQuery {
                     if (segmentDocId != 0)
                         throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return termIds.length;
-                }
-
-                @Override
-                public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
-                    if (annotIndex != 0)
-                        throw new IllegalArgumentException("Unknown annotation " + annotIndex);
-                    if (segmentDocId != 0)
-                        throw new IllegalArgumentException("Unknown document " + segmentDocId);
-                    return Arrays.copyOfRange(termIds, start, end);
                 }
 
                 @Override
@@ -162,8 +166,8 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getTokenGlobalTermId(int annotIndex, int pos) {
-            return getTokenSegmentTermId(annotIndex, pos);
+        public int getTokenSegmentSortPosition(int annotIndex, int pos, MatchSensitivity sensitivity) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -189,11 +193,10 @@ public class TestNfaFromQuery {
         // The NFA
         Nfa frag = q.getNfa(fiAccessor, direction);
         frag.finish();
-        frag.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<>());
-        //System.err.println(frag);
-        NfaState start = frag.getStartingState(); //finish();
+        frag.lookupAnnotationIndexes(fiAccessor);
+        NfaState start = frag.getStartingState().forSegment(null);
 
-        ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).advanceForwardIndexDoc(0);
+        ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
         for (int i = 0; i < tests; i++) {
             Assert.assertEquals("Test " + i, matches.contains(i),
                     start.matches(fiDoc, startPos + direction * i, direction));

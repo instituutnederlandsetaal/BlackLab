@@ -25,7 +25,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  *
  * This is used to capture cross-field relations in a parallel corpus.
  *
- * @@@ PROBLEM: right now, subsequent spans from the source spans may not overlap!
+ * FIXME: right now, subsequent spans from the source spans may not overlap!
  *   If they do overlap, some relations may be skipped over.
  *   We should cache some relations from the source span so we can be sure we return all
  *   of them, even if the source spans overlap.

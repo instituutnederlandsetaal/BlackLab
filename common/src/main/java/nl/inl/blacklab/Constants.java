@@ -8,6 +8,9 @@ public class Constants {
     /** Utility class, don't instantiate */
     private Constants() {}
 
+    /** The value to use meaning "no term" (e.g. if the document ends) */
+    public static final int NO_TERM = -1;
+
     /**
      * Safe maximum size for a Java array.
      *
@@ -24,6 +27,11 @@ public class Constants {
      * https://stackoverflow.com/questions/25609840/java-hashmap-max-size-of-5770/25610054
      */
     public static final int JAVA_MAX_HASHMAP_SIZE = Integer.MAX_VALUE / 4;
+
+    /**
+     * Safe maximum size for a Java Set.
+     */
+    public static final long JAVA_MAX_SET_SIZE = JAVA_MAX_HASHMAP_SIZE;
 
     /** Key in Solr response that contains the BlackLab response
         (also used by the proxy to retrieve the BlackLab response from the Solr response) */

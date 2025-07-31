@@ -22,10 +22,10 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  *  we use temporary files because this might take a huge amount of memory)
  * (use a LinkedHashMap to maintain the same field order when we write the tokens below)
  */
-public class PWPluginForwardIndex implements PWPlugin {
+class PWPluginForwardIndex implements PWPlugin {
 
     private final BlackLabPostingsWriter postingsWriter;
 
@@ -105,6 +105,8 @@ public class PWPluginForwardIndex implements PWPlugin {
 
     private int currentDocOccurrencesWritten;
 
+    /** Collators to use to determine (in)sensitive sort values. */
+    private Collators collators;
 
     public PWPluginForwardIndex(BlackLabPostingsWriter postingsWriter) throws IOException {
         this.postingsWriter = postingsWriter;
@@ -127,7 +129,7 @@ public class PWPluginForwardIndex implements PWPlugin {
         //   still write all NO_TERMs in this case. This is similar to sparse
         //   fields (e.g. the field that stores <p> <s> etc.) which also have a
         //   lot of NO_TERMs.
-        Arrays.fill(tokensInDoc, Terms.NO_TERM);
+        Arrays.fill(tokensInDoc, Constants.NO_TERM);
 
         // For each term...
         for (Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
@@ -146,33 +148,42 @@ public class PWPluginForwardIndex implements PWPlugin {
 
     /**
      * Given a list of terms, return the indices to sort them.
-     * E.G: getTermSortOrder(['b','c','a']) --> [2, 0, 1]
+     *
+     * The first item in the array is the index of the first term in a sorted list, etc.
+     *
+     * Example: getTermSortOrder(['b','c','a']) --> [2, 0, 1]
      */
-    static int[] getTermSortOrder(List<String> terms, Collator coll) {
+    static int[] getTermSortOrder(List<String> terms, Collator collator) {
         int[] ret = new int[terms.size()];
         for (int i = 0; i < ret.length; ++i) ret[i] = i;
 
         // Collator.compare() is synchronized, so precomputing the collation keys speeds things up
         CollationKey[] ck = new CollationKey[terms.size()];
         for (int i = 0; i < ck.length; ++i)
-            ck[i] = coll.getCollationKey(terms.get(i));
+            ck[i] = collator.getCollationKey(terms.get(i));
 
         IntArrays.parallelQuickSort(ret, (a, b) -> ck[a].compareTo(ck[b]));
         return ret;
     }
 
     /**
-     * Invert the given array so the values become the indexes and vice versa.
+     * Get an array of sort values for the given term ids, based on the given sorted term id array.
      *
-     * @param array array to invert
-     * @return inverted array
+     * Essentially inverts sortedTermIds so the values become the indexes and vice versa.
+     * Also makes sure that if multiple terms are considered equal (insensitive comparison),
+     * they all get the same sort value.
+     *
+     * @param terms the sortedTermIds array refers to
+     * @param sortedTermIds array of term ids sorted by term string
+     * @param collator collator to use for comparing terms
+     * @return an array of sort values in order of term ids (i.e. first item is the sort value for term id 0, etc.)
      */
-    static int[] invert(List<String> terms, int[] array, Collator collator) {
-        int[] result = new int[array.length];
+    static int[] getTermIdToSortValueArray(List<String> terms, int[] sortedTermIds, Collator collator) {
+        int[] result = new int[sortedTermIds.length];
         int prevSortPosition = -1;
         int prevTermId = -1;
-        for (int i = 0; i < array.length; i++) {
-            int termId = array[i];
+        for (int i = 0; i < sortedTermIds.length; i++) {
+            int termId = sortedTermIds[i];
             int sortPosition = i;
             if (prevTermId >= 0 && collator.equals(terms.get(prevTermId), terms.get(termId))) {
                 // Keep the same sort position because the terms are the same
@@ -290,7 +301,7 @@ public class PWPluginForwardIndex implements PWPlugin {
     public boolean startField(FieldInfo fieldInfo) {
 
         // Should this field get a forward index?
-        if (!BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfo))
+        if (!BLFieldTypeLucene.doesFieldHaveForwardIndex(fieldInfo))
             return false;
 
         // Make sure doc lengths are shared between all annotations for a single annotated field.
@@ -311,6 +322,9 @@ public class PWPluginForwardIndex implements PWPlugin {
         // Record starting offset of field in termindex file (written to fields file later)
         currentField.setTermIndexOffset(termIndexFile.getFilePointer());
 
+        // Collators to use for sorting terms in this field.
+        collators = BLFieldTypeLucene.getFieldCollators(fieldInfo);
+
         // Keep track of where to find term positions for each document
         // (for reversing index)
         // The map is keyed by docId and stores a list of offsets into the
@@ -328,28 +342,20 @@ public class PWPluginForwardIndex implements PWPlugin {
 
     @Override
     public void endField() throws IOException {
-        // begin writing term IDs and sort orders
-        Collators collators = Collators.getDefault();
-        int[] sensitivePos2TermID = getTermSortOrder(termsList,
-                collators.get(MatchSensitivity.SENSITIVE));
-        int[] insensitivePos2TermID = getTermSortOrder(termsList,
-                collators.get(MatchSensitivity.INSENSITIVE));
-        int[] termID2SensitivePos = invert(termsList, sensitivePos2TermID,
-                collators.get(MatchSensitivity.SENSITIVE));
-        int[] termID2InsensitivePos = invert(termsList, insensitivePos2TermID,
-                collators.get(MatchSensitivity.INSENSITIVE));
-
-        int numTerms = termsList.size();
-        currentField.setNumberOfTerms(numTerms);
+        currentField.setNumberOfTerms(termsList.size());
         currentField.setTermOrderOffset(termsOrderFile.getFilePointer());
-        // write out, specific order.
-        for (int i: termID2InsensitivePos)
+
+        // Write term IDs and sort orders
+        writeTermIdsAndSortOrders(collators.get(MatchSensitivity.INSENSITIVE));
+        writeTermIdsAndSortOrders(collators.get(MatchSensitivity.SENSITIVE));
+    }
+
+    private void writeTermIdsAndSortOrders(Collator collator) throws IOException {
+        int[] sortPositionToTermId = getTermSortOrder(termsList, collator);
+        int[] termIdToSortPosition = getTermIdToSortValueArray(termsList, sortPositionToTermId, collator);
+        for (int i: termIdToSortPosition)
             termsOrderFile.writeInt(i);
-        for (int i: insensitivePos2TermID)
-            termsOrderFile.writeInt(i);
-        for (int i: termID2SensitivePos)
-            termsOrderFile.writeInt(i);
-        for (int i: sensitivePos2TermID)
+        for (int i: sortPositionToTermId)
             termsOrderFile.writeInt(i);
     }
 
@@ -359,6 +365,13 @@ public class PWPluginForwardIndex implements PWPlugin {
         String termString = term.utf8ToString();
         termIndexFile.writeLong(termsFile.getFilePointer()); // where to find term string
         termsFile.writeString(termString);
+
+        // NOTE: we add the term here even though it may not have any occurrences that will be written
+        //   to the forward index. This is because we only write primary terms to the forward index
+        //   (if multiple terms occur at the same position, we only write the first one).
+        //   We could keep track of whether a term has any occurrences and only write it if it does,
+        //   but better would probably be to write all terms to the forward index at some point.
+        //   This would complicate the forward index structure though.
         termsList.add(termString);
     }
 

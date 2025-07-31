@@ -3,9 +3,7 @@ package nl.inl.blacklab.search.results;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
- * Grouped results of some type
- * 
- * @param <T> result type, e.g. Hit for groups of hits
+ * Grouped results of some type.
  */
 public interface ResultGroups {
 

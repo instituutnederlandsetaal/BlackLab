@@ -1,9 +1,7 @@
 package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
-import java.util.IdentityHashMap;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -137,9 +135,9 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
     @Override
     public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
 
-        // Finalize our NFA, so it looks up annotation numbers for its annotation names.
+        // Finalize our NFA, so it looks up the indexes for its annotations.
         nfa.finish();
-        nfa.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<>());
+        nfa.lookupAnnotationIndexes(fiAccessor);
 
         BLSpanWeight anchorWeight = clauses.get(0).createWeight(searcher, scoreMode, boost);
         Map<Term, TermStates> contexts = scoreMode.needsScores() ? getTermStates(anchorWeight) : null;
@@ -175,7 +173,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
             if (anchorSpans == null)
                 return null;
             ForwardIndexAccessorLeafReader fiLeafReader = fiAccessor.getForwardIndexAccessorLeafReader(context);
-            NfaState startingState = nfa.getNfa().getStartingState();
+            NfaState startingState = nfa.getNfa().getStartingState().forSegment(context);
             return new SpansFiSeq(anchorSpans, startOfAnchor, startingState, direction, fiLeafReader, guarantees);
         }
     }

@@ -38,10 +38,11 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
@@ -315,9 +316,9 @@ public class TestSearches {
     @Test
     public void testWithSpans() {
         if (testIndex.getIndexType() == BlackLabIndex.IndexType.INTEGRATED) {
-            Hits hits = testIndex.find("with-spans('quick' 'brown')");
-            Assert.assertEquals(1, hits.size());
-            MatchInfo[] matchInfo = hits.get(0).matchInfos();
+            HitResults hitResults = testIndex.find("with-spans('quick' 'brown')");
+            Assert.assertEquals(1, hitResults.size());
+            MatchInfo[] matchInfo = hitResults.getHits().get(0).matchInfos();
             Assert.assertEquals(1, matchInfo.length);
             Assert.assertEquals(MatchInfo.Type.LIST_OF_RELATIONS, matchInfo[0].getType());
             List<RelationInfo> rels = ((RelationListInfo) matchInfo[0]).getRelations();
@@ -557,10 +558,9 @@ public class TestSearches {
         BlackLabIndex index = testIndex.index();
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        Terms terms = index.annotationForwardIndex(annotation).terms();
+        Terms terms = index.forwardIndex(annotation).terms();
         int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words, null,
-                false);
+        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words, null, false);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 
@@ -572,10 +572,9 @@ public class TestSearches {
         BlackLabIndex index = testIndex.index();
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        Terms terms = index.annotationForwardIndex(annotation).terms();
+        Terms terms = index.forwardIndex(annotation).terms();
         int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        PropertyValue value = new PropertyValueContextWords(index, annotation, MatchSensitivity.INSENSITIVE, words, null,
-                false);
+        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words, null, false);
         // Query below will be rewritten using POSFILTER(ANYTOKEN(1,INF), NOTCONTAINING, 'noot');
         // there used to be an issue with determining doc length that messed this up
         Assert.assertEquals(expected, testIndex.findConc("'noot'+ [word != 'noot']+ group:('aap')+", prop, value));
@@ -583,10 +582,10 @@ public class TestSearches {
 
     @Test
     public void testCaptureGroups() {
-        Hits hits = testIndex.find("A:'aap'");
-        Assert.assertEquals(5, hits.size());
-        Assert.assertTrue(hits.hasMatchInfo());
-        MatchInfo[] group = hits.get(0).matchInfos();
+        HitResults hitResults = testIndex.find("A:'aap'");
+        Assert.assertEquals(5, hitResults.size());
+        Assert.assertTrue(hitResults.getHits().hasMatchInfo());
+        MatchInfo[] group = hitResults.getHits().get(0).matchInfos();
         Assert.assertNotNull(group);
         Assert.assertEquals(1, group.length);
         Assert.assertEquals(2, group[0].getSpanStart());
@@ -605,15 +604,15 @@ public class TestSearches {
         Assert.assertEquals(2, result.size());
         Assert.assertEquals(expected, result);
         // Validate the actual captures as well
-        Hits hits = testIndex.find(query);
-        Assert.assertEquals(2, hits.size());
-        Assert.assertTrue(hits.hasMatchInfo());
-        Assert.assertEquals(1, hits.get(0).doc());
-        Assert.assertEquals(2, hits.get(0).matchInfos()[0].getSpanStart());
-        Assert.assertEquals(3, hits.get(0).matchInfos()[0].getSpanEnd());
-        Assert.assertEquals(1, hits.get(1).doc());
-        Assert.assertEquals(4, hits.get(1).matchInfos()[0].getSpanStart());
-        Assert.assertEquals(5, hits.get(1).matchInfos()[0].getSpanEnd());
+        HitResults hitResults = testIndex.find(query);
+        Assert.assertEquals(2, hitResults.size());
+        Hits hitsList = hitResults.getHits();
+        Assert.assertTrue(hitsList.hasMatchInfo());
+        Assert.assertTrue(hitsList.get(0).doc() == hitsList.get(1).doc());
+        Assert.assertEquals(2, hitsList.get(0).matchInfos()[0].getSpanStart());
+        Assert.assertEquals(3, hitsList.get(0).matchInfos()[0].getSpanEnd());
+        Assert.assertEquals(4, hitsList.get(1).matchInfos()[0].getSpanStart());
+        Assert.assertEquals(5, hitsList.get(1).matchInfos()[0].getSpanEnd());
     }
 
     @Test

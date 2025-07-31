@@ -4,10 +4,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on an attribute of a matched span.
@@ -25,8 +27,8 @@ public class HitPropertyAlignments extends HitProperty {
         return new HitPropertyAlignments();
     }
 
-    HitPropertyAlignments(HitPropertyAlignments prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertyAlignments(HitPropertyAlignments prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
     }
 
     private synchronized List<Integer> getTargetHitGroupIndexes() {
@@ -59,8 +61,8 @@ public class HitPropertyAlignments extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyAlignments(this, newHits, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyAlignments(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

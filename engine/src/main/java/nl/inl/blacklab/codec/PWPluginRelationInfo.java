@@ -19,7 +19,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * Keeps track of attributes per unique relation id and writes them to the relation info
  * files so we can look them up later.
  */
-public class PWPluginRelationInfo implements PWPlugin {
+class PWPluginRelationInfo implements PWPlugin {
 
     /** Log all events to a log file? Useful while debugging. */
     private static final boolean ENABLE_DEBUG_LOG = false;
@@ -153,7 +153,7 @@ public class PWPluginRelationInfo implements PWPlugin {
 
         // Is this the relation annotation? Then we want to store relation info such as attribute values,
         // so we can look them up for individual relations matched.
-        if (!BlackLabIndexIntegrated.isRelationsField(fieldInfo)) {
+        if (!BlackLabIndexImpl.isRelationsField(fieldInfo)) {
             log("startField: skip non-rel field " + fieldInfo.name);
             return false;
         }

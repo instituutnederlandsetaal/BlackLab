@@ -2,8 +2,8 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsFromQuery extends SearchDocs {
 

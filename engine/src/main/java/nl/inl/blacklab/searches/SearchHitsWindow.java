@@ -3,7 +3,7 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 
@@ -22,7 +22,7 @@ public class SearchHitsWindow extends SearchHits {
     }
 
     @Override
-    public Hits executeInternal(ActiveSearch<Hits> activeSearch) throws InvalidQuery {
+    public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) throws InvalidQuery {
         return executeChildSearch(activeSearch, source).window(first, number);
     }
 

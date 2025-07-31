@@ -2,12 +2,14 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on the text actually matched.
@@ -21,8 +23,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         return new HitPropertyHitText(index, i.annotation, i.sensitivity);
     }
 
-    HitPropertyHitText(HitPropertyHitText prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert, null);
+    HitPropertyHitText(HitPropertyHitText prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert, null);
     }
 
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
@@ -42,8 +44,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyHitText(this, newHits, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyHitText(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

@@ -3,10 +3,12 @@ package nl.inl.blacklab.testutil;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -72,19 +74,18 @@ public class ExportCorpus implements AutoCloseable {
         final IndexReader reader = index.reader();
 
         System.out.println("Calling forEachDocument()...");
-        index.forEachDocument(new DocTask() {
+        index.forEachDocument(false, new DocTask() {
 
-            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
-
-            int docsDone = 0;
+            AtomicInteger docsDone = new AtomicInteger(0);
 
             @Override
-            public void perform(BlackLabIndex index, int id) {
-                Document doc = index.luceneDoc(id);
+            public void document(LeafReaderContext lrc, int segmentDocId) {
+                int docId = lrc.docBase + segmentDocId;
+                Document doc = index.luceneDoc(docId);
                 String fromInputFile = doc.get("fromInputFile");
                 System.out.println("Getting content for " + fromInputFile + "...");
                 try {
-                    String xml = DocUtil.contents(index, index.mainAnnotatedField(), id, doc);
+                    String xml = DocUtil.contents(index, index.mainAnnotatedField(), docId, doc);
                     File file = new File(exportDir, fromInputFile);
                     System.out.println("Got content, exporting to " + file + "...");
                     if (file.exists()) {
@@ -112,10 +113,9 @@ public class ExportCorpus implements AutoCloseable {
                     System.err.println("### Error exporting " + fromInputFile + ", skipping ###");
                     System.err.flush();
                 }
-                docsDone++;
-                if (docsDone % 100 == 0) {
-                    int perc = docsDone * 100 / totalDocs;
-                    System.out.println(docsDone + " docs exported (" + perc + "%)...");
+                int n = docsDone.incrementAndGet();
+                if (n % 100 == 0) {
+                    System.out.println(docsDone + " docs exported...");
                 }
             }
         });

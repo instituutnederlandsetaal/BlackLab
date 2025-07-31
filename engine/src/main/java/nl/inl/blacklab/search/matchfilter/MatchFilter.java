@@ -1,7 +1,13 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import java.util.function.BiFunction;
+import java.util.function.Function;
+
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
@@ -68,4 +74,49 @@ public abstract class MatchFilter implements TextPatternStruct {
      */
     public abstract MatchFilter rewrite();
 
+    /**
+     * Rewrite a two-clause match filter.
+     *
+     * Applies the rewriter to both clauses. If both remain the same,
+     * we just return the original object (parent). Otherwise, we create a new
+     * object with the rewritten clauses.
+     *
+     * @param parent the original object (this) to return if no changes are made
+     * @param child1 first clause
+     * @param child2 second clause
+     * @param rewriter function to apply to both clauses
+     * @param creater function to create new object from the rewritten clauses
+     * @return the rewritten object, or parent if no changes were made
+     * @param <T> the type of the match filter
+     */
+    public static <T> T twoClauseRewrite(T parent, T child1, T child2, Function<T, T> rewriter, BiFunction<T, T, T> creater) {
+        T rewritten1 = rewriter.apply(child1);
+        T rewritten2 = rewriter.apply(child2);
+        if (rewritten1 == child1 && rewritten2 == child2)
+            return parent; // nothing changed; return the original object
+        // One or both clauses were rewritten; create a new object
+        return creater.apply(rewritten1, rewritten2);
+    }
+
+    /**
+     * Create a copy of this MatchFilter with the given field.
+     *
+     * @param field the field to use
+     * @return a copy of this MatchFilter with the given field
+     */
+    public MatchFilter withField(AnnotatedField field) {
+        return this;
+    }
+
+    /**
+     * Create a copy of this MatchFilter for the given leaf reader context.
+     *
+     * This will look up term ids for this segment.
+     *
+     * @param context leaf reader context to create a copy for
+     * @return a copy of this MatchFilter for the given context
+     */
+    public MatchFilter forSegment(LeafReaderContext context) {
+        return this;
+    }
 }

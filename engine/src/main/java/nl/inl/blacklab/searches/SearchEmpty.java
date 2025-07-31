@@ -27,7 +27,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
             // If no settings given, use the default
             searchSettings = queryInfo().index().searchSettings();
         }
-        return new SearchHitsFromBLSpanQuery(queryInfo(), query, searchSettings);
+        return new SearchHitsFromQuery(queryInfo(), query, searchSettings);
     }
 
     public SearchHits find(BLSpanQuery query) {

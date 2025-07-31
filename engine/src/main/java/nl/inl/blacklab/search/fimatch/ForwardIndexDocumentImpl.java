@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /** Source of tokens for the forward index matching process.
@@ -31,7 +31,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     /**
      * Chunks of the document from the forward index, for each of the annotations.
      */
-    private final List<List<int[]>> allAnnotChunks = new ArrayList<>();
+    private final List<List<int[]>> allAnnotChunksSegment = new ArrayList<>();
 
     /**
      * Construct a token reader for one or more annotations from one forward index document.
@@ -46,7 +46,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
 
         // Create empty lists of chunks for each annotation
         for (int i = 0; i < fiAccessor.getNumberOfAnnotations(); i++) {
-            allAnnotChunks.add(new ArrayList<>());
+            allAnnotChunksSegment.add(new ArrayList<>());
         }
     }
 
@@ -56,13 +56,23 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     }
 
     @Override
+    public int getTokenSegmentSortPosition(int annotIndex, int pos, MatchSensitivity sensitivity) {
+        int segmentTermId = getTokenTermId(annotIndex, pos);
+        return fiAccessor.terms(annotIndex).idToSortPosition(segmentTermId, sensitivity);
+    }
+
+    @Override
     public int getTokenSegmentTermId(int annotIndex, int pos) {
+        return getTokenTermId(annotIndex, pos);
+    }
+
+    public int getTokenTermId(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
-            return Terms.NO_TERM;
+            return Constants.NO_TERM;
 
         // Get the list of chunks for the annotation we're interested in,
         // and the forward index object to get more.
-        List<int[]> chunks = allAnnotChunks.get(annotIndex);
+        List<int[]> chunks = allAnnotChunksSegment.get(annotIndex);
 
         // Where can our token be found?
         int whichChunk = pos / CHUNK_SIZE;
@@ -81,53 +91,6 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
         }
 
         return chunk[posWithinChunk];
-    }
-
-    @Override
-    public int getTokenGlobalTermId(int annotIndex, int pos) {
-        if (pos < 0 || pos >= docLengthTokens)
-            return Terms.NO_TERM;
-
-        // Get the list of chunks for the annotation we're interested in,
-        // and the forward index object to get more.
-        List<int[]> chunks = allAnnotChunks.get(annotIndex);
-
-        // Where can our token be found?
-        int whichChunk = pos / CHUNK_SIZE;
-        int posWithinChunk = pos % CHUNK_SIZE;
-
-        // Make sure we have the chunk we need:
-        // First, make sure the list is long enough.
-        // (we fill with nulls to avoid fetching chunks we don't need)
-        while (chunks.size() <= whichChunk)
-            chunks.add(null);
-        // Now, see if we have the chunk we want, and fetch it if not
-        int[] chunk = chunks.get(whichChunk);
-        if (chunk == null) {
-            chunk = fetchChunkGlobalTermIds(annotIndex, whichChunk);
-            chunks.set(whichChunk, chunk);
-        }
-
-        return chunk[posWithinChunk];
-
-    }
-
-    /**
-     * Fetch a chunk from the forward index for the specified annotation.
-     *
-     * NOTE: returns global term ids!
-     *
-     * @param annotIndex which annotation we want a forward index chunk for
-     * @param number the chunk number to fetch
-     * @return the chunk
-     */
-    private int[] fetchChunkGlobalTermIds(int annotIndex, int number) {
-        int start = number * CHUNK_SIZE;
-        int end = start + CHUNK_SIZE;
-        if (end > docLengthTokens) {
-            end = docLengthTokens;
-        }
-        return fiAccessor.getChunkGlobalTermIds(annotIndex, segmentDocId, start, end);
     }
 
     /**
@@ -150,12 +113,12 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
 
     @Override
     public String getTermString(int annotIndex, int segmentTermId) {
-        return fiAccessor.getTermString(annotIndex, segmentTermId);
+        return fiAccessor.terms(annotIndex).get(segmentTermId);
     }
 
     @Override
     public boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity) {
-        return fiAccessor.segmentTermsEqual(annotIndex, segmentTermId, sensitivity);
+        return fiAccessor.terms(annotIndex).termsEqual(segmentTermId, sensitivity);
     }
 
     @Override

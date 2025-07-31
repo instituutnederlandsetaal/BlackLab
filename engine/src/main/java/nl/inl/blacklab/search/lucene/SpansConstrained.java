@@ -52,7 +52,7 @@ public class SpansConstrained extends BLFilterSpans<BLSpans> {
 
         // Make sure we have the right forward index doc
         if (currentFiDoc == null || currentFiDoc.getSegmentDocId() != candidate.docID())
-            currentFiDoc = fiAccessor.advanceForwardIndexDoc(candidate.docID());
+            currentFiDoc = fiAccessor.getForwardIndexDoc(candidate.docID());
 
         // OPT: if there are duplicate hits (including matchInfo), we'll
         //   evaluate the same constraint multiple times. Could be prevented

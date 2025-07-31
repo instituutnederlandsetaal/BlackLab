@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -12,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -57,8 +58,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     /** The sensitivity of the match */
     private final MatchSensitivity sensitivity;
 
-    HitPropertySpanAttribute(HitPropertySpanAttribute prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
         groupName = prop.groupName;
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
@@ -86,8 +87,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertySpanAttribute(this, newHits, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertySpanAttribute(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

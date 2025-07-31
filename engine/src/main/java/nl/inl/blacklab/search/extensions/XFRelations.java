@@ -85,8 +85,6 @@ public class XFRelations implements ExtensionFunctionClass {
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
                 relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.field());
-
-                // @@@ TODO ensure the correct field is returned (source field)
             }
             return relAndTarget;
         } else {

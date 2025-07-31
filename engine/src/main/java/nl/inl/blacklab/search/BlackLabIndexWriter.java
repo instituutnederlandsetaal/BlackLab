@@ -7,13 +7,9 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.index.BLInputDocument;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -136,17 +132,6 @@ public interface BlackLabIndexWriter extends AutoCloseable {
      * @return the analyzer
      */
     Analyzer analyzer();
-
-    /**
-     * Get forward index for the specified annotated field.
-     *
-     * @param field field to get forward index for
-     * @return forward index
-     */
-    ForwardIndex forwardIndex(AnnotatedField field);
-
-    /** Get the ContentStore with this name. If no such ContentStore exists, the implementation should create it. */
-    ContentStore contentStore(Field contentStoreName);
 
     /** Get the strategy to use for indexing relations. */
     RelationsStrategy getRelationsStrategy();

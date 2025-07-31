@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.matchfilter;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -15,14 +16,18 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     private int annotationIndex = -1;
 
+    private AnnotatedField field;
+
     public MatchFilterTokenAnnotation(String groupName, String annotationName) {
         this.groupName = groupName;
+        if (annotationName == null)
+            throw new IllegalArgumentException("annotationName cannot be null");
         this.annotationName = annotationName;
     }
 
     @Override
     public String toString() {
-        return groupName + (annotationName == null ? "" : "." + annotationName);
+        return groupName + "." + annotationName;
     }
 
     @Override
@@ -30,7 +35,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((groupName == null) ? 0 : groupName.hashCode());
-        result = prime * result + ((annotationName == null) ? 0 : annotationName.hashCode());
+        result = prime * result + annotationName.hashCode();
         return result;
     }
 
@@ -48,10 +53,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
                 return false;
         } else if (!groupName.equals(other.groupName))
             return false;
-        if (annotationName == null) {
-            if (other.annotationName != null)
-                return false;
-        } else if (!annotationName.equals(other.annotationName))
+        if (!annotationName.equals(other.annotationName))
             return false;
         return true;
     }
@@ -76,8 +78,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        if (annotationName != null)
-            annotationIndex = fiAccessor.getAnnotationNumber(annotationName);
+        annotationIndex = fiAccessor.getAnnotationIndex(annotationName);
     }
 
     @Override
@@ -85,16 +86,20 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         return this;
     }
 
+    @Override
+    public MatchFilter withField(AnnotatedField field) {
+        this.field = field;
+        return super.withField(field);
+    }
+
     public MatchFilter matchTokenString(String str, MatchSensitivity sensitivity) {
-        return new MatchFilterTokenAnnotationEqualsString(groupName, annotationName, str, sensitivity);
+        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
+                groupName, annotationName, str, sensitivity);
+        return mf.withField(field);
     }
 
     public MatchFilter matchOtherTokenSameProperty(String otherGroupName, MatchSensitivity sensitivity) {
         return new MatchFilterSameTokens(groupName, otherGroupName, annotationName, sensitivity);
-    }
-
-    public boolean hasAnnotation() {
-        return annotationName != null;
     }
 
     public String getAnnotationName() {

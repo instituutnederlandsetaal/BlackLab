@@ -26,46 +26,106 @@ LATER?
 
 ## Improve parallellisation and get rid of global term ids
 
-Grouping and sorting is currently not done per segment, but only once we've gathered hits from each segment. When we group/sort/filter on context, we thus have to return to the segment each hit came from, and translate between global and local term ids, which is expensive. Determining the mapping also takes up time when opening an index.
+Grouping and sorting is currently not done per segment, but only once we've gathered hits from each segment. When we group/sort/filter on context, we thus have to return to the segment each hit came from, which is relatively inefficient.
 
-It should be faster to perform the operations per segment, then merge the results: this is inheritently parallelizable (because segments are independent of one another), eliminates term id conversions, minimizes resource contention, and makes disk reads less disjointed.
+It should be faster to perform the operations per segment, then merge the results: this is inheritently parallelizable (because segments are independent of one another), minimizes resource contention, and makes disk reads less disjointed.
 
-The merge step would use string comparisons/hashes instead of term sort order comparisons. Such a merge would work in a similar way as with distributed search.
+The merge step would use string comparisons instead of term sort order comparisons. (similar to how merging would work in a distributed search scenario).
 
-The global forward index API with global term ids and sort order would not be needed anymore after this change. This is good, because it's expensive to keep track of global term ids, especially when dynamically adding/removing documents. It would be especially impractical for distributed search, because then the term ids would need to be shared between nodes, which would be difficult and slow.
 
-How would we approach this:
 
-- [x] Remove the old external index format code. It relies on global forward index and global term ids and cannot (and should not) be supported going forward.
+Caching in BlackLab splits search into stages, e.g. "unsorted hits" > "sorted hits" > "page X from sorted hits". The first stage should be able to give you "page X from unsorted hits" even while it's fetching more hits.
+
+`HitsFromQuery` does this by merging hits from segments into a global list as the search progresses. But it's silly to build this merged list (with locking delays) and then "unmerge" it again so that we can sort hits per segment. Better would be to keep hits separated by segment. But then how do we get "page X from unsorted hits" before all hits have been fetched?
+
+One approach is to build a global list and keep the segment lists as well, but this takes up extra memory.
+
+We really just want a global _view_ of the unsorted hits. This view should grow over time as hits are fetched, and should be backed by the hits per segment. We could keep track of where hits can be found, i.e. "hit 13 in the global list is hit 3 from segment 5". This adds a layer of indirection, but only if we're making a (small) page of unsorted hits, which shouldn't be too bad. For efficiency, we could remember "stretches" of hits, i.e. "hit 13 in the global list is part of a stretch that starts at 10 and is 5 hits long, from segment 5 starting at 0". If the next step is sorting or grouping, we'll just use the hits from segments directly, skipping the layer of indirection. Even better, we may be able to lazy-initialize the global hits view, so we might not have to make it at all, or we might only need it after all hits have been fetched.
+
+
+
+### Done so far
+
+- remove old external index
+- `HitsSimple`, implemented by the `HitsInternal*` classes among others, is where we can iterate over hits. `Hits` does not implement this interface anymore; call `getHits()` to get a `HitsSimple` object. This removes a layer of indirection and separates functionality.
+- Got rid of global term ids. We use the per-segment forward index and terms object everywhere now. Large indexes should open much faster now, because we don't determine the global term id mappings anymore.
+- could we do away with PropertyValue hierarchy and use Object / String/Integer/... directly?
+- try to get rid of more useless abstract base classes like `Result` (?)
+- 
+
+### Still to do
+
+- [ ] optimize how we use the per-segment forward index and terms objects (try to batch things by segment more)
+- [ ] Check the last remnants of the global forward index; clean up if possible.
+
 
 - [ ] Implement:
-  - [ ] Gather hits from a single index segment into a `HitsInternal` object.
   - [ ] Ensure several of these can be merged into another `HitsInternal` object _dynamically_, while the hits are being gathered (in the case where no sort has been requested).
   - [ ] Add a subclass that gathers hits from a single segment, sorts them, and allows them to be merged based on the sort value later.
   - [ ] Follow a similar approach for grouping.
 
-- Implement merging:
-  - `HitsFromQuerySorted` merges hits from several `SpansSorted` instances
-  - `HitsGroupedFromQuery` merges hits from several `GroupedSpans` instances
+- [ ] Implement merging:
+  - [ ] `HitsFromQuerySorted` merges hits from several `SpansSorted` instances
+  - [ ] `HitsGroupedFromQuery` merges hits from several `GroupedSpans` instances
   
   Merging should be based on (`String`/`CollationKey` and maybe `Integer` and `Double` as well?) comparison of the stored sort and group values.
 
-- Optimize `SpansSorted`, `GroupedSpans` for the new, per-segment situation (i.e. don't use `Hits`, `Kwics` anymore).
+- [ ] Optimize `SpansSorted`, `GroupedSpans` for the new, per-segment situation (i.e. don't use `Hits`, `Kwics` anymore).
 
-- Eliminate global term ids from classes like `Kwic(s)`, `Contexts`, etc. These are generally only done for a small window of (already-merged) hits, so we still need to be able to get the context for a hit after merging, but these should be in string form.
 
-- Update NFA matching to use per-segment term ids. NFAs will have to be customized per-segment. `ForwardIndexAccessor` needs to be updated to use the per-segment forward index as well (should be easy as this class is already used per-segment, that is, from `Spans` classes).
+### Optimize handling of various codec objects
 
-- Convert "special cases" such as: 
-  - `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`
-  - calculating the total number of tokens in `IndexMetadataIntegrated`
-  - more?
+SMALLER ISSUES
 
-- Eliminate uses of the global `(Annotation)ForwardIndex` and `Terms` objects, such as in `HitProperty` and `PropertyValue`, and replace them with per-segment alternatives.
+- DocProperty per-segment (DocValues)
 
-- Deal with any unexpected problems that arise.
+- Store sorted hits using indexes to the original hits object to save memory?
 
-- Clean up, removing any now-unused classes.
+- `ForwardIndex.forField()` created two objects; can we do it with one? See below.
+
+```java
+  /**
+    * Get a new FieldForwardIndex on this segment.
+    * Though the reader is not Threadsafe, a new instance is returned every time,
+    * So this function can be used from multiple threads.
+    */
+    public FieldForwardIndex forField(String luceneField) {
+        return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
+    }
+```
+
+## BL5 major refactorings (Dutch)
+
+- type parameters weg uit Results etc. (ws. nog meer opruiming mogelijk)
+
+- HitsSimple is nu het interface om met hits te werken, te itereren, etc.
+  Hits is een compleet "zoekresultaat". Hits.getHits() retourneert een HitsSimple.
+  (namen kunnen nog aangepast worden)
+  HitsSimple wordt geimplementeerd door HitsInternal*, maar Hits heeft ook een
+  eigen implementatie die bijv. ensureHitsRead() aanroept.
+
+- Global term ids zijn verdwenen. Global Terms object ook.
+  Overal waar met termen wordt gewerkt, gaat dit per-segment met id/sortposition of
+  globally met strings.
+  Zie bijv. HitPropertyContextBase.
+  Doel is om uiteindelijk bijv. sorteren per segment te doen (met sortpositions), daarna een
+  snelle merge op stringbasis.
+  Nu wordt er nog wat te veel randomly tussen segmenten gesprongen (globalDocId > segment)
+
+- (WIP)
+  HitsFromQueryKeepSegments: alternatief voor (subclass van) HitsFromQuery.
+  Doel is om hits per segment op te slaan maar ook een global view te bieden (zonder alles
+  2x in geheugen te houden).
+  Global view gebeurt door stretches bij te houden.
+  (segment / start in segment / start in global view / length)
+  Global view is relatief traag natuurlijk, maar wordt uiteindelijk hopelijk alleen gebruikt
+  als je een pagina unsorted hits vraagt, dus niet heel performancekritisch. Andere operaties
+  (sort, group, sample, etc.) werken met de hele set hits en gebruiken direct de hitlijsten per
+  segment.
+
+- andere TODOs:
+    - minder met doc(index), start(index), etc. doen, zo veel mogelijk met getEphemeral(index, hit)
+
 
 
 ## Optimization opportunities

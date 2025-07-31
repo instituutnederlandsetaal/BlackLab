@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -21,57 +20,6 @@ public class TestValueSort {
         Collator coll = BlackLab.getFieldValueSortCollator();
         list.sort(coll);
         Assert.assertEquals(expected, list);
-    }
-    
-    @Test
-    public void testValueSortV1() {
-        final List<String> list = Arrays.asList(
-            "a-",
-            "-b",
-            "a",
-            "AA-",
-            "aa",
-            "AA",
-            "cool_stuff",
-            "cool stuff",
-            "cool-stuff",
-            "help?",
-            "help.",
-            "help",
-            "(h)elp",
-            ".",
-            "a-",
-            "b",
-            "tes(t)ed",
-            "test",
-            "tested",
-            ""
-        );
-        final List<String> expected = Arrays.asList(
-            "",
-            ".",
-            "(h)elp",
-            "a-",
-            "a",
-            "a-",
-            "AA-",
-            "aa",
-            "AA",
-            "-b",
-            "b",
-            "cool_stuff",
-            "cool stuff",
-            "cool-stuff",
-            "help",
-            "help?",
-            "help.",
-            "tes(t)ed",
-            "test",
-            "tested"
-        );
-        Collator coll = new Collators(BlackLab.defaultCollator(), CollatorVersion.V1).get(MatchSensitivity.INSENSITIVE);
-        list.sort(coll);
-        Assert.assertEquals(list, expected);
     }
     
     @Test
@@ -120,7 +68,7 @@ public class TestValueSort {
             "test",
             "tested"
         );
-        Collator coll = new Collators(BlackLab.defaultCollator(), CollatorVersion.V2).get(MatchSensitivity.INSENSITIVE);
+        Collator coll = new Collators(BlackLab.defaultCollator()).get(MatchSensitivity.INSENSITIVE);
         list.sort(coll);
         Assert.assertEquals(list, expected);
     }

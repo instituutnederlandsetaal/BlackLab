@@ -21,7 +21,7 @@ import org.apache.lucene.util.Accountables;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.RamUsageEstimator;
 
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 
 public abstract class BlackLabStoredFieldsWriter extends StoredFieldsWriter {
 
@@ -133,31 +133,31 @@ public abstract class BlackLabStoredFieldsWriter extends StoredFieldsWriter {
      */
     @Override
     public void writeField(FieldInfo fieldInfo, float v) throws IOException {
-        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        assert !BLFieldTypeLucene.isContentStoreField(fieldInfo);
         delegate.writeField(fieldInfo, v);
     }
 
     @Override
     public void writeField(FieldInfo fieldInfo, int v) throws IOException {
-        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        assert !BLFieldTypeLucene.isContentStoreField(fieldInfo);
         delegate.writeField(fieldInfo, v);
     }
 
     @Override
     public void writeField(FieldInfo fieldInfo, long v) throws IOException {
-        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        assert !BLFieldTypeLucene.isContentStoreField(fieldInfo);
         delegate.writeField(fieldInfo, v);
     }
 
     @Override
     public void writeField(FieldInfo fieldInfo, double v) throws IOException {
-        assert !BlackLabIndexIntegrated.isContentStoreField(fieldInfo);
+        assert !BLFieldTypeLucene.isContentStoreField(fieldInfo);
         delegate.writeField(fieldInfo, v);
     }
 
     @Override
     public void writeField(FieldInfo fieldInfo, String v) throws IOException {
-        if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
+        if (BLFieldTypeLucene.isContentStoreField(fieldInfo)) {
             // This is a content store field.
             writeContentStoreField(fieldInfo, v);
         } else {
@@ -168,7 +168,7 @@ public abstract class BlackLabStoredFieldsWriter extends StoredFieldsWriter {
 
     @Override
     public void writeField(FieldInfo fieldInfo, BytesRef v) throws IOException {
-        if (BlackLabIndexIntegrated.isContentStoreField(fieldInfo)) {
+        if (BLFieldTypeLucene.isContentStoreField(fieldInfo)) {
             // This is a content store field.
             writeContentStoreField(fieldInfo, v.utf8ToString());
         } else {

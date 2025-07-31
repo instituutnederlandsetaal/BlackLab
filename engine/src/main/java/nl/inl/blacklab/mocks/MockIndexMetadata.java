@@ -127,7 +127,8 @@ public class MockIndexMetadata implements IndexMetadata {
 
     @Override
     public Map<String, CorpusSize.Count> countPerField() {
-        return Map.of(mainAnnotatedField().name(), CorpusSize.Count.get(documentCount(), tokenCount()));
+        long documents = documentCount();
+        return Map.of(mainAnnotatedField().name(), new CorpusSize.Count(documents, tokenCount()));
     }
 
     @Override

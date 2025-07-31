@@ -11,6 +11,7 @@ import java.util.TreeSet;
 
 import nl.inl.blacklab.Constants;
 
+/** Base class for non-Hits Results (docs, groups, termfrequency). */
 public abstract class ResultsList<T> extends ResultsAbstract {
 
     /** The results. */
@@ -60,13 +61,13 @@ public abstract class ResultsList<T> extends ResultsAbstract {
     }
 
     protected static <U> List<U> doWindow(ResultsList<U> results, long first, long number) {
-        if (first < 0 || first != 0 && !results.resultsStats().waitUntil().processedAtLeast(first + 1)) {
+        if (first < 0 || first != 0 && !results.resultsStats().processedAtLeast(first + 1)) {
             return Collections.emptyList();
         }
 
         // Auto-clamp number
         long actualSize = number;
-        if (!results.resultsStats().waitUntil().processedAtLeast(first + actualSize))
+        if (!results.resultsStats().processedAtLeast(first + actualSize))
             actualSize = results.size() - first;
 
         // Make sublist (copy results from List.subList() to avoid lingering references large lists)

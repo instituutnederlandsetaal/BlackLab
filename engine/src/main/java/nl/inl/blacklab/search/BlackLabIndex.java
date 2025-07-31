@@ -12,11 +12,13 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -33,11 +35,11 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -62,6 +64,8 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /** Get the strategy to use for indexing/searching relations. */
     RelationsStrategy getRelationsStrategy();
+
+    LeafReaderLookup getLeafReaderLookup();
 
     enum IndexType {
         EXTERNAL_FILES, // (NO LONGER SUPPORTED) classic index with external forward index, etc.
@@ -148,10 +152,11 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /**
      * Perform a task on each (non-deleted) Lucene Document.
-     * 
+     *
+     * @param parallel if true, process index segments in parallel
      * @param task task to perform
      */
-    void forEachDocument(DocTask task);
+    void forEachDocument(boolean parallel, DocTask task);
 
 
     // Search the index
@@ -165,7 +170,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param query the pattern to find
      * @return the hits found
      */
-    default Hits find(BLSpanQuery query) {
+    default HitResults find(BLSpanQuery query) {
         return find(query, null);
     }
 
@@ -177,7 +182,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
+    HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
 
     /**
      * Find hits for a pattern in a field.
@@ -186,7 +191,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    default Hits find(BLSpanQuery query, SearchSettings settings) {
+    default HitResults find(BLSpanQuery query, SearchSettings settings) {
         return find(QueryInfo.create(this, fieldFromQuery(query), true), query, settings);
     }
 
@@ -289,6 +294,10 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     ForwardIndex forwardIndex(AnnotatedField field);
 
+    default AnnotationForwardIndex forwardIndex(Annotation annotation) {
+        return forwardIndex(annotation.field()).get(annotation);
+    }
+
 
     
     // Information about the index
@@ -356,6 +365,8 @@ public interface BlackLabIndex extends AutoCloseable {
     
     // Get settings
     //---------------------------------------------------------------------------
+
+    LeafReaderContext getLeafReaderContext(int docId);
 
     /**
      * The default settings for all new Hits objects.

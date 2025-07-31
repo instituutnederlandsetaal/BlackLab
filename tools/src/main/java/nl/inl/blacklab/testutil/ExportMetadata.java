@@ -13,11 +13,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
+import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
@@ -86,14 +88,13 @@ public class ExportMetadata implements AutoCloseable {
         final IndexReader reader = index.reader();
 
         System.out.println("Calling forEachDocument()...");
-        index.forEachDocument(new DocTask() {
+        index.forEachDocument(true, new DocTask() {
 
-            int docsDone = 0;
-
-            final int totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+            AtomicInteger docsDone = new AtomicInteger(0);
 
             @Override
-            public void perform(BlackLabIndex index, int docId) {
+            public void document(LeafReaderContext segment, int segmentDocId) {
+                int docId = segment.docBase + segmentDocId;
                 Map<String, String> metadata = new HashMap<>();
                 Document luceneDoc = index.luceneDoc(docId);
                 for (IndexableField f: luceneDoc.getFields()) {
@@ -106,11 +107,12 @@ public class ExportMetadata implements AutoCloseable {
                             metadata.put(f.name(), f.numericValue().toString());
                     }
                 }
-                values.add(metadata);
-                docsDone++;
-                if (docsDone % 100 == 0) {
-                    int perc = docsDone * 100 / totalDocs;
-                    System.out.println(docsDone + " docs exported (" + perc + "%)...");
+                synchronized (values) {
+                    values.add(metadata);
+                }
+                int n = docsDone.incrementAndGet();
+                if (n % 100 == 0) {
+                    System.out.println(docsDone + " docs exported...");
                 }
             }
         });

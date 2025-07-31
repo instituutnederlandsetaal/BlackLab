@@ -3,14 +3,14 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlTransient;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Hit  {
@@ -33,7 +33,7 @@ public class Hit  {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("matchInfos")
-    public Map<String, MatchInfo> matchInfo; // @@ why not matchInfos here? for XML serialization..?
+    public Map<String, MatchInfo> matchInfo; // @@@ why not matchInfos here? for XML serialization..?
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords left;
@@ -44,7 +44,7 @@ public class Hit  {
     public ContextWords right;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public Map<String, Hit> otherFields; // @@ check XML serialization
+    public Map<String, Hit> otherFields; // @@@ check XML serialization
 
     // required for Jersey
     public Hit() {}

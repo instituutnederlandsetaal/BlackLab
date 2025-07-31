@@ -1,8 +1,10 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -17,9 +19,9 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
 
     /**
      * Index of the annotation we're trying to match. Only valid after
-     * lookupPropertyNumber() called.
+     * lookupAnnotationIndexes() called.
      */
-    private int propertyNumber = -1;
+    private int annotationIndex = -1;
 
     /** The pattern this state accepts. */
     protected final String pattern;
@@ -49,9 +51,9 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         // Token state. Check if it matches token from token source, and if so, continue.
-        int actualTokenSegmentTermId = fiDoc.getTokenSegmentTermId(propertyNumber, pos);
+        int actualTokenSegmentTermId = fiDoc.getTokenSegmentTermId(annotationIndex, pos);
         if (actualTokenSegmentTermId >= 0) {
-            String tokenString = fiDoc.getTermString(propertyNumber, actualTokenSegmentTermId);
+            String tokenString = fiDoc.getTermString(annotationIndex, actualTokenSegmentTermId);
             if (matchesPattern(sensitivity.desensitize(tokenString))) {
                 return nextState.findMatchesInternal(fiDoc, pos + direction, direction, matchEnds);
             }
@@ -68,10 +70,20 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     }
 
     @Override
-    NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    boolean hasDangling() {
+        return nextState == null;
+    }
+
+    @Override
+    Collection<NfaState> getConnectedStates() {
+        return List.of(nextState);
+    }
+
+    @Override
+    NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateMultiTermPattern copy = copyNoNextState();
         copiesMade.put(this, copy);
-        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade);
+        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade, onCopyState);
         if (nextState == null && dangling != null)
             dangling.add(copy);
         return copy;
@@ -125,20 +137,16 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     abstract String getPatternType();
 
     @Override
-    public void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
+    public void lookupAnnotationIndexesInternal(ForwardIndexAccessor fiAccessor) {
         String[] comp = AnnotatedFieldNameUtil.getNameComponents(luceneField);
         String annotationName = comp[1];
-        propertyNumber = fiAccessor.getAnnotationNumber(annotationName);
-        if (nextState != null)
-            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
+        annotationIndex = fiAccessor.getAnnotationIndex(annotationName);
     }
 
     @Override
-    protected void finishInternal(Set<NfaState> visited) {
+    protected void finishInternal() {
         if (nextState == null)
             nextState = match();
-        else
-            nextState.finish(visited);
     }
 
 }

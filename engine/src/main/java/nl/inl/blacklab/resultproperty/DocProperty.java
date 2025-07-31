@@ -5,10 +5,11 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -23,15 +24,50 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class DocProperty implements ResultProperty, Comparator<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
+    /** The segment, if these are segment-local hits */
+    protected final LeafReaderContext lrc;
+
+    /** If true, we have segment hits (lrc != null) and we should convert the
+     *  segment doc/term ids to global when determining the property values. */
+    boolean toGlobal;
+
     /** Reverse comparison result or not? */
     protected final boolean reverse;
 
-    protected DocProperty(DocProperty prop, boolean invert) {
+    protected DocProperty(DocProperty prop, LeafReaderContext lrc, boolean invert) {
+        this.lrc = lrc == null ? prop.lrc : lrc;
         reverse = invert ? !prop.reverse : prop.reverse;
     }
 
     protected DocProperty() {
+        this.lrc = null;
         this.reverse = sortDescendingByDefault();
+    }
+
+    /**
+     * If we have segment hits and intend to produce global property values,
+     * this method will adjust the doc id to be global.
+     *
+     * This is different from globalDocIdForHit below: that always returns a
+     * global doc id, while this method will return a segment-local doc id
+     * if toGlobal is false.
+     *
+     * @param docId document id
+     * @return (possibly) adjusted doc id
+     */
+    int adjustedDocId(int docId) {
+        return docId + (toGlobal ? lrc.docBase : 0);
+    }
+
+    /**
+     * Get a global doc id for a segment hit.
+     * (because DocProperty only works with global doc ids right now)
+     *
+     * @param docId document id
+     * @return (possibly) adjusted doc id
+     */
+    int globalDocIdForHit(int docId) {
+        return docId + (lrc != null ? lrc.docBase : 0);
     }
 
     /**
@@ -165,7 +201,11 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
      * @return document property with the comparison reversed
      */
     @Override
-    public abstract DocProperty reverse();
+    public DocProperty reverse() {
+        return copyWith(null, true);
+    }
+
+    public abstract DocProperty copyWith(LeafReaderContext lrc, boolean invert);
 
     @Override
     public String toString() {

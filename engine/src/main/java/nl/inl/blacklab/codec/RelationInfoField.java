@@ -12,7 +12,7 @@ import org.apache.lucene.store.IndexOutput;
  * Such as where in the term strings file the strings for this field begin.
  * See integrated.md
  */
-public class RelationInfoField {
+class RelationInfoField {
     /** Field name, e.g. contents%_relation@s */
     private final String fieldName;
 

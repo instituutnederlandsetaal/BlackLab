@@ -3,25 +3,55 @@ package nl.inl.blacklab.querytool;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.apache.commons.cli.help.HelpFormatter;
+
 import nl.inl.util.FileUtil;
 
 class Config {
-    /**
-     * Get a Config object with an error message.
-     *
-     * @param error the error message
-     * @return the Config object
-     */
-    public static Config error(String error) {
-        Config config = new Config();
-        config.error = error;
-        return config;
+
+    static Options options = getCommandLineOptions();
+
+    private static Options getCommandLineOptions() {
+        Options options = new Options();
+        options.addOption(Option.builder().longOpt("mode").hasArg().argName("mode")
+                .desc("Mode to run the tool in. Valid modes are 'correctness', 'performance' or 'all', " +
+                        "or their 1-character abbreviations. Without -f, 'all' is the default. With -f, 'correctness' " +
+                        "is the default. Correctness shows results; performance shows timings; all shows both.").get());
+        options.addOption(Option.builder().longOpt("encoding").hasArg().argName("charset")
+                .desc("Encoding to use. If omitted, uses system default.").get());
+        options.addOption(Option.builder("v").longOpt("verbose")
+                .desc("Start in verbose mode (show query & rewrite).").get());
+        options.addOption(Option.builder("f").longOpt("file").hasArg().argName("command-file")
+                .desc("Execute batch commands from file and exit. " +
+                        "Batch command files should contain one command per line, or multiple " +
+                        "commands on a single line separated by && (use this e.g. to time " +
+                        "querying and sorting together). Lines starting with # are comments. " +
+                        "Comments are printed on stdout as well. Lines starting with - will " +
+                        "not be reported. Start a line with -# for an unreported comment.").get());
+        return options;
+    }
+
+    static void showUsage() {
+        try {
+            HelpFormatter formatter = HelpFormatter.builder().setShowSince(false).get();
+            formatter.printHelp("QueryTool <corpus-dir>",
+                    "Interactive and batch querying tool for BlackLab corpora.",
+                    options, "", true);
+        } catch (IOException e) {
+            throw new IllegalStateException(e);
+        }
     }
 
     /**
@@ -31,70 +61,55 @@ class Config {
      * @param output output object to configure (and write messages to)
      * @return the Config object
      */
-    public static Config fromCommandline(String[] args, Output output) {
+    public static Config fromCommandLineCommonsCli(String[] args, Output output) {
         // Parse command line
-        Config config = new Config();
-        for (int i = 0; i < args.length; i++) {
-            String arg = args[i].trim();
-            if (arg.startsWith("--")) {
-                if (arg.equals("--mode")) {
-                    if (i + 1 == args.length) {
-                        return error("--mode option needs argument");
-                    }
-                    String mode = args[i + 1].toLowerCase();
-                    if (mode.matches("c(orrectness)?")) {
-                        // Correctness testing: we want results, no timing and larger pagesize
-                        output.setShowOutput(true);
-                        config.showStats = false;
-                        QueryToolImpl.defaultPageSize = 1000;
-                        QueryToolImpl.alwaysSortBy = "after:word:s,hitposition"; // for reproducibility
-                        output.setShowDocIds(false); // doc ids are randomly assigned
-                        output.setShowMatchInfo(false); // (temporary)
-                    } else if (mode.matches("p(erformance)?")) {
-                        // Performance testing: we want timing and no results
-                        output.setShowOutput(false);
-                        config.showStats = true;
-                    } else if (mode.matches("a(ll)?")) {
-                        // Regular: we want results and timing
-                        output.setShowOutput(true);
-                        config.showStats = true;
-                        output.setShowMatchInfo(true);
-                    } else {
-                        return error("Unknown mode: " + mode);
-                    }
-                    i++;
-                }
-            } else if (arg.startsWith("-")) {
-                switch (arg) {
-                case "-e":
-                    if (i + 1 == args.length) {
-                        return error("-e option needs argument");
-                    }
-                    config.encoding = args[i + 1];
-                    i++;
-                    break;
-                case "-f":
-                    if (i + 1 == args.length) {
-                        return error("-f option needs argument");
-                    }
-                    config.inputFile = new File(args[i + 1]);
-                    i++;
-                    output.error("Batch mode; reading commands from " + config.inputFile);
-                    break;
-                case "-v":
-                    output.setVerbose(true);
-                    output.setShowMatchInfo(true);
-                    break;
-                default:
-                    return error("Unknown option: " + arg);
-                }
-            } else {
-                if (config.indexDir != null) {
-                    return error("Can only specify 1 index directory");
-                }
-                config.indexDir = new File(arg);
-            }
+        CommandLine cmd = null;
+        try {
+            cmd = new DefaultParser().parse(options, args);
+        } catch (ParseException e) {
+            System.out.println(e.getMessage());
+            showUsage();
+            System.exit(1);
         }
+
+        Config config = new Config();
+        String mode = cmd.getOptionValue("mode", "all").toLowerCase();
+        if (mode.matches("c(orrectness)?")) {
+            // Correctness testing: we want results, no timing and larger pagesize
+            output.setShowOutput(true);
+            config.showStats = false;
+            QueryToolImpl.defaultPageSize = 1000;
+            QueryToolImpl.alwaysSortBy = "after:word:s,hitposition"; // for reproducibility
+            output.setShowDocIds(false); // doc ids are randomly assigned
+            output.setShowMatchInfo(false); // (temporary)
+        } else if (mode.matches("p(erformance)?")) {
+            // Performance testing: we want timing and no results
+            output.setShowOutput(false);
+            config.showStats = true;
+        } else if (mode.matches("a(ll)?")) {
+            // Regular: we want results and timing
+            output.setShowOutput(true);
+            config.showStats = true;
+            output.setShowMatchInfo(true);
+        } else {
+            return error("Unknown mode: " + mode);
+        }
+
+        config.encoding = Charset.forName(cmd.getOptionValue("encoding", Charset.defaultCharset().name()));
+        String filePath = cmd.getOptionValue("file");
+        if (filePath != null) {
+            config.inputFile = new File(filePath);
+            output.error("Batch mode; reading commands from " + config.inputFile);
+        }
+        if (cmd.hasOption("verbose")) {
+            output.setVerbose(true);
+            output.setShowMatchInfo(true);
+        }
+        config.indexDir = new File(cmd.getArgs().length > 0 ? cmd.getArgs()[0] : ".");
+        return finalizeConfig(output, config);
+    }
+
+    private static Config finalizeConfig(Output output, Config config) {
         if (config.indexDir == null)
             return error("No index directory specified");
         if (!config.indexDir.exists() || !config.indexDir.isDirectory())
@@ -107,17 +122,10 @@ class Config {
         output.setShowStats(config.showStats == null ? showStatsDefaultValue : config.showStats);
 
         // Use correct output encoding
-        try {
-            // Yes
-            output.setOutputWriter(new PrintWriter(new OutputStreamWriter(System.out, config.encoding), true));
-            output.setErrorWriter(new PrintWriter(new OutputStreamWriter(System.err, config.encoding), true));
-            output.line("Using output encoding " + config.encoding + "\n");
-        } catch (UnsupportedEncodingException e) {
-            // Nope; fall back to default
-            output.setOutputWriter(new PrintWriter(new OutputStreamWriter(System.out, Charset.defaultCharset()), true));
-            output.setErrorWriter(new PrintWriter(new OutputStreamWriter(System.err, Charset.defaultCharset()), true));
-            output.error("Unknown encoding " + config.encoding + "; using default");
-        }
+        // Yes
+        output.setOutputWriter(new PrintWriter(new OutputStreamWriter(System.out, config.encoding), true));
+        output.setErrorWriter(new PrintWriter(new OutputStreamWriter(System.err, config.encoding), true));
+        output.line("Using output encoding " + config.encoding + "\n");
 
         if (config.inputFile != null)
             output.setBatchMode(true);
@@ -125,10 +133,26 @@ class Config {
         return config;
     }
 
+    /**
+     * Get a Config object with an error message.
+     *
+     * @param error the error message
+     * @return the Config object
+     */
+    public static Config error(String error) {
+        Config config = new Config();
+        config.error = error;
+        return config;
+    }
+
     private String error = null;
+
     private File indexDir = null;
+
     private File inputFile = null;
-    private String encoding = Charset.defaultCharset().name();
+
+    private Charset encoding = Charset.defaultCharset();
+
     private Boolean showStats = null; // default not overridden (default depends on batch mode or not)
 
     public String getError() {

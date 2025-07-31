@@ -169,10 +169,6 @@ public abstract class BLFilterSpans<T extends Spans> extends BLFilterDocsSpans<T
         startPos = -1;
         assert docID() != -1 && docID() != NO_MORE_DOCS;
         assert startPosition() == -1;
-
-        // @@@ JN 2024-04-24 seems to be a problem for multiple reasons?
-        // one reason is that SpansInBucketsAbstract puts its clause at first hit because of how bucket gathering works,
-        // but it also seems to trigger on SpansRelations.
         assert in.startPosition() == -1;
 
         startPos = in.nextStartPosition();

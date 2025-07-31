@@ -10,15 +10,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -47,9 +46,9 @@ public class TestIndexFormats {
 
     private static BlackLabIndex index;
 
-    private static AnnotationForwardIndex wordFi;
+    private static String wordFi;
 
-    private static AnnotationForwardIndex posFi;
+    private static String posFi;
 
     private static Terms wordTerms;
 
@@ -58,25 +57,27 @@ public class TestIndexFormats {
         index = testIndex.index();
         AnnotatedField contents = index.mainAnnotatedField();
         Annotation word = contents.mainAnnotation();
-        wordFi = index.forwardIndex(contents).get(word);
-        posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
-        wordTerms = wordFi.terms();
+        wordFi = word.forwardIndexSensitivity().luceneField();
+        posFi = contents.annotation("pos").forwardIndexSensitivity().luceneField();
+        wordTerms = testIndex.getTermsSegment(word);
     }
 
     @Test
     public void testSimple() {
-        Assert.assertEquals("Number of terms", 28, wordTerms.numberOfTerms());
+        Assert.assertTrue("Number of terms", wordTerms.numberOfTerms() > 0 && wordTerms.numberOfTerms() < 28);
     }
 
     @Test
     public void testIndexOfAndGet() {
-        MutableIntSet s = new IntHashSet();
-        for (int i = 0; i < 28; i++) {
-            String term = wordTerms.get(i);
-            Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(term));
-            s.clear();
-            wordTerms.indexOf(s, term, MatchSensitivity.SENSITIVE);
-            Assert.assertEquals("indexOf(get(" + i + "))", i, s.intIterator().next());
+        for (int termId = 0; termId < wordTerms.numberOfTerms(); termId++) {
+            String term = wordTerms.get(termId);
+            int sortPos = wordTerms.idToSortPosition(termId, MatchSensitivity.SENSITIVE);
+            int sortPos2 = wordTerms.termToSortPosition(term, MatchSensitivity.SENSITIVE);
+            Assert.assertEquals("sensitive sort pos for: " + term, sortPos, sortPos2);
+
+            sortPos = wordTerms.idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
+            sortPos2 = wordTerms.termToSortPosition(term, MatchSensitivity.INSENSITIVE);
+            Assert.assertEquals("insensitive sort pos for: " + term, sortPos, sortPos2);
         }
     }
 
@@ -93,16 +94,17 @@ public class TestIndexFormats {
      * @param sensitive match sensitivity to use
      */
     private void testCompareTerms(MatchSensitivity sensitive) {
-        Terms terms = wordFi.terms();
-        Collator collator = wordFi.collators().get(sensitive);
+        Terms terms = wordTerms;
+        Collator collator = Collators.getDefault().get(sensitive);
         Random random = new Random(123_456);
         for (int i = 0; i < 100; i++) {
-            int a = random.nextInt(28);
-            int b = random.nextInt(28);
+            int a = random.nextInt(wordTerms.numberOfTerms());
+            int b = random.nextInt(wordTerms.numberOfTerms());
             String ta = terms.get(a);
             String tb = terms.get(b);
             int expected = collator.compare(ta, tb);
-            int actual = terms.compareSortPosition(a, b, sensitive);
+            int actual = Integer.compare(terms.idToSortPosition(a, sensitive),
+                    terms.idToSortPosition(b, sensitive));
             Assert.assertEquals(
                     ta + "(" + a + ") <=> " + tb + "(" + b + ") (" + sensitive + ")",
                     expected,
@@ -117,15 +119,20 @@ public class TestIndexFormats {
             int expectedLength = TestIndex.DOC_LENGTHS_TOKENS[i] + BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             int docId = testIndex.getDocIdForDocNumber(i);
 
-            Assert.assertEquals(expectedLength, wordFi.docLength(docId));
+            LeafReaderContext lrc = index.getLeafReaderContext(docId);
+            int docLength = (int) FieldForwardIndex.get(lrc, wordFi).docLength(docId - lrc.docBase);
+            Assert.assertEquals(expectedLength, docLength);
 
             // pos annotation doesn't occur in all docs; test that this doesn't mess up doc length
-            Assert.assertEquals(expectedLength, posFi.docLength(docId));
+            int docLengthPos = (int) FieldForwardIndex.get(lrc, posFi).docLength(docId - lrc.docBase);
+            Assert.assertEquals(expectedLength, docLengthPos);
         }
     }
 
-    int getToken(AnnotationForwardIndex afi, int docId, int pos) {
-        int[] context = afi.retrievePart(docId, pos, pos + 1);
+    int getToken(String luceneField, int docId, int pos) {
+        LeafReaderContext lrc = testIndex.index().getLeafReaderContext(docId);
+        int[] context = FieldForwardIndex.get(lrc, luceneField)
+                .retrieveParts(docId - lrc.docBase, new int[] { pos }, new int[] { pos + 1 }).get(0);
         if (context.length == 0)
             throw new IllegalArgumentException("Token offset out of range");
         return context[0];
@@ -146,13 +153,6 @@ public class TestIndexFormats {
     public void testRetrieveOutOfRange() {
         wordTerms.get(getToken(wordFi, 0, TestIndex.DOC_LENGTHS_TOKENS[0] +
                 BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN));
-    }
-
-    /** translating a -1 term from segment to global should also return -1 */
-    @Test
-    public void testNoTerm() {
-        LeafReaderContext lrc = index.reader().leaves().iterator().next();
-        Assert.assertEquals(-1, wordTerms.segmentIdsToGlobalIds(lrc.ord, new int[] {-1})[0]);
     }
 
     @Test

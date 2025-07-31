@@ -16,8 +16,7 @@ public class PropertyValueInt extends PropertyValue {
 
     @Override
     public int compareTo(Object o) {
-        long ovalue = ((PropertyValueInt) o).value;
-        return Long.compare(value, ovalue);
+        return Long.compare(value, ((PropertyValueInt) o).value);
     }
 
     @Override

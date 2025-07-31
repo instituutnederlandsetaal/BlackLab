@@ -2,8 +2,11 @@ package nl.inl.blacklab.search.matchfilter;
 
 import java.util.List;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -83,12 +86,23 @@ public class MatchFilterEquals extends MatchFilter {
     }
 
     @Override
+    public MatchFilter withField(AnnotatedField field) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.withField(field),
+                (x, y) -> new MatchFilterEquals(x, y, sensitivity));
+    }
+
+    @Override
+    public MatchFilter forSegment(LeafReaderContext context) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forSegment(context),
+                (x, y) -> new MatchFilterEquals(x, y, sensitivity));
+    }
+
+    @Override
     public MatchFilter rewrite() {
         MatchFilter x = a.rewrite();
         MatchFilter y = b.rewrite();
 
-        if (x instanceof MatchFilterTokenAnnotation && ((MatchFilterTokenAnnotation) x).hasAnnotation()
-                && y instanceof MatchFilterString) {
+        if (x instanceof MatchFilterTokenAnnotation && y instanceof MatchFilterString) {
             // Simple annotation to string comparison, e.g. a.word = "cow"
             // This can be done more efficiently without string comparisons
             String termString = ((MatchFilterString) y).getString();

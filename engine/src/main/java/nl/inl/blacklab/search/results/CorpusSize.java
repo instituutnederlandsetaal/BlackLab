@@ -4,22 +4,16 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Size of a (sub)corpus in documents and tokens.
+ *
+ * Includes counts per annotated field.
+ */
 public final class CorpusSize {
 
-    public static final CorpusSize EMPTY = new CorpusSize(Count.create(), null);
-
-    public static CorpusSize get(long documents, long tokens, Map<String, Count> tokensPerField) {
-        return new CorpusSize(Count.get(documents, tokens), tokensPerField);
-    }
+    public static final CorpusSize EMPTY = new CorpusSize(new Count(0, 0), null);
 
     public static class Count {
-        public static Count get(long documents, long tokens) {
-            return new Count(documents, tokens);
-        }
-
-        public static Count create() {
-            return new Count(0, 0);
-        }
 
         long documents;
         long tokens;
@@ -46,6 +40,7 @@ public final class CorpusSize {
         public long getDocuments() {
             return documents;
         }
+
         public long getTokens() {
             return tokens;
         }
@@ -55,8 +50,7 @@ public final class CorpusSize {
 
     private final Map<String, Count> perField;
 
-    private CorpusSize(Count total, Map<String, Count> perField) {
-        super();
+    public CorpusSize(Count total, Map<String, Count> perField) {
         this.total = total;
         this.perField = perField == null ? new LinkedHashMap<>() : perField;
     }
@@ -65,7 +59,7 @@ public final class CorpusSize {
         return total;
     }
 
-    public Map<String, Count> getTokensPerField() {
+    public Map<String, Count> getCountsPerField() {
         return Collections.unmodifiableMap(perField);
     }
 

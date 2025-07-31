@@ -83,7 +83,6 @@ public enum MatchSensitivity {
             case INSENSITIVE ->
                     StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase());
             case SENSITIVE -> input;
-            default -> throw new UnsupportedOperationException("Unknown sensitivity " + this);
         };
     }
 }

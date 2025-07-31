@@ -4,8 +4,8 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.HitGroupsTokenFrequencies;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitGroupsTokenFrequencies;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -57,7 +57,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
             return HitGroupsTokenFrequencies.get(source, property);
         } else {
             // Just find all the hits and group them.
-            return HitGroups.fromHits(executeChildSearch(activeSearch, source), property, maxResultsToStorePerGroup);
+            return executeChildSearch(activeSearch, source).group(property, maxResultsToStorePerGroup);
         }
     }
 

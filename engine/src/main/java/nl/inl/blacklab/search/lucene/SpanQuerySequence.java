@@ -15,14 +15,13 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
+import org.apache.lucene.queries.spans.SpanWeight;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
-import org.apache.lucene.queries.spans.SpanWeight;
 
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion.Direction;
@@ -366,8 +365,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
         BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
-        boolean canDoNfaMatching = isCanDoNfaMatching(index);
-        boolean anyRewritten = performQueryOptimizations(index, cl, canDoNfaMatching);
+        boolean anyRewritten = performQueryOptimizations(index, cl);
 
         // Optimize each clause, and flatten again if necessary
         // NOTE: this seems redundant because we've already flattened, and optimize() is only implemented by
@@ -385,7 +383,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         return new SpanQuerySequence(cl.toArray(new BLSpanQuery[0]));
     }
 
-    private boolean performQueryOptimizations(BlackLabIndex index, List<BLSpanQuery> cl, boolean canDoNfaMatching) {
+    private boolean performQueryOptimizations(BlackLabIndex index, List<BLSpanQuery> cl) {
         // Flatten nested sequences.
         // This doesn't change the query because the sequence operator is associative.
         boolean anyRewritten = flattenSequence(cl);
@@ -402,7 +400,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // By doing it before rewriting, we save the time to expand the regex to all its matching
         // terms, as well
         // as dealing with each of these (sometimes frequent) terms, which can be significant.
-        anyRewritten |= combineAdjacentClauses(cl, index.reader(), ClauseCombiner.all(canDoNfaMatching));
+        anyRewritten |= combineAdjacentClauses(cl, index.reader(), ClauseCombiner.all());
         return anyRewritten;
     }
 
@@ -412,8 +410,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 
         BlackLabIndex index = BlackLab.indexFromReader(null, reader, true);
-        boolean canDoNfaMatching = isCanDoNfaMatching(index);
-        boolean anyRewritten = performQueryOptimizations(index, cl, canDoNfaMatching);
+        boolean anyRewritten = performQueryOptimizations(index, cl);
 
         // Rewrite each clause, and flatten again if necessary
         anyRewritten |= rewriteClauses(cl, reader);
@@ -422,7 +419,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
         // Again, try to combine adjacent clauses into more efficient ones. Rewriting clauses may have
         // generated new opportunities for combining clauses.
-        anyRewritten |= combineAdjacentClauses(cl, reader,  ClauseCombiner.all(canDoNfaMatching));
+        anyRewritten |= combineAdjacentClauses(cl, reader,  ClauseCombiner.all());
 
         // If any part of the sequence matches the empty sequence, we must
         // rewrite it to several alternatives combined with OR. Do so now.
@@ -445,14 +442,6 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         if (orCl.size() == 1)
             return orCl.get(0);
         return new BLSpanOrQuery(orCl.toArray(new BLSpanQuery[0])).rewrite(reader);
-    }
-
-    private boolean isCanDoNfaMatching(BlackLabIndex index) {
-        boolean canDoNfaMatching = false;
-        if (index instanceof BlackLabIndexAbstract) {
-            canDoNfaMatching = ((BlackLabIndexAbstract) index).canDoNfaMatching();
-        }
-        return canDoNfaMatching;
     }
 
     /**

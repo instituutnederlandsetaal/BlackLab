@@ -12,11 +12,12 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.hitresults.Concordances;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
@@ -37,20 +38,21 @@ public class ResultDocResult {
         pid = WebserviceOperations.getDocumentPid(index, dr.identity().value(), document);
         docInfo = WebserviceOperations.docInfo(index, pid, document, metadataFieldsToList);
         // Snippets
-        Hits hits = dr.storedResults().window(0, 5);
+        HitResults hitResults = dr.storedResults().window(0, 5);
         numberOfHits = dr.storedResults().size();
 
         concordancesToShow = new ArrayList<>();
         kwicsToShow = new ArrayList<>();
-        if (hits.resultsStats().waitUntil().processedAtLeast(1)) {
+        if (hitResults.resultsStats().processedAtLeast(1)) {
             ContextSettings contextSettings = params.contextSettings();
             Concordances theConcordances = null;
             Kwics theKwics = null;
+            Hits hitsList = hitResults.getHits();
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
-                theConcordances = hits.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
+                theConcordances = hitsList.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else
-                theKwics = hits.kwics(index.defaultContextSize());
-            for (Hit hit: hits) {
+                theKwics = hitsList.kwics(index.defaultContextSize());
+            for (EphemeralHit hit: hitsList) {
                 // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                 if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                     // Add concordance from original XML

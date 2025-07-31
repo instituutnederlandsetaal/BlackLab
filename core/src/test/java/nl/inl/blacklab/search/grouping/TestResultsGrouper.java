@@ -10,11 +10,11 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 public class TestResultsGrouper {
     final int[] doc   = { 1, 2, 1, 3, 2, 1 };
@@ -29,18 +29,18 @@ public class TestResultsGrouper {
         Mockito.when(indexSearcher.getSimilarity()).thenReturn(new BM25Similarity());
 
         index.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.list(QueryInfo.create(index), doc, start, end);
+        HitResults hitResults = HitResults.list(QueryInfo.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
-        HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
+        HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT);
 
         Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);
         HitGroup group1 = grouper.get(one);
         Assert.assertEquals(one, group1.identity());
         Assert.assertEquals(3, group1.size());
-        Assert.assertEquals(1, group1.storedResults().get(0).doc());
-        Assert.assertEquals(1, group1.storedResults().get(1).doc());
-        Assert.assertEquals(1, group1.storedResults().get(2).doc());
+        Assert.assertEquals(1, group1.storedResults().getHits().get(0).doc());
+        Assert.assertEquals(1, group1.storedResults().getHits().get(1).doc());
+        Assert.assertEquals(1, group1.storedResults().getHits().get(2).doc());
         PropertyValueInt two = new PropertyValueInt(2);
         Assert.assertEquals(2, grouper.get(two).size());
         PropertyValueInt three = new PropertyValueInt(3);

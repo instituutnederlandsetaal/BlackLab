@@ -11,7 +11,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -33,17 +32,18 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryTimings;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.tools.QueryTool;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.Concordances;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.XmlUtil;
 
@@ -180,24 +180,25 @@ class Output {
     }
 
     static void usage() {
-        System.err.println(
-                "Usage: " + QueryTool.class.getName() + " [options] <indexDir>\n" +
-                        "\n" +
-                        "Options (mostly useful for batch testing):\n" +
-                        "-f <file>            Execute batch commands from file and exit\n" +
-                        "-v                   Start in verbose mode (show query & rewrite)\n" +
-                        "--mode all           Show results and timings (default without -f)\n" +
-                        "--mode correctness,  Show results but no timings (default for -f)\n" +
-                        "--mode c\n" +
-                        "--mode performance,  Show timings but no results\n" +
-                        "--mode p,\n" +
-                        "-e <encoding>        Specify what output encoding to use [system default]\n" +
-                        "\n" +
-                        WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
-                        "commands on a single line separated by && (use this e.g. to time " +
-                        "querying and sorting together). Lines starting with # are comments. " +
-                        "Comments are printed on stdout as well. Lines starting with - will " +
-                        "not be reported. Start a line with -# for an unreported comment.", 80));
+        Config.showUsage();
+//        System.err.println(
+//                "Usage: " + QueryTool.class.getName() + " [options] <indexDir>\n" +
+//                        "\n" +
+//                        "Options (mostly useful for batch testing):\n" +
+//                        "-f <file>            Execute batch commands from file and exit\n" +
+//                        "-v                   Start in verbose mode (show query & rewrite)\n" +
+//                        "--mode all           Show results and timings (default without -f)\n" +
+//                        "--mode correctness,  Show results but no timings (default for -f)\n" +
+//                        "--mode c\n" +
+//                        "--mode performance,  Show timings but no results\n" +
+//                        "--mode p,\n" +
+//                        "-e <encoding>        Specify what output encoding to use [system default]\n" +
+//                        "\n" +
+//                        WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
+//                        "commands on a single line separated by && (use this e.g. to time " +
+//                        "querying and sorting together). Lines starting with # are comments. " +
+//                        "Comments are printed on stdout as well. Lines starting with - will " +
+//                        "not be reported. Start a line with -# for an unreported comment.", 80));
     }
 
     void showIndexMetadata(BlackLabIndex index) {
@@ -259,7 +260,7 @@ class Output {
         long maxTermsPerLeafReader = LuceneUtil.getMaxTermsPerLeafReader(index.reader(), fieldName);
         String luceneFieldInfo = " (lucene: " + fieldName + "; max. LR terms = " + maxTermsPerLeafReader + ") ";
 
-        int numberOfUniqueTerms = annotation.hasForwardIndex() ? index.forwardIndex(annotation.field()).get(annotation).terms().numberOfTerms() : 0;
+        int numberOfUniqueTerms = annotation.hasForwardIndex() ? index.forwardIndex(annotation).terms().numberOfTerms() : 0;
         return annotation.name() + luceneFieldInfo + (annotation.hasForwardIndex() ? " (+FI, " + numberOfUniqueTerms + " unique terms)" : "") + ", " + sensitivityDesc;
     }
 
@@ -485,13 +486,13 @@ class Output {
                 .collect(Collectors.joining(", "));
     }
 
-    public void hits(Hits total, Hits window, QueryToolImpl queryTool) {
+    public void hits(HitResults total, HitResults window, QueryToolImpl queryTool) {
         BlackLabIndex index = window.queryInfo().index();
 
         if (!isShowConc()) {
             if (queryTool.isDetermineTotalNumberOfHits() || total.resultsStats().done()) {
                 // Wait until all collected and show total number of hits, no concordances
-                line(total.resultsStats().waitUntil().allProcessed() + " hits");
+                line(total.resultsStats().processedTotal() + " hits");
             } else {
                 // No total; just show how many so far
                 long i = total.resultsStats().processedSoFar();
@@ -502,14 +503,17 @@ class Output {
 
         // Compile hits display info and calculate necessary width of left context column
         int leftContextMaxSize = 10; // number of characters to reserve on screen for left context
-        Concordances concordances = window.concordances(queryTool.getContextSize(), queryTool.getConcType());
+        Concordances concordances = window.getHits().concordances(queryTool.getContextSize(), queryTool.getConcType());
         Kwics kwics = queryTool.getConcType() == ConcordanceType.FORWARD_INDEX ? concordances.getKwics() : null;
         List<HitToShow> toShow = new ArrayList<>();
-        for (Hit hit: window) {
+        Hits windowHits = window.getHits();
+        for (EphemeralHit hit: windowHits) {
             HitToShow hitToShow;
             if (kwics != null) {
                 Map<String, MatchInfo> matchInfo;
-                matchInfo = window.hasMatchInfo() ? Hits.getMatchInfoMap(window, hit, false) : Collections.emptyMap();
+                matchInfo = windowHits.hasMatchInfo() ?
+                        windowHits.matchInfoDefs().getMap(hit.matchInfos(), false) :
+                        Collections.emptyMap();
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
                 Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
@@ -519,11 +523,12 @@ class Output {
                         Kwic kwic = e.getValue();
                         Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
                                 hit.matchInfos());
-                        hitToShow.addForeign(annotatedField, showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
+                        hitToShow.addForeign(annotatedField,
+                                showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
                     }
                 }
             } else {
-                hitToShow = showHitFromContentStore(hit, concordances, window, queryTool.isStripXml());
+                hitToShow = showHitFromContentStore(hit, concordances, windowHits, queryTool.isStripXml());
             }
             toShow.add(hitToShow);
             if (leftContextMaxSize < hitToShow.left.length())
@@ -571,16 +576,16 @@ class Output {
         if (!queryTool.isDetermineTotalNumberOfHits()) {
             msg = hitsStats.countedSoFar() + " hits counted so far (total not determined)";
         } else {
-            long numberRetrieved = hitsStats.waitUntil().allProcessed();
+            long numberRetrieved = hitsStats.processedTotal();
             ResultsStats docsStats = total.docsStats();
-            String hitsInDocs = numberRetrieved + " hits in " + docsStats.waitUntil().allProcessed() + " documents";
-            if (window.resultsStats().maxStats().hitsProcessedExceededMaximum()) {
-                if (window.resultsStats().maxStats().hitsCountedExceededMaximum()) {
-                    msg = hitsInDocs + " retrieved, more than " + hitsStats.waitUntil().allCounted() + " ("
-                            + docsStats.waitUntil().allCounted() + " docs) total";
+            String hitsInDocs = numberRetrieved + " hits in " + docsStats.processedTotal() + " documents";
+            if (window.resultsStats().maxStats().isTooManyToProcess()) {
+                if (window.resultsStats().maxStats().isTooManyToCount()) {
+                    msg = hitsInDocs + " retrieved, more than " + hitsStats.countedTotal() + " ("
+                            + docsStats.countedTotal() + " docs) total";
                 } else {
-                    msg = hitsInDocs + " retrieved, " + hitsStats.waitUntil().allCounted() + " (" +
-                            docsStats.waitUntil().allCounted() + " docs) total";
+                    msg = hitsInDocs + " retrieved, " + hitsStats.countedTotal() + " (" +
+                            docsStats.countedTotal() + " docs) total";
                 }
             } else {
                 msg = hitsInDocs;
@@ -605,7 +610,7 @@ class Output {
         return new HitToShow(hit.doc(), before, match, after, matchInfo);
     }
 
-    private HitToShow showHitFromContentStore(Hit hit, Concordances concordances, Hits window,
+    private HitToShow showHitFromContentStore(EphemeralHit hit, Concordances concordances, Hits window,
             boolean stripXML) {
         HitToShow hitToShow;
         Concordance conc = concordances.get(hit);
@@ -618,7 +623,7 @@ class Output {
 
         Map<String, MatchInfo> matchInfo = null;
         if (window.hasMatchInfo())
-            matchInfo = Hits.getMatchInfoMap(window, hit, false);
+            matchInfo = window.matchInfoDefs().getMap(hit.matchInfos(), false);
         hitToShow = new HitToShow(hit.doc(), left, hitText, right, matchInfo);
         return hitToShow;
     }

@@ -2,55 +2,25 @@ package nl.inl.blacklab.forwardindex;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
-/** Keeps a list of unique terms and their sort positions. */
-@ThreadSafe
+/**
+ * Read terms for a single field.
+ * Should be thread-safe.
+ */
 public interface Terms {
-
-    /** The value to use meaning "no term" (e.g. if the document ends) */
-    int NO_TERM = -1;
 
     /** Charset we use for serializing terms. */
     Charset TERMS_CHARSET = StandardCharsets.UTF_8;
 
     /**
-     * Get the existing index number of a term, or add it to the term list and
-     * assign it a new index number.
+     * Get the term string for a term id.
      *
-     * In index mode, this is fast. In search mode, this is slower, because we have
-     * to do a binary search through the memory-mapped terms file. However, this is
-     * only done rarely.
-     *
-     * @param term the term to get the index number for
-     * @return the term's index number, or -1 if not found
-     */
-    int indexOf(String term);
-
-    /**
-     * Get the index number(s) of terms matching a string.
-     *
-     * This is used in search mode when translating queries into NFAs. Depending on
-     * case-sensitivity settings, a single term string may match multiple terms.
-     *
-     * @param results (out) index numbers for the matching term(s)
-     * @param term the term to get the index number for
-     * @param sensitivity compare sensitively? (case-sensitivity currently switches both case-
-     *         and diacritics-sensitivity)
-     */
-    void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity);
-
-    /**
-     * Get a term by id. Only works in search mode.
-     *
-     * @param id the term id
-     * @return the corresponding term
+     * @param id term id
+     * @return term string
      */
     String get(int id);
 
@@ -58,6 +28,25 @@ public interface Terms {
      * @return the number of terms in this object
      */
     int numberOfTerms();
+
+    /**
+     * Check if two terms are considered equal for the given sensitivity.
+     * @param termIds term id
+     * @param sensitivity how to compare the terms
+     * @return true if the terms are equal
+     */
+    default boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
+        if (termIds.length < 2)
+            return true;
+        // optimize?
+        int expected = idToSortPosition(termIds[0], sensitivity);
+        for (int termIdIndex = 1; termIdIndex < termIds.length; ++termIdIndex) {
+            int cur = idToSortPosition(termIds[termIdIndex], sensitivity);
+            if (cur != expected)
+                return false;
+        }
+        return true;
+    }
 
     /**
      * Get the sort position for a term based on its term id
@@ -69,76 +58,59 @@ public interface Terms {
     int idToSortPosition(int id, MatchSensitivity sensitivity);
 
     /**
+     * Find the sort position for a term.
+     *
+     * NOTE: this is relatively expensive, so try to avoid calling it
+     * in performance-critical code. Could be optimized by a bunch of precalculations,
+     * but not worth it for now.
+     *
+     * @param term the term to find
+     * @param sensitivity how to compare the term (case-sensitive, diacritics-sensitive, etc.)
+     * @return the sort position of the term, or -1 if not found
+     */
+    int termToSortPosition(String term, MatchSensitivity sensitivity);
+
+    /**
      * Convert an array of term ids to sort positions
      *
-     * @param termId the term ids
+     * @param termIds the term ids
      * @param sortOrder the sort positions
      * @param sensitivity whether we want the sensitive or insensitive sort positions
      */
-    default void toSortOrder(int[] termId, int[] sortOrder, MatchSensitivity sensitivity) {
-        for (int i = 0; i < termId.length; i++) {
-            sortOrder[i] = idToSortPosition(termId[i], sensitivity);
+    default void idsToSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
+        // optimize?
+        for (int i = 0; i < termIds.length; i++) {
+            sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
         }
     }
 
-    /**
-     * Compare two terms (from their term ids) based on their sort positions
-     *
-     * @param termId1 id of the first term
-     * @param termId2 id of the second term
-     * @param sensitivity whether we want to compare sensitively or insensitively
-     * @return the comparison result (negative if term1 < term2, zero if equal,
-     *         positive if term1 > term2)
-     */
-    default int compareSortPosition(int termId1, int termId2, MatchSensitivity sensitivity) {
-        return Integer.compare(idToSortPosition(termId1, sensitivity), idToSortPosition(termId2, sensitivity));
-    }
-
-    /**
-     * Check if two terms are considered equal for the given sensitivity.
-     *
-     * @param termId term id
-     * @param sensitivity how to compare the terms
-     * @return true if the terms are equal
-     */
-    boolean termsEqual(int[] termId, MatchSensitivity sensitivity);
-
-    /**
-     * We have snippets with segment-specific term ids; convert them to global term ids.
-     *
-     * Note that with external forward index, there is no such thing as segment-specific term ids,
-     * there's only global term ids. So in this case, this method should just return the input.
-     *
-     * @param ord segment these snippets came from
-     * @param segmentResults snippets with segment-specific term ids
-     * @return segments with global term ids
-     */
-    default List<int[]> segmentIdsToGlobalIds(int ord, List<int[]> segmentResults) {
-        List<int[]> results = new ArrayList<>();
-        for (int[] snippet: segmentResults) {
-            results.add(segmentIdsToGlobalIds(ord, snippet));
+    default String[] idsToTerms(int[] termIds) {
+        String[] values = new String[termIds.length];
+        for (int i = 0; i < termIds.length; i++) {
+            values[i] = get(termIds[i]);
         }
-        return results;
+        return values;
     }
 
-    /**
-     * We have a snippet with segment-specific term ids; convert it to global term ids.
-     *
-     * Note that with external forward index, there is no such thing as segment-specific term ids,
-     * there's only global term ids. So in this case, this method should just return the input.
-     *
-     * @param ord segment these snippets came from
-     * @param segmentResults snippets with segment-specific term ids
-     * @return segments with global term ids
-     */
-    int[] segmentIdsToGlobalIds(int ord, int[] segmentResults);
+    int indexOf(String word);
+
+    // SEEMS TO BE UNUSED...?
+    void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity);
 
     /**
-     * Convert a single seggment-specific term id to the corresponding global term id.
+     * Convert an array of segment term ids to global term ids.
      *
-     * @param ord segment these snippets came from
-     * @param segmentTermId segment-specific term id
-     * @return segments global term id
+     * @param segmentTermIds segment term ids
      */
-    int segmentIdToGlobalId(int ord, int segmentTermId);
+    default void convertToGlobalTermIds(int[] segmentTermIds) {
+        throw new UnsupportedOperationException();
+    }
+
+    default int toGlobalTermId(int tokenId) {
+        throw new UnsupportedOperationException();
+    }
+
+    default Terms getGlobalTerms() {
+        throw new UnsupportedOperationException();
+    }
 }

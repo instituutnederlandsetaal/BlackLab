@@ -9,7 +9,7 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.results.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -271,24 +271,10 @@ public abstract class QueryParamsAbstract implements QueryParams {
         WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?
                 WebserviceParameter.WORDS_AROUND_HIT :
                 WebserviceParameter.CONTEXT;
-        String str = get(par);
-        int before = 0, after = 0;
-        String inlineTagName = null;
-        if (str.matches("\\d+")) {
-            before = after = Integer.parseInt(str);
-        } else if (str.matches("\\d+:\\d+")) {
-            String[] parts = str.split(":");
-            before = Integer.parseInt(parts[0]);
-            after = Integer.parseInt(parts[1]);
-        } else if (str.matches("\\w+")) {
-            inlineTagName = str;
-        } else {
-            throw new IllegalArgumentException("Invalid context value: " + str);
-        }
-
+        String contextDef = get(par);
         int maxContextSize = getSearchManager().config().getParameters().getContextSize().getMaxInt();
-
-        return ContextSize.get(before, after, true, inlineTagName, ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize));
+        int maxSnippetLength = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
+        return ContextSize.fromContextDef(contextDef, maxSnippetLength);
     }
 
     @Override

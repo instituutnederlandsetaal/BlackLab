@@ -2,9 +2,9 @@ package nl.inl.blacklab.config;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
 
 public class BLConfigSearch {
     private BLConfigCollator collator = new BLConfigCollator();

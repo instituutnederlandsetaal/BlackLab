@@ -18,7 +18,7 @@ public class PropertyValueDoc extends PropertyValue {
 
     @Override
     public int compareTo(Object o) {
-        return docId - ((PropertyValueDoc) o).docId;
+        return Integer.compare(docId, ((PropertyValueDoc) o).docId);
     }
 
     @Override

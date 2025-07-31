@@ -10,10 +10,11 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.WebserviceParams;
@@ -46,12 +47,12 @@ public class ResultHitGroup {
                     docPropValues);
         }
 
-        numberOfDocsInGroup = group.storedResults().docsStats().waitUntil().allCounted();
+        numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
         properties = group.getGroupProperties(prop);
 
         if (params.getIncludeGroupContents()) {
-            Hits hitsInGroup = group.storedResults();
+            Hits hitsInGroup = group.storedResults().getHits();
             ContextSettings contextSettings = params.contextSettings();
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
                     contextSettings.size());
@@ -59,7 +60,7 @@ public class ResultHitGroup {
         }
 
         if (params.getIncludeGroupContents()) {
-            Hits hitsInGroup = getGroup().storedResults();
+            HitResults hitsInGroup = getGroup().storedResults();
             listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup, getConcordanceContext(),
                     getDocIdToPid());
         }

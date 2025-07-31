@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -27,7 +28,7 @@ public class NfaStateOrAcyclic extends NfaState {
 
     public NfaStateOrAcyclic(List<NfaState> clauses, boolean clausesAllSameLength) {
         for (NfaState clause : clauses) {
-            clause.finish(new HashSet<>());
+            clause.finish();
         }
         this.clauses = new ArrayList<>(clauses);
         this.nextState = null;
@@ -80,12 +81,24 @@ public class NfaStateOrAcyclic extends NfaState {
     }
 
     @Override
-    NfaStateOrAcyclic copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    boolean hasDangling() {
+        return nextState == null;
+    }
+
+    @Override
+    Collection<NfaState> getConnectedStates() {
+        List<NfaState> result = new ArrayList<>(clauses);
+        result.add(nextState);
+        return result;
+    }
+
+    @Override
+    NfaStateOrAcyclic copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateOrAcyclic copy = new NfaStateOrAcyclic();
         copiesMade.put(this, copy);
         List<NfaState> clauseCopies = new ArrayList<>();
         for (NfaState clause : clauses) {
-            clause = clause.copy(null, copiesMade);
+            clause = clause.copy(null, copiesMade, onCopyState);
             clauseCopies.add(clause);
         }
         copy.clauses.addAll(clauseCopies);
@@ -173,28 +186,13 @@ public class NfaStateOrAcyclic extends NfaState {
     }
 
     @Override
-    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        for (NfaState clause : clauses) {
-            if (clause != null)
-                clause.lookupAnnotationNumbers(fiAccessor, statesVisited);
-        }
-        if (nextState != null)
-            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
-    }
-
-    @Override
-    protected void finishInternal(Set<NfaState> visited) {
+    protected void finishInternal() {
         for (int i = 0; i < clauses.size(); i++) {
-            NfaState clause = clauses.get(i);
-            if (clause == null)
+            if (clauses.get(i) == null)
                 clauses.set(i, match());
-            else
-                clause.finish(visited);
         }
         if (nextState == null)
             nextState = match();
-        else
-            nextState.finish(visited);
     }
 
 }

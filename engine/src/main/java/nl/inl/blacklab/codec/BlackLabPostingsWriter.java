@@ -31,7 +31,7 @@ import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
@@ -241,7 +241,7 @@ public abstract class BlackLabPostingsWriter extends FieldsConsumer {
         boolean storeRelationInfo = isStoreRelationInfo(luceneField);
 
         // Should this field get a forward index?
-        boolean storeForwardIndex = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(
+        boolean storeForwardIndex = BLFieldTypeLucene.doesFieldHaveForwardIndex(
                 fieldInfos.fieldInfo(luceneField));
         return storeForwardIndex || storeRelationInfo;
     }

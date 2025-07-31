@@ -44,10 +44,10 @@ public abstract class TermsReaderAbstract implements Terms {
     private int numberOfTerms;
 
     /** Collator to use for sensitive string comparisons */
-    protected final Collator collatorSensitive;
+    protected Collator collatorSensitive;
 
     /** Collator to use for insensitive string comparisons */
-    protected final Collator collatorInsensitive;
+    protected Collator collatorInsensitive;
 
     /** Insensitive sort position to start index of group in groupTermIds */
     private int[] insensitivePosition2GroupOffset;
@@ -93,8 +93,11 @@ public abstract class TermsReaderAbstract implements Terms {
      */
     private int[] cacheFirstTermIdInGroup2GroupOffset;
 
-    protected TermsReaderAbstract(Collators collators) {
+    protected TermsReaderAbstract() {
         DEBUGGING = TermsReaderAbstract.class.desiredAssertionStatus(); // assertions enabled?
+    }
+
+    public void setCollators(Collators collators) {
         collatorSensitive = collators.get(MatchSensitivity.SENSITIVE);
         collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
     }

@@ -1,7 +1,10 @@
 package nl.inl.blacklab.mocks;
 
+import java.text.Collator;
+
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -14,30 +17,37 @@ public class MockTerms implements Terms {
     }
 
     @Override
-    public int indexOf(String term) {
+    public int termToSortPosition(String term, MatchSensitivity sensitivity) {
         for (int i = 0; i < numberOfTerms(); i++) {
             if (get(i).equals(term))
-                return i;
+                return idToSortPosition(i, sensitivity);
         }
         throw new IllegalArgumentException("Unknown term '" + term + "'");
     }
 
     @Override
-    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-        for (int i = 0; i < numberOfTerms(); i++) {
-            if (sensitivity.isCaseSensitive()) {
-                if (get(i).equals(term))
-                    results.add(i);
-            } else {
-                if (get(i).equalsIgnoreCase(term))
-                    results.add(i);
-            }
-        }
+    public String get(int id) {
+        return words[id];
     }
 
     @Override
-    public String get(int id) {
-        return words[id];
+    public int indexOf(String word) {
+        for (int i = 0; i < numberOfTerms(); i++) {
+            if (words[i].equals(word)) {
+                return i;
+            }
+        }
+        return -1; // Not found
+    }
+
+    @Override
+    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+        Collator collator = Collators.getDefault().get(sensitivity);
+        for (int i = 0; i < numberOfTerms(); i++) {
+            if (collator.compare(term, words[i]) == 0) {
+                results.add(i);
+            }
+        }
     }
 
     @Override
@@ -49,20 +59,5 @@ public class MockTerms implements Terms {
     public int idToSortPosition(int id, MatchSensitivity sensitivity) {
         //
         return id;
-    }
-
-    @Override
-    public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int segmentIdToGlobalId(int ord, int segmentTermId) {
-        throw new UnsupportedOperationException();
     }
 }

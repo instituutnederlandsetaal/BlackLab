@@ -13,25 +13,26 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class Collators {
 
-    /** Different versions of insensitive collator */
-    public enum CollatorVersion {
-        V1, // ignored dash and space
-        V2 // doesn't ignore dash and space
-    }
-
-    private final CollatorVersion version;
-
     private final Collator sensitive;
 
     private final Collator insensitive;
 
-    public Collators(Collator base, CollatorVersion version) {
+    public Collators(Collator base) {
         super();
-        this.version = version;
+
+        // A note on the different collator strengths:
+        // PRIMARY    cares only about largest (primary) differences
+        //            Collators with this strength are therefore LESS STRICT
+        //            (e.g. 'APE' and 'ape' are considered identical)
+        //
+        // TERTIARY   also cares about smaller (tertiary) differences
+        //            Collators with this strength are therefore STRICTER
+        //            (e.g. 'APE' and 'ape' are considered different, and 'APE' comes before 'ape')
+
         sensitive = (Collator) base.clone();
         sensitive.setStrength(Collator.TERTIARY); // NOTE: TERTIARY considers differently-normalized characters to be,
         // identical which can cause problems if the input data is not consistently normalized the same way.
-        insensitive = desensitize(base, version);
+        insensitive = desensitize(base);
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -50,49 +51,32 @@ public class Collators {
      * for case-/accent-insensitive comparison.
      *
      * @param coll collator to make insensitive
-     * @param collatorVersion version of the insensitive collator we want
      * @return insensitive collator
      */
-    private static Collator desensitize(Collator coll, CollatorVersion collatorVersion) {
-        switch (collatorVersion) {
-        case V1:
-            // Basic case- and accent-insensitive collator
-            // Note that this ignores dashes and spaces, which is different
-            // from how the rest of blacklab deals with term equality.
-            // Hence V2.
-            Collator cl = (Collator) coll.clone();
-            cl.setStrength(Collator.PRIMARY);
-            return cl;
-        case V2:
-        default:
-            if (coll instanceof RuleBasedCollator) {
-                // Case- and accent-insensitive collator that doesn't
-                // ignore dash and space like the regular insensitive collator (V1) does.
-                String rules = ((RuleBasedCollator)coll).getRules().replace(",'-'", ""); // don't ignore dash
-                rules = rules.replace("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
-                try {
-                    coll = new RuleBasedCollator(rules);
-                } catch (Exception e) {
-                    throw BlackLabException.wrapRuntime(e);
-                }
-            } else {
-                coll = (Collator)coll.clone();
+    private static Collator desensitize(Collator coll) {
+        if (coll instanceof RuleBasedCollator) {
+            // Case- and accent-insensitive collator that doesn't
+            // ignore dash and space like the regular insensitive collator (V1) does.
+            String rules = ((RuleBasedCollator)coll).getRules().replace(",'-'", ""); // don't ignore dash
+            rules = rules.replace("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
+            try {
+                coll = new RuleBasedCollator(rules);
+            } catch (Exception e) {
+                throw BlackLabException.wrapRuntime(e);
             }
-            coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
-            return coll;
+        } else {
+            coll = (Collator)coll.clone();
         }
+        coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
+        return coll;
     }
 
     private static Collators defaultInstance;
 
     public static synchronized Collators getDefault() {
         if (defaultInstance == null) {
-            defaultInstance = new Collators(BlackLab.defaultCollator(), CollatorVersion.V2);
+            defaultInstance = new Collators(BlackLab.defaultCollator());
         }
         return defaultInstance;
-    }
-
-    public CollatorVersion version() {
-        return version;
     }
 }

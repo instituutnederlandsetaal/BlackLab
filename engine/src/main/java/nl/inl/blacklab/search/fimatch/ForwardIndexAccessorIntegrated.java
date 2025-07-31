@@ -2,21 +2,17 @@ package nl.inl.blacklab.search.fimatch;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.apache.lucene.index.LeafReaderContext;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
+import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.DocFieldLengthGetter;
 
 /**
@@ -46,23 +42,24 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         protected final LeafReaderContext readerContext;
 
-        private final ForwardIndexSegmentReader forwardIndexSegmentReader;
+        private final BlackLabPostingsReader postingsReader;
 
         private final DocFieldLengthGetter lengthGetter;
 
-        private final List<TermsSegmentReader> termsSegmentReaders = new ArrayList<>();
+        private final List<AnnotForwardIndex> fiPerSegment = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            forwardIndexSegmentReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
+            postingsReader = BlackLabPostingsReader.forSegment(readerContext);
             for (String luceneField: luceneFields) {
-                termsSegmentReaders.add(forwardIndexSegmentReader.terms(luceneField));
+                AnnotForwardIndex e = postingsReader.forwardIndex(luceneField);
+                fiPerSegment.add(e);
             }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
 
         @Override
-        public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+        public ForwardIndexDocument getForwardIndexDoc(int segmentDocId) {
             return new ForwardIndexDocumentImpl(this, segmentDocId);
         }
 
@@ -75,19 +72,8 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
-            int[] part = getChunkSegmentTermIds(annotIndex, segmentDocId, start, end);
-            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext.ord, part);
-        }
-
-        @Override
         public int[] getChunkSegmentTermIds(int annotIndex, int segmentDocId, int start, int end) {
-            Annotation annotation = annotations.get(annotIndex);
-            AnnotationSensitivity sensitivity = annotation.hasSensitivity(
-                    MatchSensitivity.SENSITIVE) ?
-                    annotation.sensitivity(MatchSensitivity.SENSITIVE) :
-                    annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-            return forwardIndexSegmentReader.retrievePart(sensitivity.luceneField(), segmentDocId, start, end);
+            return fiPerSegment.get(annotIndex).retrievePart(segmentDocId, start, end);
         }
 
         @Override
@@ -96,13 +82,11 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public String getTermString(int annotIndex, int segmentTermId) {
-            return termsSegmentReaders.get(annotIndex).get(segmentTermId);
-        }
-
-        @Override
-        public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
-            return termsSegmentReaders.get(annotIndex).termsEqual(segmentTermIds, sensitivity);
+        public Terms terms(int annotIndex) {
+            if (annotIndex < 0 || annotIndex >= fiPerSegment.size())
+                throw new IllegalArgumentException("Invalid annotation index: " + annotIndex +
+                        " (there are " + fiPerSegment.size() + " annotations)");
+            return fiPerSegment.get(annotIndex).terms();
         }
     }
 

@@ -18,7 +18,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestHitPropertySerialize {
 
@@ -26,7 +26,9 @@ public class TestHitPropertySerialize {
 
     private static final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private static final Hits hits = Hits.empty(mockIndex.createDefaultQueryInfo());
+    private static final MockTerms terms = new MockTerms("aap", "noot", "mies");
+
+    private static final Hits hits = Hits.empty(mockIndex.mainAnnotatedField(), null);
 
     private static Annotation lemmaAnnotation;
 
@@ -51,8 +53,8 @@ public class TestHitPropertySerialize {
         PropertyValue val, val1;
         String exp;
 
-        val1 = new PropertyValueContextWords(hits.queryInfo().index(), lemmaAnnotation, MatchSensitivity.SENSITIVE, new int[] { 2 }, null,
-                false);
+        val1 = new PropertyValueContextWords(lemmaAnnotation, MatchSensitivity.SENSITIVE,
+                terms, new int[] { terms.indexOf("mies") }, null, false);
         exp = "cws:contents%lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
@@ -67,7 +69,7 @@ public class TestHitPropertySerialize {
         Assert.assertEquals(exp, val.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("$bl:ab,la") });
+        val = new PropertyValueMultiple(val1, new PropertyValueString("$bl:ab,la"));
         exp = "dec:1980,str:$DLbl$CLab$CMla";
         Assert.assertEquals(exp, val.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());

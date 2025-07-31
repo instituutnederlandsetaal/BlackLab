@@ -3,6 +3,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -11,8 +13,8 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on a matched group.
@@ -49,8 +51,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     /** If set: use the first tag/relation with this name in the match info list */
     private boolean relNameIsFullRelType = false;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
@@ -75,7 +77,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         }
 
         this.spanMode = spanMode;
-        emptyValue = new PropertyValueContextWords(index, annotation, sensitivity, new int[0], new int[0], false);
+        emptyValue = new PropertyValueContextWords(annotation, sensitivity, (LeafReaderContext)null, new int[0], new int[0], false);
     }
 
     /**
@@ -88,15 +90,15 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @param groupName the match info group name
      * @return the field name
      */
-    private static AnnotatedField determineMatchInfoField(HitsSimple hits, String groupName, RelationInfo.SpanMode spanMode) {
+    private static AnnotatedField determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
         return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
                 .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyCaptureGroup(this, newHits, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyCaptureGroup(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

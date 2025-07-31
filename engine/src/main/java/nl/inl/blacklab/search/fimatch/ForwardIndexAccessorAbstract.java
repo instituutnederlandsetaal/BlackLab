@@ -6,21 +6,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
  * including an easy and fast way to read any annotation at any position from a
  * document.
  *
- * The two synchronized getAnnotationNumber methods are called when creating the
+ * The two synchronized getAnnotationIndex methods are called when creating the
  * SpanWeight for a SpanQueryFiSeq. This could in theory be done at the same time
  * from different threads. After that the state of this class shouldn't change anymore,
  * so no more synchronisation is needed.
@@ -34,14 +30,11 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     /** Field name, e.g. "contents" */
     protected final AnnotatedField annotatedField;
 
-    /** The annotation names for each annotation */
+    /** The annotations (indexed by annotation index) */
     protected final List<Annotation> annotations = new ArrayList<>();
 
-    /** The annotation index for each annotation name */
-    private final Map<Annotation, Integer> annotationNumbers = new HashMap<>();
-
-    /** The terms object for each annotation */
-    protected final List<Terms> terms = new ArrayList<>();
+    /** The annotation index for each annotation name (inverse of the list above) */
+    private final Map<Annotation, Integer> annotationIndexes = new HashMap<>();
 
     /** The Lucene field that contains the forward index for each annotation */
     protected final List<String> luceneFields = new ArrayList<>();
@@ -57,40 +50,25 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
      * @param annotation annotation to get the index for
      * @return index for this annotation
      */
-    protected synchronized int getAnnotationNumber(Annotation annotation) {
-        Integer n = annotationNumbers.get(annotation);
+    protected synchronized int getAnnotationIndex(Annotation annotation) {
+        Integer n = annotationIndexes.get(annotation);
         if (n == null) {
             // Assign number and store reference to forward index
-            n = annotationNumbers.size();
-            annotationNumbers.put(annotation, n);
+            n = annotationIndexes.size();
+            annotationIndexes.put(annotation, n);
             annotations.add(annotation);
-            terms.add(index.annotationForwardIndex(annotation).terms());
             luceneFields.add(annotation.forwardIndexSensitivity().luceneField());
         }
         return n;
     }
 
     @Override
-    public synchronized int getAnnotationNumber(String annotationName) {
-        return getAnnotationNumber(annotatedField.annotation(annotationName));
-    }
-
-    @Override
-    public void getGlobalTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
-            MatchSensitivity sensitivity) {
-        terms.get(annotationNumber).indexOf(results, annotationValue, sensitivity);
-    }
-
-    protected String getTermString(int annotIndex, int globalTermId) {
-        return terms.get(annotIndex).get(globalTermId);
-    }
-
-    protected boolean termsEqual(int annotIndex, int[] globalTermIds, MatchSensitivity sensitivity) {
-        return terms.get(annotIndex).termsEqual(globalTermIds, sensitivity);
+    public synchronized int getAnnotationIndex(String annotationName) {
+        return getAnnotationIndex(annotatedField.annotation(annotationName));
     }
 
     protected int numberOfAnnotations() {
-        return terms.size();
+        return annotations.size();
     }
 
     @Override

@@ -26,6 +26,7 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.util.CurrentThreadExecutorService;
 import nl.inl.util.VersionFile;
 
 /**
@@ -88,7 +89,7 @@ public final class BlackLabEngine implements AutoCloseable {
     private final ExecutorService searchExecutorService;
 
     /** How many threads may a single search use? */
-    private final int maxThreadsPerSearch;
+    private int maxThreadsPerSearch;
 
     /** Give each searchthread a unique number */
     private final AtomicInteger threadCounter = new AtomicInteger(1);
@@ -224,13 +225,13 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format) throws ErrorOpeningIndex {
-        return new BlackLabIndexIntegrated(indexName, this, reader, null, true, false, format);
+        return new BlackLabIndexImpl(indexName, this, reader, null, true, false, format);
     }
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
         checkSupportedIndexType(indexDir, false);
-        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, false, false, null);
+        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, false, false, null);
     }
 
     private static void checkSupportedIndexType(File indexDir, boolean createNewIndex) {
@@ -257,7 +258,7 @@ public final class BlackLabEngine implements AutoCloseable {
      * @return a BlackLabIndex instance with this reader
      */
     public BlackLabIndex wrapIndexReader(String indexName, IndexReader reader, boolean indexMode) throws ErrorOpeningIndex {
-        return new BlackLabIndexIntegrated(indexName, this, reader, null, indexMode, false,
+        return new BlackLabIndexImpl(indexName, this, reader, null, indexMode, false,
                 null);
     }
 
@@ -273,7 +274,7 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         checkSupportedIndexType(indexDir, forceCreateNew);
-        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
+        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
     }
 
     /**
@@ -299,7 +300,7 @@ public final class BlackLabEngine implements AutoCloseable {
         }
 
         checkSupportedIndexType(indexDir, createNewIndex);
-        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
+        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
     }
 
     /**
@@ -346,6 +347,22 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     /**
+     * Get the appropriate search executor service for the given number of threads.
+     *
+     * If the number of threads is 2 or more, we use the regular
+     * search executor service. If the number of threads is 1, we just use a
+     * CurrentThreadExecutorService.
+     *
+     * @param numThreads number of threads to use for searching
+     * @return the executor service
+     */
+    public ExecutorService searchExecutorService(int numThreads) {
+        return numThreads >= 2
+                ? searchExecutorService()
+                : new CurrentThreadExecutorService();
+    }
+
+    /**
      * Given an IndexReader, return corresponding BlackLabIndex.
      *
      * @param reader IndexReader to get the BlackLabIndex for
@@ -374,6 +391,12 @@ public final class BlackLabEngine implements AutoCloseable {
 
     public int maxThreadsPerSearch() {
         return maxThreadsPerSearch;
+    }
+
+    public void setMaxThreadsPerSearch(int max) {
+        if (max < 1)
+            throw new IllegalArgumentException("maxThreadsPerSearch must be at least 1 (got " + max + ")");
+        this.maxThreadsPerSearch = max;
     }
 
     public BLIndexObjectFactory indexObjectFactory() {

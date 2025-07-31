@@ -23,8 +23,8 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 
 /**
  * Writes frequency results to a TSV file.
@@ -124,7 +124,7 @@ class FreqListOutputTsv implements FreqListOutput {
                 Terms[] terms = annotationNames.stream()
                         .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
                         .toArray(Terms[]::new);
-                MatchSensitivity[] sensitivity = new MatchSensitivity[terms.length];
+                MatchSensitivity[] sensitivity = new MatchSensitivity[annotationNames.size()];
                 Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
                 for (Map.Entry<GroupIdHash,
                         OccurrenceCounts> e : occurrences.entrySet()) {

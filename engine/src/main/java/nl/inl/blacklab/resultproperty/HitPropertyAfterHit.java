@@ -4,13 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for sorting on a number of tokens after a hit.
@@ -34,8 +36,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         return hitProp;
     }
 
-    HitPropertyAfterHit(HitPropertyAfterHit prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert, null);
+    HitPropertyAfterHit(HitPropertyAfterHit prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
@@ -58,15 +60,6 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     @Override
-    void deserializeParam(String param) {
-        try {
-            numberOfTokens = Integer.parseInt(param);
-        } catch (NumberFormatException e) {
-            numberOfTokens = index.defaultContextSize().after();
-        }
-    }
-
-    @Override
     public List<String> serializeParts() {
         List<String> result = new ArrayList<>(super.serializeParts());
         result.add(3, Integer.toString(numberOfTokens)); // before field name
@@ -74,8 +67,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyAfterHit(this, newHits, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyAfterHit(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

@@ -13,9 +13,8 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsInternal;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -125,25 +124,25 @@ public class ResultDocContents {
             throw new NotAuthorized(
                     "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://blacklab.ivdnt.org/how-to-configure-indexing.html.");
 
-        Hits hits = null;
+        HitResults hitResults = null;
         if (params.hasPattern()) {
-            hits = params.hitsSample().execute();
+            hitResults = params.hitsSample().execute();
         }
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
-        HitsSimple hitsInDoc;
+        Hits hitsInDoc;
         AnnotatedField fieldToShow = params.getAnnotatedField();
-        if (hits == null) {
-            hitsInDoc = HitsInternal.empty(fieldToShow, null);
+        if (hitResults == null) {
+            hitsInDoc = Hits.empty(fieldToShow, null);
         } else {
-            hitsInDoc = hits.getHitsInDoc(docId);
+            hitsInDoc = hitResults.getHits().filteredByDocId(docId);
         }
         if (isFullDocument) {
             // Whole document. Use the highlightDocument method, which takes document versions in
             // a parallel corpus into account (cuts out part of the original input file).
             AnnotatedField field;
-            field = hits == null ? fieldToShow : hits.field();
+            field = hitResults == null ? fieldToShow : hitResults.field();
             content = DocUtil.highlightDocument(index, field, docId, hitsInDoc);
         } else {
             // Part of the document by token positions.

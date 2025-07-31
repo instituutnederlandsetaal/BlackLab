@@ -51,20 +51,21 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationLikeInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.search.results.docs.DocGroup;
+import nl.inl.blacklab.search.results.docs.DocGroups;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
@@ -478,18 +479,18 @@ public class ResponseStreamer {
     private void summaryResultsStats(ResultSummaryNumHits result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ResultsStats hitsStats = result.getHitsStats();
-        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.waitUntil().allCounted() : hitsStats.countedSoFar());
-        long hitsProcessed = result.isWaitForTotal() ? hitsStats.waitUntil().allProcessed() : hitsStats.processedSoFar();
+        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.countedTotal() : hitsStats.countedSoFar());
+        long hitsProcessed = result.isWaitForTotal() ? hitsStats.processedTotal() : hitsStats.processedSoFar();
         ResultsStats docsStats = result.getDocsStats();
         if (docsStats == null)
             docsStats = ResultsStatsSaved.INVALID;
-        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.waitUntil().allCounted() : docsStats.countedSoFar());
-        long docsProcessed = result.isWaitForTotal() ? docsStats.waitUntil().allProcessed() : docsStats.processedSoFar();
+        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.countedTotal() : docsStats.countedSoFar());
+        long docsProcessed = result.isWaitForTotal() ? docsStats.processedTotal() : docsStats.processedSoFar();
 
         CorpusSize subcorpusSize = result.getSubcorpusSize();
         if (isNewApi) {
             // New API v5+: group related values
-            boolean limitReached = hitsStats.maxStats().hitsProcessedExceededMaximum();
+            boolean limitReached = hitsStats.maxStats().isTooManyToProcess();
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
             {
                 ds.entry(KEY_STATS_STATUS, !hitsStats.done() && !limitReached ? STATS_STATUS_WORKING :
@@ -517,8 +518,8 @@ public class ResponseStreamer {
             ds.entry("stillCounting", !hitsStats.done());
             ds.entry(KEY_NUMBER_OF_HITS, hitsCounted)
                     .entry("numberOfHitsRetrieved", hitsProcessed)
-                    .entry("stoppedCountingHits", hitsStats.maxStats().hitsCountedExceededMaximum())
-                    .entry("stoppedRetrievingHits", hitsStats.maxStats().hitsProcessedExceededMaximum());
+                    .entry("stoppedCountingHits", hitsStats.maxStats().isTooManyToCount())
+                    .entry("stoppedRetrievingHits", hitsStats.maxStats().isTooManyToProcess());
             ds.entry(KEY_NUMBER_OF_DOCS, docsCounted)
                     .entry("numberOfDocsRetrieved", docsProcessed);
             subcorpusSizeStats(subcorpusSize);
@@ -538,7 +539,7 @@ public class ResponseStreamer {
         if (isNewApi) {
             // New API v5+: group related values
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
-            boolean limitReached = docResults.resultsStats().maxStats().hitsProcessedExceededMaximum();
+            boolean limitReached = docResults.resultsStats().maxStats().isTooManyToProcess();
             {
                 ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
                 ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
@@ -590,10 +591,10 @@ public class ResponseStreamer {
                 ds.entry(KEY_DOCUMENT_VERSION_COUNT, subcorpusSize.getDocumentVersions());
             if (totalCount.hasTokenCount())
                 ds.entry("tokens", totalCount.getTokens()); // always use "tokens" here
-            if (subcorpusSize.getTokensPerField().size() > 1) {
+            if (subcorpusSize.getCountsPerField().size() > 1) {
                 // Multiple annotated fields. Show size per field.
                 ds.startEntry(KEY_ANNOTATED_FIELDS).startList();
-                for (Map.Entry<String, CorpusSize.Count> entry : subcorpusSize.getTokensPerField().entrySet()) {
+                for (Map.Entry<String, CorpusSize.Count> entry : subcorpusSize.getCountsPerField().entrySet()) {
                     ds.startItem(KEY_ANNOTATED_FIELD).startMap();
                     ds.entry(KEY_FIELD_NAME, entry.getKey());
                     ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, entry.getValue().getDocuments());
@@ -608,22 +609,24 @@ public class ResponseStreamer {
 
     public void listOfHits(ResultListOfHits result) throws BlsException {
         nl.inl.blacklab.server.lib.WebserviceParams params = result.getParams();
-        Hits hits = result.getHits();
+        HitResults hitResults = result.getHits();
 
         ds.startEntry("hits").startList();
-        for (Hit hit : hits) {
+        Hits hitsList = hitResults.getHits().getStatic();
+        for (EphemeralHit hit: hitsList) {
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> matchInfos = null;
-                if (hits.hasMatchInfo()) {
-                    matchInfos = Hits.getMatchInfoMap(hits, hit, params.getOmitEmptyCaptures());
+                if (hitsList.hasMatchInfo()) {
+                    matchInfos = hitsList.matchInfoDefs().getMap(hit.matchInfos(), params.getOmitEmptyCaptures());
                     if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, hits.field(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                hit(docPid, hit, hitResults.field(), matchInfos, params.contextSettings().size(),
+                        result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
             ds.endItem();
@@ -631,7 +634,7 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, Hit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
@@ -646,27 +649,28 @@ public class ResponseStreamer {
      */
     public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
-        Hits hits = result.getHits();
-        if (!hits.resultsStats().waitUntil().processedAtLeast(1))
+        Hits hitsList = result.getHits();
+        if (hitsList.isEmpty())
             throw new IllegalStateException("Hit for snippet not found");
-        Hit hit = hits.get(0);
-        hits = hits.size() > 1 ? hits.window(hit) : hits; // make sure we only have 1 hit
-        Map<String, MatchInfo> matchInfo = Hits.getMatchInfoMap(hits, hit, false);
+        hitsList = hitsList.size() > 1 ? hitsList.sublist(0, 1) : hitsList;
+        EphemeralHit hit = new EphemeralHit();
+        hitsList.getEphemeral(0, hit);
+        Map<String, MatchInfo> matchInfo = hitsList.matchInfoDefs().getMap(hit.matchInfos(), false);
         ContextSize context = result.getContext();
         ConcordanceContext concordanceContext = result.isOrigContent() ?
-                ConcordanceContext.concordances(hits.concordances(context, ConcordanceType.CONTENT_STORE)) :
-                ConcordanceContext.kwics(hits.kwics(context));
+                ConcordanceContext.concordances(hitsList.concordances(context, ConcordanceType.CONTENT_STORE)) :
+                ConcordanceContext.kwics(hitsList.kwics(context));
         List<Annotation> annotationsToList = result.getAnnotsToWrite();
         //boolean includeContext = result.isHit(); // i.e. did we specify hitstart/hitend (include context) or
                                                  // wordstart/wordend (no context, just the snippet)
         boolean isSnippet = true;
 
-        AnnotatedField searchField = result.getHits().field();
+        AnnotatedField searchField = hitsList.field();
         outputHitOrSnippet(docPid, hit, searchField, matchInfo, context, concordanceContext, annotationsToList,
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
+    private void outputHitOrSnippet(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;

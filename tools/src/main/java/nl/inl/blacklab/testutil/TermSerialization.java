@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
 
-import org.eclipse.collections.api.iterator.IntIterator;
+import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -18,8 +18,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TermSerialization {
-
-    private static Terms terms;
 
     private TermSerialization() {
     }
@@ -33,34 +31,18 @@ public class TermSerialization {
         AnnotatedField field = index.annotatedField("contents");
         Annotation annotation = annotationName.isEmpty() ? field.mainAnnotation() : field.annotation(annotationName);
         AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
-        terms = fi.terms();
 
-        MutableIntSet s = new IntHashSet();
-        int sensitiveIndex = terms.indexOf(word);
-        s.add(sensitiveIndex);
-        report("terms.indexOf", s);
-        s.clear();
-        terms.indexOf(s, word, MatchSensitivity.SENSITIVE);
-        report("terms.indexOf sensitive", s);
-        s.clear();
-        terms.indexOf(s, word, MatchSensitivity.INSENSITIVE);
-        report("terms.indexOf insensitive", s);
-
-        Collators collators = fi.collators();
-        Collator collator = collators.get(MatchSensitivity.SENSITIVE);
-
-        System.out.println("Checking these insensitive terms...");
-        System.out.flush();
-        IntIterator it = s.intIterator();
-        while (it.hasNext()) {
-            int termId = it.next();
-            String term = terms.get(termId);
-            int termId2 = terms.indexOf(term);
-            String term2 = terms.get(termId2);
-            if (collator.compare(term, term2) != 0) {
-                System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
-            }
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        for (LeafReaderContext lrc: index.reader().leaves()) {
+            doTerm(word, lrc, luceneField);
         }
+    }
+
+    private static void doTerm(String word, LeafReaderContext lrc, String luceneField) {
+        Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
+
+        Collators collators = Collators.getDefault();
+        Collator collator = collators.get(MatchSensitivity.SENSITIVE);
 
         System.out.println("Checking all terms...");
         System.out.flush();
@@ -75,16 +57,17 @@ public class TermSerialization {
                 System.out.println("term is empty! id = " + termId);
                 System.out.flush();
             } else {
-                int termId2 = terms.indexOf(term);
-                if (termId2 == -1) {
-                    System.out.println("termId2 == -1: '" + term + "'");
+                int sortPos1 = terms.idToSortPosition(termId, MatchSensitivity.SENSITIVE);
+                int sortPos2 = terms.termToSortPosition(term, MatchSensitivity.SENSITIVE);
+                if (sortPos1 != sortPos2) {
+                    System.out.println("SENSITIVE sortPos1 != sortPos2: " + sortPos1 + " != " + sortPos2 + " for term '" + term + "'");
                     System.out.flush();
-                } else {
-                    String term2 = terms.get(termId2);
-                    if (collator.compare(term, term2) != 0) {
-                        System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
-                        System.out.flush();
-                    }
+                }
+                sortPos1 = terms.idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
+                sortPos2 = terms.termToSortPosition(term, MatchSensitivity.INSENSITIVE);
+                if (sortPos1 != sortPos2) {
+                    System.out.println("INSENSITIVE sortPos1 != sortPos2: " + sortPos1 + " != " + sortPos2 + " for term '" + term + "'");
+                    System.out.flush();
                 }
             }
             n++;
@@ -95,7 +78,7 @@ public class TermSerialization {
         }
     }
 
-    private static void report(String prompt, MutableIntSet s1) {
+    private static void report(String prompt, MutableIntSet s1, Terms terms) {
         StringBuilder values = new StringBuilder();
         for (int i : s1.toArray()) {
             values.append(i).append(" (").append(terms.get(i)).append("); ");

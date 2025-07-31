@@ -1,8 +1,10 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The match state
@@ -31,7 +33,17 @@ public class NfaStateMatch extends NfaState {
     }
 
     @Override
-    NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    boolean hasDangling() {
+        return false;
+    }
+
+    @Override
+    Collection<NfaState> getConnectedStates() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         return this; // immutable, singleton
     }
 
@@ -63,16 +75,6 @@ public class NfaStateMatch extends NfaState {
     @Override
     protected String dumpInternal(Map<NfaState, Integer> stateNrs) {
         return "MATCH()";
-    }
-
-    @Override
-    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        // NOP
-    }
-
-    @Override
-    protected void finishInternal(Set<NfaState> visited) {
-        // NOP
     }
 
 }

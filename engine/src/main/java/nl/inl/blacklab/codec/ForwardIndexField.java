@@ -13,11 +13,24 @@ import org.apache.lucene.store.IndexOutput;
  * See integrated.md
  */
 public class ForwardIndexField {
+
+    /** Name of field in Lucene index */
     private final String fieldName;
+
+    /** Total number of terms in this field */
     protected int numberOfTerms;
+
+    /** Where term order can be found */
     protected long termOrderOffset;
+
+    /** Where term strings can be found */
     protected long termIndexOffset;
+
+    /** Where token indexes can be found */
     protected long tokensIndexOffset;
+
+    /** Our Terms object */
+    private BLTerms terms;
 
     protected ForwardIndexField(String fieldName) {
         this.fieldName = fieldName;
@@ -32,6 +45,13 @@ public class ForwardIndexField {
         this.termOrderOffset = file.readLong();
         this.termIndexOffset = file.readLong();
         this.tokensIndexOffset = file.readLong();
+    }
+
+    public synchronized BLTerms getTerms(BlackLabPostingsReader postingsReader) {
+        if (terms == null) {
+            terms = BLTerms.get(postingsReader, fieldName, this);
+        }
+        return terms;
     }
 
     public String getFieldName() {

@@ -1,7 +1,9 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -16,10 +18,10 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private final DocPropertyStoredField docPropStoredField;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, HitsSimple hits, boolean invert) {
-        super(prop, hits, invert);
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
         this.fieldName = prop.fieldName;
-        this.docPropStoredField = prop.docPropStoredField;
+        this.docPropStoredField = prop.docPropStoredField.copyWith(lrc, false);
         assert docPropStoredField != null;
     }
 
@@ -34,8 +36,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, boolean invert) {
-        return new HitPropertyDocumentStoredField(this, newHits, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyDocumentStoredField(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override
@@ -45,11 +47,13 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public PropertyValueString get(long result) {
-        return DocPropertyStoredField.fromArray(docPropStoredField.get(hits.doc(result)));
+        // NOTE: DocPropertyStoredField will convert the doc id to global
+        return PropertyValueString.fromArray(docPropStoredField.get(hits.doc(result)));
     }
 
     @Override
     public int compare(long a, long b) {
+        // NOTE: DocPropertyStoredField will convert the doc id to global
         final int docA = hits.doc(a);
         final int docB = hits.doc(b);
         return reverse ?

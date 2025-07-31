@@ -11,15 +11,16 @@ import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
+import org.apache.lucene.index.CodecReader;
 import org.apache.lucene.index.IndexFileNames;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
-import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 public abstract class BlackLabPostingsReader extends FieldsProducer {
@@ -30,7 +31,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     protected final FieldsProducer delegateFieldsProducer;
 
     /** The forward index */
-    protected final SegmentForwardIndex forwardIndex;
+    protected final ForwardIndex forwardIndex;
 
     /** The relation info (if it was stored) */
     protected final SegmentRelationInfo relationInfo;
@@ -61,7 +62,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
         this.state = state;
         this.reverseEndian = reverseEndian;
 
-        forwardIndex = new SegmentForwardIndex(this);
+        forwardIndex = new ForwardIndex(this);
         relationInfo = SegmentRelationInfo.openIfPresent(this);
 
         // NOTE: opening the forward index calls openInputFile, which reads
@@ -70,6 +71,18 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
             throw new IllegalStateException("Opening the segment FI should have set the delegate format name");
         PostingsFormat delegatePostingsFormat = PostingsFormat.forName(delegateFormatName);
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
+    }
+
+    /**
+     * Get the BlackLabPostingsReader for the given leafreader.
+     *
+     * @param lrc leafreader to get the BlackLab40PostingsReader for
+     * @return BlackLab40PostingsReader for this leafreader
+     */
+    public static BlackLabPostingsReader forSegment(LeafReaderContext lrc) {
+        // Downcast to CodecReader (caution, internal API)
+        CodecReader codecReader = (CodecReader)lrc.reader();
+        return (BlackLabPostingsReader)codecReader.getPostingsReader();
     }
 
     public BlackLabStoredFieldsReader getStoredFieldsReader() {
@@ -91,8 +104,8 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
      *
      * @return forward index segment reader
      */
-    public ForwardIndexSegmentReader forwardIndex() {
-        return forwardIndex.reader();
+    public AnnotForwardIndex forwardIndex(String luceneField) {
+        return forwardIndex.forField(luceneField);
     }
 
     /**
@@ -122,18 +135,22 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     }
 
     @Override
-    public BLTerms terms(String field) throws IOException {
-        BLTerms terms;
+    public BLTerms terms(String field) {
         synchronized (termsPerField) {
-            terms = termsPerField.get(field);
+            BLTerms terms = termsPerField.get(field);
             if (terms == null) {
-                Terms delegateTerms = delegateFieldsProducer.terms(field);
-
-                terms = delegateTerms == null ? null : new BLTerms(delegateTerms, this);
+                ForwardIndexField forwardIndexField = forwardIndex.getForwardIndexField(field);
+                if (forwardIndexField == null) {
+                    // No forward index. We'll create the object there.
+                    terms = BLTerms.get(this, field, null);
+                } else {
+                    // Let ForwardIndexField manage the BLTerms object.
+                    terms = forwardIndexField.getTerms(this);
+                }
                 termsPerField.put(field, terms);
             }
+            return terms;
         }
-        return terms;
     }
 
     @Override

@@ -10,12 +10,14 @@ import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -37,11 +39,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
@@ -154,12 +156,17 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public void forEachDocument(DocTask task) {
+    public LeafReaderContext getLeafReaderContext(int docId) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
+    public void forEachDocument(boolean parallel, DocTask task) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 
@@ -292,6 +299,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public RelationsStrategy getRelationsStrategy() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public LeafReaderLookup getLeafReaderLookup() {
         throw new UnsupportedOperationException();
     }
 }

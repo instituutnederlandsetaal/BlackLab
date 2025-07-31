@@ -266,7 +266,7 @@ if (b == null)
           jj_la1[5] = jj_gen;
           ;
         }
-{if ("" != null) return new MatchFilterTokenAnnotation(l, s == null ? null : s.toString());}
+{if ("" != null) return new MatchFilterTokenAnnotation(l, s == null ? wrapper.getDefaultAnnotation() : s.toString());}
       } else {
         jj_consume_token(-1);
         throw new ParseException();

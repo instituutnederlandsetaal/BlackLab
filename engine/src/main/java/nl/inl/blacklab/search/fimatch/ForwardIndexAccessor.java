@@ -3,9 +3,6 @@ package nl.inl.blacklab.search.fimatch;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -24,18 +21,7 @@ public interface ForwardIndexAccessor {
      * @param annotationName annotation to get the index for
      * @return index for this annotation
      */
-    int getAnnotationNumber(String annotationName);
-
-    /**
-     * Get the term number for a given term string.
-     *
-     * @param results (out) term number for this term in this annotation
-     * @param annotationNumber which annotation to get term number for
-     * @param annotationValue which term string to get term number for
-     * @param sensitivity match sensitively or not? (currently both or neither)
-     */
-    void getGlobalTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
-            MatchSensitivity sensitivity);
+    int getAnnotationIndex(String annotationName);
 
     /**
      * Get an accessor for forward index documents from this leafreader.

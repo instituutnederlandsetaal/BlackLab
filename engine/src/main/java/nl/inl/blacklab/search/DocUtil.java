@@ -16,8 +16,8 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 
@@ -157,12 +157,12 @@ public class DocUtil {
         }
     }
 
-    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, HitsSimple hits) {
+    private static List<HitCharSpan> getCharacterOffsets(BlackLabIndex index, int docId, Hits hits) {
         if (hits.size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
-        Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();
+        Iterator<EphemeralHit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {
             EphemeralHit hit = hitsIt.next(); // hits.get(i);
             starts[i] = hit.start();
@@ -252,7 +252,7 @@ public class DocUtil {
      * @param endAtWord ending token position in contents (first token not to be returned)
      * @return (part of) the content with highlighting.
      */
-    public static String highlightContent(BlackLabIndex index, int docId, HitsSimple hits, int startAtWord, int endAtWord) {
+    public static String highlightContent(BlackLabIndex index, int docId, Hits hits, int startAtWord, int endAtWord) {
         // Convert word positions to char positions
         int lastWord = endAtWord < 0 ? endAtWord : endAtWord - 1; // if whole content, don't subtract one
         AnnotatedField field = hits.field();
@@ -267,7 +267,7 @@ public class DocUtil {
         return highlightContent(index, docId, hits, fixUnbalancedTags, highlightFromOffset, content);
     }
 
-    private static String highlightContent(BlackLabIndex index, int docId, HitsSimple hits, boolean fixUnbalancedTags,
+    private static String highlightContent(BlackLabIndex index, int docId, Hits hits, boolean fixUnbalancedTags,
             int highlightFromOffset, String content) {
         // Do we have anything to highlight, or do we have an XML fragment that needs balancing?
         if (!hits.isEmpty() || fixUnbalancedTags) {
@@ -294,7 +294,7 @@ public class DocUtil {
      * @param hits hits to highlight
      * @return document with highlighting
      */
-    public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, HitsSimple hits) {
+    public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
         String contents = index.contentAccessor(contentsField).getDocumentContents(docId);
         return highlightContent(index, docId, hits, false, 0, contents);
     }

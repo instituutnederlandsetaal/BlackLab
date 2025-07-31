@@ -10,7 +10,6 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestCollatorsZalgo {
@@ -39,7 +38,7 @@ public class TestCollatorsZalgo {
 
     private static Collator getBlackLabCollator() {
         Collator coll = getDefaultEnglishCollator();
-        Collators colls = new Collators(coll, CollatorVersion.V2);
+        Collators colls = new Collators(coll);
         return colls.get(MatchSensitivity.INSENSITIVE);
     }
 

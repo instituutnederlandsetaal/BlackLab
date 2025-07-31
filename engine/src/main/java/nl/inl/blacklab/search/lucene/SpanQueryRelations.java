@@ -16,7 +16,9 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
+import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -29,7 +31,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * <p>
  * This version works with the integrated index and the _relation annotation.
  */
-public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
+public class SpanQueryRelations extends BLSpanQuery {
 
     public enum Direction {
         // Only return root relations (relations without a source)
@@ -242,10 +244,10 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
             if (spans == null)
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationField.luceneField());
-            boolean primaryIndicator = BlackLabIndexIntegrated.doesFieldHaveForwardIndex(fieldInfo);
+            boolean primaryIndicator = BLFieldTypeLucene.doesFieldHaveForwardIndex(fieldInfo);
+            RelationInfoSegmentReader relInfo = BlackLabPostingsReader.forSegment(context).relationInfo();
             spans = new SpansRelations(baseField, relationType, spans, primaryIndicator,
-                    direction, spanMode, captureAs, BlackLabIndexIntegrated.relationInfo(context),
-                    relationsStrategy);
+                    direction, spanMode, captureAs, relInfo, relationsStrategy);
             if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.equals(field))
                 spans = new SpansOverrideField(spans, targetField);
             return spans;
@@ -317,7 +319,6 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         return relationField.luceneField();
     }
 
-    @Override
     public String getElementNameRegex() {
         return RelationUtil.typeFromFullType(relationType);
     }
