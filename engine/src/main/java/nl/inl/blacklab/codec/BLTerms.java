@@ -173,39 +173,38 @@ public class BLTerms extends Terms {
     }
 
     TermsSegmentReader reader() {
-        return new TermsSegmentReader() {
+        return new TermsSegmentReader() { // not thread-safe
 
-            private final RandomAccessInput sensitive;
-            private final RandomAccessInput insensitive;
-            private final RandomAccessInput stringOffsets;
+            private final RandomAccessInput termIdToSensitivePos;
+            private final RandomAccessInput termIdToInsensitivePos;
+            private final RandomAccessInput termStringOffsets;
             IndexInput termStrings;
 
             {
-                // first navigate to where the sensitive iteration order is stored in the _termOrderFile.
                 try {
-                    /**
-                     * File with the iteration order.
-                     * All term IDS are local to this segment.
-                     * for reference, the file contains the following mappings:
-                     *     int[n] termID2InsensitivePos    ( offset [0*n*int] )
-                     *     int[n] insensitivePos2TermID    ( offset [1*n*int] )
-                     *     int[n] termID2SensitivePos      ( offset [2*n*int] )
-                     *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
-                     */
-                    IndexInput termID2SensitivePos = getCloneOfTermOrderFile();
-                    IndexInput termID2InsensitivePos = getCloneOfTermOrderFile();
+                    ForwardIndexField field = getField(luceneField);
+
+                    // Find the sort orders. All term IDS are local to this segment.
+                    // for reference, the term order file contains the following mappings:
+                    // int[n] termID2InsensitivePos    ( offset [0+n*int] )
+                    // int[n] insensitivePos2TermID    ( offset [1+n*int] )
+                    // int[n] termID2SensitivePos      ( offset [2+n*int] )
+                    // int[n] sensitivePos2TermID      ( offset [3+n*int] )
+                    // (NOTE: we ignore (in)sensitivePos2TermID at the moment, but we could use it to
+                    //  iterate over the terms in sort order if we needed to - although inverting the
+                    //  termID2[In]sensitivePos would work for that too)
 
                     // Get random access to the sort order arrays for this field
-                    ForwardIndexField field = getField(luceneField);
                     long arrayLength = ((long) field.getNumberOfTerms()) * Integer.BYTES;
-                    insensitive = termID2InsensitivePos.randomAccessSlice(field.getTermOrderOffset(),
-                            arrayLength);
-                    sensitive = termID2SensitivePos.randomAccessSlice(
-                            arrayLength * 2 + field.getTermOrderOffset(), arrayLength);
+                    IndexInput termOrderFile = getCloneOfTermOrderFile();
+                    long offset = field.getTermOrderOffset();
+                    termIdToInsensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
+                    offset += arrayLength * 2;
+                    termIdToSensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
 
                     // All fields share the same strings file.  Move to the start of our section in the file.
-                    IndexInput stringOffsetsFile = getCloneOfTermIndexFile();
-                    stringOffsets = stringOffsetsFile.randomAccessSlice(field.getTermIndexOffset(), field.getNumberOfTerms() * Long.BYTES);
+                    long termStringOffsetsLength = (long) field.getNumberOfTerms() * Long.BYTES;
+                    termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(field.getTermIndexOffset(), termStringOffsetsLength);
                     termStrings = getCloneOfTermsFile();
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
@@ -215,9 +214,11 @@ public class BLTerms extends Terms {
 
             @Override
             public String get(int id) {
+                if (id < 0)
+                    return "";
                 try {
-                    long offset = stringOffsets.readLong(id * Long.BYTES);
-                    termStrings.seek(offset);
+                    long termStringOffset = termStringOffsets.readLong((long) id * Long.BYTES);
+                    termStrings.seek(termStringOffset);
                     return termStrings.readString();
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
@@ -240,9 +241,12 @@ public class BLTerms extends Terms {
 
             @Override
             public int idToSortPosition(int id, MatchSensitivity sensitivity) {
+                if (id < 0)
+                    return -1; // no term
                 try {
-                    RandomAccessInput array = sensitivity == MatchSensitivity.SENSITIVE ? sensitive : insensitive;
-                    return array.readInt(id * Integer.BYTES);
+                    RandomAccessInput array = sensitivity == MatchSensitivity.SENSITIVE ? termIdToSensitivePos :
+                            termIdToInsensitivePos;
+                    return array.readInt((long) id * Integer.BYTES);
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
