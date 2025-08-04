@@ -46,5 +46,10 @@ public interface ForwardIndexSegmentReader {
      */
     long docLength(String luceneField, int docId);
 
+    /**
+     * Get a 
+     * @param luceneField
+     * @return
+     */
     TermsSegmentReader terms(String luceneField);
 }

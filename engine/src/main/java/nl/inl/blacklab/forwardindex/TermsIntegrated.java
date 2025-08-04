@@ -159,7 +159,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return Pair.of(terms, termStrings);
     }
 
-    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc)
+    private synchronized void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc)
             throws InterruptedException {
         BLTerms segmentTerms;
         try {
@@ -171,7 +171,6 @@ public class TermsIntegrated extends TermsReaderAbstract {
             // can happen if segment only contains index metadata doc
             return;
         }
-        segmentTerms.setTermsIntegrated(this, lrc.ord);
         BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
         try (TermsIntegratedSegment s = new TermsIntegratedSegment(postingsReader, luceneField, lrc.ord)) {
             Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();

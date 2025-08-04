@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -123,17 +124,16 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
 
     @Override
     public BLTerms terms(String field) throws IOException {
-        BLTerms terms;
         synchronized (termsPerField) {
-            terms = termsPerField.get(field);
+            BLTerms terms = termsPerField.get(field);
             if (terms == null) {
                 Terms delegateTerms = delegateFieldsProducer.terms(field);
 
-                terms = delegateTerms == null ? null : new BLTerms(delegateTerms, this);
+                terms = delegateTerms == null ? null : new BLTerms(field, delegateTerms, this);
                 termsPerField.put(field, terms);
             }
+            return terms;
         }
-        return terms;
     }
 
     @Override

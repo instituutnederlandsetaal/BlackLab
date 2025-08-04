@@ -31,7 +31,7 @@ public class BlackLabCodecUtil {
      * @return BlackLab40PostingsReader for this leafreader
      */
     public static BlackLabPostingsReader getPostingsReader(LeafReaderContext lrc) {
-        return BLTerms.getTerms(lrc).getFieldsProducer();
+        return BLTerms.getAnyTermsObject(lrc).getFieldsProducer();
     }
 
 }

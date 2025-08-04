@@ -52,7 +52,7 @@ public class MockTerms implements Terms {
     }
 
     @Override
-    public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
+    public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
         throw new UnsupportedOperationException();
     }
 

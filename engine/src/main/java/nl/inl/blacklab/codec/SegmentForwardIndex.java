@@ -249,7 +249,7 @@ public class SegmentForwardIndex implements AutoCloseable {
         @Override
         public TermsSegmentReader terms(String luceneField) {
             try {
-                return fieldsProducer.terms(luceneField);
+                return fieldsProducer.terms(luceneField).reader();
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }

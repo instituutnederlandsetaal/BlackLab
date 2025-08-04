@@ -339,12 +339,12 @@ public abstract class TermsReaderAbstract implements Terms {
     }
 
     @Override
-    public boolean termsEqual(int[] termId, MatchSensitivity sensitivity) {
-        if (termId.length < 2)
+    public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
+        if (termIds.length < 2)
             return true;
-        int expected = idToSortPosition(termId[0], sensitivity);
-        for (int termIdIndex = 1; termIdIndex < termId.length; ++termIdIndex) {
-            int cur = idToSortPosition(termId[termIdIndex], sensitivity);
+        int expected = idToSortPosition(termIds[0], sensitivity);
+        for (int termIdIndex = 1; termIdIndex < termIds.length; ++termIdIndex) {
+            int cur = idToSortPosition(termIds[termIdIndex], sensitivity);
             if (cur != expected)
                 return false;
         }

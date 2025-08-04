@@ -129,32 +129,15 @@ public class TermsIntegratedSegment implements AutoCloseable {
                 // clone these file accessors, as they are not threadsafe
                 // while this code was written these file handles were only ever used in one thread,
                 // but doing this ensures we don't break things in the future.
-                /**
-                 * File with the iteration order.
-                 * All term IDS are local to this segment.
-                 * for reference, the file contains the following mappings:
-                 *     int[n] termID2InsensitivePos    ( offset [0*n*int] )
-                 *     int[n] insensitivePos2TermID    ( offset [1*n*int] )
-                 *     int[n] termID2SensitivePos      ( offset [2*n*int] )
-                 *     int[n] sensitivePos2TermID      ( offset [3*n*int] )
-                 */
-                IndexInput termID2SensitivePosFile = segment._termOrderFile.clone();
-                IndexInput termID2InsensitivePosFile = segment._termOrderFile.clone();
-
                 this.termStringFile = segment._termsFile.clone();
 
                 this.i = 0;
                 this.n = field.getNumberOfTerms();
 
-                termID2InsensitivePosFile.seek(field.getTermOrderOffset());
-                long insensitiveArraysLength = ((long) n) * Integer.BYTES * 2;
-                termID2SensitivePosFile.seek(insensitiveArraysLength + field.getTermOrderOffset());
-
                 // All fields share the same strings file.  Move to the start of our section in the file.
-                IndexInput stringoffsets = segment._termIndexFile.clone();
-                stringoffsets.seek(field.getTermIndexOffset());
-                long firstStringOffset = stringoffsets.readLong();
-
+                IndexInput stringOffsets = segment._termIndexFile.clone();
+                stringOffsets.seek(field.getTermIndexOffset());
+                long firstStringOffset = stringOffsets.readLong();
                 this.termStringFile.seek(firstStringOffset);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
@@ -177,19 +160,6 @@ public class TermsIntegratedSegment implements AutoCloseable {
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
-        }
-
-        /**
-         * Get the ord (ordinal) of the segment this iterator was constructed on.
-         * You could see this as the "id" of the segment. Starts at 0 and increments by 1 for every next segment.
-         */
-        public int ord() {
-            return this.ord;
-        }
-
-        /** returns the total number of terms in this segment */
-        public int size() {
-            return this.n;
         }
     }
 

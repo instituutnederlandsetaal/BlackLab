@@ -328,7 +328,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
                     ArrayUtils.reverse(termIds);
                 contextTermId.add(termIds);
                 int[] sortOrder = new int[termIds.length];
-                //segmentAnnotationTerms.toSortOrder(termIds, sortOrder, sensitivity);
+                segmentAnnotationTerms.toSortOrder(termIds, sortOrder, sensitivity);
                 contextSortOrder.add(sortOrder);
             }
         }

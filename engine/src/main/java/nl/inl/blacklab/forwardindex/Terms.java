@@ -97,11 +97,11 @@ public interface Terms {
     /**
      * Check if two terms are considered equal for the given sensitivity.
      *
-     * @param termId term id
+     * @param termIds term id
      * @param sensitivity how to compare the terms
      * @return true if the terms are equal
      */
-    boolean termsEqual(int[] termId, MatchSensitivity sensitivity);
+    boolean termsEqual(int[] termIds, MatchSensitivity sensitivity);
 
     /**
      * We have snippets with segment-specific term ids; convert them to global term ids.
