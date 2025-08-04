@@ -14,6 +14,7 @@ import org.apache.lucene.store.RandomAccessInput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -214,7 +215,7 @@ public class BLTerms extends Terms {
 
             @Override
             public String get(int id) {
-                if (id < 0)
+                if (id == Constants.NO_TERM)
                     return "";
                 try {
                     long termStringOffset = termStringOffsets.readLong((long) id * Long.BYTES);
@@ -241,8 +242,8 @@ public class BLTerms extends Terms {
 
             @Override
             public int idToSortPosition(int id, MatchSensitivity sensitivity) {
-                if (id < 0)
-                    return -1; // no term
+                if (id == Constants.NO_TERM)
+                    return Constants.NO_TERM;
                 try {
                     RandomAccessInput array = sensitivity == MatchSensitivity.SENSITIVE ? termIdToSensitivePos :
                             termIdToInsensitivePos;

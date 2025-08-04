@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /** Source of tokens for the forward index matching process.
@@ -58,7 +58,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     @Override
     public int getTokenSegmentTermId(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
-            return Terms.NO_TERM;
+            return Constants.NO_TERM;
 
         // Get the list of chunks for the annotation we're interested in,
         // and the forward index object to get more.
@@ -86,7 +86,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     @Override
     public int getTokenGlobalTermId(int annotIndex, int pos) {
         if (pos < 0 || pos >= docLengthTokens)
-            return Terms.NO_TERM;
+            return Constants.NO_TERM;
 
         // Get the list of chunks for the annotation we're interested in,
         // and the forward index object to get more.

@@ -14,9 +14,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 @ThreadSafe
 public interface Terms {
 
-    /** The value to use meaning "no term" (e.g. if the document ends) */
-    int NO_TERM = -1;
-
     /** Charset we use for serializing terms. */
     Charset TERMS_CHARSET = StandardCharsets.UTF_8;
 

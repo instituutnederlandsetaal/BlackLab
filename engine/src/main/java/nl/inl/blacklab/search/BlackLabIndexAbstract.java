@@ -750,11 +750,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract ForwardIndex createForwardIndex(AnnotatedField field);
 
     @Override
-    public ContentStore contentStore(Field field) {
-        return contentAccessor(field).getContentStore();
-    }
-
-    @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
         return field.getRelationsStats(this, limitValues);
     }

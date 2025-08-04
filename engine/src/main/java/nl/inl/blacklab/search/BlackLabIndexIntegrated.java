@@ -286,7 +286,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
-    public ForwardIndex createForwardIndex(AnnotatedField field) {
+    protected ForwardIndex createForwardIndex(AnnotatedField field) {
         return new ForwardIndexIntegrated(this, field);
     }
 

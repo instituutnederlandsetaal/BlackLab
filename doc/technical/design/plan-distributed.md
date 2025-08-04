@@ -44,17 +44,17 @@ How would we approach this:
   - [ ] Add a subclass that gathers hits from a single segment, sorts them, and allows them to be merged based on the sort value later.
   - [ ] Follow a similar approach for grouping.
 
-- Implement merging:
-  - `HitsFromQuerySorted` merges hits from several `SpansSorted` instances
-  - `HitsGroupedFromQuery` merges hits from several `GroupedSpans` instances
+- [ ] Implement merging:
+  - [ ] `HitsFromQuerySorted` merges hits from several `SpansSorted` instances
+  - [ ] `HitsGroupedFromQuery` merges hits from several `GroupedSpans` instances
   
   Merging should be based on (`String`/`CollationKey` and maybe `Integer` and `Double` as well?) comparison of the stored sort and group values.
 
-- Optimize `SpansSorted`, `GroupedSpans` for the new, per-segment situation (i.e. don't use `Hits`, `Kwics` anymore).
+- [ ] Optimize `SpansSorted`, `GroupedSpans` for the new, per-segment situation (i.e. don't use `Hits`, `Kwics` anymore).
 
-- Eliminate global term ids from classes like `Kwic(s)`, `Contexts`, etc. These are generally only done for a small window of (already-merged) hits, so we still need to be able to get the context for a hit after merging, but these should be in string form.
+- [ ] Eliminate global term ids from classes like `Kwic(s)`, `Contexts`, etc. These are generally only done for a small window of (already-merged) hits, so we still need to be able to get the context for a hit after merging, but these should be in string form.
 
-- Update NFA matching to use per-segment term ids. NFAs will have to be customized per-segment. `ForwardIndexAccessor` needs to be updated to use the per-segment forward index as well (should be easy as this class is already used per-segment, that is, from `Spans` classes).
+- [x] Update NFA matching to use per-segment term ids. NFAs will have to be customized per-segment. `ForwardIndexAccessor` needs to be updated to use the per-segment forward index as well (should be easy as this class is already used per-segment, that is, from `Spans` classes).
 
 - Convert "special cases" such as: 
   - `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -23,7 +24,7 @@ public abstract class PropertyValueContext extends PropertyValue {
     public static int deserializeToken(Terms terms, String term) {
         int termId;
         if (term.equals("~"))
-            termId = Terms.NO_TERM; // no token, effectively a "null" value
+            termId = Constants.NO_TERM; // no token, effectively a "null" value
         else {
             if (term.startsWith("~~")) {
                 // tilde in first position has to be escaped

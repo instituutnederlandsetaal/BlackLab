@@ -8,6 +8,9 @@ public class Constants {
     /** Utility class, don't instantiate */
     private Constants() {}
 
+    /** The value to use meaning "no term" (e.g. if the document ends) */
+    public static final int NO_TERM = -1;
+
     /**
      * Safe maximum size for a Java array.
      *

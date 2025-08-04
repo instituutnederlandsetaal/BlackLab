@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -33,7 +34,7 @@ import nl.inl.blacklab.testutil.TestIndex;
 @RunWith(Parameterized.class)
 public class TestHitProperties {
 
-    private static final int NO_TERM = Terms.NO_TERM;
+    private static final int NO_TERM = Constants.NO_TERM;
 
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<TestIndex> typeToUse() {
@@ -131,7 +132,7 @@ public class TestHitProperties {
             Assert.assertEquals(expected[i], PropertyValueContext.serializeTerm(mockTerms, i));
             Assert.assertEquals(expected[i], PropertyValueContext.serializeTerm(mockTerms, PropertyValueContext.deserializeToken(mockTerms, expected[i])));
         }
-        Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, Terms.NO_TERM));
+        Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, Constants.NO_TERM));
         Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, PropertyValueContext.deserializeToken(mockTerms, "~")));
     }
 

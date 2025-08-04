@@ -22,9 +22,9 @@ import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -127,7 +127,7 @@ public class PWPluginForwardIndex implements PWPlugin {
         //   still write all NO_TERMs in this case. This is similar to sparse
         //   fields (e.g. the field that stores <p> <s> etc.) which also have a
         //   lot of NO_TERMs.
-        Arrays.fill(tokensInDoc, Terms.NO_TERM);
+        Arrays.fill(tokensInDoc, Constants.NO_TERM);
 
         // For each term...
         for (Entry<Integer/*term ID*/, Long/*file offset*/> e: termPosOffsets.entrySet()) {
