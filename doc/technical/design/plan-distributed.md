@@ -56,16 +56,16 @@ How would we approach this:
 
 - [x] Update NFA matching to use per-segment term ids. NFAs will have to be customized per-segment. `ForwardIndexAccessor` needs to be updated to use the per-segment forward index as well (should be easy as this class is already used per-segment, that is, from `Spans` classes).
 
-- Convert "special cases" such as: 
-  - `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`
-  - calculating the total number of tokens in `IndexMetadataIntegrated`
-  - more?
+- [ ] Convert "special cases" such as: 
+  - [ ] `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`
+  - [ ] calculating the total number of tokens in `IndexMetadataIntegrated`
+  - [ ] more?
 
-- Eliminate uses of the global `(Annotation)ForwardIndex` and `Terms` objects, such as in `HitProperty` and `PropertyValue`, and replace them with per-segment alternatives.
+- [ ] Eliminate uses of the global `(Annotation)ForwardIndex` and `Terms` objects, such as in `HitProperty` and `PropertyValue`, and replace them with per-segment alternatives.
 
-- Deal with any unexpected problems that arise.
+- [ ] Deal with any unexpected problems that arise.
 
-- Clean up, removing any now-unused classes.
+- [ ] Clean up, removing any now-unused classes.
 
 
 ## Optimization opportunities

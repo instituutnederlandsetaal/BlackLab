@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.indexmetadata;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
+import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 
 /** An annotated field */
 public interface AnnotatedField extends Field {
@@ -44,5 +46,9 @@ public interface AnnotatedField extends Field {
         if (offsetsSensitivity == null)
             offsetsSensitivity = main.sensitivity(MatchSensitivity.SENSITIVE);
         return offsetsSensitivity.luceneField();
+    }
+
+    default ForwardIndexAccessor forwardIndexAccessor() {
+        return new ForwardIndexAccessorIntegrated(index(), this);
     }
 }

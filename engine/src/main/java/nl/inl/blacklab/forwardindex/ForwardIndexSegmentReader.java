@@ -3,6 +3,7 @@ package nl.inl.blacklab.forwardindex;
 import java.util.List;
 
 import net.jcip.annotations.NotThreadSafe;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
  * Provides read access to the forward indexes in a single Lucene index segment.
@@ -47,9 +48,26 @@ public interface ForwardIndexSegmentReader {
     long docLength(String luceneField, int docId);
 
     /**
-     * Get a 
-     * @param luceneField
-     * @return
+     * Get a TermsSegmentReader for a given field in this segment.
+     *
+     * The returned object is not thread-safe, so it should only
+     * be used by a single thread.
+     *
+     * @param luceneField lucene field to read terms from
+     * @return TermsSegmentReader for the given field
      */
     TermsSegmentReader terms(String luceneField);
+
+    /**
+     * Get a TermsSegmentReader for a given annotation in this segment.
+     *
+     * The returned object is not thread-safe, so it should only
+     * be used by a single thread.
+     *
+     * @param annotation annotation to read terms from
+     * @return TermsSegmentReader for the given field
+     */
+    default TermsSegmentReader terms(Annotation annotation) {
+        return terms(annotation.forwardIndexSensitivity().luceneField());
+    }
 }

@@ -46,7 +46,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** [GLOBAL] Terms for our annotation */
     protected Terms globalAnnotationTerms;
 
-    /** [SEGMENT] Lucene field */
+    /** [SEGMENT] Lucene field containing the forward index */
     private String segmentLuceneField;
 
     /** [SEGMENT] forward index */
@@ -219,9 +219,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     void initForwardIndex() {
         if (lrc != null) {
-            segmentLuceneField = annotation.sensitivity(sensitivity).luceneField();
+            segmentLuceneField = annotation.forwardIndexSensitivity().luceneField();
             segmentForwardIndex = BlackLabIndexIntegrated.forwardIndex(lrc);
-            segmentAnnotationTerms = segmentForwardIndex.terms(segmentLuceneField);
+            segmentAnnotationTerms = segmentForwardIndex.terms(annotation);
         } else {
             globalAnnotationForwardIndex = index.annotationForwardIndex(annotation);
             globalAnnotationTerms = globalAnnotationForwardIndex.terms();

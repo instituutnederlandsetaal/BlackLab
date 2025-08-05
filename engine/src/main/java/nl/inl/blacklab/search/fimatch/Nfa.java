@@ -8,6 +8,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
@@ -28,7 +29,6 @@ public class Nfa {
 
     public Nfa(NfaState startingState, Collection<NfaState> danglingArrows) {
         this.startingState = startingState;
-        this.danglingArrows = danglingArrows;
         this.danglingArrows = new ArrayList<>();
         if (danglingArrows != null)
             this.danglingArrows.addAll(danglingArrows);
@@ -43,9 +43,13 @@ public class Nfa {
     }
 
     public Nfa copy() {
+        return copy(null);
+    }
+
+    public Nfa copy(Consumer<NfaState> onCopy) {
         List<NfaState> dangling = new ArrayList<>();
         Map<NfaState, NfaState> copiesMade = new IdentityHashMap<>();
-        NfaState copy = startingState.copy(dangling, copiesMade);
+        NfaState copy = startingState.copy(dangling, copiesMade, onCopy);
         return new Nfa(copy, dangling);
     }
 
@@ -149,6 +153,15 @@ public class Nfa {
         return startingState.toString();
     }
 
+    /**
+     * Lookup the annotation numbers for all states in this NFA.
+     *
+     * NOTE: we use a Map and not a Set because we instantiate IdentityHashMap,
+     * which allows us to use NfaState as the key.
+     *
+     * @param fiAccessor forward index accessor to use
+     * @param statesVisited states visited so far, to avoid infinite recursion
+     */
     public void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         startingState.lookupAnnotationNumbers(fiAccessor, statesVisited);
     }

@@ -155,7 +155,7 @@ class SpansFiSeq extends BLFilterDocsSpans<BLSpans> {
      */
     private int synchronizePos() throws IOException {
         if (currentFiDoc == null || currentFiDoc.getSegmentDocId() != docID())
-            currentFiDoc = fiAccessor.advanceForwardIndexDoc(docID());
+            currentFiDoc = fiAccessor.getForwardIndexDoc(docID());
 
         // Find the next "valid" anchor spans, if there is one.
         while (anchorStart != NO_MORE_POSITIONS) {

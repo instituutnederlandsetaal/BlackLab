@@ -175,7 +175,7 @@ public class BLTerms extends Terms {
 
     TermsSegmentReader reader() {
         return new TermsSegmentReader() { // not thread-safe
-
+            private final ForwardIndexField field;
             private final RandomAccessInput termIdToSensitivePos;
             private final RandomAccessInput termIdToInsensitivePos;
             private final RandomAccessInput termStringOffsets;
@@ -183,7 +183,7 @@ public class BLTerms extends Terms {
 
             {
                 try {
-                    ForwardIndexField field = getField(luceneField);
+                    field = getField(luceneField);
 
                     // Find the sort orders. All term IDS are local to this segment.
                     // for reference, the term order file contains the following mappings:
@@ -259,6 +259,21 @@ public class BLTerms extends Terms {
                 for (int i = 0; i < termIds.length; i++) {
                     sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
                 }
+            }
+
+            @Override
+            public int sortPositionFor(String term, MatchSensitivity sensitivity) {
+                return idToSortPosition(indexOf(term), sensitivity);
+            }
+
+            @Override
+            public int indexOf(String term) {
+                for (int i = 0; i < field.getNumberOfTerms(); i++) {
+                    if (get(i).equals(term)) {
+                        return i;
+                    }
+                }
+                return Constants.NO_TERM; // term not found
             }
         };
     }

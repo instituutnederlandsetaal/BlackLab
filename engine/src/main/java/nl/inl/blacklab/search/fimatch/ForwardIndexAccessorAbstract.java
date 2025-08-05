@@ -81,14 +81,6 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
         terms.get(annotationNumber).indexOf(results, annotationValue, sensitivity);
     }
 
-    protected String getTermString(int annotIndex, int globalTermId) {
-        return terms.get(annotIndex).get(globalTermId);
-    }
-
-    protected boolean termsEqual(int annotIndex, int[] globalTermIds, MatchSensitivity sensitivity) {
-        return terms.get(annotIndex).termsEqual(globalTermIds, sensitivity);
-    }
-
     protected int numberOfAnnotations() {
         return terms.size();
     }

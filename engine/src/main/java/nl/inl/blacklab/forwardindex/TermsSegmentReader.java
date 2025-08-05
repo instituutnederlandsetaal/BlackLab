@@ -41,4 +41,8 @@ public interface TermsSegmentReader {
      * @param sensitivity whether we want the sensitive or insensitive sort positions
      */
     void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity);
+
+    int sortPositionFor(String compareToTermString, MatchSensitivity sensitivity);
+
+    int indexOf(String term);
 }

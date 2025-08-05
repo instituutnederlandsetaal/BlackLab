@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
@@ -80,12 +81,12 @@ public class NfaStateOrAcyclic extends NfaState {
     }
 
     @Override
-    NfaStateOrAcyclic copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaStateOrAcyclic copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateOrAcyclic copy = new NfaStateOrAcyclic();
         copiesMade.put(this, copy);
         List<NfaState> clauseCopies = new ArrayList<>();
         for (NfaState clause : clauses) {
-            clause = clause.copy(null, copiesMade);
+            clause = clause.copy(null, copiesMade, onCopyState);
             clauseCopies.add(clause);
         }
         copy.clauses.addAll(clauseCopies);

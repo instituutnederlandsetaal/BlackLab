@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class NfaStateNot extends NfaState {
 
@@ -41,11 +42,11 @@ public class NfaStateNot extends NfaState {
     }
 
     @Override
-    NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateNot copy = new NfaStateNot();
         copiesMade.put(this, copy);
-        NfaState clauseCopy = clause.copy(null, copiesMade);
-        NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade);
+        NfaState clauseCopy = clause.copy(null, copiesMade, onCopyState);
+        NfaState nextStateCopy = nextState == null ? null : nextState.copy(dangling, copiesMade, onCopyState);
         copy.clause = clauseCopy;
         copy.nextState = nextStateCopy;
         if (nextState == null)

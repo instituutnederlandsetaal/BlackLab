@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The match state
@@ -31,7 +32,7 @@ public class NfaStateMatch extends NfaState {
     }
 
     @Override
-    NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         return this; // immutable, singleton
     }
 

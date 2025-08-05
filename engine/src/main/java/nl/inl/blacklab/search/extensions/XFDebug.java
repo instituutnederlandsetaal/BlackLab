@@ -50,13 +50,13 @@ public class XFDebug implements ExtensionFunctionClass {
                         fiIndex = 0;
                     if (fiIndex == 0) {
                         // Resolve the first query using the forward index and the second using the inverted index
-                        ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(a.getField());
+                        ForwardIndexAccessor fiAccessor = a.getAnnotatedField().forwardIndexAccessor();
                         NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
                         return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_TO_LEFT,
                                 fiAccessor);
                     } else {
                         // Resolve the second query using the forward index and the first using the inverted index
-                        ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(b.getField());
+                        ForwardIndexAccessor fiAccessor = a.getAnnotatedField().forwardIndexAccessor();
                         NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
                         return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b,
                                 SpanQueryFiSeq.DIR_TO_RIGHT,
@@ -68,7 +68,7 @@ public class XFDebug implements ExtensionFunctionClass {
                 (queryInfo, context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
                     BLSpanQuery b = (BLSpanQuery) args.get(1);
-                    ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(a.getField());
+                    ForwardIndexAccessor fiAccessor = a.getAnnotatedField().forwardIndexAccessor();
                     NfaTwoWay nfaTwoWay = a.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
                     return new SpanQueryFiSeq(b, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, a, SpanQueryFiSeq.DIR_TO_LEFT,
                             fiAccessor);
@@ -78,7 +78,7 @@ public class XFDebug implements ExtensionFunctionClass {
                 (queryInfo, context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
                     BLSpanQuery b = (BLSpanQuery) args.get(1);
-                    ForwardIndexAccessor fiAccessor = context.index().forwardIndexAccessor(b.getField());
+                    ForwardIndexAccessor fiAccessor = b.getAnnotatedField().forwardIndexAccessor();
                     NfaTwoWay nfaTwoWay = b.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
                     return new SpanQueryFiSeq(a, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, b, SpanQueryFiSeq.DIR_TO_RIGHT,
                             fiAccessor);

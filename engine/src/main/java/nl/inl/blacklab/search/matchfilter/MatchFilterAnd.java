@@ -2,8 +2,11 @@ package nl.inl.blacklab.search.matchfilter;
 
 import java.util.List;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
@@ -72,6 +75,16 @@ public class MatchFilterAnd extends MatchFilter {
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         a.lookupAnnotationIndices(fiAccessor);
         b.lookupAnnotationIndices(fiAccessor);
+    }
+
+    @Override
+    public MatchFilter withField(AnnotatedField field) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.withField(field), MatchFilterAnd::new);
+    }
+
+    @Override
+    public MatchFilter forContext(LeafReaderContext context) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forContext(context), MatchFilterAnd::new);
     }
 
     @Override

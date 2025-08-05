@@ -15,6 +15,7 @@ import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -78,7 +79,17 @@ public class TestNfaFromQuery {
                 @Override
                 public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
                     throw new UnsupportedOperationException();
-                    //return MockForwardIndexAccessor.this.termsEqual(annotIndex, termId, sensitivity);
+                }
+
+                @Override
+                public int segmentTermIdToSortPosition(int annotIndex, int segmentTermId,
+                        MatchSensitivity sensitivity) {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public TermsSegmentReader terms(int annotIndex) {
+                    throw new UnsupportedOperationException();
                 }
 
                 @Override
@@ -100,7 +111,7 @@ public class TestNfaFromQuery {
                 }
 
                 @Override
-                public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+                public ForwardIndexDocument getForwardIndexDoc(int segmentDocId) {
                     if (segmentDocId != 0)
                         throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return new ForwardIndexDocumentIntArray(termIds);
@@ -111,15 +122,6 @@ public class TestNfaFromQuery {
                     if (segmentDocId != 0)
                         throw new IllegalArgumentException("Unknown document " + segmentDocId);
                     return termIds.length;
-                }
-
-                @Override
-                public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
-                    if (annotIndex != 0)
-                        throw new IllegalArgumentException("Unknown annotation " + annotIndex);
-                    if (segmentDocId != 0)
-                        throw new IllegalArgumentException("Unknown document " + segmentDocId);
-                    return Arrays.copyOfRange(termIds, start, end);
                 }
 
                 @Override
@@ -162,8 +164,8 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getTokenGlobalTermId(int annotIndex, int pos) {
-            return getTokenSegmentTermId(annotIndex, pos);
+        public int getTokenSegmentSortPosition(int annotIndex, int pos, MatchSensitivity sensitivity) {
+            throw new UnsupportedOperationException();
         }
 
         @Override
@@ -193,7 +195,7 @@ public class TestNfaFromQuery {
         //System.err.println(frag);
         NfaState start = frag.getStartingState(); //finish();
 
-        ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).advanceForwardIndexDoc(0);
+        ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
         for (int i = 0; i < tests; i++) {
             Assert.assertEquals("Test " + i, matches.contains(i),
                     start.matches(fiDoc, startPos + direction * i, direction));

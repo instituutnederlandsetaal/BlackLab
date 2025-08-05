@@ -8,15 +8,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 public class MatchFilterString extends MatchFilter {
     final ConstraintValueString string;
 
-    /** -1 if we don't know the annotation index, or the annotation index otherwise */
-    final int annotIndex = -1;
-
-    /**
-     * Term index if we know the annotation index to use for this expression (i.e.
-     * annotIndex >= 0), or -1 if not
-     */
-    final int termIndex = -1;
-
     public MatchFilterString(String string) {
         this(new ConstraintValueString(string));
     }
@@ -72,14 +63,6 @@ public class MatchFilterString extends MatchFilter {
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
         // NOP
-    }
-
-    public int getPropIndex() {
-        return annotIndex;
-    }
-
-    public int getTermIndex() {
-        return termIndex;
     }
 
     @Override

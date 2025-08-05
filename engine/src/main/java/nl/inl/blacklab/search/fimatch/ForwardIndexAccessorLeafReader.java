@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import net.jcip.annotations.NotThreadSafe;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -18,7 +19,7 @@ public interface ForwardIndexAccessorLeafReader {
      * @param segmentDocId document id within this segment
      * @return the token source
      */
-    ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId);
+    ForwardIndexDocument getForwardIndexDoc(int segmentDocId);
 
     /**
      * Return the document length in tokens.
@@ -29,19 +30,6 @@ public interface ForwardIndexAccessorLeafReader {
      * @return document length in tokens
      */
     int getDocLength(int segmentDocId);
-
-    /**
-     * Get a chunk of tokens from a forward index
-     *
-     * NOTE: Returns chunks with *global* term ids!
-     *
-     * @param annotIndex annotation to get tokens for
-     * @param segmentDocId document id within this segment
-     * @param start first token to get
-     * @param end one more than the last token to get
-     * @return chunk of tokens
-     */
-    int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end);
 
     /**
      * Get a chunk of tokens from a forward index
@@ -58,6 +46,8 @@ public interface ForwardIndexAccessorLeafReader {
 
     int getNumberOfAnnotations();
 
+    TermsSegmentReader terms(int annotIndex);
+
     /**
      * Get a term string for a term id.
      *
@@ -65,7 +55,9 @@ public interface ForwardIndexAccessorLeafReader {
      * @param segmentTermId term id within the segment
      * @return term string
      */
-    String getTermString(int annotIndex, int segmentTermId);
+    default String getTermString(int annotIndex, int segmentTermId) {
+        return terms(annotIndex).get(segmentTermId);
+    }
 
     /**
      * Check if a number of terms are considered equal for the given sensitivity.
@@ -75,5 +67,11 @@ public interface ForwardIndexAccessorLeafReader {
      * @param sensitivity how to compare the terms
      * @return true if all the terms are equals
      */
-    boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity);
+    default boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
+        return terms(annotIndex).termsEqual(segmentTermIds, sensitivity);
+    }
+
+    default int segmentTermIdToSortPosition(int annotIndex, int segmentTermId, MatchSensitivity sensitivity) {
+        return terms(annotIndex).idToSortPosition(segmentTermId, sensitivity);
+    }
 }

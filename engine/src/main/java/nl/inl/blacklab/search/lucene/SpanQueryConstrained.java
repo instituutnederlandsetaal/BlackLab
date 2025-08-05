@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -87,7 +86,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
             BLSpans spansProd = prodWeight.getSpans(context, requiredPostings);
             if (spansProd == null)
                 return null;
-            return new SpansConstrained(spansProd, constraint,
+            return new SpansConstrained(spansProd, constraint.forContext(context),
                     fiAccessor.getForwardIndexAccessorLeafReader(context));
         }
     }

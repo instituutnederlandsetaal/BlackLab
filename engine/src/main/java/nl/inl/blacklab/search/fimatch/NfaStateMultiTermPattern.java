@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -68,10 +69,10 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     }
 
     @Override
-    NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateMultiTermPattern copy = copyNoNextState();
         copiesMade.put(this, copy);
-        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade);
+        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade, onCopyState);
         if (nextState == null && dangling != null)
             dangling.add(copy);
         return copy;

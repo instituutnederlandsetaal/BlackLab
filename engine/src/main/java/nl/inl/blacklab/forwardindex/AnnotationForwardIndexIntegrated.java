@@ -124,11 +124,6 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     }
 
     @Override
-    public int numDocs() {
-        return indexReader.numDocs();
-    }
-
-    @Override
     public String toString() {
         return "AnnotationForwardIndexIntegrated (" + this.luceneField + ")";
     }

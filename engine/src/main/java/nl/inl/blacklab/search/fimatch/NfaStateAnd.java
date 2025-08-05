@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class NfaStateAnd extends NfaState {
@@ -51,7 +52,7 @@ public class NfaStateAnd extends NfaState {
     }
 
     @Override
-    NfaStateAnd copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaStateAnd copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         List<NfaState> clauseCopies = new ArrayList<>();
         boolean hasNulls = false;
         NfaStateAnd copy = new NfaStateAnd();
@@ -60,7 +61,7 @@ public class NfaStateAnd extends NfaState {
             if (nextState == null)
                 hasNulls = true;
             else
-                nextState = nextState.copy(dangling, copiesMade);
+                nextState = nextState.copy(dangling, copiesMade, onCopyState);
             clauseCopies.add(nextState);
         }
         copy.nextStates.addAll(clauseCopies);
@@ -168,5 +169,7 @@ public class NfaStateAnd extends NfaState {
                 s.finish(visited);
         }
     }
+
+
 
 }

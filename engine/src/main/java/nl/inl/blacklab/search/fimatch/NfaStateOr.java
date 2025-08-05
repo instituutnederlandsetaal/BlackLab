@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class NfaStateOr extends NfaState {
@@ -50,7 +51,7 @@ public class NfaStateOr extends NfaState {
     }
 
     @Override
-    NfaStateOr copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaStateOr copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateOr copy = new NfaStateOr(clausesAllSameLength);
         copiesMade.put(this, copy);
         List<NfaState> clauseCopies = new ArrayList<>();
@@ -59,7 +60,7 @@ public class NfaStateOr extends NfaState {
             if (nextState == null)
                 hasNulls = true;
             else
-                nextState = nextState.copy(dangling, copiesMade);
+                nextState = nextState.copy(dangling, copiesMade, onCopyState);
             clauseCopies.add(nextState);
         }
         copy.nextStates.addAll(clauseCopies);

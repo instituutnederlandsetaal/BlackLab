@@ -24,12 +24,6 @@ public record MockForwardIndex(Terms terms) implements AnnotationForwardIndex {
     }
 
     @Override
-    public int numDocs() {
-        //
-        return 0;
-    }
-
-    @Override
     public int docLength(int docId) {
         //
         return 0;

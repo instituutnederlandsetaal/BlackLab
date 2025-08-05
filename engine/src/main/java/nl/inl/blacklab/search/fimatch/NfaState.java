@@ -7,6 +7,10 @@ import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+
+import org.apache.lucene.index.LeafReaderContext;
 
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
@@ -33,12 +37,12 @@ public abstract class NfaState {
      * Build a token state.
      *
      * @param luceneField what annotation to match
-     * @param inputTokensGlobalTermIds what tokens to match
+     * @param inputTokens what tokens to match
      * @param nextState what state to go to after a succesful match
      * @return the state object
      */
-    public static NfaState token(String luceneField, Set<String> inputTokensGlobalTermIds, NfaState nextState) {
-        return new NfaStateToken(luceneField, inputTokensGlobalTermIds, nextState);
+    public static NfaState token(String luceneField, Set<String> inputTokens, NfaState nextState) {
+        return new NfaStateToken(luceneField, inputTokens, nextState);
     }
 
     public static NfaState regex(String luceneField, String pattern, NfaState nextState) {
@@ -79,6 +83,8 @@ public abstract class NfaState {
     public static NfaState match() {
         return NfaStateMatch.get();
     }
+
+    LeafReaderContext lrc = null;
 
     /**
      * Find all matches for this NFA in the token source.
@@ -134,13 +140,17 @@ public abstract class NfaState {
      * @param copiesMade states copied earlier during this copy operation, so we can
      *            deal with cyclic NFAs (i.e. don't keep copying, re-use the
      *            previous copy)
+     * @param onCopyState optional callback to call on each copied state
      * @return the copied fragment
      */
-    final NfaState copy(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
-        NfaState existingCopy = copiesMade.get(this);
-        if (existingCopy != null)
-            return existingCopy;
-        return copyInternal(dangling, copiesMade);
+    final NfaState copy(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
+        NfaState copiedState = copiesMade.get(this);
+        if (copiedState == null) {
+            copiedState = copyInternal(dangling, copiesMade, onCopyState);
+            if (onCopyState != null)
+                onCopyState.accept(copiedState);
+        }
+        return copiedState;
     }
 
     /**
@@ -157,7 +167,7 @@ public abstract class NfaState {
      *            previous copy)
      * @return the copied fragment
      */
-    abstract NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade);
+    abstract NfaState copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState);
 
     /**
      * Set the next state for a given input.
@@ -242,6 +252,22 @@ public abstract class NfaState {
      * @return maximum hit length
      */
     public abstract int hitsLengthMax(Set<NfaState> statesVisited);
+
+    public NfaState forContext(LeafReaderContext context) {
+        return copy(null, new IdentityHashMap<>(), state -> state.lrc = context);
+    }
+
+    protected static NfaState rewriteState(NfaState state, BiFunction<NfaState, IdentityHashMap<NfaState, NfaState>, NfaState> rewriter,
+            IdentityHashMap<NfaState, NfaState> rewritten) {
+        // See if we've already rewritten this state; if so, return the rewritten state.
+        NfaState rewrittenState = rewritten.get(state);
+        if (rewrittenState == null) {
+            // Not yet rewritten; do so now.
+            rewrittenState = rewriter.apply(state, rewritten);
+            rewritten.put(state, rewrittenState);
+        }
+        return rewrittenState;
+    }
 
     public final void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
         // Make sure we only visit each state once

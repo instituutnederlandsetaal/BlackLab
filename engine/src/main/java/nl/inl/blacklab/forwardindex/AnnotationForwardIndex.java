@@ -12,16 +12,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public interface AnnotationForwardIndex {
 
     /**
-     * Convert the given docId to a forward index id (fiid).
-     *
-     * @param docId Lucene doc id
-     * @return forward index id
-     */
-    default int docId2fiid(int docId) {
-        return docId;
-    }
-
-    /**
      * Initialize this forward index (to be run in the background).
      */
     void initialize();
@@ -82,13 +72,6 @@ public interface AnnotationForwardIndex {
      * @return the Terms object
      */
     Terms terms();
-
-    /**
-     * @return the number of documents in the forward index
-     *
-     * NOTE: this INCLUDES deleted documents!
-     */
-    int numDocs();
 
     /**
      * Gets the length (in tokens) of a document.

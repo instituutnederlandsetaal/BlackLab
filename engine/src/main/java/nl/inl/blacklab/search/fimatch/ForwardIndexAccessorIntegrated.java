@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.fimatch;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -62,7 +61,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public ForwardIndexDocument advanceForwardIndexDoc(int segmentDocId) {
+        public ForwardIndexDocument getForwardIndexDoc(int segmentDocId) {
             return new ForwardIndexDocumentImpl(this, segmentDocId);
         }
 
@@ -72,12 +71,6 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
             //       represent a word, just any closing punctuation after the last word.
             return lengthGetter.getFieldLength(segmentDocId)
                     - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-        }
-
-        @Override
-        public int[] getChunkGlobalTermIds(int annotIndex, int segmentDocId, int start, int end) {
-            int[] part = getChunkSegmentTermIds(annotIndex, segmentDocId, start, end);
-            return terms.get(annotIndex).segmentIdsToGlobalIds(readerContext.ord, part);
         }
 
         @Override
@@ -96,13 +89,11 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public String getTermString(int annotIndex, int segmentTermId) {
-            return termsSegmentReaders.get(annotIndex).get(segmentTermId);
-        }
-
-        @Override
-        public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
-            return termsSegmentReaders.get(annotIndex).termsEqual(segmentTermIds, sensitivity);
+        public TermsSegmentReader terms(int annotIndex) {
+            if (annotIndex < 0 || annotIndex >= termsSegmentReaders.size())
+                throw new IllegalArgumentException("Invalid annotation index: " + annotIndex +
+                        " (there are " + termsSegmentReaders.size() + " annotations)");
+            return termsSegmentReaders.get(annotIndex);
         }
     }
 

@@ -27,7 +27,7 @@ import nl.inl.util.LuceneUtil;
  * If such a situation is found, we convert the clause to be matched using the forward
  * index to an NFA (nondeterministic finite automaton) and use the other as the "anchor"
  * (because a forward index matching operations always needs a starting position).
- * Together they are combined in a FISEQ (forward index sequence) operation whic, like
+ * Together they are combined in a FISEQ (forward index sequence) operation which, like
  * explained above, will first find infrequent matches using Lucene, then decide using
  * the forward index if they are actual matches or not.
  *
@@ -257,7 +257,7 @@ public class ClauseCombinerNfa extends ClauseCombiner {
                 return ((SpanQueryFiSeq) left).appendNfa(right);
             }
             // New FISEQ.
-            ForwardIndexAccessor fiAccessor = BlackLab.indexFromReader(null /* FIXME */, reader, true).forwardIndexAccessor(right.getField());
+            ForwardIndexAccessor fiAccessor = right.getAnnotatedField().forwardIndexAccessor();
             NfaTwoWay nfaTwoWay = right.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_RIGHT);
             return new SpanQueryFiSeq(left, SpanQueryFiSeq.END_OF_ANCHOR, nfaTwoWay, right, SpanQueryFiSeq.DIR_TO_RIGHT, fiAccessor);
         }
@@ -268,10 +268,9 @@ public class ClauseCombinerNfa extends ClauseCombiner {
             return ((SpanQueryFiSeq) right).appendNfa(left);
         }
         // New FISEQ.
-        ForwardIndexAccessor fiAccessor = BlackLab.indexFromReader(null /* FIXME */, reader, true).forwardIndexAccessor(left.getField());
+        ForwardIndexAccessor fiAccessor = left.getAnnotatedField().forwardIndexAccessor();
         NfaTwoWay nfaTwoWay = left.getNfaTwoWay(fiAccessor, SpanQueryFiSeq.DIR_TO_LEFT);
         return new SpanQueryFiSeq(right, SpanQueryFiSeq.START_OF_ANCHOR, nfaTwoWay, left, SpanQueryFiSeq.DIR_TO_LEFT, fiAccessor);
-
     }
 
     @Override

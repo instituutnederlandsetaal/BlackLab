@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
@@ -71,8 +72,8 @@ public class NfaStateToken extends NfaState {
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         // Token state. Check if it matches token from token source, and if so, continue.
-        int actualTokenGlobalTermId = fiDoc.getTokenGlobalTermId(propertyNumber, pos);
-        if (acceptAnyToken && actualTokenGlobalTermId >= 0 || inputTokensGlobalTermIds.contains(actualTokenGlobalTermId)) {
+        int actualTokenSegmentTermId = fiDoc.getTokenSegmentTermId(propertyNumber, pos);
+        if (acceptAnyToken && actualTokenSegmentTermId >= 0 || inputTokensGlobalTermIds.contains(actualTokenSegmentTermId)) {
             if (nextState == null) {
                 // null stands for the match state
                 if (matchEnds != null)
@@ -91,10 +92,10 @@ public class NfaStateToken extends NfaState {
     }
 
     @Override
-    NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade) {
+    NfaStateToken copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateToken copy = new NfaStateToken(luceneField, inputTokenStrings, null);
         copiesMade.put(this, copy);
-        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade);
+        copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade, onCopyState);
         if (nextState == null && dangling != null)
             dangling.add(copy);
         return copy;
