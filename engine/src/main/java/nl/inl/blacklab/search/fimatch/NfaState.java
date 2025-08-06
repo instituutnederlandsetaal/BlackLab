@@ -1,7 +1,8 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
-import java.util.IdentityHashMap;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
@@ -84,8 +85,6 @@ public abstract class NfaState {
         return NfaStateMatch.get();
     }
 
-    LeafReaderContext lrc = null;
-
     /**
      * Find all matches for this NFA in the token source.
      *
@@ -132,6 +131,64 @@ public abstract class NfaState {
     abstract void fillDangling(NfaState state);
 
     /**
+     * Does this state have a dangling output?
+     * @return true if it has a dangling output, false if not
+     */
+    abstract boolean hasDangling();
+
+    public void visit(Set<NfaState> visited, Consumer<NfaState> visitor) {
+        // See if we've already rewritten this state; if so, return the rewritten state.
+        if (!visited.contains(this)) {
+            // Not yet visited; do so now.
+            visited.add(this);
+            if (visitor != null)
+                visitor.accept(this);
+            getConnectedStates().forEach(state -> {
+                if (state != null)
+                    state.visit(visited, visitor);
+            });
+        }
+    }
+
+    abstract Collection<NfaState> getConnectedStates();
+
+    public Collection<NfaState> getDangling() {
+        // Collect dangling states, i.e. those that have no next state.
+        // Note that this is not the same as hasDangling(), which only checks this state.
+        Set<NfaState> statesWithDangling = new HashSet<>();
+        visit(new HashSet<>(), state -> {
+            if (state.hasDangling())
+                statesWithDangling.add(state);
+        });
+        return statesWithDangling;
+    }
+
+    protected static NfaState rewriteState(NfaState state, Map<NfaState, NfaState> rewritten,
+            BiFunction<NfaState, Map<NfaState, NfaState>, NfaState> rewriter) {
+        // See if we've already rewritten this state; if so, return the rewritten state.
+        NfaState rewrittenState = rewritten.get(state);
+        if (rewrittenState == null) {
+            // Not yet rewritten; do so now.
+            rewrittenState = rewriter.apply(state, rewritten);
+            rewritten.put(state, rewrittenState); // should've been done already in copyInternal(), but ok
+        }
+        return rewrittenState;
+    }
+
+    /**
+     * Return a copy of the fragment starting from this state, and collect all
+     * (copied) states with dangling outputs.
+     *
+     * @param dangling where to collect copied states with dangling outputs, or null
+     *            if we don't care about these
+     * @param onCopyState optional callback to call on each copied state
+     * @return the copied fragment
+     */
+    public final NfaState copy(Collection<NfaState> dangling, Consumer<NfaState> onCopyState) {
+        return copy(dangling, new HashMap<>(), onCopyState);
+    }
+
+    /**
      * Return a copy of the fragment starting from this state, and collect all
      * (copied) states with dangling outputs.
      *
@@ -144,13 +201,15 @@ public abstract class NfaState {
      * @return the copied fragment
      */
     final NfaState copy(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
-        NfaState copiedState = copiesMade.get(this);
-        if (copiedState == null) {
-            copiedState = copyInternal(dangling, copiesMade, onCopyState);
+        return rewriteState(this, copiesMade, (state, rewritten) -> {
+            // Otherwise, copy this state.
+            // NOTE: copyInternal() must already add the copied state to copiesMade BEFORE rewriting any other states!
+            //       This is important to avoid infinite recursion when copying cyclic NFAs.
+            NfaState copiedState = state.copyInternal(dangling, copiesMade, onCopyState);
             if (onCopyState != null)
                 onCopyState.accept(copiedState);
-        }
-        return copiedState;
+            return copiedState;
+        });
     }
 
     /**
@@ -159,6 +218,10 @@ public abstract class NfaState {
      *
      * Subclasses can override this (not copy()), so they don't have to look at
      * copiesMade but can always just create a copy of themselves.
+     *
+     * IMPORTANT: implementations MUST add the copied state to copiesMade BEFORE
+     *            rewriting any other states! Otherwise, infinite recursion could
+     *            occur when copying cyclic NFAs.
      *
      * @param dangling where to collect copied states with dangling outputs, or null
      *            if we don't care about these
@@ -179,22 +242,15 @@ public abstract class NfaState {
 
     @Override
     public String toString() {
-        Map<NfaState, Integer> stateNrs = new IdentityHashMap<>();
+        Map<NfaState, Integer> stateNrs = new HashMap<>();
         return "NFA:" + dump(stateNrs);
     }
 
     /**
      * Visit each node and replace dangling arrows (nulls) with the match state.
-     *
-     * @param visited nodes visited so far, so we don't visit nodes multiple times
      */
-    public void finish(Set<NfaState> visited) {
-        // Avoid infinite cycling
-        if (visited.contains(this))
-            return;
-        visited.add(this);
-        // Actually finish the state
-        finishInternal(visited);
+    public final void finish() {
+        visit(new HashSet<>(), nfaState -> nfaState.finishInternal());
     }
 
     /**
@@ -204,7 +260,10 @@ public abstract class NfaState {
      *            make sure we don't visit the same node twice, so always call
      *            finish() in your implementations, not finishInternal().
      */
-    protected abstract void finishInternal(Set<NfaState> visited);
+    protected void finishInternal() {
+        // Default implementation does nothing, subclasses should override this
+        // if they need to do something special when finishing.
+    }
 
     public static String dump(NfaState state, Map<NfaState, Integer> stateNrs) {
         return state == null ? "DANGLING" : state.dump(stateNrs);
@@ -212,8 +271,10 @@ public abstract class NfaState {
 
     public String dump(Map<NfaState, Integer> stateNrs) {
         Integer n = stateNrs.get(this);
-        if (n != null)
+        if (n != null) {
+            // If we've already seen this state, just refer to it by number.
             return "#" + n;
+        }
         n = stateNrs.size() + 1;
         stateNrs.put(this, n);
         return "#" + n + ":" + dumpInternal(stateNrs);
@@ -253,31 +314,39 @@ public abstract class NfaState {
      */
     public abstract int hitsLengthMax(Set<NfaState> statesVisited);
 
-    public NfaState forContext(LeafReaderContext context) {
-        return copy(null, new IdentityHashMap<>(), state -> state.lrc = context);
+    /**
+     * Return a copy of this NFA fragment with the specified context.
+     *
+     * @param lrc context to use
+     * @return copy with this context
+     */
+    public NfaState forLeafReaderContext(LeafReaderContext lrc) {
+        return copy(null, new HashMap<>(), state -> state.setLeafReaderContext(lrc));
     }
 
-    protected static NfaState rewriteState(NfaState state, BiFunction<NfaState, IdentityHashMap<NfaState, NfaState>, NfaState> rewriter,
-            IdentityHashMap<NfaState, NfaState> rewritten) {
-        // See if we've already rewritten this state; if so, return the rewritten state.
-        NfaState rewrittenState = rewritten.get(state);
-        if (rewrittenState == null) {
-            // Not yet rewritten; do so now.
-            rewrittenState = rewriter.apply(state, rewritten);
-            rewritten.put(state, rewrittenState);
-        }
-        return rewrittenState;
+    /**
+     * Sets the LeafReaderContext for this NFA state.
+     */
+    protected void setLeafReaderContext(LeafReaderContext lrc) {
     }
 
-    public final void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        // Make sure we only visit each state once
-        if (statesVisited.containsKey(this))
-            return;
-        statesVisited.put(this, true);
-        // Actually look up the annotation numbers for the annotations we need
-        lookupAnnotationNumbersInternal(fiAccessor, statesVisited);
+    public final void lookupAnnotationIndexes(ForwardIndexAccessor fiAccessor) {
+        visit(new HashSet<>(), nfaState -> {
+            // Actually look up the indexes for the annotations we need
+            nfaState.lookupAnnotationIndexesInternal(fiAccessor);
+        });
     }
 
-    abstract void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited);
+    void lookupAnnotationIndexesInternal(ForwardIndexAccessor fiAccessor) {
+        // Default implementation does nothing, subclasses should override this
+        // if they need to look up annotation indexes.
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        // NOTE: We intentionally don't provide our own equals() implementation here, because we care about object
+        // identity, not equality (i.e. when copying an NFA, we need to process each state instance once only).
+        return super.equals(obj);
+    }
 
 }

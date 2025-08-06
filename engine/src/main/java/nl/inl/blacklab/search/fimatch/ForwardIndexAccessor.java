@@ -24,17 +24,17 @@ public interface ForwardIndexAccessor {
      * @param annotationName annotation to get the index for
      * @return index for this annotation
      */
-    int getAnnotationNumber(String annotationName);
+    int getAnnotationIndex(String annotationName);
 
     /**
      * Get the term number for a given term string.
      *
      * @param results (out) term number for this term in this annotation
-     * @param annotationNumber which annotation to get term number for
+     * @param annotationIndex which annotation to get term number for
      * @param annotationValue which term string to get term number for
      * @param sensitivity match sensitively or not? (currently both or neither)
      */
-    void getGlobalTermNumbers(MutableIntSet results, int annotationNumber, String annotationValue,
+    void getGlobalTermNumbers(MutableIntSet results, int annotationIndex, String annotationValue,
             MatchSensitivity sensitivity);
 
     /**

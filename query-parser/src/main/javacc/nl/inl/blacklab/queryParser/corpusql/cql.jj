@@ -245,7 +245,7 @@ MatchFilter constraintValue():
 |   LOOKAHEAD(2)
     l=captureLabel() [ "." s=<NAME> ]
     {
-        return new MatchFilterTokenAnnotation(l, s == null ? null : s.toString());
+        return new MatchFilterTokenAnnotation(l, s == null ? wrapper.getDefaultAnnotation() : s.toString());
     }
 }
 

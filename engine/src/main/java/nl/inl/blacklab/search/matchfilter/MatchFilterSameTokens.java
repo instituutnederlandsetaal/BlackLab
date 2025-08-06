@@ -98,7 +98,7 @@ public class MatchFilterSameTokens extends MatchFilter {
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        annotIndex = fiAccessor.getAnnotationNumber(annotationName);
+        annotIndex = fiAccessor.getAnnotationIndex(annotationName);
     }
 
     @Override

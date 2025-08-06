@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.fimatch;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -46,17 +45,17 @@ public class TestNfaFromQuery {
         }
 
         @Override
-        public int getAnnotationNumber(String annotationName) {
+        public int getAnnotationIndex(String annotationName) {
             if (annotationName.equals("word"))
                 return 0;
             throw new IllegalArgumentException("Unknown annotation " + annotationName);
         }
 
         @Override
-        public void getGlobalTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
+        public void getGlobalTermNumbers(MutableIntSet results, int annotationIndex, String annotValue,
                 MatchSensitivity sensitivity) {
-            if (annotNumber != 0)
-                throw new IllegalArgumentException("Unknown annotation " + annotNumber);
+            if (annotationIndex != 0)
+                throw new IllegalArgumentException("Unknown annotation " + annotationIndex);
             if (sensitivity.isCaseSensitive()) {
                 results.add(terms.get(annotValue));
                 return;
@@ -89,7 +88,38 @@ public class TestNfaFromQuery {
 
                 @Override
                 public TermsSegmentReader terms(int annotIndex) {
-                    throw new UnsupportedOperationException();
+                    return new TermsSegmentReader() {
+                        @Override
+                        public String get(int id) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
+                            return termIds.length == 2 && termIds[0] == termIds[1];
+                        }
+
+                        @Override
+                        public int idToSortPosition(int id, MatchSensitivity sensitivity) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public int sortPositionFor(String compareToTermString, MatchSensitivity sensitivity) {
+                            // Wrong (we return id, not sort pos), but we only need equal words to have the same sort position for these tests.
+                            return terms.get(compareToTermString);
+                        }
+
+                        @Override
+                        public int indexOf(String term) {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
                 }
 
                 @Override
@@ -191,9 +221,8 @@ public class TestNfaFromQuery {
         // The NFA
         Nfa frag = q.getNfa(fiAccessor, direction);
         frag.finish();
-        frag.lookupAnnotationNumbers(fiAccessor, new IdentityHashMap<>());
-        //System.err.println(frag);
-        NfaState start = frag.getStartingState(); //finish();
+        frag.lookupAnnotationIndexes(fiAccessor);
+        NfaState start = frag.getStartingState().forLeafReaderContext(null);
 
         ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
         for (int i = 0; i < tests; i++) {

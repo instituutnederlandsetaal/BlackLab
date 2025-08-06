@@ -69,8 +69,8 @@ public class MatchFilterImplication extends MatchFilter {
     }
 
     @Override
-    public MatchFilter forContext(LeafReaderContext context) {
-        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forContext(context), MatchFilterImplication::new);
+    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forLeafReaderContext(context), MatchFilterImplication::new);
     }
 
     @Override

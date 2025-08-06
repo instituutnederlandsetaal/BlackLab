@@ -28,7 +28,7 @@ public class NfaStateOrAcyclic extends NfaState {
 
     public NfaStateOrAcyclic(List<NfaState> clauses, boolean clausesAllSameLength) {
         for (NfaState clause : clauses) {
-            clause.finish(new HashSet<>());
+            clause.finish();
         }
         this.clauses = new ArrayList<>(clauses);
         this.nextState = null;
@@ -78,6 +78,18 @@ public class NfaStateOrAcyclic extends NfaState {
     void fillDangling(NfaState state) {
         if (nextState == null)
             nextState = state;
+    }
+
+    @Override
+    boolean hasDangling() {
+        return nextState == null;
+    }
+
+    @Override
+    Collection<NfaState> getConnectedStates() {
+        List<NfaState> result = new ArrayList<>(clauses);
+        result.add(nextState);
+        return result;
     }
 
     @Override
@@ -174,28 +186,13 @@ public class NfaStateOrAcyclic extends NfaState {
     }
 
     @Override
-    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        for (NfaState clause : clauses) {
-            if (clause != null)
-                clause.lookupAnnotationNumbers(fiAccessor, statesVisited);
-        }
-        if (nextState != null)
-            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
-    }
-
-    @Override
-    protected void finishInternal(Set<NfaState> visited) {
+    protected void finishInternal() {
         for (int i = 0; i < clauses.size(); i++) {
-            NfaState clause = clauses.get(i);
-            if (clause == null)
+            if (clauses.get(i) == null)
                 clauses.set(i, match());
-            else
-                clause.finish(visited);
         }
         if (nextState == null)
             nextState = match();
-        else
-            nextState.finish(visited);
     }
 
 }

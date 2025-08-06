@@ -86,7 +86,7 @@ public class SpanQueryConstrained extends BLSpanQueryAbstract {
             BLSpans spansProd = prodWeight.getSpans(context, requiredPostings);
             if (spansProd == null)
                 return null;
-            return new SpansConstrained(spansProd, constraint.forContext(context),
+            return new SpansConstrained(spansProd, constraint.forLeafReaderContext(context),
                     fiAccessor.getForwardIndexAccessorLeafReader(context));
         }
     }

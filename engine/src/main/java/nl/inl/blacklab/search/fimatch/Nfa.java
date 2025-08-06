@@ -4,9 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -48,8 +46,7 @@ public class Nfa {
 
     public Nfa copy(Consumer<NfaState> onCopy) {
         List<NfaState> dangling = new ArrayList<>();
-        Map<NfaState, NfaState> copiesMade = new IdentityHashMap<>();
-        NfaState copy = startingState.copy(dangling, copiesMade, onCopy);
+        NfaState copy = startingState.copy(dangling, onCopy);
         return new Nfa(copy, dangling);
     }
 
@@ -154,20 +151,16 @@ public class Nfa {
     }
 
     /**
-     * Lookup the annotation numbers for all states in this NFA.
-     *
-     * NOTE: we use a Map and not a Set because we instantiate IdentityHashMap,
-     * which allows us to use NfaState as the key.
+     * Lookup the annotation indexes for all states in this NFA.
      *
      * @param fiAccessor forward index accessor to use
      * @param statesVisited states visited so far, to avoid infinite recursion
      */
-    public void lookupAnnotationNumbers(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        startingState.lookupAnnotationNumbers(fiAccessor, statesVisited);
+    public void lookupAnnotationIndexes(ForwardIndexAccessor fiAccessor) {
+        startingState.lookupAnnotationIndexes(fiAccessor);
     }
 
     public void finish() {
-        startingState.finish(new HashSet<>());
+        startingState.finish();
     }
-
 }

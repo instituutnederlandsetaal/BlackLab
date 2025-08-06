@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -13,7 +13,7 @@ public class NfaStateNot extends NfaState {
     private NfaState nextState;
 
     public NfaStateNot(NfaState clause, NfaState nextState) {
-        clause.finish(new HashSet<>());
+        clause.finish();
         this.clause = clause;
         this.nextState = nextState;
     }
@@ -39,6 +39,16 @@ public class NfaStateNot extends NfaState {
     void fillDangling(NfaState state) {
         if (nextState == null)
             nextState = state;
+    }
+
+    @Override
+    boolean hasDangling() {
+        return nextState == null;
+    }
+
+    @Override
+    Collection<NfaState> getConnectedStates() {
+        return List.of(clause, nextState);
     }
 
     @Override
@@ -85,23 +95,11 @@ public class NfaStateNot extends NfaState {
     }
 
     @Override
-    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        if (clause != null)
-            clause.lookupAnnotationNumbers(fiAccessor, statesVisited);
-        if (nextState != null)
-            nextState.lookupAnnotationNumbers(fiAccessor, statesVisited);
-    }
-
-    @Override
-    protected void finishInternal(Set<NfaState> visited) {
+    protected void finishInternal() {
         if (clause == null)
             clause = match();
-        else
-            clause.finish(visited);
         if (nextState == null)
             nextState = match();
-        else
-            nextState.finish(visited);
     }
 
 }

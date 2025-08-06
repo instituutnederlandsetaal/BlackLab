@@ -22,7 +22,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     private final Annotation annotation;
 
-    private int annotIndex = -1;
+    private int annotationIndex = -1;
 
     private final String compareToTermString;
 
@@ -44,7 +44,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         this.groupName = groupName;
         this.compareToTermString = termString;
         this.sensitivity = sensitivity;
-        this.annotationName = null; // no longer necessary
+        this.annotationName = annotation.name();
         this.annotation = annotation;
     }
 
@@ -111,17 +111,10 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         if (span == null)
             return ConstraintValue.undefined();
         int tokenPosition = span.getSpanStart();
-        if (annotIndex < 0)
+        if (annotationIndex < 0)
             return ConstraintValue.get(tokenPosition);
-        int leftTermGlobalId = fiDoc.getTokenSegmentSortPosition(annotIndex, tokenPosition, sensitivity);
+        int leftTermGlobalId = fiDoc.getTokenSegmentSortPosition(annotationIndex, tokenPosition, sensitivity);
         return ConstraintValue.get(compareToSortPosition == leftTermGlobalId);
-    }
-
-    @Override
-    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        if (annotationName != null) {
-            annotIndex = fiAccessor.getAnnotationNumber(annotationName);
-        }
     }
 
     @Override
@@ -129,21 +122,32 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         Annotation annotation = field.annotation(annotationName);
         if (annotation == null)
             throw new IllegalArgumentException("Annotation '" + annotationName + "' not found in field '" + field.name() + "'.");
-        return new MatchFilterTokenAnnotationEqualsString(
+        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
                 groupName, annotation, compareToTermString, sensitivity);
+        mf.annotationIndex = annotationIndex;
+        return mf;
     }
 
     @Override
-    public MatchFilter forContext(LeafReaderContext context) {
+    public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
+        if (annotationName != null) {
+            annotationIndex = fiAccessor.getAnnotationIndex(annotationName);
+        }
+    }
+
+    @Override
+    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
         // Look up the sort position for the value we're comparing to.
         ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(context);
         assert annotation != null;
         TermsSegmentReader terms = fi.terms(annotation);
         int sortPosition = terms.sortPositionFor(compareToTermString, sensitivity);
 
-        return new MatchFilterTokenAnnotationEqualsString(
+        MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
                 groupName, annotation, compareToTermString, sensitivity,
                 sortPosition);
+        mf.annotationIndex = annotationIndex;
+        return mf;
     }
 
     @Override

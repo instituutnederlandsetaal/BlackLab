@@ -2,13 +2,14 @@ package nl.inl.blacklab.search.fimatch;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.IdentityHashMap;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestNfa {
@@ -16,9 +17,9 @@ public class TestNfa {
     static final class MockFiAccessor implements ForwardIndexAccessor {
 
         @Override
-        public void getGlobalTermNumbers(MutableIntSet results, int annotNumber, String annotValue,
+        public void getGlobalTermNumbers(MutableIntSet results, int annotationIndex, String annotValue,
                 MatchSensitivity sensitivity) {
-            if (annotNumber != 0)
+            if (annotationIndex != 0)
                 throw new IllegalArgumentException("only 0 is valid annotation");
             if (annotValue.length() > 1)
                 throw new IllegalArgumentException("only words of length 1 are valid");
@@ -26,7 +27,7 @@ public class TestNfa {
         }
 
         @Override
-        public int getAnnotationNumber(String annotName) {
+        public int getAnnotationIndex(String annotName) {
             if (!annotName.equals("word"))
                 throw new IllegalArgumentException("only 'word' is valid annotation");
             return 0;
@@ -34,7 +35,64 @@ public class TestNfa {
 
         @Override
         public ForwardIndexAccessorLeafReader getForwardIndexAccessorLeafReader(LeafReaderContext readerContext) {
-            return null;
+            return new ForwardIndexAccessorLeafReader() {
+                @Override
+                public ForwardIndexDocument getForwardIndexDoc(int segmentDocId) {
+                    return null;
+                }
+
+                @Override
+                public int getDocLength(int segmentDocId) {
+                    return 0;
+                }
+
+                @Override
+                public int[] getChunkSegmentTermIds(int annotIndex, int segmentDocId, int start, int end) {
+                    return new int[0];
+                }
+
+                @Override
+                public int getNumberOfAnnotations() {
+                    return 0;
+                }
+
+                @Override
+                public TermsSegmentReader terms(int annotIndex) {
+                    return new TermsSegmentReader() {
+                        @Override
+                        public String get(int id) {
+                            return Character.toString((char) id);
+                        }
+
+                        @Override
+                        public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
+                            return termIds.length == 2 && termIds[0] == termIds[1];
+                        }
+
+                        @Override
+                        public int idToSortPosition(int id, MatchSensitivity sensitivity) {
+                            return id;
+                        }
+
+                        @Override
+                        public void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
+                            for (int i = 0; i < termIds.length; i++) {
+                                sortOrder[i] = termIds[i];
+                            }
+                        }
+
+                        @Override
+                        public int sortPositionFor(String term, MatchSensitivity sensitivity) {
+                            return term.charAt(0);
+                        }
+
+                        @Override
+                        public int indexOf(String term) {
+                            return term.charAt(0);
+                        }
+                    };
+                }
+            };
         }
 
     }
@@ -96,8 +154,9 @@ public class TestNfa {
         NfaState ab = NfaState.token("contents%word@i", "a", NfaState.token("contents%word@i", "b", null));
         NfaState ba = NfaState.token("contents%word@i", "b", NfaState.token("contents%word@i", "a", null));
         NfaState start = NfaState.or(false, Arrays.asList(ab, ba), true);
-        start.finish(new HashSet<>());
-        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<>());
+        start.finish();
+        start.lookupAnnotationIndexes(new MockFiAccessor());
+        start = start.forLeafReaderContext(null);
 
         ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
         Assert.assertTrue(start.matches(fiDoc, 0, 1));
@@ -106,15 +165,38 @@ public class TestNfa {
         Assert.assertFalse(start.matches(fiDoc, 6, 1));
     }
 
-    @Test
-    public void testNfaRepetition() {
-        // Test NFA matching ac*e
+    private static NfaState getNfaWithRepetition() {
         NfaState c = NfaState.token("contents%word@i", "c", null);
         NfaState split = NfaState.or(true, Arrays.asList(c, NfaState.token("contents%word@i", "e", null)), false);
         NfaState start = NfaState.token("contents%word@i", "a", split);
         c.setNextState(0, split); // loopback
-        start.finish(new HashSet<>());
-        start.lookupAnnotationNumbers(new MockFiAccessor(), new IdentityHashMap<>());
+        start.finish();
+        start.lookupAnnotationIndexes(new MockFiAccessor());
+        start = start.forLeafReaderContext(null);
+        return start;
+    }
+
+    @Test
+    public void testNfaRepetition() {
+        // Test NFA matching ac*e
+        NfaState start = getNfaWithRepetition();
+
+        // Forward matching
+        Assert.assertTrue(start.matches(new ForwardIndexDocumentString("access"), 0, 1));
+        Assert.assertTrue(start.matches(new ForwardIndexDocumentString("aces"), 0, 1));
+        Assert.assertTrue(start.matches(new ForwardIndexDocumentString("aether"), 0, 1));
+        Assert.assertFalse(start.matches(new ForwardIndexDocumentString("acquire"), 0, 1));
+        Assert.assertFalse(start.matches(new ForwardIndexDocumentString("cesium"), 0, 1));
+
+        // Backward matching
+        Assert.assertTrue(start.matches(new ForwardIndexDocumentString("ideaal"), 3, -1));
+    }
+
+    @Test
+    public void testNfaCopy() {
+        // Test NFA matching ac*e
+        Set<NfaState> dangling = new HashSet<>();
+        NfaState start = getNfaWithRepetition().copy(dangling, null);
 
         // Forward matching
         Assert.assertTrue(start.matches(new ForwardIndexDocumentString("access"), 0, 1));

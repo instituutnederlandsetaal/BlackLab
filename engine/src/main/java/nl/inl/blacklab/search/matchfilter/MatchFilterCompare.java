@@ -121,8 +121,8 @@ public class MatchFilterCompare extends MatchFilter {
     }
 
     @Override
-    public MatchFilter forContext(LeafReaderContext context) {
-        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forContext(context),
+    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forLeafReaderContext(context),
                 (x, y) -> new MatchFilterCompare(x, y, operator, sensitivity));
     }
 

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -48,6 +49,16 @@ public class NfaStateOr extends NfaState {
             if (nextStates.get(i) == null)
                 nextStates.set(i, state);
         }
+    }
+
+    @Override
+    boolean hasDangling() {
+        return nextStates.stream().anyMatch(Objects::isNull);
+    }
+
+    @Override
+    Collection<NfaState> getConnectedStates() {
+        return nextStates;
     }
 
     @Override
@@ -153,21 +164,10 @@ public class NfaStateOr extends NfaState {
     }
 
     @Override
-    void lookupAnnotationNumbersInternal(ForwardIndexAccessor fiAccessor, Map<NfaState, Boolean> statesVisited) {
-        for (NfaState s : nextStates) {
-            if (s != null)
-                s.lookupAnnotationNumbers(fiAccessor, statesVisited);
-        }
-    }
-
-    @Override
-    protected void finishInternal(Set<NfaState> visited) {
+    protected void finishInternal() {
         for (int i = 0; i < nextStates.size(); i++) {
-            NfaState s = nextStates.get(i);
-            if (s == null)
+            if (nextStates.get(i) == null)
                 nextStates.set(i, match());
-            else
-                s.finish(visited);
         }
     }
 

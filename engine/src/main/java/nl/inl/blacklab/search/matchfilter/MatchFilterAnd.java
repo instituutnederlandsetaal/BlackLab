@@ -83,8 +83,8 @@ public class MatchFilterAnd extends MatchFilter {
     }
 
     @Override
-    public MatchFilter forContext(LeafReaderContext context) {
-        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forContext(context), MatchFilterAnd::new);
+    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forLeafReaderContext(context), MatchFilterAnd::new);
     }
 
     @Override

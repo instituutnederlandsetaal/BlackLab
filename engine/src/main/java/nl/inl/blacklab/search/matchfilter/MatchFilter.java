@@ -116,7 +116,7 @@ public abstract class MatchFilter implements TextPatternStruct {
      * @param context leaf reader context to create a copy for
      * @return a copy of this MatchFilter for the given context
      */
-    public MatchFilter forContext(LeafReaderContext context) {
+    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
         return this;
     }
 }
