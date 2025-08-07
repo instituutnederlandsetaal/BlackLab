@@ -51,6 +51,19 @@ public abstract class PropertyValueContext extends PropertyValue {
         return token;
     }
 
+    public static String serializeTerm(String value) {
+        if (value == null)
+            value = "~"; // no token, effectively a "null" value
+        else {
+            if (!value.isEmpty() && value.charAt(0) == '~') {
+                // tilde in first position has to be escaped
+                // because of how null value is encoded
+                value = "~" + value;
+            }
+        }
+        return value;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;

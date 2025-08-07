@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
@@ -17,8 +16,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public abstract class ForwardIndexAbstract implements ForwardIndex {
 
     protected static final Logger logger = LogManager.getLogger(ForwardIndexAbstract.class);
-
-    private final boolean canDoNfaMatching;
 
     /** Check that the requested snippet can be taken from a document of this length.
      * @param docLength length of the document
@@ -78,14 +75,7 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
                 }
             });
         }
-
-        canDoNfaMatching = fis.values().stream().allMatch(AnnotationForwardIndex::canDoNfaMatching);
         initialized = true;
-    }
-
-    @Override
-    public boolean canDoNfaMatching() {
-        return canDoNfaMatching;
     }
 
     /**
@@ -100,24 +90,8 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
     }
 
     @Override
-    public Terms terms(Annotation annotation) {
-        if (closed)
-            throw new IllegalStateException("ForwardIndex was closed");
-        return get(annotation).terms();
-    }
-
-    @Override
     public AnnotatedField field() {
         return field;
-    }
-
-    @Override
-    public Iterator<AnnotationForwardIndex> iterator() {
-        if (closed)
-            throw new IllegalStateException("ForwardIndex was closed");
-        synchronized (fis) {
-            return fis.values().iterator();
-        }
     }
 
     @Override
@@ -131,8 +105,10 @@ public abstract class ForwardIndexAbstract implements ForwardIndex {
         synchronized (fis) {
             afi = fis.get(annotation);
         }
-        if (afi == null)
+        if (afi == null) {
             afi = openAnnotationForwardIndex(annotation, index);
+            add(annotation, afi);
+        }
         return afi;
     }
 

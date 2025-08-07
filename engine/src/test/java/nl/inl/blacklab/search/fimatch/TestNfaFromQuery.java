@@ -102,6 +102,11 @@ public class TestNfaFromQuery {
                         public int indexOf(String term) {
                             throw new UnsupportedOperationException();
                         }
+
+                        @Override
+                        public int numberOfTerms() {
+                            return 0;
+                        }
                     };
                 }
 

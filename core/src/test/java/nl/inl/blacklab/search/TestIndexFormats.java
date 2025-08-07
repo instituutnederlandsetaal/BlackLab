@@ -125,7 +125,8 @@ public class TestIndexFormats {
     }
 
     int getToken(AnnotationForwardIndex afi, int docId, int pos) {
-        int[] context = afi.retrievePart(docId, pos, pos + 1);
+        LeafReaderContext lrc = testIndex.index().getLeafReaderContext(docId);
+        int[] context = afi.retrievePartsIntSegment(lrc, docId, new int[] { pos }, new int[] { pos + 1 }).get(0);
         if (context.length == 0)
             throw new IllegalArgumentException("Token offset out of range");
         return context[0];

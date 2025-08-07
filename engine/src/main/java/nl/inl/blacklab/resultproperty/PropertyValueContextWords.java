@@ -1,7 +1,11 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -18,6 +22,9 @@ public class PropertyValueContextWords extends PropertyValueContext {
     /** Sort orders for our term ids */
     int[] valueSortOrder;
 
+    /** String version of this value (valueTokenId/valueSortOrder will be null in this case) */
+    private String[] value;
+
     /** Sensitivity to use for comparisons */
     private MatchSensitivity sensitivity;
 
@@ -28,37 +35,69 @@ public class PropertyValueContextWords extends PropertyValueContext {
      */
     private boolean reverseOnDisplay;
 
-    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int[] value, int[] sortOrder, boolean reverseOnDisplay) {
+    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
+            int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
         super(index.annotationForwardIndex(annotation).terms(), annotation);
-        init(sensitivity, value, sortOrder, reverseOnDisplay);
+        init(sensitivity, null, termIds, sortPositions, reverseOnDisplay);
     }
 
-    PropertyValueContextWords(Terms terms, Annotation annotation, MatchSensitivity sensitivity, int[] value,
-            int[] sortOrder, boolean reverseOnDisplay) {
+    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
+            String[] termStrings, boolean reverseOnDisplay) {
+        super(index.annotationForwardIndex(annotation).terms(), annotation);
+        init(sensitivity, termStrings, null, null, reverseOnDisplay);
+    }
+
+    PropertyValueContextWords(Terms terms, Annotation annotation, MatchSensitivity sensitivity, String[] termStrings,
+            int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
         super(terms, annotation);
-        init(sensitivity, value, sortOrder, reverseOnDisplay);
+        init(sensitivity, termStrings, termIds, sortPositions, reverseOnDisplay);
     }
 
-    private void init(MatchSensitivity sensitivity, int[] value, int[] sortOrder,
+    private void init(MatchSensitivity sensitivity, String[] termStrings, int[] termIds, int[] sortPositions,
             boolean reverseOnDisplay) {
         this.sensitivity = sensitivity;
-        this.valueTokenId = value;
-        if (sortOrder == null) {
-            this.valueSortOrder = new int[value.length];
-            terms.toSortOrder(value, valueSortOrder, sensitivity);
+        if (termStrings == null) {
+            this.valueTokenId = termIds;
+            if (sortPositions == null) {
+                this.valueSortOrder = new int[termIds.length];
+                terms.toSortOrder(termIds, valueSortOrder, sensitivity);
+            } else {
+                this.valueSortOrder = sortPositions;
+            }
+            this.value = null;
         } else {
-            this.valueSortOrder = sortOrder;
+            this.value = termStrings;
+            this.valueTokenId = null;
+            this.valueSortOrder = null;
         }
         this.reverseOnDisplay = reverseOnDisplay;
     }
 
     @Override
     public int compareTo(Object o) {
+        if (value != null)
+            return compareStringArrays(value, ((PropertyValueContextWords) o).value);
         return Arrays.compare(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
+    }
+
+    private int compareStringArrays(String[] a, String[] b) {
+        int n = Math.min(a.length, b.length);
+        for (int i = 0; i < n; i++) {
+            int c = collator.compare(a[i], b[i]);
+            if (c != 0)
+                return c;
+        }
+        if (a.length < b.length)
+            return -1; // this value is shorter, so comes first
+        if (a.length > b.length)
+            return 1; // this value is longer, so comes last
+        return 0; // equal
     }
 
     @Override
     public int hashCode() {
+        if (value != null)
+            return Arrays.hashCode(value);
         return Arrays.hashCode(valueSortOrder);
     }
 
@@ -66,8 +105,11 @@ public class PropertyValueContextWords extends PropertyValueContext {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if (obj instanceof PropertyValueContextWords)
+        if (obj instanceof PropertyValueContextWords) {
+            if (value != null)
+                return Arrays.equals(value, ((PropertyValueContextWords) obj).value);
             return Arrays.equals(valueSortOrder, ((PropertyValueContextWords) obj).valueSortOrder);
+        }
         return false;
     }
 
@@ -80,58 +122,52 @@ public class PropertyValueContextWords extends PropertyValueContext {
             List<String> infos, List<String> terms, boolean reverseOnDisplay) {
         Annotation annotation = infos.isEmpty() ? field.mainAnnotation() :
                 index.metadata().annotationFromFieldAndName(infos.get(0), field);
-        Terms termsObj = index.annotationForwardIndex(annotation).terms();
         MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
                 annotation.mainSensitivity().sensitivity();
-        int[] ids = new int[terms.size()];
-        for (int i = 0; i < terms.size(); i++) {
-            ids[i] = deserializeToken(termsObj, terms.get(i));
-        }
-        return new PropertyValueContextWords(index, annotation, sensitivity, ids, null, reverseOnDisplay);
+        return new PropertyValueContextWords(index, annotation, sensitivity, terms.toArray(new String[0]),
+                reverseOnDisplay);
     }
 
     // get displayable string version; note that we lowercase this if this is case-insensitive
     @Override
     public String toString() {
-        StringBuilder b = new StringBuilder();
-        if (reverseOnDisplay) {
-            for (int i = valueTokenId.length - 1; i >= 0; i--) {
+        List<String> parts = new ArrayList<>();
+        int n = value == null ? valueTokenId.length : value.length;
+        for (int i = 0; i < n; i++) {
+            String word;
+            if (value == null) {
                 int v = valueTokenId[i];
-                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
-                if (!word.isEmpty()) {
-                    if (!b.isEmpty())
-                        b.append(" ");
-                    b.append(word);
-                }
+                word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
+            } else {
+                String w = value[i];
+                word = w == null ? NO_VALUE_STR : sensitivity.desensitize(w);
             }
-        } else {
-            for (int v : valueTokenId) {
-                String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
-                if (!word.isEmpty()) {
-                    if (!b.isEmpty())
-                        b.append(" ");
-                    b.append(word);
-                }
-            }
+            if (!word.isEmpty())
+                parts.add(word);
         }
-        return b.toString();
+        if (reverseOnDisplay)
+            Collections.reverse(parts);
+        return StringUtils.join(parts, " ");
     }
 
     @Override
     public String serialize() {
-        String[] parts = new String[valueTokenId.length + 3];
+        int length = value == null ? valueTokenId.length : value.length;
+        String[] parts = new String[length + 3];
         parts[0] = reverseOnDisplay ? "cwsr" : "cws";
         parts[1] = annotation.fieldAndAnnotationName();
         parts[2] = sensitivity.luceneFieldSuffix();
-        for (int i = 0; i < valueTokenId.length; i++) {
-            String term = serializeTerm(terms, valueTokenId[i]);
+        for (int i = 0; i < length; i++) {
+            String term = value == null ?
+                    serializeTerm(terms, valueTokenId[i]) :
+                    serializeTerm(value[i]);
             parts[i + 3] = term;
         }
         return PropertySerializeUtil.combineParts(parts);
     }
 
     @Override
-    public int[] value() {
-        return valueTokenId;
+    public Object value() {
+        return value == null ? valueTokenId : value;
     }
 }

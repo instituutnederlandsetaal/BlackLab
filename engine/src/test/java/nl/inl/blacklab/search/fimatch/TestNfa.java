@@ -79,6 +79,11 @@ public class TestNfa {
                         public int indexOf(String term) {
                             return term.charAt(0);
                         }
+
+                        @Override
+                        public int numberOfTerms() {
+                            return 0;
+                        }
                     };
                 }
             };

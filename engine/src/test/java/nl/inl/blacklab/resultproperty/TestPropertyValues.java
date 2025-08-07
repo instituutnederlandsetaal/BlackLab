@@ -43,13 +43,13 @@ public class TestPropertyValues {
         AnnotatedField field = new AnnotatedFieldImpl(index, "contents");
         Annotation annotation = new AnnotationImpl(field, "lemma");
         PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(terms, annotation, sensitivity,
-                new int[]{2, 3, 3}, null, false);
+                null, new int[]{2, 3, 3}, null, false);
         PropertyValueContextWords twoThreeThree2 = new PropertyValueContextWords(terms, annotation, sensitivity,
-                new int[]{2, 3, 3}, null, false);
+                null, new int[]{2, 3, 3}, null, false);
         PropertyValueContextWords oneThreeFour = new PropertyValueContextWords(terms, annotation, sensitivity,
-                new int[]{1, 3, 4}, null, false);
+                null, new int[]{1, 3, 4}, null, false);
         PropertyValueContextWords twoThreeFive = new PropertyValueContextWords(terms, annotation, sensitivity,
-                new int[]{2, 3, 5}, null, false);
+                null, new int[]{2, 3, 5}, null, false);
         Assert.assertEquals(0, twoThreeThree.compareTo(twoThreeThree2));
         Assert.assertEquals(-1, oneThreeFour.compareTo(twoThreeThree));
         Assert.assertEquals(1, twoThreeFive.compareTo(twoThreeThree));

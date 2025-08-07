@@ -110,10 +110,6 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
-    private long get(PropertyValueDoc identity) {
-        return get(identity.value());
-    }
-
     @Override
     public PropertyValueInt get(DocResult result) {
         return new PropertyValueInt(get(result.identity().value()));

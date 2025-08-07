@@ -441,13 +441,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true), documentFilterQuery);
     }
 
-    public boolean canDoNfaMatching() {
-        if (forwardIndices.isEmpty())
-            return false;
-        ForwardIndex fi = forwardIndices.values().iterator().next();
-        return fi.canDoNfaMatching();
-    }
-
     protected void checkCanOpenIndex(boolean createNewIndex) throws IllegalArgumentException {
         // subclass can override this
     }

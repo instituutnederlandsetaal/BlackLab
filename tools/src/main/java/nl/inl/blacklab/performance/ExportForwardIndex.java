@@ -1,15 +1,21 @@
 package nl.inl.blacklab.performance;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -34,7 +40,7 @@ public class ExportForwardIndex {
     private ExportForwardIndex() {
     }
 
-    public static void main(String[] args) throws ErrorOpeningIndex {
+    public static void main(String[] args) throws ErrorOpeningIndex, IOException {
 
         LogUtil.setupBasicLoggingConfig(); // suppress log4j warning
 
@@ -86,7 +92,7 @@ public class ExportForwardIndex {
             ForwardIndex forwardIndex = index.forwardIndex(annotatedField);
 
             if (doTerms)
-                exportTerms(annotatedField, forwardIndex);
+                exportTerms(index, annotatedField);
             if (doLengths || doTokens)
                 exportDocs(index, annotatedField, forwardIndex, doLengths, doTokens);
         }
@@ -110,26 +116,44 @@ public class ExportForwardIndex {
                 String length = doLengths ? " len=" + afi.docLength(docId) : "";
                 System.out.println("    " + annotation.name() + length);
                 if (doTokens) {
-                    int[] doc = afi.getDocument(docId);
-                    for (int tokenId: doc) {
-                        String token = afi.terms().get(tokenId);
-                        System.out.println("    " + token);
+                    LeafReaderContext lrc = index.getLeafReaderContext(docId);
+                    try {
+                        TermsSegmentReader terms = BlackLabCodecUtil.getPostingsReader(lrc)
+                                .terms(annotation.forwardIndexSensitivity().luceneField()).reader();
+                        int[] doc = afi.getDocumentSegment(lrc, docId);
+                        for (int tokenId: doc) {
+                            String token = terms.get(tokenId);
+                            System.out.println("    " + token);
+                        }
+                    } catch (IOException e) {
+                        throw new InvalidIndex(e);
                     }
                 }
             }
         });
     }
 
-    private static void exportTerms(AnnotatedField annotatedField, ForwardIndex forwardIndex) {
+    private static void exportTerms(BlackLabIndex index, AnnotatedField annotatedField) throws IOException {
         // Export term indexes + term strings
         System.out.println("TERMS");
         for (Annotation annotation: annotatedField.annotations()) {
             if (SKIP_ANNOTATIONS.contains(annotation.name()) || !annotation.hasForwardIndex())
                 continue;
             System.out.println("  " + annotation.name());
-            Terms terms = forwardIndex.terms(annotation);
-            for (int i = 0; i < terms.numberOfTerms(); i++) {
-                System.out.println(String.format("    %03d %s", i, terms.get(i)));
+            Set<String> allTerms = new TreeSet<>();
+            for (LeafReaderContext lrc: index.reader().leaves()) {
+                String luceneField = annotatedField.mainAnnotation().forwardIndexSensitivity().luceneField();
+                TermsSegmentReader r = BlackLabCodecUtil.getPostingsReader(lrc)
+                        .terms(luceneField).reader();
+                for (int i = 0; i < r.numberOfTerms(); i++) {
+                    allTerms.add(r.get(i));
+                }
+            }
+
+            int i = 0;
+            for (String term: allTerms) {
+                System.out.println(String.format("    %03d %s", i, term));
+                i++;
             }
         }
     }

@@ -15,15 +15,18 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -60,7 +63,18 @@ public class HitGroupsTokenFrequencies {
     private static class GroupIdHash {
         private final int[] tokenIds;
         private final int[] tokenSortPositions;
+
+        /**
+         * The tokens as strings.
+         * <p>
+         * Set after merging per-segment results into global results.
+         * tokenIds and tokenSortPositions are null in this case.
+         */
+        private final String[] tokens;
+
         private final PropertyValue[] metadataValues;
+
+        /** Precalculated hash code. */
         private final int hash;
 
         /**
@@ -73,8 +87,24 @@ public class HitGroupsTokenFrequencies {
         public GroupIdHash(int[] tokenIds, int[] tokenSortPositions, PropertyValue[] metadataValues, int metadataValuesHash) {
             this.tokenIds = tokenIds;
             this.tokenSortPositions = tokenSortPositions;
+            this.tokens = null;
             this.metadataValues = metadataValues;
-            hash = Arrays.hashCode(tokenSortPositions) ^ metadataValuesHash;
+            hash = Arrays.hashCode(this.tokenSortPositions) ^ metadataValuesHash;
+        }
+
+        /**
+         * Construct the version with token strings.
+         *
+         * @param tokens token term for each token in the group id
+         * @param metadataValues relevant metadatavalues
+         * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
+         */
+        public GroupIdHash(String[] tokens, PropertyValue[] metadataValues, int metadataValuesHash) {
+            this.tokenIds = null;
+            this.tokenSortPositions = null;
+            this.tokens = tokens;
+            this.metadataValues = metadataValues;
+            hash = Arrays.hashCode(this.tokens) ^ metadataValuesHash;
         }
 
         @Override
@@ -86,9 +116,44 @@ public class HitGroupsTokenFrequencies {
         @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
         @Override
         public boolean equals(Object obj) {
-            return ((GroupIdHash) obj).hash == this.hash &&
-                   Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions) &&
-                   Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues);
+            if (((GroupIdHash) obj).hash != this.hash)
+                return false;
+            if (!Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues))
+                return false;
+            if (tokens != null) {
+                // String form
+                return Arrays.equals(tokens, ((GroupIdHash) obj).tokens);
+            } else {
+                // Segment sort order form
+                return Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions);
+            }
+        }
+
+        /** Convert term ids to their string representation.
+         * Done when merging per-segment results into global results.
+         */
+        public GroupIdHash termIdsToStrings(LeafReaderContext lrc, List<AnnotInfo> hitProperties) {
+            if (tokens != null) {
+                // Already converted to strings
+                return this;
+            }
+            if (tokenIds == null || tokenSortPositions == null) {
+                throw new IllegalStateException("Cannot convert term ids to strings, no term ids available");
+            }
+            String[] tokenStrings = new String[tokenIds.length];
+            BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
+            for (int i = 0; i < tokenIds.length; i++) {
+                String luceneFieldName = hitProperties.get(i).annotationForwardIndex.annotation().forwardIndexSensitivity().luceneField();
+                try {
+                    int tokensSegmentTermId = tokenIds[i];
+                    tokenStrings[i] = tokensSegmentTermId >= 0 ?
+                            postingsReader.terms(luceneFieldName).reader().get(tokensSegmentTermId) :
+                            null;
+                } catch (IOException e) {
+                    throw new InvalidIndex(e);
+                }
+            }
+            return new GroupIdHash(tokenStrings, metadataValues, Arrays.hashCode(metadataValues));
         }
     }
 
@@ -230,21 +295,25 @@ public class HitGroupsTokenFrequencies {
             try (final BlockTimer c = BlockTimer.create("Top Level")) {
 
                 // Collect all doc ids that match the given filter (or all docs if no filter specified)
-                final List<Integer> docIds = new ArrayList<>();
+                final Map<LeafReaderContext, List<Integer>> docIds = new HashMap<>();
                 try (BlockTimer ignored = c.child("Gathering documents")) {
                     index.searcher().search(filterQuery == null ? index.getAllRealDocsQuery() : filterQuery, new SimpleCollector() {
-                        private int docBase;
+                        private LeafReaderContext context;
 
                         @Override
                         protected void doSetNextReader(LeafReaderContext context) throws IOException {
-                            docBase = context.docBase;
+                            this.context = context;
                             super.doSetNextReader(context);
                         }
 
                         @Override
-                        public void collect(int docId) {
-                            int globalDocId = docId + docBase;
-                            docIds.add(globalDocId);
+                        public void collect(int segmentDocId) {
+                            docIds.compute(context, (k, v) -> {
+                                if (v == null)
+                                    v = new ArrayList<>();
+                                v.add(segmentDocId);
+                                return v;
+                            });
                         }
 
                         @Override
@@ -260,38 +329,47 @@ public class HitGroupsTokenFrequencies {
                     // This requires a different approach because we never retrieve the individual tokens if there's no annotation
                     // e.g. match '*' group by document year --
                     // What we do instead is for every document just retrieve how many tokens it contains (from its metadata), and add that count to the appropriate group
-                    numberOfDocsProcessed = docIds.size();
+                    numberOfDocsProcessed = docIds.values().stream().map(List::size).reduce(0, Integer::sum);
                     try (BlockTimer ignored = c.child("Grouping documents (metadata only path)")) {
                         String fieldName = queryInfo.field().name();
-                        DocPropertyAnnotatedFieldLength propTokens = new DocPropertyAnnotatedFieldLength(index, fieldName);
+                        DocPropertyAnnotatedFieldLength fieldLength = new DocPropertyAnnotatedFieldLength(index, fieldName);
                         final int[] emptyTokenValuesArray = new int[0];
 
-                        docIds.parallelStream().forEach(docId -> {
-                            final int docLength = (int) propTokens.get(docId); // already excludes dummy closing token!
-                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(
-                                    docId), 0, docLength);
-                            final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
-                            for (int i = 0; i < docProperties.size(); ++i) { metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult); }
-                            final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
-
-                            numberOfHitsProcessed.addAndGet(docLength);
-
-                            // Add all tokens in document to the group.
-                            final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray, emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
-                            globalOccurrences.compute(groupId, (__, groupSizes) -> {
-                                if (groupSizes != null) {
-                                    // Issue #379 (https://github.com/instituutnederlandsetaal/BlackLab/issues/379) discussed the
-                                    // thread safety of the below 2 lines. It should be safe because globalOccurrences
-                                    // is a ConcurrentHashMap, and its compute() operation is atomic according to the
-                                    // documentation:
-                                    // https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html#compute-K-java.util.function.BiFunction-
-                                    groupSizes.hits += docLength;
-                                    groupSizes.docs += 1;
-                                    return groupSizes;
-                                } else {
-                                    return new OccurrenceCounts(docLength, 1);
+                        docIds.entrySet().parallelStream().forEach(entry -> {
+                            LeafReaderContext lrc = entry.getKey();
+                            List<Integer> docIdsInSegment = entry.getValue();
+                            for (int docId: docIdsInSegment) {
+                                int globalDocId = docId + lrc.docBase;
+                                final int docLength = (int) fieldLength.get(globalDocId); // excludes dummy closing token!
+                                final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
+                                        new PropertyValueDoc(globalDocId), 0, docLength);
+                                final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
+                                for (int i = 0; i < docProperties.size(); ++i) {
+                                    metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult);
                                 }
-                            });
+                                // precompute, it's the same for all hits in document
+                                final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup);
+
+                                numberOfHitsProcessed.addAndGet(docLength);
+
+                                // Add all tokens in document to the group.
+                                final GroupIdHash groupId = new GroupIdHash(emptyTokenValuesArray,
+                                        emptyTokenValuesArray, metadataValuesForGroup, metadataValuesHash);
+                                globalOccurrences.compute(groupId, (__, groupSizes) -> {
+                                    if (groupSizes != null) {
+                                        // Issue #379 (https://github.com/instituutnederlandsetaal/BlackLab/issues/379) discussed the
+                                        // thread safety of the below 2 lines. It should be safe because globalOccurrences
+                                        // is a ConcurrentHashMap, and its compute() operation is atomic according to the
+                                        // documentation:
+                                        // https://docs.oracle.com/javase/8/docs/api/java/util/concurrent/ConcurrentHashMap.html#compute-K-java.util.function.BiFunction-
+                                        groupSizes.hits += docLength;
+                                        groupSizes.docs += 1;
+                                        return groupSizes;
+                                    } else {
+                                        return new OccurrenceCounts(docLength, 1);
+                                    }
+                                });
+                            }
                         });
                     }
                 } else {
@@ -310,123 +388,157 @@ public class HitGroupsTokenFrequencies {
                     final Set<String> fieldsToLoad = new HashSet<>();
                     fieldsToLoad.add(lengthTokensFieldName);
 
-                    final IndexReader reader = index.reader();
+                    numberOfDocsProcessed = docIds.entrySet().parallelStream().map(entry -> {
+                        LeafReaderContext lrc = entry.getKey();
+                        List<Integer> segmentDocIds = entry.getValue();
 
-                    numberOfDocsProcessed = docIds.parallelStream().filter(docId -> {
+                        // Keep track of term occurrences in this segment; later we'll merge it with the global term frequencies
+                        Map<GroupIdHash, OccurrenceCounts> occsInSegment = new HashMap<>();
 
-                        // If we've already exceeded the maximum, skip this doc
-                        if (numberOfHitsProcessed.get() >= maxHitsToCount)
-                            return false;
-
-                        try {
-
-                            // Step 1: read all values for the to-be-grouped annotations for this document
-                            // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
-
-                            final Document doc = reader.document(docId, fieldsToLoad);
-                            final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
-                            final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
-
-                            try (BlockTimer ignored = c.child("Read annotations from forward index")) {
-                                for (AnnotInfo annot : hitProperties) {
-                                    final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                                    final int[] tokenValues = afi.getDocument(docId);
-                                    tokenValuesPerAnnotation.add(tokenValues);
-
-                                    // Look up sort values
-                                    // NOTE: tried moving this to a TermsReader.arrayOfIdsToSortPosition() method,
-                                    //       but that was slower...
-                                    int docLength = tokenValues.length;
-                                    int[] sortValues = new int[docLength];
-                                    for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
-                                        final int termId = tokenValues[tokenIndex];
-                                        sortValues[tokenIndex] = annot.getTerms().idToSortPosition(termId, annot.getMatchSensitivity());
-                                    }
-                                    sortValuesPerAnnotation.add(sortValues);
-                                }
-
-                            }
-
-                            // Step 2: retrieve the to-be-grouped metadata for this document
-                            int docLength = Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                            final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo, new PropertyValueDoc(
-                                    docId), 0, docLength);
-                            final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ? new PropertyValue[docProperties.size()] : null;
-                            for (int i = 0; i < docProperties.size(); ++i)
-                                metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult);
-                            final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
-
-                            // now we have all values for all relevant annotations for this document
-                            // iterate again and pair up the nth entries for all annotations, then store that as a group.
-
-                            // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
+                        int docsDone = 0;
+                        for (int segmentDocId: segmentDocIds) {
+                            int globalDocId = segmentDocId + lrc.docBase;
                             Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
-                            try (BlockTimer ignored = c.child("Group tokens")) {
+                            // If we've already exceeded the maximum, skip this doc
+                            if (numberOfHitsProcessed.get() >= maxHitsToCount)
+                                return docsDone;
+                            docsDone++;
 
-                                for (int tokenIndex = 0; tokenIndex < docLength; ++ tokenIndex) {
-                                    int[] annotationValuesForThisToken = new int[numAnnotations];
-                                    int[] sortPositions = new int[numAnnotations];
+                            try {
 
-                                    // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
-                                    // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
-                                    // so in essence it's also an "id", but a case-insensitive one.
-                                    // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
-                                    // that hashes the token ids instead of the sortpositions in that case.
-                                    for (int annotationIndex = 0; annotationIndex < numAnnotations; ++annotationIndex) {
-                                        int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
-                                        if (tokenIndex >= tokenValues.length) {
-                                            logger.debug("### ERROR");
-                                            logger.debug("docLength = " + docLength);
-                                            logger.debug("tokenValues.length = " + tokenValues.length);
-                                            logger.debug("tokenIndex = " + tokenIndex);
-                                            logger.debug("annotationIndex = " + annotationIndex);
-                                            logger.debug("annotation = " + (hitProperties.get(annotationIndex).getAnnotationForwardIndex().annotation().name()));
+                                // Step 1: read all values for the to-be-grouped annotations for this document
+                                // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
+
+                                final Document doc = lrc.reader().document(segmentDocId, fieldsToLoad);
+                                final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
+                                final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
+
+                                try (BlockTimer ignored = c.child("Read annotations from forward index")) {
+                                    for (AnnotInfo annot : hitProperties) {
+                                        final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
+                                        String luceneField = annot.annotationForwardIndex.annotation()
+                                                .forwardIndexSensitivity().luceneField();
+                                        TermsSegmentReader segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
+                                                .terms(luceneField).reader();
+                                        final int[] tokenValues = afi.getDocumentSegment(lrc, globalDocId);
+                                        tokenValuesPerAnnotation.add(tokenValues);
+
+                                        // Look up sort values
+                                        // NOTE: tried moving this to a TermsReader.arrayOfIdsToSortPosition() method,
+                                        //       but that was slower...
+                                        int docLength = tokenValues.length;
+                                        int[] sortValues = new int[docLength];
+                                        for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
+                                            final int segmentTermId = tokenValues[tokenIndex];
+                                            sortValues[tokenIndex] = segmentTerms.idToSortPosition(segmentTermId,
+                                                    annot.getMatchSensitivity());
                                         }
-                                        annotationValuesForThisToken[annotationIndex] = tokenValues[tokenIndex];
-                                        int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
-                                        sortPositions[annotationIndex] = sortValuesThisAnnotation[tokenIndex];
+                                        sortValuesPerAnnotation.add(sortValues);
                                     }
-                                    final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
-
-                                    // Count occurrence in this doc
-                                    OccurrenceCounts occ = occsInDoc.get(groupId);
-                                    if (occ == null) {
-                                        occ = new OccurrenceCounts(1, 1);
-                                        occsInDoc.put(groupId, occ);
-                                    } else {
-                                        occ.hits++;
-                                    }
-
-
                                 }
 
-                                // Merge occurrences in this doc with global occurrences
-                                occsInDoc.forEach((groupId, occurrenceInDocument) -> globalOccurrences.compute(groupId, (__, globalGroup) -> {
-                                    if (globalGroup != null) {
-                                        // Merge local & global counts
-                                        globalGroup.hits += occurrenceInDocument.hits;
-                                        globalGroup.docs += occurrenceInDocument.docs;
-                                        return globalGroup;
-                                    } else {
-                                        return occurrenceInDocument; // first time we found this group.
+                                // Step 2: retrieve the to-be-grouped metadata for this document
+                                int docLength = Integer.parseInt(doc.get(lengthTokensFieldName))
+                                        - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
+                                        new PropertyValueDoc(globalDocId), 0, docLength);
+                                final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ?
+                                        new PropertyValue[docProperties.size()] :
+                                        null;
+                                for (int i = 0; i < docProperties.size(); ++i)
+                                    metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult);
+                                // precompute, it's the same for all hits in document
+                                final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup);
+
+                                // now we have all values for all relevant annotations for this document
+                                // iterate again and pair up the nth entries for all annotations, then store that as a group.
+
+                                try (BlockTimer ignored = c.child("Group tokens")) {
+
+                                    for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
+                                        int[] annotationValuesForThisToken = new int[numAnnotations];
+                                        int[] sortPositions = new int[numAnnotations];
+
+                                        // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
+                                        // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
+                                        // so in essence it's also an "id", but a case-insensitive one.
+                                        // we could further optimize to not do this step when grouping sensitively by making a specialized instance of the GroupIdHash class
+                                        // that hashes the token ids instead of the sortpositions in that case.
+                                        for (int annotationIndex = 0;
+                                             annotationIndex < numAnnotations; ++annotationIndex) {
+                                            int[] tokenValues = tokenValuesPerAnnotation.get(annotationIndex);
+                                            if (tokenIndex >= tokenValues.length) {
+                                                logger.debug("### ERROR");
+                                                logger.debug("docLength = " + docLength);
+                                                logger.debug("tokenValues.length = " + tokenValues.length);
+                                                logger.debug("tokenIndex = " + tokenIndex);
+                                                logger.debug("annotationIndex = " + annotationIndex);
+                                                logger.debug("annotation = " + (hitProperties.get(annotationIndex)
+                                                        .getAnnotationForwardIndex().annotation().name()));
+                                            }
+                                            annotationValuesForThisToken[annotationIndex] = tokenValues[tokenIndex];
+                                            int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
+                                            sortPositions[annotationIndex] = sortValuesThisAnnotation[tokenIndex];
+                                        }
+                                        final GroupIdHash groupId = new GroupIdHash(annotationValuesForThisToken,
+                                                sortPositions, metadataValuesForGroup, metadataValuesHash);
+
+                                        // Count occurrence in this doc
+                                        occsInDoc.compute(groupId, (__, occurrenceInDoc) -> {
+                                            if (occurrenceInDoc == null) {
+                                                occurrenceInDoc = new OccurrenceCounts(1, 1);
+                                            } else {
+                                                occurrenceInDoc.hits++;
+                                            }
+                                            return occurrenceInDoc;
+                                        });
                                     }
-                                }));
 
+                                    // If we exceeded maxHitsToCount, remember that and don't process more docs.
+                                    // (NOTE: we don't care if we don't get exactly maxHitsToCount in this case; just that
+                                    //  we stop the operation before the server is overloaded)
+                                    if (numberOfHitsProcessed.getAndUpdate(i -> i + docLength) >= maxHitsToCount) {
+                                        hitMaxHitsToCount.set(true);
+                                    }
 
-                                // If we exceeded maxHitsToCount, remember that and don't process more docs.
-                                // (NOTE: we don't care if we don't get exactly maxHitsToCount in this case; just that
-                                //  we stop the operation before the server is overloaded)
-                                if (numberOfHitsProcessed.getAndUpdate(i -> i + docLength) >= maxHitsToCount) {
-                                    hitMaxHitsToCount.set(true);
                                 }
-
+                            } catch (IOException e) {
+                                throw BlackLabException.wrapRuntime(e);
                             }
-                        } catch (IOException e) {
-                            throw BlackLabException.wrapRuntime(e);
+                            // Merge the document occurrences into the segment's occurrences.
+                            // (we do this extra step so that the docs count is correct;
+                            //  if we do all docs in one map, we don't know when to increment docs)
+                            occsInDoc.forEach((groupId, occInDoc) ->
+                                    occsInSegment.compute(groupId, (__, occInSeg) -> {
+                                if (occInSeg == null) {
+                                    // First time this segment we found this group.
+                                    occInSeg = occInDoc;
+                                } else {
+                                    // Merge counts
+                                    occInSeg.hits += occInDoc.hits;
+                                    occInSeg.docs += occInDoc.docs;
+                                }
+                                return occInSeg;
+                            }));
                         }
-                        return true;
-                    }).count();
+                        // Merge occurrences in this doc with global occurrences
+                        // (the group ids are converted to their string representation here)
+                        occsInSegment.forEach(
+                                (groupId, occurrenceInSegment) -> globalOccurrences.compute(groupId.termIdsToStrings(lrc, hitProperties),
+                                        (__, globalGroup) -> {
+                                            if (globalGroup != null) {
+                                                // Merge local & global counts
+                                                globalGroup.hits += occurrenceInSegment.hits;
+                                                globalGroup.docs += occurrenceInSegment.docs;
+                                                return globalGroup;
+                                            } else {
+                                                return occurrenceInSegment; // first time we found this group.
+                                            }
+                                        }));
+
+                        return docsDone;
+                    }).reduce(0, Integer::sum);
                     logger.trace("Number of processed docs: " + numberOfDocsProcessed);
                 }
             }
@@ -439,7 +551,7 @@ public class HitGroupsTokenFrequencies {
                 groups = globalOccurrences.entrySet().parallelStream().map(e -> {
                     final long groupSizeHits = e.getValue().hits;
                     final int groupSizeDocs = e.getValue().docs;
-                    final int[] annotationValues = e.getKey().tokenIds;
+                    final String[] annotationValues = e.getKey().tokens;
                     final PropertyValue[] metadataValues = e.getKey().metadataValues;
                     // allocate new - is not copied when moving into propertyvaluemultiple
                     final PropertyValue[] groupIdAsList = new PropertyValue[numAnnotations + numMetadataValues];
@@ -458,7 +570,7 @@ public class HitGroupsTokenFrequencies {
                             Annotation annot = annotInfo.getAnnotationForwardIndex().annotation();
                             MatchSensitivity sens = annotInfo.getMatchSensitivity();
                             groupIdAsList[indexInOutput++] = new PropertyValueContextWords(index, annot, sens,
-                                    new int[] {annotationValues[indexInInput]}, null, false);
+                                    new String[] {annotationValues[indexInInput]}, false);
                         }
                     }
 

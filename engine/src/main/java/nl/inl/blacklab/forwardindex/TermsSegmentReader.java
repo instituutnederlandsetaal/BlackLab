@@ -45,4 +45,6 @@ public interface TermsSegmentReader {
     int sortPositionFor(String compareToTermString, MatchSensitivity sensitivity);
 
     int indexOf(String term);
+
+    int numberOfTerms();
 }

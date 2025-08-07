@@ -44,9 +44,9 @@ public class Contexts {
     private static final int HIT_START_INDEX = 0;
 
     /**
-     * In context arrays, what index indicates the hit end (start of right part)?
+     * In context arrays, what index indicates the hit end (first word after the hit)?
      */
-    private static final int RIGHT_START_INDEX = 1;
+    private static final int AFTER_START_INDEX = 1;
 
     /** In context arrays, what index indicates the length of the context? */
     private static final int LENGTH_INDEX = 2;
@@ -55,14 +55,14 @@ public class Contexts {
     }
 
     /**
-     * Retrieves the KWIC information (KeyWord In Context: left, hit and right
+     * Retrieves the KWIC information (KeyWord In Context: before, hit and after
      * context) for a number of hits in the same document from the ContentStore.
      *
      * Used by Kwics.retrieveKwics().
      *
      * @param hits hits in this one document
      * @param forwardIndexes forward indexes for the annotations
-     * @param contextSize number of words left and right of hit to fetch
+     * @param contextSize number of words before and after hit to fetch
      * @param kwicConsumer where to add the KWICs
      */
     static void makeKwicsSingleDocForwardIndex(
@@ -102,11 +102,9 @@ public class Contexts {
             int contextLength = hitContext[Contexts.LENGTH_INDEX];
             List<String> tokens = new ArrayList<>(contextLength * numberOfAnnotations);
             // For each word in the context...
-            for (int indexInContext = Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-                 indexInContext < contextLength + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-                    indexInContext++) {
+            for (int indexInContext = 0; indexInContext < contextLength; indexInContext++) {
                 // For each annotation...
-                int annotIndex = indexInContext;
+                int annotIndex = indexInContext + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
                 for (TermsSegmentReader terms: annotationTerms) {
                     tokens.add(terms.get(hitContext[annotIndex]));
                     annotIndex += contextLength; // jmup to next annotation in context array
@@ -114,7 +112,7 @@ public class Contexts {
             }
             int fragmentStartInDoc = h.start() - hitContext[Contexts.HIT_START_INDEX];
             kwicConsumer.accept(h, new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
-                    hitContext[Contexts.RIGHT_START_INDEX], fragmentStartInDoc));
+                    hitContext[Contexts.AFTER_START_INDEX], fragmentStartInDoc));
             hitIndex++;
         }
     }
@@ -171,7 +169,7 @@ public class Contexts {
                             + theseWords.length * contextSources.size()];
                     // Math.min() so we don't go beyond actually retrieved snippet (which may have been limited because of config)!
                     contexts[i][HIT_START_INDEX] = Math.min(theseWords.length, hit.start() - firstWordIndex);
-                    contexts[i][RIGHT_START_INDEX] = Math.min(theseWords.length, hit.end() - firstWordIndex);
+                    contexts[i][AFTER_START_INDEX] = Math.min(theseWords.length, hit.end() - firstWordIndex);
                     contexts[i][LENGTH_INDEX] = theseWords.length;
                 }
                 // Copy the context we just retrieved into the context array
@@ -217,8 +215,8 @@ public class Contexts {
          * There may be multiple contexts for each hit. Each
          * int array starts with three bookkeeping integers, followed by the contexts
          * information. The bookkeeping integers are:
-         * 0 = hit start, index of the hit word (and length of the left context), counted from the start of the context
-         * 1 = right start, start of the right context, counted from the start the context
+         * 0 = hit start, index of the hit word (and length of the context before the hit), counted from the start of the context
+         * 1 = after start, start of the context after the hit, counted from the start the context
          * 2 = context length, length of 1 context. As stated above, there may be multiple contexts.
          *
          * The first context therefore starts at index 3.
@@ -253,10 +251,10 @@ public class Contexts {
      * method can only be used for hits in a single segment.
      *
      * @param hits hits to find contexts for
-     * @param annotations the field and annotations to use for the context
+     * @param annotation the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    private static BigList<String[]> getContexts(HitsSimple hits, Annotation annotation, ContextSize contextSize) {
+    private static BigList<String[]> getCollocations(HitsSimple hits, Annotation annotation, ContextSize contextSize) {
         if (annotation == null)
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
@@ -276,8 +274,8 @@ public class Contexts {
          * There may be multiple contexts for each hit. Each
          * int array starts with three bookkeeping integers, followed by the contexts
          * information. The bookkeeping integers are:
-         * 0 = hit start, index of the hit word (and length of the left context), counted from the start of the context
-         * 1 = right start, start of the right context, counted from the start the context
+         * 0 = hit start, index of the hit word (and length of the context before the hit), counted from the start of the context
+         * 1 = right start, start of the context after the hit, counted from the start the context
          * 2 = context length, length of 1 context. As stated above, there may be multiple contexts.
          *
          * The first context therefore starts at index 3.
@@ -291,7 +289,7 @@ public class Contexts {
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
-                    String[][] docContextArray = getContextWordsSingleDocumentStrings(hits, firstHitInCurrentDoc, i, contextSize, fi, matchInfoDefs);
+                    String[][] docContextArray = getCollocationWordsSingleDocumentStrings(hits, firstHitInCurrentDoc, i, contextSize, fi, matchInfoDefs);
                     Collections.addAll(contexts, docContextArray);
                     // start a new document
                     prevDoc = curDoc;
@@ -299,23 +297,34 @@ public class Contexts {
                 }
             }
             // Process hits in final document
-            String[][] docContextArray = getContextWordsSingleDocumentStrings(hits, firstHitInCurrentDoc, hits.size(), contextSize, fi, matchInfoDefs);
+            String[][] docContextArray = getCollocationWordsSingleDocumentStrings(hits, firstHitInCurrentDoc, hits.size(), contextSize, fi, matchInfoDefs);
             Collections.addAll(contexts, docContextArray);
         }
         return contexts;
     }
 
-    private static String[][] getContextWordsSingleDocumentStrings(HitsSimple hits, long start, long end, ContextSize contextSize, AnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
+    private static String[][] getCollocationWordsSingleDocumentStrings(HitsSimple hits, long start, long end, ContextSize contextSize, AnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
         int[][] contexts = getContextWordsSingleDocument(hits, start, end, contextSize, List.of(contextSource), matchInfoDefs);
+        if (contextSize.isInlineTag())
+            throw new IllegalArgumentException("Cannot build contexts with inline tags");
         String[][] stringContexts = new String[contexts.length][];
         int doc = hits.doc(start);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(doc);
         ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
         TermsSegmentReader terms = fi.terms(contextSource.annotation().forwardIndexSensitivity().luceneField());
         for (int j = 0; j < contexts.length; j++) {
-            stringContexts[j] = new String[contexts[j].length];
-            for (int k = 0; k < contexts[j].length; k++) {
-                stringContexts[j][k] = terms.get(contexts[j][k]);
+            int[] context = contexts[j];
+            int beforeContextLength = context[HIT_START_INDEX];
+            int afterHitIndex = context[AFTER_START_INDEX];
+            int afterContextLength = context[LENGTH_INDEX] - afterHitIndex;
+            int n = Math.min(contextSize.before(), beforeContextLength) +
+                    Math.min(contextSize.after(), afterContextLength);
+            stringContexts[j] = new String[n];
+            for (int k = 0; k < beforeContextLength; k++) {
+                stringContexts[j][k] = terms.get(context[NUMBER_OF_BOOKKEEPING_INTS + k]);
+            }
+            for (int k = 0; k < afterContextLength; k++) {
+                stringContexts[j][k + beforeContextLength] = terms.get(context[NUMBER_OF_BOOKKEEPING_INTS + afterHitIndex + k]);
             }
         }
         return stringContexts;
@@ -341,12 +350,12 @@ public class Contexts {
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
 
-        Iterable<String[]> contexts = getContexts(hits.getHits().getStatic(), annotation, contextSize);
+        Iterable<String[]> contexts = getCollocations(hits.getHits().getStatic(), annotation, contextSize);
         Map<String, Integer> countPerWord = new HashMap<>();
         for (String[] context: contexts) {
             // Count words
-            for (int i = 0; i < context.length; i++) {
-                countPerWord.compute(context[i], (k, v) -> v == null ? 1 : v + 1);
+            for (String s: context) {
+                countPerWord.compute(s, (k, v) -> v == null ? 1 : v + 1);
             }
         }
 
@@ -357,12 +366,7 @@ public class Contexts {
             String word = sensitivity.desensitize(e.getKey());
             // Note that multiple ids may map to the same word (because of sensitivity settings)
             // Here, those groups are merged.
-            Integer mergedCount = wordFreq.get(word);
-            if (mergedCount == null) {
-                mergedCount = 0;
-            }
-            mergedCount += count;
-            wordFreq.put(word, mergedCount);
+            wordFreq.compute(word, (k, v) -> v == null ? count : v + count);
         }
 
         // Transfer from map to list

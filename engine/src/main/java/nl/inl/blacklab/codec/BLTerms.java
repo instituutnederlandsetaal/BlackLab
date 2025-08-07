@@ -268,12 +268,18 @@ public class BLTerms extends Terms {
 
             @Override
             public int indexOf(String term) {
+                // TODO: use binary search via sort positions..?
                 for (int i = 0; i < field.getNumberOfTerms(); i++) {
                     if (get(i).equals(term)) {
                         return i;
                     }
                 }
                 return Constants.NO_TERM; // term not found
+            }
+
+            @Override
+            public int numberOfTerms() {
+                return field.getNumberOfTerms();
             }
         };
     }

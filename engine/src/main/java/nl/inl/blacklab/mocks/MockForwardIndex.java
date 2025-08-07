@@ -26,23 +26,18 @@ public record MockForwardIndex(Terms terms) implements AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
+    public List<int[]> retrievePartsInt(int globalDocId, int[] start, int[] end) {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int docId, int[] start, int[] end) {
+    public List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int globalDocId, int[] start, int[] end) {
         throw new UnsupportedOperationException();
     }
 
     @Override
     public int docLength(int docId) {
         return 0;
-    }
-
-    @Override
-    public boolean canDoNfaMatching() {
-        return false;
     }
 
     @Override

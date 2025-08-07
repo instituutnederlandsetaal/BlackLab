@@ -99,18 +99,18 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     }
 
     @Override
-    public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
+    public List<int[]> retrievePartsInt(int globalDocId, int[] start, int[] end) {
         initialize();
-        LeafReaderContext lrc = index.getLeafReaderContext(docId);
-        List<int[]> segmentResults = retrievePartsIntSegment(lrc, docId, start, end);
+        LeafReaderContext lrc = index.getLeafReaderContext(globalDocId);
+        List<int[]> segmentResults = retrievePartsIntSegment(lrc, globalDocId, start, end);
         return terms.segmentIdsToGlobalIds(lrc.ord, segmentResults);
     }
 
     @Override
-    public List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int docId, int[] start, int[] end) {
+    public List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int globalDocId, int[] start, int[] end) {
         initialize();
         ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
-        return fi.retrieveParts(luceneField, docId - lrc.docBase, start, end);
+        return fi.retrieveParts(luceneField, globalDocId - lrc.docBase, start, end);
     }
 
     @Override
@@ -128,11 +128,6 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     @Override
     public Collators collators() {
         return collators;
-    }
-
-    @Override
-    public boolean canDoNfaMatching() {
-        return true; // depends on collator version, and integrated always uses V2
     }
 
     @Override

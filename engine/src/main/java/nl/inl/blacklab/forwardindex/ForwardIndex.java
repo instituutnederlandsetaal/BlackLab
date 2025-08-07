@@ -12,15 +12,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * which allows access to just one.
  */
 @ThreadSafe
-public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
-
-    /**
-     * Get the Terms object in order to translate ids to token strings
-     * 
-     * @param annotation annotation to get terms for 
-     * @return the Terms object
-     */
-    Terms terms(Annotation annotation);
+public interface ForwardIndex {
 
     /**
      * The field for which this is the forward index
@@ -36,6 +28,4 @@ public interface ForwardIndex extends Iterable<AnnotationForwardIndex> {
      * @return single-annotation forward index view
      */
     AnnotationForwardIndex get(Annotation annotation);
-
-    boolean canDoNfaMatching();
 }
