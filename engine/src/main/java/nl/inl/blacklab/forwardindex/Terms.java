@@ -79,28 +79,6 @@ public interface Terms {
     }
 
     /**
-     * Compare two terms (from their term ids) based on their sort positions
-     *
-     * @param termId1 id of the first term
-     * @param termId2 id of the second term
-     * @param sensitivity whether we want to compare sensitively or insensitively
-     * @return the comparison result (negative if term1 < term2, zero if equal,
-     *         positive if term1 > term2)
-     */
-    default int compareSortPosition(int termId1, int termId2, MatchSensitivity sensitivity) {
-        return Integer.compare(idToSortPosition(termId1, sensitivity), idToSortPosition(termId2, sensitivity));
-    }
-
-    /**
-     * Check if two terms are considered equal for the given sensitivity.
-     *
-     * @param termIds term id
-     * @param sensitivity how to compare the terms
-     * @return true if the terms are equal
-     */
-    boolean termsEqual(int[] termIds, MatchSensitivity sensitivity);
-
-    /**
      * We have snippets with segment-specific term ids; convert them to global term ids.
      *
      * Note that with external forward index, there is no such thing as segment-specific term ids,
@@ -130,12 +108,4 @@ public interface Terms {
      */
     int[] segmentIdsToGlobalIds(int ord, int[] segmentResults);
 
-    /**
-     * Convert a single seggment-specific term id to the corresponding global term id.
-     *
-     * @param ord segment these snippets came from
-     * @param segmentTermId segment-specific term id
-     * @return segments global term id
-     */
-    int segmentIdToGlobalId(int ord, int segmentTermId);
 }

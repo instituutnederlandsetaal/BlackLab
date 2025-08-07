@@ -338,19 +338,6 @@ public abstract class TermsReaderAbstract implements Terms {
         return new String(termBytes, TERMS_CHARSET);
     }
 
-    @Override
-    public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
-        if (termIds.length < 2)
-            return true;
-        int expected = idToSortPosition(termIds[0], sensitivity);
-        for (int termIdIndex = 1; termIdIndex < termIds.length; ++termIdIndex) {
-            int cur = idToSortPosition(termIds[termIdIndex], sensitivity);
-            if (cur != expected)
-                return false;
-        }
-        return true;
-    }
-
     private int getGroupOffset(String term, MatchSensitivity sensitivity) {
         final Collator collator = sensitivity.isCaseSensitive() ? collatorSensitive : collatorInsensitive;
         final int[] sortPosition2GroupOffset = sensitivity.isCaseSensitive() ?

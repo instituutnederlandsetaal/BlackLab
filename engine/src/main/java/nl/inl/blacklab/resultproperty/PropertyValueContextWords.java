@@ -60,6 +60,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             this.valueTokenId = termIds;
             if (sortPositions == null) {
                 this.valueSortOrder = new int[termIds.length];
+                // @@@ WRONG: termIds are segment-local, Terms interface expects global term ids!
                 terms.toSortOrder(termIds, valueSortOrder, sensitivity);
             } else {
                 this.valueSortOrder = sortPositions;

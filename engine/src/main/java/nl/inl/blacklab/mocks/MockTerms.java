@@ -52,17 +52,8 @@ public class MockTerms implements Terms {
     }
 
     @Override
-    public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public int segmentIdToGlobalId(int ord, int segmentTermId) {
-        throw new UnsupportedOperationException();
-    }
 }

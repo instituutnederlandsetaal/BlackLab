@@ -31,7 +31,7 @@ public abstract class PropertyValueContext extends PropertyValue {
                 // because of how null value is encoded
                 term = term.substring(1);
             }
-            termId = terms.indexOf(term);
+            termId = terms.indexOf(term); // @@@ TODO
         }
         return termId;
     }
