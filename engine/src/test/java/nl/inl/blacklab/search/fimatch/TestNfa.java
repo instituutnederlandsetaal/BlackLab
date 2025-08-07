@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -15,16 +14,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 public class TestNfa {
 
     static final class MockFiAccessor implements ForwardIndexAccessor {
-
-        @Override
-        public void getGlobalTermNumbers(MutableIntSet results, int annotationIndex, String annotValue,
-                MatchSensitivity sensitivity) {
-            if (annotationIndex != 0)
-                throw new IllegalArgumentException("only 0 is valid annotation");
-            if (annotValue.length() > 1)
-                throw new IllegalArgumentException("only words of length 1 are valid");
-            results.add(annotValue.charAt(0));
-        }
 
         @Override
         public int getAnnotationIndex(String annotName) {

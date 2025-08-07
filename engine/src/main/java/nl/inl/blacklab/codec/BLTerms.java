@@ -173,7 +173,7 @@ public class BLTerms extends Terms {
         return terms.getStats();
     }
 
-    TermsSegmentReader reader() {
+    public TermsSegmentReader reader() {
         return new TermsSegmentReader() { // not thread-safe
             private final ForwardIndexField field;
             private final RandomAccessInput termIdToSensitivePos;

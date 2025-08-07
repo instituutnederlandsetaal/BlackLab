@@ -21,6 +21,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
@@ -30,6 +31,7 @@ import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -161,6 +163,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     /** Was this index closed? */
     private boolean closed;
 
+    /** Index of segments by their doc base (the number to add to get global docId) */
+    protected final LeafReaderLookup leafReaderLookup;
+
     // Constructors
     //---------------------------------------------------------------
 
@@ -213,6 +218,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 // No IndexReader opened yet; do so now.
                 openIndex(createNewIndex);
             }
+            assert this.reader != null;
 
             // Determine the index structure
             if (traceIndexOpening())
@@ -233,6 +239,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // we have and trust that it will do the right thing.
             finishOpeningIndex(indexDir, createNewIndex, solrMode);
             logger.debug("    (done with finishOpeningIndex)");
+
+            // Ensure quick lookup of the segment we need
+            leafReaderLookup = new LeafReaderLookup(this.reader);
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {
@@ -275,6 +284,15 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     boolean traceIndexOpening() {
         return BlackLab.config().getLog().getTrace().isIndexOpening();
+    }
+
+    @Override
+    public LeafReaderContext getLeafReaderContext(int docId) {
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        if (lrc == null) {
+            throw new IllegalArgumentException("No segment found for docId: " + docId);
+        }
+        return lrc;
     }
 
     // Methods for querying the index

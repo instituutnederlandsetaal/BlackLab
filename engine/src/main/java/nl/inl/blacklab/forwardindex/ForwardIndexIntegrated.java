@@ -16,11 +16,12 @@ public class ForwardIndexIntegrated extends ForwardIndexAbstract {
 
     public ForwardIndexIntegrated(BlackLabIndex index, AnnotatedField field) {
         super(index, field);
+
     }
 
     @Override
     protected AnnotationForwardIndex openAnnotationForwardIndex(Annotation annotation, BlackLabIndex index) {
-        AnnotationForwardIndex afi = AnnotationForwardIndexIntegrated.open(index.reader(), annotation, index.collator());
+        AnnotationForwardIndex afi = AnnotationForwardIndexIntegrated.open(this, index, annotation, index.collator());
         add(annotation, afi);
         return afi;
     }

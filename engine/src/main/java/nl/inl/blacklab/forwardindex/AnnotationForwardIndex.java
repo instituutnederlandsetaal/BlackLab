@@ -2,6 +2,8 @@ package nl.inl.blacklab.forwardindex;
 
 import java.util.List;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -41,6 +43,8 @@ public interface AnnotationForwardIndex {
      * @return the parts
      */
     List<int[]> retrievePartsInt(int docId, int[] start, int[] end);
+
+    List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int docId, int[] start, int[] end);
 
     /**
      * Convenience method for retrieving 1 part of a document.
@@ -96,4 +100,6 @@ public interface AnnotationForwardIndex {
     String toString();
 
     Collators collators();
+
+    ForwardIndex getParent();
 }

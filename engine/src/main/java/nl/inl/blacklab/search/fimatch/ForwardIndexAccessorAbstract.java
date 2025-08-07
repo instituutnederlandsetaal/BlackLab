@@ -6,14 +6,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices,
@@ -73,12 +70,6 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     @Override
     public synchronized int getAnnotationIndex(String annotationName) {
         return getAnnotationIndex(annotatedField.annotation(annotationName));
-    }
-
-    @Override
-    public void getGlobalTermNumbers(MutableIntSet results, int annotationIndex, String annotationValue,
-            MatchSensitivity sensitivity) {
-        terms.get(annotationIndex).indexOf(results, annotationValue, sensitivity);
     }
 
     protected int numberOfAnnotations() {

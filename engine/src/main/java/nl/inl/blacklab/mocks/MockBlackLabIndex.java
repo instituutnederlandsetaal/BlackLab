@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -151,6 +152,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     @Override
     public IndexMetadata metadata() {
         return indexMetadata;
+    }
+
+    @Override
+    public LeafReaderContext getLeafReaderContext(int docId) {
+        throw new UnsupportedOperationException();
     }
 
     @Override

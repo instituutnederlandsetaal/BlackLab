@@ -154,7 +154,6 @@ public class Nfa {
      * Lookup the annotation indexes for all states in this NFA.
      *
      * @param fiAccessor forward index accessor to use
-     * @param statesVisited states visited so far, to avoid infinite recursion
      */
     public void lookupAnnotationIndexes(ForwardIndexAccessor fiAccessor) {
         startingState.lookupAnnotationIndexes(fiAccessor);

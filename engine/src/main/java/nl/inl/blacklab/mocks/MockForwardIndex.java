@@ -2,8 +2,11 @@ package nl.inl.blacklab.mocks;
 
 import java.util.List;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -13,19 +16,27 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public record MockForwardIndex(Terms terms) implements AnnotationForwardIndex {
 
     @Override
+    public ForwardIndex getParent() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public void initialize() {
         // Nothing to do
     }
 
     @Override
     public List<int[]> retrievePartsInt(int docId, int[] start, int[] end) {
-        //
-        return null;
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int docId, int[] start, int[] end) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
     public int docLength(int docId) {
-        //
         return 0;
     }
 

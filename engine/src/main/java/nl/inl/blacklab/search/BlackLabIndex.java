@@ -12,6 +12,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
@@ -356,6 +357,8 @@ public interface BlackLabIndex extends AutoCloseable {
     
     // Get settings
     //---------------------------------------------------------------------------
+
+    LeafReaderContext getLeafReaderContext(int docId);
 
     /**
      * The default settings for all new Hits objects.

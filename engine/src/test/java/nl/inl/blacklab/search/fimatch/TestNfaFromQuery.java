@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -49,22 +48,6 @@ public class TestNfaFromQuery {
             if (annotationName.equals("word"))
                 return 0;
             throw new IllegalArgumentException("Unknown annotation " + annotationName);
-        }
-
-        @Override
-        public void getGlobalTermNumbers(MutableIntSet results, int annotationIndex, String annotValue,
-                MatchSensitivity sensitivity) {
-            if (annotationIndex != 0)
-                throw new IllegalArgumentException("Unknown annotation " + annotationIndex);
-            if (sensitivity.isCaseSensitive()) {
-                results.add(terms.get(annotValue));
-                return;
-            }
-            for (Entry<String, Integer> e : terms.entrySet()) {
-                if (e.getKey().equalsIgnoreCase(annotValue)) {
-                    results.add(e.getValue());
-                }
-            }
         }
 
         public int numberOfAnnotations() {
