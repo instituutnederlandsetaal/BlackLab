@@ -16,7 +16,7 @@ import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 
 /**
  * Manages read access to forward indexes for a single segment.
@@ -247,7 +247,7 @@ public class SegmentForwardIndex implements AutoCloseable {
         }
 
         @Override
-        public TermsSegmentReader terms(String luceneField) {
+        public TermsSegment terms(String luceneField) {
             try {
                 return fieldsProducer.terms(luceneField).reader();
             } catch (IOException e) {

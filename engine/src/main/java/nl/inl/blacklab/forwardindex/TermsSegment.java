@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Read terms for a single field from an index segment.
  * Should be thread-safe.
  */
-public interface TermsSegmentReader {
+public interface TermsSegment {
 
     /**
      * Find the term id for a term string.

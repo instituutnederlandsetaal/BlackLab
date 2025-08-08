@@ -12,7 +12,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -161,7 +161,7 @@ public class NfaStateToken extends NfaState {
     }
 
     public void setLeafReaderContext(LeafReaderContext lrc) {
-        TermsSegmentReader terms = fiAccessor.getForwardIndexAccessorLeafReader(lrc)
+        TermsSegment terms = fiAccessor.getForwardIndexAccessorLeafReader(lrc)
                 .terms(annotationIndex);
         MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
         inputTokensSortPositions = new IntHashSet();

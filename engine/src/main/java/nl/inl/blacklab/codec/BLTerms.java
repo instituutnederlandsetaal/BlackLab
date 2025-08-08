@@ -16,7 +16,7 @@ import org.apache.lucene.util.automaton.CompiledAutomaton;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -173,8 +173,8 @@ public class BLTerms extends Terms {
         return terms.getStats();
     }
 
-    public TermsSegmentReader reader() {
-        return new TermsSegmentReader() { // not thread-safe
+    public TermsSegment reader() {
+        return new TermsSegment() { // not thread-safe
 
             /** Field we're reading terms from */
             private final ForwardIndexField field;

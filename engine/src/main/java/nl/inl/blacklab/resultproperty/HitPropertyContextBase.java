@@ -14,7 +14,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -53,7 +53,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     private ForwardIndexSegmentReader segmentForwardIndex;
 
     /** [SEGMENT] terms for our annotation */
-    private TermsSegmentReader segmentAnnotationTerms;
+    private TermsSegment segmentAnnotationTerms;
 
     /** Stores the relevant context tokens for each hit index */
     protected BigList<int[]> contextTermId;

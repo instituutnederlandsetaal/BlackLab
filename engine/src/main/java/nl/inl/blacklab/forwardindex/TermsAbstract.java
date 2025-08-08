@@ -29,7 +29,7 @@ import nl.inl.util.BlockTimer;
  * string data, and an offsets array that specified for each term id
  * where that term string begins in the character array.
  */
-public abstract class TermsReaderAbstract implements Terms {
+public abstract class TermsAbstract implements Terms {
 
     /** Charset we use for serializing terms. */
     public static final Charset TERMS_CHARSET = StandardCharsets.UTF_8;
@@ -95,8 +95,8 @@ public abstract class TermsReaderAbstract implements Terms {
      */
     private int[] cacheFirstTermIdInGroup2GroupOffset;
 
-    protected TermsReaderAbstract(Collators collators) {
-        DEBUGGING = TermsReaderAbstract.class.desiredAssertionStatus(); // assertions enabled?
+    protected TermsAbstract(Collators collators) {
+        DEBUGGING = TermsAbstract.class.desiredAssertionStatus(); // assertions enabled?
         collatorSensitive = collators.get(MatchSensitivity.SENSITIVE);
         collatorInsensitive = collators.get(MatchSensitivity.INSENSITIVE);
     }

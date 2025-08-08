@@ -19,7 +19,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.Kwic;
@@ -84,7 +84,7 @@ public class Contexts {
                 .toList();
         int docId = hits.doc(0);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(docId);
-        List<TermsSegmentReader> annotationTerms = forwardIndexes.stream()
+        List<TermsSegment> annotationTerms = forwardIndexes.stream()
                 .map(afi -> {
                     String luceneField = afi.annotation().forwardIndexSensitivity().luceneField();
                     try {
@@ -105,7 +105,7 @@ public class Contexts {
             for (int indexInContext = 0; indexInContext < contextLength; indexInContext++) {
                 // For each annotation...
                 int annotIndex = indexInContext + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-                for (TermsSegmentReader terms: annotationTerms) {
+                for (TermsSegment terms: annotationTerms) {
                     tokens.add(terms.get(hitContext[annotIndex]));
                     annotIndex += contextLength; // jmup to next annotation in context array
                 }
@@ -313,7 +313,7 @@ public class Contexts {
         int doc = hits.doc(start);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(doc);
         ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
-        TermsSegmentReader terms = fi.terms(contextSource.annotation().forwardIndexSensitivity().luceneField());
+        TermsSegment terms = fi.terms(contextSource.annotation().forwardIndexSensitivity().luceneField());
         for (int j = 0; j < contexts.length; j++) {
             int[] context = contexts[j];
             int beforeContextLength = context[HIT_START_INDEX];

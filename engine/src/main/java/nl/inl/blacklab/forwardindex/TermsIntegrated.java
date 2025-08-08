@@ -25,7 +25,7 @@ import nl.inl.util.BlockTimer;
  *
  * This version is integrated into the Lucene index.
  */
-public class TermsIntegrated extends TermsReaderAbstract {
+public class TermsIntegrated extends TermsAbstract {
 
     private static final Comparator<TermInIndex> CMP_TERM_SENSITIVE = Comparator.comparing(a -> a.ckSensitive);
 

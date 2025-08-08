@@ -8,7 +8,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -49,13 +49,13 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         private final DocFieldLengthGetter lengthGetter;
 
-        private final List<TermsSegmentReader> termsSegmentReaders = new ArrayList<>();
+        private final List<TermsSegment> termsPerSegments = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
             forwardIndexSegmentReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
             for (String luceneField: luceneFields) {
-                termsSegmentReaders.add(forwardIndexSegmentReader.terms(luceneField));
+                termsPerSegments.add(forwardIndexSegmentReader.terms(luceneField));
             }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
@@ -89,11 +89,11 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public TermsSegmentReader terms(int annotIndex) {
-            if (annotIndex < 0 || annotIndex >= termsSegmentReaders.size())
+        public TermsSegment terms(int annotIndex) {
+            if (annotIndex < 0 || annotIndex >= termsPerSegments.size())
                 throw new IllegalArgumentException("Invalid annotation index: " + annotIndex +
-                        " (there are " + termsSegmentReaders.size() + " annotations)");
-            return termsSegmentReaders.get(annotIndex);
+                        " (there are " + termsPerSegments.size() + " annotations)");
+            return termsPerSegments.get(annotIndex);
         }
     }
 

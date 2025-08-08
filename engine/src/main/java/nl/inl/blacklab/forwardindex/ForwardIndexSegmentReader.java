@@ -56,7 +56,7 @@ public interface ForwardIndexSegmentReader {
      * @param luceneField lucene field to read terms from
      * @return TermsSegmentReader for the given field
      */
-    TermsSegmentReader terms(String luceneField);
+    TermsSegment terms(String luceneField);
 
     /**
      * Get a TermsSegmentReader for a given annotation in this segment.
@@ -67,7 +67,7 @@ public interface ForwardIndexSegmentReader {
      * @param annotation annotation to read terms from
      * @return TermsSegmentReader for the given field
      */
-    default TermsSegmentReader terms(Annotation annotation) {
+    default TermsSegment terms(Annotation annotation) {
         return terms(annotation.forwardIndexSensitivity().luceneField());
     }
 }

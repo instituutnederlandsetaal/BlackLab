@@ -4,7 +4,7 @@ import net.jcip.annotations.ThreadSafe;
 
 /** Keeps a list of unique terms and their sort positions. */
 @ThreadSafe
-public interface Terms extends TermsSegmentReader {
+public interface Terms extends TermsSegment {
 
     /**
      * We have a snippet with segment-specific term ids; convert it to global term ids.

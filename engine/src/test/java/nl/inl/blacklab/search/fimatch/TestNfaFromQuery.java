@@ -13,7 +13,7 @@ import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -59,8 +59,8 @@ public class TestNfaFromQuery {
             return new ForwardIndexAccessorLeafReader() {
 
                 @Override
-                public TermsSegmentReader terms(int annotIndex) {
-                    return new TermsSegmentReader() {
+                public TermsSegment terms(int annotIndex) {
+                    return new TermsSegment() {
                         @Override
                         public String get(int id) {
                             for (Entry<String, Integer> e : terms.entrySet()) {

@@ -26,7 +26,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -419,7 +419,7 @@ public class HitGroupsTokenFrequencies {
                                     for (AnnotInfo annot : hitProperties) {
                                         String luceneField = annot.annotationForwardIndex.annotation()
                                                 .forwardIndexSensitivity().luceneField();
-                                        TermsSegmentReader segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
+                                        TermsSegment segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
                                                 .terms(luceneField).reader();
                                         final int[] tokenValues = BlackLabIndexIntegrated.forwardIndex(lrc)
                                                 .retrieveParts(luceneField, globalDocId - lrc.docBase,

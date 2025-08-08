@@ -14,7 +14,7 @@ import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegmentReader;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
@@ -120,7 +120,7 @@ public class ExportForwardIndex {
                 if (doTokens) {
                     ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
                     int[] doc = fi.retrieveParts(luceneField, docId - lrc.docBase, new int[] { -1 }, new int[] { -1 }).get(0);
-                    TermsSegmentReader terms = fi.terms(luceneField);
+                    TermsSegment terms = fi.terms(luceneField);
                     for (int tokenId: doc) {
                         String token = terms.get(tokenId);
                         System.out.println("    " + token);
@@ -140,7 +140,7 @@ public class ExportForwardIndex {
             Set<String> allTerms = new TreeSet<>();
             for (LeafReaderContext lrc: index.reader().leaves()) {
                 String luceneField = annotatedField.mainAnnotation().forwardIndexSensitivity().luceneField();
-                TermsSegmentReader r = BlackLabCodecUtil.getPostingsReader(lrc)
+                TermsSegment r = BlackLabCodecUtil.getPostingsReader(lrc)
                         .terms(luceneField).reader();
                 for (int i = 0; i < r.numberOfTerms(); i++) {
                     allTerms.add(r.get(i));
