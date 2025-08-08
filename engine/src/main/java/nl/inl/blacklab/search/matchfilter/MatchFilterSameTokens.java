@@ -90,8 +90,6 @@ public class MatchFilterSameTokens extends MatchFilter {
                 segmentTermIds[i] = fiDoc.getTokenSegmentTermId(annotIndex, tokenPosition);
             }
         }
-        if (sensitivity == MatchSensitivity.SENSITIVE)
-            return ConstraintValue.get(segmentTermIds[0] == segmentTermIds[1]);
         // (Somewhat) insensitive; let Terms determine if term ids have the same sort position or not
         return ConstraintValue.get(fiDoc.segmentTermsEqual(annotIndex, segmentTermIds, sensitivity));
     }

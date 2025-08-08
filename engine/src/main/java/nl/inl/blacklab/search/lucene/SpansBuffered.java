@@ -204,9 +204,6 @@ class SpansBuffered extends BLSpans {
     }
 
     public void reset() throws IOException {
-
-        //return; //@@@TEST
-
         // Go to the start of the buffer
         if (markBeforeFirstHit) {
             // mark() was (implicitly?) called before the first call to nextStartPosition()

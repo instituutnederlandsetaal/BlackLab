@@ -19,7 +19,7 @@ public class CollatorCompare {
     private static Collator getCollator(boolean sensitive) {
         Collator coll = getDefaultEnglishCollator();
         //Collator coll = Collator.getInstance(new Locale("en", "GB"));
-        Collators colls = new Collators(coll, Collators.CollatorVersion.V2);
+        Collators colls = new Collators(coll);
         return colls.get(sensitive ? MatchSensitivity.SENSITIVE : MatchSensitivity.INSENSITIVE);
     }
 

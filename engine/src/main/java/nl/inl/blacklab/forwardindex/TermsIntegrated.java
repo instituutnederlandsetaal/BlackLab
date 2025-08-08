@@ -31,16 +31,16 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = Comparator.comparing(a -> a.ckInsensitive);
 
-    /** Information about a term in the index, and the sort positions in each segment
-     *  it occurs in. We'll use this to speed up comparisons where possible (comparing
-     *  sort positions in one of the segments is much faster than calculating CollationKeys).
+    /** Information about a term in the index and its collation keys.
      */
     private class TermInIndex {
         /** Term string */
         String term;
 
+        /** Sensitive collation key */
         CollationKey ckSensitive;
 
+        /** Insensitive collation key */
         CollationKey ckInsensitive;
 
         /** This term's global id */
@@ -111,7 +111,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
                             // Produces a term id > sort position array.
                             // NOTE: gives equal sort positions to equal terms, so the second invert can collect
                             // all the equal terms into one entry.
-                            return invertSortedTermsArray(terms, sorted, cmp);
+                            return getTermIdToSortValueArray(terms, sorted, cmp);
                         })
                         .toList();
             }
@@ -147,9 +147,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         // Globally unique terms that occur in our index (sorted by global id)
         Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>();
 
-        // Intentionally single-threaded; multi-threaded is slower.
-        // Probably because reading from a single file sequentially is more efficient than alternating between
-        // several files..?
+        // Intentionally single-threaded; multi-threaded is slower (because we have to lock the map?)
         for (LeafReaderContext l: indexReader.leaves()) {
             readTermsFromSegment(globalTermIds, l);
         }
@@ -173,15 +171,15 @@ public class TermsIntegrated extends TermsReaderAbstract {
         }
         BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
         try (TermsIntegratedSegment s = new TermsIntegratedSegment(postingsReader, luceneField, lrc.ord)) {
-            Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
+            Iterator<TermsIntegratedSegment.TermInSegment> termIterator = s.iterator();
             int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
-            while (it.hasNext()) {
+            while (termIterator.hasNext()) {
                 // Make sure this can be interrupted if e.g. a commandline utility completes
                 // before this initialization is finished.
-                if (Thread.interrupted())
+                if (Thread.currentThread().isInterrupted())
                     throw new InterruptedException();
 
-                TermsIntegratedSegment.TermInSegment t = it.next();
+                TermsIntegratedSegment.TermInSegment t = termIterator.next();
                 TermInIndex tii = globalTermIds.computeIfAbsent(t.term,
                         __ -> new TermInIndex(t.term, globalTermIds.size()));
                 // Remember the mapping from segment id to global id
@@ -201,23 +199,24 @@ public class TermsIntegrated extends TermsReaderAbstract {
     }
 
     /**
-     * Invert the given sorted term id array so the values become the indexes and vice versa.
+     * Get an array of sort values for the given term ids, based on the given sorted term id array.
      *
-     * Will make sure that if multiple terms are considered equal (insensitive comparison),
-     * they all get the same sort value
+     * Essentially inverts sortedTermIds so the values become the indexes and vice versa.
+     * Also makes sure that if multiple terms are considered equal (insensitive comparison),
+     * they all get the same sort value.
      *
-     * @params terms terms the array refers to
-     * @param array array of term ids sorted by term string
+     * @param terms terms the sortedTermIds array refers to
+     * @param sortedTermIds array of term ids sorted by term string
      * @param cmp comparator to use for equality test
-     * @return inverted array
+     * @return an array of sort values in order of term ids (i.e. first item is the sort value for term id 0, etc.)
      */
-    private int[] invertSortedTermsArray(TermInIndex[] terms, int[] array, Comparator<TermInIndex> cmp) {
-        assert terms.length == array.length;
-        int[] result = new int[array.length];
+    private int[] getTermIdToSortValueArray(TermInIndex[] terms, int[] sortedTermIds, Comparator<TermInIndex> cmp) {
+        assert terms.length == sortedTermIds.length;
+        int[] result = new int[sortedTermIds.length];
         int prevSortPosition = -1;
         int prevTermId = -1;
-        for (int i = 0; i < array.length; i++) {
-            int termId = array[i];
+        for (int i = 0; i < sortedTermIds.length; i++) {
+            int termId = sortedTermIds[i];
             int sortPosition = i;
             if (prevTermId >= 0 && cmp.compare(terms[prevTermId], terms[termId]) == 0) {
                 // Keep the same sort position because the terms are the same

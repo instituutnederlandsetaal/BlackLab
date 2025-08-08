@@ -1,9 +1,9 @@
 package nl.inl.blacklab.forwardindex;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.util.Arrays;
-
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -31,6 +31,8 @@ import nl.inl.util.BlockTimer;
  */
 public abstract class TermsReaderAbstract implements Terms {
 
+    /** Charset we use for serializing terms. */
+    public static final Charset TERMS_CHARSET = StandardCharsets.UTF_8;
     /** Will automatically be set to true if assertions are enabled (-ea). */
     protected static boolean DEBUGGING = false;
 
@@ -285,19 +287,6 @@ public abstract class TermsReaderAbstract implements Terms {
             return -1;
         // Return the first term in this group
         return groupTermIds[groupOffset + 1];
-    }
-
-    @Override
-    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-        int groupOffset = getGroupOffset(term, sensitivity);
-        if (groupOffset == -1) {
-            results.add(-1);
-            return;
-        }
-        int groupSize = groupTermIds[groupOffset];
-        for (int i = 0; i < groupSize; ++i) {
-            results.add(groupTermIds[groupOffset + 1 + i]);
-        }
     }
 
     @Override

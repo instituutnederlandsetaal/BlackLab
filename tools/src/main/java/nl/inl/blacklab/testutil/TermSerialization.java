@@ -4,13 +4,18 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
 
+import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -35,18 +40,23 @@ public class TermSerialization {
         AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
         terms = fi.terms();
 
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        for (LeafReaderContext lrc: index.reader().leaves()) {
+            doTerm(word, lrc, luceneField);
+        }
+    }
+
+    private static void doTerm(String word, LeafReaderContext lrc, String luceneField) {
+        BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
+        ForwardIndexSegmentReader fi = postingsReader.forwardIndex();
+        TermsSegmentReader terms = fi.terms(luceneField);
+
         MutableIntSet s = new IntHashSet();
         int sensitiveIndex = terms.indexOf(word);
         s.add(sensitiveIndex);
         report("terms.indexOf", s);
-        s.clear();
-        terms.indexOf(s, word, MatchSensitivity.SENSITIVE);
-        report("terms.indexOf sensitive", s);
-        s.clear();
-        terms.indexOf(s, word, MatchSensitivity.INSENSITIVE);
-        report("terms.indexOf insensitive", s);
 
-        Collators collators = fi.collators();
+        Collators collators = Collators.getDefault();
         Collator collator = collators.get(MatchSensitivity.SENSITIVE);
 
         System.out.println("Checking these insensitive terms...");

@@ -134,7 +134,7 @@ public class RelationsStats {
     public RelationsStats withLimit(long limitValues) {
         if (limitValues == this.limitValues)
             return this;
-        if (limitValues > this.limitValues) //@@@ could be okay if no lists are truncated
+        if (limitValues > this.limitValues) // TODO: could be okay if no lists are truncated?
             throw new IllegalArgumentException("Cannot increase limitValues from " + this.limitValues + " to " + limitValues);
 
         RelationsStats result = new RelationsStats(relationsStrategy, limitValues);

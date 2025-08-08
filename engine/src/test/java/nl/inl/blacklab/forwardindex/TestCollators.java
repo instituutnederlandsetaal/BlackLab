@@ -6,7 +6,6 @@ import java.util.Locale;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.StringUtil;
 
@@ -18,8 +17,7 @@ public class TestCollators {
 
     private static Collator getCollator(boolean sensitive) {
         Collator coll = getDefaultEnglishCollator();
-        //Collator coll = Collator.getInstance(new Locale("en", "GB"));
-        Collators colls = new Collators(coll, CollatorVersion.V2);
+        Collators colls = new Collators(coll);
         return colls.get(sensitive ? MatchSensitivity.SENSITIVE : MatchSensitivity.INSENSITIVE);
     }
 

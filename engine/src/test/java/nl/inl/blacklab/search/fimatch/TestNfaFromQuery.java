@@ -59,22 +59,15 @@ public class TestNfaFromQuery {
             return new ForwardIndexAccessorLeafReader() {
 
                 @Override
-                public boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
-                public int segmentTermIdToSortPosition(int annotIndex, int segmentTermId,
-                        MatchSensitivity sensitivity) {
-                    throw new UnsupportedOperationException();
-                }
-
-                @Override
                 public TermsSegmentReader terms(int annotIndex) {
                     return new TermsSegmentReader() {
                         @Override
                         public String get(int id) {
-                            throw new UnsupportedOperationException();
+                            for (Entry<String, Integer> e : terms.entrySet()) {
+                                if (e.getValue() == id)
+                                    return e.getKey();
+                            }
+                            return null; // should not happen
                         }
 
                         @Override
@@ -84,33 +77,34 @@ public class TestNfaFromQuery {
 
                         @Override
                         public int idToSortPosition(int id, MatchSensitivity sensitivity) {
-                            throw new UnsupportedOperationException();
+                            return id; // wrong, but not used for sorting in these tests
                         }
 
                         @Override
                         public void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
-                            throw new UnsupportedOperationException();
+                            for (int i = 0; i < termIds.length; i++) {
+                                sortOrder[i] = termIds[i];
+                            }
                         }
 
                         @Override
-                        public int sortPositionFor(String compareToTermString, MatchSensitivity sensitivity) {
+                        public int sortPositionFor(String term, MatchSensitivity sensitivity) {
                             // Wrong (we return id, not sort pos), but we only need equal words to have the same sort position for these tests.
-                            return terms.get(compareToTermString);
+                            return terms.get(term);
                         }
 
                         @Override
                         public int indexOf(String term) {
-                            throw new UnsupportedOperationException();
+                            return terms.get(term);
                         }
 
                         @Override
                         public int numberOfTerms() {
-                            return 0;
+                            return terms.size();
                         }
                     };
                 }
 
-                @Override
                 public String getTermString(int annotIndex, int segmentTermId) {
                     return MockForwardIndexAccessor.this.getTermString(annotIndex, segmentTermId);
                 }

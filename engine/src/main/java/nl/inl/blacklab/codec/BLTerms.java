@@ -175,10 +175,20 @@ public class BLTerms extends Terms {
 
     public TermsSegmentReader reader() {
         return new TermsSegmentReader() { // not thread-safe
+
+            /** Field we're reading terms from */
             private final ForwardIndexField field;
+
+            /** For looking up sort position for a term id (sensitive) */
             private final RandomAccessInput termIdToSensitivePos;
+
+            /** For looking up sort position for a term id (insensitive) */
             private final RandomAccessInput termIdToInsensitivePos;
+
+            /** Offset of each term in termStrings */
             private final RandomAccessInput termStringOffsets;
+
+            /** Where to read term strings */
             IndexInput termStrings;
 
             {
@@ -259,11 +269,6 @@ public class BLTerms extends Terms {
                 for (int i = 0; i < termIds.length; i++) {
                     sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
                 }
-            }
-
-            @Override
-            public int sortPositionFor(String term, MatchSensitivity sensitivity) {
-                return idToSortPosition(indexOf(term), sensitivity);
             }
 
             @Override

@@ -157,7 +157,7 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
 
     @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean onTheRight) {
-        return false; // true;   // @@@ see below
+        return false; // true; (see below)
     }
 
     @Override

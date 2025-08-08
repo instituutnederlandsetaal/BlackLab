@@ -9,12 +9,27 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 public interface TermsSegmentReader {
 
     /**
+     * Find the term id for a term string.
+     *
+     * Fairly slow operation, but not used very often.
+     *
+     * @param term the term to get the index number for
+     * @return the term's index number, or -1 if not found
+     */
+    int indexOf(String term);
+
+    /**
      * Get the term string for a term id.
      *
      * @param id term id
      * @return term string
      */
     String get(int id);
+
+    /**
+     * @return the number of terms in this object
+     */
+    int numberOfTerms();
 
     /**
      * Check if two terms are considered equal for the given sensitivity.
@@ -42,9 +57,7 @@ public interface TermsSegmentReader {
      */
     void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity);
 
-    int sortPositionFor(String compareToTermString, MatchSensitivity sensitivity);
-
-    int indexOf(String term);
-
-    int numberOfTerms();
+    default int sortPositionFor(String term, MatchSensitivity sensitivity) {
+        return idToSortPosition(indexOf(term), sensitivity);
+    }
 }

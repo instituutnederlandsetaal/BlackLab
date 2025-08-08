@@ -1,7 +1,5 @@
 package nl.inl.blacklab.mocks;
 
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -20,19 +18,6 @@ public class MockTerms implements Terms {
                 return i;
         }
         throw new IllegalArgumentException("Unknown term '" + term + "'");
-    }
-
-    @Override
-    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-        for (int i = 0; i < numberOfTerms(); i++) {
-            if (sensitivity.isCaseSensitive()) {
-                if (get(i).equals(term))
-                    results.add(i);
-            } else {
-                if (get(i).equalsIgnoreCase(term))
-                    results.add(i);
-            }
-        }
     }
 
     @Override
@@ -55,5 +40,4 @@ public class MockTerms implements Terms {
     public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
         throw new UnsupportedOperationException();
     }
-
 }

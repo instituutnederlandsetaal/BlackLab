@@ -34,6 +34,18 @@ public class BLConfigCollator {
         collator = null;
     }
 
+    public String getCountry() {
+        return country;
+    }
+
+    public String getVariant() {
+        return variant;
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
     public synchronized Collator get() {
         if (collator == null) {
             if (StringUtils.isEmpty(language))

@@ -58,7 +58,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     @Override
     public int getTokenSegmentSortPosition(int annotIndex, int pos, MatchSensitivity sensitivity) {
         int segmentTermId = getTokenTermId(annotIndex, pos);
-        return fiAccessor.segmentTermIdToSortPosition(annotIndex, segmentTermId, sensitivity);
+        return fiAccessor.terms(annotIndex).idToSortPosition(segmentTermId, sensitivity);
     }
 
     @Override
@@ -113,12 +113,12 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
 
     @Override
     public String getTermString(int annotIndex, int segmentTermId) {
-        return fiAccessor.getTermString(annotIndex, segmentTermId);
+        return fiAccessor.terms(annotIndex).get(segmentTermId);
     }
 
     @Override
     public boolean segmentTermsEqual(int annotIndex, int[] segmentTermId, MatchSensitivity sensitivity) {
-        return fiAccessor.segmentTermsEqual(annotIndex, segmentTermId, sensitivity);
+        return fiAccessor.terms(annotIndex).termsEqual(segmentTermId, sensitivity);
     }
 
     @Override

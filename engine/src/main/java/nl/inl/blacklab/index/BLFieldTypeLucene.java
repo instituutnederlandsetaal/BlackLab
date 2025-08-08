@@ -3,10 +3,13 @@ package nl.inl.blacklab.index;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
 
+import nl.inl.blacklab.config.BLConfigCollator;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
@@ -94,7 +97,9 @@ public class BLFieldTypeLucene implements BLFieldType {
             }
             if (forwardIndex) {
                 // indicate that this field should get a forward index when written to the index
+                // also set the collator definition for this field, so that we can use it when building the forward index
                 BlackLabIndexIntegrated.setFieldHasForwardIndex(type);
+                BlackLabIndexIntegrated.setFieldCollator(type, getCollatorDef()); // Make configurable per field?
             }
             if (strategy != null) {
                 // Record the relation strategy used for this _relations field
@@ -103,6 +108,15 @@ public class BLFieldTypeLucene implements BLFieldType {
             type.freeze();
             return new BLFieldTypeLucene(type);
         });
+    }
+
+    /** Return a :-separated string with collator parameters to put in field attribute (for FI) */
+    private static String getCollatorDef() {
+        BLConfigCollator collatorConfig = BlackLab.config().getSearch().getCollator();
+        String language = collatorConfig.getLanguage();
+        String country = collatorConfig.getCountry();
+        String variant = collatorConfig.getVariant();
+        return StringUtils.join(new String[]{language, country, variant}, ":");
     }
 
     private final IndexableFieldType type;

@@ -2,7 +2,9 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.Collator;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -29,6 +31,7 @@ import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -59,6 +62,9 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
     private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
+
+    /** Collator to use (for determining term sort values for FI) */
+    private static final String BLFA_COLLATOR = "BL_collator";
 
     /** Lucene field attribute. Does the field have a content store? */
     private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
@@ -92,6 +98,35 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      */
     public static void setFieldHasForwardIndex(FieldType type) {
         type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
+    }
+
+    /**
+     * Set the collator to use for this field.
+     *
+     * Collator is used to determine term sort orders for the forward index.
+     *
+     * @param type field type
+     */
+    public static void setFieldCollator(FieldType type, String collator) {
+        type.putAttribute(BlackLabIndexIntegrated.BLFA_COLLATOR, collator);
+    }
+
+    /**
+     * Set the collator to use for this field.
+     *
+     * Collator is used to determine term sort orders for the forward index.
+     *
+     * @param fieldInfo field type
+     */
+    public static Collators getFieldCollators(FieldInfo fieldInfo) {
+        String collatorParams = fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_COLLATOR);
+        if (collatorParams == null || collatorParams.isEmpty())
+            return Collators.getDefault();
+        String[] parts = collatorParams.split(":");
+        String language = parts[0];
+        String country = parts.length > 1 ? parts[1] : "";
+        String variant = parts.length > 2 ? parts[2] : "";
+        return new Collators(Collator.getInstance(new Locale(language, country, variant)));
     }
 
     /**

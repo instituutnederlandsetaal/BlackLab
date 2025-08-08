@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search;
 
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,9 +8,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.testutil.TestIndex;
-import nl.inl.util.StringUtil;
 
 public class TestTerms {
 
@@ -46,14 +42,6 @@ public class TestTerms {
             String term = terms.get(i);
             int index = terms.indexOf(term);
             Assert.assertEquals(i, index);
-
-            String termDesensitized = StringUtil.desensitize(term);
-            MutableIntSet results = new IntHashSet();
-            terms.indexOf(results, term, MatchSensitivity.INSENSITIVE);
-            results.forEach(termId -> {
-                String foundTerm = StringUtil.desensitize(terms.get(termId));
-                Assert.assertEquals(termDesensitized, foundTerm);
-            });
         }
     }
 }

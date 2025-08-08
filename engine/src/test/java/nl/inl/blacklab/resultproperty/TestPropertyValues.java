@@ -8,7 +8,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockTerms;
@@ -24,7 +23,7 @@ public class TestPropertyValues {
     private static final Collator regularCollator = BlackLab.defaultCollator();
 
     /** A different collator is used for terms so that if a and b are equal after desensitizing, collator.compare(a, b) == 0 */
-    private static final Collator termsCollator = (new Collators(regularCollator, CollatorVersion.V2)).get(
+    private static final Collator termsCollator = (new Collators(regularCollator)).get(
             MatchSensitivity.INSENSITIVE);
 
     private static final Terms terms;

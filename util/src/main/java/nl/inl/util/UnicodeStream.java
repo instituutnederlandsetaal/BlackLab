@@ -15,8 +15,7 @@ import org.apache.commons.io.input.BOMInputStream;
  * http://stackoverflow.com/questions/1835430/byte-order-mark-screws-up-file-reading-in-java
  * which was adapted from Google Data API Client library (Apache License).
  *
- *
- * TODO: @@@ replace with BOMInputStream from Apache Commons IO...?
+ * TODO: replace with BOMInputStream from Apache Commons IO...?
  *
  */
 public class UnicodeStream {

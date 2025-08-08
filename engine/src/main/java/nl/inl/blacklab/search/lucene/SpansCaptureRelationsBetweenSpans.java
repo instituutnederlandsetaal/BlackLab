@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  *   If they do overlap, some relations may be skipped over.
  *   We should cache (some) relations from the source span so we can be sure we return all
  *   of them, even if the source spans overlap. Use SpansInBuckets or maybe a rewindable
- *   Spans view on top of that class? See @@@ comment below for a possible solution.
+ *   Spans view on top of that class? See comment below for a possible solution.
  */
 class SpansCaptureRelationsBetweenSpans extends BLFilterSpans<BLSpans> {
 

@@ -75,8 +75,6 @@ public class TestIndexFormats {
             String term = wordTerms.get(i);
             Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(term));
             s.clear();
-            wordTerms.indexOf(s, term, MatchSensitivity.SENSITIVE);
-            Assert.assertEquals("indexOf(get(" + i + "))", i, s.intIterator().next());
         }
     }
 

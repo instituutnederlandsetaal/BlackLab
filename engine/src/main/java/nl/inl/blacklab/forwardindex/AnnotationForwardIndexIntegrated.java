@@ -7,7 +7,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -35,7 +34,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
 
-        Collators collators = new Collators(collator, CollatorVersion.V2);
+        Collators collators = new Collators(collator);
         return new AnnotationForwardIndexIntegrated(forwardIndex, index, annotation, collators);
     }
 

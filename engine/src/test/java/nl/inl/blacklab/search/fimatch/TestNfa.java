@@ -71,11 +71,6 @@ public class TestNfa {
                         }
 
                         @Override
-                        public int sortPositionFor(String term, MatchSensitivity sensitivity) {
-                            return term.charAt(0);
-                        }
-
-                        @Override
                         public int indexOf(String term) {
                             return term.charAt(0);
                         }

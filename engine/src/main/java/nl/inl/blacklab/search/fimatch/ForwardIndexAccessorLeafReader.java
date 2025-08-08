@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.fimatch;
 
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices
@@ -48,30 +47,4 @@ public interface ForwardIndexAccessorLeafReader {
 
     TermsSegmentReader terms(int annotIndex);
 
-    /**
-     * Get a term string for a term id.
-     *
-     * @param annotIndex which annotation?
-     * @param segmentTermId term id within the segment
-     * @return term string
-     */
-    default String getTermString(int annotIndex, int segmentTermId) {
-        return terms(annotIndex).get(segmentTermId);
-    }
-
-    /**
-     * Check if a number of terms are considered equal for the given sensitivity.
-     *
-     * @param annotIndex which annotation?
-     * @param segmentTermIds term ids to compare
-     * @param sensitivity how to compare the terms
-     * @return true if all the terms are equals
-     */
-    default boolean segmentTermsEqual(int annotIndex, int[] segmentTermIds, MatchSensitivity sensitivity) {
-        return terms(annotIndex).termsEqual(segmentTermIds, sensitivity);
-    }
-
-    default int segmentTermIdToSortPosition(int annotIndex, int segmentTermId, MatchSensitivity sensitivity) {
-        return terms(annotIndex).idToSortPosition(segmentTermId, sensitivity);
-    }
 }

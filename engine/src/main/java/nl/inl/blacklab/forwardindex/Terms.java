@@ -1,11 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -13,9 +9,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 /** Keeps a list of unique terms and their sort positions. */
 @ThreadSafe
 public interface Terms {
-
-    /** Charset we use for serializing terms. */
-    Charset TERMS_CHARSET = StandardCharsets.UTF_8;
 
     /**
      * Get the existing index number of a term, or add it to the term list and
@@ -29,19 +22,6 @@ public interface Terms {
      * @return the term's index number, or -1 if not found
      */
     int indexOf(String term);
-
-    /**
-     * Get the index number(s) of terms matching a string.
-     *
-     * This is used in search mode when translating queries into NFAs. Depending on
-     * case-sensitivity settings, a single term string may match multiple terms.
-     *
-     * @param results (out) index numbers for the matching term(s)
-     * @param term the term to get the index number for
-     * @param sensitivity compare sensitively? (case-sensitivity currently switches both case-
-     *         and diacritics-sensitivity)
-     */
-    void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity);
 
     /**
      * Get a term by id. Only works in search mode.

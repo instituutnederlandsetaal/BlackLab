@@ -26,7 +26,7 @@ public class HitsFromQuerySorted extends HitsFromQueryAbstract {
 
     protected HitsFromQuerySorted(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings, HitProperty sortBy) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
-        super(queryInfo.optOverrideField(sourceQuery), /*@@@@WRONG*/(HitsInternalMutable)HitsInternal.empty(queryInfo.optOverrideField(sourceQuery).field(),
+        super(queryInfo.optOverrideField(sourceQuery), /* // @@@ WRONG */ (HitsInternalMutable)HitsInternal.empty(queryInfo.optOverrideField(sourceQuery).field(),
                 null), searchSettings);
         this.sortBy = sortBy;
         weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
