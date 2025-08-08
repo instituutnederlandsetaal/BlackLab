@@ -13,21 +13,29 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.ScoreMode;
+import org.apache.lucene.search.SimpleCollector;
+import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
@@ -182,7 +190,7 @@ public class FrequencyTool {
                 .toArray(Terms[]::new);
         List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation).toList();
         List<String> metadataFields = freqList.getMetadataFields();
-        final List<Integer> docIds = getDocIds(index, freqList);
+        final Map<LeafReaderContext, List<Integer>> docIds = getDocIds(index, freqList);
 
         // Create tmp dir for the chunk files
         File tmpDir = new File(outputDir, "tmp");
@@ -193,64 +201,78 @@ public class FrequencyTool {
         // and write it as a sorted chunk file if it exceeds the configured size.
         // At the end we will merge all the chunks to get the final result.
         List<File> chunkFiles = new ArrayList<>();
-        final int docsToProcessInParallel = config.getDocsToProcessInParallel();
-        int chunkNumber = 0;
+        final int docsToProcessInParallel = config.getDocsToProcessInParallel(); // TODO: limit number of threads?
+        final AtomicInteger chunkNumber = new AtomicInteger(0);
 
         // This is where we store our groups while we're computing/gathering them.
         // Maps from group Id to number of hits and number of docs
         // ConcurrentMap because we're counting in parallel.
-        ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences = null;
+        final ConcurrentMap<GroupIdHash, OccurrenceCounts> globalOccurrences = new ConcurrentHashMap<>();
 
         for (int rep = 0; rep < config.getRepetitions(); rep++) { // FOR DEBUGGING
 
-            for (int i = 0; i < docIds.size(); i += docsToProcessInParallel) {
-                int runEnd = Math.min(i + docsToProcessInParallel, docIds.size());
-                List<Integer> docIdsInChunk = docIds.subList(i, runEnd);
+            int finalRep = rep;
+            docIds.entrySet().parallelStream().forEach(entry -> {
+                LeafReaderContext lrc = entry.getKey();
+                List<Integer> docIdsInSegment = entry.getValue();
 
-                // Make sure we have a map
-                if (occurrences == null) {
-                    // NOTE: we looked at ConcurrentSkipListMap which keeps entries in sorted order,
-                    //       but it was faster to use a HashMap and sort it afterwards.
-                    occurrences = new ConcurrentHashMap<>();
+                // Keep track of term occurrences in this segment; later we'll merge it with the global term frequencies
+                Map<GroupIdHash, OccurrenceCounts> occsInSegment = CalcTokenFrequencies.get(index, lrc, annotations,
+                        metadataFields, docIdsInSegment, freqList.getNgramSize());
+
+                // Merge occurrences in this segment with global occurrences
+                // (the group ids are converted to their string representation here)
+                if (globalOccurrences instanceof ConcurrentSkipListMap) {
+                    // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
+                    //       because we use ConcurrentSkipListMap, which may call the remapping function
+                    //       multiple times if there's potential concurrency issues.
+                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.termIdsToStrings(lrc, annotations), (__, groupSize) -> {
+                        if (groupSize == null)
+                            return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                        else
+                            return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
+                    }));
+                } else {
+                    // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
+                    // because our remapping function will only be called once.
+                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.termIdsToStrings(lrc, annotations), (__, groupSize) -> {
+                        // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
+                        //       because we use ConcurrentSkipListMap, which may call the remapping function
+                        //       multiple times if there's potential concurrency issues.
+                        if (groupSize != null) {
+                            // Group existed already
+                            // Count hits and doc
+                            occ.hits += groupSize.hits;
+                            occ.docs += groupSize.docs;
+                        }
+                        return occ; // reusing occ here is okay because it doesn't change on subsequent calls
+                    }));
                 }
 
-                // Process current run of documents and add to grouping
-                CalcTokenFrequencies.get(index, annotations, metadataFields, docIdsInChunk, occurrences, freqList.getNgramSize());
-
-                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries");
+                //System.out.println("  Processed docs " + i + "-" + runEnd + ", " + globalOccurrences.size() + " entries");
 
                 // If the grouping has gotten too large, write it to file so we don't run out of memory.
-                boolean groupingTooLarge = occurrences.size() > config.getGroupsPerChunk();
-                boolean isFinalRun = rep == config.getRepetitions() - 1 && runEnd >= docIds.size();
-                if (groupingTooLarge || isFinalRun) {
+                if (globalOccurrences.size() > config.getGroupsPerChunk()) {
+                    // Sort our map now.
+                    SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(globalOccurrences);
 
-                    if (isFinalRun && chunkNumber == 0) {
-                        // There's only one chunk. We can skip writing intermediate file and write result directly.
-                        FreqListOutput.TSV.write(index, annotatedField, reportName, annotationNames, occurrences,
-                                outputDir, outputType == FreqListOutput.Type.TSV_GZIP);
-                        occurrences = null;
-                    } else if (groupingTooLarge || isFinalRun) {
-                        // Sort our map now.
-                        SortedMap<GroupIdHash, OccurrenceCounts> sorted = new TreeMap<>(occurrences);
-
-                        // Write next chunk file.
-                        chunkNumber++;
-                        String chunkName = reportName + chunkNumber;
-                        boolean tsv = outputType == FreqListOutput.Type.UNMERGED_TSV_GZ;
-                        File chunkFile = new File(tmpDir, chunkName + (tsv ? ".tsv.gz" : ".chunk"));
-                        System.out.println("  Writing " + chunkFile);
-                        if (!tsv) {
-                            // Write chunk files, to be merged at the end
-                            writeChunkFile(chunkFile, sorted, config.isCompressTempFiles());
-                            chunkFiles.add(chunkFile);
-                        } else {
-                            // Write separate TSV file per chunk; don't merge at the end
-                            writeTsvFile(chunkFile, sorted, terms);
-                        }
-                        occurrences = null; // free memory, allocate new on next iteration
+                    // Write next chunk file.
+                    chunkNumber.incrementAndGet();
+                    String chunkName = reportName + chunkNumber;
+                    boolean tsv = outputType == FreqListOutput.Type.UNMERGED_TSV_GZ;
+                    File chunkFile = new File(tmpDir, chunkName + (tsv ? ".tsv.gz" : ".chunk"));
+                    System.out.println("  Writing " + chunkFile);
+                    if (!tsv) {
+                        // Write chunk files, to be merged at the end
+                        writeChunkFile(chunkFile, sorted, config.isCompressTempFiles());
+                        chunkFiles.add(chunkFile);
+                    } else {
+                        // Write separate TSV file per chunk; don't merge at the end
+                        writeTsvFile(chunkFile, sorted, terms);
                     }
+                    globalOccurrences.clear();
                 }
-            }
+            });
         }
 
         // Did we write intermediate chunk files that have to be merged?
@@ -272,20 +294,56 @@ public class FrequencyTool {
             System.err.println("Could not delete: " + tmpDir);
     }
 
-    private static List<Integer> getDocIds(BlackLabIndex index, ConfigFreqList freqList) {
-        final List<Integer> docIds = new ArrayList<>();
+    private static Map<LeafReaderContext, List<Integer>> getDocIds(BlackLabIndex index, ConfigFreqList freqList) {
+        final Map<LeafReaderContext, List<Integer>> docIds = new HashMap<>();
 
         String filter = freqList.getFilter();
         if (filter != null) {
             try {
-                Query q = LuceneUtil.parseLuceneQuery(index, filter, index.analyzer(), "");
-                index.queryDocuments(q).forEach(d -> docIds.add(d.docId()));
+                Query filterQuery = LuceneUtil.parseLuceneQuery(index, filter, index.analyzer(), "");
+
+                index.searcher().search(filterQuery == null ? index.getAllRealDocsQuery() : filterQuery, new SimpleCollector() {
+                    private LeafReaderContext context;
+
+                    @Override
+                    protected void doSetNextReader(LeafReaderContext context) throws IOException {
+                        this.context = context;
+                        super.doSetNextReader(context);
+                    }
+
+                    @Override
+                    public void collect(int segmentDocId) {
+                        docIds.compute(context, (k, v) -> {
+                            if (v == null)
+                                v = new ArrayList<>();
+                            v.add(segmentDocId);
+                            return v;
+                        });
+                    }
+
+                    @Override
+                    public ScoreMode scoreMode() {
+                        return ScoreMode.COMPLETE_NO_SCORES;
+                    }
+                });
+
             } catch (ParseException e) {
-                throw new RuntimeException(e);
+                throw new InvalidQuery(e);
+            } catch (IOException e) {
+                throw new InvalidIndex(e);
             }
         } else {
             // No filter: include all documents.
-            index.forEachDocument((__, id) -> docIds.add(id));
+            for (LeafReaderContext lrc: index.reader().leaves()) {
+                Bits liveDocs = lrc.reader().getLiveDocs();
+                List<Integer> docIdsInSegment = new ArrayList<>();
+                for (int segmentDocId = 0; segmentDocId < lrc.reader().maxDoc(); segmentDocId++) {
+                    if (liveDocs == null || liveDocs.get(segmentDocId)) {
+                        docIdsInSegment.add(segmentDocId);
+                    }
+                }
+                docIds.put(lrc, docIdsInSegment);
+            }
         }
         return docIds;
     }

@@ -1,15 +1,11 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
-import java.util.ArrayList;
-import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -96,20 +92,6 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     public Terms terms() {
         initialize();
         return terms;
-    }
-
-    @Override
-    public List<int[]> retrievePartsInt(int globalDocId, int[] start, int[] end) {
-        initialize();
-        LeafReaderContext lrc = index.getLeafReaderContext(globalDocId);
-        List<int[]> segmentResults = BlackLabIndexIntegrated.forwardIndex(lrc)
-                .retrieveParts(luceneField, globalDocId - lrc.docBase, start, end);
-
-        List<int[]> results = new ArrayList<>();
-        for (int[] snippet: segmentResults) {
-            results.add(terms.segmentIdsToGlobalIds(lrc.ord, snippet));
-        }
-        return results;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -296,19 +297,27 @@ public abstract class HitPropertyContextBase extends HitProperty {
         int n = (int)(toIndexExclusive - fromIndex);
 
         // Determine which bits of context to get
-        int[] startsOfSnippets = new int[n];
-        int[] endsOfSnippets = new int[n];
+        int[] starts = new int[n];
+        int[] ends = new int[n];
         EphemeralHit hit = new EphemeralHit();
         long hitIndex = fromIndex;
         for (int j = 0; j < n; ++j, ++hitIndex) {
             hits.getEphemeral(hitIndex, hit);
-            setStartEnd.setStartEnd(startsOfSnippets, endsOfSnippets, j, hit);
+            setStartEnd.setStartEnd(starts, ends, j, hit);
         }
 
         if (globalAnnotationForwardIndex != null) {
             // [GLOBAL] Retrieve term ids
-            List<int[]> listTermIds = globalAnnotationForwardIndex.retrievePartsInt(docId, startsOfSnippets,
-                    endsOfSnippets);
+            List<int[]> listTermIds = new ArrayList<>();
+            LeafReaderContext lrc = index.getLeafReaderContext(docId);
+            ForwardIndexSegmentReader forwardIndex = BlackLabIndexIntegrated.forwardIndex(lrc);
+            String luceneField = globalAnnotationForwardIndex.annotation().forwardIndexSensitivity().luceneField();
+            int segmentDocId = docId - lrc.docBase;
+            Terms terms = globalAnnotationForwardIndex.terms();
+            for (int[] snippet: forwardIndex.retrieveParts(luceneField, segmentDocId, starts, ends)) {
+                listTermIds.add(terms.segmentIdsToGlobalIds(lrc.ord, snippet));
+            }
+
             // Also determine sort orders so we don't have to do that for each compare
             for (int[] termIds: listTermIds) {
                 if (compareInReverse)
@@ -321,7 +330,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         } else {
             // [SEGMENT] Retrieve term ids
             List<int[]> listTermIds = segmentForwardIndex.retrieveParts(segmentLuceneField, docId,
-                    startsOfSnippets, endsOfSnippets);
+                    starts, ends);
             // Also determine sort orders so we don't have to do that for each compare
             for (int[] termIds: listTermIds) {
                 if (compareInReverse)

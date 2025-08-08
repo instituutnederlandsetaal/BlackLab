@@ -8,16 +8,17 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -51,14 +52,15 @@ class CalcTokenFrequencies {
      * @param index index
      * @param annotations annotations to group on
      * @param metadataFields metadata fields to group on
-     * @param occurrences grouping to add to
+     * @param segmentDocIds (segment-local) document ids to process
+     * @param ngramSize size of ngrams to group on (1 for single tokens
      */
-    public static void get(
+    public static Map<GroupIdHash, OccurrenceCounts> get(
             BlackLabIndex index,
+            LeafReaderContext lrc,
             List<Annotation> annotations,
             List<String> metadataFields,
-            List<Integer> docIds,
-            ConcurrentMap<GroupIdHash, OccurrenceCounts> occurrences,
+            List<Integer> segmentDocIds,
             int ngramSize
         ) {
 
@@ -76,6 +78,9 @@ class CalcTokenFrequencies {
 
         final int numAnnotations = hitProperties.size();
 
+        // Keep track of term occurrences in this segment; later we'll merge it with the global term frequencies
+        Map<GroupIdHash, OccurrenceCounts> occsInSegment = new HashMap<>();
+
         try (final BlockTimer c = BlockTimer.create("Top Level")) {
 
             // Start actually calculating the requests frequencies.
@@ -91,24 +96,28 @@ class CalcTokenFrequencies {
             fieldsToLoad.add(lengthTokensFieldName);
             fieldsToLoad.addAll(metadataFields);
 
-            final IndexReader reader = index.reader();
-
-            docIds.parallelStream().forEach(docId -> {
+            for (int segmentDocId: segmentDocIds) {
+                int globalDocId = segmentDocId + lrc.docBase;
+                Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
                 try {
 
                     // Step 1: read all values for the to-be-grouped annotations for this document
                     // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
-                    final Document doc = reader.document(docId, fieldsToLoad);
+                    final Document doc = lrc.reader().document(segmentDocId, fieldsToLoad);
                     final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
                     final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                     try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                         for (AnnotInfo annot : hitProperties) {
-                            final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                            final int[] tokenValues = afi.retrievePartsInt(docId, new int[] { -1 }, new int[] { -1 })
-                                    .get(0);
+                            String luceneField = annot.getAnnotationForwardIndex().annotation()
+                                    .forwardIndexSensitivity().luceneField();
+                            TermsSegment segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
+                                    .terms(luceneField).reader();
+                            final int[] tokenValues = BlackLabIndexIntegrated.forwardIndex(lrc)
+                                    .retrieveParts(luceneField, globalDocId - lrc.docBase,
+                                            new int[] { -1 }, new int[] { -1 }).get(0);
                             tokenValuesPerAnnotation.add(tokenValues);
 
                             // Look up sort values
@@ -117,8 +126,9 @@ class CalcTokenFrequencies {
                             int docLength = tokenValues.length;
                             int[] sortValues = new int[docLength];
                             for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
-                                final int termId = tokenValues[tokenIndex];
-                                sortValues[tokenIndex] = annot.getTerms().idToSortPosition(termId, annot.getMatchSensitivity());
+                                final int segmentTermId = tokenValues[tokenIndex];
+                                sortValues[tokenIndex] = segmentTerms.idToSortPosition(segmentTermId,
+                                        annot.getMatchSensitivity());
                             }
                             sortValuesPerAnnotation.add(sortValues);
                         }
@@ -131,13 +141,11 @@ class CalcTokenFrequencies {
                     final String[] metadataValuesForGroup = !docProperties.isEmpty() ? new String[docProperties.size()] : null;
                     for (int i = 0; i < docProperties.size(); ++i)
                         metadataValuesForGroup[i] = doc.get(docProperties.get(i));
-                    final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup); // precompute, it's the same for all hits in document
+                    // precompute, it's the same for all hits in document
+                    final int metadataValuesHash = Arrays.hashCode(metadataValuesForGroup);
 
                     // now we have all values for all relevant annotations for this document
                     // iterate again and pair up the nth entries for all annotations, then store that as a group.
-
-                    // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
-                    Map<GroupIdHash, OccurrenceCounts> occsInDoc = new HashMap<>();
 
                     try (BlockTimer ignored = c.child("Group tokens")) {
                         // We can't get an ngram for the last ngramSize-1 tokens
@@ -160,52 +168,34 @@ class CalcTokenFrequencies {
                             final GroupIdHash groupId = new GroupIdHash(ngramSize, annotationValuesForThisToken, sortPositions, metadataValuesForGroup, metadataValuesHash);
 
                             // Count occurrence in this doc
-                            OccurrenceCounts occ = occsInDoc.get(groupId);
-                            if (occ == null) {
-                                occ = new OccurrenceCounts(1, 1);
-                                occsInDoc.put(groupId, occ);
-                            } else {
-                                occ.hits++;
-                            }
-
-
-                        }
-
-
-                        // Merge occurrences in this doc with global occurrences
-                        if (occurrences instanceof ConcurrentSkipListMap) {
-                            // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
-                            //       because we use ConcurrentSkipListMap, which may call the remapping function
-                            //       multiple times if there's potential concurrency issues.
-                            occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
-                                if (groupSize == null)
-                                    return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                                else
-                                    return new OccurrenceCounts(groupSize.hits + occ.hits, groupSize.docs + occ.docs);
-                            }));
-                        } else {
-                            // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
-                            // because our remapping function will only be called once.
-                            occsInDoc.forEach((groupId, occ) -> occurrences.compute(groupId, (__, groupSize) -> {
-                                // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
-                                //       because we use ConcurrentSkipListMap, which may call the remapping function
-                                //       multiple times if there's potential concurrency issues.
-                                if (groupSize != null) {
-                                    // Group existed already
-                                    // Count hits and doc
-                                    occ.hits += groupSize.hits;
-                                    occ.docs += groupSize.docs;
+                            occsInDoc.compute(groupId, (__, occurrenceInDoc) -> {
+                                if (occurrenceInDoc == null) {
+                                    occurrenceInDoc = new OccurrenceCounts(1, 1);
+                                } else {
+                                    occurrenceInDoc.hits++;
                                 }
-                                return occ; // reusing occ here is okay because it doesn't change on subsequent calls
-                            }));
+                                return occurrenceInDoc;
+                            });
                         }
-
                     }
                 } catch (IOException e) {
                     throw BlackLabException.wrapRuntime(e);
                 }
-            });
+                // Merge occurrences in this doc with segment occurrences
+                occsInDoc.forEach((groupId, occurrenceInDocument) ->
+                    occsInSegment.compute(groupId,
+                        (__, segmentGroup) -> {
+                            if (segmentGroup != null) {
+                                // Merge local & global counts
+                                segmentGroup.hits += occurrenceInDocument.hits;
+                                segmentGroup.docs += occurrenceInDocument.docs;
+                                return segmentGroup;
+                            } else {
+                                return occurrenceInDocument; // first time we found this group.
+                            }
+                        }));
+            }
         }
-
+        return occsInSegment;
     }
 }
