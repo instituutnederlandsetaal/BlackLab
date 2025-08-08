@@ -10,6 +10,8 @@ To learn how to index and search your data, see the [official project site](http
 
 To learn about BlackLab development, see the [dev docs](doc/#readme). 
 
+For a high-level overview of how the project fits together, see the [Architecture Overview](doc/technical/architecture.md).
+
 If you wish to cite BlackLab, see [Citing BlackLab](https://blacklab.ivdnt.org/guide/about.html#citing-blacklab). Thank you!
 
 ## Branches
@@ -25,7 +27,7 @@ There are additional branches related to in-development features. These are inte
 
 The current version of BlackLab requires Java 17 or higher. It has been tested up to and including Java 21.
 
-This version uses Lucene 8. This unfortunately means that corpora created with older BlackLab versions (up to 2.3) cannot be read and will need to be re-indexed.
+This version uses Lucene 9. This unfortunately means that corpora created with older BlackLab versions (up to 2.3) cannot be read and will need to be re-indexed.
 
 
 ## Roadmap
