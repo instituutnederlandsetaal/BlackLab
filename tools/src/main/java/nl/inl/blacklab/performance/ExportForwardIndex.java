@@ -12,12 +12,12 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -112,21 +112,18 @@ public class ExportForwardIndex {
             for (Annotation annotation: annotatedField.annotations()) {
                 if (SKIP_ANNOTATIONS.contains(annotation.name()) || !annotation.hasForwardIndex())
                     continue;
-                AnnotationForwardIndex afi = forwardIndex.get(annotation);
-                String length = doLengths ? " len=" + afi.docLength(docId) : "";
+                String luceneField = annotation.forwardIndexSensitivity().luceneField();
+                LeafReaderContext lrc = index.getLeafReaderContext(docId);
+                int docLength = (int)BlackLabIndexIntegrated.forwardIndex(lrc).docLength(luceneField, docId - lrc.docBase);
+                String length = doLengths ? " len=" + docLength : "";
                 System.out.println("    " + annotation.name() + length);
                 if (doTokens) {
-                    LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                    try {
-                        TermsSegmentReader terms = BlackLabCodecUtil.getPostingsReader(lrc)
-                                .terms(annotation.forwardIndexSensitivity().luceneField()).reader();
-                        int[] doc = afi.getDocumentSegment(lrc, docId);
-                        for (int tokenId: doc) {
-                            String token = terms.get(tokenId);
-                            System.out.println("    " + token);
-                        }
-                    } catch (IOException e) {
-                        throw new InvalidIndex(e);
+                    ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
+                    int[] doc = fi.retrieveParts(luceneField, docId - lrc.docBase, new int[] { -1 }, new int[] { -1 }).get(0);
+                    TermsSegmentReader terms = fi.terms(luceneField);
+                    for (int tokenId: doc) {
+                        String token = terms.get(tokenId);
+                        System.out.println("    " + token);
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
@@ -101,22 +102,14 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     public List<int[]> retrievePartsInt(int globalDocId, int[] start, int[] end) {
         initialize();
         LeafReaderContext lrc = index.getLeafReaderContext(globalDocId);
-        List<int[]> segmentResults = retrievePartsIntSegment(lrc, globalDocId, start, end);
-        return terms.segmentIdsToGlobalIds(lrc.ord, segmentResults);
-    }
+        List<int[]> segmentResults = BlackLabIndexIntegrated.forwardIndex(lrc)
+                .retrieveParts(luceneField, globalDocId - lrc.docBase, start, end);
 
-    @Override
-    public List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int globalDocId, int[] start, int[] end) {
-        initialize();
-        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
-        return fi.retrieveParts(luceneField, globalDocId - lrc.docBase, start, end);
-    }
-
-    @Override
-    public int docLength(int docId) {
-        LeafReaderContext lrc = index.getLeafReaderContext(docId);
-        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
-        return (int)fi.docLength(luceneField, docId - lrc.docBase);
+        List<int[]> results = new ArrayList<>();
+        for (int[] snippet: segmentResults) {
+            results.add(terms.segmentIdsToGlobalIds(lrc.ord, snippet));
+        }
+        return results;
     }
 
     @Override

@@ -37,7 +37,18 @@ public interface TermsSegmentReader {
      * @param sensitivity how to compare the terms
      * @return true if the terms are equal
      */
-    boolean termsEqual(int[] termIds, MatchSensitivity sensitivity);
+    default boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
+        if (termIds.length < 2)
+            return true;
+        // optimize?
+        int expected = idToSortPosition(termIds[0], sensitivity);
+        for (int termIdIndex = 1; termIdIndex < termIds.length; ++termIdIndex) {
+            int cur = idToSortPosition(termIds[termIdIndex], sensitivity);
+            if (cur != expected)
+                return false;
+        }
+        return true;
+    }
 
     /**
      * Get the sort position for a term based on its term id
@@ -55,7 +66,12 @@ public interface TermsSegmentReader {
      * @param sortOrder the sort positions
      * @param sensitivity whether we want the sensitive or insensitive sort positions
      */
-    void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity);
+    default void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
+        // optimize?
+        for (int i = 0; i < termIds.length; i++) {
+            sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
+        }
+    }
 
     default int sortPositionFor(String term, MatchSensitivity sensitivity) {
         return idToSortPosition(indexOf(term), sensitivity);

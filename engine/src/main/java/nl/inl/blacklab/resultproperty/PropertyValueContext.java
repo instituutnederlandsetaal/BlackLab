@@ -1,39 +1,17 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public abstract class PropertyValueContext extends PropertyValue {
 
-    protected final Terms terms;
+    protected final Terms terms; // @@@ TODO: get rid of global terms
 
     protected final Annotation annotation;
-
-    PropertyValueContext(BlackLabIndex index, Annotation annotation) {
-        this.annotation = annotation;
-        this.terms = index == null ? null : index.annotationForwardIndex(annotation).terms();
-    }
 
     PropertyValueContext(Terms terms, Annotation annotation) {
         this.annotation = annotation;
         this.terms = terms;
-    }
-
-    public static int deserializeToken(Terms terms, String term) {
-        int termId;
-        if (term.equals("~"))
-            termId = Constants.NO_TERM; // no token, effectively a "null" value
-        else {
-            if (term.startsWith("~~")) {
-                // tilde in first position has to be escaped
-                // because of how null value is encoded
-                term = term.substring(1);
-            }
-            termId = terms.indexOf(term); // @@@ TODO
-        }
-        return termId;
     }
 
     public static String serializeTerm(Terms terms, int valueTokenId) {

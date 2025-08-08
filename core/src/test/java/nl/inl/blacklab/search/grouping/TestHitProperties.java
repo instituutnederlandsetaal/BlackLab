@@ -130,10 +130,8 @@ public class TestHitProperties {
         MockTerms mockTerms = new MockTerms(words);
         for (int i = 0; i < mockTerms.numberOfTerms(); i++) {
             Assert.assertEquals(expected[i], PropertyValueContext.serializeTerm(mockTerms, i));
-            Assert.assertEquals(expected[i], PropertyValueContext.serializeTerm(mockTerms, PropertyValueContext.deserializeToken(mockTerms, expected[i])));
         }
         Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, Constants.NO_TERM));
-        Assert.assertEquals("~", PropertyValueContext.serializeTerm(mockTerms, PropertyValueContext.deserializeToken(mockTerms, "~")));
     }
 
 }

@@ -2,8 +2,6 @@ package nl.inl.blacklab.forwardindex;
 
 import java.util.List;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
@@ -44,41 +42,12 @@ public interface AnnotationForwardIndex {
      */
     List<int[]> retrievePartsInt(int globalDocId, int[] start, int[] end);
 
-    List<int[]> retrievePartsIntSegment(LeafReaderContext lrc, int globalDocId, int[] start, int[] end);
-
-    /**
-     * Retrieve token ids for the entire document.
-     * @param globalDocId forward index id
-     * @return token ids for the entire document.
-     */
-    default int[] getDocument(int globalDocId) {
-        return retrievePartsInt(globalDocId, new int[] { -1 }, new int[] { -1 }).get(0);
-    }
-    /**
-     * Retrieve token ids for the entire document.
-     * @param globalDocId forward index id
-     * @return token ids for the entire document.
-     */
-    default int[] getDocumentSegment(LeafReaderContext lrc, int globalDocId) {
-        return retrievePartsIntSegment(lrc, globalDocId, new int[] { -1 }, new int[] { -1 }).get(0);
-    }
-
     /**
      * Get the Terms object in order to translate ids to token strings
      *
      * @return the Terms object
      */
     Terms terms();
-
-    /**
-     * Gets the length (in tokens) of a document.
-     *
-     * NOTE: this INCLUDES the extra closing token at the end of the document!
-     *
-     * @param docId Lucene document id
-     * @return length of the document
-     */
-    int docLength(int docId);
 
     /**
      * The annotation for which this is the forward index

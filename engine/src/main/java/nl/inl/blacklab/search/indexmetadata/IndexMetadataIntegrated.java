@@ -14,6 +14,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -28,7 +29,6 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormat;
@@ -46,6 +46,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
@@ -744,9 +745,10 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                     CorpusSize.Count fieldCount = CorpusSize.Count.create(); // [0] = token count, [1] = document count
                     // Add up token counts for all the documents
                     Annotation annot = field.mainAnnotation();
-                    AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+                    String luceneField = index.forwardIndex(field).get(annot).annotation().forwardIndexSensitivity().luceneField();
                     index.forEachDocument((__, docId) -> {
-                        int docLength = afi.docLength(docId);
+                        LeafReaderContext lrc = index.getLeafReaderContext(docId);
+                        int docLength = (int) BlackLabIndexIntegrated.forwardIndex(lrc).docLength(luceneField, docId - lrc.docBase);
                         if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)

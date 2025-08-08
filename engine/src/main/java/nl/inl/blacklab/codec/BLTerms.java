@@ -189,7 +189,7 @@ public class BLTerms extends Terms {
             private final RandomAccessInput termStringOffsets;
 
             /** Where to read term strings */
-            IndexInput termStrings;
+            final IndexInput termStrings;
 
             {
                 try {
@@ -237,20 +237,6 @@ public class BLTerms extends Terms {
             }
 
             @Override
-            public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
-                if (termIds.length < 2)
-                    return true;
-                // optimize?
-                int expected = idToSortPosition(termIds[0], sensitivity);
-                for (int termIdIndex = 1; termIdIndex < termIds.length; ++termIdIndex) {
-                    int cur = idToSortPosition(termIds[termIdIndex], sensitivity);
-                    if (cur != expected)
-                        return false;
-                }
-                return true;
-            }
-
-            @Override
             public int idToSortPosition(int id, MatchSensitivity sensitivity) {
                 if (id == Constants.NO_TERM)
                     return Constants.NO_TERM;
@@ -260,14 +246,6 @@ public class BLTerms extends Terms {
                     return array.readInt((long) id * Integer.BYTES);
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
-                }
-            }
-
-            @Override
-            public void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
-                // optimize?
-                for (int i = 0; i < termIds.length; i++) {
-                    sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
                 }
             }
 

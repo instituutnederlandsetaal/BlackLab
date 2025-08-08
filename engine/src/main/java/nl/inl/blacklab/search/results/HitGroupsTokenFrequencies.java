@@ -37,6 +37,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
+import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -416,12 +417,14 @@ public class HitGroupsTokenFrequencies {
 
                                 try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                                     for (AnnotInfo annot : hitProperties) {
-                                        final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
                                         String luceneField = annot.annotationForwardIndex.annotation()
                                                 .forwardIndexSensitivity().luceneField();
                                         TermsSegmentReader segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
                                                 .terms(luceneField).reader();
-                                        final int[] tokenValues = afi.getDocumentSegment(lrc, globalDocId);
+                                        final int[] tokenValues = BlackLabIndexIntegrated.forwardIndex(lrc)
+                                                .retrieveParts(luceneField, globalDocId - lrc.docBase,
+                                                        new int[] { -1 }, new int[] { -1 }).get(0);
+
                                         tokenValuesPerAnnotation.add(tokenValues);
 
                                         // Look up sort values

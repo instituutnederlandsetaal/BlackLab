@@ -107,7 +107,8 @@ class CalcTokenFrequencies {
                     try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                         for (AnnotInfo annot : hitProperties) {
                             final AnnotationForwardIndex afi = annot.getAnnotationForwardIndex();
-                            final int[] tokenValues = afi.getDocument(docId);
+                            final int[] tokenValues = afi.retrievePartsInt(docId, new int[] { -1 }, new int[] { -1 })
+                                    .get(0);
                             tokenValuesPerAnnotation.add(tokenValues);
 
                             // Look up sort values

@@ -152,7 +152,9 @@ public class Contexts {
             if (forwardIndex == null)
                 throw new IllegalArgumentException("Cannot get context from without a forward index");
             // Get all the words from the forward index
-            List<int[]> words = forwardIndex.retrievePartsIntSegment(lrc, doc, startsOfSnippets, endsOfSnippets);
+            String luceneField = forwardIndex.annotation().forwardIndexSensitivity().luceneField();
+            List<int[]> words = BlackLabIndexIntegrated.forwardIndex(lrc)
+                    .retrieveParts(luceneField, doc - lrc.docBase, startsOfSnippets, endsOfSnippets);
 
             // Build the actual concordances
 //            int hitNum = 0;

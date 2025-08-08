@@ -71,20 +71,8 @@ public class TestNfaFromQuery {
                         }
 
                         @Override
-                        public boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
-                            return termIds.length == 2 && termIds[0] == termIds[1];
-                        }
-
-                        @Override
                         public int idToSortPosition(int id, MatchSensitivity sensitivity) {
                             return id; // wrong, but not used for sorting in these tests
-                        }
-
-                        @Override
-                        public void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
-                            for (int i = 0; i < termIds.length; i++) {
-                                sortOrder[i] = termIds[i];
-                            }
                         }
 
                         @Override

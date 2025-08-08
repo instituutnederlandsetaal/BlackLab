@@ -18,7 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -47,9 +47,9 @@ public class TestIndexFormats {
 
     private static BlackLabIndex index;
 
-    private static AnnotationForwardIndex wordFi;
+    private static String wordFi;
 
-    private static AnnotationForwardIndex posFi;
+    private static String posFi;
 
     private static Terms wordTerms;
 
@@ -58,9 +58,9 @@ public class TestIndexFormats {
         index = testIndex.index();
         AnnotatedField contents = index.mainAnnotatedField();
         Annotation word = contents.mainAnnotation();
-        wordFi = index.forwardIndex(contents).get(word);
-        posFi = index.forwardIndex(contents).get(contents.annotation("pos"));
-        wordTerms = wordFi.terms();
+        wordFi = index.forwardIndex(contents).get(word).annotation().forwardIndexSensitivity().luceneField();
+        posFi = index.forwardIndex(contents).get(contents.annotation("pos")).annotation().forwardIndexSensitivity().luceneField();
+        wordTerms = index.forwardIndex(contents).get(word).terms();
     }
 
     @Test
@@ -91,8 +91,8 @@ public class TestIndexFormats {
      * @param sensitive match sensitivity to use
      */
     private void testCompareTerms(MatchSensitivity sensitive) {
-        Terms terms = wordFi.terms();
-        Collator collator = wordFi.collators().get(sensitive);
+        Terms terms = wordTerms;
+        Collator collator = Collators.getDefault().get(sensitive);
         Random random = new Random(123_456);
         for (int i = 0; i < 100; i++) {
             int a = random.nextInt(28);
@@ -116,16 +116,21 @@ public class TestIndexFormats {
             int expectedLength = TestIndex.DOC_LENGTHS_TOKENS[i] + BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             int docId = testIndex.getDocIdForDocNumber(i);
 
-            Assert.assertEquals(expectedLength, wordFi.docLength(docId));
+            LeafReaderContext lrc = index.getLeafReaderContext(docId);
+            int docLength = (int) BlackLabIndexIntegrated.forwardIndex(lrc).docLength(wordFi, docId - lrc.docBase);
+            Assert.assertEquals(expectedLength, docLength);
 
             // pos annotation doesn't occur in all docs; test that this doesn't mess up doc length
-            Assert.assertEquals(expectedLength, posFi.docLength(docId));
+            int docLengthPos = (int) BlackLabIndexIntegrated.forwardIndex(lrc).docLength(posFi, docId - lrc.docBase);
+            Assert.assertEquals(expectedLength, docLengthPos);
         }
     }
 
-    int getToken(AnnotationForwardIndex afi, int docId, int pos) {
+    int getToken(String luceneField, int docId, int pos) {
         LeafReaderContext lrc = testIndex.index().getLeafReaderContext(docId);
-        int[] context = afi.retrievePartsIntSegment(lrc, docId, new int[] { pos }, new int[] { pos + 1 }).get(0);
+        //String luceneField = afi.annotation().forwardIndexSensitivity().luceneField();
+        int[] context = BlackLabIndexIntegrated.forwardIndex(lrc)
+                .retrieveParts(luceneField, docId - lrc.docBase, new int[] { pos }, new int[] { pos + 1 }).get(0);
         if (context.length == 0)
             throw new IllegalArgumentException("Token offset out of range");
         return context[0];
