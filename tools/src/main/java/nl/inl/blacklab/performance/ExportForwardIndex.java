@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -139,7 +140,7 @@ public class ExportForwardIndex {
             Set<String> allTerms = new TreeSet<>();
             for (LeafReaderContext lrc: index.reader().leaves()) {
                 String luceneField = annotatedField.mainAnnotation().forwardIndexSensitivity().luceneField();
-                Terms r = BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
+                Terms r = BLTerms.forSegment(lrc, luceneField).reader();
                 for (int i = 0; i < r.numberOfTerms(); i++) {
                     allTerms.add(r.get(i));
                 }

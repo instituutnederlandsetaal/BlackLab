@@ -68,6 +68,36 @@ How would we approach this:
 - [ ] Clean up, removing any now-unused classes.
 
 
+### Optimize handling of various codec objects
+
+BIG ISSUES
+
+- `BlacklabIndex.getLeafReaderContext(docId)` uses binarySearch
+- `BlackLabCodecUtil.getPostingsReader(lrc)` iterates over fields to find BLTerms object
+
+SMALLER ISSUES
+
+- `BlackLabPostingsReader.forwardIndex()` creates a reader object
+- `BlackLabPostingsReader.terms()` uses a map lookup
+- `BLTerms.reader()` creates a reader object
+
+INCONSITENT API
+
+- postingsReader.forwardIndex() returns FI reader object for all fields
+- postingsReader.terms(luceneField).reader() returns terms reader object for single field
+  (try minimize creating short-lived reader objects)
+
+BETTER WAY TO GET TERMS READER?
+
+```java
+((BLTerms)lrc.reader().terms(luceneFieldName)).reader();
+```
+
+
+
+
+
+
 ## Optimization opportunities
 
 The first implementation of the integrated index is slow, because we just want to make it work for now. There are a number of opportunities for optimizing it.

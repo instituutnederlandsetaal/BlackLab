@@ -81,6 +81,14 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         }
     }
 
+    public static BLTerms forSegment(LeafReaderContext lrc, String luceneField) {
+        try {
+            return (BLTerms)lrc.reader().terms(luceneField);
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
+    }
+
     public BlackLabPostingsReader getFieldsProducer() {
         return postingsReader;
     }

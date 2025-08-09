@@ -13,6 +13,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
@@ -84,7 +85,7 @@ public class Contexts {
         List<Terms> annotationTerms = forwardIndexes.stream()
                 .map(afi -> {
                     String luceneField = afi.annotation().forwardIndexSensitivity().luceneField();
-                    return BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
+                    return BLTerms.forSegment(lrc, luceneField).reader();
                 })
                 .toList();
         int hitIndex = 0;
