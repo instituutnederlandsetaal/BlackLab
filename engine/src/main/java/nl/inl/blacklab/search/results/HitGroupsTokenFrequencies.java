@@ -20,9 +20,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
-import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
@@ -138,12 +138,12 @@ public class HitGroupsTokenFrequencies {
                 throw new IllegalStateException("Cannot convert term ids to strings, no term ids available");
             }
             String[] tokenStrings = new String[tokenIds.length];
-            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
             for (int i = 0; i < tokenIds.length; i++) {
                 String luceneFieldName = hitProperties.get(i).annotationForwardIndex.annotation().forwardIndexSensitivity().luceneField();
+                FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneFieldName);
                 int tokensSegmentTermId = tokenIds[i];
                 tokenStrings[i] = tokensSegmentTermId >= 0 ?
-                        postingsReader.terms(luceneFieldName).reader().get(tokensSegmentTermId) :
+                        forwardIndex.terms().get(tokensSegmentTermId) :
                         null;
             }
             return new GroupIdHash(tokenStrings, metadataValues, Arrays.hashCode(metadataValues));
@@ -190,11 +190,11 @@ public class HitGroupsTokenFrequencies {
 
     /** Info about an annotation we're grouping on. */
     private static final class AnnotInfo {
-        private final AnnotationForwardIndex annotationForwardIndex;
+        private final GAnnotationForwardIndex annotationForwardIndex;
 
         private final MatchSensitivity matchSensitivity;
 
-        public AnnotationForwardIndex getAnnotationForwardIndex() {
+        public GAnnotationForwardIndex getAnnotationForwardIndex() {
             return annotationForwardIndex;
         }
 
@@ -202,7 +202,7 @@ public class HitGroupsTokenFrequencies {
             return matchSensitivity;
         }
 
-        public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
+        public AnnotInfo(GAnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
             this.annotationForwardIndex = annotationForwardIndex;
             this.matchSensitivity = matchSensitivity;
         }
@@ -265,7 +265,7 @@ public class HitGroupsTokenFrequencies {
                         Annotation annotation = ((HitPropertyHitText)p).getAnnotation();
 
                         final int positionInUnpackedList = hitProperties.size();
-                        final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annotation);
+                        final GAnnotationForwardIndex annotationFI = index.annotationForwardIndex(annotation);
                         final MatchSensitivity sensitivity = ((HitPropertyHitText) p).getSensitivity();
                         hitProperties.add(new AnnotInfo(annotationFI, sensitivity));
                         originalOrderOfUnpackedProperties.add(PropInfo.hit(positionInUnpackedList));
@@ -404,11 +404,10 @@ public class HitGroupsTokenFrequencies {
                                     for (AnnotInfo annot : hitProperties) {
                                         String luceneField = annot.annotationForwardIndex.annotation()
                                                 .forwardIndexSensitivity().luceneField();
-                                        BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
-                                        Terms segmentTerms = postingsReader.terms(luceneField).reader();
-                                        final int[] tokenValues = postingsReader.forwardIndex()
-                                                .retrieveParts(luceneField, globalDocId - lrc.docBase,
+                                        FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+                                        final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
                                                         new int[] { -1 }, new int[] { -1 }).get(0);
+                                        Terms segmentTerms = forwardIndex.terms();
 
                                         tokenValuesPerAnnotation.add(tokenValues);
 

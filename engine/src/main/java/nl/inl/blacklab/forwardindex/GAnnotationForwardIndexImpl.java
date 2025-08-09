@@ -12,14 +12,14 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
- * Forward index for single annotation (FIs integrated).
+ * Global forward index for single annotation (FIs integrated).
  *
  * This implementation works with FIs integrated into the Lucene index.
  *
  * Note that in the integrated case, there's no separate forward index id (fiid),
  * but instead the Lucene docId is used.
  */
-public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
+public class GAnnotationForwardIndexImpl implements GAnnotationForwardIndex {
 
     /**
      * Open an integrated forward index.
@@ -28,12 +28,12 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
      * @param collator collator to use
      * @return forward index
      */
-    public static AnnotationForwardIndex open(ForwardIndex forwardIndex, BlackLabIndex index, Annotation annotation, Collator collator) {
+    public static GAnnotationForwardIndex open(GForwardIndex forwardIndex, BlackLabIndex index, Annotation annotation, Collator collator) {
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
 
         Collators collators = new Collators(collator);
-        return new AnnotationForwardIndexImpl(index, annotation, collators);
+        return new GAnnotationForwardIndexImpl(index, annotation, collators);
     }
 
     private final IndexReader indexReader;
@@ -46,7 +46,7 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     /** Collators to use for comparisons */
     private final Collators collators;
 
-    public AnnotationForwardIndexImpl(BlackLabIndex index, Annotation annotation, Collators collators) {
+    public GAnnotationForwardIndexImpl(BlackLabIndex index, Annotation annotation, Collators collators) {
         super();
         this.indexReader = index.reader();
         this.annotation = annotation;

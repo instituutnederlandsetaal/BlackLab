@@ -1,6 +1,6 @@
 package nl.inl.blacklab.codec;
 
-public class ForwardIndexFieldMutable extends ForwardIndexField {
+class ForwardIndexFieldMutable extends ForwardIndexField {
     public ForwardIndexFieldMutable(String fieldName) {
         super(fieldName);
     }

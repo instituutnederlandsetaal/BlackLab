@@ -11,10 +11,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.forwardindex.GForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -89,7 +88,7 @@ public class ExportForwardIndex {
 
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             AnnotatedField annotatedField = index.annotatedField(annotatedFieldName);
-            ForwardIndex forwardIndex = index.forwardIndex(annotatedField);
+            GForwardIndex forwardIndex = index.forwardIndex(annotatedField);
 
             if (doTerms)
                 exportTerms(index, annotatedField);
@@ -98,7 +97,7 @@ public class ExportForwardIndex {
         }
     }
 
-    private static void exportDocs(BlackLabIndex index, AnnotatedField annotatedField, ForwardIndex forwardIndex, boolean doLengths, boolean doTokens) {
+    private static void exportDocs(BlackLabIndex index, AnnotatedField annotatedField, GForwardIndex forwardIndex, boolean doLengths, boolean doTokens) {
         // Export tokens in each doc
         System.out.println("\nDOCS");
         AtomicInteger n = new AtomicInteger(0);
@@ -114,13 +113,13 @@ public class ExportForwardIndex {
                     continue;
                 String luceneField = annotation.forwardIndexSensitivity().luceneField();
                 LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                ForwardIndexSegmentReader fi = BlackLabPostingsReader.forSegment(lrc).forwardIndex();
-                int docLength = (int) fi.docLength(luceneField, docId - lrc.docBase);
+                FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+                int docLength = (int) fi.docLength(docId - lrc.docBase);
                 String length = doLengths ? " len=" + docLength : "";
                 System.out.println("    " + annotation.name() + length);
                 if (doTokens) {
-                    int[] doc = fi.retrieveParts(luceneField, docId - lrc.docBase, new int[] { -1 }, new int[] { -1 }).get(0);
-                    Terms terms = fi.terms(luceneField);
+                    int[] doc = fi.retrieveParts(docId - lrc.docBase, new int[] { -1 }, new int[] { -1 }).get(0);
+                    Terms terms = fi.terms();
                     for (int tokenId: doc) {
                         String token = terms.get(tokenId);
                         System.out.println("    " + token);

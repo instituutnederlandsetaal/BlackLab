@@ -5,14 +5,16 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
+ * Global forward index.
+ *
  * A component that can quickly tell you what word occurs at a specific position
  * of a specific document.
  * 
- * This allows access to all annotations for a document, as opposed to {@link AnnotationForwardIndex},
+ * This allows access to all annotations for a document, as opposed to {@link GAnnotationForwardIndex},
  * which allows access to just one.
  */
 @ThreadSafe
-public interface ForwardIndex {
+public interface GForwardIndex {
 
     /**
      * The field for which this is the forward index
@@ -27,5 +29,5 @@ public interface ForwardIndex {
      * @param annotation annotation to get a view of
      * @return single-annotation forward index view
      */
-    AnnotationForwardIndex get(Annotation annotation);
+    GAnnotationForwardIndex get(Annotation annotation);
 }

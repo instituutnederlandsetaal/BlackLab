@@ -30,7 +30,7 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
  * Keeps track of attributes per unique relation id and writes them to the relation info
  * files so we can look them up later.
  */
-public class PWPluginRelationInfo implements PWPlugin {
+class PWPluginRelationInfo implements PWPlugin {
 
     /** Log all events to a log file? Useful while debugging. */
     private static final boolean ENABLE_DEBUG_LOG = false;

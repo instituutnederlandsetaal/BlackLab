@@ -14,10 +14,9 @@ import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
@@ -65,7 +64,7 @@ public class Contexts {
      */
     static void makeKwicsSingleDocForwardIndex(
             HitsSimple hits,
-            List<AnnotationForwardIndex> forwardIndexes,
+            List<GAnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
             BiConsumer<Hit, Kwic> kwicConsumer
     ) {
@@ -78,7 +77,7 @@ public class Contexts {
                 contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
-                .map(AnnotationForwardIndex::annotation)
+                .map(GAnnotationForwardIndex::annotation)
                 .toList();
         int docId = hits.doc(0);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(docId);
@@ -122,7 +121,7 @@ public class Contexts {
      * @return the context words for each hit, as an array of int arrays.
      */
     private static int[][] getContextWordsSingleDocument(HitsSimple hits, long start, long end,
-            ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
+            ContextSize contextSize, List<GAnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
@@ -142,13 +141,13 @@ public class Contexts {
         int doc = hits.doc(start);
         int[][] contexts = new int[n][];
         LeafReaderContext lrc = hits.index().getLeafReaderContext(doc);
-        for (AnnotationForwardIndex forwardIndex: contextSources) {
+        for (GAnnotationForwardIndex forwardIndex: contextSources) {
             if (forwardIndex == null)
                 throw new IllegalArgumentException("Cannot get context from without a forward index");
             // Get all the words from the forward index
             String luceneField = forwardIndex.annotation().forwardIndexSensitivity().luceneField();
-            List<int[]> words = BlackLabPostingsReader.forSegment(lrc).forwardIndex()
-                    .retrieveParts(luceneField, doc - lrc.docBase, startsOfSnippets, endsOfSnippets);
+            List<int[]> words = FieldForwardIndex.get(lrc, luceneField)
+                    .retrieveParts(doc - lrc.docBase, startsOfSnippets, endsOfSnippets);
 
             // Build the actual concordances
 //            int hitNum = 0;
@@ -192,7 +191,7 @@ public class Contexts {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        List<AnnotationForwardIndex> fis = new ArrayList<>();
+        List<GAnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
             fis.add(hits.index().annotationForwardIndex(annotation));
         }
@@ -254,7 +253,7 @@ public class Contexts {
         if (annotation == null)
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        AnnotationForwardIndex fi = hits.index().annotationForwardIndex(annotation);
+        GAnnotationForwardIndex fi = hits.index().annotationForwardIndex(annotation);
 
         // Get the context
         // Group hits per document
@@ -299,15 +298,16 @@ public class Contexts {
         return contexts;
     }
 
-    private static String[][] getCollocationWordsSingleDocumentStrings(HitsSimple hits, long start, long end, ContextSize contextSize, AnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
+    private static String[][] getCollocationWordsSingleDocumentStrings(HitsSimple hits, long start, long end, ContextSize contextSize, GAnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
         int[][] contexts = getContextWordsSingleDocument(hits, start, end, contextSize, List.of(contextSource), matchInfoDefs);
         if (contextSize.isInlineTag())
             throw new IllegalArgumentException("Cannot build contexts with inline tags");
         String[][] stringContexts = new String[contexts.length][];
         int doc = hits.doc(start);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(doc);
-        ForwardIndexSegmentReader fi = BlackLabPostingsReader.forSegment(lrc).forwardIndex();
-        Terms terms = fi.terms(contextSource.annotation().forwardIndexSensitivity().luceneField());
+        String luceneField = contextSource.annotation().forwardIndexSensitivity().luceneField();
+        BLTerms blTerms = BLTerms.forSegment(lrc, luceneField);
+        Terms terms = blTerms.reader();
         for (int j = 0; j < contexts.length; j++) {
             int[] context = contexts[j];
             int beforeContextLength = context[HIT_START_INDEX];

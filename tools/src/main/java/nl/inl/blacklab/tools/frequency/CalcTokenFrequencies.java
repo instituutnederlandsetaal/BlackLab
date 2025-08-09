@@ -12,9 +12,9 @@ import java.util.Set;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -70,7 +70,7 @@ class CalcTokenFrequencies {
 
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
         final List<AnnotInfo> hitProperties = annotations.stream().map(ann -> {
-            AnnotationForwardIndex afi = index.annotationForwardIndex(ann);
+            GAnnotationForwardIndex afi = index.annotationForwardIndex(ann);
             return new AnnotInfo(afi, MatchSensitivity.INSENSITIVE);
         }).toList();
         final List<String> docProperties = new ArrayList<>(metadataFields);
@@ -112,11 +112,10 @@ class CalcTokenFrequencies {
                         for (AnnotInfo annot : hitProperties) {
                             String luceneField = annot.getAnnotationForwardIndex().annotation()
                                     .forwardIndexSensitivity().luceneField();
-                            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
-                            Terms segmentTerms = postingsReader.terms(luceneField).reader();
-                            final int[] tokenValues = postingsReader.forwardIndex()
-                                    .retrieveParts(luceneField, globalDocId - lrc.docBase,
+                            FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+                            final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
                                             new int[] { -1 }, new int[] { -1 }).get(0);
+                            Terms segmentTerms = forwardIndex.terms();
                             tokenValuesPerAnnotation.add(tokenValues);
 
                             // Look up sort values

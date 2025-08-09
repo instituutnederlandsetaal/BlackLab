@@ -20,7 +20,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 public abstract class BlackLabPostingsReader extends FieldsProducer {
@@ -31,7 +31,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     protected final FieldsProducer delegateFieldsProducer;
 
     /** The forward index */
-    protected final SegmentForwardIndex forwardIndex;
+    protected final ForwardIndex forwardIndex;
 
     /** The relation info (if it was stored) */
     protected final SegmentRelationInfo relationInfo;
@@ -62,7 +62,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
         this.state = state;
         this.reverseEndian = reverseEndian;
 
-        forwardIndex = new SegmentForwardIndex(this);
+        forwardIndex = new ForwardIndex(this);
         relationInfo = SegmentRelationInfo.openIfPresent(this);
 
         // NOTE: opening the forward index calls openInputFile, which reads
@@ -79,8 +79,10 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
      * @param lrc leafreader to get the BlackLab40PostingsReader for
      * @return BlackLab40PostingsReader for this leafreader
      */
-    public static BlackLabPostingsReader forSegment(LeafReaderContext lrc) {
-        return BLTerms.getAnyTermsObject(lrc).getFieldsProducer();
+    public static BlackLabPostingsReader forSegment(LeafReaderContext lrc, String luceneField) {
+        if (luceneField == null)
+            return BLTerms.getAnyTermsObject(lrc).getFieldsProducer();
+        return BLTerms.forSegment(lrc, luceneField).getFieldsProducer();
     }
 
     public BlackLabStoredFieldsReader getStoredFieldsReader() {
@@ -102,8 +104,8 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
      *
      * @return forward index segment reader
      */
-    public ForwardIndexSegmentReader forwardIndex() {
-        return forwardIndex.reader();
+    public FieldForwardIndex forwardIndex(String luceneField) {
+        return forwardIndex.forField(luceneField);
     }
 
     /**

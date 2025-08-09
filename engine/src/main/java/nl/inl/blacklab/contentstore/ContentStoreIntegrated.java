@@ -37,7 +37,7 @@ public class ContentStoreIntegrated implements ContentStore {
      * @return content store
      */
     static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
-        return BlackLabPostingsReader.forSegment(lrc).getStoredFieldsReader().contentStore();
+        return BlackLabPostingsReader.forSegment(lrc, null).getStoredFieldsReader().contentStore();
     }
 
     @Override

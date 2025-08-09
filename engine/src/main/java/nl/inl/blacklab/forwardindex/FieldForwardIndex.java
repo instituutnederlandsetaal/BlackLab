@@ -2,36 +2,51 @@ package nl.inl.blacklab.forwardindex;
 
 import java.util.List;
 
-import net.jcip.annotations.NotThreadSafe;
+import org.apache.lucene.index.LeafReaderContext;
 
-/**
- * Provides read access to all forward indexes in an index segment.
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
+
+/** A forward index interface for a single field in a segment.
  *
  * Implementations are not intended to be threadsafe, but to be used by a single
  * thread.
  */
-@NotThreadSafe
-public interface ForwardIndexSegmentReader {
+public class FieldForwardIndex {
+
+    public static FieldForwardIndex get(LeafReaderContext lrc, String luceneField) {
+        return BlackLabPostingsReader.forSegment(lrc, luceneField).forwardIndex(luceneField);
+    }
+
+    private final ForwardIndexSegmentReader forwardIndex;
+
+    private final String luceneField;
+
+    public FieldForwardIndex(ForwardIndexSegmentReader forwardIndex, String luceneField) {
+        this.forwardIndex = forwardIndex;
+        this.luceneField = luceneField;
+    }
 
     /** Retrieve parts of a document from a forward index.
      *
-     * @param luceneField lucene field to retrieve snippet from
      * @param docId segment-local docId of document to retrieve snippet from
      * @param starts starting token positions
      * @param ends ending token positions
      * @return snippets (with segment-local term ids)
      */
-    List<int[]> retrieveParts(String luceneField, int docId, int[] starts, int[] ends);
+    public List<int[]> retrieveParts(int docId, int[] starts, int[] ends) {
+        return forwardIndex.retrieveParts(luceneField, docId, starts, ends);
+    }
 
     /** Retrieve a single part of a document from a forward index.
      *
-     * @param luceneField lucene field to retrieve snippet from
      * @param docId segment-local docId of document to retrieve snippet from
      * @param start starting token positions
      * @param end ending token positions
      * @return snippets (with segment-local term ids)
      */
-    int[] retrievePart(String luceneField, int docId, int start, int end);
+    public int[] retrievePart(int docId, int start, int end) {
+        return forwardIndex.retrievePart(luceneField, docId, start, end);
+    }
 
     /** Get length of document in tokens from a forward index.
      *
@@ -40,11 +55,12 @@ public interface ForwardIndexSegmentReader {
      * The "extra closing token" that is added to the end of the document (for punctuation and closing tags
      * after the last word) is included in the length.
      *
-     * @param luceneField lucene field to read forward index from
      * @param docId segment-local docId of document to get length for
      * @return doc length in tokens (including the "extra closing token")
      */
-    long docLength(String luceneField, int docId);
+    public long docLength(int docId) {
+        return forwardIndex.docLength(luceneField, docId);
+    }
 
     /**
      * Get a Terms for a given field in this segment.
@@ -52,12 +68,9 @@ public interface ForwardIndexSegmentReader {
      * The returned object is not thread-safe, so it should only
      * be used by a single thread.
      *
-     * @param luceneField lucene field to read terms from
      * @return terms object for the given field
      */
-    Terms terms(String luceneField);
-
-    default FieldForwardIndex forField(String luceneField) {
-        return new FieldForwardIndex(this, luceneField);
+    public Terms terms() {
+        return forwardIndex.terms(luceneField);
     }
 }

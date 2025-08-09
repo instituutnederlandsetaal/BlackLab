@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  *  we use temporary files because this might take a huge amount of memory)
  * (use a LinkedHashMap to maintain the same field order when we write the tokens below)
  */
-public class PWPluginForwardIndex implements PWPlugin {
+class PWPluginForwardIndex implements PWPlugin {
 
     private final BlackLabPostingsWriter postingsWriter;
 

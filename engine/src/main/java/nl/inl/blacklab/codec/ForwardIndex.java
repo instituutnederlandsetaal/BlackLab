@@ -14,15 +14,16 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.GForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.Terms;
 
 /**
  * Manages read access to forward indexes for a single segment.
  */
 @ThreadSafe
-public class SegmentForwardIndex implements AutoCloseable {
+public class ForwardIndex implements AutoCloseable {
 
     /** Tokens index file record consists of:
      * - offset in tokens file (long),
@@ -45,8 +46,7 @@ public class SegmentForwardIndex implements AutoCloseable {
     /** Contains the tokens for all fields and documents */
     private IndexInput _tokensFile;
 
-
-    public SegmentForwardIndex(BlackLabPostingsReader postingsReader) throws IOException {
+    public ForwardIndex(BlackLabPostingsReader postingsReader) throws IOException {
         this.fieldsProducer = postingsReader;
 
         try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.FIELDS_EXT)) {
@@ -83,12 +83,12 @@ public class SegmentForwardIndex implements AutoCloseable {
     }
 
     /** 
-     * Get a new ForwardIndexSegmentReader on this segment. 
+     * Get a new FieldForwardIndex on this segment.
      * Though the reader is not Threadsafe, a new instance is returned every time, 
      * So this function can be used from multiple threads. 
      */
-    public ForwardIndexSegmentReader reader() {
-        return new Reader();
+    public FieldForwardIndex forField(String luceneField) {
+        return new FieldForwardIndex(new Reader(), luceneField);
     }
 
     /**
@@ -165,7 +165,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                 start = 0;
             if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
                 end = docLength;
-            ForwardIndexImpl.validateSnippetParameters(docLength, start, end);
+            GForwardIndexImpl.validateSnippetParameters(docLength, start, end);
 
             // Read the snippet from the tokens file
             try {

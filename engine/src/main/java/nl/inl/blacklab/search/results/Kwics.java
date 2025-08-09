@@ -6,8 +6,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.GForwardIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -42,7 +42,7 @@ public class Kwics {
 
     private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(HitsSimple hits, ContextSize contextSize) {
         Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
-        Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
+        Map<AnnotatedField, List<GAnnotationForwardIndex>> afisPerField = new HashMap<>();
         AnnotatedField defaultField = hits.field();
         for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
             EphemeralHit hit = it.next();
@@ -74,7 +74,7 @@ public class Kwics {
                         }
 
                         AnnotatedField field = e.getKey();
-                        List<AnnotationForwardIndex> afis = afisPerField.get(field);
+                        List<GAnnotationForwardIndex> afis = afisPerField.get(field);
                         HitsSimple singleHit = HitsInternal.single(hits.field(), hits.matchInfoDefs(), hit.doc(), matchStart, matchEnd);
                         ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd, true,
                                 contextSize.getMaxSnippetLength());
@@ -106,7 +106,7 @@ public class Kwics {
      * @return updated map of min/max positions per field
      */
     private static Map<AnnotatedField, int[]> updateMinMaxForMatchInfo(BlackLabIndex index, MatchInfo mi, AnnotatedField defaultField,
-            Map<AnnotatedField, int[]> minMaxPerField, Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
+            Map<AnnotatedField, int[]> minMaxPerField, Map<AnnotatedField, List<GAnnotationForwardIndex>> afisPerField, boolean isTargetHit) {
         AnnotatedField field = mi.getField();
         boolean isTag = mi.getType() == MatchInfo.Type.INLINE_TAG; // not "real" relations, don't influence foreign hits
         if (field != defaultField) { // foreign KWICs only
@@ -178,8 +178,8 @@ public class Kwics {
     private static Map<Hit, Kwic> retrieveKwics(HitsSimple hits, ContextSize contextSize, AnnotatedField field) {
         // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
         // (this convention originates from how we write our XML structure)
-        ForwardIndex forwardIndex = hits.index().forwardIndex(field);
-        List<AnnotationForwardIndex> forwardIndexes = getAnnotationForwardIndexes(forwardIndex);
+        GForwardIndex forwardIndex = hits.index().forwardIndex(field);
+        List<GAnnotationForwardIndex> forwardIndexes = getAnnotationForwardIndexes(forwardIndex);
 
         // Iterate over hits and fetch KWICs per document
         int lastDocId = -1;
@@ -204,9 +204,9 @@ public class Kwics {
         return kwics;
     }
 
-    private static List<AnnotationForwardIndex> getAnnotationForwardIndexes(ForwardIndex forwardIndex) {
+    private static List<GAnnotationForwardIndex> getAnnotationForwardIndexes(GForwardIndex forwardIndex) {
         AnnotatedField field = forwardIndex.field();
-        List<AnnotationForwardIndex> forwardIndexes = new ArrayList<>(field.annotations().size());
+        List<GAnnotationForwardIndex> forwardIndexes = new ArrayList<>(field.annotations().size());
         forwardIndexes.add(forwardIndex.get(field.annotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)));
         for (Annotation annotation: field.annotations()) {
             if (annotation.hasForwardIndex() && !annotation.equals(field.mainAnnotation()) && !annotation.name().equals(

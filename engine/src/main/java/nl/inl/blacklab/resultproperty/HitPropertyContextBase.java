@@ -10,9 +10,8 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -45,10 +44,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     private BigList<String[]> globalContextTerms;
 
     /** [SEGMENT] forward index */
-    private ForwardIndexSegmentReader segmentForwardIndex;
-
-    /** [SEGMENT] terms for our annotation */
-    private Terms segmentTerms;
+    private FieldForwardIndex segmentForwardIndex;
 
     /** [SEGMENT] Stores the relevant context tokens for each hit index */
     private BigList<int[]> segmentContextTermId;
@@ -204,7 +200,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         if (prop.isGlobal()) {
             globalContextTerms = prop.globalContextTerms;
         } else {
-            segmentTerms = prop.segmentTerms;
             segmentForwardIndex = prop.segmentForwardIndex;
             segmentContextTermId = prop.segmentContextTermId;
             segmentContextSortOrder = prop.segmentContextSortOrder;
@@ -226,8 +221,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     void initForwardIndex() {
         luceneField = annotation.forwardIndexSensitivity().luceneField();
         if (!isGlobal()) {
-            segmentForwardIndex = BlackLabPostingsReader.forSegment(lrc).forwardIndex();
-            segmentTerms = segmentForwardIndex.terms(annotation);
+            segmentForwardIndex = FieldForwardIndex.get(lrc, luceneField);
         }
     }
 
@@ -320,11 +314,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
         if (isGlobal()) {
             // [GLOBAL] Retrieve terms
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
-            ForwardIndexSegmentReader forwardIndex = postingsReader.forwardIndex();
-            Terms segmentTerms = postingsReader.terms(luceneField).reader();
+            FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+            Terms segmentTerms = forwardIndex.terms();
             int segmentDocId = docId - lrc.docBase;
-            for (int[] snippet: forwardIndex.retrieveParts(luceneField, segmentDocId, starts, ends)) {
+            for (int[] snippet: forwardIndex.retrieveParts(segmentDocId, starts, ends)) {
                 String[] terms = segmentTerms.toStringValues(snippet);
                 if (compareInReverse)
                     ArrayUtils.reverse(terms);
@@ -332,14 +325,14 @@ public abstract class HitPropertyContextBase extends HitProperty {
             }
         } else {
             // [SEGMENT] Retrieve term ids
-            List<int[]> listTermIds = segmentForwardIndex.retrieveParts(luceneField, docId, starts, ends);
+            List<int[]> listTermIds = segmentForwardIndex.retrieveParts(docId, starts, ends);
             // Also determine sort orders so we don't have to do that for each compare
             for (int[] termIds: listTermIds) {
                 if (compareInReverse)
                     ArrayUtils.reverse(termIds);
                 segmentContextTermId.add(termIds);
                 int[] sortOrder = new int[termIds.length];
-                segmentTerms.toSortOrder(termIds, sortOrder, sensitivity);
+                segmentForwardIndex.terms().toSortOrder(termIds, sortOrder, sensitivity);
                 segmentContextSortOrder.add(sortOrder);
             }
         }

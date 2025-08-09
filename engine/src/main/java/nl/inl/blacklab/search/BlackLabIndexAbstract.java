@@ -40,8 +40,8 @@ import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.GForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -101,7 +101,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      *
      * Indexed by annotation.
      */
-    protected final Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
+    protected final Map<AnnotatedField, GForwardIndex> forwardIndices = new HashMap<>();
 
     private SearchSettings searchSettings;
 
@@ -405,9 +405,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
-    public ForwardIndex forwardIndex(AnnotatedField field) {
+    public GForwardIndex forwardIndex(AnnotatedField field) {
         synchronized (forwardIndices) {
-            ForwardIndex forwardIndex = forwardIndices.get(field);
+            GForwardIndex forwardIndex = forwardIndices.get(field);
             if (forwardIndex == null) {
                 forwardIndex = createForwardIndex(field);
                 forwardIndices.put(field, forwardIndex);
@@ -417,7 +417,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
-    public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
+    public GAnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
         return forwardIndex(annotation.field()).get(annotation);
     }
 
@@ -758,7 +758,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         // subclasses may override
     }
 
-    protected abstract ForwardIndex createForwardIndex(AnnotatedField field);
+    protected abstract GForwardIndex createForwardIndex(AnnotatedField field);
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {

@@ -8,7 +8,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -45,17 +44,18 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         protected final LeafReaderContext readerContext;
 
-        private final ForwardIndexSegmentReader forwardIndexSegmentReader;
+        private final BlackLabPostingsReader postingsReader;
 
         private final DocFieldLengthGetter lengthGetter;
 
-        private final List<Terms> termsPerSegments = new ArrayList<>();
+        private final List<Terms> termsPerSegment = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            forwardIndexSegmentReader = BlackLabPostingsReader.forSegment(readerContext).forwardIndex();
+            postingsReader = BlackLabPostingsReader
+                    .forSegment(readerContext, luceneFields.isEmpty() ? null : luceneFields.get(0));
             for (String luceneField: luceneFields) {
-                termsPerSegments.add(forwardIndexSegmentReader.terms(luceneField));
+                termsPerSegment.add(postingsReader.forwardIndex(luceneField).terms());
             }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());
         }
@@ -80,7 +80,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
                     MatchSensitivity.SENSITIVE) ?
                     annotation.sensitivity(MatchSensitivity.SENSITIVE) :
                     annotation.sensitivity(MatchSensitivity.INSENSITIVE);
-            return forwardIndexSegmentReader.retrievePart(sensitivity.luceneField(), segmentDocId, start, end);
+            return postingsReader.forwardIndex(sensitivity.luceneField()).retrievePart(segmentDocId, start, end);
         }
 
         @Override
@@ -90,10 +90,10 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         @Override
         public Terms terms(int annotIndex) {
-            if (annotIndex < 0 || annotIndex >= termsPerSegments.size())
+            if (annotIndex < 0 || annotIndex >= termsPerSegment.size())
                 throw new IllegalArgumentException("Invalid annotation index: " + annotIndex +
-                        " (there are " + termsPerSegments.size() + " annotations)");
-            return termsPerSegments.get(annotIndex);
+                        " (there are " + termsPerSegment.size() + " annotations)");
+            return termsPerSegment.get(annotIndex);
         }
     }
 
