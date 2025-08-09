@@ -46,7 +46,7 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
@@ -62,7 +62,7 @@ import nl.inl.util.TimeUtil;
     "custom", "contentViewable", "documentFormat", "versionInfo",
     "metadataFields", "annotatedFields", "documentFormatConfig", "indexFlags"
 })
-public class IndexMetadataIntegrated implements IndexMetadataWriter {
+public class IndexMetadataImpl implements IndexMetadataWriter {
 
     /** What is the current index format? */
     public static final String LATEST_INDEX_FORMAT = "4";
@@ -74,18 +74,18 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     public static final String IFL_INDEX_RELATIONS_TWICE = "index_relations_twice";
 
-    public static IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index) {
+    public static IndexMetadataImpl deserializeFromJsonJaxb(BlackLabIndex index) {
         try {
             Integer docId = MetadataDocument.getMetadataDocId(index.reader());
-            IndexMetadataIntegrated metadata;
+            IndexMetadataImpl metadata;
             if (docId == null) {
                 // No metadata document found. Instantiate default.
-                metadata = new IndexMetadataIntegrated(index, null);
+                metadata = new IndexMetadataImpl(index, null);
             } else {
                 // Load and deserialize metadata document.
                 String json = MetadataDocument.getMetadataJson(index.reader(), docId);
                 metadata = Json.getJaxbReader().readValue(
-                        new StringReader(json), IndexMetadataIntegrated.class);
+                        new StringReader(json), IndexMetadataImpl.class);
                 metadata.fixAfterDeserialization(index, docId);
             }
             return metadata;
@@ -94,8 +94,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
     }
 
-    public static IndexMetadataIntegrated create(BlackLabIndex index, ConfigInputFormat config) {
-        return new IndexMetadataIntegrated(index, config);
+    public static IndexMetadataImpl create(BlackLabIndex index, ConfigInputFormat config) {
+        return new IndexMetadataImpl(index, config);
     }
 
     /** Is this one of the special fields that only occur in the index metadata document? */
@@ -146,7 +146,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             return METADATA_DOC_QUERY;
         }
 
-        public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataIntegrated metadata) {
+        public void saveToIndex(BlackLabIndexWriter indexWriter, IndexMetadataImpl metadata) {
             try {
                 // Serialize metadata to JSON
                 String metadataJson = serializeToJson(metadata);
@@ -179,7 +179,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             indexWriter.writer().updateDocument(METADATA_DOC_QUERY.getTerm(), indexmetadataDoc);
         }
 
-        private String serializeToJson(IndexMetadataIntegrated metadata) {
+        private String serializeToJson(IndexMetadataImpl metadata) {
             try {
                 return Json.getJaxbWriter().writeValueAsString(metadata);
             } catch (IOException e) {
@@ -316,14 +316,14 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
-    IndexMetadataIntegrated() {}
+    IndexMetadataImpl() {}
 
     /**
      * Create index metadata object for a new index.
      *
      * Either based on config if supplied, or populated with default values.
      */
-    private IndexMetadataIntegrated(BlackLabIndex index, ConfigInputFormat config) {
+    private IndexMetadataImpl(BlackLabIndex index, ConfigInputFormat config) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(index, createMetadataFieldValuesFactory());
         metadataFields.setTopLevelCustom(custom); // for special fields, metadata groups
@@ -748,7 +748,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                     String luceneField = index.forwardIndex(field).get(annot).annotation().forwardIndexSensitivity().luceneField();
                     index.forEachDocument((__, docId) -> {
                         LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                        int docLength = (int) BlackLabIndexIntegrated.forwardIndex(lrc).docLength(luceneField, docId - lrc.docBase);
+                        int docLength = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(luceneField, docId - lrc.docBase);
                         if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)

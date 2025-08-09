@@ -10,18 +10,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 public interface AnnotationForwardIndex {
 
     /**
-     * Initialize this forward index (to be run in the background).
-     */
-    void initialize();
-
-    /**
-     * Get the Terms object in order to translate ids to token strings
-     *
-     * @return the Terms object
-     */
-    Terms terms();
-
-    /**
      * The annotation for which this is the forward index
      *
      * @return annotation
@@ -33,9 +21,5 @@ public interface AnnotationForwardIndex {
 
     Collators collators();
 
-    ForwardIndex getParent();
-
-    default int numberOfTerms() {
-        return terms().numberOfTerms();
-    }
+    int numberOfTerms();
 }

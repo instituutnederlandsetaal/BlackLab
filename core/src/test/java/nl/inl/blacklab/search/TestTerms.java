@@ -33,7 +33,7 @@ public class TestTerms {
         testIndex = testIndexIntegrated;
         BlackLabIndex index = testIndex.index();
         Annotation ann = index.mainAnnotatedField().mainAnnotation();
-        terms = index.annotationForwardIndex(ann).terms();
+        terms = testIndex.getTermsSegment(ann);
     }
 
     @Test

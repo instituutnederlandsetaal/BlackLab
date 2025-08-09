@@ -33,7 +33,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
+import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
+import nl.inl.blacklab.search.indexmetadata.IndexMetadataImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
@@ -57,7 +57,7 @@ import nl.inl.util.VersionFile;
 /**
  * A BlackLab index with all files included in the Lucene index.
  */
-public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
+public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     /** Lucene field attribute. Does the field have a forward index?
         If yes, payloads will indicate primary/secondary values. */
@@ -97,7 +97,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @param type field type
      */
     public static void setFieldHasForwardIndex(FieldType type) {
-        type.putAttribute(BlackLabIndexIntegrated.BLFA_FORWARD_INDEX, "true");
+        type.putAttribute(BlackLabIndexImpl.BLFA_FORWARD_INDEX, "true");
     }
 
     /**
@@ -108,7 +108,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @param type field type
      */
     public static void setFieldCollator(FieldType type, String collator) {
-        type.putAttribute(BlackLabIndexIntegrated.BLFA_COLLATOR, collator);
+        type.putAttribute(BlackLabIndexImpl.BLFA_COLLATOR, collator);
     }
 
     /**
@@ -119,7 +119,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @param fieldInfo field type
      */
     public static Collators getFieldCollators(FieldInfo fieldInfo) {
-        String collatorParams = fieldInfo.getAttribute(BlackLabIndexIntegrated.BLFA_COLLATOR);
+        String collatorParams = fieldInfo.getAttribute(BlackLabIndexImpl.BLFA_COLLATOR);
         if (collatorParams == null || collatorParams.isEmpty())
             return Collators.getDefault();
         String[] parts = collatorParams.split(":");
@@ -145,7 +145,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @param type field type
      */
     public static void setContentStoreField(FieldType type) {
-        type.putAttribute(BlackLabIndexIntegrated.BLFA_CONTENT_STORE, "true");
+        type.putAttribute(BlackLabIndexImpl.BLFA_CONTENT_STORE, "true");
     }
 
     public static RelationsStrategy getRelationsStrategy(FieldInfo fieldInfo) {
@@ -161,7 +161,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
      * @param strategy strategy to use
      */
     public static void setRelationsStrategy(FieldType type, RelationsStrategy strategy) {
-        type.putAttribute(BlackLabIndexIntegrated.BLFA_RELATION_STRATEGY, strategy.getName());
+        type.putAttribute(BlackLabIndexImpl.BLFA_RELATION_STRATEGY, strategy.getName());
     }
 
     /**
@@ -255,7 +255,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         return relationsStrategy;
     }
 
-    BlackLabIndexIntegrated(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
+    BlackLabIndexImpl(String name, BlackLabEngine blackLab, IndexReader reader, File indexDir, boolean indexMode, boolean createNewIndex,
             ConfigInputFormat config) throws ErrorOpeningIndex {
         super(name, blackLab, reader, indexDir, indexMode, createNewIndex, config);
 
@@ -283,7 +283,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
                 if (!isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
 
-                if (IndexMetadataIntegrated.isMetadataDocField(fi.name))
+                if (IndexMetadataImpl.isMetadataDocField(fi.name))
                     continue;
                 fieldsFounds = true;
 
@@ -309,8 +309,8 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     @Override
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
         if (!createNewIndex)
-            return IndexMetadataIntegrated.deserializeFromJsonJaxb(this);
-        return IndexMetadataIntegrated.create(this, config);
+            return IndexMetadataImpl.deserializeFromJsonJaxb(this);
+        return IndexMetadataImpl.create(this, config);
     }
 
     @Override
@@ -322,7 +322,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
 
     @Override
     protected ForwardIndex createForwardIndex(AnnotatedField field) {
-        return new ForwardIndexIntegrated(this, field);
+        return new ForwardIndexImpl(this, field);
     }
 
     @Override
@@ -361,8 +361,8 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     @Override
-    public IndexMetadataIntegrated metadata() {
-        return (IndexMetadataIntegrated)super.metadata();
+    public IndexMetadataImpl metadata() {
+        return (IndexMetadataImpl)super.metadata();
     }
 
     @Override

@@ -3,8 +3,9 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -18,7 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Note that in the integrated case, there's no separate forward index id (fiid),
  * but instead the Lucene docId is used.
  */
-public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex {
+public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
 
     /**
      * Open an integrated forward index.
@@ -32,13 +33,8 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
 
         Collators collators = new Collators(collator);
-        return new AnnotationForwardIndexIntegrated(forwardIndex, index, annotation, collators);
+        return new AnnotationForwardIndexImpl(index, annotation, collators);
     }
-
-    /** The 'parent' forward index object */
-    private final ForwardIndex forwardIndex;
-
-    private final BlackLabIndex index;
 
     private final IndexReader indexReader;
 
@@ -50,15 +46,9 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     /** Collators to use for comparisons */
     private final Collators collators;
 
-    private Terms terms;
-
-    private boolean initialized = false;
-
-    public AnnotationForwardIndexIntegrated(ForwardIndex forwardIndex, BlackLabIndex index, Annotation annotation, Collators collators) {
+    public AnnotationForwardIndexImpl(BlackLabIndex index, Annotation annotation, Collators collators) {
         super();
-        this.forwardIndex = forwardIndex;
         this.indexReader = index.reader();
-        this.index = index;
         this.annotation = annotation;
         this.collators = collators;
         AnnotationSensitivity annotSens = annotation.hasSensitivity(
@@ -69,29 +59,13 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
     }
 
     @Override
-    public ForwardIndex getParent() {
-        return forwardIndex;
-    }
-
-    @Override
-    public synchronized void initialize() {
-        if (initialized) {
-            return;
+    public int numberOfTerms() {
+        int numberOfTerms = 0;
+        for (LeafReaderContext lrc: indexReader.leaves()) {
+            Terms terms = BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(luceneField);
+            numberOfTerms += terms.numberOfTerms();
         }
-
-        try {
-            this.terms = new TermsIntegrated(collators, indexReader, luceneField);
-            this.initialized = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // preserve interrupted status
-            throw new InterruptedSearch("Intialization of Forward Index was interrupted", e);
-        }
-    }
-
-    @Override
-    public Terms terms() {
-        initialize();
-        return terms;
+        return numberOfTerms;
     }
 
     @Override

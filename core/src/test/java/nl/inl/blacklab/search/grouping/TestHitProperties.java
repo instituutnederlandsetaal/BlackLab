@@ -11,7 +11,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyCaptureGroup;
@@ -46,7 +46,7 @@ public class TestHitProperties {
 
     private BlackLabIndex index;
 
-    private TermsSegment terms;
+    private Terms terms;
 
     private Annotation wordAnnotation;
 

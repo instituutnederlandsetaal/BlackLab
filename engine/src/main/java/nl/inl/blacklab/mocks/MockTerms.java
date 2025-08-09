@@ -36,8 +36,4 @@ public class MockTerms implements Terms {
         return id;
     }
 
-    @Override
-    public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
-        throw new UnsupportedOperationException();
-    }
 }

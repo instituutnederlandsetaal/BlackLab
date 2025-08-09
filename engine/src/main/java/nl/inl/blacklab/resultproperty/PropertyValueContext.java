@@ -1,20 +1,20 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 public abstract class PropertyValueContext extends PropertyValue {
 
-    protected final TermsSegment terms;
+    protected final Terms terms;
 
     protected final Annotation annotation;
 
-    PropertyValueContext(TermsSegment terms, Annotation annotation) {
+    PropertyValueContext(Terms terms, Annotation annotation) {
         this.annotation = annotation;
         this.terms = terms;
     }
 
-    public static String serializeTerm(TermsSegment terms, int valueTokenId) {
+    public static String serializeTerm(Terms terms, int valueTokenId) {
         String token;
         if (valueTokenId < 0)
             token = "~"; // no token, effectively a "null" value

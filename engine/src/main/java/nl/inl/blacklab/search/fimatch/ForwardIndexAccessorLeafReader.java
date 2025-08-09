@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.fimatch;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 
 /**
  * Allows the forward index matching subsystem to access the forward indices
@@ -45,6 +45,6 @@ public interface ForwardIndexAccessorLeafReader {
 
     int getNumberOfAnnotations();
 
-    TermsSegment terms(int annotIndex);
+    Terms terms(int annotIndex);
 
 }

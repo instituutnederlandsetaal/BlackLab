@@ -14,7 +14,7 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -45,7 +45,7 @@ public class TermSerialization {
     private static void doTerm(String word, LeafReaderContext lrc, String luceneField) {
         BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
         ForwardIndexSegmentReader fi = postingsReader.forwardIndex();
-        TermsSegment terms = fi.terms(luceneField);
+        Terms terms = fi.terms(luceneField);
 
         MutableIntSet s = new IntHashSet();
         int segmentTermIdSensitive = terms.indexOf(word);
@@ -101,7 +101,7 @@ public class TermSerialization {
         }
     }
 
-    private static void report(String prompt, MutableIntSet s1, TermsSegment terms) {
+    private static void report(String prompt, MutableIntSet s1, Terms terms) {
         StringBuilder values = new StringBuilder();
         for (int i : s1.toArray()) {
             values.append(i).append(" (").append(terms.get(i)).append("); ");

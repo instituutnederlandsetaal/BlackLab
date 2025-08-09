@@ -8,7 +8,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TestNfa {
@@ -46,8 +46,8 @@ public class TestNfa {
                 }
 
                 @Override
-                public TermsSegment terms(int annotIndex) {
-                    return new TermsSegment() {
+                public Terms terms(int annotIndex) {
+                    return new Terms() {
                         @Override
                         public String get(int id) {
                             return Character.toString((char) id);

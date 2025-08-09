@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.search.BlackLab;
@@ -26,7 +26,7 @@ public class TestPropertyValues {
     private static final Collator termsCollator = (new Collators(regularCollator)).get(
             MatchSensitivity.INSENSITIVE);
 
-    private static final TermsSegment terms;
+    private static final Terms terms;
 
     static {
         // Test using MockTerms with a sorted list of very similar words that should not be equal

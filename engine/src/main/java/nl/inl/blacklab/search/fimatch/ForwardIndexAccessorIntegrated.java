@@ -8,10 +8,10 @@ import org.apache.lucene.index.LeafReaderContext;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -49,11 +49,11 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         private final DocFieldLengthGetter lengthGetter;
 
-        private final List<TermsSegment> termsPerSegments = new ArrayList<>();
+        private final List<Terms> termsPerSegments = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            forwardIndexSegmentReader = BlackLabIndexIntegrated.forwardIndex(readerContext);
+            forwardIndexSegmentReader = BlackLabIndexImpl.forwardIndex(readerContext);
             for (String luceneField: luceneFields) {
                 termsPerSegments.add(forwardIndexSegmentReader.terms(luceneField));
             }
@@ -89,7 +89,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
         }
 
         @Override
-        public TermsSegment terms(int annotIndex) {
+        public Terms terms(int annotIndex) {
             if (annotIndex < 0 || annotIndex >= termsPerSegments.size())
                 throw new IllegalArgumentException("Invalid annotation index: " + annotIndex +
                         " (there are " + termsPerSegments.size() + " annotations)");

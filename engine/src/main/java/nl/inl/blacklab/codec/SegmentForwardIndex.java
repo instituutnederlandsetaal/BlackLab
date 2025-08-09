@@ -14,9 +14,9 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
+import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 
 /**
  * Manages read access to forward indexes for a single segment.
@@ -165,7 +165,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                 start = 0;
             if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
                 end = docLength;
-            ForwardIndexAbstract.validateSnippetParameters(docLength, start, end);
+            ForwardIndexImpl.validateSnippetParameters(docLength, start, end);
 
             // Read the snippet from the tokens file
             try {
@@ -247,7 +247,7 @@ public class SegmentForwardIndex implements AutoCloseable {
         }
 
         @Override
-        public TermsSegment terms(String luceneField) {
+        public Terms terms(String luceneField) {
             try {
                 return fieldsProducer.terms(luceneField).reader();
             } catch (IOException e) {

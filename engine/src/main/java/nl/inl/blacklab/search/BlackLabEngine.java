@@ -224,13 +224,13 @@ public final class BlackLabEngine implements AutoCloseable {
     }
 
     public BlackLabIndexWriter openForWriting(String indexName, IndexReader reader, ConfigInputFormat format) throws ErrorOpeningIndex {
-        return new BlackLabIndexIntegrated(indexName, this, reader, null, true, false, format);
+        return new BlackLabIndexImpl(indexName, this, reader, null, true, false, format);
     }
 
     public BlackLabIndex open(File indexDir) throws ErrorOpeningIndex {
         // Detect index type and instantiate appropriate class
         checkSupportedIndexType(indexDir, false);
-        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, false, false, null);
+        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, false, false, null);
     }
 
     private static void checkSupportedIndexType(File indexDir, boolean createNewIndex) {
@@ -257,7 +257,7 @@ public final class BlackLabEngine implements AutoCloseable {
      * @return a BlackLabIndex instance with this reader
      */
     public BlackLabIndex wrapIndexReader(String indexName, IndexReader reader, boolean indexMode) throws ErrorOpeningIndex {
-        return new BlackLabIndexIntegrated(indexName, this, reader, null, indexMode, false,
+        return new BlackLabIndexImpl(indexName, this, reader, null, indexMode, false,
                 null);
     }
 
@@ -273,7 +273,7 @@ public final class BlackLabEngine implements AutoCloseable {
             throws ErrorOpeningIndex {
         // If no preference for index type given, use the current default
         checkSupportedIndexType(indexDir, forceCreateNew);
-        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
+        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, true, forceCreateNew, null);
     }
 
     /**
@@ -299,7 +299,7 @@ public final class BlackLabEngine implements AutoCloseable {
         }
 
         checkSupportedIndexType(indexDir, createNewIndex);
-        return new BlackLabIndexIntegrated(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
+        return new BlackLabIndexImpl(indexDir.getName(), this, null, indexDir, true, createNewIndex, config);
     }
 
     /**

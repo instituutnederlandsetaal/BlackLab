@@ -15,10 +15,10 @@ import org.apache.lucene.index.LeafReaderContext;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -113,9 +113,9 @@ class CalcTokenFrequencies {
                         for (AnnotInfo annot : hitProperties) {
                             String luceneField = annot.getAnnotationForwardIndex().annotation()
                                     .forwardIndexSensitivity().luceneField();
-                            TermsSegment segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
+                            Terms segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
                                     .terms(luceneField).reader();
-                            final int[] tokenValues = BlackLabIndexIntegrated.forwardIndex(lrc)
+                            final int[] tokenValues = BlackLabIndexImpl.forwardIndex(lrc)
                                     .retrieveParts(luceneField, globalDocId - lrc.docBase,
                                             new int[] { -1 }, new int[] { -1 }).get(0);
                             tokenValuesPerAnnotation.add(tokenValues);

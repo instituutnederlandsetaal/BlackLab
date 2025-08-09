@@ -19,9 +19,9 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -84,7 +84,7 @@ public class Contexts {
                 .toList();
         int docId = hits.doc(0);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(docId);
-        List<TermsSegment> annotationTerms = forwardIndexes.stream()
+        List<Terms> annotationTerms = forwardIndexes.stream()
                 .map(afi -> {
                     String luceneField = afi.annotation().forwardIndexSensitivity().luceneField();
                     try {
@@ -105,7 +105,7 @@ public class Contexts {
             for (int indexInContext = 0; indexInContext < contextLength; indexInContext++) {
                 // For each annotation...
                 int annotIndex = indexInContext + Contexts.NUMBER_OF_BOOKKEEPING_INTS;
-                for (TermsSegment terms: annotationTerms) {
+                for (Terms terms: annotationTerms) {
                     tokens.add(terms.get(hitContext[annotIndex]));
                     annotIndex += contextLength; // jmup to next annotation in context array
                 }
@@ -153,7 +153,7 @@ public class Contexts {
                 throw new IllegalArgumentException("Cannot get context from without a forward index");
             // Get all the words from the forward index
             String luceneField = forwardIndex.annotation().forwardIndexSensitivity().luceneField();
-            List<int[]> words = BlackLabIndexIntegrated.forwardIndex(lrc)
+            List<int[]> words = BlackLabIndexImpl.forwardIndex(lrc)
                     .retrieveParts(luceneField, doc - lrc.docBase, startsOfSnippets, endsOfSnippets);
 
             // Build the actual concordances
@@ -312,8 +312,8 @@ public class Contexts {
         String[][] stringContexts = new String[contexts.length][];
         int doc = hits.doc(start);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(doc);
-        ForwardIndexSegmentReader fi = BlackLabIndexIntegrated.forwardIndex(lrc);
-        TermsSegment terms = fi.terms(contextSource.annotation().forwardIndexSensitivity().luceneField());
+        ForwardIndexSegmentReader fi = BlackLabIndexImpl.forwardIndex(lrc);
+        Terms terms = fi.terms(contextSource.annotation().forwardIndexSensitivity().luceneField());
         for (int j = 0; j < contexts.length; j++) {
             int[] context = contexts[j];
             int beforeContextLength = context[HIT_START_INDEX];

@@ -7,7 +7,6 @@ import java.util.Map;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.RandomAccessInput;
@@ -16,7 +15,7 @@ import org.apache.lucene.util.automaton.CompiledAutomaton;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -26,7 +25,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Also used to read extra terms information (i.e. term strings and sort order).
  * Thread-safe.
  */
-public class BLTerms extends Terms {
+public class BLTerms extends org.apache.lucene.index.Terms {
 
     /**
      * Return BLTerms instance for one of the fields, so that we have access to the
@@ -56,7 +55,7 @@ public class BLTerms extends Terms {
     private final BlackLabPostingsReader postingsReader;
 
     /** The Lucene terms object we're wrapping */
-    private final Terms terms;
+    private final org.apache.lucene.index.Terms terms;
 
     private IndexInput _termIndexFile;
     private IndexInput _termsFile;
@@ -65,7 +64,7 @@ public class BLTerms extends Terms {
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
     private final Map<String, ForwardIndexField> fieldsByName = new LinkedHashMap<>();
 
-    public BLTerms(String luceneField, Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
+    public BLTerms(String luceneField, org.apache.lucene.index.Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
         this.luceneField = luceneField;
         this.terms = terms;
         this.postingsReader = postingsReader;
@@ -173,8 +172,8 @@ public class BLTerms extends Terms {
         return terms.getStats();
     }
 
-    public TermsSegment reader() {
-        return new TermsSegment() { // not thread-safe
+    public Terms reader() {
+        return new Terms() { // not thread-safe
 
             /** Field we're reading terms from */
             private final ForwardIndexField field;

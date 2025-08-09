@@ -10,7 +10,7 @@ import org.apache.lucene.index.IndexableFieldType;
 
 import nl.inl.blacklab.config.BLConfigCollator;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 /** Represents Lucene field types. */
@@ -93,17 +93,17 @@ public class BLFieldTypeLucene implements BLFieldType {
                 // indicate that this field should store value as a content store (for random access)
                 // (we set the field attribute regardless of our index format, but that's okay, it doesn't hurt anything
                 //  if not used)
-                BlackLabIndexIntegrated.setContentStoreField(type);
+                BlackLabIndexImpl.setContentStoreField(type);
             }
             if (forwardIndex) {
                 // indicate that this field should get a forward index when written to the index
                 // also set the collator definition for this field, so that we can use it when building the forward index
-                BlackLabIndexIntegrated.setFieldHasForwardIndex(type);
-                BlackLabIndexIntegrated.setFieldCollator(type, getCollatorDef()); // Make configurable per field?
+                BlackLabIndexImpl.setFieldHasForwardIndex(type);
+                BlackLabIndexImpl.setFieldCollator(type, getCollatorDef()); // Make configurable per field?
             }
             if (strategy != null) {
                 // Record the relation strategy used for this _relations field
-                BlackLabIndexIntegrated.setRelationsStrategy(type, strategy);
+                BlackLabIndexImpl.setRelationsStrategy(type, strategy);
             }
             type.freeze();
             return new BLFieldTypeLucene(type);

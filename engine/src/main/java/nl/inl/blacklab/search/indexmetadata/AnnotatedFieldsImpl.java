@@ -150,7 +150,7 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
         return annotationGroupsPerField().get(fieldName);
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata) {
+    public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataImpl metadata) {
         this.index = index;
         setTopLevelCustom(metadata.custom());
 

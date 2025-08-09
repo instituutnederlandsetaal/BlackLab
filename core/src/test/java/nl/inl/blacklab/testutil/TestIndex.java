@@ -17,7 +17,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -342,7 +342,7 @@ public class TestIndex {
         return results;
     }
 
-    public TermsSegment getTermsSegment(Annotation annotation) {
+    public Terms getTermsSegment(Annotation annotation) {
         LeafReaderContext lrc = index.getLeafReaderContext(0);
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
         return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(luceneField);

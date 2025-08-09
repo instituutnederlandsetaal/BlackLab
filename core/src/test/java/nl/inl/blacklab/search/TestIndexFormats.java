@@ -58,9 +58,9 @@ public class TestIndexFormats {
         index = testIndex.index();
         AnnotatedField contents = index.mainAnnotatedField();
         Annotation word = contents.mainAnnotation();
-        wordFi = index.forwardIndex(contents).get(word).annotation().forwardIndexSensitivity().luceneField();
-        posFi = index.forwardIndex(contents).get(contents.annotation("pos")).annotation().forwardIndexSensitivity().luceneField();
-        wordTerms = index.forwardIndex(contents).get(word).terms();
+        wordFi = word.forwardIndexSensitivity().luceneField();
+        posFi = contents.annotation("pos").forwardIndexSensitivity().luceneField();
+        wordTerms = testIndex.getTermsSegment(word);
     }
 
     @Test
@@ -117,11 +117,11 @@ public class TestIndexFormats {
             int docId = testIndex.getDocIdForDocNumber(i);
 
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            int docLength = (int) BlackLabIndexIntegrated.forwardIndex(lrc).docLength(wordFi, docId - lrc.docBase);
+            int docLength = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(wordFi, docId - lrc.docBase);
             Assert.assertEquals(expectedLength, docLength);
 
             // pos annotation doesn't occur in all docs; test that this doesn't mess up doc length
-            int docLengthPos = (int) BlackLabIndexIntegrated.forwardIndex(lrc).docLength(posFi, docId - lrc.docBase);
+            int docLengthPos = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(posFi, docId - lrc.docBase);
             Assert.assertEquals(expectedLength, docLengthPos);
         }
     }
@@ -129,7 +129,7 @@ public class TestIndexFormats {
     int getToken(String luceneField, int docId, int pos) {
         LeafReaderContext lrc = testIndex.index().getLeafReaderContext(docId);
         //String luceneField = afi.annotation().forwardIndexSensitivity().luceneField();
-        int[] context = BlackLabIndexIntegrated.forwardIndex(lrc)
+        int[] context = BlackLabIndexImpl.forwardIndex(lrc)
                 .retrieveParts(luceneField, docId - lrc.docBase, new int[] { pos }, new int[] { pos + 1 }).get(0);
         if (context.length == 0)
             throw new IllegalArgumentException("Token offset out of range");
@@ -151,13 +151,6 @@ public class TestIndexFormats {
     public void testRetrieveOutOfRange() {
         wordTerms.get(getToken(wordFi, 0, TestIndex.DOC_LENGTHS_TOKENS[0] +
                 BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN));
-    }
-
-    /** translating a -1 term from segment to global should also return -1 */
-    @Test
-    public void testNoTerm() {
-        LeafReaderContext lrc = index.reader().leaves().iterator().next();
-        Assert.assertEquals(-1, wordTerms.segmentIdsToGlobalIds(lrc.ord, new int[] {-1})[0]);
     }
 
     @Test

@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -18,7 +18,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
 
-    private static TermsSegment getTerms(Annotation annotation, LeafReaderContext lrc) {
+    private static Terms getTerms(Annotation annotation, LeafReaderContext lrc) {
         return lrc == null ? null : BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(
                 annotation.forwardIndexSensitivity().luceneField());
     }
@@ -52,7 +52,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
     }
 
     public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
-            TermsSegment terms, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
+            Terms terms, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
         super(terms, annotation);
         init(sensitivity, null, null, termIds, sortPositions, reverseOnDisplay);
     }

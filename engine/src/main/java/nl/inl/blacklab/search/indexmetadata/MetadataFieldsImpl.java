@@ -302,7 +302,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return new ArrayList<>(metadataFieldInfos.keySet());
     }
 
-    public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
+    public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataImpl metadata, MetadataFieldValues.Factory factory) {
         this.index = index;
         setTopLevelCustom(metadata.custom());
 

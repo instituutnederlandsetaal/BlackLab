@@ -1,21 +1,87 @@
 package nl.inl.blacklab.forwardindex;
 
-import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
-/** Keeps a list of unique terms and their sort positions. */
-@ThreadSafe
-public interface Terms extends TermsSegment {
+/**
+ * Read terms for a single field.
+ * Should be thread-safe.
+ */
+public interface Terms {
 
     /**
-     * We have a snippet with segment-specific term ids; convert it to global term ids.
+     * Find the term id for a term string.
      *
-     * Note that with external forward index, there is no such thing as segment-specific term ids,
-     * there's only global term ids. So in this case, this method should just return the input.
+     * Fairly slow operation, but not used very often.
      *
-     * @param ord segment these snippets came from
-     * @param segmentResults snippets with segment-specific term ids
-     * @return segments with global term ids
+     * @param term the term to get the index number for
+     * @return the term's index number, or -1 if not found
      */
-    int[] segmentIdsToGlobalIds(int ord, int[] segmentResults);
+    int indexOf(String term);
 
+    /**
+     * Get the term string for a term id.
+     *
+     * @param id term id
+     * @return term string
+     */
+    String get(int id);
+
+    /**
+     * @return the number of terms in this object
+     */
+    int numberOfTerms();
+
+    /**
+     * Check if two terms are considered equal for the given sensitivity.
+     * @param termIds term id
+     * @param sensitivity how to compare the terms
+     * @return true if the terms are equal
+     */
+    default boolean termsEqual(int[] termIds, MatchSensitivity sensitivity) {
+        if (termIds.length < 2)
+            return true;
+        // optimize?
+        int expected = idToSortPosition(termIds[0], sensitivity);
+        for (int termIdIndex = 1; termIdIndex < termIds.length; ++termIdIndex) {
+            int cur = idToSortPosition(termIds[termIdIndex], sensitivity);
+            if (cur != expected)
+                return false;
+        }
+        return true;
+    }
+
+    /**
+     * Get the sort position for a term based on its term id
+     *
+     * @param id the term id
+     * @param sensitivity whether we want the sensitive or insensitive sort position
+     * @return the sort position
+     */
+    int idToSortPosition(int id, MatchSensitivity sensitivity);
+
+    /**
+     * Convert an array of term ids to sort positions
+     *
+     * @param termIds the term ids
+     * @param sortOrder the sort positions
+     * @param sensitivity whether we want the sensitive or insensitive sort positions
+     */
+    default void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
+        // optimize?
+        for (int i = 0; i < termIds.length; i++) {
+            sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
+        }
+    }
+
+    default int sortPositionFor(String term, MatchSensitivity sensitivity) {
+        return idToSortPosition(indexOf(term), sensitivity);
+    }
+
+    default String[] toStringValues(int[] snippet) {
+        String[] values = new String[snippet.length];
+        for (int i = 0; i < snippet.length; i++) {
+            values[i] = get(snippet[i]);
+        }
+        return values;
+    }
 }

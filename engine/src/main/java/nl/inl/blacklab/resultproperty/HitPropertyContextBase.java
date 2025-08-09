@@ -12,9 +12,9 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.TermsSegment;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexIntegrated;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -48,7 +48,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     private ForwardIndexSegmentReader segmentForwardIndex;
 
     /** [SEGMENT] terms for our annotation */
-    private TermsSegment segmentTerms;
+    private Terms segmentTerms;
 
     /** [SEGMENT] Stores the relevant context tokens for each hit index */
     private BigList<int[]> segmentContextTermId;
@@ -226,7 +226,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     void initForwardIndex() {
         luceneField = annotation.forwardIndexSensitivity().luceneField();
         if (!isGlobal()) {
-            segmentForwardIndex = BlackLabIndexIntegrated.forwardIndex(lrc);
+            segmentForwardIndex = BlackLabIndexImpl.forwardIndex(lrc);
             segmentTerms = segmentForwardIndex.terms(annotation);
         }
     }
@@ -320,8 +320,8 @@ public abstract class HitPropertyContextBase extends HitProperty {
         if (isGlobal()) {
             // [GLOBAL] Retrieve term ids
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            ForwardIndexSegmentReader forwardIndex = BlackLabIndexIntegrated.forwardIndex(lrc);
-            TermsSegment segmentTerms = forwardIndex.terms(annotation);
+            ForwardIndexSegmentReader forwardIndex = BlackLabIndexImpl.forwardIndex(lrc);
+            Terms segmentTerms = forwardIndex.terms(annotation);
             int segmentDocId = docId - lrc.docBase;
             for (int[] snippet: forwardIndex.retrieveParts(luceneField, segmentDocId, starts, ends)) {
                 String[] terms = segmentTerms.toStringValues(snippet);
