@@ -76,4 +76,12 @@ public interface TermsSegment {
     default int sortPositionFor(String term, MatchSensitivity sensitivity) {
         return idToSortPosition(indexOf(term), sensitivity);
     }
+
+    default String[] toStringValues(int[] snippet) {
+        String[] values = new String[snippet.length];
+        for (int i = 0; i < snippet.length; i++) {
+            values[i] = get(snippet[i]);
+        }
+        return values;
+    }
 }

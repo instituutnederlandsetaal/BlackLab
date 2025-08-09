@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -15,6 +17,14 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
+
+    private static TermsSegment getTerms(Annotation annotation, LeafReaderContext lrc) {
+        return lrc == null ? null : BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(
+                annotation.forwardIndexSensitivity().luceneField());
+    }
+
+    /** Segment our term ids came from (will be null if have term strings, or if arrays are length 0) */
+    private LeafReaderContext lrc;
 
     /** Term ids for this value */
     int[] valueTokenId;
@@ -35,39 +45,41 @@ public class PropertyValueContextWords extends PropertyValueContext {
      */
     private boolean reverseOnDisplay;
 
-    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
-            int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
-        super(index.annotationForwardIndex(annotation).terms(), annotation);
-        init(sensitivity, null, termIds, sortPositions, reverseOnDisplay);
+    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
+            LeafReaderContext lrc, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
+        super(getTerms(annotation, lrc), annotation);
+        init(sensitivity, null, lrc, termIds, sortPositions, reverseOnDisplay);
     }
 
-    public PropertyValueContextWords(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity,
-            String[] termStrings, boolean reverseOnDisplay) {
-        super(index.annotationForwardIndex(annotation).terms(), annotation);
-        init(sensitivity, termStrings, null, null, reverseOnDisplay);
-    }
-
-    PropertyValueContextWords(Terms terms, Annotation annotation, MatchSensitivity sensitivity, String[] termStrings,
-            int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
+    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
+            TermsSegment terms, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
         super(terms, annotation);
-        init(sensitivity, termStrings, termIds, sortPositions, reverseOnDisplay);
+        init(sensitivity, null, null, termIds, sortPositions, reverseOnDisplay);
     }
 
-    private void init(MatchSensitivity sensitivity, String[] termStrings, int[] termIds, int[] sortPositions,
+    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
+            String[] termStrings, boolean reverseOnDisplay) {
+        super(null, annotation);
+        init(sensitivity, termStrings, null, null, null, reverseOnDisplay);
+    }
+
+    private void init(MatchSensitivity sensitivity, String[] terms, LeafReaderContext lrc, int[] termIds, int[] sortPositions,
             boolean reverseOnDisplay) {
         this.sensitivity = sensitivity;
-        if (termStrings == null) {
+        if (terms == null) {
+            // We have (segment-local) term ids
+            this.lrc = lrc;
             this.valueTokenId = termIds;
             if (sortPositions == null) {
                 this.valueSortOrder = new int[termIds.length];
-                // @@@ WRONG: termIds are segment-local, Terms interface expects global term ids!
-                terms.toSortOrder(termIds, valueSortOrder, sensitivity);
+                this.terms.toSortOrder(termIds, valueSortOrder, sensitivity);
             } else {
                 this.valueSortOrder = sortPositions;
             }
             this.value = null;
         } else {
-            this.value = termStrings;
+            // We have term strings
+            this.value = terms;
             this.valueTokenId = null;
             this.valueSortOrder = null;
         }
@@ -81,7 +93,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return Arrays.compare(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
     }
 
-    private int compareStringArrays(String[] a, String[] b) {
+    public static int compareStringArrays(String[] a, String[] b) {
         int n = Math.min(a.length, b.length);
         for (int i = 0; i < n; i++) {
             int c = collator.compare(a[i], b[i]);
@@ -125,7 +137,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
                 index.metadata().annotationFromFieldAndName(infos.get(0), field);
         MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
                 annotation.mainSensitivity().sensitivity();
-        return new PropertyValueContextWords(index, annotation, sensitivity, terms.toArray(new String[0]),
+        return new PropertyValueContextWords(annotation, sensitivity, terms.toArray(new String[0]),
                 reverseOnDisplay);
     }
 

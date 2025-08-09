@@ -1,7 +1,6 @@
 package nl.inl.blacklab.tools.frequency;
 
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -12,8 +11,6 @@ final class AnnotInfo {
 
     private final MatchSensitivity matchSensitivity;
 
-    private final Terms terms;
-
     public AnnotationForwardIndex getAnnotationForwardIndex() {
         return annotationForwardIndex;
     }
@@ -22,13 +19,8 @@ final class AnnotInfo {
         return matchSensitivity;
     }
 
-    public Terms getTerms() {
-        return terms;
-    }
-
     public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
         this.annotationForwardIndex = annotationForwardIndex;
         this.matchSensitivity = matchSensitivity;
-        this.terms = annotationForwardIndex.terms();
     }
 }

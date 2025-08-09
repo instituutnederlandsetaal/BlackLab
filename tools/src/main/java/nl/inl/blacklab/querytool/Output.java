@@ -262,7 +262,7 @@ class Output {
         long maxTermsPerLeafReader = LuceneUtil.getMaxTermsPerLeafReader(index.reader(), fieldName);
         String luceneFieldInfo = " (lucene: " + fieldName + "; max. LR terms = " + maxTermsPerLeafReader + ") ";
 
-        int numberOfUniqueTerms = annotation.hasForwardIndex() ? index.forwardIndex(annotation.field()).get(annotation).terms().numberOfTerms() : 0;
+        int numberOfUniqueTerms = annotation.hasForwardIndex() ? index.forwardIndex(annotation.field()).get(annotation).numberOfTerms() : 0;
         return annotation.name() + luceneFieldInfo + (annotation.hasForwardIndex() ? " (+FI, " + numberOfUniqueTerms + " unique terms)" : "") + ", " + sensitivityDesc;
     }
 

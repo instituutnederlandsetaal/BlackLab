@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.search.BlackLab;
@@ -26,7 +26,7 @@ public class TestPropertyValues {
     private static final Collator termsCollator = (new Collators(regularCollator)).get(
             MatchSensitivity.INSENSITIVE);
 
-    private static final Terms terms;
+    private static final TermsSegment terms;
 
     static {
         // Test using MockTerms with a sorted list of very similar words that should not be equal
@@ -41,17 +41,17 @@ public class TestPropertyValues {
         MockBlackLabIndex index = new MockBlackLabIndex();
         AnnotatedField field = new AnnotatedFieldImpl(index, "contents");
         Annotation annotation = new AnnotationImpl(field, "lemma");
-        PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(terms, annotation, sensitivity,
-                null, new int[]{2, 3, 3}, null, false);
-        PropertyValueContextWords twoThreeThree2 = new PropertyValueContextWords(terms, annotation, sensitivity,
-                null, new int[]{2, 3, 3}, null, false);
-        PropertyValueContextWords oneThreeFour = new PropertyValueContextWords(terms, annotation, sensitivity,
-                null, new int[]{1, 3, 4}, null, false);
-        PropertyValueContextWords twoThreeFive = new PropertyValueContextWords(terms, annotation, sensitivity,
-                null, new int[]{2, 3, 5}, null, false);
-        Assert.assertEquals(0, twoThreeThree.compareTo(twoThreeThree2));
-        Assert.assertEquals(-1, oneThreeFour.compareTo(twoThreeThree));
-        Assert.assertEquals(1, twoThreeFive.compareTo(twoThreeThree));
+        PropertyValueContextWords brownFoxFox = new PropertyValueContextWords(annotation, sensitivity,
+                new String[]{"brown", "fox", "fox"}, false);
+        PropertyValueContextWords brownFoxFox2 = new PropertyValueContextWords(annotation, sensitivity,
+                new String[]{"brown", "fox", "fox"}, false);
+        PropertyValueContextWords quickFoxJumps = new PropertyValueContextWords(annotation, sensitivity,
+                new String[]{"quick", "fox", "jumps"}, false);
+        PropertyValueContextWords brownFoxOver = new PropertyValueContextWords(annotation, sensitivity,
+                new String[]{"brown", "fox", "over"}, false);
+        Assert.assertEquals(0, brownFoxFox.compareTo(brownFoxFox2));
+        Assert.assertEquals(1, quickFoxJumps.compareTo(brownFoxFox));
+        Assert.assertEquals(-1, brownFoxFox.compareTo(brownFoxOver));
     }
 
     @Test

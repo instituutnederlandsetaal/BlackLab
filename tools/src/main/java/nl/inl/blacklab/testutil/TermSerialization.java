@@ -14,7 +14,6 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -23,8 +22,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class TermSerialization {
-
-    private static Terms terms;
 
     private TermSerialization() {
     }
@@ -38,7 +35,6 @@ public class TermSerialization {
         AnnotatedField field = index.annotatedField("contents");
         Annotation annotation = annotationName.isEmpty() ? field.mainAnnotation() : field.annotation(annotationName);
         AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
-        terms = fi.terms();
 
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
         for (LeafReaderContext lrc: index.reader().leaves()) {
@@ -52,9 +48,9 @@ public class TermSerialization {
         TermsSegment terms = fi.terms(luceneField);
 
         MutableIntSet s = new IntHashSet();
-        int sensitiveIndex = terms.indexOf(word);
-        s.add(sensitiveIndex);
-        report("terms.indexOf", s);
+        int segmentTermIdSensitive = terms.indexOf(word);
+        s.add(segmentTermIdSensitive);
+        report("terms.indexOf", s, terms);
 
         Collators collators = Collators.getDefault();
         Collator collator = collators.get(MatchSensitivity.SENSITIVE);
@@ -105,7 +101,7 @@ public class TermSerialization {
         }
     }
 
-    private static void report(String prompt, MutableIntSet s1) {
+    private static void report(String prompt, MutableIntSet s1, TermsSegment terms) {
         StringBuilder values = new StringBuilder();
         for (int i : s1.toArray()) {
             values.append(i).append(" (").append(terms.get(i)).append("); ");

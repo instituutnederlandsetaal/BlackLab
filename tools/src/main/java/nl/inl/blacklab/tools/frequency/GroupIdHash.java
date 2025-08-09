@@ -67,8 +67,8 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
         hash = Arrays.hashCode(this.tokens) ^ metadataValuesHash;
     }
 
-    public int[] getTokenIds() {
-        return tokenIds;
+    public String[] getTokens() {
+        return tokens;
     }
 
     public String[] getMetadataValues() {

@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -37,9 +36,6 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     /** The annotation index for each annotation name (inverse of the list above) */
     private final Map<Annotation, Integer> annotationIndexes = new HashMap<>();
 
-    /** The terms object for each annotation */
-    protected final List<Terms> terms = new ArrayList<>();
-
     /** The Lucene field that contains the forward index for each annotation */
     protected final List<String> luceneFields = new ArrayList<>();
 
@@ -61,7 +57,6 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
             n = annotationIndexes.size();
             annotationIndexes.put(annotation, n);
             annotations.add(annotation);
-            terms.add(index.annotationForwardIndex(annotation).terms());
             luceneFields.add(annotation.forwardIndexSensitivity().luceneField());
         }
         return n;
@@ -73,7 +68,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     }
 
     protected int numberOfAnnotations() {
-        return terms.size();
+        return annotations.size();
     }
 
     @Override

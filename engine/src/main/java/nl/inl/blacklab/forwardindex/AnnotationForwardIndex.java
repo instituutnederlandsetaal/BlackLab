@@ -34,4 +34,8 @@ public interface AnnotationForwardIndex {
     Collators collators();
 
     ForwardIndex getParent();
+
+    default int numberOfTerms() {
+        return terms().numberOfTerms();
+    }
 }

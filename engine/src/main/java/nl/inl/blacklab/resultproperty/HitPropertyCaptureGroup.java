@@ -77,7 +77,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         }
 
         this.spanMode = spanMode;
-        emptyValue = new PropertyValueContextWords(index, annotation, sensitivity, new int[0], new int[0], false);
+        emptyValue = new PropertyValueContextWords(annotation, sensitivity, (LeafReaderContext)null, new int[0], new int[0], false);
     }
 
     /**

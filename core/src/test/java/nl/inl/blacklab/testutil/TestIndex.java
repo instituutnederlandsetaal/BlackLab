@@ -7,14 +7,17 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
+import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -337,6 +340,12 @@ public class TestIndex {
             results.add(conc.trim());
         }
         return results;
+    }
+
+    public TermsSegment getTermsSegment(Annotation annotation) {
+        LeafReaderContext lrc = index.getLeafReaderContext(0);
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(luceneField);
     }
 
 }

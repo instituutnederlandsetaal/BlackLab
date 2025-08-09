@@ -25,7 +25,6 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.forwardindex.TermsSegment;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
@@ -202,8 +201,6 @@ public class HitGroupsTokenFrequencies {
 
         private final MatchSensitivity matchSensitivity;
 
-        private final Terms terms;
-
         public AnnotationForwardIndex getAnnotationForwardIndex() {
             return annotationForwardIndex;
         }
@@ -212,14 +209,9 @@ public class HitGroupsTokenFrequencies {
             return matchSensitivity;
         }
 
-        public Terms getTerms() {
-            return terms;
-        }
-
         public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
             this.annotationForwardIndex = annotationForwardIndex;
             this.matchSensitivity = matchSensitivity;
-            this.terms = annotationForwardIndex.terms();
         }
     }
 
@@ -572,7 +564,7 @@ public class HitGroupsTokenFrequencies {
                             AnnotInfo annotInfo = hitProperties.get(indexInInput);
                             Annotation annot = annotInfo.getAnnotationForwardIndex().annotation();
                             MatchSensitivity sens = annotInfo.getMatchSensitivity();
-                            groupIdAsList[indexInOutput++] = new PropertyValueContextWords(index, annot, sens,
+                            groupIdAsList[indexInOutput++] = new PropertyValueContextWords(annot, sens,
                                     new String[] {annotationValues[indexInInput]}, false);
                         }
                     }

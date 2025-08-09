@@ -185,10 +185,8 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      */
     HitProperty(HitProperty prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
-        this.lrc = lrc;
-        this.reverse = prop.reverse;
-        if (invert)
-            this.reverse = !this.reverse;
+        this.lrc = lrc == null ? prop.lrc : lrc;
+        this.reverse = invert ? !prop.reverse : prop.reverse;
     }
 
     /**
@@ -245,7 +243,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      */
     public HitProperty copyWith(HitsSimple hits) {
         // If the filter property requires contexts, fetch them now.
-        return copyWith(hits, lrc, false);
+        return copyWith(hits, null, false);
     }
 
     /**
@@ -253,7 +251,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * object.
      *
      * @param newHits           new Hits to use, or null to inherit
-     * @param leafReaderContext
+     * @param leafReaderContext the LeafReaderContext to use, or null to inherit
      * @param invert            true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
