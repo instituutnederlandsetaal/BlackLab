@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLInputDocument;
@@ -46,7 +47,6 @@ import nl.inl.blacklab.indexers.config.ConfigMetadataFieldGroup;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
@@ -748,7 +748,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     String luceneField = index.forwardIndex(field).get(annot).annotation().forwardIndexSensitivity().luceneField();
                     index.forEachDocument((__, docId) -> {
                         LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                        int docLength = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(luceneField, docId - lrc.docBase);
+                        int docLength = (int) BlackLabPostingsReader.forSegment(lrc).forwardIndex()
+                                .docLength(luceneField, docId - lrc.docBase);
                         if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)

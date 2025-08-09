@@ -20,10 +20,8 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -36,7 +34,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -141,17 +138,13 @@ public class HitGroupsTokenFrequencies {
                 throw new IllegalStateException("Cannot convert term ids to strings, no term ids available");
             }
             String[] tokenStrings = new String[tokenIds.length];
-            BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
+            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
             for (int i = 0; i < tokenIds.length; i++) {
                 String luceneFieldName = hitProperties.get(i).annotationForwardIndex.annotation().forwardIndexSensitivity().luceneField();
-                try {
-                    int tokensSegmentTermId = tokenIds[i];
-                    tokenStrings[i] = tokensSegmentTermId >= 0 ?
-                            postingsReader.terms(luceneFieldName).reader().get(tokensSegmentTermId) :
-                            null;
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
-                }
+                int tokensSegmentTermId = tokenIds[i];
+                tokenStrings[i] = tokensSegmentTermId >= 0 ?
+                        postingsReader.terms(luceneFieldName).reader().get(tokensSegmentTermId) :
+                        null;
             }
             return new GroupIdHash(tokenStrings, metadataValues, Arrays.hashCode(metadataValues));
         }
@@ -411,9 +404,9 @@ public class HitGroupsTokenFrequencies {
                                     for (AnnotInfo annot : hitProperties) {
                                         String luceneField = annot.annotationForwardIndex.annotation()
                                                 .forwardIndexSensitivity().luceneField();
-                                        Terms segmentTerms = BlackLabCodecUtil.getPostingsReader(lrc)
-                                                .terms(luceneField).reader();
-                                        final int[] tokenValues = BlackLabIndexImpl.forwardIndex(lrc)
+                                        BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
+                                        Terms segmentTerms = postingsReader.terms(luceneField).reader();
+                                        final int[] tokenValues = postingsReader.forwardIndex()
                                                 .retrieveParts(luceneField, globalDocId - lrc.docBase,
                                                         new int[] { -1 }, new int[] { -1 }).get(0);
 

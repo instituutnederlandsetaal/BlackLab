@@ -192,7 +192,7 @@ public class TestNfaFromQuery {
         Nfa frag = q.getNfa(fiAccessor, direction);
         frag.finish();
         frag.lookupAnnotationIndexes(fiAccessor);
-        NfaState start = frag.getStartingState().forLeafReaderContext(null);
+        NfaState start = frag.getStartingState().forSegment(null);
 
         ForwardIndexDocument fiDoc = fiAccessor.getForwardIndexAccessorLeafReader(null).getForwardIndexDoc(0);
         for (int i = 0; i < tests; i++) {

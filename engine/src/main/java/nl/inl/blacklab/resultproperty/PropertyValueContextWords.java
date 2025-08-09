@@ -8,7 +8,7 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -19,8 +19,10 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public class PropertyValueContextWords extends PropertyValueContext {
 
     private static Terms getTerms(Annotation annotation, LeafReaderContext lrc) {
-        return lrc == null ? null : BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(
-                annotation.forwardIndexSensitivity().luceneField());
+        if (lrc == null)
+            return null;
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        return BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
     }
 
     /** Segment our term ids came from (will be null if have term strings, or if arrays are length 0) */

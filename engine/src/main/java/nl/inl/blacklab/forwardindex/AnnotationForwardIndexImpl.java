@@ -5,7 +5,7 @@ import java.text.Collator;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -62,7 +62,7 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     public int numberOfTerms() {
         int numberOfTerms = 0;
         for (LeafReaderContext lrc: indexReader.leaves()) {
-            Terms terms = BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(luceneField);
+            Terms terms = BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
             numberOfTerms += terms.numberOfTerms();
         }
         return numberOfTerms;

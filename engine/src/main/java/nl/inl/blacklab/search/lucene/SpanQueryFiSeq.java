@@ -173,7 +173,7 @@ public class SpanQueryFiSeq extends BLSpanQueryAbstract {
             if (anchorSpans == null)
                 return null;
             ForwardIndexAccessorLeafReader fiLeafReader = fiAccessor.getForwardIndexAccessorLeafReader(context);
-            NfaState startingState = nfa.getNfa().getStartingState().forLeafReaderContext(context);
+            NfaState startingState = nfa.getNfa().getStartingState().forSegment(context);
             return new SpansFiSeq(anchorSpans, startOfAnchor, startingState, direction, fiLeafReader, guarantees);
         }
     }

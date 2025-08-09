@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
@@ -117,11 +118,11 @@ public class TestIndexFormats {
             int docId = testIndex.getDocIdForDocNumber(i);
 
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            int docLength = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(wordFi, docId - lrc.docBase);
+            int docLength = (int) BlackLabPostingsReader.forSegment(lrc).forwardIndex().docLength(wordFi, docId - lrc.docBase);
             Assert.assertEquals(expectedLength, docLength);
 
             // pos annotation doesn't occur in all docs; test that this doesn't mess up doc length
-            int docLengthPos = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(posFi, docId - lrc.docBase);
+            int docLengthPos = (int) BlackLabPostingsReader.forSegment(lrc).forwardIndex().docLength(posFi, docId - lrc.docBase);
             Assert.assertEquals(expectedLength, docLengthPos);
         }
     }
@@ -129,7 +130,7 @@ public class TestIndexFormats {
     int getToken(String luceneField, int docId, int pos) {
         LeafReaderContext lrc = testIndex.index().getLeafReaderContext(docId);
         //String luceneField = afi.annotation().forwardIndexSensitivity().luceneField();
-        int[] context = BlackLabIndexImpl.forwardIndex(lrc)
+        int[] context = BlackLabPostingsReader.forSegment(lrc).forwardIndex()
                 .retrieveParts(luceneField, docId - lrc.docBase, new int[] { pos }, new int[] { pos + 1 }).get(0);
         if (context.length == 0)
             throw new IllegalArgumentException("Token offset out of range");

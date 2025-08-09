@@ -9,11 +9,9 @@ import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -43,9 +41,7 @@ public class TermSerialization {
     }
 
     private static void doTerm(String word, LeafReaderContext lrc, String luceneField) {
-        BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
-        ForwardIndexSegmentReader fi = postingsReader.forwardIndex();
-        Terms terms = fi.terms(luceneField);
+        Terms terms = BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
 
         MutableIntSet s = new IntHashSet();
         int segmentTermIdSensitive = terms.indexOf(word);

@@ -320,7 +320,7 @@ public abstract class NfaState {
      * @param lrc context to use
      * @return copy with this context
      */
-    public NfaState forLeafReaderContext(LeafReaderContext lrc) {
+    public NfaState forSegment(LeafReaderContext lrc) {
         return copy(null, new HashMap<>(), state -> state.setLeafReaderContext(lrc));
     }
 

@@ -69,8 +69,8 @@ public class MatchFilterOr extends MatchFilter {
     }
 
     @Override
-    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
-        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forLeafReaderContext(context), MatchFilterOr::new);
+    public MatchFilter forSegment(LeafReaderContext context) {
+        return twoClauseRewrite(this, a, b, (MatchFilter m) -> m.forSegment(context), MatchFilterOr::new);
     }
 
     @Override

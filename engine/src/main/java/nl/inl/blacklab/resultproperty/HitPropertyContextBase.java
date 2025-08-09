@@ -10,11 +10,11 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -226,7 +226,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     void initForwardIndex() {
         luceneField = annotation.forwardIndexSensitivity().luceneField();
         if (!isGlobal()) {
-            segmentForwardIndex = BlackLabIndexImpl.forwardIndex(lrc);
+            segmentForwardIndex = BlackLabPostingsReader.forSegment(lrc).forwardIndex();
             segmentTerms = segmentForwardIndex.terms(annotation);
         }
     }
@@ -318,10 +318,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
 
         if (isGlobal()) {
-            // [GLOBAL] Retrieve term ids
+            // [GLOBAL] Retrieve terms
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            ForwardIndexSegmentReader forwardIndex = BlackLabIndexImpl.forwardIndex(lrc);
-            Terms segmentTerms = forwardIndex.terms(annotation);
+            BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
+            ForwardIndexSegmentReader forwardIndex = postingsReader.forwardIndex();
+            Terms segmentTerms = postingsReader.terms(luceneField).reader();
             int segmentDocId = docId - lrc.docBase;
             for (int[] snippet: forwardIndex.retrieveParts(luceneField, segmentDocId, starts, ends)) {
                 String[] terms = segmentTerms.toStringValues(snippet);

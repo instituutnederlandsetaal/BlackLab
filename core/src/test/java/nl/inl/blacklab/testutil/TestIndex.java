@@ -12,7 +12,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -345,7 +345,7 @@ public class TestIndex {
     public Terms getTermsSegment(Annotation annotation) {
         LeafReaderContext lrc = index.getLeafReaderContext(0);
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
-        return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex().terms(luceneField);
+        return BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
     }
 
 }

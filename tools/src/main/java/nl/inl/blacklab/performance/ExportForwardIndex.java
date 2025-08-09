@@ -10,14 +10,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -114,11 +113,11 @@ public class ExportForwardIndex {
                     continue;
                 String luceneField = annotation.forwardIndexSensitivity().luceneField();
                 LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                int docLength = (int) BlackLabIndexImpl.forwardIndex(lrc).docLength(luceneField, docId - lrc.docBase);
+                ForwardIndexSegmentReader fi = BlackLabPostingsReader.forSegment(lrc).forwardIndex();
+                int docLength = (int) fi.docLength(luceneField, docId - lrc.docBase);
                 String length = doLengths ? " len=" + docLength : "";
                 System.out.println("    " + annotation.name() + length);
                 if (doTokens) {
-                    ForwardIndexSegmentReader fi = BlackLabIndexImpl.forwardIndex(lrc);
                     int[] doc = fi.retrieveParts(luceneField, docId - lrc.docBase, new int[] { -1 }, new int[] { -1 }).get(0);
                     Terms terms = fi.terms(luceneField);
                     for (int tokenId: doc) {
@@ -140,8 +139,7 @@ public class ExportForwardIndex {
             Set<String> allTerms = new TreeSet<>();
             for (LeafReaderContext lrc: index.reader().leaves()) {
                 String luceneField = annotatedField.mainAnnotation().forwardIndexSensitivity().luceneField();
-                Terms r = BlackLabCodecUtil.getPostingsReader(lrc)
-                        .terms(luceneField).reader();
+                Terms r = BlackLabPostingsReader.forSegment(lrc).terms(luceneField).reader();
                 for (int i = 0; i < r.numberOfTerms(); i++) {
                     allTerms.add(r.get(i));
                 }

@@ -1,15 +1,12 @@
 package nl.inl.blacklab.tools.frequency;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
-import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -130,17 +127,13 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
             throw new IllegalStateException("Cannot convert term ids to strings, no term ids available");
         }
         String[] tokenStrings = new String[tokenIds.length];
-        BlackLabPostingsReader postingsReader = BlackLabCodecUtil.getPostingsReader(lrc);
+        BlackLabPostingsReader postingsReader = BlackLabPostingsReader.forSegment(lrc);
         for (int i = 0; i < tokenIds.length; i++) {
             String luceneFieldName = hitProperties.get(i).forwardIndexSensitivity().luceneField();
-            try {
-                int tokensSegmentTermId = tokenIds[i];
-                tokenStrings[i] = tokensSegmentTermId >= 0 ?
-                        postingsReader.terms(luceneFieldName).reader().get(tokensSegmentTermId) :
-                        null;
-            } catch (IOException e) {
-                throw new InvalidIndex(e);
-            }
+            int tokensSegmentTermId = tokenIds[i];
+            tokenStrings[i] = tokensSegmentTermId >= 0 ?
+                    postingsReader.terms(luceneFieldName).reader().get(tokensSegmentTermId) :
+                    null;
         }
         return new GroupIdHash(ngramSize, tokenStrings, metadataValues, Arrays.hashCode(metadataValues));
     }

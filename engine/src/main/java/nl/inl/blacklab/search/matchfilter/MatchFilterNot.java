@@ -71,8 +71,8 @@ public class MatchFilterNot extends MatchFilter {
     }
 
     @Override
-    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
-        MatchFilter a2 = a.forLeafReaderContext(context);
+    public MatchFilter forSegment(LeafReaderContext context) {
+        MatchFilter a2 = a.forSegment(context);
         if (a2 == a)
             return this;
         return new MatchFilterNot(a2);

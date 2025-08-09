@@ -24,18 +24,14 @@ import org.apache.lucene.search.Query;
 
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.codec.BlackLabCodec;
-import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
-import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -165,30 +161,6 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     }
 
     /**
-     * Get the content store for an index segment.
-     *
-     * The returned content store should only be used from one thread.
-     *
-     * @param lrc leafreader context (segment) to get the content store for.
-     * @return content store
-     */
-    public static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
-        return BlackLabCodecUtil.getStoredFieldsReader(lrc).contentStore();
-    }
-
-    /**
-     * Get the forward index for an index segment.
-     *
-     * The returned forward index should only be used from one thread.
-     *
-     * @param lrc leafreader context (segment) to get the forward index for.
-     * @return forward index
-     */
-    public static ForwardIndexSegmentReader forwardIndex(LeafReaderContext lrc) {
-        return BlackLabCodecUtil.getPostingsReader(lrc).forwardIndex();
-    }
-
-    /**
      * Is the specified Lucene field a relations field?
      *
      * If yes, we should store relations info for this field.
@@ -200,18 +172,6 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
         String[] nameComponents = AnnotatedFieldNameUtil.getNameComponents(fieldInfo.name);
         return nameComponents.length > 1 && nameComponents[1] != null && nameComponents[1].equals(
                 AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
-    }
-
-    /**
-     * Get the relation info index for an index segment.
-     *
-     * The returned relation info index should only be used from one thread.
-     *
-     * @param lrc leafreader context (segment) to get the relation info index for.
-     * @return relation info index, or null if not available
-     */
-    public static RelationInfoSegmentReader relationInfo(LeafReaderContext lrc) {
-        return BlackLabCodecUtil.getPostingsReader(lrc).relationInfo();
     }
 
     /** A list of stored fields that doesn't include content store fields. */

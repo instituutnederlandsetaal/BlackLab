@@ -3,8 +3,8 @@ package nl.inl.blacklab.contentstore;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.codec.LeafReaderLookup;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 
 /**
  * Global content store interface for the integrated index format.
@@ -28,10 +28,22 @@ public class ContentStoreIntegrated implements ContentStore {
         this.luceneField = luceneField;
     }
 
+    /**
+     * Get the content store for an index segment.
+     *
+     * The returned content store should only be used from one thread.
+     *
+     * @param lrc leafreader context (segment) to get the content store for.
+     * @return content store
+     */
+    static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
+        return BlackLabPostingsReader.forSegment(lrc).getStoredFieldsReader().contentStore();
+    }
+
     @Override
     public String retrieve(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        ContentStoreSegmentReader cs = BlackLabIndexImpl.contentStore(lrc);
+        ContentStoreSegmentReader cs = contentStore(lrc);
         return cs.getValue(docId - lrc.docBase, luceneField);
     }
 
@@ -39,7 +51,7 @@ public class ContentStoreIntegrated implements ContentStore {
     public String retrievePart(int docId, int start, int end) {
         if (start == -1) start = 0; // fix legacy quirk
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        ContentStoreSegmentReader cs = BlackLabIndexImpl.contentStore(lrc);
+        ContentStoreSegmentReader cs = contentStore(lrc);
         return cs.getValueSubstring(docId - lrc.docBase, luceneField, start, end);
     }
 
@@ -48,14 +60,14 @@ public class ContentStoreIntegrated implements ContentStore {
         for (int i = 0; i < start.length; i++)
             if (start[i] == -1)  start[i] = 0; // fix legacy quirk
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        ContentStoreSegmentReader cs = BlackLabIndexImpl.contentStore(lrc);
+        ContentStoreSegmentReader cs = contentStore(lrc);
         return cs.getValueSubstrings(docId - lrc.docBase, luceneField, start, end);
     }
 
     @Override
     public int docLength(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        ContentStoreSegmentReader cs = BlackLabIndexImpl.contentStore(lrc);
+        ContentStoreSegmentReader cs = contentStore(lrc);
         return cs.valueLength(docId - lrc.docBase, luceneField);
     }
 

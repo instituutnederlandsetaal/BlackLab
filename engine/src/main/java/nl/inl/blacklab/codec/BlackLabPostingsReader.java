@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +12,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.IndexFileNames;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.Directory;
@@ -73,6 +73,16 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
         delegateFieldsProducer = delegatePostingsFormat.fieldsProducer(state);
     }
 
+    /**
+     * Get the BlackLabPostingsReader for the given leafreader.
+     *
+     * @param lrc leafreader to get the BlackLab40PostingsReader for
+     * @return BlackLab40PostingsReader for this leafreader
+     */
+    public static BlackLabPostingsReader forSegment(LeafReaderContext lrc) {
+        return BLTerms.getAnyTermsObject(lrc).getFieldsProducer();
+    }
+
     public BlackLabStoredFieldsReader getStoredFieldsReader() {
         try {
             BlackLabCodec codec = (BlackLabCodec) state.segmentInfo.getCodec();
@@ -123,13 +133,16 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
     }
 
     @Override
-    public BLTerms terms(String field) throws IOException {
+    public BLTerms terms(String field) {
         synchronized (termsPerField) {
             BLTerms terms = termsPerField.get(field);
             if (terms == null) {
-                Terms delegateTerms = delegateFieldsProducer.terms(field);
-
-                terms = delegateTerms == null ? null : new BLTerms(field, delegateTerms, this);
+                try {
+                    Terms delegateTerms = delegateFieldsProducer.terms(field);
+                    terms = delegateTerms == null ? null : new BLTerms(field, delegateTerms, this);
+                } catch (IOException e) {
+                    throw new InvalidIndex(e);
+                }
                 termsPerField.put(field, terms);
             }
             return terms;

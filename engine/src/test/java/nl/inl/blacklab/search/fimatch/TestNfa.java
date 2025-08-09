@@ -133,7 +133,7 @@ public class TestNfa {
         NfaState start = NfaState.or(false, Arrays.asList(ab, ba), true);
         start.finish();
         start.lookupAnnotationIndexes(new MockFiAccessor());
-        start = start.forLeafReaderContext(null);
+        start = start.forSegment(null);
 
         ForwardIndexDocumentString fiDoc = new ForwardIndexDocumentString("abatoir");
         Assert.assertTrue(start.matches(fiDoc, 0, 1));
@@ -149,7 +149,7 @@ public class TestNfa {
         c.setNextState(0, split); // loopback
         start.finish();
         start.lookupAnnotationIndexes(new MockFiAccessor());
-        start = start.forLeafReaderContext(null);
+        start = start.forSegment(null);
         return start;
     }
 

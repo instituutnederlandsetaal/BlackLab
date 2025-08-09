@@ -2,9 +2,8 @@ package nl.inl.blacklab.search.matchfilter;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
+import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -136,11 +135,11 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
     }
 
     @Override
-    public MatchFilter forLeafReaderContext(LeafReaderContext context) {
+    public MatchFilter forSegment(LeafReaderContext context) {
         // Look up the sort position for the value we're comparing to.
-        ForwardIndexSegmentReader fi = BlackLabIndexImpl.forwardIndex(context);
         assert annotation != null;
-        Terms terms = fi.terms(annotation);
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        Terms terms = BlackLabPostingsReader.forSegment(context).terms(luceneField).reader();
         int sortPosition = terms.sortPositionFor(compareToTermString, sensitivity);
 
         MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
