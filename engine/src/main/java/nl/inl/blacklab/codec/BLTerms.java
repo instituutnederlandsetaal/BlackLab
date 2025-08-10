@@ -37,13 +37,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     public static BLTerms getAnyTermsObject(LeafReaderContext lrc) {
         // Find the first field that has terms.
         for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
-            try {
-                BLTerms terms = (BLTerms) (lrc.reader().terms(fieldInfo.name));
-                if (terms != null)
-                    return terms;
-            } catch (IOException e) {
-                throw new InvalidIndex(e);
-            }
+            BLTerms terms = forSegment(lrc, fieldInfo.name);
+            if (terms != null)
+                return terms;
         }
         throw new IllegalStateException("No suitable field found for codec access!");
     }
@@ -83,7 +79,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
     public static BLTerms forSegment(LeafReaderContext lrc, String luceneField) {
         try {
-            return (BLTerms)lrc.reader().terms(luceneField);
+            return (BLTerms) lrc.reader().terms(luceneField);
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }

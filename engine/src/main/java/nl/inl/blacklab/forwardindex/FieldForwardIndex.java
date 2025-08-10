@@ -14,7 +14,7 @@ import nl.inl.blacklab.codec.BlackLabPostingsReader;
 public class FieldForwardIndex {
 
     public static FieldForwardIndex get(LeafReaderContext lrc, String luceneField) {
-        return BlackLabPostingsReader.forSegment(lrc, luceneField).forwardIndex(luceneField);
+        return BlackLabPostingsReader.forSegment(lrc).forwardIndex(luceneField);
     }
 
     private final ForwardIndexSegmentReader forwardIndex;

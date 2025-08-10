@@ -1,6 +1,5 @@
 package nl.inl.blacklab.contentstore;
 
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
@@ -13,18 +12,18 @@ import nl.inl.blacklab.codec.LeafReaderLookup;
  */
 public class ContentStoreIntegrated implements ContentStore {
 
-    public static ContentStore open(IndexReader reader, String luceneField) {
-        return new ContentStoreIntegrated(reader, luceneField);
-    }
-
     /** Quickly look up the segment a document is stored in */
     private final LeafReaderLookup leafReaderLookup;
 
     /** Field we're accessing */
     private final String luceneField;
 
-    public ContentStoreIntegrated(IndexReader reader, String luceneField) {
-        leafReaderLookup = new LeafReaderLookup(reader);
+    public ContentStoreIntegrated(LeafReaderLookup leafReaderLookup, String luceneField) {
+        if (leafReaderLookup == null)
+            throw new IllegalArgumentException("LeafReaderLookup cannot be null");
+        if (luceneField == null || luceneField.isEmpty())
+            throw new IllegalArgumentException("Lucene field cannot be null or empty");
+        this.leafReaderLookup = leafReaderLookup;
         this.luceneField = luceneField;
     }
 
@@ -37,7 +36,7 @@ public class ContentStoreIntegrated implements ContentStore {
      * @return content store
      */
     static ContentStoreSegmentReader contentStore(LeafReaderContext lrc) {
-        return BlackLabPostingsReader.forSegment(lrc, null).getStoredFieldsReader().contentStore();
+        return BlackLabPostingsReader.forSegment(lrc).getStoredFieldsReader().contentStore();
     }
 
     @Override

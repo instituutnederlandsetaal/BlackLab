@@ -276,7 +276,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     @Override
     protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
         String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
-        ContentStore cs = ContentStoreIntegrated.open(reader(), luceneField);
+        ContentStore cs = new ContentStoreIntegrated(leafReaderLookup, luceneField);
         registerContentStore(field, cs);
     }
 

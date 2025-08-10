@@ -32,6 +32,7 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
+import nl.inl.blacklab.codec.LeafReaderLookupArray;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -232,6 +233,9 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (traceIndexOpening())
                 logger.debug("    (got index metadata)");
 
+            // Ensure quick lookup of the segment we need
+            leafReaderLookup = new LeafReaderLookupArray(this.reader);
+
             // TODO abstract away this special solrMode parameter (which is used to avoid closing the reader if we're in solr mode)
             // we should abstract out the creation of the objects that depend on the analyzer
             // (such as the lucene writer) into the IndexObjectFactory
@@ -240,8 +244,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             finishOpeningIndex(indexDir, createNewIndex, solrMode);
             logger.debug("    (done with finishOpeningIndex)");
 
-            // Ensure quick lookup of the segment we need
-            leafReaderLookup = new LeafReaderLookup(this.reader);
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);
         } catch (IOException e) {

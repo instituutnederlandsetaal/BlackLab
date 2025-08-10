@@ -11,6 +11,7 @@ import org.apache.lucene.backward_codecs.store.EndiannessReverserUtil;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
+import org.apache.lucene.index.CodecReader;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
@@ -79,10 +80,10 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
      * @param lrc leafreader to get the BlackLab40PostingsReader for
      * @return BlackLab40PostingsReader for this leafreader
      */
-    public static BlackLabPostingsReader forSegment(LeafReaderContext lrc, String luceneField) {
-        if (luceneField == null)
-            return BLTerms.getAnyTermsObject(lrc).getFieldsProducer();
-        return BLTerms.forSegment(lrc, luceneField).getFieldsProducer();
+    public static BlackLabPostingsReader forSegment(LeafReaderContext lrc) {
+        // Downcast to CodecReader (caution, internal API)
+        CodecReader codecReader = (CodecReader)lrc.reader();
+        return (BlackLabPostingsReader)codecReader.getPostingsReader();
     }
 
     public BlackLabStoredFieldsReader getStoredFieldsReader() {

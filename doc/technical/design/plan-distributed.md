@@ -87,13 +87,6 @@ INCONSITENT API
 - postingsReader.terms(luceneField).reader() returns terms reader object for single field
   (try minimize creating short-lived reader objects)
 
-BETTER WAY TO GET TERMS READER?
-
-```java
-((BLTerms)lrc.reader().terms(luceneFieldName)).reader();
-```
-
-
 
 
 

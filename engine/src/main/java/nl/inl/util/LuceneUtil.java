@@ -34,6 +34,7 @@ import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -191,10 +192,10 @@ public final class LuceneUtil {
      * Check if a Lucene field has offsets stored.
      *
      * @param reader our index
-     * @param luceneFieldName field to check
+     * @param fieldName field to check
      * @return true iff field has offsets
      */
-    public static boolean hasOffsets(IndexReader reader, String luceneFieldName) {
+    public static boolean hasOffsets(IndexReader reader, String fieldName) {
         // Iterate over documents in the index until we find a annotation
         // for this annotated field that has stored character offsets. This is
         // our main annotation.
@@ -207,7 +208,7 @@ public final class LuceneUtil {
         for (int n = 0; n < reader.maxDoc(); n++) {
             if (liveDocs == null || liveDocs.get(n)) {
                 try {
-                    Terms terms = reader.getTermVector(n, luceneFieldName);
+                    Terms terms = reader.getTermVector(n, fieldName);
                     if (terms == null) {
                         // No term vector; probably not stored in this document.
                         continue;
@@ -259,7 +260,7 @@ public final class LuceneUtil {
         try {
             outerLoop:
             for (LeafReaderContext leafReader : index.leaves()) {
-                Terms terms = leafReader.reader().terms(fieldName);
+                Terms terms = BLTerms.forSegment(leafReader, fieldName);
                 if (terms == null) {
                     if (logger.isDebugEnabled())
                         logger.debug("no terms for field " + fieldName + " in leafReader, skipping");
@@ -308,7 +309,7 @@ public final class LuceneUtil {
             
             outerLoop:
             for (LeafReaderContext leafReader : index.leaves()) {
-                Terms terms = leafReader.reader().terms(fieldName);
+                Terms terms = BLTerms.forSegment(leafReader, fieldName);
                 if (terms == null) {
                     if (logger.isDebugEnabled())
                         logger.debug("no terms for field " + fieldName + " in leafReader, skipping");
@@ -354,10 +355,6 @@ public final class LuceneUtil {
     public static Map<String, Integer> termFrequencies(IndexSearcher indexSearcher, Query documentFilterQuery,
             AnnotationSensitivity annotSensitivity, Set<String> searchTerms) {
         try {
-            Map<String, Integer> freq = new HashMap<>();
-            IndexReader indexReader = indexSearcher.getIndexReader();
-            String field = annotSensitivity.luceneField();
-
             Weight weight = null;
             if (documentFilterQuery != null) {
                 weight = indexSearcher.createWeight(documentFilterQuery,ScoreMode.COMPLETE_NO_SCORES,1.0f);
@@ -365,6 +362,8 @@ public final class LuceneUtil {
                     throw new InvalidIndex("weight == null");
             }
 
+            Map<String, Integer> freq = new HashMap<>();
+            IndexReader indexReader = indexSearcher.getIndexReader();
             for (LeafReaderContext arc : indexReader.leaves()) {
                 if (arc == null)
                     throw new InvalidIndex("arc == null");
@@ -372,6 +371,7 @@ public final class LuceneUtil {
                     throw new InvalidIndex("arc.reader() == null");
 
                 LeafReader reader = arc.reader();
+                String field = annotSensitivity.luceneField();
                 if (weight != null) { // retrieve term frequency per matched document
                     Scorer scorer = weight.scorer(arc);
                     if (scorer == null) { // no matched documents
@@ -434,11 +434,11 @@ public final class LuceneUtil {
         }
     }
 
-    public static long getSumTotalTermFreq(IndexReader reader, String luceneField) {
+    public static long getSumTotalTermFreq(IndexReader reader, String fieldName) {
         long totalTerms = 0;
         try {
-            for (LeafReaderContext ctx : reader.leaves()) {
-                Terms terms = ctx.reader().terms(luceneField);
+            for (LeafReaderContext leafReader : reader.leaves()) {
+                Terms terms = BLTerms.forSegment(leafReader, fieldName);
                 if (terms == null) {
                     // if this LeafReader doesn't include this field, just skip it
                     continue;
@@ -466,7 +466,7 @@ public final class LuceneUtil {
         long maxTermsPerLeafReader = 0;
         try {
             for (LeafReaderContext leafReader : reader.leaves()) {
-                Terms terms = leafReader.reader().terms(fieldName);
+                Terms terms = BLTerms.forSegment(leafReader, fieldName);
                 if (terms != null && maxTermsPerLeafReader < terms.size())
                     maxTermsPerLeafReader = terms.size();
             }

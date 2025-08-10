@@ -245,7 +245,7 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
                 return null;
             FieldInfo fieldInfo = context.reader().getFieldInfos().fieldInfo(relationField.luceneField());
             boolean primaryIndicator = BlackLabIndexImpl.doesFieldHaveForwardIndex(fieldInfo);
-            RelationInfoSegmentReader relInfo = BlackLabPostingsReader.forSegment(context, null).relationInfo();
+            RelationInfoSegmentReader relInfo = BlackLabPostingsReader.forSegment(context).relationInfo();
             spans = new SpansRelations(baseField, relationType, spans, primaryIndicator,
                     direction, spanMode, captureAs, relInfo, relationsStrategy);
             if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.equals(field))

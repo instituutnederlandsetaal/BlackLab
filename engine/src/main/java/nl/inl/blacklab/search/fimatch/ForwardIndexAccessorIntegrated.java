@@ -52,8 +52,7 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
-            postingsReader = BlackLabPostingsReader
-                    .forSegment(readerContext, luceneFields.isEmpty() ? null : luceneFields.get(0));
+            postingsReader = BlackLabPostingsReader.forSegment(readerContext);
             for (String luceneField: luceneFields) {
                 termsPerSegment.add(postingsReader.forwardIndex(luceneField).terms());
             }
