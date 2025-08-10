@@ -82,13 +82,13 @@ public class ForwardIndex implements AutoCloseable {
         }
     }
 
-    /** 
+    /**
      * Get a new FieldForwardIndex on this segment.
-     * Though the reader is not Threadsafe, a new instance is returned every time, 
-     * So this function can be used from multiple threads. 
+     * Though the reader is not Threadsafe, a new instance is returned every time,
+     * So this function can be used from multiple threads.
      */
     public FieldForwardIndex forField(String luceneField) {
-        return new FieldForwardIndex(new Reader(), luceneField);
+        return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
     }
 
     /**
@@ -130,12 +130,12 @@ public class ForwardIndex implements AutoCloseable {
 
         /** Retrieve parts of a document from the forward index. */
         @Override
-        public List<int[]> retrieveParts(String luceneField, int docId, int[] starts, int[] ends) {
+        public List<int[]> retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends) {
             int n = starts.length;
             if (n != ends.length)
                 throw new IllegalArgumentException("start and end must be of equal length");
 
-            getDocOffsetAndLength(luceneField, docId);
+            getDocOffsetAndLength(field, docId);
 
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
@@ -150,9 +150,9 @@ public class ForwardIndex implements AutoCloseable {
 
         /** Retrieve parts of a document from the forward index. */
         @Override
-        public int[] retrievePart(String luceneField, int docId, int start, int end) {
+        public int[] retrievePart(ForwardIndexField field, int docId, int start, int end) {
             // ensure both inputs available
-            getDocOffsetAndLength(luceneField, docId);
+            getDocOffsetAndLength(field, docId);
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
@@ -218,10 +218,10 @@ public class ForwardIndex implements AutoCloseable {
             }
         }
 
-        private void getDocOffsetAndLength(String luceneField, int docId)  {
+        private void getDocOffsetAndLength(ForwardIndexField field, int docId)  {
             try {
                 tokensIndex(); // ensure input available
-                long fieldTokensIndexOffset = fieldsByName.get(luceneField).getTokensIndexOffset();
+                long fieldTokensIndexOffset = field.getTokensIndexOffset();
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
@@ -241,14 +241,14 @@ public class ForwardIndex implements AutoCloseable {
          * @return doc length
          */
         @Override
-        public long docLength(String luceneField, int docId) {
-            getDocOffsetAndLength(luceneField, docId);
+        public long docLength(ForwardIndexField field, int docId) {
+            getDocOffsetAndLength(field, docId);
             return docLength;
         }
 
         @Override
-        public Terms terms(String luceneField) {
-            return fieldsProducer.terms(luceneField).reader();
+        public Terms terms(ForwardIndexField field) {
+            return fieldsProducer.terms(field.getFieldName()).reader();
         }
     }
 }

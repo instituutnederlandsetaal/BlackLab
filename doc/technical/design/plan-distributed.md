@@ -70,11 +70,6 @@ How would we approach this:
 
 ### Optimize handling of various codec objects
 
-BIG ISSUES
-
-- `BlacklabIndex.getLeafReaderContext(docId)` uses binarySearch
-- `BlackLabCodecUtil.getPostingsReader(lrc)` iterates over fields to find BLTerms object
-
 SMALLER ISSUES
 
 - `BlackLabPostingsReader.forwardIndex()` creates a reader object

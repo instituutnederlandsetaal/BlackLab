@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
+import nl.inl.blacklab.codec.ForwardIndexField;
 
 /** A forward index interface for a single field in a segment.
  *
@@ -19,11 +20,11 @@ public class FieldForwardIndex {
 
     private final ForwardIndexSegmentReader forwardIndex;
 
-    private final String luceneField;
+    private final ForwardIndexField field;
 
-    public FieldForwardIndex(ForwardIndexSegmentReader forwardIndex, String luceneField) {
+    public FieldForwardIndex(ForwardIndexSegmentReader forwardIndex, ForwardIndexField field) {
         this.forwardIndex = forwardIndex;
-        this.luceneField = luceneField;
+        this.field = field;
     }
 
     /** Retrieve parts of a document from a forward index.
@@ -34,7 +35,7 @@ public class FieldForwardIndex {
      * @return snippets (with segment-local term ids)
      */
     public List<int[]> retrieveParts(int docId, int[] starts, int[] ends) {
-        return forwardIndex.retrieveParts(luceneField, docId, starts, ends);
+        return forwardIndex.retrieveParts(field, docId, starts, ends);
     }
 
     /** Retrieve a single part of a document from a forward index.
@@ -45,7 +46,7 @@ public class FieldForwardIndex {
      * @return snippets (with segment-local term ids)
      */
     public int[] retrievePart(int docId, int start, int end) {
-        return forwardIndex.retrievePart(luceneField, docId, start, end);
+        return forwardIndex.retrievePart(field, docId, start, end);
     }
 
     /** Get length of document in tokens from a forward index.
@@ -59,7 +60,7 @@ public class FieldForwardIndex {
      * @return doc length in tokens (including the "extra closing token")
      */
     public long docLength(int docId) {
-        return forwardIndex.docLength(luceneField, docId);
+        return forwardIndex.docLength(field, docId);
     }
 
     /**
@@ -71,6 +72,6 @@ public class FieldForwardIndex {
      * @return terms object for the given field
      */
     public Terms terms() {
-        return forwardIndex.terms(luceneField);
+        return forwardIndex.terms(field);
     }
 }

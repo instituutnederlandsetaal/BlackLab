@@ -12,7 +12,7 @@ import org.apache.lucene.store.IndexOutput;
  * Such as where in the term strings file the strings for this field begin.
  * See integrated.md
  */
-class ForwardIndexField {
+public class ForwardIndexField {
     private final String fieldName;
     protected int numberOfTerms;
     protected long termOrderOffset;
