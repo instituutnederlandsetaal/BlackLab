@@ -14,6 +14,9 @@ import nl.inl.blacklab.codec.ForwardIndexField;
  */
 public class FieldForwardIndex {
 
+    /** Our terms object */
+    private Terms terms;
+
     public static FieldForwardIndex get(LeafReaderContext lrc, String luceneField) {
         return BlackLabPostingsReader.forSegment(lrc).forwardIndex(luceneField);
     }
@@ -67,11 +70,16 @@ public class FieldForwardIndex {
      * Get a Terms for a given field in this segment.
      *
      * The returned object is not thread-safe, so it should only
-     * be used by a single thread.
+     * be used by a single thread. Subsequent calls will return
+     * the same object.
      *
      * @return terms object for the given field
      */
     public Terms terms() {
-        return forwardIndex.terms(field);
+        if (terms == null) {
+            // cache it, we don't need new instance every time
+            terms = forwardIndex.terms(field);
+        }
+        return terms;
     }
 }

@@ -57,8 +57,4 @@ public interface ForwardIndexSegmentReader {
      * @return terms object for the given field
      */
     Terms terms(ForwardIndexField field);
-
-    default FieldForwardIndex forField(ForwardIndexField field) {
-        return new FieldForwardIndex(this, field);
-    }
 }

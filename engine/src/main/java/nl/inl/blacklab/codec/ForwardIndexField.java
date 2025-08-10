@@ -18,6 +18,7 @@ public class ForwardIndexField {
     protected long termOrderOffset;
     protected long termIndexOffset;
     protected long tokensIndexOffset;
+    public BLTerms terms; // we cache this here to avoid lookups
 
     protected ForwardIndexField(String fieldName) {
         this.fieldName = fieldName;
