@@ -25,7 +25,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 
 public abstract class BlackLabPostingsReader extends FieldsProducer {
 
@@ -150,7 +150,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
             if (terms == null) {
                 try {
                     Terms delegateTerms = delegateFieldsProducer.terms(field);
-                    Collators collators = BlackLabIndexImpl.getFieldCollators(fieldInfo);
+                    Collators collators = BLFieldTypeLucene.getFieldCollators(fieldInfo);
                     ForwardIndexField forwardIndexField = forwardIndex.getForwardIndexField(field);
                     terms = delegateTerms == null ? null : new BLTerms(forwardIndexField, collators, delegateTerms, this);
                 } catch (IOException e) {

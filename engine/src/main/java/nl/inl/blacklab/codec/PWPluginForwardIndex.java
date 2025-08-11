@@ -25,7 +25,7 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.PayloadUtils;
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.search.BlackLabIndexImpl;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -301,7 +301,7 @@ class PWPluginForwardIndex implements PWPlugin {
     public boolean startField(FieldInfo fieldInfo) {
 
         // Should this field get a forward index?
-        if (!BlackLabIndexImpl.doesFieldHaveForwardIndex(fieldInfo))
+        if (!BLFieldTypeLucene.doesFieldHaveForwardIndex(fieldInfo))
             return false;
 
         // Make sure doc lengths are shared between all annotations for a single annotated field.
@@ -323,7 +323,7 @@ class PWPluginForwardIndex implements PWPlugin {
         currentField.setTermIndexOffset(termIndexFile.getFilePointer());
 
         // Collators to use for sorting terms in this field.
-        collators = BlackLabIndexImpl.getFieldCollators(fieldInfo);
+        collators = BLFieldTypeLucene.getFieldCollators(fieldInfo);
 
         // Keep track of where to find term positions for each document
         // (for reversing index)

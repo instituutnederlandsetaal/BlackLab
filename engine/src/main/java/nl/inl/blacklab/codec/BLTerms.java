@@ -38,9 +38,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** Collators to use for sorting and comparing terms */
     Collators collators;
 
-    /** FieldProducer, so it can be accessed from outside the Codec (for access to forward index) */
-    private final BlackLabPostingsReader postingsReader;
-
     /** The Lucene terms object we're wrapping */
     private final org.apache.lucene.index.Terms terms;
 
@@ -52,7 +49,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         this.forwardIndexField = forwardIndexField;
         this.collators = collators;
         this.terms = terms;
-        this.postingsReader = postingsReader;
         this._termIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
         this._termsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMS_EXT);
         this._termOrderFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMORDER_EXT);

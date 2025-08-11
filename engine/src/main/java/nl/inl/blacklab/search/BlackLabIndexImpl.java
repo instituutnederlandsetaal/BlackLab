@@ -2,17 +2,13 @@ package nl.inl.blacklab.search;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
 import java.util.HashSet;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -29,9 +25,9 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.GForwardIndex;
 import nl.inl.blacklab.forwardindex.GForwardIndexImpl;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
@@ -54,111 +50,6 @@ import nl.inl.util.VersionFile;
  * A BlackLab index with all files included in the Lucene index.
  */
 public class BlackLabIndexImpl extends BlackLabIndexAbstract {
-
-    /** Lucene field attribute. Does the field have a forward index?
-        If yes, payloads will indicate primary/secondary values. */
-    private static final String BLFA_FORWARD_INDEX = "BL_hasForwardIndex";
-
-    /** Collator to use (for determining term sort values for FI) */
-    private static final String BLFA_COLLATOR = "BL_collator";
-
-    /** Lucene field attribute. Does the field have a content store? */
-    private static final String BLFA_CONTENT_STORE = "BL_hasContentStore";
-
-    /** Lucene field attribute. How is this relation field encoded?
-     *  ("naive-separate-terms" / "single-term" / ...)
-     */
-    private static final String BLFA_RELATION_STRATEGY = "BL_relationsStrategy";
-
-    /**
-     * Does the specified Lucene field have a forward index stored with it?
-     *
-     * If yes, we can deduce from the payload if a value is the primary value (e.g. original word,
-     * to use for concordances, sort, group, etc.) or a secondary value (e.g. stemmed, synonym).
-     * This is used because we only store the primary value in the forward index.
-     *
-     * We need to know this whenever we work with payloads too, so we can skip this indicator.
-     * See {@link nl.inl.blacklab.analysis.PayloadUtils}.
-     *
-     * @param fieldInfo Lucene field to check
-     * @return true if it has a forward index
-     */
-    public static boolean doesFieldHaveForwardIndex(FieldInfo fieldInfo) {
-        String v = fieldInfo.getAttribute(BLFA_FORWARD_INDEX);
-        return v != null && v.equals("true");
-    }
-
-    /**
-     * Indicate that this field has a forward index.
-     * @param type field type
-     */
-    public static void setFieldHasForwardIndex(FieldType type) {
-        type.putAttribute(BlackLabIndexImpl.BLFA_FORWARD_INDEX, "true");
-    }
-
-    /**
-     * Set the collator to use for this field.
-     *
-     * Collator is used to determine term sort orders for the forward index.
-     *
-     * @param type field type
-     */
-    public static void setFieldCollator(FieldType type, String collator) {
-        type.putAttribute(BlackLabIndexImpl.BLFA_COLLATOR, collator);
-    }
-
-    /**
-     * Set the collator to use for this field.
-     *
-     * Collator is used to determine term sort orders for the forward index.
-     *
-     * @param fieldInfo field type
-     */
-    public static Collators getFieldCollators(FieldInfo fieldInfo) {
-        String collatorParams = fieldInfo.getAttribute(BlackLabIndexImpl.BLFA_COLLATOR);
-        if (collatorParams == null || collatorParams.isEmpty())
-            return Collators.getDefault();
-        String[] parts = collatorParams.split(":");
-        String language = parts[0];
-        String country = parts.length > 1 ? parts[1] : "";
-        String variant = parts.length > 2 ? parts[2] : "";
-        return new Collators(Collator.getInstance(new Locale(language, country, variant)));
-    }
-
-    /**
-     * Is the specified field a content store field?
-     *
-     * @param fieldInfo field to check
-     * @return true if it's a content store field
-     */
-    public static boolean isContentStoreField(FieldInfo fieldInfo) {
-        String v = fieldInfo.getAttribute(BLFA_CONTENT_STORE);
-        return v != null && v.equals("true");
-    }
-
-    /**
-     * Set this field type to be a content store field
-     * @param type field type
-     */
-    public static void setContentStoreField(FieldType type) {
-        type.putAttribute(BlackLabIndexImpl.BLFA_CONTENT_STORE, "true");
-    }
-
-    public static RelationsStrategy getRelationsStrategy(FieldInfo fieldInfo) {
-        String strategyName = fieldInfo.getAttribute(BLFA_RELATION_STRATEGY);
-        if (StringUtils.isEmpty(strategyName))
-            return RelationsStrategy.ifNotRecorded();
-        return RelationsStrategy.fromName(strategyName);
-    }
-
-    /**
-     * Set the relations index/search strategy for this relations field
-     * @param type field type
-     * @param strategy strategy to use
-     */
-    public static void setRelationsStrategy(FieldType type, RelationsStrategy strategy) {
-        type.putAttribute(BlackLabIndexImpl.BLFA_RELATION_STRATEGY, strategy.getName());
-    }
 
     /**
      * Is the specified Lucene field a relations field?
@@ -240,7 +131,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
         for (LeafReaderContext lrc: reader().leaves()) {
             boolean relStratSet = false;
             for (FieldInfo fi: lrc.reader().getFieldInfos()) {
-                if (!isContentStoreField(fi))
+                if (!BLFieldTypeLucene.isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
 
                 if (IndexMetadataImpl.isMetadataDocField(fi.name))
@@ -251,7 +142,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
                 // so we can use the same one for searching.
                 if (!createNewIndex && isRelationsField(fi) && !relStratSet) {
                     try {
-                        relationsStrategy = getRelationsStrategy(fi);
+                        relationsStrategy = BLFieldTypeLucene.getRelationsStrategy(fi);
                     } catch (Exception e) {
                         throw new ErrorOpeningIndex(e.getMessage(), e);
                     }
