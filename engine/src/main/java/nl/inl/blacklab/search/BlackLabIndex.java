@@ -149,10 +149,11 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /**
      * Perform a task on each (non-deleted) Lucene Document.
-     * 
+     *
+     * @param parallel if true, process index segments in parallel
      * @param task task to perform
      */
-    void forEachDocument(DocTask task);
+    void forEachDocument(boolean parallel, DocTask task);
 
 
     // Search the index

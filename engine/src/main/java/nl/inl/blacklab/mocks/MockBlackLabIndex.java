@@ -160,7 +160,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public void forEachDocument(DocTask task) {
+    public void forEachDocument(boolean parallel, DocTask task) {
         throw new UnsupportedOperationException();
     }
 

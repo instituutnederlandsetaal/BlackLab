@@ -6,8 +6,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -21,6 +23,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.search.BooleanQuery;
@@ -332,16 +335,23 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
-    public void forEachDocument(DocTask task) {
-        final int maxDoc = reader().maxDoc();
-        final Bits liveDocs = MultiBits.getLiveDocs(reader());
-        int skipDocId = metadata().metadataDocId();
-        for (int docId = 0; docId < maxDoc; docId++) {
-            boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
-            if (isLiveDoc && docId != skipDocId) {
-                task.perform(this, docId);
+    public void forEachDocument(boolean parallel, DocTask task) {
+        List<LeafReaderContext> leaves = reader.leaves();
+        Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
+        int metadataDocId = metadata().metadataDocId();
+        stream.forEach(lrc -> {
+            LeafReader reader1 = lrc.reader();
+            Bits liveDocs = reader1.getLiveDocs();
+            int maxDoc = reader1.maxDoc();
+            task.startSegment(lrc);
+            for (int docId = 0; docId < maxDoc; docId++) {
+                boolean isMetadataDoc = lrc.docBase + docId == metadataDocId;
+                boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
+                if (!isMetadataDoc && isLiveDoc) { // Only count live documents
+                    task.document(lrc, docId);
+                }
             }
-        }
+        });
     }
 
     @Override

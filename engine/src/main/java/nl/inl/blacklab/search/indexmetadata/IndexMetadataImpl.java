@@ -48,6 +48,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
@@ -739,26 +740,37 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             if (!isNewIndex()) {
                 // Count tokens for each field (and documents while we're at it)
                 documentVersionCount = 0;
+                documentCount = 0;
                 for (AnnotatedField field: annotatedFields()) {
-                    documentCount = 0;
-                    index.forEachDocument( (__, ___) -> documentCount++); // count documents
                     CorpusSize.Count fieldCount = CorpusSize.Count.create(); // [0] = token count, [1] = document count
-                    // Add up token counts for all the documents
-                    Annotation annot = field.mainAnnotation();
-                    String luceneField = index.forwardIndex(field).get(annot).annotation().forwardIndexSensitivity().luceneField();
-                    index.forEachDocument((__, docId) -> {
-                        LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                        int docLength = (int) FieldForwardIndex.get(lrc, luceneField)
-                                .docLength(docId - lrc.docBase);
-                        if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
-                            // Positive docLength means that this document has a value for this annotated field
-                            // (e.g. the index metadata document does not and returns 0)
-                            fieldCount.add(1, (long)docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
-                            documentVersionCount++;
-                        }
-                    });
                     countPerField.put(field.name(), fieldCount);
                 }
+                index.forEachDocument(false, new DocTask() {
+                    @Override
+                    public void document(LeafReaderContext segment, int segmentDocId) {
+                        boolean firstField = true;
+                        for (AnnotatedField field: annotatedFields()) {
+                            CorpusSize.Count fieldCount = countPerField.get(field.name());
+                            // Add up token counts for all the documents
+                            Annotation annot = field.mainAnnotation();
+                            String luceneField = index.forwardIndex(field).get(annot).annotation()
+                                    .forwardIndexSensitivity().luceneField();
+                            FieldForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
+                            int docLength = (int) fi.docLength(segmentDocId);
+                            if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
+                                // Positive docLength means that this document has a value for this annotated field
+                                // (e.g. the index metadata document does not and returns 0)
+                                fieldCount.add(1,
+                                        (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                                documentVersionCount++;
+                                if (firstField) {
+                                    documentCount++;
+                                }
+                            }
+                            firstField = false;
+                        }
+                    }
+                });
                 tokenCount = countPerField.values().stream().map(CorpusSize.Count::getTokens)
                         .mapToLong(Long::longValue).sum();
             }

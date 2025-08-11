@@ -57,34 +57,36 @@ How would we approach this:
 - [x] Update NFA matching to use per-segment term ids. NFAs will have to be customized per-segment. `ForwardIndexAccessor` needs to be updated to use the per-segment forward index as well (should be easy as this class is already used per-segment, that is, from `Spans` classes).
 
 - [ ] Convert "special cases" such as: 
-  - [ ] `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`
+  - [x] `HitGroupsTokenFrequencies` and `CalcTokenFrequencies`
   - [ ] calculating the total number of tokens in `IndexMetadataIntegrated`
   - [ ] more?
 
 - [ ] Eliminate uses of the global `(Annotation)ForwardIndex` and `Terms` objects, such as in `HitProperty` and `PropertyValue`, and replace them with per-segment alternatives.
 
-- [ ] Deal with any unexpected problems that arise.
+- [x] Deal with any unexpected problems that arise.
 
-- [ ] Clean up, removing any now-unused classes.
+- [x] Clean up, removing any now-unused classes.
 
 
 ### Optimize handling of various codec objects
 
 SMALLER ISSUES
 
-- `Terms.indexOf()`: use binary search through sortpositions (currently linear)
 - `BlackLabPostingsReader.forwardIndex()` creates a reader object
 - `BLTerms.reader()` creates a reader object
 
-INCONSITENT API
+- `ForwardIndex.forField()` created two objects; can we do it with one? See below.
 
-- postingsReader.forwardIndex() returns FI reader object for all fields
-- postingsReader.terms(luceneField).reader() returns terms reader object for single field
-  (try minimize creating short-lived reader objects)
-
-
-
-
+```java
+  /**
+    * Get a new FieldForwardIndex on this segment.
+    * Though the reader is not Threadsafe, a new instance is returned every time,
+    * So this function can be used from multiple threads.
+    */
+    public FieldForwardIndex forField(String luceneField) {
+        return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
+    }
+```
 
 ## Optimization opportunities
 

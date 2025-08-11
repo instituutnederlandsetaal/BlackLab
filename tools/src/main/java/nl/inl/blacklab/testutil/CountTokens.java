@@ -1,9 +1,11 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
@@ -17,24 +19,21 @@ import nl.inl.util.LogUtil;
  */
 public class CountTokens {
 
-    private static final class CountTask implements DocTask {
-        private final String tokenLengthField;
-        final int totalDocs;
-        int docsDone = 0;
-        public long totalTokens = 0;
+    private final class CountTask implements DocTask {
 
-        CountTask(IndexReader reader, String tokenLengthField) {
-            this.tokenLengthField = tokenLengthField;
-            totalDocs = reader.maxDoc() - reader.numDeletedDocs();
+        AtomicInteger totalDocs = new AtomicInteger(0);
+
+        public AtomicLong totalTokens = new AtomicLong(0);
+
+        CountTask() {
         }
 
-        @Override
-        public void perform(BlackLabIndex index, int id) {
-            totalTokens += Long.parseLong(index.luceneDoc(id).get(tokenLengthField));
-            docsDone++;
-            if (docsDone % 100 == 0) {
-                int perc = docsDone * 100 / totalDocs;
-                System.out.println(docsDone + " docs exported (" + perc + "%)...");
+        public void document(LeafReaderContext segment, int segmentDocId) {
+            totalDocs.incrementAndGet();
+            int globalDocId = segment.docBase + segmentDocId;
+            totalTokens.getAndUpdate(n -> n + Long.parseLong(index.luceneDoc(globalDocId).get(tokenLengthField)));
+            if (totalDocs.get() % 100 == 0) {
+                System.out.println(totalDocs + " docs exported...");
             }
         }
     }
@@ -64,9 +63,12 @@ public class CountTokens {
 
     BlackLabIndex index;
 
+    private String tokenLengthField;
+
     public CountTokens(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
         index = BlackLab.open(indexDir);
+        tokenLengthField = index.mainAnnotatedField().tokenLengthField();
         System.out.println("Done.");
     }
 
@@ -74,15 +76,10 @@ public class CountTokens {
      * Export the whole corpus.
      */
     private void count() {
-
         System.out.println("Getting IndexReader...");
-        final IndexReader reader = index.reader();
-
-        final String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
-
         System.out.println("Calling forEachDocument()...");
-        CountTask task = new CountTask(reader, tokenLengthField);
-        index.forEachDocument(task);
+        CountTask task = new CountTask();
+        index.forEachDocument(true, task);
         System.out.println("TOTAL TOKENS: " + task.totalTokens);
     }
 }
