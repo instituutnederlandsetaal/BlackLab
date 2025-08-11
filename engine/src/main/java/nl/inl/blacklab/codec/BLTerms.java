@@ -35,6 +35,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** Field for which these are the terms */
     private final ForwardIndexField forwardIndexField;
 
+    /** Collators to use for sorting and comparing terms */
+    Collators collators;
+
     /** FieldProducer, so it can be accessed from outside the Codec (for access to forward index) */
     private final BlackLabPostingsReader postingsReader;
 
@@ -45,8 +48,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     private IndexInput _termsFile;
     private IndexInput _termOrderFile;
 
-    public BLTerms(ForwardIndexField forwardIndexField, org.apache.lucene.index.Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
+    public BLTerms(ForwardIndexField forwardIndexField, Collators collators, org.apache.lucene.index.Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
         this.forwardIndexField = forwardIndexField;
+        this.collators = collators;
         this.terms = terms;
         this.postingsReader = postingsReader;
         this._termIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
@@ -141,8 +145,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         return terms.getStats();
     }
 
-    Collators collators = Collators.getDefault();
-
     public Terms reader() {
         if (forwardIndexField == null)
             throw new InvalidIndex("No forward index field specified for this terms reader");
@@ -228,9 +230,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             }
 
             private int compareTerms(String term1, String term2, MatchSensitivity sensitivity) {
-
-                // FIXME: actually, we should use the configured collator for this field here.
-                //   (RELATED: Collator vs. MatchSensitivity is still a bit of an issue...)
                 return collators.get(sensitivity).compare(term1, term2);
             }
 

@@ -12,6 +12,7 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.CodecReader;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
@@ -21,8 +22,10 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
+import nl.inl.blacklab.search.BlackLabIndexImpl;
 
 public abstract class BlackLabPostingsReader extends FieldsProducer {
 
@@ -137,13 +140,19 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
 
     @Override
     public BLTerms terms(String field) {
+        FieldInfo fieldInfo = this.state.fieldInfos.fieldInfo(field);
+        if (fieldInfo == null) {
+            // Field does not exist in this segment
+            return null;
+        }
         synchronized (termsPerField) {
             BLTerms terms = termsPerField.get(field);
             if (terms == null) {
                 try {
                     Terms delegateTerms = delegateFieldsProducer.terms(field);
+                    Collators collators = BlackLabIndexImpl.getFieldCollators(fieldInfo);
                     ForwardIndexField forwardIndexField = forwardIndex.getForwardIndexField(field);
-                    terms = delegateTerms == null ? null : new BLTerms(forwardIndexField, delegateTerms, this);
+                    terms = delegateTerms == null ? null : new BLTerms(forwardIndexField, collators, delegateTerms, this);
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
