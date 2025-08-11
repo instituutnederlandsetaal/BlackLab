@@ -365,6 +365,13 @@ class PWPluginForwardIndex implements PWPlugin {
         String termString = term.utf8ToString();
         termIndexFile.writeLong(termsFile.getFilePointer()); // where to find term string
         termsFile.writeString(termString);
+
+        // NOTE: we add the term here even though it may not have any occurrences that will be written
+        //   to the forward index. This is because we only write primary terms to the forward index
+        //   (if multiple terms occur at the same position, we only write the first one).
+        //   We could keep track of whether a term has any occurrences and only write it if it does,
+        //   but better would probably be to write all terms to the forward index at some point.
+        //   This would complicate the forward index structure though.
         termsList.add(termString);
     }
 

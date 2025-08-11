@@ -318,7 +318,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             Terms segmentTerms = forwardIndex.terms();
             int segmentDocId = docId - lrc.docBase;
             for (int[] snippet: forwardIndex.retrieveParts(segmentDocId, starts, ends)) {
-                String[] terms = segmentTerms.toStringValues(snippet);
+                String[] terms = segmentTerms.idsToTerms(snippet);
                 if (compareInReverse)
                     ArrayUtils.reverse(terms);
                 globalContextTerms.add(terms);
@@ -332,7 +332,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
                     ArrayUtils.reverse(termIds);
                 segmentContextTermId.add(termIds);
                 int[] sortOrder = new int[termIds.length];
-                segmentForwardIndex.terms().toSortOrder(termIds, sortOrder, sensitivity);
+                segmentForwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
                 segmentContextSortOrder.add(sortOrder);
             }
         }

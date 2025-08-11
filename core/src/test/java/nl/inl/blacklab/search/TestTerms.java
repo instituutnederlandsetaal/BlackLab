@@ -8,6 +8,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestTerms {
@@ -40,8 +41,13 @@ public class TestTerms {
     public void testTerms() {
         for (int i = 0; i < terms.numberOfTerms(); i++) {
             String term = terms.get(i);
-            int index = terms.indexOf(term);
-            Assert.assertEquals(i, index);
+            int sortPos = terms.idToSortPosition(i, MatchSensitivity.SENSITIVE);
+            int sortPos2 = terms.termToSortPosition(term, MatchSensitivity.SENSITIVE);
+            Assert.assertEquals("Sensitive sort positions should be identical", sortPos, sortPos2);
+
+            sortPos = terms.idToSortPosition(i, MatchSensitivity.INSENSITIVE);
+            sortPos2 = terms.termToSortPosition(term, MatchSensitivity.INSENSITIVE);
+            Assert.assertEquals("Insensitive sort positions should be identical", sortPos, sortPos2);
         }
     }
 }

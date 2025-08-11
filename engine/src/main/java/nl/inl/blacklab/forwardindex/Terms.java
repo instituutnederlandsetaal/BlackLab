@@ -9,16 +9,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 public interface Terms {
 
     /**
-     * Find the term id for a term string.
-     *
-     * Fairly slow operation, but not used very often.
-     *
-     * @param term the term to get the index number for
-     * @return the term's index number, or -1 if not found
-     */
-    int indexOf(String term);
-
-    /**
      * Get the term string for a term id.
      *
      * @param id term id
@@ -60,27 +50,36 @@ public interface Terms {
     int idToSortPosition(int id, MatchSensitivity sensitivity);
 
     /**
+     * Find the sort position for a term.
+     *
+     * NOTE: this is relatively expensive, so try to avoid calling it
+     * in performance-critical code. Could be optimized by a bunch of precalculations,
+     * but not worth it for now.
+     *
+     * @param term the term to find
+     * @param sensitivity how to compare the term (case-sensitive, diacritics-sensitive, etc.)
+     * @return the sort position of the term, or -1 if not found
+     */
+    int termToSortPosition(String term, MatchSensitivity sensitivity);
+
+    /**
      * Convert an array of term ids to sort positions
      *
      * @param termIds the term ids
      * @param sortOrder the sort positions
      * @param sensitivity whether we want the sensitive or insensitive sort positions
      */
-    default void toSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
+    default void idsToSortOrder(int[] termIds, int[] sortOrder, MatchSensitivity sensitivity) {
         // optimize?
         for (int i = 0; i < termIds.length; i++) {
             sortOrder[i] = idToSortPosition(termIds[i], sensitivity);
         }
     }
 
-    default int sortPositionFor(String term, MatchSensitivity sensitivity) {
-        return idToSortPosition(indexOf(term), sensitivity);
-    }
-
-    default String[] toStringValues(int[] snippet) {
-        String[] values = new String[snippet.length];
-        for (int i = 0; i < snippet.length; i++) {
-            values[i] = get(snippet[i]);
+    default String[] idsToTerms(int[] termIds) {
+        String[] values = new String[termIds.length];
+        for (int i = 0; i < termIds.length; i++) {
+            values[i] = get(termIds[i]);
         }
         return values;
     }

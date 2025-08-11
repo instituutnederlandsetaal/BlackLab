@@ -166,7 +166,7 @@ public class NfaStateToken extends NfaState {
         MatchSensitivity sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
         inputTokensSortPositions = new IntHashSet();
         for (String token: inputTokenStrings) {
-            int sortPosition = terms.sortPositionFor(token, sensitivity);
+            int sortPosition = terms.termToSortPosition(token, sensitivity);
             inputTokensSortPositions.add(sortPosition);
         }
     }

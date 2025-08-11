@@ -76,13 +76,8 @@ public class TestNfaFromQuery {
                         }
 
                         @Override
-                        public int sortPositionFor(String term, MatchSensitivity sensitivity) {
+                        public int termToSortPosition(String term, MatchSensitivity sensitivity) {
                             // Wrong (we return id, not sort pos), but we only need equal words to have the same sort position for these tests.
-                            return terms.get(term);
-                        }
-
-                        @Override
-                        public int indexOf(String term) {
                             return terms.get(term);
                         }
 

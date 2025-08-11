@@ -59,7 +59,7 @@ public class TestNfa {
                         }
 
                         @Override
-                        public int indexOf(String term) {
+                        public int termToSortPosition(String term, MatchSensitivity sensitivity) {
                             return term.charAt(0);
                         }
 

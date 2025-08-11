@@ -74,7 +74,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
             this.valueTokenId = termIds;
             if (sortPositions == null) {
                 this.valueSortOrder = new int[termIds.length];
-                this.terms.toSortOrder(termIds, valueSortOrder, sensitivity);
+                this.terms.idsToSortOrder(termIds, valueSortOrder, sensitivity);
             } else {
                 this.valueSortOrder = sortPositions;
             }

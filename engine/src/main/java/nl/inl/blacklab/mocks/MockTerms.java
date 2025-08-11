@@ -12,10 +12,10 @@ public class MockTerms implements Terms {
     }
 
     @Override
-    public int indexOf(String term) {
+    public int termToSortPosition(String term, MatchSensitivity sensitivity) {
         for (int i = 0; i < numberOfTerms(); i++) {
             if (get(i).equals(term))
-                return i;
+                return idToSortPosition(i, sensitivity);
         }
         throw new IllegalArgumentException("Unknown term '" + term + "'");
     }

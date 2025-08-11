@@ -140,7 +140,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
         assert annotation != null;
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
         Terms terms = BLTerms.forSegment(context, luceneField).reader();
-        int sortPosition = terms.sortPositionFor(compareToTermString, sensitivity);
+        int sortPosition = terms.termToSortPosition(compareToTermString, sensitivity);
 
         MatchFilterTokenAnnotationEqualsString mf = new MatchFilterTokenAnnotationEqualsString(
                 groupName, annotation, compareToTermString, sensitivity,

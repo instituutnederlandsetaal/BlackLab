@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.text.Collator;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.Collators;
@@ -43,26 +41,8 @@ public class TermSerialization {
     private static void doTerm(String word, LeafReaderContext lrc, String luceneField) {
         Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
 
-        MutableIntSet s = new IntHashSet();
-        int segmentTermIdSensitive = terms.indexOf(word);
-        s.add(segmentTermIdSensitive);
-        report("terms.indexOf", s, terms);
-
         Collators collators = Collators.getDefault();
         Collator collator = collators.get(MatchSensitivity.SENSITIVE);
-
-        System.out.println("Checking these insensitive terms...");
-        System.out.flush();
-        IntIterator it = s.intIterator();
-        while (it.hasNext()) {
-            int termId = it.next();
-            String term = terms.get(termId);
-            int termId2 = terms.indexOf(term);
-            String term2 = terms.get(termId2);
-            if (collator.compare(term, term2) != 0) {
-                System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
-            }
-        }
 
         System.out.println("Checking all terms...");
         System.out.flush();
@@ -77,16 +57,17 @@ public class TermSerialization {
                 System.out.println("term is empty! id = " + termId);
                 System.out.flush();
             } else {
-                int termId2 = terms.indexOf(term);
-                if (termId2 == -1) {
-                    System.out.println("termId2 == -1: '" + term + "'");
+                int sortPos1 = terms.idToSortPosition(termId, MatchSensitivity.SENSITIVE);
+                int sortPos2 = terms.termToSortPosition(term, MatchSensitivity.SENSITIVE);
+                if (sortPos1 != sortPos2) {
+                    System.out.println("SENSITIVE sortPos1 != sortPos2: " + sortPos1 + " != " + sortPos2 + " for term '" + term + "'");
                     System.out.flush();
-                } else {
-                    String term2 = terms.get(termId2);
-                    if (collator.compare(term, term2) != 0) {
-                        System.out.println("term != term2: '" + term + "' != '" + term2 + "'");
-                        System.out.flush();
-                    }
+                }
+                sortPos1 = terms.idToSortPosition(termId, MatchSensitivity.INSENSITIVE);
+                sortPos2 = terms.termToSortPosition(term, MatchSensitivity.INSENSITIVE);
+                if (sortPos1 != sortPos2) {
+                    System.out.println("INSENSITIVE sortPos1 != sortPos2: " + sortPos1 + " != " + sortPos2 + " for term '" + term + "'");
+                    System.out.flush();
                 }
             }
             n++;

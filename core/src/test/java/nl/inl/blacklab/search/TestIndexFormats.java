@@ -10,8 +10,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -71,11 +69,15 @@ public class TestIndexFormats {
 
     @Test
     public void testIndexOfAndGet() {
-        MutableIntSet s = new IntHashSet();
         for (int i = 0; i < 28; i++) {
             String term = wordTerms.get(i);
-            Assert.assertEquals("indexOf(get(" + i + "))", i, wordTerms.indexOf(term));
-            s.clear();
+            int sortPos = wordTerms.idToSortPosition(i, MatchSensitivity.SENSITIVE);
+            int sortPos2 = wordTerms.termToSortPosition(term, MatchSensitivity.SENSITIVE);
+            Assert.assertEquals("sensitive sort pos for: " + term, sortPos, sortPos2);
+
+            sortPos = wordTerms.idToSortPosition(i, MatchSensitivity.INSENSITIVE);
+            sortPos2 = wordTerms.termToSortPosition(term, MatchSensitivity.INSENSITIVE);
+            Assert.assertEquals("insensitive sort pos for: " + term, sortPos, sortPos2);
         }
     }
 

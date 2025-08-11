@@ -72,8 +72,8 @@ How would we approach this:
 
 SMALLER ISSUES
 
+- `Terms.indexOf()`: use binary search through sortpositions (currently linear)
 - `BlackLabPostingsReader.forwardIndex()` creates a reader object
-- `BlackLabPostingsReader.terms()` uses a map lookup
 - `BLTerms.reader()` creates a reader object
 
 INCONSITENT API

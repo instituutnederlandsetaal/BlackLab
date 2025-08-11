@@ -5,7 +5,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.lucene.codecs.CodecUtil;
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.store.IndexInput;
@@ -15,6 +14,7 @@ import org.apache.lucene.util.automaton.CompiledAutomaton;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -27,21 +27,12 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class BLTerms extends org.apache.lucene.index.Terms {
 
-    /**
-     * Return BLTerms instance for one of the fields, so that we have access to the
-     * FieldsProducer. (HACK)
-     *
-     * @param lrc leaf reader context
-     * @return BLTerms instance
-     */
-    public static BLTerms getAnyTermsObject(LeafReaderContext lrc) {
-        // Find the first field that has terms.
-        for (FieldInfo fieldInfo: lrc.reader().getFieldInfos()) {
-            BLTerms terms = forSegment(lrc, fieldInfo.name);
-            if (terms != null)
-                return terms;
+    public static BLTerms forSegment(LeafReaderContext lrc, String luceneField) {
+        try {
+            return (BLTerms) lrc.reader().terms(luceneField);
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
         }
-        throw new IllegalStateException("No suitable field found for codec access!");
     }
 
     /** Field for which these are the terms */
@@ -75,18 +66,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 fieldsByName.put(f.getFieldName(), f);
             }
         }
-    }
-
-    public static BLTerms forSegment(LeafReaderContext lrc, String luceneField) {
-        try {
-            return (BLTerms) lrc.reader().terms(luceneField);
-        } catch (IOException e) {
-            throw new InvalidIndex(e);
-        }
-    }
-
-    public BlackLabPostingsReader getFieldsProducer() {
-        return postingsReader;
     }
 
     private synchronized IndexInput getCloneOfTermIndexFile() {
@@ -176,6 +155,8 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         return terms.getStats();
     }
 
+    Collators collators = Collators.getDefault();
+
     public Terms reader() {
         return new Terms() { // not thread-safe
 
@@ -187,6 +168,12 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             /** For looking up sort position for a term id (insensitive) */
             private final RandomAccessInput termIdToInsensitivePos;
+
+            /** For looking up term id for a sort position (sensitive) */
+            private final RandomAccessInput sensitivePosToTermId;
+
+            /** For looking up term id for a sort position (insensitive) */
+            private final RandomAccessInput insensitivePosToTermId;
 
             /** Offset of each term in termStrings */
             private final RandomAccessInput termStringOffsets;
@@ -204,17 +191,18 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     // int[n] insensitivePos2TermID    ( offset [1+n*int] )
                     // int[n] termID2SensitivePos      ( offset [2+n*int] )
                     // int[n] sensitivePos2TermID      ( offset [3+n*int] )
-                    // (NOTE: we ignore (in)sensitivePos2TermID at the moment, but we could use it to
-                    //  iterate over the terms in sort order if we needed to - although inverting the
-                    //  termID2[In]sensitivePos would work for that too)
 
                     // Get random access to the sort order arrays for this field
                     long arrayLength = ((long) field.getNumberOfTerms()) * Integer.BYTES;
                     IndexInput termOrderFile = getCloneOfTermOrderFile();
                     long offset = field.getTermOrderOffset();
                     termIdToInsensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
-                    offset += arrayLength * 2;
+                    offset += arrayLength;
+                    insensitivePosToTermId = termOrderFile.randomAccessSlice(offset, arrayLength);
+                    offset += arrayLength;
                     termIdToSensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
+                    offset += arrayLength;
+                    sensitivePosToTermId = termOrderFile.randomAccessSlice(offset, arrayLength);
 
                     // All fields share the same strings file.  Move to the start of our section in the file.
                     long termStringOffsetsLength = (long) field.getNumberOfTerms() * Long.BYTES;
@@ -252,15 +240,69 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 }
             }
 
+            private int compareTerms(String term1, String term2, MatchSensitivity sensitivity) {
+
+                // FIXME: actually, we should use the configured collator for this field here.
+                //   (RELATED: Collator vs. MatchSensitivity is still a bit of an issue...)
+                return collators.get(sensitivity).compare(term1, term2);
+            }
+
             @Override
-            public int indexOf(String term) {
-                // TODO: use binary search via sort positions..?
-                for (int i = 0; i < field.getNumberOfTerms(); i++) {
-                    if (get(i).equals(term)) {
-                        return i;
-                    }
+            public int termToSortPosition(String term, MatchSensitivity sensitivity) {
+                int indexOfTerm;
+
+                // First, find the index in the sort position array.
+                // This may not be the actual sort position because multiple terms can have the same sort position.
+                // In this case, the index of first term determines the sort position for all those terms.
+                RandomAccessInput sortPosToTermId = sensitivity == MatchSensitivity.SENSITIVE ?
+                        sensitivePosToTermId : insensitivePosToTermId;
+                indexOfTerm = findIndexInSortPositionArray(term, sensitivity, sortPosToTermId);
+                if (indexOfTerm < 0) {
+                    // Not found, return NO_TERM
+                    return Constants.NO_TERM;
                 }
-                return Constants.NO_TERM; // term not found
+
+                // Now, find the first term equal to this one.
+                int sortPos = indexOfTerm - 1;
+                try {
+                    while (sortPos > 0 &&
+                            compareTerms(get(sortPosToTermId.readInt((long) sortPos * Integer.BYTES)), term, sensitivity) == 0) {
+                        // If the term is equal to the one we're looking for, we have to go back further
+                        // until we find the first occurrence of this term.
+                        // (NOTE: this is relatively inefficient and we could precalculate it, but this method isn't
+                        //  used in any hot loops)
+                        sortPos--;
+                    }
+                } catch (IOException e) {
+                    throw new InvalidIndex(e);
+                }
+                return sortPos + 1; // +1 because we went one too far
+            }
+
+            private int findIndexInSortPositionArray(String term, MatchSensitivity sensitivity,
+                    RandomAccessInput sortPosToTermId) {
+                // Use binary search by sort position to find the term's sort position.
+                int low = 0;
+                int high = field.getNumberOfTerms() - 1;
+                try {
+                    while (low <= high) {
+                        int mid = (low + high) >>> 1;
+                        String midVal = get(sortPosToTermId.readInt((long) mid * Integer.BYTES));
+                        int cmp = compareTerms(midVal, term, sensitivity);
+                        if (cmp < 0) {
+                            low = mid + 1;
+                        } else if (cmp > 0) {
+                            high = mid - 1;
+                        } else {
+                            // found it!
+                            return mid;
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new InvalidIndex(e);
+                }
+                // not found
+                return Constants.NO_TERM;
             }
 
             @Override

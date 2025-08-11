@@ -1,26 +1,27 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class ConstraintValueString extends ConstraintValue {
 
-    String s;
+    String value;
 
-    ConstraintValueString(String s) {
-        if (s == null)
+    ConstraintValueString(String value) {
+        if (value == null)
             throw new IllegalArgumentException("s cannot be null!");
-        this.s = s;
+        this.value = value;
     }
 
     public String getValue() {
-        return s;
+        return value;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((s == null) ? 0 : s.hashCode());
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
 
@@ -33,10 +34,10 @@ public class ConstraintValueString extends ConstraintValue {
         if (getClass() != obj.getClass())
             return false;
         ConstraintValueString other = (ConstraintValueString) obj;
-        if (s == null) {
-            if (other.s != null)
+        if (value == null) {
+            if (other.value != null)
                 return false;
-        } else if (!s.equals(other.s))
+        } else if (!value.equals(other.value))
             return false;
         return true;
     }
@@ -44,7 +45,7 @@ public class ConstraintValueString extends ConstraintValue {
     @Override
     public int compareTo(ConstraintValue other) {
         if (other instanceof ConstraintValueString)
-            return s.compareTo(((ConstraintValueString) other).s);
+            return value.compareTo(((ConstraintValueString) other).value);
         throw new IllegalArgumentException("Can only compare equal types! Tried to compare string to " + other.getClass().getName());
     }
 
@@ -55,18 +56,17 @@ public class ConstraintValueString extends ConstraintValue {
 
     @Override
     public String toString() {
-        return s;
+        return value;
     }
 
+    // TODO: use configured collator for field
+    Collators collators = Collators.getDefault();
+
     public ConstraintValue stringEquals(ConstraintValueString rb, MatchSensitivity sensitivity) {
-        String a = sensitivity.desensitize(getValue());
-        String b = sensitivity.desensitize(rb.getValue());
-        return ConstraintValue.get(a.equals(b));
+        return ConstraintValue.get(stringCompareTo(rb, sensitivity) == 0);
     }
 
     public int stringCompareTo(ConstraintValueString rb, MatchSensitivity sensitivity) {
-        String a = sensitivity.desensitize(getValue());
-        String b = sensitivity.desensitize(rb.getValue());
-        return a.compareTo(b);
+        return collators.get(sensitivity).compare(getValue(), rb.getValue());
     }
 }

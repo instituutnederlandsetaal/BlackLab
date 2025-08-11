@@ -236,7 +236,7 @@ public class ForwardIndex implements AutoCloseable {
          *
          * This includes the "extra closing token" at the end, so subtract one for the real length.
          *
-         * @param luceneField lucene field to read forward index from
+         * @param field lucene field to read forward index from
          * @param docId segment-local docId of document to get length for
          * @return doc length
          */

@@ -19,6 +19,16 @@ public class Collators {
 
     public Collators(Collator base) {
         super();
+
+        // A note on the different collator strengths:
+        // PRIMARY    cares only about largest (primary) differences
+        //            Collators with this strength are therefore LESS STRICT
+        //            (e.g. 'APE' and 'ape' are considered identical)
+        //
+        // TERTIARY   also cares about smaller (tertiary) differences
+        //            Collators with this strength are therefore STRICTER
+        //            (e.g. 'APE' and 'ape' are considered different, and 'APE' comes before 'ape')
+
         sensitive = (Collator) base.clone();
         sensitive.setStrength(Collator.TERTIARY); // NOTE: TERTIARY considers differently-normalized characters to be,
         // identical which can cause problems if the input data is not consistently normalized the same way.
