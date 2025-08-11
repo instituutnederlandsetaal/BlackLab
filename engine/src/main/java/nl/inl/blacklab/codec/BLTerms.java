@@ -1,10 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
-import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.store.IndexInput;
@@ -36,7 +33,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     }
 
     /** Field for which these are the terms */
-    private final String luceneField;
+    private final ForwardIndexField forwardIndexField;
 
     /** FieldProducer, so it can be accessed from outside the Codec (for access to forward index) */
     private final BlackLabPostingsReader postingsReader;
@@ -48,24 +45,13 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     private IndexInput _termsFile;
     private IndexInput _termOrderFile;
 
-    /** Contains field names and offsets to term index file, where the terms for the field can be found */
-    private final Map<String, ForwardIndexField> fieldsByName = new LinkedHashMap<>();
-
-    public BLTerms(String luceneField, org.apache.lucene.index.Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
-        this.luceneField = luceneField;
+    public BLTerms(ForwardIndexField forwardIndexField, org.apache.lucene.index.Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
+        this.forwardIndexField = forwardIndexField;
         this.terms = terms;
         this.postingsReader = postingsReader;
         this._termIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
         this._termsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMS_EXT);
         this._termOrderFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMORDER_EXT);
-
-        // OPT: read cache these fields somewhere so we don't read them once per annotation
-        try (IndexInput fieldInput = postingsReader.openIndexFile(BlackLabPostingsFormat.FIELDS_EXT)) {
-            while (fieldInput.getFilePointer() < (fieldInput.length() - CodecUtil.footerLength())) {
-                ForwardIndexField f = new ForwardIndexField(fieldInput);
-                fieldsByName.put(f.getFieldName(), f);
-            }
-        }
     }
 
     private synchronized IndexInput getCloneOfTermIndexFile() {
@@ -158,10 +144,11 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     Collators collators = Collators.getDefault();
 
     public Terms reader() {
-        return new Terms() { // not thread-safe
+        if (forwardIndexField == null)
+            throw new InvalidIndex("No forward index field specified for this terms reader");
 
-            /** Field we're reading terms from */
-            private final ForwardIndexField field;
+        return new Terms() { // not thread-safe
+            private final int numberOfTerms;
 
             /** For looking up sort position for a term id (sensitive) */
             private final RandomAccessInput termIdToSensitivePos;
@@ -183,7 +170,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             {
                 try {
-                    field = getField(luceneField);
 
                     // Find the sort orders. All term IDS are local to this segment.
                     // for reference, the term order file contains the following mappings:
@@ -193,9 +179,10 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     // int[n] sensitivePos2TermID      ( offset [3+n*int] )
 
                     // Get random access to the sort order arrays for this field
-                    long arrayLength = ((long) field.getNumberOfTerms()) * Integer.BYTES;
+                    numberOfTerms = forwardIndexField.getNumberOfTerms();
+                    long arrayLength = ((long) numberOfTerms) * Integer.BYTES;
                     IndexInput termOrderFile = getCloneOfTermOrderFile();
-                    long offset = field.getTermOrderOffset();
+                    long offset = forwardIndexField.getTermOrderOffset();
                     termIdToInsensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
                     offset += arrayLength;
                     insensitivePosToTermId = termOrderFile.randomAccessSlice(offset, arrayLength);
@@ -205,8 +192,8 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     sensitivePosToTermId = termOrderFile.randomAccessSlice(offset, arrayLength);
 
                     // All fields share the same strings file.  Move to the start of our section in the file.
-                    long termStringOffsetsLength = (long) field.getNumberOfTerms() * Long.BYTES;
-                    termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(field.getTermIndexOffset(), termStringOffsetsLength);
+                    long termStringOffsetsLength = (long) numberOfTerms * Long.BYTES;
+                    termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(forwardIndexField.getTermIndexOffset(), termStringOffsetsLength);
                     termStrings = getCloneOfTermsFile();
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
@@ -283,7 +270,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     RandomAccessInput sortPosToTermId) {
                 // Use binary search by sort position to find the term's sort position.
                 int low = 0;
-                int high = field.getNumberOfTerms() - 1;
+                int high = numberOfTerms() - 1;
                 try {
                     while (low <= high) {
                         int mid = (low + high) >>> 1;
@@ -307,13 +294,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public int numberOfTerms() {
-                return field.getNumberOfTerms();
+                return numberOfTerms;
             }
         };
-    }
-
-    private synchronized ForwardIndexField getField(String luceneField) {
-        return fieldsByName.get(luceneField);
     }
 
 }

@@ -142,7 +142,8 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
             if (terms == null) {
                 try {
                     Terms delegateTerms = delegateFieldsProducer.terms(field);
-                    terms = delegateTerms == null ? null : new BLTerms(field, delegateTerms, this);
+                    ForwardIndexField forwardIndexField = forwardIndex.getForwardIndexField(field);
+                    terms = delegateTerms == null ? null : new BLTerms(forwardIndexField, delegateTerms, this);
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }

@@ -91,6 +91,10 @@ public class ForwardIndex implements AutoCloseable {
         return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
     }
 
+    public ForwardIndexField getForwardIndexField(String luceneField) {
+        return fieldsByName.get(luceneField);
+    }
+
     /**
      * A forward index reader for a single segment.
      *
