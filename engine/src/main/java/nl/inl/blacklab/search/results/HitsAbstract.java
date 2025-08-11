@@ -95,15 +95,15 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
             }
 
             @Override
-            public Hit get(long i) {
-                ensureResultsRead(i + 1);
-                return hitsInternal.get(i);
+            public Hit get(long index) {
+                ensureResultsRead(index + 1);
+                return hitsInternal.get(index);
             }
 
             @Override
-            public void getEphemeral(long i, EphemeralHit hit) {
-                ensureResultsRead(i + 1);
-                hitsInternal.getEphemeral(i, hit);
+            public void getEphemeral(long index, EphemeralHit hit) {
+                ensureResultsRead(index + 1);
+                hitsInternal.getEphemeral(index, hit);
             }
 
             @Override

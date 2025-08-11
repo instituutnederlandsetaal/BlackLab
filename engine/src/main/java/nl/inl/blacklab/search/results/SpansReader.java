@@ -28,9 +28,6 @@ import nl.inl.util.ThreadAborter;
  */
 class SpansReader implements Runnable {
 
-    /** How many hits should we collect (at least) before we add them to the global results? */
-    private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
-
     /** Everything that's only relevant before initialization */
     class SpansReaderBeforeInit {
         BLSpanWeight weight;
@@ -74,9 +71,10 @@ class SpansReader implements Runnable {
     final AtomicLong globalHitsToProcess;
     /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
     final AtomicLong globalHitsToCount;
-    /** Master list of hits, shared between SpansReaders, should always be locked before writing! */
-    private final HitsInternalMutable globalResults;
 
+    /** What to do when a document boundary is encountered.
+     *  (e.g. merge to global hits list) */
+    private final Strategy spansReaderStrategy;
 
     // Internal state
     boolean isDone;
@@ -105,7 +103,7 @@ class SpansReader implements Runnable {
      * @param weight                span weight we're querying
      * @param leafReaderContext     leaf reader we're running on
      * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
-     * @param globalResults         global results object (must be locked before writing)
+     * @param spansReaderStrategy   how to handle the hits as they are found, or null not to do anything yet
      * @param globalHitsToProcess   how many more hits to retrieve
      * @param globalHitsToCount     how many more hits to count
      */
@@ -114,7 +112,7 @@ class SpansReader implements Runnable {
         LeafReaderContext leafReaderContext,
         HitQueryContext sourceHitQueryContext,
 
-        HitsInternalMutable globalResults,
+        Strategy spansReaderStrategy,
         AtomicLong globalHitsToProcess,
         AtomicLong globalHitsToCount,
         ResultsStatsPassive hitsStats,
@@ -127,7 +125,7 @@ class SpansReader implements Runnable {
 
         this.leafReaderContext = leafReaderContext;
 
-        this.globalResults = globalResults;
+        this.spansReaderStrategy = spansReaderStrategy == null ? new DummyStrategy() : spansReaderStrategy;
         this.globalHitsToCount = globalHitsToCount;
         this.globalHitsToProcess = globalHitsToProcess;
 
@@ -279,12 +277,7 @@ class SpansReader implements Runnable {
 
                     if (doc != prevDoc) {
                         docsStats.increment(storeThisHit);
-                        if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
-                            // We've built up a batch of hits. Add them to the global results.
-                            // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                            addToGlobalResults(results);
-                            results.clear();
-                        }
+                        spansReaderStrategy.onDocumentBoundary(results);
                     }
 
                     if (storeThisHit) {
@@ -309,10 +302,8 @@ class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-            if (results.size() > 0) {
-                addToGlobalResults(results);
-                results.clear();
-            }
+            spansReaderStrategy.onDocumentBoundary(results);
+            spansReaderStrategy.onFinished(results);
         }
 
         // If we're here, the loop reached its natural end - we're done.
@@ -323,7 +314,32 @@ class SpansReader implements Runnable {
         this.leafReaderContext = null;
     }
 
-    void addToGlobalResults(HitsInternal hits) {
-        globalResults.addAll(hits);
+    /** How to deal with the hits found in the segment. */
+    interface Strategy {
+        /**
+         * Called when the SpansReader has reached the end of a document.
+         * @param results the hits collected so far
+         */
+        void onDocumentBoundary(HitsInternalMutable results);
+
+        /**
+         * Called when the SpansReader is done.
+         * @param results the hits collected so far
+         */
+        void onFinished(HitsInternalMutable results);
     }
+
+    /** Don't do anything with the hits yet */
+    static class DummyStrategy implements Strategy {
+        @Override
+        public void onDocumentBoundary(HitsInternalMutable results) {
+            // Do nothing
+        }
+
+        @Override
+        public void onFinished(HitsInternalMutable results) {
+            // Do nothing
+        }
+    }
+
 }

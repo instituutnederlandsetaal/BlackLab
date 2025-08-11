@@ -26,12 +26,12 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
                 HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
         BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
 
-        for (LeafReaderContext leafReaderContext : queryInfo.index().reader().leaves()) {
+        for (LeafReaderContext leafReaderContext: queryInfo.index().reader().leaves()) {
             spansReaders.add(new SpansReader(
                 weight,
                 leafReaderContext,
                 this.hitQueryContext,
-                this.hitsInternalMutable,
+                getSpansReaderStrategy(leafReaderContext),
                 this.requestedHitsToProcess,
                 this.requestedHitsToCount,
                     hitsStats,
@@ -41,6 +41,10 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
 
         if (spansReaders.isEmpty())
             setDone();
+    }
+
+    protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
+        return new SpansReaderStrategyAddToGlobal();
     }
 
     @Override
@@ -72,7 +76,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
                 }
             }
             hasLock = true;
-            
+
             // This is the blocking portion, start worker threads, then wait for them to finish.
             final ExecutorService executorService = getExecutorService();
             // Distribute the SpansReaders over the threads.
@@ -128,4 +132,30 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
         return hitsInternalMutable.size() >= number;
     }
 
+    /** Adds hits to global list regularly. */
+    private class SpansReaderStrategyAddToGlobal implements SpansReader.Strategy {
+
+        /**
+         * How many hits should we collect (at least) before we add them to the global results?
+         */
+        private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
+
+        @Override
+        public void onDocumentBoundary(HitsInternalMutable results) {
+            if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
+                // We've built up a batch of hits. Add them to the global results.
+                // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
+                hitsInternalMutable.addAll(results);
+                results.clear();
+            }
+        }
+
+        @Override
+        public void onFinished(HitsInternalMutable results) {
+            if (!results.isEmpty()) {
+                // Add the final batch of hits to the global results.
+                hitsInternalMutable.addAll(results);
+            }
+        }
+    }
 }

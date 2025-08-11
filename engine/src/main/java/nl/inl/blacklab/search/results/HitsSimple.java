@@ -58,18 +58,18 @@ public interface HitsSimple {
      * Return the specified hit.
      * Implementations of this method should be thread-safe.
      *
-     * @param i index of the desired hit
+     * @param index index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
-    Hit get(long i);
+    Hit get(long index);
 
     /**
      * Copy hit information into a temporary object.
      *
-     * @param i index of the desired hit
+     * @param index index of the desired hit
      * @param hit object to copy values to
      */
-    void getEphemeral(long i, EphemeralHit hit);
+    void getEphemeral(long index, EphemeralHit hit);
 
     /**
      * Get Lucene document id for the specified hit
