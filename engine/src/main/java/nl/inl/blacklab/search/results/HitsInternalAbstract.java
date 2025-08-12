@@ -45,11 +45,15 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
 
     @Override
     public void addAll(HitsInternal hits) {
-        this.lock.writeLock().lock();
-        try {
+        if (this.lock != null) {
+            this.lock.writeLock().lock();
+            try {
+                addAllNoLock(hits);
+            } finally {
+                this.lock.writeLock().unlock();
+            }
+        } else {
             addAllNoLock(hits);
-        } finally {
-            this.lock.writeLock().unlock();
         }
     }
 
@@ -102,11 +106,15 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     }
 
     public HitsSimple sublistNoLock(long start, long windowSize) {
+        if (start < 0)
+            throw new IndexOutOfBoundsException("Window start must be non-negative, but was " + start);
+        if (windowSize < 0)
+            throw new IllegalArgumentException("Window size must be non-negative, but was " + windowSize);
+        if (start > size() || windowSize == 0)
+            return HitsInternal.empty(field, matchInfoDefs);
         long end = start + windowSize;
         if (end > size())
             end = size();
-        if (start < 0 || end < 0 || start > end)
-            throw new IndexOutOfBoundsException("Window start " + start + " with size " + windowSize + " is out of bounds (size: " + size() + ")");
         HitsInternalMutable window = HitsInternal.create(field, matchInfoDefs, end - start, false, false);
         EphemeralHit h = new EphemeralHit();
         for (long i = start; i < end; ++i) {;

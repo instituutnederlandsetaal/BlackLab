@@ -19,7 +19,5 @@ public interface GAnnotationForwardIndex {
     @Override
     String toString();
 
-    Collators collators();
-
     int numberOfTerms();
 }

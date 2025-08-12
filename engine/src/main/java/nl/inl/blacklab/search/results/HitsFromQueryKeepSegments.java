@@ -1,13 +1,13 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
-import it.unimi.dsi.fastutil.objects.ObjectBigList;
+import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
+import it.unimi.dsi.fastutil.ints.IntBigList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -16,56 +16,120 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
- * A version of HitsFromQuery that keeps the hits from each segment separate.
+ * A version of HitsFromQuery that keeps the hits from each segment separately.
+ * <p>
  * This is useful in case we want to sort or group, which is more efficiently done per-segment, then merged.
  * We also support a global view of the unsorted hits (even while they're being fetched), for operations
  * that don't require all hits, such as returning a page of hits.
  */
 public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
-    /** The hits per segment. */
-    private final List<HitsInternalMutable> segmentHits = new ArrayList<>();
-
-    /** A stretch of hits from the segment hits to construct the global view with
+    /** hitToStretchMapping has a value for every nth hit index in the global view.
+     * <p>
+     * So hitToStretchMapping.getInt(i) will return the stretch for hit index i * HIT_INDEX_TO_STRETCH_STEP.
      */
-    class HitsStretch {
-        /** Number of the segment this stretch is from. */
-        int segNumber;
+    private static final long HIT_INDEX_TO_STRETCH_STEP = 100;
+
+    /**
+     * How long a stretch of segment hits in the global view should ideally be.
+     * <p>
+     * Note that we DO sometimes add stretches smaller than this if we happen to be done
+     * collecting hits for now and want to add the last hits to the global view.
+     */
+    private static final int STRETCH_SIZE_TRY_MINIMUM = 20;
+
+    /** Divider for the size of new stretches.
+     * <p>
+     * For efficiency, we make new stretches a fraction of the total number of hits so far,
+     * so the size of new stretches grows as the number of hits retrieved grows.
+     */
+    public static final int STRETCH_SIZE_DIVIDER = 10;
+
+    /** A stretch of hits from a segment.
+     * <p>
+     * We use these to construct the global view.
+     */
+    static class HitsStretch {
+        /** Stretch index, for finding next stretch quickly. */
+        int stretchIndex;
+
+        /** Segment this stretch is from. */
+        HitsInternalMutable segHits;
 
         /** Start index in the segment hits. */
         long segStart;
 
-        /** End index (exclusive) in the segment hits. */
-        long segEnd;
-
         /** Start index in the global hits view. */
         long globalStart;
 
-        public HitsStretch(int segNumber, long segStart, long segEnd, long globalStart) {
-            this.segNumber = segNumber;
+        /** Length of this stretch. */
+        long length;
+
+        public HitsStretch(int stretchIndex, HitsInternalMutable segHits, long segStart, long globalStart, long length) {
+            this.stretchIndex = stretchIndex;
+            this.segHits = segHits;
             this.segStart = segStart;
-            this.segEnd = segEnd;
             this.globalStart = globalStart;
+            this.length = length;
         }
 
-        public long length() {
-            return segEnd - segStart;
+
+        /** Get the associated segment's hits */
+        HitsInternalMutable segmentHits() {
+            return segHits;
         }
 
-        HitsInternalMutable segment() {
-            return segmentHits.get(segNumber);
+        public boolean containsGlobalIndex(long index) {
+            // Check if this stretch contains the given global hit index.
+            // The global hit index is the index in the global hits view, which is a concatenation of all segment hits.
+            return index >= globalStart && index < globalStart + length;
+        }
+
+        public long globalToSegmentIndex(long globalIndex) {
+            // Calculate the index of this global hit in the segment's hits.
+            assert containsGlobalIndex(globalIndex);
+            long indexInSegment = globalIndex - globalStart + segStart;
+            assert indexInSegment >= 0 : "Index in segment out of bounds: " + indexInSegment;
+            return indexInSegment;
+        }
+
+        @Override
+        public String toString() {
+            return "HitsStretch{" +
+                    "stretchIndex=" + stretchIndex +
+                    ", segHits=" + segHits +
+                    ", segStart=" + segStart +
+                    ", globalStart=" + globalStart +
+                    ", length=" + length +
+                    '}';
         }
     }
 
-    /** For each global hit index, points to the stretch it's part of. */
-    private final ObjectBigList<HitsStretch> hitIndexToStretch = new ObjectBigArrayBigList<>();
+    /** The hits per segment. */
+    private ObjectList<HitsInternalMutable> hitsPerSegment;
+
+    /** Number of hits in the global view. */
+    protected long numberOfHits = 0;
 
     /** The stretches that make up our global hits view, in order */
-    private final List<HitsStretch> stretches = new ArrayList<>();
+    private final ObjectList<HitsStretch> stretches = new ObjectArrayList<>();
+
+    /** Records the stretch index for every nth hit (n = {@link #HIT_INDEX_TO_STRETCH_STEP}) */
+    private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
     protected HitsFromQueryKeepSegments(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo, sourceQuery, searchSettings);
+        if (hitsPerSegment == null) {
+            // (can only happen if there are no spans - normally initialized in getSpansReaderStrategy())
+            hitsPerSegment = new ObjectArrayList<>();
+        }
+    }
+
+    /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
+     *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
+    protected long globalHitsSoFar() {
+        return numberOfHits;
     }
 
     @Override
@@ -90,7 +154,9 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             @Override
             public long size() {
                 ensureResultsRead(-1);
-                return hitIndexToStretch.size64();
+                synchronized (HitsFromQueryKeepSegments.this) {
+                    return numberOfHits;
+                }
             }
 
             @Override
@@ -105,62 +171,67 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 return hit.toHit();
             }
 
+            /** Get the stretch a certain hit is part of */
             private HitsStretch getHitsStretch(long index) {
-                // Find the stretch this hit is part of.
-                HitsStretch stretch = hitIndexToStretch.get(index);
-                if (stretch == null) {
-                    throw new IndexOutOfBoundsException("Hit index " + index + " is out of bounds (size: " + size() + ")");
-                }
-                return stretch;
-            }
+                synchronized (HitsFromQueryKeepSegments.this) {
+                    if (index < 0 || index >= numberOfHits)
+                        throw new IndexOutOfBoundsException(
+                                "Hit index " + index + " is out of bounds (size: " + numberOfHits + ")");
 
-            private static long segmentIndex(long index, HitsStretch stretch) {
-                // Calculate the index of this global hit in the segment's hits.
-                long indexInSegment = index - stretch.globalStart + stretch.segStart;
-                assert indexInSegment >= 0 : "Index in segment out of bounds: " + indexInSegment;
-                return indexInSegment;
+                    // Round down to nearest stretch index and get the stretch for that index.
+                    long indexInMapping = index / HIT_INDEX_TO_STRETCH_STEP;
+                    int stretchIndex = hitToStretchMapping.getInt(indexInMapping);
+                    HitsStretch stretch = stretches.get(stretchIndex);
+
+                    // If the stretch doesn't contain the global index, find the next stretch that does.
+                    while (!stretch.containsGlobalIndex(index)) {
+                        stretchIndex++;
+                        stretch = stretches.get(stretchIndex);
+                    }
+                    return stretch;
+                }
             }
 
             @Override
             public void getEphemeral(long index, EphemeralHit hit) {
                 ensureResultsRead(index + 1);
                 HitsStretch stretch = getHitsStretch(index);
-                stretch.segment().getEphemeral(segmentIndex(index, stretch), hit);
+                stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
             }
 
             @Override
             public int doc(long index) {
                 ensureResultsRead(index + 1);
                 HitsStretch stretch = getHitsStretch(index);
-                return stretch.segment().doc(segmentIndex(index, stretch));
+                return stretch.segmentHits().doc(stretch.globalToSegmentIndex(index));
             }
 
             @Override
             public int start(long index) {
                 ensureResultsRead(index + 1);
                 HitsStretch stretch = getHitsStretch(index);
-                return stretch.segment().start(segmentIndex(index, stretch));
+                return stretch.segmentHits().start(stretch.globalToSegmentIndex(index));
             }
 
             @Override
             public int end(long index) {
                 ensureResultsRead(index + 1);
                 HitsStretch stretch = getHitsStretch(index);
-                return stretch.segment().end(segmentIndex(index, stretch));
+                return stretch.segmentHits().end(stretch.globalToSegmentIndex(index));
             }
 
             @Override
             public MatchInfo[] matchInfos(long hitIndex) {
                 ensureResultsRead(hitIndex + 1);
                 HitsStretch stretch = getHitsStretch(hitIndex);
-                return stretch.segment().matchInfos(segmentIndex(hitIndex, stretch));
+                return stretch.segmentHits().matchInfos(stretch.globalToSegmentIndex(hitIndex));
             }
 
             @Override
             public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
                 ensureResultsRead(hitIndex + 1);
                 HitsStretch stretch = getHitsStretch(hitIndex);
-                return stretch.segment().matchInfo(segmentIndex(hitIndex, stretch), matchInfoIndex);
+                return stretch.segmentHits().matchInfo(stretch.globalToSegmentIndex(hitIndex), matchInfoIndex);
             }
 
             @Override
@@ -169,26 +240,55 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             }
 
             @Override
-            public HitsSimple sublist(long start, long windowSize) {
-                ensureResultsRead(start + windowSize);
-                long end = start + windowSize;
-                if (end > size())
-                    end = size();
-                if (start < 0 || end < 0 || start > end)
-                    throw new IndexOutOfBoundsException("Window start " + start + " with size " + windowSize +
-                            " is out of bounds (size: " + size() + ")");
-                HitsInternalMutable window = HitsInternal.create(field(), matchInfoDefs(), end - start, false, false);
-                EphemeralHit h = new EphemeralHit();
-                for (long i = start; i < end; ++i) {;
-                    getEphemeral(i, h);
-                    window.add(h);
+            public HitsSimple sublist(long start, long length) {
+                if (length == 0)
+                    return HitsInternal.empty(field(), matchInfoDefs());
+                ensureResultsRead(start + length);
+                long end = start + length;
+                synchronized (HitsFromQueryKeepSegments.this) {
+                    if (end > numberOfHits)
+                        end = numberOfHits;
                 }
-                return window;
+                if (start == end)
+                    return HitsInternal.empty(field(), matchInfoDefs());
+                if (start < 0 || end < 0 || start > end)
+                    throw new IndexOutOfBoundsException("Sub-list start " + start + " with length " + length +
+                            " is out of bounds (size: " + size() + ")");
+
+                HitsInternalMutable sublist = HitsInternal.create(field(), matchInfoDefs(), end - start, false, false);
+                EphemeralHit h = new EphemeralHit();
+                long globalIndex = start;
+                HitsStretch currentStretch = getHitsStretch(globalIndex);
+                long indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
+                if (indexInSegment < 0)
+                    throw new IllegalStateException("Negative index in segment: " + indexInSegment +
+                            " (global index: " + globalIndex + ", stretch: " + currentStretch + ")");
+                long hitsLeftInStretch = currentStretch.length - (start - currentStretch.globalStart);
+                while (true) {
+                    currentStretch.segmentHits().getEphemeral(indexInSegment, h);
+                    sublist.add(h);
+                    indexInSegment++;
+                    globalIndex++;
+                    if (globalIndex == end)
+                        break; // we're done
+                    hitsLeftInStretch--;
+                    if (hitsLeftInStretch == 0) {
+                        // Go to the next stretch.
+                        currentStretch = stretches.get(currentStretch.stretchIndex + 1);
+                        indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
+                        hitsLeftInStretch = currentStretch.length - (start - currentStretch.globalStart);
+                    }
+                }
+                return sublist;
             }
 
             @Override
             public Iterator<EphemeralHit> ephemeralIterator() {
                 return new Iterator<>() {
+
+                    Iterator<HitsStretch> stretchIterator = stretches.iterator();
+
+                    HitsStretch currentStretch = null; // current stretch of hits we're iterating over
 
                     long index = -1;
 
@@ -196,7 +296,8 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
                     @Override
                     public boolean hasNext() {
-                        return index + 1 < size();
+                        long nextHitIndex = index + 1;
+                        return ensureResultsRead(nextHitIndex + 1);
                     }
 
                     @Override
@@ -204,7 +305,13 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                         if (!hasNext())
                             throw new IndexOutOfBoundsException("No more hits available (index: " + index + ")");
                         index++;
-                        getEphemeral(index, hit);
+
+                        // Make sure we have the right stretch for this hit index.
+                        while (currentStretch == null || !currentStretch.containsGlobalIndex(index)) {
+                            // We need to find the stretch for this hit index.
+                            currentStretch = stretchIterator.next();
+                        }
+                        currentStretch.segmentHits().getEphemeral(currentStretch.globalToSegmentIndex(index), hit);
                         return hit;
                     }
                 };
@@ -214,9 +321,10 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             public HitsSimple sorted(HitProperty sortProp) {
                 ensureResultsRead(-1);
 
-                // FIXME: sort per segment (in parallel), then merge - separate class
+                // NOTE: this method is provided for completeness, but it is not efficient.
+                //       the better way is to sort the hits per segment in parallel, then merge them.
                 HitsInternalMutable sortedHits = HitsInternal.create(field(), matchInfoDefs(), size(), size(), false);
-                for (HitsInternalMutable h: segmentHits) {
+                for (HitsInternalMutable h: hitsPerSegment) {
                     sortedHits.addAll(h);
                 }
                 return sortedHits.sorted(sortProp);
@@ -224,37 +332,39 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
             @Override
             public boolean hasMatchInfo() {
-                return hitQueryContext.numberOfMatchInfos() > 0;  // correct...?
+                return hitQueryContext.numberOfMatchInfos() > 0;
             }
         };
     }
 
-    /**
-     * How many hits should we collect (at least) before we add them to the global results?
-     */
-    private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
-
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
         // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from
         // it at the same time.
-        final HitsInternalMutable collectHits = HitsInternal.create(field(), hitQueryContext.getMatchInfoDefs(),
+        final HitsInternalMutable hitsInThisSegment = HitsInternal.create(field(), hitQueryContext.getMatchInfoDefs(),
                 -1, true, true);
-        final int segmentNumber = segmentHits.size();
-        segmentHits.add(collectHits);
-
+        if (hitsPerSegment == null)
+            hitsPerSegment = new ObjectArrayList<>();
+        hitsPerSegment.add(hitsInThisSegment); // only called from constructor, so no need to synchronize
         return new SpansReader.Strategy() {
 
             long lastStretchEnd = 0; // last stretch end index in the global hits view
 
             @Override
             public void onDocumentBoundary(HitsInternalMutable results) {
-                // We've built up a batch of hits. Add them to the global results.
-                // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                synchronized (collectHits) {
-                    collectHits.addAll(results);
-                    if (collectHits.size() > ADD_HITS_TO_GLOBAL_THRESHOLD) {
-                        addStretch();
-                    }
+                // Add new hits to the segment results.
+                hitsInThisSegment.addAll(results);
+
+                // Add them to the global view? We only do this on a boundary
+                // between documents, so hits from the same doc remain
+                // contiguous in the global view.
+
+                // Note that we add small stretches at first, so the first page of hits is
+                // available quickly. Later, we add them in larger batches to reduce overhead.
+                // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
+                //  out of date (i.e. too small) value here)
+                long addHitsToGlobalThreshold = Math.max(STRETCH_SIZE_TRY_MINIMUM, numberOfHits / STRETCH_SIZE_DIVIDER);
+                if (hitsInThisSegment.size() - lastStretchEnd > addHitsToGlobalThreshold) {
+                    addStretch();
                 }
                 results.clear();
             }
@@ -262,24 +372,37 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             @Override
             public void onFinished(HitsInternalMutable results) {
                 // Add the final batch of hits to the segment results.
-                synchronized (collectHits) {
-                    collectHits.addAll(results);
-                    if (!collectHits.isEmpty())
-                        addStretch();
+                hitsInThisSegment.addAll(results);
+                if (hitsInThisSegment.size() - lastStretchEnd > 0) {
+                    addStretch();
                 }
             }
 
+            /** Add the latest stretch of hits we've found to the global view. */
             private void addStretch() {
                 // Create a new stretch for the global hits view.
                 // Start where the last stretch in this segment ended.
-                HitsStretch stretch = new HitsStretch(segmentNumber, lastStretchEnd,
-                        collectHits.size(), hitIndexToStretch.size64());
-                stretches.add(stretch);
-                for (long i = 0; i < stretch.length(); i++) {
-                    // For each hit in this stretch, remember which stretch it belongs to.
-                    hitIndexToStretch.add(stretch);
+                long length = hitsInThisSegment.size() - lastStretchEnd;
+                assert length > 0;
+                synchronized (HitsFromQueryKeepSegments.this) {
+                    HitsStretch stretch = new HitsStretch(stretches.size(), hitsInThisSegment,
+                            lastStretchEnd, numberOfHits, length);
+                    stretches.add(stretch);
+                    lastStretchEnd += length;
+                    numberOfHits += length;
+
+                    // Add hitToStretchMappings for the appropriate indexes, so we can quickly find the stretch
+                    // for a global hit index. (we record a mapping every HIT_INDEX_TO_STRETCH_STEP)
+                    long hitsSinceLastMapping = stretch.globalStart % HIT_INDEX_TO_STRETCH_STEP;
+                    if (hitsSinceLastMapping == 0)
+                        hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
+                    long nextMappingIndex = stretch.globalStart + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
+                    while (nextMappingIndex < stretch.globalStart + length) {
+                        // Add an entry for this global hit index, so we can quickly find the stretch it belongs to.
+                        hitToStretchMapping.add(stretches.size() - 1);
+                        nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
+                    }
                 }
-                lastStretchEnd = stretch.segEnd;
             }
         };
     }

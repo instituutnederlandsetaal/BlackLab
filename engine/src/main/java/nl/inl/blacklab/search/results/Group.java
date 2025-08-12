@@ -9,8 +9,6 @@ import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
  * A group of results, with its group identity and the results themselves.
- * 
- * @param <T> result type, e.g. Hit 
  */
 public abstract class Group {
     

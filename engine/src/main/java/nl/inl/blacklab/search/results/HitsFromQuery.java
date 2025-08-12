@@ -20,6 +20,12 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
     /** Objects getting the actual hits from each index segment and adding them to the global results list. */
     protected final List<SpansReader> spansReaders = new ArrayList<>();
 
+    /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
+     *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
+    protected long globalHitsSoFar() {
+        return hitsInternalMutable.size();
+    }
+
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
@@ -52,8 +58,8 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
         // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
         final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number + FETCH_HITS_MIN, maxHitsToCount);
 
-        if (allSourceSpansFullyRead || hitsInternalMutable.size() >= clampedNumber) {
-            return hitsInternalMutable.size() >= number;
+        if (allSourceSpansFullyRead || globalHitsSoFar() >= clampedNumber) {
+            return globalHitsSoFar() >= number;
         }
 
         // NOTE: we first update to process, then to count. If we do it the other way around, and spansReaders
@@ -71,8 +77,8 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
                 */
-                if (allSourceSpansFullyRead || (hitsInternalMutable.size() >= clampedNumber)) {
-                    return hitsInternalMutable.size() >= number;
+                if (allSourceSpansFullyRead || (globalHitsSoFar() >= clampedNumber)) {
+                    return globalHitsSoFar() >= number;
                 }
             }
             hasLock = true;
@@ -129,7 +135,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
                 ensureHitsReadLock.unlock();
             }
         }
-        return hitsInternalMutable.size() >= number;
+        return globalHitsSoFar() >= number;
     }
 
     /** Adds hits to global list regularly. */

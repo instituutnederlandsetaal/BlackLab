@@ -315,7 +315,7 @@ class SpansReader implements Runnable {
     }
 
     /** How to deal with the hits found in the segment. */
-    interface Strategy {
+    public interface Strategy {
         /**
          * Called when the SpansReader has reached the end of a document.
          * @param results the hits collected so far

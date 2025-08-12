@@ -74,11 +74,6 @@ public class GAnnotationForwardIndexImpl implements GAnnotationForwardIndex {
     }
 
     @Override
-    public Collators collators() {
-        return collators;
-    }
-
-    @Override
     public String toString() {
         return "AnnotationForwardIndexIntegrated (" + this.luceneField + ")";
     }

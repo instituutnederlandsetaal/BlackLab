@@ -47,7 +47,7 @@ public class HitsList extends HitsAbstract {
      */
     protected HitsList(
                        QueryInfo queryInfo,
-                       HitsInternal hits,
+                       HitsSimple hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
                        ResultsStats hitsStats,

@@ -41,7 +41,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     protected static final int FETCH_HITS_MIN = 20;
 
     /** Our internal list of hits. */
-    protected final HitsInternal hitsInternal;
+    protected final HitsSimple hitsInternal;
 
     /** Mutable interface to our list of hits, if mutation is allowed. */
     protected final HitsInternalMutable hitsInternalMutable;
@@ -56,7 +56,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @param queryInfo query info for corresponding query
      * @param hits hits to use for this object. Used as-is, not copied.
      */
-    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits, boolean mutable) {
+    protected HitsAbstract(QueryInfo queryInfo, HitsSimple hits, boolean mutable) {
         super(queryInfo);
         if (hits == null)
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
@@ -218,47 +218,49 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      */
     @Override
     public Hits window(long first, long windowSize) {
-        // Error if first out of range
-        boolean emptyResultSet = !resultsStats().waitUntil().processedAtLeast(1);
-        if (first < 0 || (emptyResultSet && first > 0) ||
-            (!emptyResultSet && !resultsStats().waitUntil().processedAtLeast(first + 1))) {
-            //throw new IllegalArgumentException("First hit out of range");
-            return Hits.empty(queryInfo());
-        }
+        HitsSimple hs = getHits();
+        HitsSimple window = hs.sublist(first, windowSize);
 
-        // Auto-clamp number
-        // take care not to always call size(), as that blocks until we're done!
-        // Instead, first call ensureResultsRead so we block until we have either have enough or finish
-        boolean enoughHitsForFullWindow = this.ensureResultsRead(first + windowSize);
-        // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
-        long number;
-        if (enoughHitsForFullWindow)
-            number = windowSize;
-        else {
-            number = size() - first;
-            assert number < windowSize;
-        }
+//        // Error if first out of range
+//        boolean emptyResultSet = !resultsStats().waitUntil().processedAtLeast(1);
+//        if (first < 0 || (emptyResultSet && first > 0) ||
+//            (!emptyResultSet && !resultsStats().waitUntil().processedAtLeast(first + 1))) {
+//            //throw new IllegalArgumentException("First hit out of range");
+//            return Hits.empty(queryInfo());
+//        }
+//
+//        // Auto-clamp number
+//        // take care not to always call size(), as that blocks until we're done!
+//        // Instead, first call ensureResultsRead so we block until we have either have enough or finish
+//        boolean enoughHitsForFullWindow = this.ensureResultsRead(first + windowSize);
+//        // and only THEN do this, since now we know if we don't have this many hits, we're done, and it's safe to call size
+//        long number;
+//        if (enoughHitsForFullWindow)
+//            number = windowSize;
+//        else {
+//            number = size() - first;
+//            assert number < windowSize;
+//        }
 
         // Copy the hits we're interested in.
         MutableLong docsRetrieved = new MutableLong(0); // Bypass warning (enclosing scope must be effectively final)
-        HitsInternalMutable window = HitsInternal.create(field(), getHits().matchInfoDefs(), number, number,
-                false);
+//        HitsInternalMutable window = HitsInternal.create(field(), getHits().matchInfoDefs(), number, number,
+//                false);
 
-        this.hitsInternal.withReadLock(h -> {
-            int prevDoc = -1;
-            EphemeralHit hit = new EphemeralHit();
-            for (long i = first; i < first + number; i++) {
-                h.getEphemeral(i, hit);
-                int doc = hit.doc();
-                if (doc != prevDoc) {
-                    docsRetrieved.add(1);
-                    prevDoc = doc;
-                }
-                window.add(hit);
+        // Count docs
+        Iterator<EphemeralHit> it = window.ephemeralIterator();
+        int prevDoc = -1;
+        while (it.hasNext()) {
+            EphemeralHit hit = it.next();
+            int doc = hit.doc();
+            if (doc != prevDoc) {
+                docsRetrieved.add(1);
+                prevDoc = doc;
             }
-        });
+        }
+
         boolean hasNext = resultsStats().waitUntil().processedAtLeast(first + windowSize + 1);
-        WindowStats windowStats = new WindowStats(hasNext, first, windowSize, number);
+        WindowStats windowStats = new WindowStats(hasNext, first, windowSize, window.size());
         ResultsStats hitsStats = new ResultsStatsSaved(window.size());
         ResultsStats docsStats = new ResultsStatsSaved(docsRetrieved.longValue());
         return new HitsList(queryInfo(), window, windowStats, null,
@@ -348,7 +350,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
         // Perform the actual sort.
         ensureResultsRead(-1);
-        HitsInternal sorted = this.hitsInternal.sorted(sortProp); // TODO use wrapper objects
+        HitsSimple sorted = getHits().sorted(sortProp); // TODO use wrapper objects
         sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
         return new HitsList(queryInfo(), sorted, null, null,

@@ -1,6 +1,5 @@
 package nl.inl.blacklab.mocks;
 
-import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -13,11 +12,6 @@ public record MockForwardIndex(Terms terms) implements GAnnotationForwardIndex {
     @Override
     public String toString() {
         return "MockForwardIndex";
-    }
-
-    @Override
-    public Collators collators() {
-        return null;
     }
 
     @Override

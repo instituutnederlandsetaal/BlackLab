@@ -80,6 +80,8 @@ SMALLER ISSUES
 - `BlackLabPostingsReader.forwardIndex()` creates a reader object
 - `BLTerms.reader()` creates a reader object
 
+- `AnnotationForwardIndex.numberOfTerms`: terms are counted multiple times
+
 - `ForwardIndex.forField()` created two objects; can we do it with one? See below.
 
 ```java
