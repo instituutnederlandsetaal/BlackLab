@@ -302,6 +302,10 @@ class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
+
+            // FIXME: we don't know that this is a document boundary!
+            // Seems to work with HitsFromQuery, but not with HitsFromQueryKeepSegments...
+
             spansReaderStrategy.onDocumentBoundary(results);
             spansReaderStrategy.onFinished(results);
         }

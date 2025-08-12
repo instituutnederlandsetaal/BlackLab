@@ -95,6 +95,41 @@ SMALLER ISSUES
     }
 ```
 
+## BL5 major refactorings (Dutch)
+
+- type parameters weg uit Results etc. (ws. nog meer opruiming mogelijk)
+
+- HitsSimple is nu het interface om met hits te werken, te itereren, etc.
+  Hits is een compleet "zoekresultaat". Hits.getHits() retourneert een HitsSimple.
+  (namen kunnen nog aangepast worden)
+  HitsSimple wordt geimplementeerd door HitsInternal*, maar Hits heeft ook een
+  eigen implementatie die bijv. ensureHitsRead() aanroept.
+
+- Global term ids zijn verdwenen. Global Terms object ook.
+  Overal waar met termen wordt gewerkt, gaat dit per-segment met id/sortposition of
+  globally met strings.
+  Zie bijv. HitPropertyContextBase.
+  Doel is om uiteindelijk bijv. sorteren per segment te doen (met sortpositions), daarna een
+  snelle merge op stringbasis.
+  Nu wordt er nog wat te veel randomly tussen segmenten gesprongen (globalDocId > segment)
+
+- (WIP)
+  HitsFromQueryKeepSegments: alternatief voor (subclass van) HitsFromQuery.
+  Doel is om hits per segment op te slaan maar ook een global view te bieden (zonder alles
+  2x in geheugen te houden).
+  Global view gebeurt door stretches bij te houden.
+  (segment / start in segment / start in global view / length)
+  Global view is relatief traag natuurlijk, maar wordt uiteindelijk hopelijk alleen gebruikt
+  als je een pagina unsorted hits vraagt, dus niet heel performancekritisch. Andere operaties
+  (sort, group, sample, etc.) werken met de hele set hits en gebruiken direct de hitlijsten per
+  segment.
+
+- andere TODOs:
+    - liefst alles met Iterator<EphemeralHit> doen, Iterator<Hit> weg?
+    - minder met doc(index), start(index), etc. doen, zo veel mogelijk met getEphemeral(index, hit)
+
+
+
 ## Optimization opportunities
 
 The first implementation of the integrated index is slow, because we just want to make it work for now. There are a number of opportunities for optimizing it.
