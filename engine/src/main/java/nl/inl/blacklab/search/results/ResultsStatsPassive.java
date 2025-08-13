@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.LongUnaryOperator;
 
 /** ResultsStats that relies on being informed of progress by its owner. */
@@ -74,12 +75,12 @@ public class ResultsStatsPassive extends ResultsStats {
             this.processed.incrementAndGet();
     }
 
-    public long getAndUpdateCount(LongUnaryOperator incrementCountUnlessAtMax) {
-        return this.counted.getAndUpdate(incrementCountUnlessAtMax);
+    public long getAndUpdateCount(BiFunction<Long, Boolean, Long> incrementCountUnlessAtMaxAndBoundary, boolean atDocBoundary) {
+        return this.counted.getAndUpdate(l -> incrementCountUnlessAtMaxAndBoundary.apply(l, atDocBoundary));
     }
 
-    public long getAndUpdateProcessed(LongUnaryOperator incrementProcessUnlessAtMax) {
-        return this.processed.getAndUpdate(incrementProcessUnlessAtMax);
+    public long getAndUpdateProcessed(BiFunction<Long, Boolean, Long> incrementProcessUnlessAtMaxAndBoundary, boolean atDocBoundary) {
+        return this.processed.getAndUpdate(l -> incrementProcessUnlessAtMaxAndBoundary.apply(l, atDocBoundary));
     }
 
     public synchronized void set(long processed, long counted, boolean done) {

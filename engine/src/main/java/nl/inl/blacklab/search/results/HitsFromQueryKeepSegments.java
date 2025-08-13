@@ -31,12 +31,21 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
     private static final long HIT_INDEX_TO_STRETCH_STEP = 100;
 
     /**
-     * How long a stretch of segment hits in the global view should ideally be.
+     * Desired minimum length of a stretch of segment hits in the global view.
      * <p>
      * Note that we DO sometimes add stretches smaller than this if we happen to be done
-     * collecting hits for now and want to add the last hits to the global view.
+     * collecting hits for now and need to add the last hits to the global view.
      */
-    private static final int STRETCH_SIZE_TRY_MINIMUM = 20;
+    private static final int STRETCH_THRESHOLD_MINIMUM = 10;
+
+    /**
+     * Maximum for the stretch threshold, i.e. the point at which we decide
+     * we have enough hits to add a stretch to the global view.
+     * <p>
+     * We don't want to add stretches that are too large, because that would
+     * make it take too long for the hits to become available in the global view.
+     */
+    private static final int STRETCH_THRESHOLD_MAXIMUM = 1000;
 
     /** Divider for the size of new stretches.
      * <p>
@@ -362,24 +371,28 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 // available quickly. Later, we add them in larger batches to reduce overhead.
                 // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
                 //  out of date (i.e. too small) value here)
-                long addHitsToGlobalThreshold = Math.max(STRETCH_SIZE_TRY_MINIMUM, numberOfHits / STRETCH_SIZE_DIVIDER);
-                if (hitsInThisSegment.size() - lastStretchEnd > addHitsToGlobalThreshold) {
-                    addStretch();
-                }
+                long addHitsToGlobalThreshold = clamp(numberOfHits / STRETCH_SIZE_DIVIDER, STRETCH_THRESHOLD_MINIMUM,
+                        STRETCH_THRESHOLD_MAXIMUM);
+                addStretch(addHitsToGlobalThreshold);
                 results.clear();
+            }
+
+            // (java 17 doesn't have Math.clamp, so we implement it ourselves)
+            private long clamp(long number, long min, long max) {
+                return Math.max(min, Math.min(max, number));
             }
 
             @Override
             public void onFinished(HitsInternalMutable results) {
                 // Add the final batch of hits to the segment results.
                 hitsInThisSegment.addAll(results);
-                if (hitsInThisSegment.size() - lastStretchEnd > 0) {
-                    addStretch();
-                }
+                addStretch(0);
             }
 
             /** Add the latest stretch of hits we've found to the global view. */
-            private void addStretch() {
+            private void addStretch(long threshold) {
+                if (hitsInThisSegment.size() - lastStretchEnd <= threshold)
+                    return; // not enough hits to add a stretch
                 // Create a new stretch for the global hits view.
                 // Start where the last stretch in this segment ended.
                 long length = hitsInThisSegment.size() - lastStretchEnd;

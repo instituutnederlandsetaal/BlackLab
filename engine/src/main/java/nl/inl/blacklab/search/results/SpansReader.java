@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiFunction;
 import java.util.function.LongUnaryOperator;
 
 import org.apache.lucene.index.LeafReaderContext;
@@ -67,7 +68,7 @@ class SpansReader implements Runnable {
     ResultsStatsPassive hitsStats;
     ResultsStatsPassive docsStats;
 
-    /** Target number of hits to store in the {@link #globalResults} list */
+    /** Target number of hits to store in the results list */
     final AtomicLong globalHitsToProcess;
     /** Target number of hits to count, must always be >= {@link #globalHitsToProcess} */
     final AtomicLong globalHitsToCount;
@@ -125,7 +126,7 @@ class SpansReader implements Runnable {
 
         this.leafReaderContext = leafReaderContext;
 
-        this.spansReaderStrategy = spansReaderStrategy == null ? new DummyStrategy() : spansReaderStrategy;
+        this.spansReaderStrategy = spansReaderStrategy;
         this.globalHitsToCount = globalHitsToCount;
         this.globalHitsToProcess = globalHitsToProcess;
 
@@ -216,7 +217,7 @@ class SpansReader implements Runnable {
     /**
      * Collect all hits from our spans object.
      * Updates the global counters, shared with other SpansReader objects operating on the same result set.
-     * Hits are periodically copied into the {@link SpansReader#globalResults} list when a large enough batch has been gathered.
+     * {@link Strategy::onDocumentBoundary} is called when we encounter a document boundary.
      * <p>
      * Updating the maximums while this is running is allowed.
      */
@@ -232,8 +233,15 @@ class SpansReader implements Runnable {
 
         final HitsInternalMutable results = HitsInternal.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
-        final LongUnaryOperator incrementCountUnlessAtMax = c -> c < this.globalHitsToCount.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
-        final LongUnaryOperator incrementProcessUnlessAtMax = c -> c < this.globalHitsToProcess.get() ? c + 1 : c; // only increment if doing so won't put us over the limit.
+
+        // Increment if we're NOT at a document boundary OR we haven't reached the currently requested number of hits yet.
+        // (that means that we can go over the requested number until we reach a document boundary. This is because
+        //  we want to keep hits from the same document contiguous in the results list, so e.g. document count is
+        //  correct)
+        final BiFunction<Long, Boolean, Long> incrementCountUnlessAtMaxAndBoundary = (count, atBoundary) ->
+                count < this.globalHitsToCount.get() || !atBoundary ? count + 1 : count;
+        final BiFunction<Long, Boolean, Long> incrementProcessUnlessAtMaxAndBoundary = (count, atBoundary) ->
+                count < this.globalHitsToProcess.get() || !atBoundary ? count + 1 : count;
 
         try {
             // Try to set the spans to a valid hit.
@@ -251,6 +259,7 @@ class SpansReader implements Runnable {
                 assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
                 assert spans.endPosition() != Spans.NO_MORE_POSITIONS;
                 final int doc = spans.docID() + docBase;
+                boolean atDocumentBoundary = doc != prevDoc;
                 int start = spans.startPosition();
                 int end = spans.endPosition();
                 MatchInfo[] matchInfo = null;
@@ -265,17 +274,17 @@ class SpansReader implements Runnable {
                 if (!isSameAsLast) {
                     // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     // Otherwise, don't store it either. We're done, just return.
-                    final boolean abortBeforeCounting = this.hitsStats.getAndUpdateCount(incrementCountUnlessAtMax)
+                    final boolean abortBeforeCounting = this.hitsStats.getAndUpdateCount(incrementCountUnlessAtMaxAndBoundary, atDocumentBoundary)
                             >= this.globalHitsToCount.get();
                     if (abortBeforeCounting)
                         return;
 
                     // only if unique hit and previous value (which is returned) was not yet at the limit
                     // (and thus we actually incremented) do we store this hit.
-                    final boolean storeThisHit = this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMax)
+                    final boolean storeThisHit = this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMaxAndBoundary, atDocumentBoundary)
                             < this.globalHitsToProcess.get();
 
-                    if (doc != prevDoc) {
+                    if (atDocumentBoundary) {
                         docsStats.increment(storeThisHit);
                         spansReaderStrategy.onDocumentBoundary(results);
                     }
@@ -302,11 +311,6 @@ class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-
-            // FIXME: we don't know that this is a document boundary!
-            // Seems to work with HitsFromQuery, but not with HitsFromQueryKeepSegments...
-
-            spansReaderStrategy.onDocumentBoundary(results);
             spansReaderStrategy.onFinished(results);
         }
 
@@ -331,19 +335,6 @@ class SpansReader implements Runnable {
          * @param results the hits collected so far
          */
         void onFinished(HitsInternalMutable results);
-    }
-
-    /** Don't do anything with the hits yet */
-    static class DummyStrategy implements Strategy {
-        @Override
-        public void onDocumentBoundary(HitsInternalMutable results) {
-            // Do nothing
-        }
-
-        @Override
-        public void onFinished(HitsInternalMutable results) {
-            // Do nothing
-        }
     }
 
 }
