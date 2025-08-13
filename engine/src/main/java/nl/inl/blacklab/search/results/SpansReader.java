@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.results;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiFunction;
-import java.util.function.LongUnaryOperator;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.queries.spans.SpanWeight.Postings;
@@ -258,7 +257,7 @@ class SpansReader implements Runnable {
                 assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
                 assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
                 assert spans.endPosition() != Spans.NO_MORE_POSITIONS;
-                final int doc = spans.docID() + docBase;
+                final int doc = spans.docID() /*+ docBase*/;
                 boolean atDocumentBoundary = doc != prevDoc;
                 int start = spans.startPosition();
                 int end = spans.endPosition();
@@ -289,7 +288,7 @@ class SpansReader implements Runnable {
                     if (atDocumentBoundary) {
                         docsStats.increment(storeThisHit);
                         if (!results.isEmpty())
-                            spansReaderStrategy.onDocumentBoundary(results);
+                            spansReaderStrategy.onDocumentBoundary(leafReaderContext, results);
                     }
 
                     if (storeThisHit) {
@@ -314,7 +313,7 @@ class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-            spansReaderStrategy.onFinished(results);
+            spansReaderStrategy.onFinished(leafReaderContext, results);
         }
 
         // If we're here, the loop reached its natural end - we're done.
@@ -331,13 +330,13 @@ class SpansReader implements Runnable {
          * Called when the SpansReader has reached the end of a document.
          * @param results the hits collected so far
          */
-        void onDocumentBoundary(HitsInternalMutable results);
+        void onDocumentBoundary(LeafReaderContext lrc, HitsInternalMutable results);
 
         /**
          * Called when the SpansReader is done.
          * @param results the hits collected so far
          */
-        void onFinished(HitsInternalMutable results);
+        void onFinished(LeafReaderContext lrc, HitsInternalMutable results);
     }
 
 }

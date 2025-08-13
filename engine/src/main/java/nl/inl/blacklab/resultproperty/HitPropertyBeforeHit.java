@@ -59,15 +59,6 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     }
 
     @Override
-    void deserializeParam(String param) {
-        try {
-            numberOfTokens = Integer.parseInt(param);
-        } catch (NumberFormatException e) {
-            numberOfTokens = index.defaultContextSize().before();
-        }
-    }
-
-    @Override
     public List<String> serializeParts() {
         List<String> result = new ArrayList<>(super.serializeParts());
         result.add(3, Integer.toString(numberOfTokens)); // before field name

@@ -169,16 +169,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return annotation;
     }
 
-    /** Some context properties, e.g. context before, can get an extra parameter (number of tokens).
-     *
-     * This method should deserialize that parameter if applicable.
-     *
-     * @param param extra parameter to deserialize
-     */
-    void deserializeParam(String param) {
-        // just ignore extra param by default when deserializing
-    }
-
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
     protected HitPropertyContextBase(HitPropertyContextBase prop, HitsSimple hits, LeafReaderContext lrc, boolean invert, AnnotatedField overrideField) {
         super(prop, hits, lrc, invert);
@@ -265,11 +255,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
             segmentContextTermId = new ObjectBigArrayBigList<>(size);
             segmentContextSortOrder = new ObjectBigArrayBigList<>(size);
         }
-        int prevDoc = size == 0 ? -1 : hits.doc(0);
+        int prevDoc = size == 0 ? -1 : globalDocIdOfHit(0);
         long firstHitInCurrentDoc = 0;
         if (size > 0) {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-                final int curDoc = hits.doc(i);
+                final int curDoc = globalDocIdOfHit(i);
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
@@ -294,7 +284,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    private synchronized void fetchContextForDoc(StartEndSetter setStartEnd, int docId, long fromIndex, long toIndexExclusive) {
+    private synchronized void fetchContextForDoc(StartEndSetter setStartEnd, int globalDocId, long fromIndex, long toIndexExclusive) {
         assert fromIndex >= 0 && toIndexExclusive > 0;
         assert fromIndex < toIndexExclusive;
         if (toIndexExclusive - fromIndex > Constants.JAVA_MAX_ARRAY_SIZE)
@@ -313,10 +303,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
         if (isGlobal()) {
             // [GLOBAL] Retrieve terms
-            LeafReaderContext lrc = index.getLeafReaderContext(docId);
+            LeafReaderContext lrc = index.getLeafReaderContext(globalDocId);
             FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
             Terms segmentTerms = forwardIndex.terms();
-            int segmentDocId = docId - lrc.docBase;
+            int segmentDocId = globalDocId - lrc.docBase;
             for (int[] snippet: forwardIndex.retrieveParts(segmentDocId, starts, ends)) {
                 String[] terms = segmentTerms.idsToTerms(snippet);
                 if (compareInReverse)
@@ -325,7 +315,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             }
         } else {
             // [SEGMENT] Retrieve term ids
-            List<int[]> listTermIds = segmentForwardIndex.retrieveParts(docId, starts, ends);
+            List<int[]> listTermIds = segmentForwardIndex.retrieveParts(globalDocId, starts, ends);
             // Also determine sort orders so we don't have to do that for each compare
             for (int[] termIds: listTermIds) {
                 if (compareInReverse)

@@ -75,6 +75,9 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         /** Stretch index, for finding next stretch quickly. */
         int stretchIndex;
 
+        /** This segment's docBase, for converting from segment to global doc ids. */
+        int docBase;
+
         /** Segment this stretch is from. */
         HitsInternalMutable segHits;
 
@@ -87,8 +90,9 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         /** Length of this stretch. */
         long length;
 
-        public HitsStretch(int stretchIndex, HitsInternalMutable segHits, long segStart, long globalStart, long length) {
+        public HitsStretch(int stretchIndex, int docBase, HitsInternalMutable segHits, long segStart, long globalStart, long length) {
             this.stretchIndex = stretchIndex;
+            this.docBase = docBase;
             this.segHits = segHits;
             this.segStart = segStart;
             this.globalStart = globalStart;
@@ -212,13 +216,14 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 ensureResultsRead(index + 1);
                 HitsStretch stretch = getHitsStretch(index);
                 stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
+                convertToGlobal(hit, stretch.docBase);
             }
 
             @Override
             public int doc(long index) {
                 ensureResultsRead(index + 1);
                 HitsStretch stretch = getHitsStretch(index);
-                return stretch.segmentHits().doc(stretch.globalToSegmentIndex(index));
+                return stretch.segmentHits().doc(stretch.globalToSegmentIndex(index)) + stretch.docBase;
             }
 
             @Override
@@ -281,6 +286,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 long hitsLeftInStretch = currentStretch.length - (start - currentStretch.globalStart);
                 while (true) {
                     currentStretch.segmentHits().getEphemeral(indexInSegment, h);
+                    convertToGlobal(h, currentStretch.docBase);
                     sublist.add(h);
                     indexInSegment++;
                     globalIndex++;
@@ -327,6 +333,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                             currentStretch = stretchIterator.next();
                         }
                         currentStretch.segmentHits().getEphemeral(currentStretch.globalToSegmentIndex(index), hit);
+                        convertToGlobal(hit, currentStretch.docBase);
                         return hit;
                     }
                 };
@@ -338,15 +345,20 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 /** Hits from this segment */
                 HitsSimple hits;
 
+                /** Segment's docBase, for converting segment doc id to global doc id */
+                int docBase;
+
                 /** Index of the next hit from this segment to merge */
                 int index;
 
                 /** Property to sort on */
                 HitProperty sortProp;
 
-                public SegmentInMerge(HitsSimple hits, HitProperty sortProp) {
-                    this.hits = hits;
-                    this.sortProp = sortProp.copyWith(hits);
+                public SegmentInMerge(HitsSimple segmentHits, int docBase, HitProperty globalSortProp) {
+                    this.hits = segmentHits;
+                    this.docBase = docBase;
+                    globalSortProp.setDocBase(docBase);
+                    this.sortProp = globalSortProp.copyWith(segmentHits);
                     this.index = 0;
                 }
 
@@ -389,6 +401,11 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 }
             }
 
+            record SegmentResult(
+                    int docBase,
+                    HitsSimple hits) {
+            }
+
             @Override
             public HitsSimple sorted(HitProperty sortProp) {
                 // Create target hits object for the merged results.
@@ -398,34 +415,45 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
                 if (numberOfHits < THRESHOLD_SINGLE_THREADED_SORT) {
                     // If there are only a few hits; just sort them in a single thread.
-                    for (HitsInternalMutable segmentHits: hitsPerSegment.values()) {
-                        mergedHits.addAll(segmentHits);
+                    for (Map.Entry<LeafReaderContext, HitsInternalMutable> segmentHits: hitsPerSegment.entrySet()) {
+                        Iterator<EphemeralHit> it = segmentHits.getValue().ephemeralIterator();
+                        while (it.hasNext()) {
+                            EphemeralHit hit = it.next();
+                            convertToGlobal(hit, segmentHits.getKey().docBase);
+                            mergedHits.add(hit);
+                        }
                     }
                     return mergedHits.sorted(sortProp);
                 }
 
                 // We need to sort the hits from each segment separately (in parallel), then merge them.
+                // TODO: divide segments over threads by number of hits!
                 ExecutorService executorService = getExecutorService();
                 final AtomicLong threadNumber = new AtomicLong();
-                List<Future<List<HitsSimple>>> pendingResults = hitsPerSegment.entrySet().stream()
+                List<Future<List<SegmentResult>>> pendingResults = hitsPerSegment.entrySet().stream()
                         // subdivide the list, one sublist per thread to use (one list in case of single thread).
                         .collect(Collectors.groupingBy(e -> threadNumber.getAndIncrement() % numThreads))
-                        .values()
-                        .stream()
-                        .map(list -> executorService.submit(() -> list.stream().map(entry -> {
-                            // For each segment, sort the hits using the specified property.
-                            HitsInternalMutable hits = entry.getValue();
-                            HitProperty sortPropSegment = sortProp.copyWith(hits, entry.getKey(), false);
-                            return hits.sorted(sortPropSegment);
-                        }).toList())) // now submit one task per sublist
+                        .entrySet().stream()
+                        .map(thread -> {
+                            Future<List<SegmentResult>> f = executorService.submit(
+                                    () -> thread.getValue().stream().map(segmentInput -> {
+                                        // For each segment, sort the hits using the specified property.
+                                        HitsInternalMutable hits = segmentInput.getValue();
+                                        LeafReaderContext lrc = segmentInput.getKey();
+                                        HitProperty sortPropSegment = sortProp.copyWith(hits, lrc, false);
+                                        HitsSimple sortedHits = hits.sorted(sortPropSegment);
+                                        return new SegmentResult(lrc.docBase, sortedHits);
+                                    }).toList());
+                            return f;
+                        }) // now submit one task per sublist
                         .toList(); // gather the futures
 
                 // Wait for all segments to be sorted. Add the results to the priority queue for merging.
                 MergePriorityQueue queue = new MergePriorityQueue(hitsPerSegment.size());
-                for (Future<List<HitsSimple>> future: pendingResults) {
+                for (Future<List<SegmentResult>> future: pendingResults) {
                     try {
-                        for (HitsSimple hits: future.get()) {
-                            queue.add(new SegmentInMerge(hits, sortProp));
+                        for (SegmentResult segmentResults: future.get()) {
+                            queue.add(new SegmentInMerge(segmentResults.hits, segmentResults.docBase, sortProp));
                         }
                     } catch (InterruptedException e) {
                         Thread.currentThread().interrupt(); // preserve interrupted status
@@ -440,8 +468,9 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                     SegmentInMerge segment = queue.top();
                     EphemeralHit hit = new EphemeralHit();
                     segment.getHitAndAdvance(hit);
-                    queue.updateTop(); // re-order the queue after taking a hit
+                    convertToGlobal(hit, segment.docBase);
                     mergedHits.add(hit);
+                    queue.updateTop(); // re-order the queue after taking a hit
                 }
                 return mergedHits;
             }
@@ -477,7 +506,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             long lastStretchEnd = 0; // last stretch end index in the global hits view
 
             @Override
-            public void onDocumentBoundary(HitsInternalMutable results) {
+            public void onDocumentBoundary(LeafReaderContext lrc, HitsInternalMutable results) {
                 // Add new hits to the segment results.
                 hitsInThisSegment.addAll(results);
 
@@ -501,7 +530,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             }
 
             @Override
-            public void onFinished(HitsInternalMutable results) {
+            public void onFinished(LeafReaderContext lrc, HitsInternalMutable results) {
                 // Add the final batch of hits to the segment results.
                 hitsInThisSegment.addAll(results);
                 addStretch(0);
@@ -516,7 +545,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 long length = hitsInThisSegment.size() - lastStretchEnd;
                 assert length > 0;
                 synchronized (HitsFromQueryKeepSegments.this) {
-                    HitsStretch stretch = new HitsStretch(stretches.size(), hitsInThisSegment,
+                    HitsStretch stretch = new HitsStretch(stretches.size(), lrc.docBase, hitsInThisSegment,
                             lastStretchEnd, numberOfHits, length);
                     stretches.add(stretch);
                     lastStretchEnd += length;

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -151,21 +152,43 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
         private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
 
         @Override
-        public void onDocumentBoundary(HitsInternalMutable results) {
+        public void onDocumentBoundary(LeafReaderContext lrc, HitsInternalMutable results) {
             if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
                 // We've built up a batch of hits. Add them to the global results.
                 // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                hitsInternalMutable.addAll(results);
+                addAll(lrc, results);
                 results.clear();
             }
         }
 
-        @Override
-        public void onFinished(HitsInternalMutable results) {
-            if (!results.isEmpty()) {
-                // Add the final batch of hits to the global results.
-                hitsInternalMutable.addAll(results);
+        private void addAll(LeafReaderContext lrc, HitsInternalMutable results) {
+            Iterator<EphemeralHit> it = results.ephemeralIterator();
+            while (it.hasNext()) {
+                EphemeralHit h = it.next();
+                convertToGlobal(h, lrc.docBase);
+                hitsInternalMutable.add(h);
             }
         }
+
+        @Override
+        public void onFinished(LeafReaderContext lrc, HitsInternalMutable results) {
+            if (!results.isEmpty()) {
+                // Add the final batch of hits to the global results.
+                addAll(lrc, results);
+            }
+        }
+    }
+
+    /**
+     * Convert a hit to a global hit by adding the document base.
+     *
+     * Each segment has a document base, which is the lowest document ID in that segment.
+     * Adding the document base converts the document ID of the hit to a global document ID.
+     *
+     * @param hit the hit to convert
+     * @param docBase the document base to add
+     */
+    static void convertToGlobal(EphemeralHit hit, int docBase) {
+        hit.doc_ += docBase;
     }
 }

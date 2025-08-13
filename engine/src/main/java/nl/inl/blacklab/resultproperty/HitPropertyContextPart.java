@@ -171,12 +171,6 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     }
 
     @Override
-    void deserializeParam(String param) {
-        part = ContextPart.forString(param, index.defaultContextSize());
-        compareInReverse = part.direction == -1;
-    }
-
-    @Override
     public List<String> serializeParts() {
         List<String> result = new ArrayList<>(super.serializeParts());
         result.add(3, part.toString()); // before field name

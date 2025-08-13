@@ -36,7 +36,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public PropertyValueDoc get(long hitIndex) {
-        return new PropertyValueDoc(hits.doc(hitIndex));
+        return new PropertyValueDoc(globalDocIdOfHit(hitIndex));
     }
 
     @Override
@@ -46,6 +46,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public int compare(long indexA, long indexB) {
+        // no need to add docBase here, because we're just comparing
         int docA = hits.doc(indexA);
         int docB = hits.doc(indexB);
         return reverse ? docB - docA : docA - docB;

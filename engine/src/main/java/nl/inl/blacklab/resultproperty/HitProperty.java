@@ -7,7 +7,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReaderContext;
 
-import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -23,7 +22,16 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
+    /** If we're a segment hit property, this will be set */
     LeafReaderContext lrc = null;
+
+    /** If we're a global hit poperty, this will be > 0 */
+    int docBase = 0;
+
+    /** Find the global doc id for a specific hit */
+    int globalDocIdOfHit(long index) {
+        return hits.doc(index) + docBase;
+    }
 
     public static HitProperty deserialize(HitsSimple hits, String serialized, ContextSize contextSize) {
         return deserialize(hits.index(), hits.field(), serialized, contextSize);
@@ -164,13 +172,6 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     /** Reverse comparison result or not? */
     protected boolean reverse;
 
-    /**
-     * For HitProperties that need context, the context indices that correspond to
-     * the context(s) they need in the result set. (in the same order as reported by
-     * needsContext()).
-     */
-    IntList contextIndices;
-
     protected HitProperty() {
         this.hits = null;
         this.reverse = sortDescendingByDefault();
@@ -187,6 +188,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         this.hits = hits == null ? prop.hits : hits;
         this.lrc = lrc == null ? prop.lrc : lrc;
         this.reverse = invert ? !prop.reverse : prop.reverse;
+        this.docBase = prop.docBase;
     }
 
     /**
@@ -338,4 +340,8 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @return true if it does, false if not
      */
     public abstract boolean isDocPropOrHitText();
+
+    public void setDocBase(int docBase) {
+        this.docBase = docBase;
+    }
 }
