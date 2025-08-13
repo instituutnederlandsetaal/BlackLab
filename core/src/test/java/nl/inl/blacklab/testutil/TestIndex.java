@@ -23,6 +23,9 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.HitPropertyHitPosition;
+import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -42,6 +45,9 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
+
+    /** Create an index with multiple segments? */
+    private static final boolean MULTI_SEGMENT = true;
 
     /** Integrated index format */
     private static TestIndex testIndexIntegrated;
@@ -183,6 +189,13 @@ public class TestIndex {
             try {
                 // Index each of our test "documents".
                 for (int i = 0; i < TEST_DATA.length; i++) {
+                    if (MULTI_SEGMENT && i == 1) {
+                        // Close and re-open the indexer to create a new segment.
+                        indexer.close();
+                        indexWriter = BlackLab.openForWriting(indexDir, false, (ConfigInputFormat)null);
+                        indexer = Indexer.create(indexWriter);
+                        indexer.setListener(new IndexListenerAbortOnError()); // throw on error
+                    }
                     indexer.index("test" + (i + 1), TEST_DATA[i].getBytes());
                 }
                 if (testDelete) {
@@ -191,7 +204,9 @@ public class TestIndex {
                     indexer.close();
                     indexWriter = BlackLab.openForWriting(indexDir, false, (ConfigInputFormat)null);
                     indexer = Indexer.create(indexWriter);
-                    String luceneField = indexer.indexWriter().metadata().annotatedField("contents").annotation("word").sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
+                    indexer.setListener(new IndexListenerAbortOnError()); // throw on error
+                    String luceneField = indexer.indexWriter().metadata().mainAnnotatedField().mainAnnotation()
+                            .sensitivity(MatchSensitivity.INSENSITIVE).luceneField();
                     indexer.indexWriter().delete(new TermQuery(new Term(luceneField, "dog")));
                 }
             } finally {
@@ -292,9 +307,10 @@ public class TestIndex {
      */
     public Hits find(String pattern, Query filter) {
         try {
-            return index.find(CorpusQueryLanguageParser.parse(pattern, "word")
-                        .toQuery(QueryInfo.create(index),
-                    filter, false, false), null);
+            BLSpanQuery query = CorpusQueryLanguageParser.parse(pattern, "word")
+                    .toQuery(QueryInfo.create(index), filter, false, false);
+            return index.find(query, null)
+                    .sorted(new HitPropertyMultiple(new HitPropertyDoc(index), new HitPropertyHitPosition()));
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);
         }

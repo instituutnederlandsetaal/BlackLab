@@ -239,9 +239,9 @@ class SpansReader implements Runnable {
         //  we want to keep hits from the same document contiguous in the results list, so e.g. document count is
         //  correct)
         final BiFunction<Long, Boolean, Long> incrementCountUnlessAtMaxAndBoundary = (count, atBoundary) ->
-                count < this.globalHitsToCount.get() || !atBoundary ? count + 1 : count;
+                (count < this.globalHitsToCount.get() || !atBoundary) ? count + 1 : count;
         final BiFunction<Long, Boolean, Long> incrementProcessUnlessAtMaxAndBoundary = (count, atBoundary) ->
-                count < this.globalHitsToProcess.get() || !atBoundary ? count + 1 : count;
+                (count < this.globalHitsToProcess.get() || !atBoundary) ? count + 1 : count;
 
         try {
             // Try to set the spans to a valid hit.
@@ -274,19 +274,22 @@ class SpansReader implements Runnable {
                 if (!isSameAsLast) {
                     // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     // Otherwise, don't store it either. We're done, just return.
-                    final boolean abortBeforeCounting = this.hitsStats.getAndUpdateCount(incrementCountUnlessAtMaxAndBoundary, atDocumentBoundary)
+                    final boolean requestedCountReached = this.hitsStats.getAndUpdateCount(incrementCountUnlessAtMaxAndBoundary, atDocumentBoundary)
                             >= this.globalHitsToCount.get();
-                    if (abortBeforeCounting)
+                    if (requestedCountReached && atDocumentBoundary)
                         return;
 
                     // only if unique hit and previous value (which is returned) was not yet at the limit
                     // (and thus we actually incremented) do we store this hit.
-                    final boolean storeThisHit = this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMaxAndBoundary, atDocumentBoundary)
-                            < this.globalHitsToProcess.get();
+                    final boolean storeThisHit =
+                            this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMaxAndBoundary,
+                                    atDocumentBoundary)
+                                    < this.globalHitsToProcess.get() || requestedCountReached;
 
                     if (atDocumentBoundary) {
                         docsStats.increment(storeThisHit);
-                        spansReaderStrategy.onDocumentBoundary(results);
+                        if (!results.isEmpty())
+                            spansReaderStrategy.onDocumentBoundary(results);
                     }
 
                     if (storeThisHit) {

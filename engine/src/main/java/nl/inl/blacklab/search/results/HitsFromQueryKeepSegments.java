@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.results;
 
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -104,13 +106,33 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
         @Override
         public String toString() {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < length; i++) {
+                if (i > 0) sb.append(", ");
+                sb.append(segHits.doc(segStart + i));
+            }
+
             return "HitsStretch{" +
                     "stretchIndex=" + stretchIndex +
                     ", segHits=" + segHits +
                     ", segStart=" + segStart +
                     ", globalStart=" + globalStart +
                     ", length=" + length +
-                    '}';
+                    "} (DOCS: " + sb + ")";
+        }
+
+        // DEBUG: check that documents in this stretch haven't been seen before.
+        public void checkDocuments(Set<Integer> docsSeen, ObjectList<HitsStretch> stretches) {
+            Set<Integer> docsInThisStretch = new HashSet<>();
+            for (int i = 0; i < length; i++) {
+                int doc = segHits.doc(segStart + i);
+                docsInThisStretch.add(doc);
+                if (docsSeen.contains(doc)) {
+                    throw new IllegalStateException("Duplicate document in hits: " + doc +
+                            " (stretches: " + stretches + ", NEW stretch: " + this + ")");
+                }
+            }
+            docsSeen.addAll(docsInThisStretch);
         }
     }
 
@@ -346,6 +368,9 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         };
     }
 
+    /** DEBUG: docs already seen in the global view. */
+    Set<Integer> docsSeen = new HashSet<>();
+
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
         // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from
         // it at the same time.
@@ -400,6 +425,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 synchronized (HitsFromQueryKeepSegments.this) {
                     HitsStretch stretch = new HitsStretch(stretches.size(), hitsInThisSegment,
                             lastStretchEnd, numberOfHits, length);
+                    stretch.checkDocuments(docsSeen, stretches); // DEBUG
                     stretches.add(stretch);
                     lastStretchEnd += length;
                     numberOfHits += length;

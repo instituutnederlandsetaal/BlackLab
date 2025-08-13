@@ -203,6 +203,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             public String get(int id) {
                 if (id == Constants.NO_TERM)
                     return "";
+                assert id >= 0 && id < numberOfTerms : "Term id " + id + " is out of bounds (max is " + (numberOfTerms - 1) + ")";
                 try {
                     long termStringOffset = termStringOffsets.readLong((long) id * Long.BYTES);
                     termStrings.seek(termStringOffset);

@@ -17,6 +17,10 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 
 public class HitsFromQuery extends HitsFromQueryAbstract {
 
+    public static HitsFromQuery get(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+        return new HitsFromQueryKeepSegments(queryInfo, sourceQuery, searchSettings);
+    }
+
     /** Objects getting the actual hits from each index segment and adding them to the global results list. */
     protected final List<SpansReader> spansReaders = new ArrayList<>();
 

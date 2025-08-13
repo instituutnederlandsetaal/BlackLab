@@ -605,10 +605,9 @@ public class TestSearches {
         Assert.assertEquals(2, hits.size());
         HitsSimple hitsList = hits.getHits();
         Assert.assertTrue(hitsList.hasMatchInfo());
-        Assert.assertEquals(1, hitsList.get(0).doc());
+        Assert.assertTrue(hitsList.get(0).doc() == hitsList.get(1).doc());
         Assert.assertEquals(2, hitsList.get(0).matchInfos()[0].getSpanStart());
         Assert.assertEquals(3, hitsList.get(0).matchInfos()[0].getSpanEnd());
-        Assert.assertEquals(1, hitsList.get(1).doc());
         Assert.assertEquals(4, hitsList.get(1).matchInfos()[0].getSpanStart());
         Assert.assertEquals(5, hitsList.get(1).matchInfos()[0].getSpanEnd());
     }

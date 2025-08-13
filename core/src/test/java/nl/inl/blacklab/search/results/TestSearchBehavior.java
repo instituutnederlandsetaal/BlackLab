@@ -25,7 +25,7 @@ public class TestSearchBehavior {
 
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo, patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = HitsFromQuery.get(queryInfo, patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
@@ -78,7 +78,7 @@ public class TestSearchBehavior {
     public void testParallelSearchException() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo, patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = HitsFromQuery.get(queryInfo, patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");

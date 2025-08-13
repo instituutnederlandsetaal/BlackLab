@@ -23,7 +23,7 @@ public interface Hits extends Results {
      * @return hits found
      */
     static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
-        return new HitsFromQuery(queryInfo, query, searchSettings);
+        return HitsFromQuery.get(queryInfo, query, searchSettings);
     }
 
     /**
