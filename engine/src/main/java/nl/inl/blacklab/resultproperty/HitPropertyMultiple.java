@@ -42,13 +42,13 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     /** The properties we're combining */
     final List<HitProperty> properties;
     
-    HitPropertyMultiple(HitPropertyMultiple mprop, HitsSimple newHits, boolean invert) {
-        super(mprop, null, null, invert);
+    HitPropertyMultiple(HitPropertyMultiple mprop, HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+        super(mprop, newHits, lrc, invert);
         int n = mprop.properties.size();
         this.properties = new ArrayList<>();
         for (int i = 0; i < n; i++) {
             HitProperty prop = mprop.properties.get(i);
-            HitProperty nprop = prop.copyWith(newHits);
+            HitProperty nprop = prop.copyWith(newHits, lrc, false);
             this.properties.add(nprop);
         }
     }
@@ -104,7 +104,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext, boolean invert) {
-        return new HitPropertyMultiple(this, newHits, invert);
+        return new HitPropertyMultiple(this, newHits, leafReaderContext, invert);
     }
 
     @Override
@@ -232,10 +232,17 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public boolean isDocPropOrHitText() {
-        for (HitProperty p : properties) {
+        for (HitProperty p: properties) {
             if (!p.isDocPropOrHitText()) 
                 return false;
         }
         return true;
+    }
+
+    public void setDocBase(int docBase) {
+        super.setDocBase(docBase);
+        for (HitProperty prop: properties) {
+            prop.setDocBase(docBase);
+        }
     }
 }

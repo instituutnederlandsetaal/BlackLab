@@ -348,17 +348,17 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 /** Segment's docBase, for converting segment doc id to global doc id */
                 int docBase;
 
-                /** Index of the next hit from this segment to merge */
-                int index;
-
                 /** Property to sort on */
                 HitProperty sortProp;
+
+                /** Index of the next hit from this segment to merge */
+                int index;
 
                 public SegmentInMerge(HitsSimple segmentHits, int docBase, HitProperty globalSortProp) {
                     this.hits = segmentHits;
                     this.docBase = docBase;
-                    globalSortProp.setDocBase(docBase);
                     this.sortProp = globalSortProp.copyWith(segmentHits);
+                    sortProp.setDocBase(docBase);
                     this.index = 0;
                 }
 
@@ -428,6 +428,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
                 // We need to sort the hits from each segment separately (in parallel), then merge them.
                 // TODO: divide segments over threads by number of hits!
+                // TODO: make this abortable (ThreadAborter)
                 ExecutorService executorService = getExecutorService();
                 final AtomicLong threadNumber = new AtomicLong();
                 List<Future<List<SegmentResult>>> pendingResults = hitsPerSegment.entrySet().stream()

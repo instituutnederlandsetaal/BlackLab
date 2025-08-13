@@ -179,7 +179,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
 
     @Override
     public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyContextPart(this, newHits, lrc == null ? this.lrc : lrc, invert);
+        return new HitPropertyContextPart(this, newHits, lrc, invert);
     }
 
     @Override

@@ -188,7 +188,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         this.hits = hits == null ? prop.hits : hits;
         this.lrc = lrc == null ? prop.lrc : lrc;
         this.reverse = invert ? !prop.reverse : prop.reverse;
-        this.docBase = prop.docBase;
+        this.docBase = lrc == null ? prop.docBase : 0; // if we're sorting within the segment, don't add docBase
     }
 
     /**
@@ -258,17 +258,6 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @return the new HitProperty object
      */
     public abstract HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext, boolean invert);
-
-    /**
-     * Produce a copy of this HitProperty object with a different Hits and Contexts
-     * object.
-     *
-     * @param newHits new Hits to use, or null to inherit
-     * @return the new HitProperty object
-     */
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext) {
-        return copyWith(newHits, leafReaderContext, false);
-    }
 
     @Override
     public boolean isReverse() {
