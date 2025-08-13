@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -9,6 +10,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -48,7 +50,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
     /** HitsSimple interface to our actual hits.
      * Ensures enough hits have been fetched (if applicable). */
-    private HitsSimple hitsSimple;
+    HitsSimple hitsSimple;
 
     /**
      * Construct a Hits object from a hits array.
@@ -350,7 +352,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
         // Perform the actual sort.
         ensureResultsRead(-1);
-        HitsSimple sorted = getHits().sorted(sortProp); // TODO use wrapper objects
+        HitsSimple sorted = getHits().sorted(sortProp);
         sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
         return new HitsList(queryInfo(), sorted, null, null,
@@ -436,6 +438,11 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     @Override
     public HitsSimple getHits() {
         return hitsSimple;
+    }
+
+    @Override
+    public Map<LeafReaderContext, HitsSimple> getSegmentHits() {
+        return null;
     }
 
     @Override

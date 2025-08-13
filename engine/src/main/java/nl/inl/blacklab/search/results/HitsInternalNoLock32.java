@@ -276,7 +276,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
     }
 
     @Override
-    public HitsInternal sortedNoLock(HitProperty p) {
+    public HitsSimple sortedNoLock(HitProperty p) {
         return sort32(p);
     }
 

@@ -76,7 +76,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     abstract long sizeNoLock();
 
     @Override
-    public HitsInternal sorted(HitProperty p) {
+    public HitsSimple sorted(HitProperty p) {
         if (lock != null) {
             lock.readLock().lock();
             try {
@@ -89,7 +89,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         }
     }
 
-    abstract HitsInternal sortedNoLock(HitProperty p);
+    abstract HitsSimple sortedNoLock(HitProperty p);
 
     @Override
     public HitsSimple sublist(long first, long windowSize) {

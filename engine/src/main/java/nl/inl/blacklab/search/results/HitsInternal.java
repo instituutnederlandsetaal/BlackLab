@@ -103,7 +103,7 @@ public interface HitsInternal extends Iterable<EphemeralHit>, HitsSimple {
      * @param p sort property
      * @return sorted hits
      */
-    HitsInternal sorted(HitProperty p);
+    HitsSimple sorted(HitProperty p);
 
     @Override
     default HitsSimple getStatic() {

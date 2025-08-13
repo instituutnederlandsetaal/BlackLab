@@ -9,13 +9,13 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 
 /** A search that yields hits. */
-public class SearchHitsFromBLSpanQuery extends SearchHits {
+public class SearchHitsFromQuery extends SearchHits {
 
     private final BLSpanQuery spanQuery;
 
     private final SearchSettings searchSettings;
 
-    public SearchHitsFromBLSpanQuery(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings) {
+    public SearchHitsFromQuery(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings) {
         super(queryInfo);
         if (spanQuery == null)
             throw new IllegalArgumentException("Must specify a query");
@@ -50,7 +50,7 @@ public class SearchHitsFromBLSpanQuery extends SearchHits {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        SearchHitsFromBLSpanQuery other = (SearchHitsFromBLSpanQuery) obj;
+        SearchHitsFromQuery other = (SearchHitsFromQuery) obj;
         if (spanQuery == null) {
             if (other.spanQuery != null)
                 return false;

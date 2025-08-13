@@ -277,7 +277,7 @@ class HitsInternalNoLock extends HitsInternalAbstract {
     }
 
     @Override
-    HitsInternal sortedNoLock(HitProperty p) {
+    HitsSimple sortedNoLock(HitProperty p) {
         p = p.copyWith(this);
         HitsInternalMutable r;
         if (docs.size64() > Constants.JAVA_MAX_ARRAY_SIZE) {

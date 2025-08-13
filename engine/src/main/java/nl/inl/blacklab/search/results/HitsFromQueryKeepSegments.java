@@ -1,16 +1,26 @@
 package nl.inl.blacklab.search.results;
 
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Set;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.util.PriorityQueue;
 
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -55,6 +65,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
      * so the size of new stretches grows as the number of hits retrieved grows.
      */
     public static final int STRETCH_SIZE_DIVIDER = 10;
+
 
     /** A stretch of hits from a segment.
      * <p>
@@ -106,38 +117,18 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
         @Override
         public String toString() {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < length; i++) {
-                if (i > 0) sb.append(", ");
-                sb.append(segHits.doc(segStart + i));
-            }
-
             return "HitsStretch{" +
                     "stretchIndex=" + stretchIndex +
                     ", segHits=" + segHits +
                     ", segStart=" + segStart +
                     ", globalStart=" + globalStart +
                     ", length=" + length +
-                    "} (DOCS: " + sb + ")";
-        }
-
-        // DEBUG: check that documents in this stretch haven't been seen before.
-        public void checkDocuments(Set<Integer> docsSeen, ObjectList<HitsStretch> stretches) {
-            Set<Integer> docsInThisStretch = new HashSet<>();
-            for (int i = 0; i < length; i++) {
-                int doc = segHits.doc(segStart + i);
-                docsInThisStretch.add(doc);
-                if (docsSeen.contains(doc)) {
-                    throw new IllegalStateException("Duplicate document in hits: " + doc +
-                            " (stretches: " + stretches + ", NEW stretch: " + this + ")");
-                }
-            }
-            docsSeen.addAll(docsInThisStretch);
+                    "}";
         }
     }
 
     /** The hits per segment. */
-    private ObjectList<HitsInternalMutable> hitsPerSegment;
+    private Map<LeafReaderContext, HitsInternalMutable> hitsPerSegment;
 
     /** Number of hits in the global view. */
     protected long numberOfHits = 0;
@@ -149,23 +140,16 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
     protected HitsFromQueryKeepSegments(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo, sourceQuery, searchSettings);
         if (hitsPerSegment == null) {
             // (can only happen if there are no spans - normally initialized in getSpansReaderStrategy())
-            hitsPerSegment = new ObjectArrayList<>();
+            hitsPerSegment = new LinkedHashMap<>();
         }
-    }
+        // Global view on our segment hits
+        hitsSimple = new HitsSimple() {
 
-    /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
-     *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
-    protected long globalHitsSoFar() {
-        return numberOfHits;
-    }
-
-    @Override
-    public HitsSimple getHits() {
-        return new HitsSimple() {
+            /** Below this number of hits, we'll sort in a single thread to save overhead. */
+            public static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
 
             @Override
             public AnnotatedField field() {
@@ -348,17 +332,118 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 };
             }
 
+            /** The state of a segment during a merge */
+            static class SegmentInMerge {
+
+                /** Hits from this segment */
+                HitsSimple hits;
+
+                /** Index of the next hit from this segment to merge */
+                int index;
+
+                /** Property to sort on */
+                HitProperty sortProp;
+
+                public SegmentInMerge(HitsSimple hits, HitProperty sortProp) {
+                    this.hits = hits;
+                    this.sortProp = sortProp.copyWith(hits);
+                    this.index = 0;
+                }
+
+                boolean done() {
+                    return index >= hits.size();
+                }
+
+                PropertyValue sortValue() {
+                    return sortProp.get(index);
+                }
+
+                void getHitAndAdvance(EphemeralHit hit) {
+                    hits.getEphemeral(index, hit);
+                    index++;
+                }
+            }
+
+            /** Priority queue for merging n already-sorted lists of hits. */
+            static class MergePriorityQueue extends PriorityQueue<SegmentInMerge> {
+
+                public MergePriorityQueue(int maxSize) {
+                    super(maxSize);
+                }
+
+                @Override
+                protected final boolean lessThan(SegmentInMerge a, SegmentInMerge b) {
+                    if (a.done()) {
+                        // Either a is done, or both are done.
+                        // In either case, a is not less than b.
+                        return false;
+                    }
+                    if (b.done()) {
+                        // b is done but a is not, so a is less than b
+                        // (that is, there's still hits to merge in a, so bubble it up to the top of the heap).
+                        return true;
+                    }
+                    // Both still have hits to merge.
+                    // Compare the sort values of the hits from each segment.
+                    return a.sortValue().compareTo(b.sortValue()) < 0;
+                }
+            }
+
             @Override
             public HitsSimple sorted(HitProperty sortProp) {
-                ensureResultsRead(-1);
+                // Create target hits object for the merged results.
+                // (this triggers fetching all the hits because we call size())
+                long numberOfHits = size();
+                HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(), numberOfHits, numberOfHits, false);
 
-                // NOTE: this method is provided for completeness, but it is not efficient.
-                //       the better way is to sort the hits per segment in parallel, then merge them.
-                HitsInternalMutable sortedHits = HitsInternal.create(field(), matchInfoDefs(), size(), size(), false);
-                for (HitsInternalMutable h: hitsPerSegment) {
-                    sortedHits.addAll(h);
+                if (numberOfHits < THRESHOLD_SINGLE_THREADED_SORT) {
+                    // If there are only a few hits; just sort them in a single thread.
+                    for (HitsInternalMutable segmentHits: hitsPerSegment.values()) {
+                        mergedHits.addAll(segmentHits);
+                    }
+                    return mergedHits.sorted(sortProp);
                 }
-                return sortedHits.sorted(sortProp);
+
+                // We need to sort the hits from each segment separately (in parallel), then merge them.
+                ExecutorService executorService = getExecutorService();
+                final AtomicLong threadNumber = new AtomicLong();
+                List<Future<List<HitsSimple>>> pendingResults = hitsPerSegment.entrySet().stream()
+                        // subdivide the list, one sublist per thread to use (one list in case of single thread).
+                        .collect(Collectors.groupingBy(e -> threadNumber.getAndIncrement() % numThreads))
+                        .values()
+                        .stream()
+                        .map(list -> executorService.submit(() -> list.stream().map(entry -> {
+                            // For each segment, sort the hits using the specified property.
+                            HitsInternalMutable hits = entry.getValue();
+                            HitProperty sortPropSegment = sortProp.copyWith(hits, entry.getKey(), false);
+                            return hits.sorted(sortPropSegment);
+                        }).toList())) // now submit one task per sublist
+                        .toList(); // gather the futures
+
+                // Wait for all segments to be sorted. Add the results to the priority queue for merging.
+                MergePriorityQueue queue = new MergePriorityQueue(hitsPerSegment.size());
+                for (Future<List<HitsSimple>> future: pendingResults) {
+                    try {
+                        for (HitsSimple hits: future.get()) {
+                            queue.add(new SegmentInMerge(hits, sortProp));
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt(); // preserve interrupted status
+                        throw new InterruptedSearch(e);
+                    } catch (ExecutionException e) {
+                        throw new InterruptedSearch(e);
+                    }
+                }
+
+                // Now merge the sorted hits from each segment.
+                while (!queue.top().done()) {
+                    SegmentInMerge segment = queue.top();
+                    EphemeralHit hit = new EphemeralHit();
+                    segment.getHitAndAdvance(hit);
+                    queue.updateTop(); // re-order the queue after taking a hit
+                    mergedHits.add(hit);
+                }
+                return mergedHits;
             }
 
             @Override
@@ -368,8 +453,16 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         };
     }
 
-    /** DEBUG: docs already seen in the global view. */
-    Set<Integer> docsSeen = new HashSet<>();
+    /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
+     *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
+    protected long globalHitsSoFar() {
+        return numberOfHits;
+    }
+
+    @Override
+    public Map<LeafReaderContext, HitsSimple> getSegmentHits() {
+        return Collections.unmodifiableMap(hitsPerSegment);
+    }
 
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
         // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from
@@ -377,8 +470,8 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         final HitsInternalMutable hitsInThisSegment = HitsInternal.create(field(), hitQueryContext.getMatchInfoDefs(),
                 -1, true, true);
         if (hitsPerSegment == null)
-            hitsPerSegment = new ObjectArrayList<>();
-        hitsPerSegment.add(hitsInThisSegment); // only called from constructor, so no need to synchronize
+            hitsPerSegment = new LinkedHashMap<>();
+        hitsPerSegment.put(lrc, hitsInThisSegment); // only called from constructor, so no need to synchronize
         return new SpansReader.Strategy() {
 
             long lastStretchEnd = 0; // last stretch end index in the global hits view
@@ -425,7 +518,6 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 synchronized (HitsFromQueryKeepSegments.this) {
                     HitsStretch stretch = new HitsStretch(stretches.size(), hitsInThisSegment,
                             lastStretchEnd, numberOfHits, length);
-                    stretch.checkDocuments(docsSeen, stretches); // DEBUG
                     stretches.add(stretch);
                     lastStretchEnd += length;
                     numberOfHits += length;
