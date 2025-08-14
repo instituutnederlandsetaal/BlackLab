@@ -70,7 +70,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
      * identity. Ideally this wouldn't be necessary, but we need direct access to
      * the ordering for e.g. paging.
      */
-    private final Map<PropertyValue, HitGroup> groups = new HashMap<>();
+    private final Map<PropertyValue, HitGroup> groups;
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
     public static final int MAX_NUMBER_OF_GROUPS = Constants.JAVA_MAX_HASHMAP_SIZE;
@@ -115,57 +115,73 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         if (criteria == null)
             throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
-
         HitsSimple hitsList = hits.getHits().getStatic();
-        criteria = criteria.copyWith(hitsList);
 
-        Map<PropertyValue, HitsInternalMutable> groupLists = new HashMap<>();
-        Map<PropertyValue, Integer> groupSizes = new HashMap<>();
-        resultObjects = 0;
-        int i = 0;
-        Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
-            PropertyValue identity = criteria.get(i);
-            HitsInternalMutable group = groupLists.get(identity);
-            if (group == null) {
+        Map<PropertyValue, GroupHitsAndSize> groupings = performGrouping(hitsList, criteria, maxResultsToStorePerGroup);
+        largestGroupSize = groupings.values().stream()
+                .mapToLong(gr -> gr.totalNumberOfHits)
+                .max()
+                .orElse(0);
+        resultObjects = groupings.values().stream()
+                .mapToLong(gr -> gr.storedHits.size())
+                .sum() + groupings.size();
+        groups = new HashMap<>();
 
-                if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
-                    throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
-
-                group = HitsInternal.create(hits.field(), hitsList.matchInfoDefs(), -1, hitsList.size(), false);
-                groupLists.put(identity, group);
-            }
-            if (maxResultsToStorePerGroup < 0 || group.size() < maxResultsToStorePerGroup) {
-                group.add(hit.toHit());
-                resultObjects++;
-            }
-            Integer groupSize = groupSizes.get(identity);
-            if (groupSize == null)
-                groupSize = 1;
-            else
-                groupSize++;
-            if (groupSize > largestGroupSize)
-                largestGroupSize = groupSize;
-            groupSizes.put(identity, groupSize);
-            ++i;
-        }
-        resultObjects += groupLists.size();
-        for (Map.Entry<PropertyValue, HitsInternalMutable> e : groupLists.entrySet()) {
+        // Create the HitGroup objects
+        for (Map.Entry<PropertyValue, GroupHitsAndSize> e : groupings.entrySet()) {
             PropertyValue groupId = e.getKey();
-            HitsInternal hitList = e.getValue();
-            Integer groupSize = groupSizes.get(groupId);
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, hitList, hitsList.matchInfoDefs(), groupSize);
+            GroupHitsAndSize grouped = e.getValue();
+            HitGroup group = HitGroup.fromList(queryInfo(), groupId, grouped.storedHits, grouped.totalNumberOfHits);
             groups.put(groupId, group);
             results.add(group);
         }
 
-        // Make a copy so we don't keep any references to the source hits
+        // Make a copy of the stats so we don't keep any references to the source hits
         resultsStats = new ResultsStatsSaved(groups.size(), groups.size(), hits.resultsStats().maxStats());
         this.hitsStats = hits.resultsStats().save();
         this.docsStats = hits.docsStats().save();
+    }
 
+    /** Used during the actual grouping */
+    static class GroupHitsAndSize {
+        HitsInternalMutable storedHits;
+        long totalNumberOfHits;
+
+        public GroupHitsAndSize(HitsInternalMutable storedHits, int totalNumberOfHits) {
+            this.storedHits = storedHits;
+            this.totalNumberOfHits = totalNumberOfHits;
+        }
+    }
+
+    private static Map<PropertyValue, GroupHitsAndSize> performGrouping(HitsSimple hitsList, HitProperty criteria,
+            long maxResultsToStorePerGroup) {
+        // temporary copy used in grouping (don't keep reference to hitsList)
+        criteria = criteria.copyWith(hitsList);
+
+        Map<PropertyValue, GroupHitsAndSize> groupLists = new HashMap<>();
+        int hitIndex = 0;
+        Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
+        while (it.hasNext()) {
+            EphemeralHit hit = it.next();
+            PropertyValue identity = criteria.get(hitIndex);
+
+            GroupHitsAndSize group = groupLists.get(identity);
+            if (group == null) {
+                if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
+                    throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+                HitsInternalMutable hitsInGroup = HitsInternal.create(hitsList.field(), hitsList.matchInfoDefs(), -1,
+                        hitsList.size(), false);
+                group = new GroupHitsAndSize(hitsInGroup, 0);
+                groupLists.put(identity, group);
+            }
+            if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {
+                group.storedHits.add(hit.toHit());
+            }
+            group.totalNumberOfHits++;
+            ++hitIndex;
+        }
         criteria.disposeContext(); // we don't need the context information anymore, free memory
+        return groupLists;
     }
 
     protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
@@ -174,6 +190,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
         resultObjects = 0;
+        this.groups = new HashMap<>();
         for (HitGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();

@@ -771,8 +771,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                         }
                     }
                 });
-                tokenCount = countPerField.values().stream().map(CorpusSize.Count::getTokens)
-                        .mapToLong(Long::longValue).sum();
+                tokenCount = countPerField.values().stream().mapToLong(CorpusSize.Count::getTokens).sum();
             }
         }
     }

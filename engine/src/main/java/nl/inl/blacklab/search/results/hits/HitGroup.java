@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results.hits;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -15,8 +14,8 @@ public class HitGroup extends Group {
     }
 
     public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
-            MatchInfoDefs matchInfoDefs, long totalSize) {
-        return new HitGroup(queryInfo, groupIdentity, storedResults, matchInfoDefs, totalSize);
+            long totalSize) {
+        return new HitGroup(queryInfo, groupIdentity, storedResults, totalSize);
     }
 
     public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, long totalSize) {
@@ -37,8 +36,7 @@ public class HitGroup extends Group {
      * @param matchInfoDefs captured groups for hits in this group
      * @param totalSize total group size
      */
-    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
-            MatchInfoDefs matchInfoDefs, long totalSize) {
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults, long totalSize) {
         super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
     }
 
