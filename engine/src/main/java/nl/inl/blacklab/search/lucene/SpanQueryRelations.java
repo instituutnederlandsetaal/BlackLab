@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * <p>
  * This version works with the integrated index and the _relation annotation.
  */
-public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
+public class SpanQueryRelations extends BLSpanQuery {
 
     public enum Direction {
         // Only return root relations (relations without a source)
@@ -319,7 +319,6 @@ public class SpanQueryRelations extends BLSpanQuery implements TagQuery {
         return relationField.luceneField();
     }
 
-    @Override
     public String getElementNameRegex() {
         return RelationUtil.typeFromFullType(relationType);
     }
