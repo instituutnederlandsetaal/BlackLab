@@ -35,7 +35,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
  * We also support a global view of the unsorted hits (even while they're being fetched), for operations
  * that don't require all hits, such as returning a page of hits.
  */
-public class HitsFromQueryKeepSegments extends HitsFromQuery {
+public class HitResultsFromQueryKeepSegments extends HitResultsFromQuery {
 
     /**
      * The step with which hitToStretchMapping records mappings.
@@ -152,7 +152,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
-    protected HitsFromQueryKeepSegments(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+    protected HitResultsFromQueryKeepSegments(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         super(queryInfo, sourceQuery, searchSettings);
         if (hitsPerSegment == null) {
             // (can only happen if there are no spans - normally initialized in getSpansReaderStrategy())
@@ -195,12 +195,12 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
         @Override
         public AnnotatedField field() {
-            return HitsFromQueryKeepSegments.this.field();
+            return HitResultsFromQueryKeepSegments.this.field();
         }
 
         @Override
         public BlackLabIndex index() {
-            return HitsFromQueryKeepSegments.this.index();
+            return HitResultsFromQueryKeepSegments.this.index();
         }
 
         @Override
@@ -211,7 +211,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         @Override
         public long size() {
             ensureResultsRead(-1);
-            synchronized (HitsFromQueryKeepSegments.this) {
+            synchronized (HitResultsFromQueryKeepSegments.this) {
                 return numHitsGlobalView;
             }
         }
@@ -230,7 +230,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
         /** Get the stretch a certain hit is part of */
         private HitsStretch getHitsStretch(long index) {
-            synchronized (HitsFromQueryKeepSegments.this) {
+            synchronized (HitResultsFromQueryKeepSegments.this) {
                 if (index < 0 || index >= numHitsGlobalView)
                     throw new IndexOutOfBoundsException(
                             "Hit index " + index + " is out of bounds (size: " + numHitsGlobalView + ")");
@@ -303,7 +303,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                 return HitsSimple.empty(field(), matchInfoDefs());
             ensureResultsRead(start + length);
             long end = start + length;
-            synchronized (HitsFromQueryKeepSegments.this) {
+            synchronized (HitResultsFromQueryKeepSegments.this) {
                 if (end > numHitsGlobalView)
                     end = numHitsGlobalView;
             }
@@ -624,7 +624,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             // Start where the last stretch in this segment ended.
             long length = segmentHits.size() - indexInSegmentHits;
             assert length > 0;
-            synchronized (HitsFromQueryKeepSegments.this) {
+            synchronized (HitResultsFromQueryKeepSegments.this) {
                 HitsStretch stretch = new HitsStretch(stretches.size(), lrc.docBase,
                         segmentHits, indexInSegmentHits, numHitsGlobalView, length);
                 stretches.add(stretch);

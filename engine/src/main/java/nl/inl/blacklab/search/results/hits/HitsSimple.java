@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 /**
  * A list of simple hits.
  * <p>
- * Contrary to {@link Hits}, this only contains doc, start and end
+ * Contrary to {@link HitResults}, this only contains doc, start and end
  * for each hit, so no captured groups information, and no other
  * bookkeeping (hit/doc retrieved/counted stats, etc.).
  * <p>

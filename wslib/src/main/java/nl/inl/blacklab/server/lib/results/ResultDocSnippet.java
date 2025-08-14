@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
@@ -32,7 +32,7 @@ public class ResultDocSnippet {
 
     private final WebserviceParams params;
 
-    private Hits hits;
+    private HitResults hitResults;
 
     private boolean isHit;
 
@@ -89,14 +89,14 @@ public class ResultDocSnippet {
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             BLSpanQuery query = pattern.translate(queryContext);
             query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
-            hits = index.search(field, params.useCache()).find(query).execute();
+            hitResults = index.search(field, params.useCache()).find(query).execute();
         }
-        if (hits != null && !hits.resultsStats().waitUntil().processedAtLeast(1)) {
+        if (hitResults != null && !hitResults.resultsStats().waitUntil().processedAtLeast(1)) {
             // We couldn't find the tag for the context; use a context of 0 words instead
-            hits = null;
+            hitResults = null;
             context = ContextSize.get(0, maxSnippetSize);
         }
-        if (hits == null) {
+        if (hitResults == null) {
             // Limit context if necessary
             // (done automatically as well, but this should ensure equal before/after parts)
             int snippetSize = end - start + context.before() + context.after();
@@ -110,7 +110,7 @@ public class ResultDocSnippet {
                 int newAfter = (int)(context.after() * factor);
                 context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
             }
-            hits = Hits.singleHit(QueryInfo.create(index, field), luceneDocId, start, end);
+            hitResults = HitResults.singleHit(QueryInfo.create(index, field), luceneDocId, start, end);
         }
 
         origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
@@ -122,7 +122,7 @@ public class ResultDocSnippet {
     }
 
     public HitsSimple getHits() {
-        return hits.getHits();
+        return hitResults.getHits();
     }
 
     public boolean isHit() {

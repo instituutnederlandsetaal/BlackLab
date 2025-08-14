@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.testutil.TestIndex;
 
@@ -59,9 +59,9 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropHitText() {
-        Hits hits = testIndex.find(" 'the' ");
+        HitResults hitResults = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyHitText(index, MatchSensitivity.SENSITIVE);
-        HitGroups g = hits.group(p, Results.NO_LIMIT);
+        HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         HitGroup group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE,
                 new String[] { "the" }, false));
         Assert.assertEquals(3, group.size());
@@ -72,9 +72,9 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropCaptureGroup() {
-        Hits hits = testIndex.find(" A:'the' ");
+        HitResults hitResults = testIndex.find(" A:'the' ");
         HitProperty p = new HitPropertyCaptureGroup(index, index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE, "A", RelationInfo.SpanMode.FULL_SPAN);
-        HitGroups g = hits.group(p, Results.NO_LIMIT);
+        HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         HitGroup group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE,
                 new String[] { "the" }, false));
         Assert.assertEquals(3, group.size());
@@ -101,9 +101,9 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropContextWords() {
-        Hits hits = testIndex.find(" 'the' ");
+        HitResults hitResults = testIndex.find(" 'the' ");
         HitProperty p = HitPropertyContextPart.contextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "L1-1;H1-2");
-        HitGroups g = hits.group(p, Results.NO_LIMIT);
+        HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         Assert.assertEquals(4, g.size());
         HitGroup group;
         group = g.get(multipleContextWordsValues(new String[0], new String[] { "The" }));
@@ -118,9 +118,9 @@ public class TestHitProperties {
 
     @Test
     public void testHitPropContextWordsReverse() {
-        Hits hits = testIndex.find(" 'the' 'lazy' ");
+        HitResults hitResults = testIndex.find(" 'the' 'lazy' ");
         HitProperty p = HitPropertyContextPart.contextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "L1;H2-1;R1");
-        HitGroups g = hits.group(p, Results.NO_LIMIT);
+        HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         Assert.assertEquals(1, g.size());
         HitGroup group;
         group = g.get(

@@ -14,14 +14,14 @@ public class HitGroupWithoutResults extends HitGroup {
     /**
      * A Hits object that only stores statistics about a set of hits, not the actual hits themselves (because we don't need them).
      */
-    private static class HitsWithoutResults extends HitsAbstract {
+    private static class HitResultsWithoutResults extends HitResultsAbstract {
         protected final boolean maxHitsProcessed;
         protected final boolean maxHitsCounted;
 
         private final ResultsStatsSaved hitsStats;
         private final ResultsStatsSaved docsStats;
 
-        public HitsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
+        public HitResultsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
             super(queryInfo, HitsSimple.empty(queryInfo.field(), null), false);
 
             this.maxHitsProcessed = maxHitsProcessed;
@@ -59,7 +59,7 @@ public class HitGroupWithoutResults extends HitGroup {
     }
 
     public HitGroupWithoutResults(QueryInfo queryInfo, PropertyValue groupIdentity, long totalHits, int totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
-        super(groupIdentity, new HitsWithoutResults(queryInfo, totalHits, totalDocuments, maxHitsCounted, maxHitsProcessed), totalHits);
+        super(groupIdentity, new HitResultsWithoutResults(queryInfo, totalHits, totalDocuments, maxHitsCounted, maxHitsProcessed), totalHits);
     }
 
     @Override

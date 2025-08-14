@@ -13,7 +13,7 @@ import nl.inl.util.ThreadAborter;
 /**
  * A Hits object that filters another.
  */
-public class HitsFiltered extends HitsAbstract {
+public class HitResultsFiltered extends HitResultsAbstract {
 
     private final Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -22,7 +22,7 @@ public class HitsFiltered extends HitsAbstract {
      */
     private int previousHitDoc = -1;
 
-    private Hits source;
+    private HitResults source;
 
     private final HitProperty filterProperty;
 
@@ -39,18 +39,18 @@ public class HitsFiltered extends HitsAbstract {
     /**
      * Filter hits.
      *
-     * @param hits hits to filter
+     * @param hitResults hits to filter
      * @param property property to filter by
      * @param value value to filter with
      */
-    protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
-        super(hits.queryInfo(), HitsInternalMutable.create(hits.field(), hits.getHits().matchInfoDefs(), -1, true, true), true);
-        this.source = hits;
+    protected HitResultsFiltered(HitResults hitResults, HitProperty property, PropertyValue value) {
+        super(hitResults.queryInfo(), HitsInternalMutable.create(hitResults.field(), hitResults.getHits().matchInfoDefs(), -1, true, true), true);
+        this.source = hitResults;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
         // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigated by
         // implementing a ForwardIndex that stores documents linearly, making it just a single read.
-        filterProperty = property.copyWith(hits.getHits());
+        filterProperty = property.copyWith(hitResults.getHits());
         this.filterValue = value;
         hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this));
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));

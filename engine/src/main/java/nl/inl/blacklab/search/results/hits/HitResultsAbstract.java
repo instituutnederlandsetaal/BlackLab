@@ -36,16 +36,16 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
  *
  * Should be thread-safe and most methods are safe w.r.t. hits having been fetched.
  */
-public abstract class HitsAbstract extends ResultsAbstract implements Hits {
+public abstract class HitResultsAbstract extends ResultsAbstract implements HitResults {
 
-    protected static final Logger logger = LogManager.getLogger(HitsAbstract.class);
+    protected static final Logger logger = LogManager.getLogger(HitResultsAbstract.class);
 
     /**
      * Minimum number of hits to fetch in an ensureHitsRead() block.
      *
      * This prevents locking again and again for a single hit when iterating.
      *
-     * See {@link HitsFromQuery} and {@link HitsFiltered}.
+     * See {@link HitResultsFromQuery} and {@link HitResultsFiltered}.
      */
     protected static final int FETCH_HITS_MIN = 20;
 
@@ -66,7 +66,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @param queryInfo query info for corresponding query
      * @param hits hits to use for this object. Used as-is, not copied.
      */
-    protected HitsAbstract(QueryInfo queryInfo, HitsSimple hits, boolean mutable) {
+    protected HitResultsAbstract(QueryInfo queryInfo, HitsSimple hits, boolean mutable) {
         super(queryInfo);
         if (hits == null)
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
@@ -90,7 +90,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @return the window
      */
     @Override
-    public Hits window(long first, long windowSize) {
+    public HitResults window(long first, long windowSize) {
         HitsSimple hs = getHits();
         HitsSimple window = hs.sublist(first, windowSize);
 
@@ -134,7 +134,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, window.size());
         ResultsStats hitsStats = new ResultsStatsSaved(window.size());
         ResultsStats docsStats = new ResultsStatsSaved(docsRetrieved.longValue());
-        return new HitsList(queryInfo(), window, windowStats, null,
+        return new HitResultsList(queryInfo(), window, windowStats, null,
                 hitsStats, docsStats);
     }
 
@@ -145,7 +145,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @return the sample
      */
     @Override
-    public Hits sample(SampleParameters sampleParameters) {
+    public HitResults sample(SampleParameters sampleParameters) {
 
         HitsSimple sample = sampleHits(getHits(), sampleParameters);
 
@@ -161,7 +161,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
         ResultsStats hitsStats = new ResultsStatsSaved(sample.size());
         ResultsStats docsStats = new ResultsStatsSaved(docsInSample.getValue());
-        return new HitsList(queryInfo(), sample, null, sampleParameters, hitsStats, docsStats);
+        return new HitResultsList(queryInfo(), sample, null, sampleParameters, hitsStats, docsStats);
     }
 
     public static HitsSimple sampleHits(HitsSimple hitsList, SampleParameters sampleParameters) {
@@ -214,7 +214,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public Hits sorted(HitProperty sortProp) {
+    public HitResults sorted(HitProperty sortProp) {
         // We need a HitProperty with the correct Hits object
         // If we need context, make sure we have it.
         sortProp = sortProp.copyWith(getHits());
@@ -224,7 +224,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
         HitsSimple sorted = getHits().sorted(sortProp);
         sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
-        return new HitsList(queryInfo(), sorted, null, null,
+        return new HitResultsList(queryInfo(), sorted, null, null,
                 resultsStats(), docsStats());
     }
 
@@ -242,8 +242,8 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
      * @return filtered hits
      */
     @Override
-    public Hits filter(HitProperty property, PropertyValue value) {
-        return new HitsFiltered(this, property, value);
+    public HitResults filter(HitProperty property, PropertyValue value) {
+        return new HitResultsFiltered(this, property, value);
     }
 
     @Override
@@ -285,11 +285,11 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
     /** Assumes this hit is within our lists. */
     @Override
-    public Hits window(Hit hit) {
+    public HitResults window(Hit hit) {
         HitsInternalMutable r = HitsInternalMutable.create(field(), getHits().matchInfoDefs(), 1, false, false);
         r.add(hit);
 
-        return new HitsList(
+        return new HitResultsList(
                 queryInfo(),
                 r,
                 new WindowStats(false, 1, 1, 1),

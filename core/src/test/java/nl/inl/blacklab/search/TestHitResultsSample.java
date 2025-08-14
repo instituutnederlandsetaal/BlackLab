@@ -6,9 +6,9 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 
-public class TestHitsSample {
+public class TestHitResultsSample {
 
     private static final int[] A_DOC = { 1, 1, 2, 3, 3, 3 };
     private static final int[] A_START = { 1, 4, 2, 1, 3, 5 };
@@ -16,10 +16,10 @@ public class TestHitsSample {
 
     private static void assertSample(int[] expected, SampleParameters param) {
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            Hits hits = Hits.list(index.createDefaultQueryInfo(), A_DOC, A_START, A_END).sample(param);
+            HitResults hitResults = HitResults.list(index.createDefaultQueryInfo(), A_DOC, A_START, A_END).sample(param);
             int i = 0;
-            Assert.assertEquals(expected.length, hits.size());
-            for (EphemeralHit hit: hits.getHits()) {
+            Assert.assertEquals(expected.length, hitResults.size());
+            for (EphemeralHit hit: hitResults.getHits()) {
                 Assert.assertEquals(A_DOC[expected[i]], hit.doc());
                 Assert.assertEquals(A_START[expected[i]], hit.start());
                 Assert.assertEquals(A_END[expected[i]], hit.end());

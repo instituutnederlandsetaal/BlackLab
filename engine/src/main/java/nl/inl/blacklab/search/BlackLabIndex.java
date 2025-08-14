@@ -38,7 +38,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -167,7 +167,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param query the pattern to find
      * @return the hits found
      */
-    default Hits find(BLSpanQuery query) {
+    default HitResults find(BLSpanQuery query) {
         return find(query, null);
     }
 
@@ -179,7 +179,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
+    HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
 
     /**
      * Find hits for a pattern in a field.
@@ -188,7 +188,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param settings search settings, or null for default
      * @return the hits found
      */
-    default Hits find(BLSpanQuery query, SearchSettings settings) {
+    default HitResults find(BLSpanQuery query, SearchSettings settings) {
         return find(QueryInfo.create(this, fieldFromQuery(query), true), query, settings);
     }
 

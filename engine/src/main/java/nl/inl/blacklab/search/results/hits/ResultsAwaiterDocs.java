@@ -5,9 +5,9 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 /** Used by ResultsStatsPassive to wait until some number of docs have been seen. */
 class ResultsAwaiterDocs implements ResultsStats.ResultsAwaiter {
 
-    HitsAbstract results;
+    HitResultsAbstract results;
 
-    public ResultsAwaiterDocs(HitsAbstract hits) {
+    public ResultsAwaiterDocs(HitResultsAbstract hits) {
         this.results = hits;
     }
 

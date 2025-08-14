@@ -17,10 +17,10 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 
-public class HitsFromQuery extends HitsFromQueryAbstract {
+public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
 
-    public static HitsFromQuery get(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        return new HitsFromQueryKeepSegments(queryInfo, sourceQuery, searchSettings);
+    public static HitResultsFromQuery get(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+        return new HitResultsFromQueryKeepSegments(queryInfo, sourceQuery, searchSettings);
     }
 
     /** Objects getting the actual hits from each index segment and adding them to the global results list. */
@@ -68,7 +68,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
         return hitsInternalMutable.size();
     }
 
-    protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+    protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
                 HitsInternalMutable.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);

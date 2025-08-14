@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
  *
  * This interface is read-only.
  */
-public interface Hits extends Results {
+public interface HitResults extends Results {
     /**
      * Construct a Hits object from a SpanQuery.
      *
@@ -32,8 +32,8 @@ public interface Hits extends Results {
      * @param searchSettings settings such as max. hits to process/count
      * @return hits found
      */
-    static Hits fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
-        return HitsFromQuery.get(queryInfo, query, searchSettings);
+    static HitResults fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
+        return HitResultsFromQuery.get(queryInfo, query, searchSettings);
     }
 
     /**
@@ -47,12 +47,12 @@ public interface Hits extends Results {
      * @param ends      hit ends
      * @return hits found
      */
-    static Hits list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
-        return new HitsList(queryInfo, HitsSimple.fromLists(queryInfo.field(), docs, starts, ends));
+    static HitResults list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
+        return new HitResultsList(queryInfo, HitsSimple.fromLists(queryInfo.field(), docs, starts, ends));
     }
 
-    static Hits list(QueryInfo queryInfo, HitsSimple hits) {
-        return new HitsList(queryInfo, hits);
+    static HitResults list(QueryInfo queryInfo, HitsSimple hits) {
+        return new HitResultsList(queryInfo, hits);
     }
 
     /**
@@ -64,7 +64,7 @@ public interface Hits extends Results {
      * @param end         end of hit
      * @return hits object
      */
-    static Hits singleHit(QueryInfo queryInfo, int luceneDocId, int start, int end) {
+    static HitResults singleHit(QueryInfo queryInfo, int luceneDocId, int start, int end) {
         return list(queryInfo, new int[]{luceneDocId}, new int[]{start}, new int[]{end});
     }
 
@@ -74,8 +74,8 @@ public interface Hits extends Results {
      * @param queryInfo query info
      * @return hits found
      */
-    static Hits empty(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsSimple.empty(queryInfo.field(), null));
+    static HitResults empty(QueryInfo queryInfo) {
+        return new HitResultsList(queryInfo, HitsSimple.empty(queryInfo.field(), null));
     }
 
     /**
@@ -117,7 +117,7 @@ public interface Hits extends Results {
      * @param windowSize size of the window
      * @return the window
      */
-    Hits window(long first, long windowSize);
+    HitResults window(long first, long windowSize);
 
     /**
      * Take a sample of hits by wrapping an existing Hits object.
@@ -125,9 +125,9 @@ public interface Hits extends Results {
      * @param sampleParameters sample parameters
      * @return the sample
      */
-    Hits sample(SampleParameters sampleParameters);
+    HitResults sample(SampleParameters sampleParameters);
 
-    Hits sorted(HitProperty sortProp);
+    HitResults sorted(HitProperty sortProp);
 
     HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup);
 
@@ -138,7 +138,7 @@ public interface Hits extends Results {
      * @param value    value to select on, e.g. 'the'
      * @return filtered hits
      */
-    Hits filter(HitProperty property, PropertyValue value);
+    HitResults filter(HitProperty property, PropertyValue value);
 
     @Override
     long numberOfResultObjects();
@@ -172,5 +172,5 @@ public interface Hits extends Results {
      * @param hit hit for the window
      * @return hit window
      */
-    Hits window(Hit hit);
+    HitResults window(Hit hit);
 }

@@ -12,7 +12,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 
@@ -29,9 +29,9 @@ public class TestResultsGrouper {
         Mockito.when(indexSearcher.getSimilarity()).thenReturn(new BM25Similarity());
 
         index.setIndexSearcher(indexSearcher);
-        Hits hits = Hits.list(QueryInfo.create(index), doc, start, end);
+        HitResults hitResults = HitResults.list(QueryInfo.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
-        HitGroups grouper = hits.group(crit, Results.NO_LIMIT);
+        HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT);
 
         Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);

@@ -4,7 +4,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hits.HitGroup;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 
 /**
  * A document result, containing a Lucene document from the index and a
@@ -16,7 +16,7 @@ public class DocResult extends HitGroup {
         return new DocResult(queryInfo, doc, score, totalNumberOfHits);
     }
     
-    public static DocResult fromHits(PropertyValueDoc doc, Hits storedHits, long totalNumberOfHits) {
+    public static DocResult fromHits(PropertyValueDoc doc, HitResults storedHits, long totalNumberOfHits) {
         return new DocResult(doc, storedHits, totalNumberOfHits);
     }
     
@@ -34,7 +34,7 @@ public class DocResult extends HitGroup {
      * @param storedHits hits in the document stored in this result
      * @param totalNumberOfHits total number of hits in this document
      */
-    protected DocResult(PropertyValue doc, Hits storedHits, long totalNumberOfHits) {
+    protected DocResult(PropertyValue doc, HitResults storedHits, long totalNumberOfHits) {
         super(doc, storedHits, totalNumberOfHits);
         this.score = 0.0f;
     }

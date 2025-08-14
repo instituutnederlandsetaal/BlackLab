@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.util.ThreadAborter;
 
 /** 
- * Helper class for use with {@link HitsFromQuery} <br><br>
+ * Helper class for use with {@link HitResultsFromQuery} <br><br>
  * 
  * HitsFromQueryParallel generally constructs one SpansReader instance per segment ({@link LeafReaderContext}) of the index.
  * The SpansReader will then produce results for the segment, periodically merging them back to the global resultset passed in.

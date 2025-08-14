@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
@@ -60,7 +60,7 @@ public class ResultHitGroup {
         }
 
         if (params.getIncludeGroupContents()) {
-            Hits hitsInGroup = getGroup().storedResults();
+            HitResults hitsInGroup = getGroup().storedResults();
             listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup, getConcordanceContext(),
                     getDocIdToPid());
         }

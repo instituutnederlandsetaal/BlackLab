@@ -18,12 +18,12 @@ public class HitGroup extends Group {
         return new HitGroup(queryInfo, groupIdentity, storedResults, totalSize);
     }
 
-    public static HitGroup fromHits(PropertyValue groupIdentity, Hits storedResults, long totalSize) {
+    public static HitGroup fromHits(PropertyValue groupIdentity, HitResults storedResults, long totalSize) {
         return new HitGroup(groupIdentity, storedResults, totalSize);
     }
 
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, long totalSize) {
-        this(groupIdentity, Hits.empty(queryInfo), totalSize);
+        this(groupIdentity, HitResults.empty(queryInfo), totalSize);
     }
 
     /**
@@ -37,7 +37,7 @@ public class HitGroup extends Group {
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsSimple storedResults, long totalSize) {
-        super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
+        super(groupIdentity, HitResults.list(queryInfo, storedResults), totalSize);
     }
 
     /**
@@ -49,12 +49,12 @@ public class HitGroup extends Group {
      * @param storedResults the hits
      * @param totalSize total group size
      */
-    protected HitGroup(PropertyValue groupIdentity, Hits storedResults, long totalSize) {
+    protected HitGroup(PropertyValue groupIdentity, HitResults storedResults, long totalSize) {
         super(groupIdentity, storedResults, totalSize);
     }
     
     @Override
-    public Hits storedResults() {
-        return (Hits)super.storedResults();
+    public HitResults storedResults() {
+        return (HitResults)super.storedResults();
     }
 }

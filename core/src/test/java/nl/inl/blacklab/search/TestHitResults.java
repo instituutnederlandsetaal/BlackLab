@@ -12,7 +12,7 @@ import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 
-public class TestHits {
+public class TestHitResults {
 
     @Test
     public void testHitsIterate() {

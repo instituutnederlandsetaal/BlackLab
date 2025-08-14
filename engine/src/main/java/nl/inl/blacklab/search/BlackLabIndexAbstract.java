@@ -63,7 +63,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -355,8 +355,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
-    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
-        return Hits.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
+    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) {
+        return HitResults.fromSpanQuery(queryInfo, query, settings == null ? searchSettings() : settings);
     }
 
     @Override

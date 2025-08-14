@@ -5,7 +5,7 @@ import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 
 /** A search result that tracks and records the number of results in another search.
  *
@@ -70,7 +70,7 @@ public class ResultStatsFromOtherResult extends ResultsStats {
             this.count = count.resultsStats();
             break;
         case HITS:
-            if (count instanceof Hits) {
+            if (count instanceof HitResults) {
                 this.count = count.resultsStats();
             } else if (count instanceof HitGroups) {
                 long n = ((HitGroups) count).sumOfGroupSizes();
@@ -83,8 +83,8 @@ public class ResultStatsFromOtherResult extends ResultsStats {
             }
             break;
         case DOCS:
-            if (count instanceof Hits) {
-                this.count = ((Hits) count).docsStats();
+            if (count instanceof HitResults) {
+                this.count = ((HitResults) count).docsStats();
             } else if (count instanceof HitGroups) {
                 throw new UnsupportedOperationException("Cannot get docs count from HitGroups");
             } else if (count instanceof DocResults) {

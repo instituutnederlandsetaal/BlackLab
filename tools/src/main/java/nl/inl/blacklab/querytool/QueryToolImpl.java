@@ -57,7 +57,7 @@ import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
@@ -86,7 +86,7 @@ public class QueryToolImpl {
     BlackLabIndex index;
 
     /** The hits that are the result of our query. */
-    private Hits hits = null;
+    private HitResults hitResults = null;
 
     /** The docs that are the result of our query. */
     private DocResults docs = null;
@@ -98,7 +98,7 @@ public class QueryToolImpl {
      * If all hits or the current group of hits have been sorted, this contains the
      * sorted hits.
      */
-    private Hits sortedHits = null;
+    private HitResults sortedHits = null;
 
     /** The collocations, or null if we're not looking at collocations. */
     private TermFrequencyList collocations = null;
@@ -233,7 +233,7 @@ public class QueryToolImpl {
         shouldCloseIndex = false; // caller is responsible
 
         // Reset results
-        hits = null;
+        hitResults = null;
         groups = null;
         sortedHits = null;
         collocations = null;
@@ -333,7 +333,7 @@ public class QueryToolImpl {
         switch (action) {
         case "clear":
         case "reset":
-            hits = null;
+            hitResults = null;
             docs = null;
             groups = null;
             sortedHits = null;
@@ -365,7 +365,7 @@ public class QueryToolImpl {
             break;
         case "snippet": {
             int hitId = parseInt(arguments, 1) - 1;
-            Hits currentHitSet = getCurrentSortedHitSet();
+            HitResults currentHitSet = getCurrentSortedHitSet();
             if (hitId >= currentHitSet.size()) {
                 output.error("Hit number out of range.");
             } else {
@@ -398,11 +398,11 @@ public class QueryToolImpl {
         case "highlight ": {
             // Get highlighted document contents
             int docId = parseInt(arguments, 1) - 1;
-            Hits currentHitSet = getCurrentSortedHitSet();
+            HitResults currentHitSet = getCurrentSortedHitSet();
             if (currentHitSet == null) {
                 output.error("No set of hits for highlighting.");
             } else {
-                HitsSimple hitsInDoc = hits.getHits().filteredByDocId(docId);
+                HitsSimple hitsInDoc = hitResults.getHits().filteredByDocId(docId);
                 output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
             }
             break;
@@ -655,7 +655,7 @@ public class QueryToolImpl {
                 search = search.sort(HitProperty.deserialize(index, contentsField, alwaysSortBy, contextSize));
             }
 
-            hits = search.execute();
+            hitResults = search.execute();
             docs = null;
             groups = null;
             sortedHits = null;
@@ -665,7 +665,7 @@ public class QueryToolImpl {
             firstResult = 0;
             showResultsPage();
             if (determineTotalNumberOfHits)
-                statInfo = Long.toString(hits.size());
+                statInfo = Long.toString(hitResults.size());
             else
                 statInfo = "?";
             commandWasQuery = true;
@@ -707,14 +707,14 @@ public class QueryToolImpl {
      * @param pageNumber which page to show
      */
     private void showPage(long pageNumber) {
-        if (hits != null) {
+        if (hitResults != null) {
 
             if (determineTotalNumberOfHits) {
                 // Clamp page number of total number of hits
                 long totalResults = switch (showSetting) {
                     case COLLOC -> collocations.size();
                     case GROUPS -> groups.size();
-                    default -> hits.size();
+                    default -> hitResults.size();
                 };
 
                 long totalPages = (totalResults + resultsPerPage - 1) / resultsPerPage;
@@ -750,7 +750,7 @@ public class QueryToolImpl {
      * @param sortBy property to sort by
      */
     private void sortBy(String sortBy) {
-        if (hits == null)
+        if (hitResults == null)
             return;
 
         switch (showSetting) {
@@ -831,14 +831,14 @@ public class QueryToolImpl {
      *            this is null, uses the "main annotation" (word form, usually).
      */
     private void groupBy(String groupBy, String annotationName) {
-        if (hits == null)
+        if (hitResults == null)
             return;
 
         Timer t = new Timer();
 
         // Group results
         HitProperty crit = getCrit(groupBy, annotationName, 1);
-        groups = hits.group(crit, -1);
+        groups = hitResults.group(crit, -1);
         showSetting = ShowSetting.GROUPS;
         sortGroups(HitGroupPropertySize.ID);
         timings.record("group");
@@ -887,7 +887,7 @@ public class QueryToolImpl {
                 crit = new HitPropertyDocumentStoredField(index, critType);
             } else {
                 // Regular BLS serialized hit property. Decode it.
-                crit = HitProperty.deserialize(hits.getHits(), critType, contextSize);
+                crit = HitProperty.deserialize(hitResults.getHits(), critType, contextSize);
             }
             break;
         }
@@ -906,7 +906,7 @@ public class QueryToolImpl {
             showWhichGroup = -1;
         } else if (showWhat.equals("docs")) {
             showSetting = ShowSetting.DOCS;
-        } else if (showWhat.startsWith("colloc") && hits != null) {
+        } else if (showWhat.startsWith("colloc") && hitResults != null) {
             showSetting = ShowSetting.COLLOC;
             if (showWhat.length() >= 7) {
                 String newCollocAnnot = showWhat.substring(7);
@@ -964,17 +964,17 @@ public class QueryToolImpl {
         if (collocations == null) {
             // Case-sensitive collocations..?
             if (collocAnnotation == null) {
-                AnnotatedField field = hits.field();
+                AnnotatedField field = hitResults.field();
                 collocAnnotation = field.mainAnnotation();
             }
 
-            collocations = hits.collocations(collocAnnotation, contextSize, index.defaultMatchSensitivity(), true);
+            collocations = hitResults.collocations(collocAnnotation, contextSize, index.defaultMatchSensitivity(), true);
         }
         output.collocations(collocations, firstResult, resultsPerPage);
     }
 
     private void showDocsPage() {
-        Hits currentHitSet = getCurrentHitSet();
+        HitResults currentHitSet = getCurrentHitSet();
         if (docs == null) {
             if (currentHitSet != null)
                 docs = currentHitSet.perDocResults(Results.NO_LIMIT);
@@ -993,7 +993,7 @@ public class QueryToolImpl {
      */
     private void showHitsPage() {
         timings.start();
-        Hits hitsToShow = getCurrentSortedHitSet();
+        HitResults hitsToShow = getCurrentSortedHitSet();
         if (hitsToShow == null)
             return; // nothing to show
         output.hits(hitsToShow, hitsToShow.window(firstResult, resultsPerPage), this);
@@ -1008,7 +1008,7 @@ public class QueryToolImpl {
      *
      * @return the hit set
      */
-    private Hits getCurrentSortedHitSet() {
+    private HitResults getCurrentSortedHitSet() {
         if (sortedHits != null)
             return sortedHits;
         return getCurrentHitSet();
@@ -1021,8 +1021,8 @@ public class QueryToolImpl {
      *
      * @return the hit set
      */
-    private Hits getCurrentHitSet() {
-        Hits hitsToShow = hits;
+    private HitResults getCurrentHitSet() {
+        HitResults hitsToShow = hitResults;
         if (showWhichGroup >= 0) {
             HitGroup g = groups.get(showWhichGroup);
             hitsToShow = g.storedResults();

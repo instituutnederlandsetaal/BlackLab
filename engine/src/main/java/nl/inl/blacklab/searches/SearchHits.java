@@ -10,10 +10,10 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 
 /** A search that yields hits. */
-public abstract class SearchHits extends SearchForResults<Hits> {
+public abstract class SearchHits extends SearchForResults<HitResults> {
 
     protected SearchHits(QueryInfo queryInfo) {
         super(queryInfo);

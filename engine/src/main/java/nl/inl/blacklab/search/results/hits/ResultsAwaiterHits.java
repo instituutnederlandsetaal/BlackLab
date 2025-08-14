@@ -4,9 +4,9 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 class ResultsAwaiterHits implements ResultsStats.ResultsAwaiter {
 
-    private final HitsAbstract hits;
+    private final HitResultsAbstract hits;
 
-    public ResultsAwaiterHits(HitsAbstract hits) {
+    public ResultsAwaiterHits(HitResultsAbstract hits) {
         this.hits = hits;
     }
 

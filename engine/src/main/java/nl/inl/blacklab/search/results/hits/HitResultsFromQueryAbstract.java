@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.util.CurrentThreadExecutorService;
 
-public abstract class HitsFromQueryAbstract extends HitsAbstract {
+public abstract class HitResultsFromQueryAbstract extends HitResultsAbstract {
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     protected static final int HIT_POLLING_TIME_MS = 50;
@@ -56,7 +56,7 @@ public abstract class HitsFromQueryAbstract extends HitsAbstract {
     /** Number of threads to use for fetching hits. */
     protected int numThreads;
 
-    public HitsFromQueryAbstract(QueryInfo queryInfo, HitsInternalMutable hits, SearchSettings searchSettings) {
+    public HitResultsFromQueryAbstract(QueryInfo queryInfo, HitsInternalMutable hits, SearchSettings searchSettings) {
         super(queryInfo, hits, true);
         maxHitsToProcess = searchSettings.maxHitsToProcess();
         maxHitsToCount = searchSettings.maxHitsToCount();

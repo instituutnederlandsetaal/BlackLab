@@ -42,7 +42,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
@@ -165,7 +165,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public Hits find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
+    public HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings) throws TooManyClauses {
         throw new UnsupportedOperationException();
     }
 

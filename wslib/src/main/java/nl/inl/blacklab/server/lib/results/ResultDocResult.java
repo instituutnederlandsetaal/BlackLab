@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.hits.Concordances;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.blacklab.server.jobs.ContextSettings;
@@ -38,16 +38,16 @@ public class ResultDocResult {
         pid = WebserviceOperations.getDocumentPid(index, dr.identity().value(), document);
         docInfo = WebserviceOperations.docInfo(index, pid, document, metadataFieldsToList);
         // Snippets
-        Hits hits = dr.storedResults().window(0, 5);
+        HitResults hitResults = dr.storedResults().window(0, 5);
         numberOfHits = dr.storedResults().size();
 
         concordancesToShow = new ArrayList<>();
         kwicsToShow = new ArrayList<>();
-        if (hits.resultsStats().waitUntil().processedAtLeast(1)) {
+        if (hitResults.resultsStats().waitUntil().processedAtLeast(1)) {
             ContextSettings contextSettings = params.contextSettings();
             Concordances theConcordances = null;
             Kwics theKwics = null;
-            HitsSimple hitsList = hits.getHits();
+            HitsSimple hitsList = hitResults.getHits();
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
                 theConcordances = hitsList.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else

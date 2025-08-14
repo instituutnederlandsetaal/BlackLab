@@ -38,7 +38,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.util.UtilsForTesting;
@@ -265,8 +265,8 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String query) {
-        Hits hits = find(query, null);
-        return getConcordances(hits.getHits(), word);
+        HitResults hitResults = find(query, null);
+        return getConcordances(hitResults.getHits(), word);
     }
 
     /**
@@ -277,13 +277,13 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(String query, HitProperty sortBy) {
-        Hits hits = find(query, null).sorted(sortBy);
-        return getConcordances(hits.getHits(), word);
+        HitResults hitResults = find(query, null).sorted(sortBy);
+        return getConcordances(hitResults.getHits(), word);
     }
     
     public List<String> findConc(String query, HitProperty prop, PropertyValue value) {
-        Hits hits = find(query, null).filter(prop, value);
-        return getConcordances(hits.getHits(), word);
+        HitResults hitResults = find(query, null).filter(prop, value);
+        return getConcordances(hitResults.getHits(), word);
     }
 
     /**
@@ -304,7 +304,7 @@ public class TestIndex {
      * @param filter how to filter the query
      * @return the resulting BlackLab text pattern
      */
-    public Hits find(String pattern, Query filter) {
+    public HitResults find(String pattern, Query filter) {
         try {
             BLSpanQuery query = CorpusQueryLanguageParser.parse(pattern, "word")
                     .toQuery(QueryInfo.create(index), filter, false, false);
@@ -321,7 +321,7 @@ public class TestIndex {
      * @param pattern CorpusQL pattern to find
      * @return the resulting BlackLab text pattern
      */
-    public Hits find(String pattern) {
+    public HitResults find(String pattern) {
         return find(pattern, null);
     }
 

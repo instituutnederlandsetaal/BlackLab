@@ -4,7 +4,7 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 
@@ -29,7 +29,7 @@ public class SearchHitsFromQuery extends SearchHits {
      * @return result of the operation
      */
     @Override
-    public Hits executeInternal(ActiveSearch<Hits> activeSearch) {
+    public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
         return queryInfo().index().find(queryInfo(), spanQuery, searchSettings);
     }
 

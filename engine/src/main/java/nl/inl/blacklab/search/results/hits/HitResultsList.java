@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 /**
  * An immutable list of hits.
  */
-public class HitsList extends HitsAbstract {
+public class HitResultsList extends HitResultsAbstract {
 
     private final ResultsStats hitsStats;
 
@@ -30,7 +30,7 @@ public class HitsList extends HitsAbstract {
      * @param queryInfo query info
      * @param hits the list of hits to wrap
      */
-    protected HitsList(QueryInfo queryInfo, HitsSimple hits) {
+    protected HitResultsList(QueryInfo queryInfo, HitsSimple hits) {
         super(queryInfo, hits, false);
 
         // Count docs
@@ -52,7 +52,7 @@ public class HitsList extends HitsAbstract {
      *
      * Should only be used internally.
      */
-    protected HitsList(
+    protected HitResultsList(
                        QueryInfo queryInfo,
                        HitsSimple hits,
                        WindowStats windowStats,

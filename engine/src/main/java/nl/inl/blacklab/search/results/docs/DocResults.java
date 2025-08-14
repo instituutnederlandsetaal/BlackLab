@@ -45,7 +45,7 @@ import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsInternalMutable;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
@@ -346,9 +346,9 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
                             PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
-                            Hits hits = Hits.list(queryInfo(), docHits);
+                            HitResults hitResults = HitResults.list(queryInfo(), docHits);
                             long size = docHits.size();
-                            addDocResultToList(doc, hits, size);
+                            addDocResultToList(doc, hitResults, size);
                         }
 
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
@@ -368,8 +368,8 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         partialDocHits = docHits; // not done, continue from here later
                     } else {
                         PropertyValueDoc doc = new PropertyValueDoc(lastDocId);
-                        Hits hits = Hits.list(queryInfo(), docHits);
-                        addDocResultToList(doc, hits, docHits.size());
+                        HitResults hitResults = HitResults.list(queryInfo(), docHits);
+                        addDocResultToList(doc, hitResults, docHits.size());
                         sourceHitsIterator = null; // allow this to be GC'ed
                         partialDocHits = null;
                         stats.setDone();
@@ -385,7 +385,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         return results.size() >= number;
     }
 
-    private void addDocResultToList(PropertyValueDoc doc, Hits docHits, long totalNumberOfHits) {
+    private void addDocResultToList(PropertyValueDoc doc, HitResults docHits, long totalNumberOfHits) {
         if (results.size() >= Constants.JAVA_MAX_ARRAY_SIZE) {
             // (NOTE: ArrayList cannot handle more than BlackLab.JAVA_MAX_ARRAY_SIZE entries, and in general,
             //  List.size() will return Integer.MAX_VALUE if there's more than that number of items)
@@ -394,7 +394,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
         DocResult docResult;
         if (maxHitsToStorePerDoc == 0)
-            docResult = DocResult.fromHits(doc, Hits.empty(queryInfo()), totalNumberOfHits);
+            docResult = DocResult.fromHits(doc, HitResults.empty(queryInfo()), totalNumberOfHits);
         else if (maxHitsToStorePerDoc > 0 && docHits.size() > maxHitsToStorePerDoc)
             docResult = DocResult.fromHits(doc, docHits.window(0, maxHitsToStorePerDoc), totalNumberOfHits);
         else

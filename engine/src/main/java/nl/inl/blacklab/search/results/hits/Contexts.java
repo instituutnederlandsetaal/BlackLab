@@ -327,7 +327,7 @@ public class Contexts {
     /**
      * Count occurrences of context words around hit.
      *
-     * @param hits hits to get collocations for
+     * @param hitResults hits to get collocations for
      * @param annotation annotation to use for the collocations, or null if default
      * @param contextSize how many words around hits to use
      * @param sensitivity what sensitivity to use
@@ -335,8 +335,8 @@ public class Contexts {
      *
      * @return the frequency of each occurring token
      */
-    public static synchronized TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
-        BlackLabIndex index = hits.index();
+    public static synchronized TermFrequencyList collocations(HitResults hitResults, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+        BlackLabIndex index = hitResults.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();
         if (contextSize == null)
@@ -344,7 +344,7 @@ public class Contexts {
         if (sensitivity == null)
             sensitivity = annotation.sensitivity(index.defaultMatchSensitivity()).sensitivity();
 
-        Iterable<String[]> contexts = getCollocations(hits.getHits().getStatic(), annotation, contextSize);
+        Iterable<String[]> contexts = getCollocations(hitResults.getHits().getStatic(), annotation, contextSize);
         Map<String, Integer> countPerWord = new HashMap<>();
         for (String[] context: contexts) {
             // Count words
@@ -364,7 +364,7 @@ public class Contexts {
         }
 
         // Transfer from map to list
-        return new TermFrequencyList(hits.queryInfo(), wordFreq, sort);
+        return new TermFrequencyList(hitResults.queryInfo(), wordFreq, sort);
     }
 
 }

@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.config.DefaultMax;
@@ -67,7 +67,7 @@ public class ResultHitsGrouped {
         indexStatus = indexMan.getIndex(params.getCorpusName()).getStatus();
 
         SearchCacheEntry<HitGroups> search;
-        Hits hits = params.hitsSample().execute(); // we need these later to get the match info defs
+        HitResults hitResults = params.hitsSample().execute(); // we need these later to get the match info defs
         try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
             // Get the window we're interested in
             search = params.hitsGroupedStats().executeAsync();
@@ -129,7 +129,7 @@ public class ResultHitsGrouped {
 
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
-        MatchInfoDefs matchInfoDefs = hits.getHits().matchInfoDefs();
+        MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
         Set<AnnotatedField> otherFields = new HashSet<>();
         for (MatchInfo.Def def : matchInfoDefs.currentList()) {
             if (def.getTargetField() != null)

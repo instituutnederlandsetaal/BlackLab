@@ -41,7 +41,7 @@ import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
@@ -487,7 +487,7 @@ class Output {
                 .collect(Collectors.joining(", "));
     }
 
-    public void hits(Hits total, Hits window, QueryToolImpl queryTool) {
+    public void hits(HitResults total, HitResults window, QueryToolImpl queryTool) {
         BlackLabIndex index = window.queryInfo().index();
 
         if (!isShowConc()) {

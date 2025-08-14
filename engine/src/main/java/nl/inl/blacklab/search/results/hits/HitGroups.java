@@ -51,13 +51,13 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
     /**
      * Construct HitGroups from a list of hits.
      *
-     * @param hits hits to group
+     * @param hitResults hits to group
      * @param criteria criteria to group by
      * @param maxResultsToStorePerGroup max results to store
      * @return grouped hits
      */
-    public static HitGroups fromHits(Hits hits, HitProperty criteria, long maxResultsToStorePerGroup) {
-        return new HitGroups(hits, criteria, maxResultsToStorePerGroup);
+    public static HitGroups fromHits(HitResults hitResults, HitProperty criteria, long maxResultsToStorePerGroup) {
+        return new HitGroups(hitResults, criteria, maxResultsToStorePerGroup);
     }
 
     private final HitProperty criteria;
@@ -105,16 +105,16 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
     /**
      * Construct a ResultsGrouper object, by grouping the supplied hits.
      *
-     * @param hits the hits to group
+     * @param hitResults the hits to group
      * @param criteria the criteria to group on
      * @param maxResultsToStorePerGroup how many results to store per group at most
      */
-    protected HitGroups(Hits hits, HitProperty criteria, long maxResultsToStorePerGroup) {
-        super(hits.queryInfo());
+    protected HitGroups(HitResults hitResults, HitProperty criteria, long maxResultsToStorePerGroup) {
+        super(hitResults.queryInfo());
         if (criteria == null)
             throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
-        HitsSimple hitsList = hits.getHits().getStatic();
+        HitsSimple hitsList = hitResults.getHits().getStatic();
 
         Map<PropertyValue, GroupHitsAndSize> groupings = performGrouping(hitsList, criteria, maxResultsToStorePerGroup);
         largestGroupSize = groupings.values().stream()
@@ -136,9 +136,9 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         }
 
         // Make a copy of the stats so we don't keep any references to the source hits
-        resultsStats = new ResultsStatsSaved(groups.size(), groups.size(), hits.resultsStats().maxStats());
-        this.hitsStats = hits.resultsStats().save();
-        this.docsStats = hits.docsStats().save();
+        resultsStats = new ResultsStatsSaved(groups.size(), groups.size(), hitResults.resultsStats().maxStats());
+        this.hitsStats = hitResults.resultsStats().save();
+        this.docsStats = hitResults.docsStats().save();
     }
 
     /** Used during the actual grouping */

@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.Contexts;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestCollocations {
@@ -21,9 +21,9 @@ public class TestCollocations {
 
     @Test
     public void testThe() {
-        Hits hits = testIndex.find("'the'");
+        HitResults hitResults = testIndex.find("'the'");
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        TermFrequencyList result = Contexts.collocations(hits, annotation, ContextSize.get(2, 100),
+        TermFrequencyList result = Contexts.collocations(hitResults, annotation, ContextSize.get(2, 100),
                 MatchSensitivity.SENSITIVE, true);
          for (TermFrequency termFrequency: result) {
              Assert.assertEquals(1, termFrequency.frequency);
@@ -33,9 +33,9 @@ public class TestCollocations {
 
     @Test
     public void testFox() {
-        Hits hits = testIndex.find("'fox'");
+        HitResults hitResults = testIndex.find("'fox'");
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        TermFrequencyList result = Contexts.collocations(hits, annotation, ContextSize.get(3, 100),
+        TermFrequencyList result = Contexts.collocations(hitResults, annotation, ContextSize.get(3, 100),
                 MatchSensitivity.INSENSITIVE, true);
         for (TermFrequency termFrequency: result) {
             if (termFrequency.term.equals("the"))

@@ -62,7 +62,7 @@ import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
@@ -609,10 +609,10 @@ public class ResponseStreamer {
 
     public void listOfHits(ResultListOfHits result) throws BlsException {
         nl.inl.blacklab.server.lib.WebserviceParams params = result.getParams();
-        Hits hits = result.getHits();
+        HitResults hitResults = result.getHits();
 
         ds.startEntry("hits").startList();
-        HitsSimple hitsList = hits.getHits().getStatic();
+        HitsSimple hitsList = hitResults.getHits().getStatic();
         for (EphemeralHit hit: hitsList) {
             ds.startItem("hit");
             {
@@ -625,7 +625,7 @@ public class ResponseStreamer {
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, hits.field(), matchInfos, params.contextSettings().size(),
+                hit(docPid, hit, hitResults.field(), matchInfos, params.contextSettings().size(),
                         result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
