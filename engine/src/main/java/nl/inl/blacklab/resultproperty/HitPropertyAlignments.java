@@ -9,7 +9,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 
 /**
  * A hit property for grouping on an attribute of a matched span.

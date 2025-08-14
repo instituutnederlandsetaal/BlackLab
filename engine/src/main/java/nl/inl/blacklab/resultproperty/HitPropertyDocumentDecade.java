@@ -5,7 +5,7 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

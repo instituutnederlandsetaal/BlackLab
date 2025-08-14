@@ -8,7 +8,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 
 /**
- * A group of results, with its group identity and the results themselves.
+ * A generic group of results, with its group identity and the results themselves.
  */
 public abstract class Group {
     

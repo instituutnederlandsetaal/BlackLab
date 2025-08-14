@@ -35,13 +35,13 @@ import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSimple;
-import nl.inl.blacklab.search.results.Kwics;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {

@@ -2,8 +2,8 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.docs.DocResults;
 
 public class SearchDocsSorted extends SearchDocs {
 

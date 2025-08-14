@@ -4,8 +4,8 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.HitGroupsTokenFrequencies;
+import nl.inl.blacklab.search.results.hits.HitGroups;
+import nl.inl.blacklab.search.results.hits.HitGroupsTokenFrequencies;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**

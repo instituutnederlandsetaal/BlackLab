@@ -4,10 +4,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestDocResults {
 

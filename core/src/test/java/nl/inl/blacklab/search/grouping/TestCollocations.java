@@ -8,9 +8,9 @@ import nl.inl.blacklab.search.TermFrequency;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.ContextSize;
-import nl.inl.blacklab.search.results.Contexts;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hits.Contexts;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestCollocations {

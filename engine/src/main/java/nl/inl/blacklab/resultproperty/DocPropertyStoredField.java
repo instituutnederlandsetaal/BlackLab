@@ -25,7 +25,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.DocValuesUtil;
 import nl.inl.util.LuceneUtil;

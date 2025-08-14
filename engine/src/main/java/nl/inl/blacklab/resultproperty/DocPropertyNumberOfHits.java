@@ -3,7 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResult;
 
 /**
  * For grouping DocResult objects on the number of hits. This would put

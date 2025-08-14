@@ -13,12 +13,12 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.Concordances;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSimple;
-import nl.inl.blacklab.search.results.Kwics;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.hits.Concordances;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 

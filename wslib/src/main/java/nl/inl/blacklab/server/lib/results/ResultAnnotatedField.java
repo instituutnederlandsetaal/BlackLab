@@ -26,7 +26,7 @@ public class ResultAnnotatedField {
         this.annotInfos = annotInfos;
         count = index.metadata().countPerField().get(fieldDesc.name());
         if (count == null)
-            count = CorpusSize.Count.create();
+            count = new CorpusSize.Count(0, 0);
     }
 
     public String getIndexName() {

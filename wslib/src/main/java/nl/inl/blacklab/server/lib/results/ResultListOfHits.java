@@ -4,7 +4,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 

@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

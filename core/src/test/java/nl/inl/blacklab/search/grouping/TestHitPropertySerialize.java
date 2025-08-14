@@ -18,8 +18,8 @@ import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.HitsInternal;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.HitsInternal;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 
 public class TestHitPropertySerialize {
 

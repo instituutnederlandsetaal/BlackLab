@@ -1,7 +1,7 @@
 package nl.inl.blacklab.server.lib.results;
 
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultSummaryNumDocs {

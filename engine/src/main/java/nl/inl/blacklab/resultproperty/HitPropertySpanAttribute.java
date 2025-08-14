@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

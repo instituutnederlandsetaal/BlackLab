@@ -1,8 +1,8 @@
 package nl.inl.blacklab.performance;
 
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsInternal;
-import nl.inl.blacklab.search.results.HitsInternalMutable;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.HitsInternal;
+import nl.inl.blacklab.search.results.hits.HitsInternalMutable;
 import nl.inl.util.Timer;
 
 /**

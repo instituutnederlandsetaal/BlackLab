@@ -5,7 +5,7 @@ import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

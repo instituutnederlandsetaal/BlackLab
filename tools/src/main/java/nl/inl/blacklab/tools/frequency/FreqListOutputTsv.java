@@ -22,8 +22,8 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.hits.HitGroup;
+import nl.inl.blacklab.search.results.hits.HitGroups;
 
 /**
  * Writes frequency results to a TSV file.

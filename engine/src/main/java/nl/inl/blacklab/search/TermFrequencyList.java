@@ -9,12 +9,12 @@ import java.util.Map;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
-import nl.inl.blacklab.search.results.MaxStats;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultsList;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.stats.MaxStats;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 
 /**
  * A collection of tokens and their (absolute) frequencies.
@@ -106,7 +106,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency> implements Ite
     }
 
     @Override
-    protected boolean ensureResultsRead(long number) {
+    public boolean ensureResultsRead(long number) {
         return size() >= number; // all results have been read
     }
 

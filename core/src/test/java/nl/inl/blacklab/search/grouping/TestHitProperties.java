@@ -25,9 +25,9 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.blacklab.search.results.HitGroup;
-import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.Hits;
+import nl.inl.blacklab.search.results.hits.HitGroup;
+import nl.inl.blacklab.search.results.hits.HitGroups;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.testutil.TestIndex;
 

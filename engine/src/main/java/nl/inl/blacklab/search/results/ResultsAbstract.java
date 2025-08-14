@@ -7,8 +7,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  * A list of results of some type.
  *
  * All subclasses should be thread-safe.
- *
- * @param <T> result type, e.g. Hit
  */
 public abstract class ResultsAbstract implements Results {
 
@@ -52,7 +50,7 @@ public abstract class ResultsAbstract implements Results {
      *            negative, reads all hits
      * @return true if the requested number of results were read, false if there are fewer results
      */
-    protected abstract boolean ensureResultsRead(long number);
+    public abstract boolean ensureResultsRead(long number);
 
     @Override
     public long size() {

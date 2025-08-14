@@ -2,7 +2,7 @@ package nl.inl.blacklab.resultproperty;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 
 /**
  * A hit property for grouping per document id.

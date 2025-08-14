@@ -11,6 +11,7 @@ import java.util.TreeSet;
 
 import nl.inl.blacklab.Constants;
 
+/** Base class for non-Hits Results (docs, groups, termfrequency). */
 public abstract class ResultsList<T> extends ResultsAbstract {
 
     /** The results. */

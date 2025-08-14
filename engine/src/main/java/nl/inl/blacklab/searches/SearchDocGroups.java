@@ -2,9 +2,9 @@ package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.DocGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.docs.DocGroups;
 
 /** A search that yields groups of documents. */
 public abstract class SearchDocGroups extends SearchForResults<DocGroups> {

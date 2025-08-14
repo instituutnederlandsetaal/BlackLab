@@ -16,8 +16,8 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Field;
-import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.util.XmlHighlighter;
 import nl.inl.util.XmlHighlighter.HitCharSpan;
 

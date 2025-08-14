@@ -3,9 +3,9 @@ package nl.inl.blacklab.server.lib.results;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.docs.DocGroup;
+import nl.inl.blacklab.search.results.docs.DocGroups;
+import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 

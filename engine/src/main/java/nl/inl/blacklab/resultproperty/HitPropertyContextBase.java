@@ -19,9 +19,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
-import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.ThreadAborter;
 

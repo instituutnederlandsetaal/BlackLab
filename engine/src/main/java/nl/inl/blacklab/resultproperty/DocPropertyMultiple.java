@@ -13,7 +13,7 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

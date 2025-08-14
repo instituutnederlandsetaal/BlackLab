@@ -742,7 +742,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 documentVersionCount = 0;
                 documentCount = 0;
                 for (AnnotatedField field: annotatedFields()) {
-                    CorpusSize.Count fieldCount = CorpusSize.Count.create(); // [0] = token count, [1] = document count
+                    CorpusSize.Count fieldCount = new CorpusSize.Count(0, 0); // [0] = token count, [1] = document count
                     countPerField.put(field.name(), fieldCount);
                 }
                 index.forEachDocument(false, new DocTask() {

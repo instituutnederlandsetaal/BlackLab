@@ -49,7 +49,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-import nl.inl.blacklab.search.results.HitGroups;
+import nl.inl.blacklab.search.results.hits.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;

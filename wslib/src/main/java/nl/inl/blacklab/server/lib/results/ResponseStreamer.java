@@ -51,22 +51,22 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationLikeInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
-import nl.inl.blacklab.search.results.ContextSize;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.DocGroup;
-import nl.inl.blacklab.search.results.DocGroups;
-import nl.inl.blacklab.search.results.DocResults;
-import nl.inl.blacklab.search.results.EphemeralHit;
 import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.Hits;
-import nl.inl.blacklab.search.results.HitsSimple;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.ResultsStats;
-import nl.inl.blacklab.search.results.ResultsStatsSaved;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
+import nl.inl.blacklab.search.results.docs.DocGroup;
+import nl.inl.blacklab.search.results.docs.DocGroups;
+import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
@@ -592,10 +592,10 @@ public class ResponseStreamer {
                 ds.entry(KEY_DOCUMENT_VERSION_COUNT, subcorpusSize.getDocumentVersions());
             if (totalCount.hasTokenCount())
                 ds.entry("tokens", totalCount.getTokens()); // always use "tokens" here
-            if (subcorpusSize.getTokensPerField().size() > 1) {
+            if (subcorpusSize.getCountsPerField().size() > 1) {
                 // Multiple annotated fields. Show size per field.
                 ds.startEntry(KEY_ANNOTATED_FIELDS).startList();
-                for (Map.Entry<String, CorpusSize.Count> entry : subcorpusSize.getTokensPerField().entrySet()) {
+                for (Map.Entry<String, CorpusSize.Count> entry : subcorpusSize.getCountsPerField().entrySet()) {
                     ds.startItem(KEY_ANNOTATED_FIELD).startMap();
                     ds.entry(KEY_FIELD_NAME, entry.getKey());
                     ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, entry.getValue().getDocuments());

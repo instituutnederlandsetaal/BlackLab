@@ -14,8 +14,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
-import nl.inl.blacklab.search.results.DocResult;
-import nl.inl.blacklab.search.results.DocResults;
+import nl.inl.blacklab.search.results.docs.DocResult;
+import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.util.LuceneUtil;
 
 /**

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.hits.HitGroup;
 
 public class HitGroupPropertySize extends HitGroupProperty {
 

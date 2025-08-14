@@ -2,7 +2,7 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.Comparator;
 
-import nl.inl.blacklab.search.results.HitGroup;
+import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**

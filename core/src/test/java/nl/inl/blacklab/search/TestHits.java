@@ -10,10 +10,10 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
-import nl.inl.blacklab.search.results.EphemeralHit;
-import nl.inl.blacklab.search.results.Hit;
-import nl.inl.blacklab.search.results.HitsInternal;
-import nl.inl.blacklab.search.results.HitsSimple;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.HitsInternal;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 
 public class TestHits {
 
