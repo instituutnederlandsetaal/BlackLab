@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -71,7 +70,6 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
      */
     public static final int STRETCH_SIZE_DIVIDER = 10;
 
-
     /** A stretch of hits from a segment.
      * <p>
      * We use these to construct the global view.
@@ -84,42 +82,44 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         int docBase;
 
         /** Segment this stretch is from. */
-        HitsInternalMutable segHits;
+        HitsInternalMutable segmentHits;
 
         /** Start index in the segment hits. */
-        long segStart;
+        long firstHitSegment;
 
         /** Start index in the global hits view. */
-        long globalStart;
+        long firstHitGlobal;
 
         /** Length of this stretch. */
-        long length;
+        long stretchLength;
 
-        public HitsStretch(int stretchIndex, int docBase, HitsInternalMutable segHits, long segStart, long globalStart, long length) {
+        public HitsStretch(int stretchIndex, int docBase, HitsInternalMutable segmentHits, long firstHitSegment,
+                long firstHitGlobal, long stretchLength) {
             this.stretchIndex = stretchIndex;
             this.docBase = docBase;
-            this.segHits = segHits;
-            this.segStart = segStart;
-            this.globalStart = globalStart;
-            this.length = length;
+            this.segmentHits = segmentHits;
+            this.firstHitSegment = firstHitSegment;
+            this.firstHitGlobal = firstHitGlobal;
+            this.stretchLength = stretchLength;
         }
-
 
         /** Get the associated segment's hits */
         HitsInternalMutable segmentHits() {
-            return segHits;
+            return segmentHits;
         }
 
+        /** Does this stretch contain this global hit index? */
         public boolean containsGlobalIndex(long index) {
             // Check if this stretch contains the given global hit index.
             // The global hit index is the index in the global hits view, which is a concatenation of all segment hits.
-            return index >= globalStart && index < globalStart + length;
+            return index >= firstHitGlobal && index < firstHitGlobal + stretchLength;
         }
 
+        /** Convert global hit index to segment hit index */
         public long globalToSegmentIndex(long globalIndex) {
             // Calculate the index of this global hit in the segment's hits.
             assert containsGlobalIndex(globalIndex);
-            long indexInSegment = globalIndex - globalStart + segStart;
+            long indexInSegment = globalIndex - firstHitGlobal + firstHitSegment;
             assert indexInSegment >= 0 : "Index in segment out of bounds: " + indexInSegment;
             return indexInSegment;
         }
@@ -127,11 +127,12 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         @Override
         public String toString() {
             return "HitsStretch{" +
-                    "stretchIndex=" + stretchIndex +
-                    ", segHits=" + segHits +
-                    ", segStart=" + segStart +
-                    ", globalStart=" + globalStart +
-                    ", length=" + length +
+                    "docBase=" + segmentHits +
+                    ", stretchIndex=" + stretchIndex +
+                    ", segHits=" + segmentHits +
+                    ", segStart=" + firstHitSegment +
+                    ", globalStart=" + firstHitGlobal +
+                    ", length=" + stretchLength +
                     "}";
         }
     }
@@ -158,400 +159,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             hitsPerSegment = new LinkedHashMap<>();
         }
         // Global view on our segment hits
-        hitsSimple = new HitsSimple() {
-
-            /** Below this number of hits, we'll sort in a single thread to save overhead. */
-            public static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
-
-            @Override
-            public AnnotatedField field() {
-                return HitsFromQueryKeepSegments.this.field();
-            }
-
-            @Override
-            public BlackLabIndex index() {
-                return HitsFromQueryKeepSegments.this.index();
-            }
-
-            @Override
-            public MatchInfoDefs matchInfoDefs() {
-                return hitQueryContext.getMatchInfoDefs();
-            }
-
-            @Override
-            public long size() {
-                ensureResultsRead(-1);
-                synchronized (HitsFromQueryKeepSegments.this) {
-                    return numHitsGlobalView;
-                }
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return !ensureResultsRead(1);
-            }
-
-            @Override
-            public Hit get(long index) {
-                EphemeralHit hit = new EphemeralHit();
-                getEphemeral(index, hit);
-                return hit.toHit();
-            }
-
-            /** Get the stretch a certain hit is part of */
-            private HitsStretch getHitsStretch(long index) {
-                synchronized (HitsFromQueryKeepSegments.this) {
-                    if (index < 0 || index >= numHitsGlobalView)
-                        throw new IndexOutOfBoundsException(
-                                "Hit index " + index + " is out of bounds (size: " + numHitsGlobalView + ")");
-
-                    // Round down to nearest stretch index and get the stretch for that index.
-                    long indexInMapping = index / HIT_INDEX_TO_STRETCH_STEP;
-                    int stretchIndex = hitToStretchMapping.getInt(indexInMapping);
-                    HitsStretch stretch = stretches.get(stretchIndex);
-
-                    // If the stretch doesn't contain the global index, find the next stretch that does.
-                    while (!stretch.containsGlobalIndex(index)) {
-                        stretchIndex++;
-                        stretch = stretches.get(stretchIndex);
-                    }
-                    return stretch;
-                }
-            }
-
-            @Override
-            public void getEphemeral(long index, EphemeralHit hit) {
-                ensureResultsRead(index + 1);
-                HitsStretch stretch = getHitsStretch(index);
-                stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
-                convertToGlobal(hit, stretch.docBase);
-            }
-
-            @Override
-            public int doc(long index) {
-                ensureResultsRead(index + 1);
-                HitsStretch stretch = getHitsStretch(index);
-                return stretch.segmentHits().doc(stretch.globalToSegmentIndex(index)) + stretch.docBase;
-            }
-
-            @Override
-            public int start(long index) {
-                ensureResultsRead(index + 1);
-                HitsStretch stretch = getHitsStretch(index);
-                return stretch.segmentHits().start(stretch.globalToSegmentIndex(index));
-            }
-
-            @Override
-            public int end(long index) {
-                ensureResultsRead(index + 1);
-                HitsStretch stretch = getHitsStretch(index);
-                return stretch.segmentHits().end(stretch.globalToSegmentIndex(index));
-            }
-
-            @Override
-            public MatchInfo[] matchInfos(long hitIndex) {
-                ensureResultsRead(hitIndex + 1);
-                HitsStretch stretch = getHitsStretch(hitIndex);
-                return stretch.segmentHits().matchInfos(stretch.globalToSegmentIndex(hitIndex));
-            }
-
-            @Override
-            public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
-                ensureResultsRead(hitIndex + 1);
-                HitsStretch stretch = getHitsStretch(hitIndex);
-                return stretch.segmentHits().matchInfo(stretch.globalToSegmentIndex(hitIndex), matchInfoIndex);
-            }
-
-            @Override
-            public HitsSimple getStatic() {
-                return this;
-            }
-
-            @Override
-            public HitsSimple sublist(long start, long length) {
-                if (length == 0)
-                    return HitsInternal.empty(field(), matchInfoDefs());
-                ensureResultsRead(start + length);
-                long end = start + length;
-                synchronized (HitsFromQueryKeepSegments.this) {
-                    if (end > numHitsGlobalView)
-                        end = numHitsGlobalView;
-                }
-                if (start == end)
-                    return HitsInternal.empty(field(), matchInfoDefs());
-                if (start < 0 || end < 0 || start > end)
-                    throw new IndexOutOfBoundsException("Sub-list start " + start + " with length " + length +
-                            " is out of bounds (size: " + size() + ")");
-
-                HitsInternalMutable sublist = HitsInternal.create(field(), matchInfoDefs(), end - start, false, false);
-                EphemeralHit h = new EphemeralHit();
-                long globalIndex = start;
-                HitsStretch currentStretch = getHitsStretch(globalIndex);
-                long indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
-                if (indexInSegment < 0)
-                    throw new IllegalStateException("Negative index in segment: " + indexInSegment +
-                            " (global index: " + globalIndex + ", stretch: " + currentStretch + ")");
-                long hitsLeftInStretch = currentStretch.length - (start - currentStretch.globalStart);
-                while (true) {
-                    currentStretch.segmentHits().getEphemeral(indexInSegment, h);
-                    convertToGlobal(h, currentStretch.docBase);
-                    sublist.add(h);
-                    indexInSegment++;
-                    globalIndex++;
-                    if (globalIndex == end)
-                        break; // we're done
-                    hitsLeftInStretch--;
-                    if (hitsLeftInStretch == 0) {
-                        // Go to the next stretch.
-                        currentStretch = stretches.get(currentStretch.stretchIndex + 1);
-                        indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
-                        hitsLeftInStretch = currentStretch.length - (start - currentStretch.globalStart);
-                    }
-                }
-                return sublist;
-            }
-
-            @Override
-            public Iterator<EphemeralHit> ephemeralIterator() {
-                return new Iterator<>() {
-
-                    Iterator<HitsStretch> stretchIterator = stretches.iterator();
-
-                    HitsStretch currentStretch = null; // current stretch of hits we're iterating over
-
-                    long index = -1;
-
-                    final EphemeralHit hit = new EphemeralHit();
-
-                    @Override
-                    public boolean hasNext() {
-                        long nextHitIndex = index + 1;
-                        return ensureResultsRead(nextHitIndex + 1);
-                    }
-
-                    @Override
-                    public EphemeralHit next() {
-                        if (!hasNext())
-                            throw new IndexOutOfBoundsException("No more hits available (index: " + index + ")");
-                        index++;
-
-                        // Make sure we have the right stretch for this hit index.
-                        while (currentStretch == null || !currentStretch.containsGlobalIndex(index)) {
-                            // We need to find the stretch for this hit index.
-                            currentStretch = stretchIterator.next();
-                        }
-                        currentStretch.segmentHits().getEphemeral(currentStretch.globalToSegmentIndex(index), hit);
-                        convertToGlobal(hit, currentStretch.docBase);
-                        return hit;
-                    }
-                };
-            }
-
-            /** The state of a segment during a merge */
-            static class SegmentInMerge {
-
-                /** Hits from this segment */
-                HitsSimple hits;
-
-                /** Segment's docBase, for converting segment doc id to global doc id */
-                int docBase;
-
-                /** Property to sort on */
-                HitProperty sortProp;
-
-                /** Index of the next hit from this segment to merge */
-                int index;
-
-                public SegmentInMerge(HitsSimple segmentHits, int docBase, HitProperty globalSortProp) {
-                    this.hits = segmentHits;
-                    this.docBase = docBase;
-                    this.sortProp = globalSortProp.copyWith(segmentHits);
-                    sortProp.setDocBase(docBase);
-                    this.index = 0;
-                }
-
-                boolean done() {
-                    return index >= hits.size();
-                }
-
-                PropertyValue sortValue() {
-                    return sortProp.get(index);
-                }
-
-                void getHitAndAdvance(EphemeralHit hit) {
-                    hits.getEphemeral(index, hit);
-                    index++;
-                }
-            }
-
-            /** Priority queue for merging n already-sorted lists of hits. */
-            static class MergePriorityQueue extends PriorityQueue<SegmentInMerge> {
-
-                public MergePriorityQueue(int maxSize) {
-                    super(maxSize);
-                }
-
-                @Override
-                protected final boolean lessThan(SegmentInMerge a, SegmentInMerge b) {
-                    if (a.done()) {
-                        // Either a is done, or both are done.
-                        // In either case, a is not less than b.
-                        return false;
-                    }
-                    if (b.done()) {
-                        // b is done but a is not, so a is less than b
-                        // (that is, there's still hits to merge in a, so bubble it up to the top of the heap).
-                        return true;
-                    }
-                    // Both still have hits to merge.
-                    // Compare the sort values of the hits from each segment.
-                    return a.sortValue().compareTo(b.sortValue()) < 0;
-                }
-            }
-
-            /** Hits from a single segment */
-            record SegmentHits(
-                    LeafReaderContext lrc,
-                    HitsSimple hits) {
-                public Long numberOfHits() {
-                    return hits.size();
-                }
-            }
-
-            @Override
-            public HitsSimple sorted(HitProperty sortProp) {
-                // Fetch all the hits and determine size.
-                size();
-                if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED_SORT) {
-                    // If there are only a few hits, just sort them in a single thread.
-                    return sortedSingleThread(sortProp);
-                }
-
-                // We need to sort the hits from each segment separately (in parallel), then merge them.
-
-                // Group them together so that each group has approximately the same number of hits.
-                List<List<SegmentHits>> groups =
-                        sortMakeEqualGroups(hitsPerSegment, numThreads);
-
-                // TODO: make sort and merge steps abortable (ThreadAborter)
-
-                // Sort each group of segments in a separate thread.
-                List<Future<List<SegmentHits>>> pendingResults = sortGroups(groups, sortProp, getExecutorService());
-
-                // Add the results to the priority queue for merging.
-                MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
-
-                // Now merge the sorted hits from each segment.
-                HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(),
-                        numHitsGlobalView, numHitsGlobalView, false);
-                return sortMerge(queue, mergedHits);
-            }
-
-            /** Separate the hits from each segment into numThreads equals groups */
-            private static List<List<SegmentHits>> sortMakeEqualGroups(
-                    Map<LeafReaderContext, HitsInternalMutable> hitsPerSegment, int numThreads) {
-
-                // First sort segment hits by decreasing size.
-                List<SegmentHits> segmentsHits = new ArrayList<>();
-                for (Map.Entry<LeafReaderContext, HitsInternalMutable> entry : hitsPerSegment.entrySet()) {
-                    segmentsHits.add(new SegmentHits(entry.getKey(), entry.getValue()));
-                }
-                segmentsHits.sort(Comparator.comparing(SegmentHits::numberOfHits).reversed());
-
-                // Now divide the segments into groups by repeatedly adding the largest remaining segment to
-                // the smallest group.
-                List<List<SegmentHits>> groups =
-                        new ArrayList<>(numThreads);
-                List<Long> hitsInGroup = new ArrayList<>(numThreads);
-                for (int i = 0; i < numThreads; i++) {
-                    groups.add(new ArrayList<>()); // create empty group for each thread}
-                    hitsInGroup.add(0L);
-                }
-                for (SegmentHits segment: segmentsHits) {
-                    // Find the group with the least hits so far, and add this segment to that group.
-                    int minGroupIndex = 0;
-                    for (int i = 1; i < hitsInGroup.size(); i++) {
-                        if (hitsInGroup.get(i) < hitsInGroup.get(minGroupIndex)) {
-                            minGroupIndex = i;
-                        }
-                    }
-                    groups.get(minGroupIndex).add(segment);
-                    hitsInGroup.set(minGroupIndex, hitsInGroup.get(minGroupIndex) + segment.numberOfHits());
-                }
-                return groups;
-            }
-
-            /** Sort each group of segment hits in a separate thread */
-            private static List<Future<List<SegmentHits>>> sortGroups(
-                    List<List<SegmentHits>> groups, HitProperty sortProp,
-                    ExecutorService executorService) {
-                List<Future<List<SegmentHits>>> pendingResults = new ArrayList<>();
-                for (List<SegmentHits> group: groups) {
-                    Future<List<SegmentHits>> future = executorService.submit(() ->
-                            group.stream().map(segment -> {
-                                // For each segment, sort the hits using the specified property.
-                                HitProperty sortPropSegment =
-                                        sortProp.copyWith(segment.hits, segment.lrc, false);
-                                return new SegmentHits(segment.lrc, segment.hits.sorted(sortPropSegment));
-                            }).toList());
-                    pendingResults.add(future);
-                }
-                return pendingResults;
-            }
-
-            /** Gather sorted segment hits and put them in the merge queue */
-            private static MergePriorityQueue sortGatherResults(int numberOfSegments, HitProperty sortProp,
-                    List<Future<List<SegmentHits>>> pendingResults) {
-                MergePriorityQueue queue = new MergePriorityQueue(numberOfSegments);
-                for (Future<List<SegmentHits>> future: pendingResults) {
-                    try {
-                        for (SegmentHits segmentResults: future.get()) {
-                            queue.add(new SegmentInMerge(segmentResults.hits, segmentResults.lrc.docBase, sortProp));
-                        }
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt(); // preserve interrupted status
-                        throw new InterruptedSearch(e);
-                    } catch (ExecutionException e) {
-                        throw new InterruptedSearch(e);
-                    }
-                }
-                return queue;
-            }
-
-            /** Merge the sorted segment hits */
-            private static HitsInternalMutable sortMerge(MergePriorityQueue queue, HitsInternalMutable mergedHits) {
-                while (!queue.top().done()) {
-                    SegmentInMerge segment = queue.top();
-                    EphemeralHit hit = new EphemeralHit();
-                    segment.getHitAndAdvance(hit);
-                    convertToGlobal(hit, segment.docBase);
-                    mergedHits.add(hit);
-                    queue.updateTop(); // re-order the queue after taking a hit
-                }
-                return mergedHits;
-            }
-
-            /** Sort the hits in a single thread. */
-            private HitsSimple sortedSingleThread(HitProperty sortProp) {
-                size(); // Fetch all hits. Was already called, but just in case we reuse this method.
-                HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(),
-                        numHitsGlobalView, numHitsGlobalView, false);
-                for (Map.Entry<LeafReaderContext, HitsInternalMutable> segmentHits: hitsPerSegment.entrySet()) {
-                    Iterator<EphemeralHit> it = segmentHits.getValue().ephemeralIterator();
-                    while (it.hasNext()) {
-                        EphemeralHit hit = it.next();
-                        convertToGlobal(hit, segmentHits.getKey().docBase);
-                        mergedHits.add(hit);
-                    }
-                }
-                return mergedHits.sorted(sortProp);
-            }
-
-            @Override
-            public boolean hasMatchInfo() {
-                return hitQueryContext.numberOfMatchInfos() > 0;
-            }
-        };
+        hitsSimple = new GlobalHitsView();
     }
 
     /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
@@ -566,76 +174,477 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
     }
 
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
-        // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from
-        // it at the same time.
+        // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from it.
         final HitsInternalMutable hitsInThisSegment = HitsInternal.create(field(), hitQueryContext.getMatchInfoDefs(),
                 -1, true, true);
+
+        // Add it to the map of segment hits.
         if (hitsPerSegment == null)
             hitsPerSegment = new LinkedHashMap<>();
         hitsPerSegment.put(lrc, hitsInThisSegment); // only called from constructor, so no need to synchronize
-        return new SpansReader.Strategy() {
 
-            long lastStretchEnd = 0; // last stretch end index in the global hits view
+        // Return a strategy that will add hits to the segment hits and maintain the global view.
+        return new GlobalViewIntoSegmentHitsStrategy(hitsInThisSegment, lrc);
+    }
 
-            @Override
-            public void onDocumentBoundary(LeafReaderContext lrc, HitsInternalMutable results) {
-                // Add new hits to the segment results.
-                hitsInThisSegment.addAll(results);
+    /** A stable global view of the lists of segment hits */
+    private class GlobalHitsView implements HitsSimple {
 
-                // Add them to the global view? We only do this on a boundary
-                // between documents, so hits from the same doc remain
-                // contiguous in the global view.
+        /** Below this number of hits, we'll sort in a single thread to save overhead. */
+        public static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
 
-                // Note that we add small stretches at first, so the first page of hits is
-                // available quickly. Later, we add them in larger batches to reduce overhead.
-                // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
-                //  out of date (i.e. too small) value here)
-                long addHitsToGlobalThreshold = clamp(numHitsGlobalView / STRETCH_SIZE_DIVIDER, STRETCH_THRESHOLD_MINIMUM,
-                        STRETCH_THRESHOLD_MAXIMUM);
-                addStretch(addHitsToGlobalThreshold);
-                results.clear();
+        @Override
+        public AnnotatedField field() {
+            return HitsFromQueryKeepSegments.this.field();
+        }
+
+        @Override
+        public BlackLabIndex index() {
+            return HitsFromQueryKeepSegments.this.index();
+        }
+
+        @Override
+        public MatchInfoDefs matchInfoDefs() {
+            return hitQueryContext.getMatchInfoDefs();
+        }
+
+        @Override
+        public long size() {
+            ensureResultsRead(-1);
+            synchronized (HitsFromQueryKeepSegments.this) {
+                return numHitsGlobalView;
             }
+        }
 
-            // (java 17 doesn't have Math.clamp, so we implement it ourselves)
-            private long clamp(long number, long min, long max) {
-                return Math.max(min, Math.min(max, number));
+        @Override
+        public boolean isEmpty() {
+            return !ensureResultsRead(1);
+        }
+
+        @Override
+        public Hit get(long index) {
+            EphemeralHit hit = new EphemeralHit();
+            getEphemeral(index, hit);
+            return hit.toHit();
+        }
+
+        /** Get the stretch a certain hit is part of */
+        private HitsStretch getHitsStretch(long index) {
+            synchronized (HitsFromQueryKeepSegments.this) {
+                if (index < 0 || index >= numHitsGlobalView)
+                    throw new IndexOutOfBoundsException(
+                            "Hit index " + index + " is out of bounds (size: " + numHitsGlobalView + ")");
+
+                // Round down to nearest stretch index and get the stretch for that index.
+                long indexInMapping = index / HIT_INDEX_TO_STRETCH_STEP;
+                int stretchIndex = hitToStretchMapping.getInt(indexInMapping);
+                HitsStretch stretch = stretches.get(stretchIndex);
+
+                // If the stretch doesn't contain the global index, find the next stretch that does.
+                while (!stretch.containsGlobalIndex(index)) {
+                    stretchIndex++;
+                    stretch = stretches.get(stretchIndex);
+                }
+                return stretch;
             }
+        }
 
-            @Override
-            public void onFinished(LeafReaderContext lrc, HitsInternalMutable results) {
-                // Add the final batch of hits to the segment results.
-                hitsInThisSegment.addAll(results);
-                addStretch(0);
+        @Override
+        public void getEphemeral(long index, EphemeralHit hit) {
+            ensureResultsRead(index + 1);
+            HitsStretch stretch = getHitsStretch(index);
+            stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
+            convertToGlobal(hit, stretch.docBase);
+        }
+
+        @Override
+        public int doc(long index) {
+            ensureResultsRead(index + 1);
+            HitsStretch stretch = getHitsStretch(index);
+            return stretch.segmentHits().doc(stretch.globalToSegmentIndex(index)) + stretch.docBase;
+        }
+
+        @Override
+        public int start(long index) {
+            ensureResultsRead(index + 1);
+            HitsStretch stretch = getHitsStretch(index);
+            return stretch.segmentHits().start(stretch.globalToSegmentIndex(index));
+        }
+
+        @Override
+        public int end(long index) {
+            ensureResultsRead(index + 1);
+            HitsStretch stretch = getHitsStretch(index);
+            return stretch.segmentHits().end(stretch.globalToSegmentIndex(index));
+        }
+
+        @Override
+        public MatchInfo[] matchInfos(long hitIndex) {
+            ensureResultsRead(hitIndex + 1);
+            HitsStretch stretch = getHitsStretch(hitIndex);
+            return stretch.segmentHits().matchInfos(stretch.globalToSegmentIndex(hitIndex));
+        }
+
+        @Override
+        public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
+            ensureResultsRead(hitIndex + 1);
+            HitsStretch stretch = getHitsStretch(hitIndex);
+            return stretch.segmentHits().matchInfo(stretch.globalToSegmentIndex(hitIndex), matchInfoIndex);
+        }
+
+        @Override
+        public HitsSimple getStatic() {
+            return this;
+        }
+
+        @Override
+        public HitsSimple sublist(long start, long length) {
+            if (length == 0)
+                return HitsInternal.empty(field(), matchInfoDefs());
+            ensureResultsRead(start + length);
+            long end = start + length;
+            synchronized (HitsFromQueryKeepSegments.this) {
+                if (end > numHitsGlobalView)
+                    end = numHitsGlobalView;
             }
+            if (start == end)
+                return HitsInternal.empty(field(), matchInfoDefs());
+            if (start < 0 || end < 0 || start > end)
+                throw new IndexOutOfBoundsException("Sub-list start " + start + " with length " + length +
+                        " is out of bounds (size: " + size() + ")");
 
-            /** Add the latest stretch of hits we've found to the global view. */
-            private void addStretch(long threshold) {
-                if (hitsInThisSegment.size() - lastStretchEnd <= threshold)
-                    return; // not enough hits to add a stretch
-                // Create a new stretch for the global hits view.
-                // Start where the last stretch in this segment ended.
-                long length = hitsInThisSegment.size() - lastStretchEnd;
-                assert length > 0;
-                synchronized (HitsFromQueryKeepSegments.this) {
-                    HitsStretch stretch = new HitsStretch(stretches.size(), lrc.docBase, hitsInThisSegment,
-                            lastStretchEnd, numHitsGlobalView, length);
-                    stretches.add(stretch);
-                    lastStretchEnd += length;
-                    numHitsGlobalView += length;
+            HitsInternalMutable sublist = HitsInternal.create(field(), matchInfoDefs(), end - start, false, false);
+            EphemeralHit h = new EphemeralHit();
+            long globalIndex = start;
+            HitsStretch currentStretch = getHitsStretch(globalIndex);
+            long indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
+            if (indexInSegment < 0)
+                throw new IllegalStateException("Negative index in segment: " + indexInSegment +
+                        " (global index: " + globalIndex + ", stretch: " + currentStretch + ")");
+            long hitsLeftInStretch = currentStretch.stretchLength - (start - currentStretch.firstHitGlobal);
+            while (true) {
+                // Add a hit from the current stretch to the sublist.
+                currentStretch.segmentHits().getEphemeral(indexInSegment, h);
+                convertToGlobal(h, currentStretch.docBase);
+                sublist.add(h);
+                indexInSegment++;
 
-                    // Add hitToStretchMappings for the appropriate indexes, so we can quickly find the stretch
-                    // for a global hit index. (we record a mapping every HIT_INDEX_TO_STRETCH_STEP)
-                    long hitsSinceLastMapping = stretch.globalStart % HIT_INDEX_TO_STRETCH_STEP;
-                    if (hitsSinceLastMapping == 0)
-                        hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
-                    long nextMappingIndex = stretch.globalStart + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
-                    while (nextMappingIndex < stretch.globalStart + length) {
-                        // Add an entry for this global hit index, so we can quickly find the stretch it belongs to.
-                        hitToStretchMapping.add(stretches.size() - 1);
-                        nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
-                    }
+                // Are we done?
+                globalIndex++;
+                if (globalIndex == end)
+                    break;
+
+                // If we reached the end of the current stretch, go to the next stretch.
+                hitsLeftInStretch--;
+                if (hitsLeftInStretch == 0) {
+                    currentStretch = stretches.get(currentStretch.stretchIndex + 1);
+                    indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
+                    hitsLeftInStretch = currentStretch.stretchLength - (start - currentStretch.firstHitGlobal);
                 }
             }
-        };
+            return sublist;
+        }
+
+        @Override
+        public Iterator<EphemeralHit> ephemeralIterator() {
+            return new Iterator<>() {
+
+                /** Iterate over all stretches so we can iterate over each hit within them */
+                Iterator<HitsStretch> stretchIterator = stretches.iterator();
+
+                /** The current stretch of hits we're iterating over */
+                HitsStretch currentStretch = null;
+
+                /** Global hit index of the last hit produced */
+                long globalIndex = -1;
+
+                /** We populate this and return it in next() */
+                final EphemeralHit hit = new EphemeralHit();
+
+                @Override
+                public boolean hasNext() {
+                    long nextHitIndex = globalIndex + 1;
+                    return ensureResultsRead(nextHitIndex + 1);
+                }
+
+                @Override
+                public EphemeralHit next() {
+                    if (!hasNext())
+                        throw new IndexOutOfBoundsException("No more hits available (index: " + globalIndex + ")");
+                    globalIndex++;
+
+                    // Make sure we have the right stretch for this hit index.
+                    while (currentStretch == null || !currentStretch.containsGlobalIndex(globalIndex)) {
+                        // We need to find the stretch for this hit index.
+                        currentStretch = stretchIterator.next();
+                    }
+                    currentStretch.segmentHits().getEphemeral(currentStretch.globalToSegmentIndex(globalIndex), hit);
+                    convertToGlobal(hit, currentStretch.docBase);
+                    return hit;
+                }
+            };
+        }
+
+        /** The state of a segment during a merge */
+        static class SegmentInMerge {
+
+            /** Hits from this segment */
+            HitsSimple hits;
+
+            /** Segment's docBase, for converting segment doc id to global doc id */
+            int docBase;
+
+            /** Property to sort on */
+            HitProperty sortProp;
+
+            /** Index of the next hit from this segment to merge */
+            int index;
+
+            public SegmentInMerge(HitsSimple segmentHits, int docBase, HitProperty globalSortProp) {
+                this.hits = segmentHits;
+                this.docBase = docBase;
+                this.sortProp = globalSortProp.copyWith(segmentHits);
+                sortProp.setDocBase(docBase);
+                this.index = 0;
+            }
+
+            boolean done() {
+                return index >= hits.size();
+            }
+
+            PropertyValue sortValue() {
+                return sortProp.get(index);
+            }
+
+            void getHitAndAdvance(EphemeralHit hit) {
+                hits.getEphemeral(index, hit);
+                index++;
+            }
+        }
+
+        /** Priority queue for merging n already-sorted lists of hits. */
+        static class MergePriorityQueue extends PriorityQueue<SegmentInMerge> {
+
+            public MergePriorityQueue(int maxSize) {
+                super(maxSize);
+            }
+
+            @Override
+            protected final boolean lessThan(SegmentInMerge a, SegmentInMerge b) {
+                if (a.done()) {
+                    // Either a is done, or both are done.
+                    // In either case, a is not less than b.
+                    return false;
+                }
+                if (b.done()) {
+                    // b is done but a is not, so a is less than b
+                    // (that is, there's still hits to merge in a, so bubble it up to the top of the heap).
+                    return true;
+                }
+                // Both still have hits to merge.
+                // Compare the sort values of the hits from each segment.
+                return a.sortValue().compareTo(b.sortValue()) < 0;
+            }
+        }
+
+        /** Hits from a single segment */
+        record SegmentHits(
+                LeafReaderContext lrc,
+                HitsSimple hits) {
+            public Long numberOfHits() {
+                return hits.size();
+            }
+        }
+
+        @Override
+        public HitsSimple sorted(HitProperty sortProp) {
+            // Fetch all the hits and determine size.
+            size();
+            if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED_SORT) {
+                // If there are only a few hits, just sort them in a single thread.
+                return sortedSingleThread(sortProp);
+            }
+
+            // We need to sort the hits from each segment separately (in parallel), then merge them.
+
+            // Group them together so that each group has approximately the same number of hits.
+            List<List<SegmentHits>> groups =
+                    sortMakeEqualGroups(hitsPerSegment, numThreads);
+
+            // TODO: make sort and merge steps abortable (ThreadAborter)
+
+            // Sort each group of segments in a separate thread.
+            List<Future<List<SegmentHits>>> pendingResults = sortGroups(groups, sortProp, getExecutorService());
+
+            // Add the results to the priority queue for merging.
+            MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
+
+            // Now merge the sorted hits from each segment.
+            HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(),
+                    numHitsGlobalView, numHitsGlobalView, false);
+            return sortMerge(queue, mergedHits);
+        }
+
+        /** Separate the hits from each segment into numThreads equals groups */
+        private static List<List<SegmentHits>> sortMakeEqualGroups(
+                Map<LeafReaderContext, HitsInternalMutable> hitsPerSegment, int numThreads) {
+
+            // First sort segment hits by decreasing size.
+            List<SegmentHits> segmentsHits = new ArrayList<>();
+            for (Map.Entry<LeafReaderContext, HitsInternalMutable> entry : hitsPerSegment.entrySet()) {
+                segmentsHits.add(new SegmentHits(entry.getKey(), entry.getValue()));
+            }
+            return makeEqualGroups(segmentsHits, SegmentHits::numberOfHits, numThreads);
+        }
+
+        /** Sort each group of segment hits in a separate thread */
+        private static List<Future<List<SegmentHits>>> sortGroups(
+                List<List<SegmentHits>> groups, HitProperty sortProp,
+                ExecutorService executorService) {
+            List<Future<List<SegmentHits>>> pendingResults = new ArrayList<>();
+            for (List<SegmentHits> group: groups) {
+                Future<List<SegmentHits>> future = executorService.submit(() ->
+                        group.stream().map(segment -> {
+                            // For each segment, sort the hits using the specified property.
+                            HitProperty sortPropSegment =
+                                    sortProp.copyWith(segment.hits, segment.lrc, false);
+                            return new SegmentHits(segment.lrc, segment.hits.sorted(sortPropSegment));
+                        }).toList());
+                pendingResults.add(future);
+            }
+            return pendingResults;
+        }
+
+        /** Gather sorted segment hits and put them in the merge queue */
+        private static MergePriorityQueue sortGatherResults(int numberOfSegments, HitProperty sortProp,
+                List<Future<List<SegmentHits>>> pendingResults) {
+            MergePriorityQueue queue = new MergePriorityQueue(numberOfSegments);
+            for (Future<List<SegmentHits>> future: pendingResults) {
+                try {
+                    for (SegmentHits segmentResults: future.get()) {
+                        queue.add(new SegmentInMerge(segmentResults.hits, segmentResults.lrc.docBase, sortProp));
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // preserve interrupted status
+                    throw new InterruptedSearch(e);
+                } catch (ExecutionException e) {
+                    throw new InterruptedSearch(e);
+                }
+            }
+            return queue;
+        }
+
+        /** Merge the sorted segment hits */
+        private static HitsInternalMutable sortMerge(MergePriorityQueue queue, HitsInternalMutable mergedHits) {
+            while (!queue.top().done()) {
+                SegmentInMerge segment = queue.top();
+                EphemeralHit hit = new EphemeralHit();
+                segment.getHitAndAdvance(hit);
+                convertToGlobal(hit, segment.docBase);
+                mergedHits.add(hit);
+                queue.updateTop(); // re-order the queue after taking a hit
+            }
+            return mergedHits;
+        }
+
+        /** Sort the hits in a single thread. */
+        private HitsSimple sortedSingleThread(HitProperty sortProp) {
+            size(); // Fetch all hits. Was already called, but just in case we reuse this method.
+            HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(),
+                    numHitsGlobalView, numHitsGlobalView, false);
+            for (Map.Entry<LeafReaderContext, HitsInternalMutable> segmentHits: hitsPerSegment.entrySet()) {
+                Iterator<EphemeralHit> it = segmentHits.getValue().ephemeralIterator();
+                while (it.hasNext()) {
+                    EphemeralHit hit = it.next();
+                    convertToGlobal(hit, segmentHits.getKey().docBase);
+                    mergedHits.add(hit);
+                }
+            }
+            return mergedHits.sorted(sortProp);
+        }
+
+        @Override
+        public boolean hasMatchInfo() {
+            return hitQueryContext.numberOfMatchInfos() > 0;
+        }
+    }
+
+    /** Deal with new hits by adding stretches to the global view. */
+    private class GlobalViewIntoSegmentHitsStrategy implements SpansReader.Strategy {
+
+        /** The segment we're looking at */
+        private final LeafReaderContext lrc;
+
+        /** The list of hits in this segment to add new hits to */
+        private final HitsInternalMutable segmentHits;
+
+        /** First hit from segmentHits that's not yet part of the global view. */
+        long indexInSegmentHits;
+
+        public GlobalViewIntoSegmentHitsStrategy(HitsInternalMutable segmentHits, LeafReaderContext lrc) {
+            this.segmentHits = segmentHits;
+            this.lrc = lrc;
+            indexInSegmentHits = 0;
+        }
+
+        @Override
+        public void onDocumentBoundary(HitsInternalMutable results) {
+            // Add new hits to the segment results.
+            segmentHits.addAll(results);
+
+            // Add them to the global view? We only do this on a boundary
+            // between documents, so hits from the same doc remain
+            // contiguous in the global view.
+
+            // Note that we add small stretches at first, so the first page of hits is
+            // available quickly. Later, we add them in larger batches to reduce overhead.
+            // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
+            //  out of date (i.e. too small) value here)
+            long addHitsToGlobalThreshold = clamp(numHitsGlobalView / STRETCH_SIZE_DIVIDER, STRETCH_THRESHOLD_MINIMUM,
+                    STRETCH_THRESHOLD_MAXIMUM);
+            addStretchIfLargeEnough(addHitsToGlobalThreshold);
+            results.clear();
+        }
+
+        // (java 17 doesn't have Math.clamp, so we implement it ourselves)
+        private long clamp(long number, long min, long max) {
+            return Math.max(min, Math.min(max, number));
+        }
+
+        @Override
+        public void onFinished(HitsInternalMutable results) {
+            // Add the final batch of hits to the segment results.
+            segmentHits.addAll(results);
+            addStretchIfLargeEnough(0);
+        }
+
+        /** Add the latest stretch of hits we've found to the global view. */
+        private void addStretchIfLargeEnough(long threshold) {
+            if (segmentHits.size() - indexInSegmentHits <= threshold)
+                return; // not enough hits to add a stretch
+            // Create a new stretch for the global hits view.
+            // Start where the last stretch in this segment ended.
+            long length = segmentHits.size() - indexInSegmentHits;
+            assert length > 0;
+            synchronized (HitsFromQueryKeepSegments.this) {
+                HitsStretch stretch = new HitsStretch(stretches.size(), lrc.docBase,
+                        segmentHits, indexInSegmentHits, numHitsGlobalView, length);
+                stretches.add(stretch);
+                indexInSegmentHits += length;
+                numHitsGlobalView += length;
+
+                // Add hitToStretchMappings for the appropriate indexes, so we can quickly find the stretch
+                // for a global hit index. (we record a mapping every HIT_INDEX_TO_STRETCH_STEP)
+                long hitsSinceLastMapping = stretch.firstHitGlobal % HIT_INDEX_TO_STRETCH_STEP;
+                if (hitsSinceLastMapping == 0)
+                    hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
+                long nextMappingIndex = stretch.firstHitGlobal + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
+                while (nextMappingIndex < stretch.firstHitGlobal + length) {
+                    // Add an entry for this global hit index, so we can quickly find the stretch it belongs to.
+                    hitToStretchMapping.add(stretches.size() - 1);
+                    nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
+                }
+            }
+        }
     }
 }

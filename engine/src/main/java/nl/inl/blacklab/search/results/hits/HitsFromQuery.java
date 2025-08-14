@@ -1,14 +1,14 @@
 package nl.inl.blacklab.search.results.hits;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
+import java.util.function.Function;
 
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -26,6 +26,42 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
 
     /** Objects getting the actual hits from each index segment and adding them to the global results list. */
     protected final List<SpansReader> spansReaders = new ArrayList<>();
+
+    /***
+     * Make equal groups of items, so that each group has approximately the same total size.
+     * This is useful for distributing work evenly over multiple threads.
+     *
+     * @param items the items to group
+     * @param sizeGetter a function that returns the size of each item, used to determine how to group them
+     * @param numberOfGroups the number of groups to create
+     * @return a list of groups, each group is a list of items
+     * @param <T> the type of items to group
+     */
+    public static <T> List<List<T>> makeEqualGroups(List<T> items, Function<T, Long> sizeGetter, int numberOfGroups) {
+        items.sort(Comparator.comparing(sizeGetter).reversed());
+
+        // Now divide the segments into groups by repeatedly adding the largest remaining segment to
+        // the smallest group.
+        List<List<T>> groups =
+                new ArrayList<>(numberOfGroups);
+        List<Long> hitsInGroup = new ArrayList<>(numberOfGroups);
+        for (int i = 0; i < numberOfGroups; i++) {
+            groups.add(new ArrayList<>()); // create empty group for each thread}
+            hitsInGroup.add(0L);
+        }
+        for (T segment: items) {
+            // Find the group with the least hits so far, and add this segment to that group.
+            int minGroupIndex = 0;
+            for (int i = 1; i < hitsInGroup.size(); i++) {
+                if (hitsInGroup.get(i) < hitsInGroup.get(minGroupIndex)) {
+                    minGroupIndex = i;
+                }
+            }
+            groups.get(minGroupIndex).add(segment);
+            hitsInGroup.set(minGroupIndex, hitsInGroup.get(minGroupIndex) + sizeGetter.apply(segment));
+        }
+        return groups;
+    }
 
     /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
      *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
@@ -57,7 +93,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
     }
 
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
-        return new SpansReaderStrategyAddToGlobal();
+        return new SpansReaderStrategyAddToGlobal(lrc);
     }
 
     @Override
@@ -92,18 +128,27 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
 
             // This is the blocking portion, start worker threads, then wait for them to finish.
             final ExecutorService executorService = getExecutorService();
+
+            // Distribute the SpansReaders over the threads.
+            // Make sure the number of documents per segment is roughly equal for each thread.
+            Function<SpansReader, Long> sizeGetter = spansReader ->
+                    spansReader.leafReaderContext == null ? 0 : (long) spansReader.leafReaderContext.reader().maxDoc();
+            pendingResults = makeEqualGroups(spansReaders, sizeGetter, numThreads).stream()
+                .map(list -> executorService.submit(() -> list.forEach(SpansReader::run)))
+                .toList();
+
             // Distribute the SpansReaders over the threads.
             // E.g. if we have 10 SpansReaders and 3 threads, we will have
             // SpansReader 0, 3, 6 and 9 in thread 1, etc.
             // This way, each thread will get a roughly equal number of SpansReaders to run.
-            final AtomicLong i = new AtomicLong();
-            pendingResults = spansReaders
-                .stream()
-                .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use (one list in case of single thread).
-                .values()
-                .stream()
-                .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
-                .toList(); // gather the futures
+//            final AtomicLong i = new AtomicLong();
+//            pendingResults = spansReaders
+//                .stream()
+//                .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use (one list in case of single thread).
+//                .values()
+//                .stream()
+//                .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
+//                .toList(); // gather the futures
 
             // Wait for workers to complete.
             // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
@@ -148,22 +193,28 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
     /** Adds hits to global list regularly. */
     private class SpansReaderStrategyAddToGlobal implements SpansReader.Strategy {
 
+        private final LeafReaderContext lrc;
+
+        SpansReaderStrategyAddToGlobal(LeafReaderContext lrc) {
+            this.lrc = lrc;
+        }
+
         /**
          * How many hits should we collect (at least) before we add them to the global results?
          */
         private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
 
         @Override
-        public void onDocumentBoundary(LeafReaderContext lrc, HitsInternalMutable results) {
+        public void onDocumentBoundary(HitsInternalMutable results) {
             if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
                 // We've built up a batch of hits. Add them to the global results.
                 // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                addAll(lrc, results);
+                addAll(results);
                 results.clear();
             }
         }
 
-        private void addAll(LeafReaderContext lrc, HitsInternalMutable results) {
+        private void addAll(HitsInternalMutable results) {
             Iterator<EphemeralHit> it = results.ephemeralIterator();
             while (it.hasNext()) {
                 EphemeralHit h = it.next();
@@ -173,10 +224,10 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
         }
 
         @Override
-        public void onFinished(LeafReaderContext lrc, HitsInternalMutable results) {
+        public void onFinished(HitsInternalMutable results) {
             if (!results.isEmpty()) {
                 // Add the final batch of hits to the global results.
-                addAll(lrc, results);
+                addAll(results);
             }
         }
     }

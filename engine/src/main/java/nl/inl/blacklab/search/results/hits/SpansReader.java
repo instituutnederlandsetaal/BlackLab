@@ -289,7 +289,7 @@ class SpansReader implements Runnable {
                     if (atDocumentBoundary) {
                         docsStats.increment(storeThisHit);
                         if (!results.isEmpty())
-                            spansReaderStrategy.onDocumentBoundary(leafReaderContext, results);
+                            spansReaderStrategy.onDocumentBoundary(results);
                     }
 
                     if (storeThisHit) {
@@ -314,7 +314,7 @@ class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-            spansReaderStrategy.onFinished(leafReaderContext, results);
+            spansReaderStrategy.onFinished(results);
         }
 
         // If we're here, the loop reached its natural end - we're done.
@@ -322,7 +322,7 @@ class SpansReader implements Runnable {
         this.isDone = true;
         this.spans = null;
         this.hitQueryContext = null;
-        this.leafReaderContext = null;
+        // (don't null out leafReaderContext because we use it to make equal groups of SpansReaders)
     }
 
     /** How to deal with the hits found in the segment. */
@@ -331,13 +331,13 @@ class SpansReader implements Runnable {
          * Called when the SpansReader has reached the end of a document.
          * @param results the hits collected so far
          */
-        void onDocumentBoundary(LeafReaderContext lrc, HitsInternalMutable results);
+        void onDocumentBoundary(HitsInternalMutable results);
 
         /**
          * Called when the SpansReader is done.
          * @param results the hits collected so far
          */
-        void onFinished(LeafReaderContext lrc, HitsInternalMutable results);
+        void onFinished(HitsInternalMutable results);
     }
 
 }

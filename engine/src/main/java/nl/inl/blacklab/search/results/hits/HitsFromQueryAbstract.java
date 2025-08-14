@@ -25,6 +25,7 @@ public abstract class HitsFromQueryAbstract extends HitsAbstract {
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
     protected static final int HIT_POLLING_TIME_MS = 50;
+
     /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
     protected final long maxHitsToProcess;
 
