@@ -50,7 +50,7 @@ public interface Hits extends Results {
      * @return hits found
      */
     static Hits list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
-        return new HitsList(queryInfo, HitsInternal.fromLists(queryInfo.field(), docs, starts, ends));
+        return new HitsList(queryInfo, HitsSimple.fromLists(queryInfo.field(), docs, starts, ends));
     }
 
     static Hits list(QueryInfo queryInfo, HitsInternal hits) {
@@ -77,7 +77,7 @@ public interface Hits extends Results {
      * @return hits found
      */
     static Hits empty(QueryInfo queryInfo) {
-        return new HitsList(queryInfo, HitsInternal.empty(queryInfo.field(), null));
+        return new HitsList(queryInfo, HitsSimple.empty(queryInfo.field(), null));
     }
 
     /**

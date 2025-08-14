@@ -30,7 +30,7 @@ public class HitsList extends HitsAbstract {
      * @param queryInfo query info
      * @param hits the list of hits to wrap
      */
-    protected HitsList(QueryInfo queryInfo, HitsInternal hits) {
+    protected HitsList(QueryInfo queryInfo, HitsSimple hits) {
         super(queryInfo, hits, false);
 
         // Count docs

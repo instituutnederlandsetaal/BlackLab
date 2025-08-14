@@ -108,12 +108,12 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
         this.starts = starts;
         this.ends = ends;
         this.matchInfos = matchInfos == null ? new ObjectArrayList<>() : matchInfos;
-        assert HitsInternal.debugCheckAllReasonable(this);
+        assert HitsInternalAbstract.debugCheckAllReasonable(this);
     }
 
     @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
-        assert HitsInternal.debugCheckReasonableHit(doc, start, end);
+        assert HitsInternalAbstract.debugCheckReasonableHit(doc, start, end);
         docs.add(doc);
         starts.add(start);
         ends.add(end);
@@ -128,7 +128,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(EphemeralHit hit) {
-        assert HitsInternal.debugCheckReasonableHit(hit);
+        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
         docs.add(hit.doc_);
         starts.add(hit.start_);
         ends.add(hit.end_);
@@ -143,7 +143,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
-        assert HitsInternal.debugCheckReasonableHit(hit);
+        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
         docs.add(hit.doc());
         starts.add(hit.start());
         ends.add(hit.end());
@@ -156,7 +156,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
     }
 
     @Override
-    public void addAllNoLock(HitsInternal hits) {
+    public void addAllNoLock(HitsSimple hits) {
         if (hits instanceof HitsInternalLock hil) {
             // We have to lock this.
             hil.withReadLock(hil2 -> {
@@ -164,7 +164,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
             });
         } else if (hits instanceof HitsInternalLock32 hil32) {
             // We have to lock this.
-            hits.withReadLock(hil32_2 -> {
+            hil32.withReadLock(hil32_2 -> {
                 addAllNoLockSource(hil32);
             });
         } else if (hits instanceof HitsInternalNoLock hinl) {
@@ -173,11 +173,13 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
         } else if (hits instanceof HitsInternalNoLock32 hinl32) {
             // No need to lock
             addAllNoLockSource(hinl32);
+        } else {
+            super.addAllNoLock(hits);
         }
     }
 
     private void addAllNoLockSource(HitsInternalNoLock hil) {
-        assert HitsInternal.debugCheckAllReasonable(hil);
+        assert HitsInternalAbstract.debugCheckAllReasonable(hil);
         docs.addAll(hil.docs);
         starts.addAll(hil.starts);
         ends.addAll(hil.ends);
@@ -186,7 +188,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
     }
 
     private void addAllNoLockSource(HitsInternalNoLock32 hil) {
-        assert HitsInternal.debugCheckAllReasonable(hil);
+        assert HitsInternalAbstract.debugCheckAllReasonable(hil);
         docs.addAll(hil.docs);
         starts.addAll(hil.starts);
         ends.addAll(hil.ends);
@@ -209,7 +211,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
     public Hit get(long index) {
         MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
         Hit hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
-        assert HitsInternal.debugCheckReasonableHit(hit);
+        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
         return hit;
     }
 
@@ -233,7 +235,7 @@ class HitsInternalNoLock32 extends HitsInternalAbstract {
         h.start_ = starts.getInt((int)index);
         h.end_ = ends.getInt((int)index);
         h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-        assert HitsInternal.debugCheckReasonableHit(h);
+        assert HitsInternalAbstract.debugCheckReasonableHit(h);
     }
 
     @Override

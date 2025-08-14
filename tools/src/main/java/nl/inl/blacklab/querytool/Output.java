@@ -5,7 +5,6 @@ import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -509,13 +508,13 @@ class Output {
         Kwics kwics = queryTool.getConcType() == ConcordanceType.FORWARD_INDEX ? concordances.getKwics() : null;
         List<HitToShow> toShow = new ArrayList<>();
         HitsSimple windowHits = window.getHits();
-        Iterator<EphemeralHit> it = windowHits.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: windowHits) {
             HitToShow hitToShow;
             if (kwics != null) {
                 Map<String, MatchInfo> matchInfo;
-                matchInfo = windowHits.hasMatchInfo() ? HitsSimple.getMatchInfoMap(windowHits, hit, false) : Collections.emptyMap();
+                matchInfo = windowHits.hasMatchInfo() ?
+                        windowHits.matchInfoDefs().getMap(hit.matchInfos(), false) :
+                        Collections.emptyMap();
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
                 Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
@@ -525,7 +524,8 @@ class Output {
                         Kwic kwic = e.getValue();
                         Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
                                 hit.matchInfos());
-                        hitToShow.addForeign(annotatedField, showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
+                        hitToShow.addForeign(annotatedField,
+                                showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
                     }
                 }
             } else {
@@ -611,7 +611,7 @@ class Output {
         return new HitToShow(hit.doc(), before, match, after, matchInfo);
     }
 
-    private HitToShow showHitFromContentStore(Hit hit, Concordances concordances, HitsSimple window,
+    private HitToShow showHitFromContentStore(EphemeralHit hit, Concordances concordances, HitsSimple window,
             boolean stripXML) {
         HitToShow hitToShow;
         Concordance conc = concordances.get(hit);
@@ -624,7 +624,7 @@ class Output {
 
         Map<String, MatchInfo> matchInfo = null;
         if (window.hasMatchInfo())
-            matchInfo = HitsSimple.getMatchInfoMap(window, hit, false);
+            matchInfo = window.matchInfoDefs().getMap(hit.matchInfos(), false);
         hitToShow = new HitToShow(hit.doc(), left, hitText, right, matchInfo);
         return hitToShow;
     }

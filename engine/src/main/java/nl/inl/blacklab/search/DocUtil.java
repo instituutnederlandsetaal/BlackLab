@@ -162,7 +162,7 @@ public class DocUtil {
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int[] starts = new int[(int)hits.size()];
         int[] ends = new int[(int)hits.size()];
-        Iterator<EphemeralHit> hitsIt = hits.ephemeralIterator();
+        Iterator<EphemeralHit> hitsIt = hits.iterator();
         for (int i = 0; i < starts.length; i++) {
             EphemeralHit hit = hitsIt.next(); // hits.get(i);
             starts[i] = hit.start();

@@ -56,16 +56,16 @@ public class CompareHitsInternalImpls {
     public static void main(String[] args) {
 
         time("WARMUP", () -> {
-            test(null, HitsInternal.create(null, null, -1, false, false));
-            test(null, HitsInternal.create(null, null, -1, true,  false));
-            test(null, HitsInternal.create(null, null, -1, false,  true));
-            test(null, HitsInternal.create(null, null, -1, true,   true));
+            test(null, HitsInternalMutable.create(null, null, -1, false, false));
+            test(null, HitsInternalMutable.create(null, null, -1, true,  false));
+            test(null, HitsInternalMutable.create(null, null, -1, false,  true));
+            test(null, HitsInternalMutable.create(null, null, -1, true,   true));
         });
 
-        test("SMALL UNLOCKED", HitsInternal.create(null, null, -1, false, false));
-        test("HUGE  UNLOCKED", HitsInternal.create(null, null, -1, true,  false));
-        test("SMALL LOCKED  ", HitsInternal.create(null, null, -1, false,  true));
-        test("HUGE  LOCKED  ", HitsInternal.create(null, null, -1, true,   true));
+        test("SMALL UNLOCKED", HitsInternalMutable.create(null, null, -1, false, false));
+        test("HUGE  UNLOCKED", HitsInternalMutable.create(null, null, -1, true,  false));
+        test("SMALL LOCKED  ", HitsInternalMutable.create(null, null, -1, false,  true));
+        test("HUGE  LOCKED  ", HitsInternalMutable.create(null, null, -1, true,   true));
     }
 
 }

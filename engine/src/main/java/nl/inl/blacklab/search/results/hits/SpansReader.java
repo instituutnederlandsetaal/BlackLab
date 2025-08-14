@@ -231,7 +231,7 @@ class SpansReader implements Runnable {
 
         final int numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
-        final HitsInternalMutable results = HitsInternal.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
+        final HitsInternalMutable results = HitsInternalMutable.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
 
         // Increment if we're NOT at a document boundary OR we haven't reached the currently requested number of hits yet.

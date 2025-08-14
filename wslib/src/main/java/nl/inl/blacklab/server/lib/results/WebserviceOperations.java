@@ -308,9 +308,7 @@ public class WebserviceOperations {
             Map<Integer, Document> luceneDocs) {
         // Collect Lucene docs (for writing docInfos later) and find pids
         Map<Integer, String> docIdToPid = new HashMap<>();
-        Iterator<EphemeralHit> it = hits.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: hits) {
             Document document = luceneDocs.computeIfAbsent(hit.doc(),
                     __ -> index.luceneDoc(hit.doc()));
             String docPid = getDocumentPid(index, hit.doc(), document);

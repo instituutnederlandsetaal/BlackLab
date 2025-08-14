@@ -159,7 +159,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             hitsPerSegment = new LinkedHashMap<>();
         }
         // Global view on our segment hits
-        hitsSimple = new GlobalHitsView();
+        hitsView = new LazyGlobalHitsView();
     }
 
     /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
@@ -175,7 +175,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
 
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
         // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from it.
-        final HitsInternalMutable hitsInThisSegment = HitsInternal.create(field(), hitQueryContext.getMatchInfoDefs(),
+        final HitsInternalMutable hitsInThisSegment = HitsInternalMutable.create(field(), hitQueryContext.getMatchInfoDefs(),
                 -1, true, true);
 
         // Add it to the map of segment hits.
@@ -188,7 +188,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
     }
 
     /** A stable global view of the lists of segment hits */
-    private class GlobalHitsView implements HitsSimple {
+    private class LazyGlobalHitsView implements HitsSimple {
 
         /** Below this number of hits, we'll sort in a single thread to save overhead. */
         public static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
@@ -300,7 +300,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         @Override
         public HitsSimple sublist(long start, long length) {
             if (length == 0)
-                return HitsInternal.empty(field(), matchInfoDefs());
+                return HitsSimple.empty(field(), matchInfoDefs());
             ensureResultsRead(start + length);
             long end = start + length;
             synchronized (HitsFromQueryKeepSegments.this) {
@@ -308,12 +308,12 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
                     end = numHitsGlobalView;
             }
             if (start == end)
-                return HitsInternal.empty(field(), matchInfoDefs());
+                return HitsSimple.empty(field(), matchInfoDefs());
             if (start < 0 || end < 0 || start > end)
                 throw new IndexOutOfBoundsException("Sub-list start " + start + " with length " + length +
                         " is out of bounds (size: " + size() + ")");
 
-            HitsInternalMutable sublist = HitsInternal.create(field(), matchInfoDefs(), end - start, false, false);
+            HitsInternalMutable sublist = HitsInternalMutable.create(field(), matchInfoDefs(), end - start, false, false);
             EphemeralHit h = new EphemeralHit();
             long globalIndex = start;
             HitsStretch currentStretch = getHitsStretch(globalIndex);
@@ -346,7 +346,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         }
 
         @Override
-        public Iterator<EphemeralHit> ephemeralIterator() {
+        public Iterator<EphemeralHit> iterator() {
             return new Iterator<>() {
 
                 /** Iterate over all stretches so we can iterate over each hit within them */
@@ -480,7 +480,7 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
             MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
 
             // Now merge the sorted hits from each segment.
-            HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(),
+            HitsInternalMutable mergedHits = HitsInternalMutable.create(field(), matchInfoDefs(),
                     numHitsGlobalView, numHitsGlobalView, false);
             return sortMerge(queue, mergedHits);
         }
@@ -550,12 +550,10 @@ public class HitsFromQueryKeepSegments extends HitsFromQuery {
         /** Sort the hits in a single thread. */
         private HitsSimple sortedSingleThread(HitProperty sortProp) {
             size(); // Fetch all hits. Was already called, but just in case we reuse this method.
-            HitsInternalMutable mergedHits = HitsInternal.create(field(), matchInfoDefs(),
+            HitsInternalMutable mergedHits = HitsInternalMutable.create(field(), matchInfoDefs(),
                     numHitsGlobalView, numHitsGlobalView, false);
             for (Map.Entry<LeafReaderContext, HitsInternalMutable> segmentHits: hitsPerSegment.entrySet()) {
-                Iterator<EphemeralHit> it = segmentHits.getValue().ephemeralIterator();
-                while (it.hasNext()) {
-                    EphemeralHit hit = it.next();
+                for (EphemeralHit hit: segmentHits.getValue()) {
                     convertToGlobal(hit, segmentHits.getKey().docBase);
                     mergedHits.add(hit);
                 }

@@ -55,9 +55,10 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     /** Mutable interface to our list of hits, if mutation is allowed. */
     protected final HitsInternalMutable hitsInternalMutable;
 
-    /** HitsSimple interface to our actual hits.
-     * Ensures enough hits have been fetched (if applicable). */
-    HitsSimple hitsSimple;
+    /** A view to our actual hits.
+     *  Will ensure that enough hits have been fetched (if applicable).
+     */
+    HitsSimple hitsView;
 
     /**
      * Construct a Hits object from a hits array.
@@ -71,144 +72,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
         this.hitsInternal = hits;
         this.hitsInternalMutable = mutable ? (HitsInternalMutable)hits : null;
-        hitsSimple = new HitsSimple() {
-            @Override
-            public AnnotatedField field() {
-                return queryInfo().field();
-            }
-
-            @Override
-            public BlackLabIndex index() {
-                return queryInfo().index();
-            }
-
-            @Override
-            public MatchInfoDefs matchInfoDefs() {
-                return hitsInternal.matchInfoDefs();
-            }
-
-            @Override
-            public boolean hasMatchInfo() {
-                return hitsInternal.hasMatchInfo();
-            }
-
-            @Override
-            public long size() {
-                ensureResultsRead(-1);
-                return hitsInternal.size();
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return !ensureResultsRead(1);
-            }
-
-            @Override
-            public Hit get(long index) {
-                ensureResultsRead(index + 1);
-                return hitsInternal.get(index);
-            }
-
-            @Override
-            public void getEphemeral(long index, EphemeralHit hit) {
-                ensureResultsRead(index + 1);
-                hitsInternal.getEphemeral(index, hit);
-            }
-
-            @Override
-            public Iterator<EphemeralHit> ephemeralIterator() {
-                ensureResultsRead(-1);
-                return hitsInternal.ephemeralIterator();
-            }
-
-            /**
-             * Get Lucene document id for the specified hit
-             * @param index hit index
-             * @return document id
-             */
-            @Override
-            public int doc(long index) {
-                ensureResultsRead(index + 1);
-                return hitsInternal.doc(index);
-            }
-
-            /**
-             * Get start position for the specified hit
-             * @param index hit index
-             * @return document id
-             */
-            @Override
-            public int start(long index) {
-                ensureResultsRead(index + 1);
-                return hitsInternal.start(index);
-            }
-
-            /**
-             * Get end position for the specified hit
-             * @param index hit index
-             * @return document id
-             */
-            @Override
-            public int end(long index) {
-                ensureResultsRead(index + 1);
-                return hitsInternal.end(index);
-            }
-
-            @Override
-            public MatchInfo[] matchInfos(long hitIndex) {
-                ensureResultsRead(hitIndex + 1);
-                return hitsInternal.matchInfos(hitIndex);
-            }
-
-            @Override
-            public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
-                ensureResultsRead(hitIndex + 1);
-                return hitsInternal.matchInfo(hitIndex, matchInfoIndex);
-            }
-
-            @Override
-            public HitsSimple sublist(long first, long windowSize) {
-                ensureResultsRead(first + windowSize);
-                return hitsInternal.sublist(first, windowSize);
-            }
-
-            @Override
-            public HitsSimple sorted(HitProperty sortProp) {
-                ensureResultsRead(-1);
-                return hitsInternal.sorted(sortProp);
-            }
-
-            @Override
-            public HitsSimple getStatic() {
-                ensureResultsRead(-1);
-                return hitsInternal.getStatic();
-            }
-
-            @Override
-            public HitsSimple getHitsInDoc(int docId) {
-                ensureResultsRead(-1);
-                return hitsInternal.getHitsInDoc(docId);
-            }
-
-            @Override
-            public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
-                ensureResultsRead(-1);
-                return hitsInternal.concordances(contextSize, type);
-            }
-
-            @Override
-            public Kwics kwics(ContextSize contextSize) {
-                ensureResultsRead(-1);
-                return hitsInternal.kwics(contextSize);
-            }
-
-            @Override
-            public Concordances concordances(ContextSize contextSize) {
-                ensureResultsRead(-1);
-                return hitsInternal.concordances(contextSize);
-            }
-
-        };
+        hitsView = new LazyHitsView();
     }
 
     /**
@@ -257,10 +121,8 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 //                false);
 
         // Count docs
-        Iterator<EphemeralHit> it = window.ephemeralIterator();
         int prevDoc = -1;
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: window) {
             int doc = hit.doc();
             if (doc != prevDoc) {
                 docsRetrieved.add(1);
@@ -289,10 +151,8 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
         // Count the number of documents in the sample
         MutableInt docsInSample = new MutableInt(0);
-        Iterator<EphemeralHit> it = sample.ephemeralIterator();
         int previousDoc = -1;
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: sample) {
             if (hit.doc() != previousDoc) { // this works because indexes are sorted (TreeSet)
                 docsInSample.add(1);
                 previousDoc = hit.doc();
@@ -334,10 +194,12 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
         }
 
         // Add the chosen hits indexes to the sample.
-        HitsInternalMutable sample = HitsInternal.create(hitsList.field(), hitsList.matchInfoDefs(), numberOfHitsToSelect,
+        HitsInternalMutable sample = HitsInternalMutable.create(hitsList.field(), hitsList.matchInfoDefs(), numberOfHitsToSelect,
                 numberOfHitsToSelect, false);
+        EphemeralHit hit = new EphemeralHit();
         for (Long hitIndex: chosenHitIndices) {
-            sample.add(hitsList.get(hitIndex));
+            hitsList.getEphemeral(hitIndex, hit);
+            sample.add(hit);
         }
         return sample;
     }
@@ -424,7 +286,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     /** Assumes this hit is within our lists. */
     @Override
     public Hits window(Hit hit) {
-        HitsInternalMutable r = HitsInternal.create(field(), getHits().matchInfoDefs(), 1, false, false);
+        HitsInternalMutable r = HitsInternalMutable.create(field(), getHits().matchInfoDefs(), 1, false, false);
         r.add(hit);
 
         return new HitsList(
@@ -444,7 +306,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
 
     @Override
     public HitsSimple getHits() {
-        return hitsSimple;
+        return hitsView;
     }
 
     @Override
@@ -455,5 +317,143 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     @Override
     public WindowStats windowStats() {
         return null;
+    }
+
+    private class LazyHitsView implements HitsSimple {
+        @Override
+        public AnnotatedField field() {
+            return queryInfo().field();
+        }
+
+        @Override
+        public BlackLabIndex index() {
+            return queryInfo().index();
+        }
+
+        @Override
+        public MatchInfoDefs matchInfoDefs() {
+            return hitsInternal.matchInfoDefs();
+        }
+
+        @Override
+        public boolean hasMatchInfo() {
+            return hitsInternal.hasMatchInfo();
+        }
+
+        @Override
+        public long size() {
+            ensureResultsRead(-1);
+            return hitsInternal.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return !ensureResultsRead(1);
+        }
+
+        @Override
+        public Hit get(long index) {
+            ensureResultsRead(index + 1);
+            return hitsInternal.get(index);
+        }
+
+        @Override
+        public void getEphemeral(long index, EphemeralHit hit) {
+            ensureResultsRead(index + 1);
+            hitsInternal.getEphemeral(index, hit);
+        }
+
+        @Override
+        public Iterator<EphemeralHit> iterator() {
+            ensureResultsRead(-1);
+            return hitsInternal.iterator();
+        }
+
+        /**
+         * Get Lucene document id for the specified hit
+         * @param index hit index
+         * @return document id
+         */
+        @Override
+        public int doc(long index) {
+            ensureResultsRead(index + 1);
+            return hitsInternal.doc(index);
+        }
+
+        /**
+         * Get start position for the specified hit
+         * @param index hit index
+         * @return document id
+         */
+        @Override
+        public int start(long index) {
+            ensureResultsRead(index + 1);
+            return hitsInternal.start(index);
+        }
+
+        /**
+         * Get end position for the specified hit
+         * @param index hit index
+         * @return document id
+         */
+        @Override
+        public int end(long index) {
+            ensureResultsRead(index + 1);
+            return hitsInternal.end(index);
+        }
+
+        @Override
+        public MatchInfo[] matchInfos(long hitIndex) {
+            ensureResultsRead(hitIndex + 1);
+            return hitsInternal.matchInfos(hitIndex);
+        }
+
+        @Override
+        public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
+            ensureResultsRead(hitIndex + 1);
+            return hitsInternal.matchInfo(hitIndex, matchInfoIndex);
+        }
+
+        @Override
+        public HitsSimple sublist(long first, long windowSize) {
+            ensureResultsRead(first + windowSize);
+            return hitsInternal.sublist(first, windowSize);
+        }
+
+        @Override
+        public HitsSimple sorted(HitProperty sortProp) {
+            ensureResultsRead(-1);
+            return hitsInternal.sorted(sortProp);
+        }
+
+        @Override
+        public HitsSimple getStatic() {
+            ensureResultsRead(-1);
+            return hitsInternal.getStatic();
+        }
+
+        @Override
+        public HitsSimple filteredByDocId(int docId) {
+            ensureResultsRead(-1);
+            return hitsInternal.filteredByDocId(docId);
+        }
+
+        @Override
+        public Concordances concordances(ContextSize contextSize, ConcordanceType type) {
+            ensureResultsRead(-1);
+            return hitsInternal.concordances(contextSize, type);
+        }
+
+        @Override
+        public Kwics kwics(ContextSize contextSize) {
+            ensureResultsRead(-1);
+            return hitsInternal.kwics(contextSize);
+        }
+
+        @Override
+        public Concordances concordances(ContextSize contextSize) {
+            ensureResultsRead(-1);
+            return hitsInternal.concordances(contextSize);
+        }
     }
 }

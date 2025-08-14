@@ -1,15 +1,12 @@
 package nl.inl.blacklab.search;
 
-import java.util.Iterator;
-
 import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
-import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
-import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestHitsSample {
 
@@ -22,9 +19,7 @@ public class TestHitsSample {
             Hits hits = Hits.list(index.createDefaultQueryInfo(), A_DOC, A_START, A_END).sample(param);
             int i = 0;
             Assert.assertEquals(expected.length, hits.size());
-            Iterator<EphemeralHit> it = hits.getHits().ephemeralIterator();
-            while (it.hasNext()) {
-                Hit hit = it.next();
+            for (EphemeralHit hit: hits.getHits()) {
                 Assert.assertEquals(A_DOC[expected[i]], hit.doc());
                 Assert.assertEquals(A_START[expected[i]], hit.start());
                 Assert.assertEquals(A_END[expected[i]], hit.end());

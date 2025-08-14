@@ -18,7 +18,6 @@ import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.hits.HitsInternal;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 
 public class TestHitPropertySerialize {
@@ -29,7 +28,7 @@ public class TestHitPropertySerialize {
 
     private static final MockTerms terms = new MockTerms();
 
-    private static final HitsSimple hits = HitsInternal.empty(mockIndex.mainAnnotatedField(), null);
+    private static final HitsSimple hits = HitsSimple.empty(mockIndex.mainAnnotatedField(), null);
 
     private static Annotation lemmaAnnotation;
 

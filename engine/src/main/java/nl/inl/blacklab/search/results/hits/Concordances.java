@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results.hits;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -87,12 +86,12 @@ public class Concordances {
         // Determine the first and last word of the concordance, as well as the
         // first and last word of the actual hit inside the concordance.
         int startEndArrayIndex = 0;
-        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: hits) {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            contextSize.getSnippetStartEnd(hit, hits.matchInfoDefs(), true, startsOfWords, startEndArrayIndex, endsOfWords, startEndArrayIndex + 1);
+            contextSize.getSnippetStartEnd(hit, hits.matchInfoDefs(), true, startsOfWords, startEndArrayIndex,
+                    endsOfWords, startEndArrayIndex + 1);
             startsOfWords[startEndArrayIndex + 1] = hitStart;
             endsOfWords[startEndArrayIndex] = hitEnd;
 
@@ -107,9 +106,7 @@ public class Concordances {
         // Make all the concordances
         List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
         int i = 0;
-        Iterator<EphemeralHit> it = hits.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: hits) {
             conc.put(hit.toHit(), newConcs.get(i));
             ++i;
         }
@@ -128,15 +125,13 @@ public class Concordances {
         // Group hits per document
         MutableIntObjectMap<HitsInternalMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();
-        Iterator<EphemeralHit> it = hits.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit key = it.next();
+        for (EphemeralHit key: hits) {
             HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsInternal.create(hits.field(), hits.matchInfoDefs(), -1, totalHits, false);
+                hitsInDoc = HitsInternalMutable.create(hits.field(), hits.matchInfoDefs(), -1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
-            hitsInDoc.add(key.toHit());
+            hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
         for (HitsSimple l: hitsPerDocument.values()) {

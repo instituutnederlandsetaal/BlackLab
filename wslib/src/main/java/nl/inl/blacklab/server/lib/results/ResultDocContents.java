@@ -14,7 +14,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.HitsInternal;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -135,9 +134,9 @@ public class ResultDocContents {
         HitsSimple hitsInDoc;
         AnnotatedField fieldToShow = params.getAnnotatedField();
         if (hits == null) {
-            hitsInDoc = HitsInternal.empty(fieldToShow, null);
+            hitsInDoc = HitsSimple.empty(fieldToShow, null);
         } else {
-            hitsInDoc = hits.getHits().getHitsInDoc(docId);
+            hitsInDoc = hits.getHits().filteredByDocId(docId);
         }
         if (isFullDocument) {
             // Whole document. Use the highlightDocument method, which takes document versions in

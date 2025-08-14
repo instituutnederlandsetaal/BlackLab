@@ -2,7 +2,9 @@ package nl.inl.blacklab.search.lucene;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -17,6 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  * that these are only called at a time when this is known.
  */
 public class MatchInfoDefs {
+
     public static final MatchInfoDefs EMPTY = new MatchInfoDefs() {
         @Override
         synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {
@@ -36,6 +39,20 @@ public class MatchInfoDefs {
 
     public MatchInfoDefs(List<MatchInfo.Def> defs) {
         this.defs.addAll(defs);
+    }
+
+    public Map<String, MatchInfo> getMap(MatchInfo[] matchInfo, boolean omitEmptyCaptures) {
+        if (matchInfo == null)
+            return Collections.emptyMap();
+        Map<String, MatchInfo> map = new HashMap<>();
+        for (int i = 0; i < matchInfo.length; i++) {
+            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
+                continue;
+            if (matchInfo[i] != null) {
+                map.put(get(i).getName(), matchInfo[i]);
+            }
+        }
+        return map;
     }
 
     synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, AnnotatedField field, AnnotatedField targetField) {

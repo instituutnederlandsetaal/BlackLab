@@ -45,9 +45,7 @@ import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.HitsInternal;
 import nl.inl.blacklab.search.results.hits.HitsInternalMutable;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
@@ -248,7 +246,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
         this.matchInfoDefs = hits.matchInfoDefs();
-        this.sourceHitsIterator = hits.ephemeralIterator();
+        this.sourceHitsIterator = hits.iterator();
         stats.setDone(false); // we're still actively gathering hits, unlike with the other constructors
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
@@ -343,7 +341,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 int lastDocId = partialDocId;
 
                 while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
-                    Hit h = sourceHitsIterator.next().toHit();
+                    EphemeralHit h = sourceHitsIterator.next();
                     int curDoc = h.doc();
                     if (curDoc != lastDocId) {
                         if (docHits != null) {
@@ -356,7 +354,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
-                        docHits = HitsInternal.create(field(), matchInfoDefs, -1, true, false);
+                        docHits = HitsInternalMutable.create(field(), matchInfoDefs, -1, true, false);
                     }
 
                     docHits.add(h);

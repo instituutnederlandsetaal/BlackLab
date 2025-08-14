@@ -44,7 +44,7 @@ public class HitsFiltered extends HitsAbstract {
      * @param value value to filter with
      */
     protected HitsFiltered(Hits hits, HitProperty property, PropertyValue value) {
-        super(hits.queryInfo(), HitsInternal.create(hits.field(), hits.getHits().matchInfoDefs(), -1, true, true), true);
+        super(hits.queryInfo(), HitsInternalMutable.create(hits.field(), hits.getHits().matchInfoDefs(), -1, true, true), true);
         this.source = hits;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.

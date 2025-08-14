@@ -62,7 +62,6 @@ import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
@@ -614,21 +613,20 @@ public class ResponseStreamer {
 
         ds.startEntry("hits").startList();
         HitsSimple hitsList = hits.getHits().getStatic();
-        Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
-        while (it.hasNext()) {
-            Hit hit = it.next().toHit();
+        for (EphemeralHit hit: hitsList) {
             ds.startItem("hit");
             {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> matchInfos = null;
                 if (hitsList.hasMatchInfo()) {
-                    matchInfos = HitsSimple.getMatchInfoMap(hitsList, hit, params.getOmitEmptyCaptures());
+                    matchInfos = hitsList.matchInfoDefs().getMap(hit.matchInfos(), params.getOmitEmptyCaptures());
                     if (matchInfos == null && logger != null)
                         logger.warn(
                                 "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
                 }
 
-                hit(docPid, hit, hits.field(), matchInfos, params.contextSettings().size(), result.getConcordanceContext(),
+                hit(docPid, hit, hits.field(), matchInfos, params.contextSettings().size(),
+                        result.getConcordanceContext(),
                         result.getAnnotationsToWrite());
             }
             ds.endItem();
@@ -636,7 +634,7 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    private void hit(String docPid, Hit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
+    private void hit(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfo, ContextSize context, ConcordanceContext concordanceContext,
             Collection<Annotation> annotationsToList) {
         boolean isSnippet = false;
 
@@ -655,8 +653,9 @@ public class ResponseStreamer {
         if (hitsList.isEmpty())
             throw new IllegalStateException("Hit for snippet not found");
         hitsList = hitsList.size() > 1 ? hitsList.sublist(0, 1) : hitsList;
-        Hit hit = hitsList.get(0);
-        Map<String, MatchInfo> matchInfo = HitsSimple.getMatchInfoMap(hitsList, hit, false);
+        EphemeralHit hit = new EphemeralHit();
+        hitsList.getEphemeral(0, hit);
+        Map<String, MatchInfo> matchInfo = hitsList.matchInfoDefs().getMap(hit.matchInfos(), false);
         ContextSize context = result.getContext();
         ConcordanceContext concordanceContext = result.isOrigContent() ?
                 ConcordanceContext.concordances(hitsList.concordances(context, ConcordanceType.CONTENT_STORE)) :
@@ -671,7 +670,7 @@ public class ResponseStreamer {
                 isSnippet);
     }
 
-    private void outputHitOrSnippet(String docPid, Hit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
+    private void outputHitOrSnippet(String docPid, EphemeralHit hit, AnnotatedField searchField, Map<String, MatchInfo> matchInfos,
             ContextSize context, ConcordanceContext concordanceContext, Collection<Annotation> annotationsToList,
             boolean isSnippet) {
         boolean includeContext = context.inlineTagName() != null || context.before() > 0 || context.after() > 0;

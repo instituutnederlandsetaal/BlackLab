@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -154,9 +153,7 @@ public class WriteCsv {
             Map<Integer, Document> luceneDocs = new HashMap<>();
             HitsSimple hitsList = hits.getHits();
             Kwics kwics = hitsList.kwics(params.contextSettings().size());
-            Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
-            while (it.hasNext()) {
-                EphemeralHit hit = it.next();
+            for (EphemeralHit hit: hitsList) {
                 Document doc = luceneDocs.get(hit.doc());
                 if (doc == null) {
                     doc = index.luceneDoc(hit.doc());

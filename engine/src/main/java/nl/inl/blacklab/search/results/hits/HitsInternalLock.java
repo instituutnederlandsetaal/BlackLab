@@ -18,7 +18,7 @@ class HitsInternalLock extends HitsInternalNoLock {
 
     @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
-        assert HitsInternal.debugCheckReasonableHit(doc, start, end);
+        assert HitsInternalAbstract.debugCheckReasonableHit(doc, start, end);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -35,7 +35,7 @@ class HitsInternalLock extends HitsInternalNoLock {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(EphemeralHit hit) {
-        assert HitsInternal.debugCheckReasonableHit(hit);
+        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -52,7 +52,7 @@ class HitsInternalLock extends HitsInternalNoLock {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
-        assert HitsInternal.debugCheckReasonableHit(hit);
+        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -74,7 +74,7 @@ class HitsInternalLock extends HitsInternalNoLock {
             MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
                     matchInfo);
-            assert HitsInternal.debugCheckReasonableHit(hit);
+            assert HitsInternalAbstract.debugCheckReasonableHit(hit);
             return hit;
         } finally {
             lock.readLock().unlock();
@@ -90,7 +90,7 @@ class HitsInternalLock extends HitsInternalNoLock {
             h.start_ = starts.getInt(index);
             h.end_ = ends.getInt(index);
             h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-            assert HitsInternal.debugCheckReasonableHit(h);
+            assert HitsInternalAbstract.debugCheckReasonableHit(h);
         } finally {
             lock.readLock().unlock();
         }

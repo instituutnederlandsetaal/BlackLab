@@ -44,8 +44,7 @@ public class Kwics {
         Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
         Map<AnnotatedField, List<GAnnotationForwardIndex>> afisPerField = new HashMap<>();
         AnnotatedField defaultField = hits.field();
-        for (Iterator<EphemeralHit> it = hits.ephemeralIterator(); it.hasNext(); ) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: hits) {
             Map<AnnotatedField, int[]> minMaxPerField = null; // start and end of the "foreign match"
             MatchInfo[] matchInfo = hit.matchInfos();
             if (matchInfo != null) {
@@ -55,7 +54,8 @@ public class Kwics {
                         continue; // not captured for this hit
                     MatchInfo.Def def = defIt.hasNext() ? defIt.next() : null; // null should only happen in testing...
                     boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
-                            def != null && def.getName().endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
+                            def != null && def.getName()
+                            .endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
                     minMaxPerField = updateMinMaxForMatchInfo(hits.index(), mi, defaultField, minMaxPerField,
                             afisPerField, isTargetHit);
                 }
@@ -75,8 +75,10 @@ public class Kwics {
 
                         AnnotatedField field = e.getKey();
                         List<GAnnotationForwardIndex> afis = afisPerField.get(field);
-                        HitsSimple singleHit = HitsInternal.single(hits.field(), hits.matchInfoDefs(), hit.doc(), matchStart, matchEnd);
-                        ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd, true,
+                        HitsSimple singleHit = HitsSimple.single(hits.field(), hits.matchInfoDefs(), hit.doc(),
+                                matchStart, matchEnd);
+                        ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd,
+                                true,
                                 contextSize.getMaxSnippetLength());
                         Contexts.makeKwicsSingleDocForwardIndex(singleHit, afis, thisContext,
                                 (__, kwic) -> kwics.put(field, kwic));

@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -160,22 +159,22 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
 
         Map<PropertyValue, GroupHitsAndSize> groupLists = new HashMap<>();
         int hitIndex = 0;
-        Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: hitsList) {
             PropertyValue identity = criteria.get(hitIndex);
 
             GroupHitsAndSize group = groupLists.get(identity);
             if (group == null) {
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
-                    throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
-                HitsInternalMutable hitsInGroup = HitsInternal.create(hitsList.field(), hitsList.matchInfoDefs(), -1,
+                    throw new UnsupportedOperationException(
+                            "Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+                HitsInternalMutable hitsInGroup = HitsInternalMutable.create(hitsList.field(), hitsList.matchInfoDefs(),
+                        -1,
                         hitsList.size(), false);
                 group = new GroupHitsAndSize(hitsInGroup, 0);
                 groupLists.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {
-                group.storedHits.add(hit.toHit());
+                group.storedHits.add(hit);
             }
             group.totalNumberOfHits++;
             ++hitIndex;
@@ -326,11 +325,9 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         MutableIntSet docs = new IntHashSet();
         for (HitGroup h: sample) {
             hitsCounted += h.size();
-            Iterator<EphemeralHit> it = h.storedResults().getHits().ephemeralIterator();
-            while (it.hasNext()) {
-                EphemeralHit hh = it.next();
+            for (EphemeralHit hh: h.storedResults().getHits()) {
                 ++hitsRetrieved;
-                if (docs.add(hh.doc())) 
+                if (docs.add(hh.doc()))
                     ++docsRetrieved;
             }
         }

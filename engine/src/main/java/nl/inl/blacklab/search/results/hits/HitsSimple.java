@@ -1,10 +1,9 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Map;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -13,22 +12,28 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /** A minimal Hits/HitsInternal interface that is all that HitProperty needs. */
-public interface HitsSimple {
+public interface HitsSimple extends Iterable<EphemeralHit> {
 
-    static Map<String, MatchInfo> getMatchInfoMap(HitsSimple hits, Hit hit, boolean omitEmptyCaptures) {
-        MatchInfo[] matchInfo = hit.matchInfos();
-        if (matchInfo == null)
-            return Collections.emptyMap();
-        MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
-        Map<String, MatchInfo> map = new HashMap<>();
-        for (int i = 0; i < matchInfo.length; i++) {
-            if (omitEmptyCaptures && matchInfo[i].isSpanEmpty())
-                continue;
-            if (matchInfo[i] != null) {
-                map.put(matchInfoDefs.get(i).getName(), matchInfo[i]);
-            }
+    /** An empty list of hits. */
+    static HitsSimple empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+        return new HitsInternalNoLock32(field, matchInfoDefs, -1);
+    }
+
+    static HitsSimple fromLists(AnnotatedField field,
+            int[] docs, int[] starts, int[] ends) {
+        IntList lDocs = new IntArrayList(docs);
+        IntList lStarts = new IntArrayList(starts);
+        IntList lEnds = new IntArrayList(ends);
+        return new HitsInternalNoLock32(field, null, lDocs, lStarts, lEnds, null);
+    }
+
+    static HitsSimple single(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
+        if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
+            throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
         }
-        return map;
+        HitsInternalMutable hits = HitsInternalMutable.create(field, matchInfoDefs, 1, false, false);
+        hits.add(doc, matchStart, matchEnd, null);
+        return hits;
     }
 
     /**
@@ -130,7 +135,17 @@ public interface HitsSimple {
      */
     HitsSimple sublist(long first, long windowSize);
 
-    Iterator<EphemeralHit> ephemeralIterator();
+    /**
+     * Get an iterator over the hits in this Hits object.
+     * <p>
+     * The iterator is not thread-safe.
+     * <p>
+     * It will return an EphemeralHit object for each hit, which is temporary
+     * and should not be retained.
+     *
+     * @return iterator over the hits in this Hits object
+     */
+    Iterator<EphemeralHit> iterator();
 
     /**
      * Check if this hits object is empty.
@@ -175,13 +190,11 @@ public interface HitsSimple {
         return new Kwics(getStatic(), contextSize);
     }
 
-    default HitsSimple getHitsInDoc(int docId) {
-        HitsInternalMutable hitsInDoc = HitsInternal.create(field(), matchInfoDefs(), -1, size(), false);
-        Iterator<EphemeralHit> it = ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit h = it.next();
+    default HitsSimple filteredByDocId(int docId) {
+        HitsInternalMutable hitsInDoc = HitsInternalMutable.create(field(), matchInfoDefs(), -1, size(), false);
+        for (EphemeralHit h: this) {
             if (h.doc() == docId)
-                hitsInDoc.add(h.toHit());
+                hitsInDoc.add(h);
         }
         return hitsInDoc;
     }

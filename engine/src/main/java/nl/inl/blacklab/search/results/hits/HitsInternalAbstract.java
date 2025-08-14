@@ -4,6 +4,8 @@ import java.text.CollationKey;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
+import org.apache.lucene.queries.spans.Spans;
+
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -15,8 +17,32 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 public abstract class HitsInternalAbstract implements HitsInternalMutable {
 
+    static boolean debugCheckAllReasonable(HitsSimple hits) {
+        for (EphemeralHit hit: hits) {
+            assert debugCheckReasonableHit(hit);
+        }
+        return true;
+    }
+
+    static boolean debugCheckReasonableHit(Hit h) {
+        return debugCheckReasonableHit(h.doc(), h.start(), h.end());
+    }
+
+    static boolean debugCheckReasonableHit(int doc, int start, int end) {
+        assert doc >= 0 : "Hit doc id must be non-negative, is " + doc;
+        assert doc != Spans.NO_MORE_DOCS : "Hit doc id must not equal NO_MORE_DOCS";
+        assert start >= 0 : "Hit start must be non-negative, is " + start;
+        assert end >= 0 : "Hit end must be non-negative, is " + start;
+        assert start <= end : "Hit start " + start + " > end " + end;
+        assert start != Spans.NO_MORE_POSITIONS : "Hit start must not equal NO_MORE_POSITIONS";
+        assert end != Spans.NO_MORE_POSITIONS : "Hit end must not equal NO_MORE_POSITIONS";
+        return true;
+    }
+
+    /** Field these hits came from */
     final AnnotatedField field;
 
+    /** Match info definitions for these hits */
     MatchInfoDefs matchInfoDefs;
 
     /** Lock (for the classes that do locking; otherwise null) */
@@ -44,7 +70,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     abstract void clearNoLock();
 
     @Override
-    public void addAll(HitsInternal hits) {
+    public void addAll(HitsSimple hits) {
         if (this.lock != null) {
             this.lock.writeLock().lock();
             try {
@@ -57,7 +83,13 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         }
     }
 
-    abstract void addAllNoLock(HitsInternal hits);
+    void addAllNoLock(HitsSimple hits) {
+        // Fallback: just add hits one by one.
+        // (overrides implement a more efficient version)
+        for (EphemeralHit hit: hits) {
+            add(hit);
+        }
+    }
 
     @Override
     public long size() {
@@ -111,11 +143,11 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         if (windowSize < 0)
             throw new IllegalArgumentException("Window size must be non-negative, but was " + windowSize);
         if (start > size() || windowSize == 0)
-            return HitsInternal.empty(field, matchInfoDefs);
+            return HitsSimple.empty(field, matchInfoDefs);
         long end = start + windowSize;
         if (end > size())
             end = size();
-        HitsInternalMutable window = HitsInternal.create(field, matchInfoDefs, end - start, false, false);
+        HitsInternalMutable window = HitsInternalMutable.create(field, matchInfoDefs, end - start, false, false);
         EphemeralHit h = new EphemeralHit();
         for (long i = start; i < end; ++i) {;
             getEphemeral(i, h);
@@ -124,6 +156,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         return window;
     }
 
+    /** Sort a list of hits less than 2 billion long. */
     HitsInternalMutable sort32(HitProperty p) {
         if (size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new IllegalArgumentException("This method cannot sort more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits at once");
@@ -147,7 +180,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
             IntArrays.parallelQuickSort(indices, p::compare);
         }
 
-        HitsInternalMutable r = HitsInternal.create(field(), matchInfoDefs(), size, false, false);
+        HitsInternalMutable r = HitsInternalMutable.create(field(), matchInfoDefs(), size, false, false);
         for (int index: indices) {
             EphemeralHit hit = new EphemeralHit();
             getEphemeral(index, hit);
@@ -181,7 +214,6 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         this.matchInfoDefs = matchInfoDefs;
     }
 
-    @Override
     public void withReadLock(Consumer<HitsInternal> cons) {
         if (lock != null) {
             lock.readLock().lock();
@@ -198,6 +230,17 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
     @Override
     public HitsSimple getStatic() {
         return lock != null ? nonlocking() : this;
+    }
+
+    /**
+     * Return a non-locking version of this HitsInternal.
+     *
+     * CAUTION: this will use the same lists as this HitsInternal,
+     * it just won't use any locking. Make sure no locking is required
+     * anymore (for example, because all the hits have been added).
+     */
+    HitsSimple nonlocking() {
+        return this;
     }
 
 }

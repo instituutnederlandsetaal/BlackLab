@@ -402,7 +402,7 @@ public class QueryToolImpl {
             if (currentHitSet == null) {
                 output.error("No set of hits for highlighting.");
             } else {
-                HitsSimple hitsInDoc = hits.getHits().getHitsInDoc(docId);
+                HitsSimple hitsInDoc = hits.getHits().filteredByDocId(docId);
                 output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
             }
             break;

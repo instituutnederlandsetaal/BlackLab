@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -72,7 +71,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
     protected HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
-                HitsInternal.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
+                HitsInternalMutable.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
         BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
 
         for (LeafReaderContext leafReaderContext: queryInfo.index().reader().leaves()) {
@@ -215,9 +214,7 @@ public class HitsFromQuery extends HitsFromQueryAbstract {
         }
 
         private void addAll(HitsInternalMutable results) {
-            Iterator<EphemeralHit> it = results.ephemeralIterator();
-            while (it.hasNext()) {
-                EphemeralHit h = it.next();
+            for (EphemeralHit h: results) {
                 convertToGlobal(h, lrc.docBase);
                 hitsInternalMutable.add(h);
             }

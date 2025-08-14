@@ -22,7 +22,7 @@ public class HitGroupWithoutResults extends HitGroup {
         private final ResultsStatsSaved docsStats;
 
         public HitsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
-            super(queryInfo, HitsInternal.empty(queryInfo.field(), null), false);
+            super(queryInfo, HitsSimple.empty(queryInfo.field(), null), false);
 
             this.maxHitsProcessed = maxHitsProcessed;
             this.maxHitsCounted = maxHitsCounted;

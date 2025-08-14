@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.results.hits;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -88,9 +87,8 @@ public class Contexts {
                 })
                 .toList();
         int hitIndex = 0;
-        Iterator<EphemeralHit> it = hits.ephemeralIterator();
-        while (it.hasNext()) {
-            Hit h = it.next().toHit();
+        for (EphemeralHit hit: hits) {
+            Hit h = hit.toHit();
             int[] hitContext = contexts[hitIndex];
             int contextLength = hitContext[Contexts.LENGTH_INDEX];
             List<String> tokens = new ArrayList<>(contextLength * numberOfAnnotations);

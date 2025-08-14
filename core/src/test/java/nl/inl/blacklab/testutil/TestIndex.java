@@ -3,7 +3,6 @@ package nl.inl.blacklab.testutil;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
@@ -345,9 +344,7 @@ public class TestIndex {
     static List<String> getConcordances(HitsSimple hits, Annotation word) {
         List<String> results = new ArrayList<>();
         Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
-        Iterator<EphemeralHit> it = hits.ephemeralIterator();
-        while (it.hasNext()) {
-            EphemeralHit hit = it.next();
+        for (EphemeralHit hit: hits) {
             Kwic kwic = kwics.get(hit);
             String left = StringUtils.join(kwic.before(word), " ");
             String match = StringUtils.join(kwic.match(word), " ");

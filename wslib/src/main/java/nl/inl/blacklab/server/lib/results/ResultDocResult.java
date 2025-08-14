@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.document.Document;
@@ -53,9 +52,7 @@ public class ResultDocResult {
                 theConcordances = hitsList.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else
                 theKwics = hitsList.kwics(index.defaultContextSize());
-            Iterator<EphemeralHit> it = hitsList.ephemeralIterator();
-            while (it.hasNext()) {
-                EphemeralHit hit = it.next();
+            for (EphemeralHit hit: hitsList) {
                 // TODO: use RequestHandlerDocSnippet.getHitOrFragmentInfo()
                 if (contextSettings.concType() == ConcordanceType.CONTENT_STORE) {
                     // Add concordance from original XML
