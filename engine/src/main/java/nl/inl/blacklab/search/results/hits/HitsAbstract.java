@@ -147,7 +147,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
     @Override
     public Hits sample(SampleParameters sampleParameters) {
 
-        HitsInternal sample = sampleHits(getHits(), sampleParameters);
+        HitsSimple sample = sampleHits(getHits(), sampleParameters);
 
         // Count the number of documents in the sample
         MutableInt docsInSample = new MutableInt(0);
@@ -164,7 +164,7 @@ public abstract class HitsAbstract extends ResultsAbstract implements Hits {
         return new HitsList(queryInfo(), sample, null, sampleParameters, hitsStats, docsStats);
     }
 
-    public static HitsInternal sampleHits(HitsSimple hitsList, SampleParameters sampleParameters) {
+    public static HitsSimple sampleHits(HitsSimple hitsList, SampleParameters sampleParameters) {
         // Fetch all hits and get most efficient implementation (nonlocking)
         hitsList = hitsList.getStatic();
         long totalNumberOfHits = hitsList.size();

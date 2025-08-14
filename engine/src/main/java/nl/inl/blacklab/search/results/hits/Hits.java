@@ -10,7 +10,6 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -41,7 +40,6 @@ public interface Hits extends Results {
      * Make a wrapper Hits object for a list of Hit objects.
      * <p>
      * Will create Hit objects from the arrays. Mainly useful for testing.
-     * Prefer using @link { {@link #list(QueryInfo, HitsInternal, MatchInfoDefs)} }
      *
      * @param queryInfo information about the original query
      * @param docs      doc ids
@@ -53,7 +51,7 @@ public interface Hits extends Results {
         return new HitsList(queryInfo, HitsSimple.fromLists(queryInfo.field(), docs, starts, ends));
     }
 
-    static Hits list(QueryInfo queryInfo, HitsInternal hits) {
+    static Hits list(QueryInfo queryInfo, HitsSimple hits) {
         return new HitsList(queryInfo, hits);
     }
 

@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  * for each hit, so no captured groups information, and no other
  * bookkeeping (hit/doc retrieved/counted stats, etc.).
  */
-public interface HitsInternalMutable extends HitsInternal {
+public interface HitsInternalMutable extends HitsSimple {
 
     /**
      * Create an empty HitsInternal with an initial capacity.

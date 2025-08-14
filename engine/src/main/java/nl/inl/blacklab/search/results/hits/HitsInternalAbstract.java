@@ -214,7 +214,7 @@ public abstract class HitsInternalAbstract implements HitsInternalMutable {
         this.matchInfoDefs = matchInfoDefs;
     }
 
-    public void withReadLock(Consumer<HitsInternal> cons) {
+    public void withReadLock(Consumer<HitsSimple> cons) {
         if (lock != null) {
             lock.readLock().lock();
             try {

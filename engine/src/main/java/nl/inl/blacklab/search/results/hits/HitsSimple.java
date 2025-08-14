@@ -11,7 +11,15 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
-/** A minimal Hits/HitsInternal interface that is all that HitProperty needs. */
+/**
+ * A list of simple hits.
+ * <p>
+ * Contrary to {@link Hits}, this only contains doc, start and end
+ * for each hit, so no captured groups information, and no other
+ * bookkeeping (hit/doc retrieved/counted stats, etc.).
+ * <p>
+ * This is a read-only interface.
+ */
 public interface HitsSimple extends Iterable<EphemeralHit> {
 
     /** An empty list of hits. */

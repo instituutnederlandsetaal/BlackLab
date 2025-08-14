@@ -145,7 +145,7 @@ class SpansReader implements Runnable {
      * @param end   the end position
      * @param matchInfo the match info
      */
-    private boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
+    private boolean isSameAsLast(HitsSimple hits, int doc, int start, int end, MatchInfo[] matchInfo) {
         long prev = hits.size() - 1;
         return hits.size() > 0 && doc == hits.doc(prev) && start == hits.start(prev) && end == hits.end(prev) &&
                 MatchInfo.areEqual(matchInfo, hits.matchInfos(prev));

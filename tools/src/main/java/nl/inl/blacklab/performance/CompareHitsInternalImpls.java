@@ -1,8 +1,8 @@
 package nl.inl.blacklab.performance;
 
 import nl.inl.blacklab.search.results.hits.Hit;
-import nl.inl.blacklab.search.results.hits.HitsInternal;
 import nl.inl.blacklab.search.results.hits.HitsInternalMutable;
+import nl.inl.blacklab.search.results.hits.HitsSimple;
 import nl.inl.util.Timer;
 
 /**
@@ -30,7 +30,7 @@ public class CompareHitsInternalImpls {
         }
     }
 
-    static void testIterate(HitsInternal hits) {
+    static void testIterate(HitsSimple hits) {
         long n = -1;
         for (Hit h: hits) {
             if (h.doc() > n)
@@ -38,7 +38,7 @@ public class CompareHitsInternalImpls {
         }
     }
 
-    static void testIterateGet(HitsInternal hits) {
+    static void testIterateGet(HitsSimple hits) {
         long n = -1;
         for (long i = 0; i < hits.size(); i++) {
             int d = hits.doc(i);

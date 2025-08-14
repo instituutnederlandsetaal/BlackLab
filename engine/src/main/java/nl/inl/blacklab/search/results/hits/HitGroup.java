@@ -13,7 +13,7 @@ public class HitGroup extends Group {
         return new HitGroup(queryInfo, groupIdentity, totalSize);
     }
 
-    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults,
+    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, HitsSimple storedResults,
             long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, storedResults, totalSize);
     }
@@ -36,7 +36,7 @@ public class HitGroup extends Group {
      * @param matchInfoDefs captured groups for hits in this group
      * @param totalSize total group size
      */
-    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsInternal storedResults, long totalSize) {
+    protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, HitsSimple storedResults, long totalSize) {
         super(groupIdentity, Hits.list(queryInfo, storedResults), totalSize);
     }
 
