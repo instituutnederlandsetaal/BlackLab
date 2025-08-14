@@ -1,7 +1,7 @@
 package nl.inl.blacklab.searches;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.hits.HitResults;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;

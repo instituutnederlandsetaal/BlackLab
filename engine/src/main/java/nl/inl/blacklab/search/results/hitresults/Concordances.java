@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +12,10 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.util.XmlHighlighter;
 
 /** Concordances for a list of hits.

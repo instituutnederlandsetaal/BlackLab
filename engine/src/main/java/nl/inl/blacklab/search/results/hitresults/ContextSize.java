@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -8,10 +8,12 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
 
 /**
  * Represents the size of the context around a hit.
- * 
+ *
  * WARNING: right now, only before() is used (for both before and after context size)!
  * The other functionality will be added in the future.
  */
@@ -218,15 +220,15 @@ public class ContextSize {
     public int after() {
         return after;
     }
-	
+
 	/**
 	 * Should the hit itself be included in the context or not?
-	 * 
+	 *
 	 * By default it always is, but for some operations you only need
 	 * the before context. And to determine collocations you might only want
 	 * before and after context and not the hit context itself (because you're
 	 * counting words that occur around the hit)
-	 * 
+	 *
 	 * @return whether or not the hit context should be included
 	 */
 	public boolean includeHit() {

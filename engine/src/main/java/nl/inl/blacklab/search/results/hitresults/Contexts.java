@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +23,9 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.util.ThreadAborter;
 
 /**

@@ -40,7 +40,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
-import nl.inl.blacklab.search.results.hits.HitResults;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;

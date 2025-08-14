@@ -12,7 +12,7 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 

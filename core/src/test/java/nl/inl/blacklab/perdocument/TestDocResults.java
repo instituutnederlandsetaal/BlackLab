@@ -7,7 +7,7 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
-import nl.inl.blacklab.search.results.hits.HitResults;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 public class TestDocResults {
 

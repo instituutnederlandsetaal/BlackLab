@@ -6,11 +6,11 @@ import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.Kwic;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.hits.Concordances;
-import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.Concordances;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.Kwics;
 
 public class ConcordanceContext {
 

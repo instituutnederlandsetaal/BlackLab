@@ -5,8 +5,8 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.HitResults;
 
 public class TestHitResultsSample {
 

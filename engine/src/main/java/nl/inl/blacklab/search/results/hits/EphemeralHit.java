@@ -62,4 +62,17 @@ public class EphemeralHit implements Hit {
         result = 31 * result + Arrays.hashCode(matchInfo);
         return result;
     }
+
+    /**
+     * Convert a hit to a global hit by adding the document base.
+     *
+     * Each segment has a document base, which is the lowest document ID in that segment.
+     * Adding the document base converts the document ID of the hit to a global document ID.
+     *
+     * @param docBase the document base to add
+     */
+    public void segmentToGlobal(int docBase) {
+        if (doc_ != -1)
+            doc_ += docBase;
+    }
 }

@@ -5,6 +5,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /**
  * A mutable list of simple hits, used internally.

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -6,6 +6,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.util.ThreadAborter;

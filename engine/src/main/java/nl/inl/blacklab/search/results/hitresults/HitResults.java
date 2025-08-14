@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.Map;
 
@@ -16,6 +16,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.docs.DocResults;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /**

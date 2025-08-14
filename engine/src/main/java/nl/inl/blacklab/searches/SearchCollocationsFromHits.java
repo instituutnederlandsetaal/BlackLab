@@ -5,8 +5,8 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.HitResults;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /**
  * Search operation that yields collocations.

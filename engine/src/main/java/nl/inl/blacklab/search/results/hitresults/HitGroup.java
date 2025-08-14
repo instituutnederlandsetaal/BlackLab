@@ -1,8 +1,9 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A group of results, with its group identity and the results themselves, that

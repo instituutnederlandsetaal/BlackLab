@@ -10,6 +10,10 @@ import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.hitresults.Concordances;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
 
 /**
  * A list of simple hits.

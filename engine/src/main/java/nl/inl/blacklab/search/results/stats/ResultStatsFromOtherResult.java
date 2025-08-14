@@ -4,8 +4,8 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.docs.DocResults;
-import nl.inl.blacklab.search.results.hits.HitGroups;
-import nl.inl.blacklab.search.results.hits.HitResults;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /** A search result that tracks and records the number of results in another search.
  *

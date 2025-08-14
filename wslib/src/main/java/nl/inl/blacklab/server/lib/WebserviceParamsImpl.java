@@ -27,7 +27,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.searches.SearchCount;

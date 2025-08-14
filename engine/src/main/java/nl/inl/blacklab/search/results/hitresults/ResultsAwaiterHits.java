@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 

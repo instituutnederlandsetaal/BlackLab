@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +27,10 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 
 /**
  * A version of HitsFromQuery that keeps the hits from each segment separately.
@@ -254,7 +258,7 @@ public class HitResultsFromQueryKeepSegments extends HitResultsFromQuery {
             ensureResultsRead(index + 1);
             HitsStretch stretch = getHitsStretch(index);
             stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
-            convertToGlobal(hit, stretch.docBase);
+            hit.segmentToGlobal(stretch.docBase);
         }
 
         @Override
@@ -325,7 +329,7 @@ public class HitResultsFromQueryKeepSegments extends HitResultsFromQuery {
             while (true) {
                 // Add a hit from the current stretch to the sublist.
                 currentStretch.segmentHits().getEphemeral(indexInSegment, h);
-                convertToGlobal(h, currentStretch.docBase);
+                h.segmentToGlobal(currentStretch.docBase);
                 sublist.add(h);
                 indexInSegment++;
 
@@ -379,7 +383,7 @@ public class HitResultsFromQueryKeepSegments extends HitResultsFromQuery {
                         currentStretch = stretchIterator.next();
                     }
                     currentStretch.segmentHits().getEphemeral(currentStretch.globalToSegmentIndex(globalIndex), hit);
-                    convertToGlobal(hit, currentStretch.docBase);
+                    hit.segmentToGlobal(currentStretch.docBase);
                     return hit;
                 }
             };
@@ -540,7 +544,7 @@ public class HitResultsFromQueryKeepSegments extends HitResultsFromQuery {
                 SegmentInMerge segment = queue.top();
                 EphemeralHit hit = new EphemeralHit();
                 segment.getHitAndAdvance(hit);
-                convertToGlobal(hit, segment.docBase);
+                hit.segmentToGlobal(segment.docBase);
                 mergedHits.add(hit);
                 queue.updateTop(); // re-order the queue after taking a hit
             }
@@ -554,7 +558,7 @@ public class HitResultsFromQueryKeepSegments extends HitResultsFromQuery {
                     numHitsGlobalView, numHitsGlobalView, false);
             for (Map.Entry<LeafReaderContext, HitsMutable> segmentHits: hitsPerSegment.entrySet()) {
                 for (EphemeralHit hit: segmentHits.getValue()) {
-                    convertToGlobal(hit, segmentHits.getKey().docBase);
+                    hit.segmentToGlobal(segmentHits.getKey().docBase);
                     mergedHits.add(hit);
                 }
             }

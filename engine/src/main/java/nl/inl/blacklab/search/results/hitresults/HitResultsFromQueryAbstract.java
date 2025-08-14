@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.util.CurrentThreadExecutorService;
 

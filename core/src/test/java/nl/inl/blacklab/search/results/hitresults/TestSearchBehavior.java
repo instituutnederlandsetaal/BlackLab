@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

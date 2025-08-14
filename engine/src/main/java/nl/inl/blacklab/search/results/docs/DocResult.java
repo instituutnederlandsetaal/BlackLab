@@ -3,8 +3,8 @@ package nl.inl.blacklab.search.results.docs;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.hits.HitGroup;
-import nl.inl.blacklab.search.results.hits.HitResults;
+import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /**
  * A document result, containing a Lucene document from the index and a

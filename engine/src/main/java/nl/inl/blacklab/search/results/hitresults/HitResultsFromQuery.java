@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -16,6 +16,8 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 
 public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
 
@@ -215,7 +217,7 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
 
         private void addAll(HitsMutable results) {
             for (EphemeralHit h: results) {
-                convertToGlobal(h, lrc.docBase);
+                h.segmentToGlobal(lrc.docBase);
                 hitsMutable.add(h);
             }
         }
@@ -227,18 +229,5 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
                 addAll(results);
             }
         }
-    }
-
-    /**
-     * Convert a hit to a global hit by adding the document base.
-     *
-     * Each segment has a document base, which is the lowest document ID in that segment.
-     * Adding the document base converts the document ID of the hit to a global document ID.
-     *
-     * @param hit the hit to convert
-     * @param docBase the document base to add
-     */
-    static void convertToGlobal(EphemeralHit hit, int docBase) {
-        hit.doc_ += docBase;
     }
 }

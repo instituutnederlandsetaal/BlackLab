@@ -1,7 +1,8 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hitresults;
 
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;

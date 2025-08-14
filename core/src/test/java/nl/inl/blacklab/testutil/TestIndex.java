@@ -36,11 +36,11 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResults;
-import nl.inl.blacklab.search.results.hits.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.util.UtilsForTesting;
 
 public class TestIndex {
