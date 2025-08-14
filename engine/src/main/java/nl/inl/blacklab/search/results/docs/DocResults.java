@@ -46,8 +46,8 @@ import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsInternalMutable;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 
@@ -142,7 +142,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param maxHitsToStorePerDoc how many hits to store per document, for displaying snippets (-1 for all)
      * @return document results
      */
-    public static DocResults fromHits(QueryInfo queryInfo, HitsSimple hits, long maxHitsToStorePerDoc) {
+    public static DocResults fromHits(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         return new DocResults(queryInfo, hits, maxHitsToStorePerDoc);
     }
 
@@ -167,7 +167,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * Hits. (or null if we don't have partial doc hits) Pick this up when we
      * continue iterating through it.
      */
-    private HitsInternalMutable partialDocHits;
+    private HitsMutable partialDocHits;
 
     /**
      * id of the partial doc we've done (because we stopped iterating through the
@@ -242,7 +242,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param hits the hits to view per-document
      * @param maxHitsToStorePerDoc hits to store per document
      */
-    protected DocResults(QueryInfo queryInfo, HitsSimple hits, long maxHitsToStorePerDoc) {
+    protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false);
         this.matchInfoDefs = hits.matchInfoDefs();
@@ -337,7 +337,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
             try {
                 // Fill list of document results
-                HitsInternalMutable docHits = partialDocHits;
+                HitsMutable docHits = partialDocHits;
                 int lastDocId = partialDocId;
 
                 while (sourceHitsIterator.hasNext() && (number < 0 || number > results.size())) {
@@ -354,7 +354,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                         // OPT: use maxHitsToStorePerDoc to determine whether or not we need huge?
                         //       (but we do want to count the total number of hits in the doc even
                         //       if we don't store all of them)
-                        docHits = HitsInternalMutable.create(field(), matchInfoDefs, -1, true, false);
+                        docHits = HitsMutable.create(field(), matchInfoDefs, -1, true, false);
                     }
 
                     docHits.add(h);

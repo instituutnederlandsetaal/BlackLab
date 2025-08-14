@@ -3,7 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping per document.
@@ -14,7 +14,7 @@ public class HitPropertyDoc extends HitProperty {
 
     private final BlackLabIndex index;
 
-    HitPropertyDoc(HitPropertyDoc prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitPropertyDoc(HitPropertyDoc prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert);
         this.index = hits.index();
     }
@@ -25,7 +25,7 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertyDoc(this, newHits, lrc, invert);
     }
 

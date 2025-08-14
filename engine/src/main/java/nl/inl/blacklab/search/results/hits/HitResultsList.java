@@ -30,7 +30,7 @@ public class HitResultsList extends HitResultsAbstract {
      * @param queryInfo query info
      * @param hits the list of hits to wrap
      */
-    protected HitResultsList(QueryInfo queryInfo, HitsSimple hits) {
+    protected HitResultsList(QueryInfo queryInfo, Hits hits) {
         super(queryInfo, hits, false);
 
         // Count docs
@@ -48,13 +48,13 @@ public class HitResultsList extends HitResultsAbstract {
     }
 
     /**
-     * Construct a HitsList from all its components.
+     * Construct a HitResultsList from all its components.
      *
      * Should only be used internally.
      */
     protected HitResultsList(
                        QueryInfo queryInfo,
-                       HitsSimple hits,
+                       Hits hits,
                        WindowStats windowStats,
                        SampleParameters sampleParameters,
                        ResultsStats hitsStats,
@@ -79,7 +79,7 @@ public class HitResultsList extends HitResultsAbstract {
 
     @Override
     public String toString() {
-        return "HitsList";
+        return "HitResultsList";
     }
 
     /**

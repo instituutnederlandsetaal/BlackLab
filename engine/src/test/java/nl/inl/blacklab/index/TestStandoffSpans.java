@@ -23,7 +23,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.UtilsForTesting;
 
@@ -89,7 +89,7 @@ public class TestStandoffSpans {
         BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), annotationSensitivity, "character", null, null);
         HitResults results = s.find(query).execute();
         Assert.assertEquals(2, results.size());
-        HitsSimple hitsList = results.getHits();
+        Hits hitsList = results.getHits();
         Assert.assertEquals(0, hitsList.get(0).start());
         Assert.assertEquals(2, hitsList.get(0).end()); // FAILS, actually 3, but that's wrong
         Assert.assertEquals(3, hitsList.get(1).start());

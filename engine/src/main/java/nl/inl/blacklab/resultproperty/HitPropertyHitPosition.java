@@ -2,7 +2,7 @@ package nl.inl.blacklab.resultproperty;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for sorting on hit token position. Usually to be combined with
@@ -12,7 +12,7 @@ public class HitPropertyHitPosition extends HitProperty {
 
     public static final String ID = "hitposition";
 
-    HitPropertyHitPosition(HitPropertyHitPosition prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert);
     }
     
@@ -21,7 +21,7 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertyHitPosition(this, newHits, lrc, invert);
     }
 

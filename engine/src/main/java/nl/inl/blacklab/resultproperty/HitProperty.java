@@ -12,7 +12,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.hits.ContextSize;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -33,7 +33,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         return hits.doc(index) + docBase;
     }
 
-    public static HitProperty deserialize(HitsSimple hits, String serialized, ContextSize contextSize) {
+    public static HitProperty deserialize(Hits hits, String serialized, ContextSize contextSize) {
         return deserialize(hits.index(), hits.field(), serialized, contextSize);
     }
 
@@ -167,7 +167,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     }
 
     /** The Hits object we're looking at */
-    protected final HitsSimple hits;
+    protected final Hits hits;
 
     /** Reverse comparison result or not? */
     protected boolean reverse;
@@ -184,7 +184,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new hits to use, or null to inherit
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitProperty(HitProperty prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         this.hits = hits == null ? prop.hits : hits;
         this.lrc = lrc == null ? prop.lrc : lrc;
         this.reverse = invert ? !prop.reverse : prop.reverse;
@@ -243,7 +243,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param hits new Hits to use
      * @return the new HitProperty object
      */
-    public HitProperty copyWith(HitsSimple hits) {
+    public HitProperty copyWith(Hits hits) {
         // If the filter property requires contexts, fetch them now.
         return copyWith(hits, null, false);
     }
@@ -257,7 +257,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param invert            true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(HitsSimple newHits, LeafReaderContext leafReaderContext, boolean invert);
+    public abstract HitProperty copyWith(Hits newHits, LeafReaderContext leafReaderContext, boolean invert);
 
     @Override
     public boolean isReverse() {

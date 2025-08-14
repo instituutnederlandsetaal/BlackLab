@@ -36,7 +36,7 @@ import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -151,7 +151,7 @@ public class WriteCsv {
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
-            HitsSimple hitsList = hitResults.getHits();
+            Hits hitsList = hitResults.getHits();
             Kwics kwics = hitsList.kwics(params.contextSettings().size());
             for (EphemeralHit hit: hitsList) {
                 Document doc = luceneDocs.get(hit.doc());

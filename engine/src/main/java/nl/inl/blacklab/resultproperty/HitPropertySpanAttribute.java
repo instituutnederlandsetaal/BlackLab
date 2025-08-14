@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -58,7 +58,7 @@ public class HitPropertySpanAttribute extends HitProperty {
     /** The sensitivity of the match */
     private final MatchSensitivity sensitivity;
 
-    HitPropertySpanAttribute(HitPropertySpanAttribute prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert);
         groupName = prop.groupName;
         relNameInList = prop.relNameInList;
@@ -87,7 +87,7 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertySpanAttribute(this, newHits, lrc, invert);
     }
 

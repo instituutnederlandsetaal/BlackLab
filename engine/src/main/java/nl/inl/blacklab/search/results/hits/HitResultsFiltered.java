@@ -44,7 +44,7 @@ public class HitResultsFiltered extends HitResultsAbstract {
      * @param value value to filter with
      */
     protected HitResultsFiltered(HitResults hitResults, HitProperty property, PropertyValue value) {
-        super(hitResults.queryInfo(), HitsInternalMutable.create(hitResults.field(), hitResults.getHits().matchInfoDefs(), -1, true, true), true);
+        super(hitResults.queryInfo(), HitsMutable.create(hitResults.field(), hitResults.getHits().matchInfoDefs(), -1, true, true), true);
         this.source = hitResults;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
@@ -82,13 +82,13 @@ public class HitResultsFiltered extends HitResultsAbstract {
     public boolean ensureResultsRead(long number) {
         try {
             // Prevent locking when not required
-            if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
-                return hitsInternalMutable.size() >= number;
+            if (doneFiltering || number >= 0 && hitsMutable.size() >= number)
+                return hitsMutable.size() >= number;
 
             // At least one hit needs to be fetched.
             // Make sure we fetch at least FETCH_HITS_MIN while we're at it, to avoid too much locking.
-            if (number >= 0 && number - hitsInternalMutable.size() < FETCH_HITS_MIN)
-                number = hitsInternalMutable.size() + FETCH_HITS_MIN;
+            if (number >= 0 && number - hitsMutable.size() < FETCH_HITS_MIN)
+                number = hitsMutable.size() + FETCH_HITS_MIN;
 
             while (!ensureHitsReadLock.tryLock()) {
                 /*
@@ -97,14 +97,14 @@ public class HitResultsFiltered extends HitResultsAbstract {
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
                 Thread.sleep(50);
-                if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
-                    return hitsInternalMutable.size() >= number;
+                if (doneFiltering || number >= 0 && hitsMutable.size() >= number)
+                    return hitsMutable.size() >= number;
             }
             try {
                 boolean readAllHits = number < 0;
                 EphemeralHit hit = new EphemeralHit();
-                HitsSimple hitsList = source.getHits();
-                while (!doneFiltering && (readAllHits || hitsInternalMutable.size() < number)) {
+                Hits hitsList = source.getHits();
+                while (!doneFiltering && (readAllHits || hitsMutable.size() < number)) {
                  // Abort if asked
                     ThreadAborter.checkAbort();
 
@@ -114,7 +114,7 @@ public class HitResultsFiltered extends HitResultsAbstract {
                         hitsList.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
-                            hitsInternalMutable.add(hit);
+                            hitsMutable.add(hit);
                             hitsStats.increment(true);
                             if (hit.doc() != previousHitDoc) {
                                 docsStats.increment(true);
@@ -136,6 +136,6 @@ public class HitResultsFiltered extends HitResultsAbstract {
             Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         }
-        return hitsInternalMutable.size() >= number;
+        return hitsMutable.size() >= number;
     }
 }

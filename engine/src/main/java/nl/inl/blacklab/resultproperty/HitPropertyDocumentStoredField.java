@@ -3,7 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -18,7 +18,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private final DocPropertyStoredField docPropStoredField;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField;
@@ -36,7 +36,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertyDocumentStoredField(this, newHits, lrc, invert);
     }
 

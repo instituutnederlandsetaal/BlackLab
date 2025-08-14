@@ -48,10 +48,10 @@ public interface HitResults extends Results {
      * @return hits found
      */
     static HitResults list(QueryInfo queryInfo, int[] docs, int[] starts, int[] ends) {
-        return new HitResultsList(queryInfo, HitsSimple.fromLists(queryInfo.field(), docs, starts, ends));
+        return new HitResultsList(queryInfo, Hits.fromLists(queryInfo.field(), docs, starts, ends));
     }
 
-    static HitResults list(QueryInfo queryInfo, HitsSimple hits) {
+    static HitResults list(QueryInfo queryInfo, Hits hits) {
         return new HitResultsList(queryInfo, hits);
     }
 
@@ -75,7 +75,7 @@ public interface HitResults extends Results {
      * @return hits found
      */
     static HitResults empty(QueryInfo queryInfo) {
-        return new HitResultsList(queryInfo, HitsSimple.empty(queryInfo.field(), null));
+        return new HitResultsList(queryInfo, Hits.empty(queryInfo.field(), null));
     }
 
     /**
@@ -83,7 +83,7 @@ public interface HitResults extends Results {
      *
      * @return the hits interface
      */
-    HitsSimple getHits();
+    Hits getHits();
 
     /**
      * Get access to the hits per segment.
@@ -94,7 +94,7 @@ public interface HitResults extends Results {
      *
      * @return list of hits per segment, or null if not available
      */
-    Map<LeafReaderContext, HitsSimple> getSegmentHits();
+    Map<LeafReaderContext, Hits> getSegmentHits();
 
     /**
      * If this is a hits window, return the window stats.

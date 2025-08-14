@@ -42,7 +42,7 @@ import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.tools.QueryTool;
@@ -507,7 +507,7 @@ class Output {
         Concordances concordances = window.getHits().concordances(queryTool.getContextSize(), queryTool.getConcType());
         Kwics kwics = queryTool.getConcType() == ConcordanceType.FORWARD_INDEX ? concordances.getKwics() : null;
         List<HitToShow> toShow = new ArrayList<>();
-        HitsSimple windowHits = window.getHits();
+        Hits windowHits = window.getHits();
         for (EphemeralHit hit: windowHits) {
             HitToShow hitToShow;
             if (kwics != null) {
@@ -611,7 +611,7 @@ class Output {
         return new HitToShow(hit.doc(), before, match, after, matchInfo);
     }
 
-    private HitToShow showHitFromContentStore(EphemeralHit hit, Concordances concordances, HitsSimple window,
+    private HitToShow showHitFromContentStore(EphemeralHit hit, Concordances concordances, Hits window,
             boolean stripXML) {
         HitToShow hitToShow;
         Concordance conc = concordances.get(hit);

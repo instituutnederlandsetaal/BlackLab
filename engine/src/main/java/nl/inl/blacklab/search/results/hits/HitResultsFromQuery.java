@@ -65,13 +65,13 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
     /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
      *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
     protected long globalHitsSoFar() {
-        return hitsInternalMutable.size();
+        return hitsMutable.size();
     }
 
     protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
-                HitsInternalMutable.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
+                HitsMutable.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
         BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
 
         for (LeafReaderContext leafReaderContext: queryInfo.index().reader().leaves()) {
@@ -204,7 +204,7 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
         private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
 
         @Override
-        public void onDocumentBoundary(HitsInternalMutable results) {
+        public void onDocumentBoundary(HitsMutable results) {
             if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
                 // We've built up a batch of hits. Add them to the global results.
                 // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
@@ -213,15 +213,15 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
             }
         }
 
-        private void addAll(HitsInternalMutable results) {
+        private void addAll(HitsMutable results) {
             for (EphemeralHit h: results) {
                 convertToGlobal(h, lrc.docBase);
-                hitsInternalMutable.add(h);
+                hitsMutable.add(h);
             }
         }
 
         @Override
-        public void onFinished(HitsInternalMutable results) {
+        public void onFinished(HitsMutable results) {
             if (!results.isEmpty()) {
                 // Add the final batch of hits to the global results.
                 addAll(results);

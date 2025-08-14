@@ -114,7 +114,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         if (criteria == null)
             throw new IllegalArgumentException("Must have criteria to group on");
         this.criteria = criteria;
-        HitsSimple hitsList = hitResults.getHits().getStatic();
+        Hits hitsList = hitResults.getHits().getStatic();
 
         Map<PropertyValue, GroupHitsAndSize> groupings = performGrouping(hitsList, criteria, maxResultsToStorePerGroup);
         largestGroupSize = groupings.values().stream()
@@ -143,16 +143,16 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
 
     /** Used during the actual grouping */
     static class GroupHitsAndSize {
-        HitsInternalMutable storedHits;
+        HitsMutable storedHits;
         long totalNumberOfHits;
 
-        public GroupHitsAndSize(HitsInternalMutable storedHits, int totalNumberOfHits) {
+        public GroupHitsAndSize(HitsMutable storedHits, int totalNumberOfHits) {
             this.storedHits = storedHits;
             this.totalNumberOfHits = totalNumberOfHits;
         }
     }
 
-    private static Map<PropertyValue, GroupHitsAndSize> performGrouping(HitsSimple hitsList, HitProperty criteria,
+    private static Map<PropertyValue, GroupHitsAndSize> performGrouping(Hits hitsList, HitProperty criteria,
             long maxResultsToStorePerGroup) {
         // temporary copy used in grouping (don't keep reference to hitsList)
         criteria = criteria.copyWith(hitsList);
@@ -167,7 +167,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
                 if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
                     throw new UnsupportedOperationException(
                             "Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
-                HitsInternalMutable hitsInGroup = HitsInternalMutable.create(hitsList.field(), hitsList.matchInfoDefs(),
+                HitsMutable hitsInGroup = HitsMutable.create(hitsList.field(), hitsList.matchInfoDefs(),
                         -1,
                         hitsList.size(), false);
                 group = new GroupHitsAndSize(hitsInGroup, 0);

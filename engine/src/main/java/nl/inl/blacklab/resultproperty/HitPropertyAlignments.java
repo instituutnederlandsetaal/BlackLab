@@ -9,7 +9,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on an attribute of a matched span.
@@ -27,7 +27,7 @@ public class HitPropertyAlignments extends HitProperty {
         return new HitPropertyAlignments();
     }
 
-    HitPropertyAlignments(HitPropertyAlignments prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitPropertyAlignments(HitPropertyAlignments prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert);
     }
 
@@ -61,7 +61,7 @@ public class HitPropertyAlignments extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertyAlignments(this, newHits, lrc, invert);
     }
 

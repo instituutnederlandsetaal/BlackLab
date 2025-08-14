@@ -43,7 +43,7 @@ import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -365,7 +365,7 @@ public class ResultHits {
         // (note that on large indexes, this can actually take significant time)
         long startTimeKwicsMs = System.currentTimeMillis();
         ContextSettings contextSettings = params.contextSettings();
-        HitsSimple windowHits = window.getHits().getStatic();
+        Hits windowHits = window.getHits().getStatic();
         concordanceContext = ConcordanceContext.get(windowHits, contextSettings.concType(), contextSettings.size());
         kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
 

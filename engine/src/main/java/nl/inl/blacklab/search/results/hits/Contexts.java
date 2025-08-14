@@ -62,7 +62,7 @@ public class Contexts {
      * @param kwicConsumer where to add the KWICs
      */
     static void makeKwicsSingleDocForwardIndex(
-            HitsSimple hits,
+            Hits hits,
             List<GAnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
             BiConsumer<Hit, Kwic> kwicConsumer
@@ -118,7 +118,7 @@ public class Contexts {
      * @param contextSources forward indices to get context from
      * @return the context words for each hit, as an array of int arrays.
      */
-    private static int[][] getContextWordsSingleDocument(HitsSimple hits, long start, long end,
+    private static int[][] getContextWordsSingleDocument(Hits hits, long start, long end,
             ContextSize contextSize, List<GAnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
@@ -185,7 +185,7 @@ public class Contexts {
      * @param annotations the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    private static BigList<int[]> getContextsSingleSegment(HitsSimple hits, List<Annotation> annotations, ContextSize contextSize) {
+    private static BigList<int[]> getContextsSingleSegment(Hits hits, List<Annotation> annotations, ContextSize contextSize) {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
@@ -247,7 +247,7 @@ public class Contexts {
      * @param annotation the field and annotations to use for the context
      * @param contextSize how large the contexts need to be
      */
-    private static BigList<String[]> getCollocations(HitsSimple hits, Annotation annotation, ContextSize contextSize) {
+    private static BigList<String[]> getCollocations(Hits hits, Annotation annotation, ContextSize contextSize) {
         if (annotation == null)
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
@@ -296,7 +296,7 @@ public class Contexts {
         return contexts;
     }
 
-    private static String[][] getCollocationWordsSingleDocumentStrings(HitsSimple hits, long start, long end, ContextSize contextSize, GAnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
+    private static String[][] getCollocationWordsSingleDocumentStrings(Hits hits, long start, long end, ContextSize contextSize, GAnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
         int[][] contexts = getContextWordsSingleDocument(hits, start, end, contextSize, List.of(contextSource), matchInfoDefs);
         if (contextSize.isInlineTag())
             throw new IllegalArgumentException("Cannot build contexts with inline tags");

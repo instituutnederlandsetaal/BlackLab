@@ -29,7 +29,7 @@ public class Kwics {
     /** KWICs in other fields (for parallel corpora), or null if none. */
     private Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
 
-    public Kwics(HitsSimple hits, ContextSize contextSize) {
+    public Kwics(Hits hits, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
     
@@ -40,7 +40,7 @@ public class Kwics {
         foreignKwics = retrieveForeignKwics(hits, contextSize);
     }
 
-    private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(HitsSimple hits, ContextSize contextSize) {
+    private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
         Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
         Map<AnnotatedField, List<GAnnotationForwardIndex>> afisPerField = new HashMap<>();
         AnnotatedField defaultField = hits.field();
@@ -75,7 +75,7 @@ public class Kwics {
 
                         AnnotatedField field = e.getKey();
                         List<GAnnotationForwardIndex> afis = afisPerField.get(field);
-                        HitsSimple singleHit = HitsSimple.single(hits.field(), hits.matchInfoDefs(), hit.doc(),
+                        Hits singleHit = Hits.single(hits.field(), hits.matchInfoDefs(), hit.doc(),
                                 matchStart, matchEnd);
                         ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd,
                                 true,
@@ -177,7 +177,7 @@ public class Kwics {
      *
      * @return the KWICs
      */
-    private static Map<Hit, Kwic> retrieveKwics(HitsSimple hits, ContextSize contextSize, AnnotatedField field) {
+    private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
         // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
         // (this convention originates from how we write our XML structure)
         GForwardIndex forwardIndex = hits.index().forwardIndex(field);

@@ -60,7 +60,7 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -304,7 +304,7 @@ public class WebserviceOperations {
      * @param hits hits we want the doc pids for
      * @param luceneDocs map of doc id to Lucene document, to look up the pids
      */
-    public static Map<Integer, String> collectDocsAndPids(BlackLabIndex index, HitsSimple hits,
+    public static Map<Integer, String> collectDocsAndPids(BlackLabIndex index, Hits hits,
             Map<Integer, Document> luceneDocs) {
         // Collect Lucene docs (for writing docInfos later) and find pids
         Map<Integer, String> docIdToPid = new HashMap<>();

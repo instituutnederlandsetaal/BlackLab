@@ -2,39 +2,23 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.ObjectList;
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
- * A HitsInternal implementation that locks and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
- * <p>
- * Maximum size is roughly (but not exactly) 2^31 hits.
- * <p>
- * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about
- * 19% faster than {@link HitsInternalLock}. Iteration is about 10x faster.
- * <p>
- * Those percentages are not representative of real-world usage of course, but on
- * huge resultsets this will likely save a few seconds.
+ * A HitsInternal implementation that locks and can handle huge result sets.
  */
-class HitsInternalLock32 extends HitsInternalNoLock32 {
+class HitsListLock extends HitsListNoLock {
 
-    HitsInternalLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
+    HitsListLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
         super(field, matchInfoDefs, initialCapacity);
-        lock = new ReentrantReadWriteLock();
-    }
-
-    HitsInternalLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
-        super(field, matchInfoDefs, docs, starts, ends, matchInfos);
         lock = new ReentrantReadWriteLock();
     }
 
     @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
-        assert HitsInternalAbstract.debugCheckReasonableHit(doc, start, end);
+        assert HitsListAbstract.debugCheckReasonableHit(doc, start, end);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -51,7 +35,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(EphemeralHit hit) {
-        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
+        assert HitsListAbstract.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -68,7 +52,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
     @Override
     public void add(Hit hit) {
-        assert HitsInternalAbstract.debugCheckReasonableHit(hit);
+        assert HitsListAbstract.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
@@ -90,7 +74,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
             MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
                     matchInfo);
-            assert HitsInternalAbstract.debugCheckReasonableHit(hit);
+            assert HitsListAbstract.debugCheckReasonableHit(hit);
             return hit;
         } finally {
             lock.readLock().unlock();
@@ -102,11 +86,11 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            h.doc_ = docs.getInt((int)index);
-            h.start_ = starts.getInt((int)index);
-            h.end_ = ends.getInt((int)index);
+            h.doc_ = docs.getInt(index);
+            h.start_ = starts.getInt(index);
+            h.end_ = ends.getInt(index);
             h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-            assert HitsInternalAbstract.debugCheckReasonableHit(h);
+            assert HitsListAbstract.debugCheckReasonableHit(h);
         } finally {
             lock.readLock().unlock();
         }
@@ -117,7 +101,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            return this.docs.getInt((int)index);
+            return this.docs.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
@@ -128,7 +112,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            return this.starts.getInt((int)index);
+            return this.starts.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
@@ -139,7 +123,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
         lock.readLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            return this.ends.getInt((int)index);
+            return this.ends.getInt(index);
         } finally {
             lock.readLock().unlock();
         }
@@ -171,7 +155,7 @@ class HitsInternalLock32 extends HitsInternalNoLock32 {
     }
 
     @Override
-    public HitsSimple nonlocking() {
-        return new HitsInternalNoLock32(field(), matchInfoDefs(), docs, starts, ends, matchInfos);
+    public Hits nonlocking() {
+        return new HitsListNoLock(field(), matchInfoDefs(), docs, starts, ends, matchInfos);
     }
 }

@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.WebserviceParams;
@@ -52,7 +52,7 @@ public class ResultHitGroup {
         properties = group.getGroupProperties(prop);
 
         if (params.getIncludeGroupContents()) {
-            HitsSimple hitsInGroup = group.storedResults().getHits();
+            Hits hitsInGroup = group.storedResults().getHits();
             ContextSettings contextSettings = params.contextSettings();
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
                     contextSettings.size());

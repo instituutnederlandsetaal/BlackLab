@@ -41,7 +41,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
@@ -603,7 +603,7 @@ public class TestSearches {
         // Validate the actual captures as well
         HitResults hitResults = testIndex.find(query);
         Assert.assertEquals(2, hitResults.size());
-        HitsSimple hitsList = hitResults.getHits();
+        Hits hitsList = hitResults.getHits();
         Assert.assertTrue(hitsList.hasMatchInfo());
         Assert.assertTrue(hitsList.get(0).doc() == hitsList.get(1).doc());
         Assert.assertEquals(2, hitsList.get(0).matchInfos()[0].getSpanStart());

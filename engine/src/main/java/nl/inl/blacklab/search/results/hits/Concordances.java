@@ -31,7 +31,7 @@ public class Concordances {
     
     Kwics kwics = null;
 
-    public Concordances(HitsSimple hits, ConcordanceType type, ContextSize contextSize) {
+    public Concordances(Hits hits, ConcordanceType type, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
             throw new IllegalArgumentException("contextSize cannot be negative: " + contextSize);
         if (type == ConcordanceType.FORWARD_INDEX) {
@@ -71,7 +71,7 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl highlighter
      */
-    private static synchronized void makeConcordancesSingleDocContentStore(HitsSimple hits, ContextSize contextSize,
+    private static synchronized void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.size() == 0)
@@ -119,22 +119,22 @@ public class Concordances {
      * @param contextSize how many words around the hit to retrieve
      * @return the concordances
      */
-    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(HitsSimple hits, ContextSize contextSize) {
+    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, ContextSize contextSize) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
         hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
-        MutableIntObjectMap<HitsInternalMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
+        MutableIntObjectMap<HitsMutable> hitsPerDocument = IntObjectMaps.mutable.empty();
         long totalHits = hits.size();
         for (EphemeralHit key: hits) {
-            HitsInternalMutable hitsInDoc = hitsPerDocument.get(key.doc());
+            HitsMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsInternalMutable.create(hits.field(), hits.matchInfoDefs(), -1, totalHits, false);
+                hitsInDoc = HitsMutable.create(hits.field(), hits.matchInfoDefs(), -1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }
         Map<Hit, Concordance> conc = new HashMap<>();
-        for (HitsSimple l: hitsPerDocument.values()) {
+        for (Hits l: hitsPerDocument.values()) {
             Concordances.makeConcordancesSingleDocContentStore(l, contextSize, conc, hl);
         }
         return conc;

@@ -58,7 +58,7 @@ import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.HitGroup;
 import nl.inl.blacklab.search.results.hits.HitGroups;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
@@ -369,7 +369,7 @@ public class QueryToolImpl {
             if (hitId >= currentHitSet.size()) {
                 output.error("Hit number out of range.");
             } else {
-                HitsSimple singleHit = currentHitSet.getHits().sublist(hitId, 1);
+                Hits singleHit = currentHitSet.getHits().sublist(hitId, 1);
                 Concordances concordances = singleHit.concordances(snippetSize, concType);
                 Hit h = currentHitSet.getHits().get(hitId);
                 Concordance conc = concordances.get(h);
@@ -402,7 +402,7 @@ public class QueryToolImpl {
             if (currentHitSet == null) {
                 output.error("No set of hits for highlighting.");
             } else {
-                HitsSimple hitsInDoc = hitResults.getHits().filteredByDocId(docId);
+                Hits hitsInDoc = hitResults.getHits().filteredByDocId(docId);
                 output.line(WordUtils.wrap(DocUtil.highlightDocument(index, contentsField, docId, hitsInDoc), 80));
             }
             break;

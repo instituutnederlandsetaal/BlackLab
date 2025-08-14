@@ -63,7 +63,7 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -612,7 +612,7 @@ public class ResponseStreamer {
         HitResults hitResults = result.getHits();
 
         ds.startEntry("hits").startList();
-        HitsSimple hitsList = hitResults.getHits().getStatic();
+        Hits hitsList = hitResults.getHits().getStatic();
         for (EphemeralHit hit: hitsList) {
             ds.startItem("hit");
             {
@@ -649,7 +649,7 @@ public class ResponseStreamer {
      */
     public void snippet(ResultDocSnippet result) {
         String docPid = result.getParams().getDocPid();
-        HitsSimple hitsList = result.getHits();
+        Hits hitsList = result.getHits();
         if (hitsList.isEmpty())
             throw new IllegalStateException("Hit for snippet not found");
         hitsList = hitsList.size() > 1 ? hitsList.sublist(0, 1) : hitsList;

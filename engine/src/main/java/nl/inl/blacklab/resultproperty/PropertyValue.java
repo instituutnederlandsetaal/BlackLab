@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -38,7 +38,7 @@ public abstract class PropertyValue implements Comparable<Object> {
      * @param serialized the serialized object
      * @return the HitPropValue object, or null if it could not be deserialized
      */
-    public static PropertyValue deserialize(HitsSimple hits, String serialized) {
+    public static PropertyValue deserialize(Hits hits, String serialized) {
         return deserialize(hits.index(), hits.field(), serialized);
     }
     

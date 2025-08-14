@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.hits.Concordances;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
@@ -47,7 +47,7 @@ public class ResultDocResult {
             ContextSettings contextSettings = params.contextSettings();
             Concordances theConcordances = null;
             Kwics theKwics = null;
-            HitsSimple hitsList = hitResults.getHits();
+            Hits hitsList = hitResults.getHits();
             if (contextSettings.concType() == ConcordanceType.CONTENT_STORE)
                 theConcordances = hitsList.concordances(contextSettings.size(), ConcordanceType.CONTENT_STORE);
             else

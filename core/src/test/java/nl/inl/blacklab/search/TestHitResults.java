@@ -10,7 +10,7 @@ import org.junit.Test;
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestHitResults {
 
@@ -20,7 +20,7 @@ public class TestHitResults {
         int[] aStart = { 1, 2 };
         int[] aEnd = { 2, 3 };
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {
-            HitsSimple hits = HitsSimple.fromLists(index.mainAnnotatedField(), aDoc, aStart, aEnd);
+            Hits hits = Hits.fromLists(index.mainAnnotatedField(), aDoc, aStart, aEnd);
     
             int i = 0;
             for (EphemeralHit hit: hits) {

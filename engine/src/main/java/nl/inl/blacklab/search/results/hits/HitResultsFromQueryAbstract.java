@@ -56,12 +56,12 @@ public abstract class HitResultsFromQueryAbstract extends HitResultsAbstract {
     /** Number of threads to use for fetching hits. */
     protected int numThreads;
 
-    public HitResultsFromQueryAbstract(QueryInfo queryInfo, HitsInternalMutable hits, SearchSettings searchSettings) {
+    public HitResultsFromQueryAbstract(QueryInfo queryInfo, HitsMutable hits, SearchSettings searchSettings) {
         super(queryInfo, hits, true);
         maxHitsToProcess = searchSettings.maxHitsToProcess();
         maxHitsToCount = searchSettings.maxHitsToCount();
         hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy
-        hitsInternalMutable.setMatchInfoDefs(hitQueryContext.getMatchInfoDefs());
+        hitsMutable.setMatchInfoDefs(hitQueryContext.getMatchInfoDefs());
         hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this), maxHitsToProcess, maxHitsToCount);
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
         numThreads = Math.max(queryInfo.index().blackLab().maxThreadsPerSearch(), 1);

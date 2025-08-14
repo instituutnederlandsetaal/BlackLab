@@ -20,26 +20,26 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  * <p>
  * This is a read-only interface.
  */
-public interface HitsSimple extends Iterable<EphemeralHit> {
+public interface Hits extends Iterable<EphemeralHit> {
 
     /** An empty list of hits. */
-    static HitsSimple empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        return new HitsInternalNoLock32(field, matchInfoDefs, -1);
+    static Hits empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+        return new HitsListNoLock32(field, matchInfoDefs, -1);
     }
 
-    static HitsSimple fromLists(AnnotatedField field,
+    static Hits fromLists(AnnotatedField field,
             int[] docs, int[] starts, int[] ends) {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsInternalNoLock32(field, null, lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(field, null, lDocs, lStarts, lEnds, null);
     }
 
-    static HitsSimple single(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
+    static Hits single(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
         if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
             throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
         }
-        HitsInternalMutable hits = HitsInternalMutable.create(field, matchInfoDefs, 1, false, false);
+        HitsMutable hits = HitsMutable.create(field, matchInfoDefs, 1, false, false);
         hits.add(doc, matchStart, matchEnd, null);
         return hits;
     }
@@ -129,7 +129,7 @@ public interface HitsSimple extends Iterable<EphemeralHit> {
      *
      * @return internal hits object.
      */
-    HitsSimple getStatic();
+    Hits getStatic();
 
     /**
      * Get a sublist of hits, starting at the specified index.
@@ -141,7 +141,7 @@ public interface HitsSimple extends Iterable<EphemeralHit> {
      * @param windowSize size of the sublist
      * @return sublist of hits
      */
-    HitsSimple sublist(long first, long windowSize);
+    Hits sublist(long first, long windowSize);
 
     /**
      * Get an iterator over the hits in this Hits object.
@@ -170,7 +170,7 @@ public interface HitsSimple extends Iterable<EphemeralHit> {
      * @param sortProp the hit property to sort on
      * @return a new hits object with the same hits, sorted in the specified way
      */
-    HitsSimple sorted(HitProperty sortProp);
+    Hits sorted(HitProperty sortProp);
 
     boolean hasMatchInfo();
 
@@ -198,8 +198,8 @@ public interface HitsSimple extends Iterable<EphemeralHit> {
         return new Kwics(getStatic(), contextSize);
     }
 
-    default HitsSimple filteredByDocId(int docId) {
-        HitsInternalMutable hitsInDoc = HitsInternalMutable.create(field(), matchInfoDefs(), -1, size(), false);
+    default Hits filteredByDocId(int docId) {
+        HitsMutable hitsInDoc = HitsMutable.create(field(), matchInfoDefs(), -1, size(), false);
         for (EphemeralHit h: this) {
             if (h.doc() == docId)
                 hitsInDoc.add(h);

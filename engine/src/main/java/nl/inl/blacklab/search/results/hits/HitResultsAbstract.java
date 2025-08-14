@@ -50,15 +50,15 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     protected static final int FETCH_HITS_MIN = 20;
 
     /** Our internal list of hits. */
-    protected final HitsSimple hitsInternal;
+    protected final Hits hitsInternal;
 
     /** Mutable interface to our list of hits, if mutation is allowed. */
-    protected final HitsInternalMutable hitsInternalMutable;
+    protected final HitsMutable hitsMutable;
 
     /** A view to our actual hits.
      *  Will ensure that enough hits have been fetched (if applicable).
      */
-    HitsSimple hitsView;
+    Hits hitsView;
 
     /**
      * Construct a Hits object from a hits array.
@@ -66,12 +66,12 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      * @param queryInfo query info for corresponding query
      * @param hits hits to use for this object. Used as-is, not copied.
      */
-    protected HitResultsAbstract(QueryInfo queryInfo, HitsSimple hits, boolean mutable) {
+    protected HitResultsAbstract(QueryInfo queryInfo, Hits hits, boolean mutable) {
         super(queryInfo);
         if (hits == null)
             throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
         this.hitsInternal = hits;
-        this.hitsInternalMutable = mutable ? (HitsInternalMutable)hits : null;
+        this.hitsMutable = mutable ? (HitsMutable)hits : null;
         hitsView = new LazyHitsView();
     }
 
@@ -91,8 +91,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults window(long first, long windowSize) {
-        HitsSimple hs = getHits();
-        HitsSimple window = hs.sublist(first, windowSize);
+        Hits hs = getHits();
+        Hits window = hs.sublist(first, windowSize);
 
 //        // Error if first out of range
 //        boolean emptyResultSet = !resultsStats().waitUntil().processedAtLeast(1);
@@ -147,7 +147,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     @Override
     public HitResults sample(SampleParameters sampleParameters) {
 
-        HitsSimple sample = sampleHits(getHits(), sampleParameters);
+        Hits sample = sampleHits(getHits(), sampleParameters);
 
         // Count the number of documents in the sample
         MutableInt docsInSample = new MutableInt(0);
@@ -164,7 +164,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         return new HitResultsList(queryInfo(), sample, null, sampleParameters, hitsStats, docsStats);
     }
 
-    public static HitsSimple sampleHits(HitsSimple hitsList, SampleParameters sampleParameters) {
+    public static Hits sampleHits(Hits hitsList, SampleParameters sampleParameters) {
         // Fetch all hits and get most efficient implementation (nonlocking)
         hitsList = hitsList.getStatic();
         long totalNumberOfHits = hitsList.size();
@@ -194,7 +194,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         }
 
         // Add the chosen hits indexes to the sample.
-        HitsInternalMutable sample = HitsInternalMutable.create(hitsList.field(), hitsList.matchInfoDefs(), numberOfHitsToSelect,
+        HitsMutable sample = HitsMutable.create(hitsList.field(), hitsList.matchInfoDefs(), numberOfHitsToSelect,
                 numberOfHitsToSelect, false);
         EphemeralHit hit = new EphemeralHit();
         for (Long hitIndex: chosenHitIndices) {
@@ -221,7 +221,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
 
         // Perform the actual sort.
         ensureResultsRead(-1);
-        HitsSimple sorted = getHits().sorted(sortProp);
+        Hits sorted = getHits().sorted(sortProp);
         sortProp.disposeContext(); // we don't need the context information anymore, free memory
 
         return new HitResultsList(queryInfo(), sorted, null, null,
@@ -286,7 +286,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     /** Assumes this hit is within our lists. */
     @Override
     public HitResults window(Hit hit) {
-        HitsInternalMutable r = HitsInternalMutable.create(field(), getHits().matchInfoDefs(), 1, false, false);
+        HitsMutable r = HitsMutable.create(field(), getHits().matchInfoDefs(), 1, false, false);
         r.add(hit);
 
         return new HitResultsList(
@@ -305,12 +305,12 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     //--------------------------------------------------------------------
 
     @Override
-    public HitsSimple getHits() {
+    public Hits getHits() {
         return hitsView;
     }
 
     @Override
-    public Map<LeafReaderContext, HitsSimple> getSegmentHits() {
+    public Map<LeafReaderContext, Hits> getSegmentHits() {
         return null;
     }
 
@@ -319,7 +319,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         return null;
     }
 
-    private class LazyHitsView implements HitsSimple {
+    private class LazyHitsView implements Hits {
         @Override
         public AnnotatedField field() {
             return queryInfo().field();
@@ -415,25 +415,25 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         }
 
         @Override
-        public HitsSimple sublist(long first, long windowSize) {
+        public Hits sublist(long first, long windowSize) {
             ensureResultsRead(first + windowSize);
             return hitsInternal.sublist(first, windowSize);
         }
 
         @Override
-        public HitsSimple sorted(HitProperty sortProp) {
+        public Hits sorted(HitProperty sortProp) {
             ensureResultsRead(-1);
             return hitsInternal.sorted(sortProp);
         }
 
         @Override
-        public HitsSimple getStatic() {
+        public Hits getStatic() {
             ensureResultsRead(-1);
             return hitsInternal.getStatic();
         }
 
         @Override
-        public HitsSimple filteredByDocId(int docId) {
+        public Hits filteredByDocId(int docId) {
             ensureResultsRead(-1);
             return hitsInternal.filteredByDocId(docId);
         }

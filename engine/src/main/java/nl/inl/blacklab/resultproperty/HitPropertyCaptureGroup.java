@@ -14,7 +14,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.hits.Hit;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on a matched group.
@@ -51,7 +51,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     /** If set: use the first tag/relation with this name in the match info list */
     private boolean relNameIsFullRelType = false;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, HitsSimple hits, LeafReaderContext lrc, boolean invert) {
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
@@ -90,14 +90,14 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
      * @param groupName the match info group name
      * @return the field name
      */
-    private static AnnotatedField determineMatchInfoField(HitsSimple hits, String groupName, RelationInfo.SpanMode spanMode) {
+    private static AnnotatedField determineMatchInfoField(Hits hits, String groupName, RelationInfo.SpanMode spanMode) {
         return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
                 .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
     }
 
     @Override
-    public HitProperty copyWith(HitsSimple newHits, LeafReaderContext lrc, boolean invert) {
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertyCaptureGroup(this, newHits, lrc, invert);
     }
 

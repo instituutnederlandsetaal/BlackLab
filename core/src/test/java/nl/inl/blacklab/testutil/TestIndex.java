@@ -39,7 +39,7 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitResults;
-import nl.inl.blacklab.search.results.hits.HitsSimple;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.Kwics;
 import nl.inl.util.UtilsForTesting;
 
@@ -341,7 +341,7 @@ public class TestIndex {
      * @param hits the hits to display
      * @return the left, match and right values for the "word" annotation
      */
-    static List<String> getConcordances(HitsSimple hits, Annotation word) {
+    static List<String> getConcordances(Hits hits, Annotation word) {
         List<String> results = new ArrayList<>();
         Kwics kwics = hits.kwics(ContextSize.get(1, Integer.MAX_VALUE));
         for (EphemeralHit hit: hits) {

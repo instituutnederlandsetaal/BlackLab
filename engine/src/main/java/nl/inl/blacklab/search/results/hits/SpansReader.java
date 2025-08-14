@@ -145,7 +145,7 @@ class SpansReader implements Runnable {
      * @param end   the end position
      * @param matchInfo the match info
      */
-    private boolean isSameAsLast(HitsSimple hits, int doc, int start, int end, MatchInfo[] matchInfo) {
+    private boolean isSameAsLast(Hits hits, int doc, int start, int end, MatchInfo[] matchInfo) {
         long prev = hits.size() - 1;
         return hits.size() > 0 && doc == hits.doc(prev) && start == hits.start(prev) && end == hits.end(prev) &&
                 MatchInfo.areEqual(matchInfo, hits.matchInfos(prev));
@@ -231,7 +231,7 @@ class SpansReader implements Runnable {
 
         final int numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
-        final HitsInternalMutable results = HitsInternalMutable.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
+        final HitsMutable results = HitsMutable.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
 
         // Increment if we're NOT at a document boundary OR we haven't reached the currently requested number of hits yet.
@@ -331,13 +331,13 @@ class SpansReader implements Runnable {
          * Called when the SpansReader has reached the end of a document.
          * @param results the hits collected so far
          */
-        void onDocumentBoundary(HitsInternalMutable results);
+        void onDocumentBoundary(HitsMutable results);
 
         /**
          * Called when the SpansReader is done.
          * @param results the hits collected so far
          */
-        void onFinished(HitsInternalMutable results);
+        void onFinished(HitsMutable results);
     }
 
 }
