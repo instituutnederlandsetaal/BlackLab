@@ -15,7 +15,7 @@ public class HitResultsList extends HitResultsAbstract {
 
     private final ResultsStats hitsStats;
 
-    private final ResultsStatsSaved docsStats;
+    private final ResultsStats docsStats;
 
     /** Our window stats, if this is a window; null otherwise. */
     private WindowStats windowStats;
@@ -83,13 +83,6 @@ public class HitResultsList extends HitResultsAbstract {
         return "HitResultsList";
     }
 
-    /**
-     * Ensure that we have read at least as many hits as specified in the parameter.
-     *
-     * @param number the minimum number of hits that will have been read when this
-     *            method returns (unless there are fewer hits than this); if
-     *            negative, reads all hits
-     */
     @Override
     public final boolean ensureResultsRead(long number) {
         return size() >= number; // all results have been read

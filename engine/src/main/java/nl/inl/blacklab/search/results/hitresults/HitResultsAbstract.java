@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results.hitresults;
 
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
@@ -23,6 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultsAbstract;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -233,9 +235,21 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     }
 
     @Override
-    public HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup) {
+    public HitGroups group(HitProperty groupBy, long maxResultsToStorePerGroup) {
         ensureResultsRead(-1);
-        return HitGroups.fromHits(this, criteria, maxResultsToStorePerGroup);
+
+        if (groupBy == null)
+            throw new IllegalArgumentException("Must have criteria to group on");
+        Hits hits = getHits();
+        groupBy = groupBy.copyWith(hits);
+
+        Map<PropertyValue, HitGroups.GroupHitsAndSize> groupings = HitGroups.performGrouping(hits, groupBy, maxResultsToStorePerGroup);
+        List<HitGroup> groups = HitGroups.convert(queryInfo(), groupings);
+
+        // Make a copy of the stats so we don't keep any references to the source hits
+
+        return new HitGroups(queryInfo(), groups, groupBy, null, null, resultsStats().save(),
+                docsStats().save());
     }
 
     /**

@@ -57,7 +57,7 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
             return HitGroupsTokenFrequencies.get(source, property);
         } else {
             // Just find all the hits and group them.
-            return HitGroups.fromHits(executeChildSearch(activeSearch, source), property, maxResultsToStorePerGroup);
+            return executeChildSearch(activeSearch, source).group(property, maxResultsToStorePerGroup);
         }
     }
 

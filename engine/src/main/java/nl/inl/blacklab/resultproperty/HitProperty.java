@@ -238,13 +238,12 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     /**
      * Produce a copy of this HitProperty object with a different Hits object.
      *
-     * Will automatically fetch any necessary Contexts as well.
-     *
      * @param hits new Hits to use
      * @return the new HitProperty object
      */
     public HitProperty copyWith(Hits hits) {
-        // If the filter property requires contexts, fetch them now.
+        if (this.hits == hits)
+            return this;
         return copyWith(hits, null, false);
     }
 
