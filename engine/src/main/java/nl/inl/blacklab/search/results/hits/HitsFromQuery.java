@@ -797,7 +797,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // Start where the last stretch in this segment ended.
             long length = segmentHits.size() - indexInSegmentHits;
             assert length > 0;
-            synchronized (this) {
+            synchronized (HitsFromQuery.this) {
                 HitsStretch stretch = new HitsStretch(
                         stretches.size(), lrc.docBase,
                         segmentHits, indexInSegmentHits, numHitsGlobalView, length);
