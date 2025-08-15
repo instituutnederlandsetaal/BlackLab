@@ -20,7 +20,6 @@ import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
@@ -93,94 +92,12 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
 
     private long resultObjects;
 
-    /**
-     * Construct a ResultsGrouper object, by grouping the supplied hits.
-     *
-     * @param hitResults the hits to group
-     * @param groupBy the criteria to group on
-     * @param maxResultsToStorePerGroup how many results to store per group at most
-     */
-    protected HitGroups(HitResults hitResults, HitProperty groupBy, long maxResultsToStorePerGroup) {
-        super(hitResults.queryInfo());
-        if (groupBy == null)
-            throw new IllegalArgumentException("Must have criteria to group on");
-        Hits hits = hitResults.getHits();
-        this.groupBy = groupBy.copyWith(hits);
-
-        Map<PropertyValue, GroupHitsAndSize> groupings = performGrouping(hits, groupBy, maxResultsToStorePerGroup);
-        largestGroupSize = groupings.values().stream()
-                .mapToLong(gr -> gr.totalNumberOfHits)
-                .max()
-                .orElse(0);
-        resultObjects = groupings.values().stream()
-                .mapToLong(gr -> gr.storedHits.size())
-                .sum() + groupings.size();
-        groups = new HashMap<>();
-
-        // Create the HitGroup objects
-        for (Map.Entry<PropertyValue, GroupHitsAndSize> e : groupings.entrySet()) {
-            PropertyValue groupId = e.getKey();
-            GroupHitsAndSize grouped = e.getValue();
-            HitGroup group = HitGroup.fromList(queryInfo(), groupId, grouped.storedHits, grouped.totalNumberOfHits);
-            groups.put(groupId, group);
-            results.add(group);
-        }
-
-        // Make a copy of the stats so we don't keep any references to the source hits
-        resultsStats = new ResultsStatsSaved(groups.size(), groups.size(), hitResults.resultsStats().maxStats());
-        this.hitsStats = hitResults.resultsStats().save();
-        this.docsStats = hitResults.docsStats().save();
-    }
-
-    /** Used during the actual grouping */
-    public static class GroupHitsAndSize {
-        HitsMutable storedHits;
-        long totalNumberOfHits;
-
-        public GroupHitsAndSize(HitsMutable storedHits, int totalNumberOfHits) {
-            this.storedHits = storedHits;
-            this.totalNumberOfHits = totalNumberOfHits;
-        }
-    }
-
-    static Map<PropertyValue, GroupHitsAndSize> performGrouping(Hits hits, HitProperty criteria,
-            long maxResultsToStorePerGroup) {
-        hits = hits.getStatic(); // use most efficient implementation
-        // temporary copy used in grouping (don't keep reference to hits)
-        criteria = criteria.copyWith(hits);
-
-        Map<PropertyValue, GroupHitsAndSize> groupLists = new HashMap<>();
-        int hitIndex = 0;
-        for (EphemeralHit hit: hits) {
-            PropertyValue identity = criteria.get(hitIndex);
-
-            GroupHitsAndSize group = groupLists.get(identity);
-            if (group == null) {
-                if (groupLists.size() >= MAX_NUMBER_OF_GROUPS)
-                    throw new UnsupportedOperationException(
-                            "Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
-                HitsMutable hitsInGroup = HitsMutable.create(hits.field(), hits.matchInfoDefs(),
-                        -1,
-                        hits.size(), false);
-                group = new GroupHitsAndSize(hitsInGroup, 0);
-                groupLists.put(identity, group);
-            }
-            if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {
-                group.storedHits.add(hit);
-            }
-            group.totalNumberOfHits++;
-            ++hitIndex;
-        }
-        criteria.disposeContext(); // we don't need the context information anymore, free memory
-        return groupLists;
-    }
-
-    public static List<HitGroup> convert(QueryInfo queryInfo, Map<PropertyValue, GroupHitsAndSize> groupings) {
+    public static List<HitGroup> fromBasicGroup(QueryInfo queryInfo, Map<PropertyValue, Hits.Group> groupings) {
         List<HitGroup> groups = new ArrayList<>(groupings.size());
-        for (Map.Entry<PropertyValue, GroupHitsAndSize> e : groupings.entrySet()) {
+        for (Map.Entry<PropertyValue, Hits.Group> e : groupings.entrySet()) {
             PropertyValue groupId = e.getKey();
-            GroupHitsAndSize grouped = e.getValue();
-            HitGroup group = HitGroup.fromList(queryInfo, groupId, grouped.storedHits, grouped.totalNumberOfHits);
+            Hits.Group grouped = e.getValue();
+            HitGroup group = HitGroup.fromList(queryInfo, groupId, grouped.getStoredHits(), grouped.getTotalNumberOfHits());
             groups.add(group);
         }
         return groups;

@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultsAbstract;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -241,15 +240,13 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         if (groupBy == null)
             throw new IllegalArgumentException("Must have criteria to group on");
         Hits hits = getHits();
-        groupBy = groupBy.copyWith(hits);
 
-        Map<PropertyValue, HitGroups.GroupHitsAndSize> groupings = HitGroups.performGrouping(hits, groupBy, maxResultsToStorePerGroup);
-        List<HitGroup> groups = HitGroups.convert(queryInfo(), groupings);
+        Map<PropertyValue, Hits.Group> groupedHits = hits.grouped(groupBy, maxResultsToStorePerGroup);
 
-        // Make a copy of the stats so we don't keep any references to the source hits
-
-        return new HitGroups(queryInfo(), groups, groupBy, null, null, resultsStats().save(),
-                docsStats().save());
+        // (We make a copy of the stats so we don't keep any references to the source hits)
+        List<HitGroup> hitGroups = HitGroups.fromBasicGroup(queryInfo(), groupedHits);
+        return new HitGroups(queryInfo(), hitGroups, groupBy, null, null,
+                resultsStats().save(), docsStats().save());
     }
 
     /**

@@ -1,10 +1,13 @@
 package nl.inl.blacklab.search.results.hits;
 
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -12,6 +15,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hitresults.Kwics;
 
@@ -46,6 +50,41 @@ public interface Hits extends Iterable<EphemeralHit> {
         HitsMutable hits = HitsMutable.create(field, matchInfoDefs, 1, false, false);
         hits.add(doc, matchStart, matchEnd, null);
         return hits;
+    }
+
+    default Map<PropertyValue, Group> grouped(HitProperty groupBy) {
+        return grouped(groupBy, Long.MAX_VALUE);
+    }
+
+    default Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup) {
+        Hits hits = getStatic(); // use most efficient implementation
+        // temporary copy used in grouping (don't keep reference to hits)
+        groupBy = groupBy.copyWith(hits);
+
+        Map<PropertyValue, Group> groupLists = new HashMap<>();
+        int hitIndex = 0;
+        for (EphemeralHit hit: hits) {
+            PropertyValue identity = groupBy.get(hitIndex);
+
+            Group group = groupLists.get(identity);
+            if (group == null) {
+                if (groupLists.size() >= HitGroups.MAX_NUMBER_OF_GROUPS)
+                    throw new UnsupportedOperationException(
+                            "Cannot handle more than " + HitGroups.MAX_NUMBER_OF_GROUPS + " groups");
+                HitsMutable hitsInGroup = HitsMutable.create(hits.field(), hits.matchInfoDefs(),
+                        -1,
+                        hits.size(), false);
+                group = new Group(hitsInGroup, 0);
+                groupLists.put(identity, group);
+            }
+            if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {
+                group.storedHits.add(hit);
+            }
+            group.totalNumberOfHits++;
+            ++hitIndex;
+        }
+        groupBy.disposeContext(); // we don't need the context information anymore, free memory
+        return groupLists;
     }
 
     /**
@@ -209,5 +248,26 @@ public interface Hits extends Iterable<EphemeralHit> {
                 hitsInDoc.add(h);
         }
         return hitsInDoc;
+    }
+
+    /** Used during the actual grouping */
+    class Group {
+
+        public HitsMutable getStoredHits() {
+            return storedHits;
+        }
+
+        public long getTotalNumberOfHits() {
+            return totalNumberOfHits;
+        }
+
+        HitsMutable storedHits;
+
+        long totalNumberOfHits;
+
+        public Group(HitsMutable storedHits, int totalNumberOfHits) {
+            this.storedHits = storedHits;
+            this.totalNumberOfHits = totalNumberOfHits;
+        }
     }
 }
