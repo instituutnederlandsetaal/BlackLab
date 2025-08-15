@@ -86,9 +86,9 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
      */
     private long largestGroupSize = 0;
 
-    private WindowStats windowStats = null;
+    private WindowStats windowStats;
 
-    private SampleParameters sampleParameters = null;
+    private SampleParameters sampleParameters;
 
     private long resultObjects;
 
@@ -186,10 +186,6 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
 
     public HitGroup get(PropertyValue identity) {
         return groups.get(identity);
-    }
-
-    public WindowStats windowStats() {
-        return windowStats;
     }
 
     public SampleParameters sampleParameters() {

@@ -1,9 +1,5 @@
 package nl.inl.blacklab.search.results.hitresults;
 
-import java.util.Map;
-
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -86,17 +82,6 @@ public interface HitResults extends Results {
      * @return the hits interface
      */
     Hits getHits();
-
-    /**
-     * Get access to the hits per segment.
-     *
-     * This is useful for performing operations on hits per segment.
-     *
-     * CAUTION: This will fetch all hits first!
-     *
-     * @return list of hits per segment, or null if not available
-     */
-    Map<LeafReaderContext, Hits> getSegmentHits();
 
     /**
      * If this is a hits window, return the window stats.

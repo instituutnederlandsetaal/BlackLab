@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.results.hitresults;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -7,22 +8,70 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.ScoreMode;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.InvalidIndex;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.HitsFromQuery;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
+import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
+import nl.inl.util.CurrentThreadExecutorService;
 
-public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
+public class HitResultsFromQuery extends HitResultsAbstract {
+
+    /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
+    protected static final int HIT_POLLING_TIME_MS = 50;
+
+    /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
+    protected final long maxHitsToProcess;
+
+    /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
+    protected final long maxHitsToCount;
+
+    /** Query context, keeping track of e.g. match info defitions */
+    protected final HitQueryContext hitQueryContext;
+
+    /** Keeps track of hits encountered. */
+    protected final ResultsStatsPassive hitsStats;
+
+    /** Keeps track of docs encountered. */
+    protected final ResultsStatsPassive docsStats;
+
+    /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
+    protected final AtomicLong requestedHitsToProcess = new AtomicLong();
+
+    /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
+    protected final AtomicLong requestedHitsToCount = new AtomicLong();
+
+    /** Used to make sure that only 1 thread can be fetching hits at a time. */
+    protected final Lock ensureHitsReadLock = new ReentrantLock();
+
+    /** If true, we're done. */
+    protected boolean allSourceSpansFullyRead = false;
+
+    /** Number of threads to use for fetching hits. */
+    protected int numThreads;
+
+    private HitsFromQuery lazyHitsView;
 
     public static HitResultsFromQuery get(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        return new HitResultsFromQueryKeepSegments(queryInfo, sourceQuery, searchSettings);
+        return new HitResultsFromQuery(queryInfo, sourceQuery, searchSettings);
     }
 
     /** Objects getting the actual hits from each index segment and adding them to the global results list. */
@@ -64,18 +113,81 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
         return groups;
     }
 
+    /** Call optimize() and rewrite() on the source query, and create a weight for it.
+     *
+     * @param queryInfo query info for this query
+     * @param sourceQuery the source query to optimize and rewrite
+     * @param fiMatchFactor override FI match threshold (debug use only, -1 means no override)
+     * @return the weight for the optimized/rewritten query
+     */
+    protected static BLSpanWeight rewriteAndCreateWeight(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+            long fiMatchFactor) {
+        QueryTimings timings = queryInfo.timings();
+        timings.start();
+
+        // Override FI match threshold? (debug use only!)
+        try {
+            BLSpanQuery optimizedQuery;
+            synchronized (ClauseCombinerNfa.class) {
+                long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
+                if (fiMatchFactor != -1) {
+                    logger.debug("setting NFA threshold for this query to " + fiMatchFactor);
+                    ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
+                }
+
+                sourceQuery.setQueryInfo(queryInfo);
+                boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
+                if (traceOptimization)
+                    logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
+
+                optimizedQuery = sourceQuery.optimize(queryInfo.index().reader());
+                if (traceOptimization)
+                    logger.debug("Query after optimize(): " + optimizedQuery);
+
+                optimizedQuery = optimizedQuery.rewrite(queryInfo.index().reader());
+                if (traceOptimization)
+                    logger.debug("Query after rewrite(): " + optimizedQuery);
+
+                // Restore previous FI match threshold
+                if (fiMatchFactor != -1) {
+                    ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
+                }
+            }
+            timings.record("rewrite");
+
+            // This call can take a long time
+            BLSpanWeight weight = optimizedQuery.createWeight(queryInfo.index().searcher(),
+                    ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+            timings.record("createWeight");
+            return weight;
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
+    }
+
     /** Number of hits in the global view. Needed because we don't want to call hitsInternalMutable.size() from
      *  HitsFromQueryKeepSegments, because that class doesn't use it. (REFACTOR THIS!) */
     protected long globalHitsSoFar() {
-        return hitsMutable.size();
+        return lazyHitsView.globalHitsSoFar();
     }
 
     protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we explicitly construct HitsInternal so they're writeable
         super(queryInfo.optOverrideField(sourceQuery),
-                HitsMutable.create(queryInfo.optOverrideField(sourceQuery).field(), null, -1, true, true), searchSettings);
+                HitsMutable.create(queryInfo.optOverrideField(sourceQuery).field(), null,
+                        -1, true, true),
+                true);
+        maxHitsToProcess = searchSettings.maxHitsToProcess();
+        maxHitsToCount = searchSettings.maxHitsToCount();
+        hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy
+        hitsMutable.setMatchInfoDefs(hitQueryContext.getMatchInfoDefs());
+        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this), maxHitsToProcess, maxHitsToCount);
+        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
+        numThreads = Math.max(queryInfo.index().blackLab().maxThreadsPerSearch(), 1);
+
         BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
 
+        ensureViewCreated();
         for (LeafReaderContext leafReaderContext: queryInfo.index().reader().leaves()) {
             spansReaders.add(new SpansReader(
                 weight,
@@ -93,8 +205,14 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
             setDone();
     }
 
+    void ensureViewCreated() {
+        // Global view on our segment hits
+        hitsView = lazyHitsView = new HitsFromQuery(this, hitQueryContext.getMatchInfoDefs(), numThreads, getExecutorService());
+    }
+
     protected SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
-        return new SpansReaderStrategyAddToGlobal(lrc);
+        // Return a strategy that will add hits to the segment hits and maintain the global view.
+        return lazyHitsView.getSpansReaderStrategy(lrc);
     }
 
     @Override
@@ -138,19 +256,6 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
                 .map(list -> executorService.submit(() -> list.forEach(SpansReader::run)))
                 .toList();
 
-            // Distribute the SpansReaders over the threads.
-            // E.g. if we have 10 SpansReaders and 3 threads, we will have
-            // SpansReader 0, 3, 6 and 9 in thread 1, etc.
-            // This way, each thread will get a roughly equal number of SpansReaders to run.
-//            final AtomicLong i = new AtomicLong();
-//            pendingResults = spansReaders
-//                .stream()
-//                .collect(Collectors.groupingBy(sr -> i.getAndIncrement() % numThreads)) // subdivide the list, one sublist per thread to use (one list in case of single thread).
-//                .values()
-//                .stream()
-//                .map(list -> executorService.submit(() -> list.forEach(SpansReader::run))) // now submit one task per sublist
-//                .toList(); // gather the futures
-
             // Wait for workers to complete.
             // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
             // NOTE: the worker will not automatically abort, so we should also interrupt our workers should that happen.
@@ -191,43 +296,40 @@ public class HitResultsFromQuery extends HitResultsFromQueryAbstract {
         return globalHitsSoFar() >= number;
     }
 
-    /** Adds hits to global list regularly. */
-    private class SpansReaderStrategyAddToGlobal implements SpansReader.Strategy {
+    @Override
+    public ResultsStatsPassive resultsStats() {
+        return hitsStats;
+    }
 
-        private final LeafReaderContext lrc;
+    @Override
+    public ResultsStatsPassive docsStats() {
+        return docsStats;
+    }
 
-        SpansReaderStrategyAddToGlobal(LeafReaderContext lrc) {
-            this.lrc = lrc;
-        }
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{" +
+                "hitQueryContext=" + hitQueryContext +
+                ", hitsStats=" + hitsStats +
+                ", docsStats=" + docsStats +
+                '}';
+    }
 
-        /**
-         * How many hits should we collect (at least) before we add them to the global results?
-         */
-        private static final int ADD_HITS_TO_GLOBAL_THRESHOLD = 100;
+    void setDone() {
+        allSourceSpansFullyRead = true;
+        hitsStats.setDone();
+        docsStats.setDone();
+    }
 
-        @Override
-        public void onDocumentBoundary(HitsMutable results) {
-            if (results.size() >= ADD_HITS_TO_GLOBAL_THRESHOLD) {
-                // We've built up a batch of hits. Add them to the global results.
-                // We do this only once per doc, so hits from the same doc remain contiguous in the master list.
-                addAll(results);
-                results.clear();
-            }
-        }
+    protected ExecutorService getExecutorService() {
+        BlackLabIndex index = queryInfo().index();
+        final ExecutorService executorService = numThreads >= 2
+                ? index.blackLab().searchExecutorService()
+                : new CurrentThreadExecutorService();
+        return executorService;
+    }
 
-        private void addAll(HitsMutable results) {
-            for (EphemeralHit h: results) {
-                h.segmentToGlobal(lrc.docBase);
-                hitsMutable.add(h);
-            }
-        }
-
-        @Override
-        public void onFinished(HitsMutable results) {
-            if (!results.isEmpty()) {
-                // Add the final batch of hits to the global results.
-                addAll(results);
-            }
-        }
+    public MatchInfoDefs getMatchInfoDefs() {
+        return hitQueryContext.getMatchInfoDefs();
     }
 }

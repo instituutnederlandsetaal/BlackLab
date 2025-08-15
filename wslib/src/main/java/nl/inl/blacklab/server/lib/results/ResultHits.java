@@ -182,7 +182,8 @@ public class ResultHits {
     private static SearchHits getQueryForHitsInSpecificGroupOnly(WebserviceParams params, PropertyValue viewGroupVal,
             HitGroups hitsGrouped) throws BlsException, InvalidQuery {
         // see if we can enhance this query
-        if (hitsGrouped.sampleParameters() != null)
+        if (hitsGrouped.
+                sampleParameters() != null)
             return null;
 
         HitProperty groupByProp = hitsGrouped.groupCriteria();

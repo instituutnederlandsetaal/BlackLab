@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -15,7 +14,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
-import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hitresults.Kwics;
 
@@ -52,41 +50,6 @@ public interface Hits extends Iterable<EphemeralHit> {
         return hits;
     }
 
-    default Map<PropertyValue, Group> grouped(HitProperty groupBy) {
-        return grouped(groupBy, Long.MAX_VALUE);
-    }
-
-    default Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup) {
-        Hits hits = getStatic(); // use most efficient implementation
-        // temporary copy used in grouping (don't keep reference to hits)
-        groupBy = groupBy.copyWith(hits);
-
-        Map<PropertyValue, Group> groupLists = new HashMap<>();
-        int hitIndex = 0;
-        for (EphemeralHit hit: hits) {
-            PropertyValue identity = groupBy.get(hitIndex);
-
-            Group group = groupLists.get(identity);
-            if (group == null) {
-                if (groupLists.size() >= HitGroups.MAX_NUMBER_OF_GROUPS)
-                    throw new UnsupportedOperationException(
-                            "Cannot handle more than " + HitGroups.MAX_NUMBER_OF_GROUPS + " groups");
-                HitsMutable hitsInGroup = HitsMutable.create(hits.field(), hits.matchInfoDefs(),
-                        -1,
-                        hits.size(), false);
-                group = new Group(hitsInGroup, 0);
-                groupLists.put(identity, group);
-            }
-            if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {
-                group.storedHits.add(hit);
-            }
-            group.totalNumberOfHits++;
-            ++hitIndex;
-        }
-        groupBy.disposeContext(); // we don't need the context information anymore, free memory
-        return groupLists;
-    }
-
     /**
      * Get the field these hits are from.
      *
@@ -94,7 +57,9 @@ public interface Hits extends Iterable<EphemeralHit> {
      */
     AnnotatedField field();
 
-    BlackLabIndex index();
+    default BlackLabIndex index() {
+        return field().index();
+    }
 
     /**
      * Type of each of our match infos.
@@ -203,9 +168,7 @@ public interface Hits extends Iterable<EphemeralHit> {
      *
      * @return true if there are no hits, false otherwise
      */
-    default boolean isEmpty() {
-        return size() == 0;
-    }
+    boolean isEmpty();
 
     /**
      * Return a new hits object with these hits sorted by the given property.
@@ -214,6 +177,14 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @return a new hits object with the same hits, sorted in the specified way
      */
     Hits sorted(HitProperty sortProp);
+
+    default Map<PropertyValue, Group> grouped(HitProperty groupBy) {
+        return grouped(groupBy, Long.MAX_VALUE);
+    }
+
+    Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup);
+
+    long countDocs();
 
     boolean hasMatchInfo();
 
@@ -227,39 +198,21 @@ public interface Hits extends Iterable<EphemeralHit> {
         return concordances(contextSize, ConcordanceType.FORWARD_INDEX);
     }
 
-    default Concordances concordances(ContextSize contextSize, ConcordanceType type) {
-        if (contextSize == null)
-            contextSize = index().defaultContextSize();
-        if (type == null)
-            type = ConcordanceType.FORWARD_INDEX;
-        return new Concordances(getStatic(), type, contextSize);
-    }
+    /**
+     * Create concordances.
+     *
+     * @param contextSize desired context size
+     * @param type concordance type: from forward index or original content
+     * @return concordances
+     */
+    Concordances concordances(ContextSize contextSize, ConcordanceType type);
 
-    default Kwics kwics(ContextSize contextSize) {
-        if (contextSize == null)
-            contextSize = index().defaultContextSize();
-        return new Kwics(getStatic(), contextSize);
-    }
+    Kwics kwics(ContextSize contextSize);
 
-    default Hits filteredByDocId(int docId) {
-        HitsMutable hitsInDoc = HitsMutable.create(field(), matchInfoDefs(), -1, size(), false);
-        for (EphemeralHit h: this) {
-            if (h.doc() == docId)
-                hitsInDoc.add(h);
-        }
-        return hitsInDoc;
-    }
+    Hits filteredByDocId(int docId);
 
     /** Used during the actual grouping */
     class Group {
-
-        public HitsMutable getStoredHits() {
-            return storedHits;
-        }
-
-        public long getTotalNumberOfHits() {
-            return totalNumberOfHits;
-        }
 
         HitsMutable storedHits;
 
@@ -269,5 +222,14 @@ public interface Hits extends Iterable<EphemeralHit> {
             this.storedHits = storedHits;
             this.totalNumberOfHits = totalNumberOfHits;
         }
+
+        public HitsMutable getStoredHits() {
+            return storedHits;
+        }
+
+        public long getTotalNumberOfHits() {
+            return totalNumberOfHits;
+        }
+
     }
 }

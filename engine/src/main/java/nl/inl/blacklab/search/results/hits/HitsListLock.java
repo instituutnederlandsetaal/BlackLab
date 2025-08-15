@@ -67,21 +67,6 @@ class HitsListLock extends HitsListNoLock {
     }
 
     @Override
-    public Hit get(long index) {
-        lock.readLock().lock();
-        try {
-            // Don't call super method, this is faster (hot code)
-            MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-            HitImpl hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index),
-                    matchInfo);
-            assert HitsListAbstract.debugCheckReasonableHit(hit);
-            return hit;
-        } finally {
-            lock.readLock().unlock();
-        }
-    }
-
-    @Override
     public void getEphemeral(long index, EphemeralHit h) {
         lock.readLock().lock();
         try {

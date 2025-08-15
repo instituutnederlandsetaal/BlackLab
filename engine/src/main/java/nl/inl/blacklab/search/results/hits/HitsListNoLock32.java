@@ -29,41 +29,6 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  */
 class HitsListNoLock32 extends HitsListAbstract {
 
-    /**
-     * Class to iterate over hits.
-     * <p>
-     * NOTE: contrary to expectation, implementing this class using iterators
-     * over docs, starts and ends makes it slower.
-     */
-    private class HitIterator implements Iterator<EphemeralHit> {
-        private int pos = 0;
-
-        private final EphemeralHit hit = new EphemeralHit();
-
-        public HitIterator() {
-        }
-
-        @Override
-        public boolean hasNext() {
-            // Since this iteration method is not thread-safe anyway, use the direct array to prevent repeatedly acquiring the read lock
-            return docs.size() > pos;
-        }
-
-        @Override
-        public EphemeralHit next() {
-            try {
-                hit.doc_ = docs.getInt(pos);
-                hit.start_ = starts.getInt(pos);
-                hit.end_ = ends.getInt(pos);
-                hit.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(pos);
-                ++pos;
-                return hit;
-            } catch (IndexOutOfBoundsException e) {
-                throw new NoSuchElementException();
-            }
-        }
-    }
-
     protected final IntList docs;
     protected final IntList starts;
     protected final IntList ends;
@@ -207,14 +172,6 @@ class HitsListNoLock32 extends HitsListAbstract {
         matchInfos.clear();
     }
 
-    @Override
-    public Hit get(long index) {
-        MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
-        Hit hit = new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
-        assert HitsListAbstract.debugCheckReasonableHit(hit);
-        return hit;
-    }
-
     /**
      * Copy values into the ephemeral hit, for use in a hot loop or somesuch.
      * The intent of this function is to allow retrieving many hits without needing to allocate so many short lived objects.
@@ -271,10 +228,15 @@ class HitsListNoLock32 extends HitsListAbstract {
         return docs.size();
     }
 
+    @Override
+    long countDocsNoLock() {
+        return docs.stream().distinct().count();
+    }
+
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
     @Override
     public Iterator<EphemeralHit> iterator() {
-        return new HitIterator();
+        return super.iterator();
     }
 
     @Override

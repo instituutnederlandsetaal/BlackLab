@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
-public abstract class HitsListAbstract implements HitsMutable {
+public abstract class HitsListAbstract extends HitsAbstract implements HitsMutable {
 
     static boolean debugCheckAllReasonable(Hits hits) {
         for (EphemeralHit hit: hits) {
@@ -108,6 +108,22 @@ public abstract class HitsListAbstract implements HitsMutable {
     abstract long sizeNoLock();
 
     @Override
+    public long countDocs() {
+        if (lock != null) {
+            lock.readLock().lock();
+            try {
+                return countDocsNoLock();
+            } finally {
+                lock.readLock().unlock();
+            }
+        } else {
+            return countDocsNoLock();
+        }
+    }
+
+    abstract long countDocsNoLock();
+
+    @Override
     public Hits sorted(HitProperty p) {
         if (lock != null) {
             lock.readLock().lock();
@@ -128,32 +144,13 @@ public abstract class HitsListAbstract implements HitsMutable {
         if (lock != null) {
             lock.readLock().lock();
             try {
-                return sublistNoLock(first, windowSize);
+                return super.sublist(first, windowSize);
             } finally {
                 lock.readLock().unlock();
             }
         } else {
-            return sublistNoLock(first, windowSize);
+            return super.sublist(first, windowSize);
         }
-    }
-
-    public Hits sublistNoLock(long start, long windowSize) {
-        if (start < 0)
-            throw new IndexOutOfBoundsException("Window start must be non-negative, but was " + start);
-        if (windowSize < 0)
-            throw new IllegalArgumentException("Window size must be non-negative, but was " + windowSize);
-        if (start > size() || windowSize == 0)
-            return Hits.empty(field, matchInfoDefs);
-        long end = start + windowSize;
-        if (end > size())
-            end = size();
-        HitsMutable window = HitsMutable.create(field, matchInfoDefs, end - start, false, false);
-        EphemeralHit h = new EphemeralHit();
-        for (long i = start; i < end; ++i) {;
-            getEphemeral(i, h);
-            window.add(h);
-        }
-        return window;
     }
 
     /** Sort a list of hits less than 2 billion long. */
@@ -195,18 +192,8 @@ public abstract class HitsListAbstract implements HitsMutable {
     }
 
     @Override
-    public BlackLabIndex index() {
-        return field.index();
-    }
-
-    @Override
     public MatchInfoDefs matchInfoDefs() {
         return matchInfoDefs;
-    }
-
-    @Override
-    public boolean hasMatchInfo() {
-        return matchInfoDefs != null && matchInfoDefs.currentSize() > 0;
     }
 
     @Override

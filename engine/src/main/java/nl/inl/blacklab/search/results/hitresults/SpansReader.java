@@ -29,7 +29,7 @@ import nl.inl.util.ThreadAborter;
  * The SpansReader will then produce results for the segment, periodically merging them back to the global resultset passed in.
  * The global result set is contained within HitsFromQueryParallel, and when finished, exposed as Hits.
  */
-class SpansReader implements Runnable {
+public class SpansReader implements Runnable {
 
     /** Everything that's only relevant before initialization */
     class SpansReaderBeforeInit {
