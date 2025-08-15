@@ -20,12 +20,12 @@ public class MaxStatsStatic implements MaxStats {
     }
 
     @Override
-    public boolean hitsProcessedExceededMaximum() {
+    public boolean isTooManyToProcess() {
         return maxHitsProcessed;
     }
 
     @Override
-    public boolean hitsCountedExceededMaximum() {
+    public boolean isTooManyToCount() {
         return maxHitsCounted;
     }
 
@@ -44,6 +44,6 @@ public class MaxStatsStatic implements MaxStats {
 
     @Override
     public String toString() {
-        return "MaxStats(" + hitsProcessedExceededMaximum() + ", " + hitsCountedExceededMaximum() + ")";
+        return "MaxStats(" + isTooManyToProcess() + ", " + isTooManyToCount() + ")";
     }
 }

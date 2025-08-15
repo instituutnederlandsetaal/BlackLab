@@ -479,18 +479,18 @@ public class ResponseStreamer {
     private void summaryResultsStats(ResultSummaryNumHits result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         ResultsStats hitsStats = result.getHitsStats();
-        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.waitUntil().allCounted() : hitsStats.countedSoFar());
-        long hitsProcessed = result.isWaitForTotal() ? hitsStats.waitUntil().allProcessed() : hitsStats.processedSoFar();
+        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.countedTotal() : hitsStats.countedSoFar());
+        long hitsProcessed = result.isWaitForTotal() ? hitsStats.processedTotal() : hitsStats.processedSoFar();
         ResultsStats docsStats = result.getDocsStats();
         if (docsStats == null)
             docsStats = ResultsStatsSaved.INVALID;
-        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.waitUntil().allCounted() : docsStats.countedSoFar());
-        long docsProcessed = result.isWaitForTotal() ? docsStats.waitUntil().allProcessed() : docsStats.processedSoFar();
+        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.countedTotal() : docsStats.countedSoFar());
+        long docsProcessed = result.isWaitForTotal() ? docsStats.processedTotal() : docsStats.processedSoFar();
 
         CorpusSize subcorpusSize = result.getSubcorpusSize();
         if (isNewApi) {
             // New API v5+: group related values
-            boolean limitReached = hitsStats.maxStats().hitsProcessedExceededMaximum();
+            boolean limitReached = hitsStats.maxStats().isTooManyToProcess();
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
             {
                 ds.entry(KEY_STATS_STATUS, !hitsStats.done() && !limitReached ? STATS_STATUS_WORKING :
@@ -518,8 +518,8 @@ public class ResponseStreamer {
             ds.entry("stillCounting", !hitsStats.done());
             ds.entry(KEY_NUMBER_OF_HITS, hitsCounted)
                     .entry("numberOfHitsRetrieved", hitsProcessed)
-                    .entry("stoppedCountingHits", hitsStats.maxStats().hitsCountedExceededMaximum())
-                    .entry("stoppedRetrievingHits", hitsStats.maxStats().hitsProcessedExceededMaximum());
+                    .entry("stoppedCountingHits", hitsStats.maxStats().isTooManyToCount())
+                    .entry("stoppedRetrievingHits", hitsStats.maxStats().isTooManyToProcess());
             ds.entry(KEY_NUMBER_OF_DOCS, docsCounted)
                     .entry("numberOfDocsRetrieved", docsProcessed);
             subcorpusSizeStats(subcorpusSize);
@@ -539,7 +539,7 @@ public class ResponseStreamer {
         if (isNewApi) {
             // New API v5+: group related values
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
-            boolean limitReached = docResults.resultsStats().maxStats().hitsProcessedExceededMaximum();
+            boolean limitReached = docResults.resultsStats().maxStats().isTooManyToProcess();
             {
                 ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
                 ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());

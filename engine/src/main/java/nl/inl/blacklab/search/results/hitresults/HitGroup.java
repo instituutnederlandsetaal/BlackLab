@@ -4,6 +4,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.stats.MaxStats;
 
 /**
  * A group of results, with its group identity and the results themselves, that
@@ -17,6 +18,13 @@ public class HitGroup extends Group {
     public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, Hits storedResults,
             long totalSize) {
         return new HitGroup(queryInfo, groupIdentity, storedResults, totalSize);
+    }
+
+    public static HitGroup withoutResults(QueryInfo queryInfo, PropertyValue groupIdentity,
+            long totalHits, int totalDocuments, MaxStats maxStats) {
+        return new HitGroup(groupIdentity,
+                new HitResultsList(queryInfo, Hits.empty(queryInfo.field(), null),
+                        totalHits, totalDocuments, maxStats), totalHits);
     }
 
     public static HitGroup fromHits(PropertyValue groupIdentity, HitResults storedResults, long totalSize) {
@@ -34,7 +42,6 @@ public class HitGroup extends Group {
      *
      * @param queryInfo query info
      * @param storedResults the hits we actually stored
-     * @param matchInfoDefs captured groups for hits in this group
      * @param totalSize total group size
      */
     protected HitGroup(QueryInfo queryInfo, PropertyValue groupIdentity, Hits storedResults, long totalSize) {
@@ -53,7 +60,7 @@ public class HitGroup extends Group {
     protected HitGroup(PropertyValue groupIdentity, HitResults storedResults, long totalSize) {
         super(groupIdentity, storedResults, totalSize);
     }
-    
+
     @Override
     public HitResults storedResults() {
         return (HitResults)super.storedResults();

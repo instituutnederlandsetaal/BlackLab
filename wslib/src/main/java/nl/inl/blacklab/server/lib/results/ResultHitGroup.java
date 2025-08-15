@@ -47,7 +47,7 @@ public class ResultHitGroup {
                     docPropValues);
         }
 
-        numberOfDocsInGroup = group.storedResults().docsStats().waitUntil().allCounted();
+        numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
         properties = group.getGroupProperties(prop);
 

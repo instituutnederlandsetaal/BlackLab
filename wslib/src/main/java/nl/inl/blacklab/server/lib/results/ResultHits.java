@@ -149,8 +149,8 @@ public class ResultHits {
                     docsStats = searchDocCount.executeAsync().peek();
                     // Wait until all hits have been counted.
                     if (waitForTotal) {
-                        hitsStats.waitUntil().allCounted();
-                        docsStats.waitUntil().allCounted();
+                        hitsStats.countedTotal();
+                        docsStats.countedTotal();
                     }
                 } catch (InterruptedSearch e) {
                     // Our count was probably aborted.
@@ -332,7 +332,7 @@ public class ResultHits {
 
     public void finishSearch() {
         WindowSettings windowSettings = params.windowSettings();
-        if (!hitResults.resultsStats().waitUntil().processedAtLeast(windowSettings.first()))
+        if (!hitResults.getHits().sizeAtLeast(windowSettings.first()))
             throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
 
         cacheEntryWindow = null;

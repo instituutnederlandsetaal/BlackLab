@@ -43,7 +43,7 @@ public class ResultDocResult {
 
         concordancesToShow = new ArrayList<>();
         kwicsToShow = new ArrayList<>();
-        if (hitResults.resultsStats().waitUntil().processedAtLeast(1)) {
+        if (hitResults.resultsStats().processedAtLeast(1)) {
             ContextSettings contextSettings = params.contextSettings();
             Concordances theConcordances = null;
             Kwics theKwics = null;

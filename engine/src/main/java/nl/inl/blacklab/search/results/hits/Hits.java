@@ -76,6 +76,27 @@ public interface Hits extends Iterable<EphemeralHit> {
     long size();
 
     /**
+     * Check if this hits object has at least the specified number of hits.
+     *
+     * Depending on the implementation, this may lock until enough hits
+     * have been fetched.
+     *
+     * @param minSize minimum number of hits required
+     * @return true if there are at least minSize hits, false otherwise
+     */
+    boolean sizeAtLeast(long minSize);
+
+    /**
+     * Check if this hits object is empty.
+     *
+     * Depending on the implementation, this may lock until it
+     * knows whether there are any hits or not.
+     *
+     * @return true if there are no hits, false otherwise
+     */
+    boolean isEmpty();
+
+    /**
      * Return the specified hit.
      * Implementations of this method should be thread-safe.
      *
@@ -162,13 +183,6 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @return iterator over the hits in this Hits object
      */
     Iterator<EphemeralHit> iterator();
-
-    /**
-     * Check if this hits object is empty.
-     *
-     * @return true if there are no hits, false otherwise
-     */
-    boolean isEmpty();
 
     /**
      * Return a new hits object with these hits sorted by the given property.

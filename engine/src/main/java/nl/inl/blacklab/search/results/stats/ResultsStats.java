@@ -51,13 +51,16 @@ public abstract class ResultsStats implements SearchResult {
 
     private ResultsAwaiter waitUntil;
 
-    /**
-     * Get the progress awaiter object, that we can ask to wait until e.g. all hits have been processed.
-     *
-     * @return an object that can be used to wait for certain conditions
-     */
-    public ResultsAwaiter waitUntil() {
-        return waitUntil;
+    public boolean processedAtLeast(long lowerBound) {
+        return waitUntil.processedAtLeast(lowerBound);
+    }
+
+    public long processedTotal() {
+        return waitUntil.allProcessed();
+    }
+
+    public long countedTotal() {
+        return waitUntil.allCounted();
     }
 
     public abstract long processedSoFar();

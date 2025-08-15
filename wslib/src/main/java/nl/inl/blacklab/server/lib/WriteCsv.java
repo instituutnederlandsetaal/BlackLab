@@ -94,7 +94,7 @@ public class WriteCsv {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpusResults.query(), metadataGroupProperties, docPropValues);
-                    long numberOfDocsInGroup = group.storedResults().docsStats().waitUntil().allCounted();
+                    long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
                     CorpusSize.Count totalCount = groupSubcorpusSize.getTotalCount();
@@ -145,7 +145,7 @@ public class WriteCsv {
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                hitResults.resultsStats().waitUntil().allCounted(); // block for a bit
+                hitResults.resultsStats().countedTotal(); // block for a bit
                 summaryCsvHits(params, printer, row.size(), hitResults, groups, subcorpusResults.subcorpusSize(),
                         rs);
             }

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.search.results.hits;
 
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;

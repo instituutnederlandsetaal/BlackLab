@@ -29,7 +29,7 @@ public interface Results extends SearchResult {
     ResultsStats resultsStats();
 
     /**
-     * This is an alias of resultsStats().waitUntil().allProcessed().
+     * This is an alias of resultsStats().waitUntilAllProcessed().
      *
      * @return number of hits processed total
      */

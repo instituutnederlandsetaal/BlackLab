@@ -43,7 +43,7 @@ public class SearchCountFromResults<T extends Results> extends SearchCount {
         // This runs synchronously, so SearchCountFromResults will not be finished until
         // the entire count it finished. You can peek at the running count in the meantime,
         // however.
-        resultCount.waitUntil().allProcessed();
+        resultCount.processedTotal();
 
         return resultCount;
     }

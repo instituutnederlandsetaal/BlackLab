@@ -38,11 +38,8 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.results.hitresults.HitResultsFiltered;
-import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaitable;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterDocs;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterHits;
@@ -52,25 +49,23 @@ import nl.inl.util.CurrentThreadExecutorService;
 
 /**
  * Our main hit fetching class.
- *
+ * <p>
  * Fetches hits from a query per segment in parallel and provides
  * a stable global view of the lists of segment hits.
  */
 public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
-    protected static final Logger logger = LogManager.getLogger(HitsFromQuery.class);
+    private static final Logger logger = LogManager.getLogger(HitsFromQuery.class);
 
     /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
-    protected static final int HIT_POLLING_TIME_MS = 50;
+    private static final int HIT_POLLING_TIME_MS = 50;
 
     /**
      * Minimum number of hits to fetch in an ensureHitsRead() block.
-     *
+     * <p>
      * This prevents locking again and again for a single hit when iterating.
-     *
-     * See {@link HitResultsFromQuery} and {@link HitResultsFiltered}.
      */
-    protected static final int FETCH_HITS_MIN = 20;
+    private static final int FETCH_HITS_MIN = 20;
 
     /**
      * The step with which hitToStretchMapping records mappings.
@@ -111,81 +106,48 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      */
     private static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
 
-    private final QueryInfo queryInfo;
+    private final AnnotatedField field;
     
     private final MatchInfoDefs matchInfoDefs;
 
-    /** Number of threads to use for fetching hits. */
-    protected int numThreads;
+    private final QueryTimings timings;
 
-    private final ExecutorService executorService;
+    /** Number of threads to use for fetching hits. */
+    private final int numThreads;
 
     /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
-    protected final long maxHitsToProcess;
+    private final long maxHitsToProcess;
 
     /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
-    protected final long maxHitsToCount;
+    private final long maxHitsToCount;
 
     /** Query context, keeping track of e.g. match info defitions */
-    protected final HitQueryContext hitQueryContext;
+    private final HitQueryContext hitQueryContext;
 
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
-    protected final AtomicLong requestedHitsToProcess = new AtomicLong();
+    private final AtomicLong requestedHitsToProcess = new AtomicLong();
 
     /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
-    protected final AtomicLong requestedHitsToCount = new AtomicLong();
+    private final AtomicLong requestedHitsToCount = new AtomicLong();
 
     /** Used to make sure that only 1 thread can be fetching hits at a time. */
-    protected final Lock ensureHitsReadLock = new ReentrantLock();
+    private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /** If true, we're done. */
-    protected boolean allSourceSpansFullyRead = false;
+    private boolean allSourceSpansFullyRead = false;
 
     /** Objects getting the actual hits from each index segment and adding them to the global results list. */
-    protected final List<SpansReader> spansReaders = new ArrayList<>();
+    final List<SpansReader> spansReaders = new ArrayList<>();
 
     private final ResultsStatsPassive hitsStats;
 
     private final ResultsStatsPassive docsStats;
 
-    public HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        this.queryInfo = queryInfo;
-        maxHitsToProcess = searchSettings.maxHitsToProcess();
-        maxHitsToCount = searchSettings.maxHitsToCount();
-        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this),
-                searchSettings.maxHitsToProcess(),
-                searchSettings.maxHitsToCount());
-        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
-        hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy
-        numThreads = Math.max(queryInfo.index().blackLab().maxThreadsPerSearch(), 1);
-
-        this.matchInfoDefs = hitQueryContext.getMatchInfoDefs();
-        this.executorService = getExecutorService();
-        hitsPerSegment = new LinkedHashMap<>();
-
-        BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
-        for (LeafReaderContext leafReaderContext: queryInfo.index().reader().leaves()) {
-            spansReaders.add(new SpansReader(
-                    weight,
-                    leafReaderContext,
-                    this.hitQueryContext,
-                    getSpansReaderStrategy(leafReaderContext),
-                    this.requestedHitsToProcess,
-                    this.requestedHitsToCount,
-                    hitsStats,
-                    docsStats
-            ));
-        }
-
-        if (spansReaders.isEmpty())
-            setDone();
-    }
-
     /** The hits per segment. */
     private Map<LeafReaderContext, HitsMutable> hitsPerSegment;
 
     /** Number of hits in the global view. */
-    protected long numHitsGlobalView = 0;
+    private long numHitsGlobalView = 0;
 
     /** The stretches that make up our global hits view, in order */
     private final ObjectList<HitsStretch> stretches = new ObjectArrayList<>();
@@ -196,6 +158,39 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      * this stretch index if needed.
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
+
+    public HitsFromQuery(AnnotatedField field, QueryTimings timings, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+        this.field = field;
+        this.timings = timings;
+        maxHitsToProcess = searchSettings.maxHitsToProcess();
+        maxHitsToCount = searchSettings.maxHitsToCount();
+        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this),
+                searchSettings.maxHitsToProcess(),
+                searchSettings.maxHitsToCount());
+        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
+        hitQueryContext = new HitQueryContext(field.index(), null, field); // each spans will get a copy
+        numThreads = Math.max(field.index().blackLab().maxThreadsPerSearch(), 1);
+
+        this.matchInfoDefs = hitQueryContext.getMatchInfoDefs();
+        hitsPerSegment = new LinkedHashMap<>();
+
+        BLSpanWeight weight = rewriteAndCreateWeight(sourceQuery, searchSettings.fiMatchFactor());
+        for (LeafReaderContext leafReaderContext: index().reader().leaves()) {
+            spansReaders.add(new SpansReader(
+                    weight,
+                    leafReaderContext,
+                    this.hitQueryContext,
+                    new GlobalViewIntoSegmentHitsStrategy(leafReaderContext),
+                    this.requestedHitsToProcess,
+                    this.requestedHitsToCount,
+                    hitsStats,
+                    docsStats
+            ));
+        }
+
+        if (spansReaders.isEmpty())
+            setDone();
+    }
 
     /***
      * Make equal groups of items, so that each group has approximately the same total size.
@@ -235,7 +230,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
     @Override
     public AnnotatedField field() {
-        return queryInfo.field();
+        return field;
     }
 
     @Override
@@ -252,31 +247,29 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     }
 
     @Override
-    public boolean isEmpty() {
-        return !ensureResultsRead(1);
+    public boolean sizeAtLeast(long minSize) {
+        return ensureResultsRead(minSize);
     }
 
     /**
      * Get the stretch a certain hit is part of
      */
-    private HitsStretch getHitsStretch(long index) {
-        synchronized (this) {
-            if (index < 0 || index >= numHitsGlobalView)
-                throw new IndexOutOfBoundsException(
-                        "Hit index " + index + " is out of bounds (size: " + numHitsGlobalView + ")");
+    private synchronized HitsStretch getHitsStretch(long index) {
+        if (index < 0 || index >= numHitsGlobalView)
+            throw new IndexOutOfBoundsException(
+                    "Hit index " + index + " is out of bounds (size: " + numHitsGlobalView + ")");
 
-            // Round down to nearest stretch index and get the stretch for that index.
-            long indexInMapping = index / HIT_INDEX_TO_STRETCH_STEP;
-            int stretchIndex = hitToStretchMapping.getInt(indexInMapping);
-            HitsStretch stretch = stretches.get(stretchIndex);
+        // Round down to nearest stretch index and get the stretch for that index.
+        long indexInMapping = index / HIT_INDEX_TO_STRETCH_STEP;
+        int stretchIndex = hitToStretchMapping.getInt(indexInMapping);
+        HitsStretch stretch = stretches.get(stretchIndex);
 
-            // If the stretch doesn't contain the global index, find the next stretch that does.
-            while (!stretch.containsGlobalIndex(index)) {
-                stretchIndex++;
-                stretch = stretches.get(stretchIndex);
-            }
-            return stretch;
+        // If the stretch doesn't contain the global index, find the next stretch that does.
+        while (!stretch.containsGlobalIndex(index)) {
+            stretchIndex++;
+            stretch = stretches.get(stretchIndex);
         }
+        return stretch;
     }
 
     @Override
@@ -380,7 +373,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         return new Iterator<>() {
 
             /** Iterate over all stretches so we can iterate over each hit within them */
-            Iterator<HitsStretch> stretchIterator = stretches.iterator();
+            final Iterator<HitsStretch> stretchIterator = stretches.iterator();
 
             /** The current stretch of hits we're iterating over */
             HitsStretch currentStretch = null;
@@ -415,14 +408,34 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         };
     }
 
-    public void registerSegment(LeafReaderContext lrc, HitsMutable segmentHits) {
+    private synchronized void registerSegment(LeafReaderContext lrc, HitsMutable segmentHits) {
         if (hitsPerSegment == null)
             hitsPerSegment = new LinkedHashMap<>();
         hitsPerSegment.put(lrc, segmentHits); // only called from constructor, so no need to synchronize
     }
 
-    public SpansReader.Strategy getSpansReaderStrategy(LeafReaderContext lrc) {
-        return new GlobalViewIntoSegmentHitsStrategy(lrc);
+    private synchronized void addStretchFromSegment(LeafReaderContext lrc, Hits segmentHits, long startFrom) {
+        // Create a new stretch for the global hits view.
+        // Start where the last stretch in this segment ended.
+        long stretchLength = segmentHits.size() - startFrom;
+        assert stretchLength > 0;
+        HitsStretch stretch = new HitsStretch(
+                stretches.size(), lrc.docBase,
+                segmentHits, startFrom, numHitsGlobalView, stretchLength);
+        stretches.add(stretch);
+        numHitsGlobalView += stretchLength;
+
+        // Add hitToStretchMappings for the appropriate indexes, so we can quickly find the stretch
+        // for a global hit index. (we record a mapping every HIT_INDEX_TO_STRETCH_STEP)
+        long hitsSinceLastMapping = stretch.firstHitGlobal % HIT_INDEX_TO_STRETCH_STEP;
+        if (hitsSinceLastMapping == 0)
+            hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
+        long nextMappingIndex = stretch.firstHitGlobal + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
+        while (nextMappingIndex < stretch.firstHitGlobal + stretchLength) {
+            // Add an entry for this global hit index, so we can quickly find the stretch it belongs to.
+            hitToStretchMapping.add(stretches.size() - 1);
+            nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
+        }
     }
 
     public long globalHitsSoFar() {
@@ -459,10 +472,10 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             hasLock = true;
 
             // This is the blocking portion, start worker threads, then wait for them to finish.
-            final ExecutorService executorService = getExecutorService();
 
             // Distribute the SpansReaders over the threads.
             // Make sure the number of documents per segment is roughly equal for each thread.
+            ExecutorService executorService = getExecutorService();
             Function<SpansReader, Long> sizeGetter = spansReader ->
                     spansReader.leafReaderContext == null ? 0 : (long) spansReader.leafReaderContext.reader().maxDoc();
             pendingResults = makeEqualGroups(spansReaders, sizeGetter, numThreads).stream()
@@ -625,8 +638,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         // TODO: make sort and merge steps abortable (ThreadAborter)
 
         // Sort each group of segments in a separate thread.
-        List<Future<List<SegmentHits>>> pendingResults = sortGroups(groups, sortProp,
-                executorService);
+        List<Future<List<SegmentHits>>> pendingResults = sortGroups(groups, sortProp, getExecutorService());
 
         // Add the results to the priority queue for merging.
         MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
@@ -739,21 +751,18 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         private final HitsMutable segmentHits;
 
         /**
-         * First hit from segmentHits that's not yet part of the global view.
+         * Number of hits already added to the global view.
+         * <p>
+         * Therefore also the first hit index that's not yet part of the global view.
          */
-        long indexInSegmentHits;
+        long numberAddedToGlobalView;
 
         public GlobalViewIntoSegmentHitsStrategy(LeafReaderContext lrc) {
             // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from it.
-            final HitsMutable segmentHits = HitsMutable.create(field(), matchInfoDefs,
-                    -1, true, true);
-
-            // Add it to the map of segment hits.
-            registerSegment(lrc, segmentHits);
-
-            this.segmentHits = segmentHits;
             this.lrc = lrc;
-            indexInSegmentHits = 0;
+            this.segmentHits = HitsMutable.create(field(), matchInfoDefs, -1, true, true);
+            registerSegment(lrc, segmentHits);
+            numberAddedToGlobalView = 0;
         }
 
         @Override
@@ -769,15 +778,10 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // available quickly. Later, we add them in larger batches to reduce overhead.
             // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
             //  out of date (i.e. too small) value here)
-            long addHitsToGlobalThreshold = clamp(numHitsGlobalView / STRETCH_SIZE_DIVIDER, STRETCH_THRESHOLD_MINIMUM,
-                    STRETCH_THRESHOLD_MAXIMUM);
+            long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
+                    Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
             addStretchIfLargeEnough(addHitsToGlobalThreshold);
             results.clear();
-        }
-
-        // (java 17 doesn't have Math.clamp, so we implement it ourselves)
-        private long clamp(long number, long min, long max) {
-            return Math.max(min, Math.min(max, number));
         }
 
         @Override
@@ -791,32 +795,10 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
          * Add the latest stretch of hits we've found to the global view.
          */
         private void addStretchIfLargeEnough(long threshold) {
-            if (segmentHits.size() - indexInSegmentHits <= threshold)
+            if (segmentHits.size() - numberAddedToGlobalView <= threshold)
                 return; // not enough hits to add a stretch
-            // Create a new stretch for the global hits view.
-            // Start where the last stretch in this segment ended.
-            long length = segmentHits.size() - indexInSegmentHits;
-            assert length > 0;
-            synchronized (HitsFromQuery.this) {
-                HitsStretch stretch = new HitsStretch(
-                        stretches.size(), lrc.docBase,
-                        segmentHits, indexInSegmentHits, numHitsGlobalView, length);
-                stretches.add(stretch);
-                indexInSegmentHits += length;
-                numHitsGlobalView += length;
-
-                // Add hitToStretchMappings for the appropriate indexes, so we can quickly find the stretch
-                // for a global hit index. (we record a mapping every HIT_INDEX_TO_STRETCH_STEP)
-                long hitsSinceLastMapping = stretch.firstHitGlobal % HIT_INDEX_TO_STRETCH_STEP;
-                if (hitsSinceLastMapping == 0)
-                    hitsSinceLastMapping = HIT_INDEX_TO_STRETCH_STEP;
-                long nextMappingIndex = stretch.firstHitGlobal + (HIT_INDEX_TO_STRETCH_STEP - hitsSinceLastMapping);
-                while (nextMappingIndex < stretch.firstHitGlobal + length) {
-                    // Add an entry for this global hit index, so we can quickly find the stretch it belongs to.
-                    hitToStretchMapping.add(stretches.size() - 1);
-                    nextMappingIndex += HIT_INDEX_TO_STRETCH_STEP;
-                }
-            }
+            addStretchFromSegment(lrc, segmentHits, numberAddedToGlobalView);
+            numberAddedToGlobalView = segmentHits.size();
         }
     }
 
@@ -832,7 +814,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         int docBase;
 
         /** Segment this stretch is from. */
-        HitsMutable segmentHits;
+        Hits segmentHits;
 
         /** Start index in the segment hits. */
         long firstHitSegment;
@@ -843,7 +825,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         /** Length of this stretch. */
         long stretchLength;
 
-        public HitsStretch(int stretchIndex, int docBase, HitsMutable segmentHits, long firstHitSegment,
+        public HitsStretch(int stretchIndex, int docBase, Hits segmentHits, long firstHitSegment,
                 long firstHitGlobal, long stretchLength) {
             this.stretchIndex = stretchIndex;
             this.docBase = docBase;
@@ -854,7 +836,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         }
 
         /** Get the associated segment's hits */
-        HitsMutable segmentHits() {
+        Hits segmentHits() {
             return segmentHits;
         }
 
@@ -889,14 +871,12 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
     /** Call optimize() and rewrite() on the source query, and create a weight for it.
      *
-     * @param queryInfo query info for this query
      * @param sourceQuery the source query to optimize and rewrite
      * @param fiMatchFactor override FI match threshold (debug use only, -1 means no override)
      * @return the weight for the optimized/rewritten query
      */
-    protected static BLSpanWeight rewriteAndCreateWeight(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+    protected BLSpanWeight rewriteAndCreateWeight(BLSpanQuery sourceQuery,
             long fiMatchFactor) {
-        QueryTimings timings = queryInfo.timings();
         timings.start();
 
         // Override FI match threshold? (debug use only!)
@@ -905,22 +885,21 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             synchronized (ClauseCombinerNfa.class) {
                 long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
                 if (fiMatchFactor != -1) {
-                    logger.debug("setting NFA threshold for this query to " + fiMatchFactor);
+                    logger.debug("setting NFA threshold for this query to {}", fiMatchFactor);
                     ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
                 }
 
-                sourceQuery.setQueryInfo(queryInfo);
                 boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
                 if (traceOptimization)
-                    logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
+                    logger.debug("Query before optimize()/rewrite(): {}", sourceQuery);
 
-                optimizedQuery = sourceQuery.optimize(queryInfo.index().reader());
+                optimizedQuery = sourceQuery.optimize(index().reader());
                 if (traceOptimization)
-                    logger.debug("Query after optimize(): " + optimizedQuery);
+                    logger.debug("Query after optimize(): {}", optimizedQuery);
 
-                optimizedQuery = optimizedQuery.rewrite(queryInfo.index().reader());
+                optimizedQuery = optimizedQuery.rewrite(index().reader());
                 if (traceOptimization)
-                    logger.debug("Query after rewrite(): " + optimizedQuery);
+                    logger.debug("Query after rewrite(): {}", optimizedQuery);
 
                 // Restore previous FI match threshold
                 if (fiMatchFactor != -1) {
@@ -930,7 +909,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             timings.record("rewrite");
 
             // This call can take a long time
-            BLSpanWeight weight = optimizedQuery.createWeight(queryInfo.index().searcher(),
+            BLSpanWeight weight = optimizedQuery.createWeight(index().searcher(),
                     ScoreMode.COMPLETE_NO_SCORES, 1.0f);
             timings.record("createWeight");
             return weight;
@@ -940,10 +919,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     }
 
     protected ExecutorService getExecutorService() {
-        final ExecutorService executorService = numThreads >= 2
+        return numThreads >= 2
                 ? index().blackLab().searchExecutorService()
                 : new CurrentThreadExecutorService();
-        return executorService;
     }
 
     void setDone() {

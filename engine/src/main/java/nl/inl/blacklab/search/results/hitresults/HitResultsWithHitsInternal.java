@@ -71,8 +71,8 @@ public abstract class HitResultsWithHitsInternal extends HitResultsAbstract {
         }
 
         @Override
-        public boolean isEmpty() {
-            return !ensureResultsRead(1);
+        public boolean sizeAtLeast(long minSize) {
+            return ensureResultsRead(minSize);
         }
 
         @Override

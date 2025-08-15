@@ -33,7 +33,12 @@ public abstract class HitsAbstract implements Hits {
 
     @Override
     public boolean isEmpty() {
-        return size() == 0;
+        return !sizeAtLeast(1);
+    }
+
+    @Override
+    public boolean sizeAtLeast(long minSize) {
+        return size() >= minSize;
     }
 
     @Override

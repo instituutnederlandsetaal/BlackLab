@@ -75,7 +75,7 @@ public class ResultDocsCsv {
         // The max for CSV exports is also different from the default pagesize maximum.
         if (docs != null) {
             long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
-            if (!docs.resultsStats().waitUntil().processedAtLeast(first))
+            if (!docs.resultsStats().processedAtLeast(first))
                 first = 0;
 
             long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();

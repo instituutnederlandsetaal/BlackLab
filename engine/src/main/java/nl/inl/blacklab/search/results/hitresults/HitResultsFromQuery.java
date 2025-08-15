@@ -9,14 +9,14 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 public class HitResultsFromQuery extends HitResultsAbstract {
 
-    private HitsFromQuery hits;
+    /** Global view on our segment hits */
+    private final HitsFromQuery hits;
 
     protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         // NOTE: we pass an empty hits because we have our own (REFACTOR!)
         super(queryInfo.optOverrideField(sourceQuery));
-
-        // Global view on our segment hits
-        hits = new HitsFromQuery(queryInfo.optOverrideField(sourceQuery), sourceQuery, searchSettings);
+        sourceQuery.setQueryInfo(queryInfo);
+        hits = new HitsFromQuery(queryInfo().field(), queryInfo.timings(), sourceQuery, searchSettings);
     }
 
     @Override

@@ -16,20 +16,20 @@ public class ResultsAwaiterDocs implements ResultsStats.ResultsAwaiter {
         // There's no ensureDocsRead() method, so loop until the requested number of docs have been read
         ResultsStats hitsStats = results.resultsStats();
         while (!hitsStats.done() && results.docsStats().processedSoFar() < lowerBound) {
-            hitsStats.waitUntil().processedAtLeast(hitsStats.processedSoFar() + 1);
+            hitsStats.processedAtLeast(hitsStats.processedSoFar() + 1);
         }
         return results.docsStats().processedSoFar() >= lowerBound;
     }
 
     @Override
     public long allProcessed() {
-        results.resultsStats().waitUntil().allProcessed();
+        results.resultsStats().processedTotal();
         return results.docsStats().processedSoFar();
     }
 
     @Override
     public long allCounted() {
-        results.resultsStats().waitUntil().allProcessed();
+        results.resultsStats().processedTotal();
         return results.docsStats().countedSoFar();
     }
 }

@@ -7,10 +7,6 @@ import java.util.function.BiFunction;
 /** ResultsStats that relies on being informed of progress by its owner. */
 public class ResultsStatsPassive extends ResultsStats {
 
-    public ResultsStatsPassive() {
-        this(new ThrowingResultsAwaiter());
-    }
-
     public ResultsStatsPassive(ResultsAwaiter waitUntil) {
         this(waitUntil, Long.MAX_VALUE, Long.MAX_VALUE);
     }
@@ -29,12 +25,12 @@ public class ResultsStatsPassive extends ResultsStats {
 
     private MaxStats maxStats = new MaxStats() {
         @Override
-        public boolean hitsProcessedExceededMaximum() {
+        public boolean isTooManyToProcess() {
             return processed.get() >= maxHitsToProcess;
         }
 
         @Override
-        public boolean hitsCountedExceededMaximum() {
+        public boolean isTooManyToCount() {
             return counted.get() >= maxHitsToCount;
         }
     };
@@ -52,7 +48,7 @@ public class ResultsStatsPassive extends ResultsStats {
     }
 
     public synchronized boolean done() {
-        return done.get() || (maxStats.hitsProcessedExceededMaximum() && maxStats.hitsCountedExceededMaximum());
+        return done.get() || (maxStats.isTooManyToProcess() && maxStats.isTooManyToCount());
     }
 
     public synchronized MaxStats maxStats() {

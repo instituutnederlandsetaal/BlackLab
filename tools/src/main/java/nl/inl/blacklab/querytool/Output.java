@@ -493,7 +493,7 @@ class Output {
         if (!isShowConc()) {
             if (queryTool.isDetermineTotalNumberOfHits() || total.resultsStats().done()) {
                 // Wait until all collected and show total number of hits, no concordances
-                line(total.resultsStats().waitUntil().allProcessed() + " hits");
+                line(total.resultsStats().processedTotal() + " hits");
             } else {
                 // No total; just show how many so far
                 long i = total.resultsStats().processedSoFar();
@@ -577,16 +577,16 @@ class Output {
         if (!queryTool.isDetermineTotalNumberOfHits()) {
             msg = hitsStats.countedSoFar() + " hits counted so far (total not determined)";
         } else {
-            long numberRetrieved = hitsStats.waitUntil().allProcessed();
+            long numberRetrieved = hitsStats.processedTotal();
             ResultsStats docsStats = total.docsStats();
-            String hitsInDocs = numberRetrieved + " hits in " + docsStats.waitUntil().allProcessed() + " documents";
-            if (window.resultsStats().maxStats().hitsProcessedExceededMaximum()) {
-                if (window.resultsStats().maxStats().hitsCountedExceededMaximum()) {
-                    msg = hitsInDocs + " retrieved, more than " + hitsStats.waitUntil().allCounted() + " ("
-                            + docsStats.waitUntil().allCounted() + " docs) total";
+            String hitsInDocs = numberRetrieved + " hits in " + docsStats.processedTotal() + " documents";
+            if (window.resultsStats().maxStats().isTooManyToProcess()) {
+                if (window.resultsStats().maxStats().isTooManyToCount()) {
+                    msg = hitsInDocs + " retrieved, more than " + hitsStats.countedTotal() + " ("
+                            + docsStats.countedTotal() + " docs) total";
                 } else {
-                    msg = hitsInDocs + " retrieved, " + hitsStats.waitUntil().allCounted() + " (" +
-                            docsStats.waitUntil().allCounted() + " docs) total";
+                    msg = hitsInDocs + " retrieved, " + hitsStats.countedTotal() + " (" +
+                            docsStats.countedTotal() + " docs) total";
                 }
             } else {
                 msg = hitsInDocs;

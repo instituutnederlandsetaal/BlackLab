@@ -89,8 +89,9 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults window(long first, long windowSize) {
-        Hits window = getHits().sublist(first, windowSize);
-        boolean hasNext = resultsStats().waitUntil().processedAtLeast(first + windowSize + 1);
+        Hits hits = getHits();
+        Hits window = hits.sublist(first, windowSize);
+        boolean hasNext = hits.sizeAtLeast(first + windowSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, window.size());
         ResultsStats hitsStats = new ResultsStatsSaved(window.size());
         ResultsStats docsStats = new ResultsStatsSaved(window.countDocs());
@@ -134,16 +135,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults sorted(HitProperty sortProp) {
-        // We need a HitProperty with the correct Hits object
-        // If we need context, make sure we have it.
-        sortProp = sortProp.copyWith(getHits());
-
-        // Perform the actual sort.
         ensureResultsRead(-1);
-        Hits sorted = getHits().sorted(sortProp);
-        sortProp.disposeContext(); // we don't need the context information anymore, free memory
-
-        return new HitResultsList(queryInfo(), sorted, null, null,
+        return new HitResultsList(queryInfo(), getHits().sorted(sortProp), null, null,
                 resultsStats(), docsStats());
     }
 

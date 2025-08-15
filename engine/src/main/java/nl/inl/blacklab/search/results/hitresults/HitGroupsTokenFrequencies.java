@@ -576,7 +576,8 @@ public class HitGroupsTokenFrequencies {
                         }
                     }
 
-                    return new HitGroupWithoutResults(queryInfo, groupId, groupSizeHits, groupSizeDocs, false, false);
+                    return HitGroup.withoutResults(queryInfo, groupId, groupSizeHits,
+                            groupSizeDocs, MaxStats.NOT_EXCEEDED);
                 }).map(g -> (HitGroup)g).toList();
             }
             logger.debug("fast path used for grouping");

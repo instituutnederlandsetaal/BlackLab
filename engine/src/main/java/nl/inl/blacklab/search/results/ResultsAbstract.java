@@ -54,7 +54,7 @@ public abstract class ResultsAbstract implements Results {
 
     @Override
     public long size() {
-        return resultsStats().waitUntil().allProcessed();
+        return resultsStats().processedTotal();
     }
 
 }

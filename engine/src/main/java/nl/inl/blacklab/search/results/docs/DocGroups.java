@@ -141,7 +141,7 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
     
     public DocGroups window(long first, long number) {
         List<DocGroup> resultsWindow = doWindow(this, first, number);
-        boolean hasNext = resultsStats().waitUntil().processedAtLeast(first + resultsWindow.size() + 1);
+        boolean hasNext = resultsStats().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats);
     }

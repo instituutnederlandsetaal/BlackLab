@@ -91,7 +91,7 @@ public class ResultDocSnippet {
             query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
             hitResults = index.search(field, params.useCache()).find(query).execute();
         }
-        if (hitResults != null && !hitResults.resultsStats().waitUntil().processedAtLeast(1)) {
+        if (hitResults != null && !hitResults.resultsStats().processedAtLeast(1)) {
             // We couldn't find the tag for the context; use a context of 0 words instead
             hitResults = null;
             context = ContextSize.get(0, maxSnippetSize);

@@ -40,12 +40,12 @@ public class HitResultsFiltered extends HitResultsWithHitsInternal implements Re
 
     private final PropertyValue filterValue;
 
-    /** Mutable interface to our list of hits being fetched, if mutation is allowed. */
+    /** Mutable interface to our list of hits being fetched. */
     protected final HitsMutable hitsMutable;
 
     private boolean doneFiltering = false;
 
-    private int indexInSource = -1;
+    private long indexInSource = -1;
 
     private final ResultsStatsPassive hitsStats;
 
@@ -119,15 +119,15 @@ public class HitResultsFiltered extends HitResultsWithHitsInternal implements Re
             try {
                 boolean readAllHits = number < 0;
                 EphemeralHit hit = new EphemeralHit();
-                Hits hitsList = source.getHits();
+                Hits sourceHits = source.getHits();
                 while (!doneFiltering && (readAllHits || hitsMutable.size() < number)) {
                  // Abort if asked
                     ThreadAborter.checkAbort();
 
                     // Advance to next hit
                     indexInSource++;
-                    if (source.resultsStats().waitUntil().processedAtLeast((long)indexInSource + 1)) {
-                        hitsList.getEphemeral(indexInSource, hit);
+                    if (sourceHits.sizeAtLeast(indexInSource + 1)) {
+                        sourceHits.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
                             hitsMutable.add(hit);

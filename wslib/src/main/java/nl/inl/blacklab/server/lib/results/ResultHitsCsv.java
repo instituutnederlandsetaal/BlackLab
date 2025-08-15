@@ -96,7 +96,7 @@ public class ResultHitsCsv {
         // The max for CSV exports is also different from the default pagesize maximum.
         if (hitResults != null) {
             long first = Math.max(0, params.getFirstResultToShow()); // Defaults to 0
-            if (!hitResults.resultsStats().waitUntil().processedAtLeast(first))
+            if (!hitResults.getHits().sizeAtLeast(first))
                 first = 0;
 
             long number = params.getSearchManager().config().getSearch().getMaxHitsToRetrieve();

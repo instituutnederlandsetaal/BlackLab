@@ -35,7 +35,7 @@ public class ResultStatsFromOtherResult extends ResultsStats {
             public boolean processedAtLeast(long lowerBound) {
                 update();
                 try {
-                    return ResultStatsFromOtherResult.this.count.waitUntil().processedAtLeast(lowerBound);
+                    return ResultStatsFromOtherResult.this.count.processedAtLeast(lowerBound);
                 } catch(InterruptedSearch e) {
                     wasInterrupted = true;
                     throw e;
@@ -46,7 +46,7 @@ public class ResultStatsFromOtherResult extends ResultsStats {
             public long allProcessed() {
                 update();
                 try {
-                    return ResultStatsFromOtherResult.this.count.waitUntil().allProcessed();
+                    return ResultStatsFromOtherResult.this.count.processedTotal();
                 } catch(InterruptedSearch e) {
                     wasInterrupted = true;
                     throw e;
@@ -57,7 +57,7 @@ public class ResultStatsFromOtherResult extends ResultsStats {
             public long allCounted() {
                 update();
                 try {
-                    return ResultStatsFromOtherResult.this.count.waitUntil().allCounted();
+                    return ResultStatsFromOtherResult.this.count.countedTotal();
                 } catch(InterruptedSearch e) {
                     wasInterrupted = true;
                     throw e;

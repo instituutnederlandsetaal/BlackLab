@@ -166,7 +166,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
      */
     @Override
     public long sumOfGroupSizes() {
-        return hitsStats.waitUntil().allCounted();
+        return hitsStats.countedTotal();
     }
 
     /**
@@ -194,7 +194,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
 
     public HitGroups window(long first, long number) {
         List<HitGroup> resultsWindow = doWindow(this, first, number);
-        boolean hasNext = resultsStats().waitUntil().processedAtLeast(first + resultsWindow.size() + 1);
+        boolean hasNext = resultsStats().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
         return HitGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
     }

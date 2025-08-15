@@ -13,7 +13,6 @@ import org.junit.Test;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
 import nl.inl.blacklab.testutil.TestIndex;
 
 public class TestSearchBehavior {
@@ -28,7 +27,7 @@ public class TestSearchBehavior {
 
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo, patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
@@ -81,7 +80,7 @@ public class TestSearchBehavior {
     public void testParallelSearchException() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo, patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");

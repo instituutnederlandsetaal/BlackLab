@@ -15,7 +15,7 @@ import nl.inl.blacklab.exceptions.InterruptedSearch;
 public class ResultsStatsDelegate extends ResultsStats {
 
     /** Used to return from cache entry if search hasn't been started yet. */
-    public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
+    public final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
 
         @Override
         public long processedSoFar() {
@@ -42,6 +42,7 @@ public class ResultsStatsDelegate extends ResultsStats {
             return "ResultsStats.SEARCH_NOT_STARTED_YET";
         }
     };
+
     /** How often should we poll for the real stats to be available in realStats()? */
     private static final long STATS_POLL_TIME_MS = 50;
 
@@ -117,11 +118,6 @@ public class ResultsStatsDelegate extends ResultsStats {
     }
 
     @Override
-    public ResultsAwaiter waitUntil() {
-        return realStats().waitUntil();
-    }
-
-    @Override
     public long processedSoFar() {
         return stats().processedSoFar();
     }
@@ -134,6 +130,21 @@ public class ResultsStatsDelegate extends ResultsStats {
     @Override
     public boolean done() {
         return stats().done();
+    }
+
+    @Override
+    public boolean processedAtLeast(long lowerBound) {
+        return realStats().processedAtLeast(lowerBound);
+    }
+
+    @Override
+    public long processedTotal() {
+        return realStats().processedTotal();
+    }
+
+    @Override
+    public long countedTotal() {
+        return realStats().countedTotal();
     }
 
     @Override

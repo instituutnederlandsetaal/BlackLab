@@ -32,20 +32,29 @@ public class HitResultsList extends HitResultsWithHitsInternal {
      * @param hits the list of hits to wrap
      */
     protected HitResultsList(QueryInfo queryInfo, Hits hits) {
-        super(queryInfo, hits);
+        this(queryInfo, hits, -1, -1, MaxStats.NOT_EXCEEDED);
+    }
 
-        // Count docs
-        int prevDoc = -1;
-        int docsCounted = 0;
-        for (long i = 0; i < hits.size(); i++) {
-            int docId = hits.doc(i);
-            if (docId != prevDoc) {
-                docsCounted++;
-                prevDoc = docId;
-            }
-        }
-        hitsStats = new ResultsStatsSaved(hitsInternal.size());
-        docsStats = new ResultsStatsSaved(docsCounted);
+    /**
+     * Make a wrapper Hits object for a list of Hit objects.
+     *
+     * Does not copy the list, but reuses it.
+     *
+     * @param queryInfo query info
+     * @param hits the list of hits to wrap
+     * @param hitsCounted number of hits counted so far, or -1 if same as number processed
+     * @param docsCounted number of documents counted so far, or -1 if same as number processed
+     */
+    protected HitResultsList(QueryInfo queryInfo, Hits hits, long hitsCounted, long docsCounted, MaxStats maxStats) {
+        super(queryInfo, hits);
+        long hitsProcessed = hits.size();
+        long docsProcessed = hits.countDocs();
+        if (hitsCounted < 0)
+            hitsCounted = hitsProcessed;
+        if (docsCounted < 0)
+            docsCounted = docsProcessed;
+        hitsStats = new ResultsStatsSaved(hitsProcessed, hitsCounted, maxStats);
+        docsStats = new ResultsStatsSaved(docsProcessed, docsCounted, maxStats);
     }
 
     /**
@@ -54,12 +63,12 @@ public class HitResultsList extends HitResultsWithHitsInternal {
      * Should only be used internally.
      */
     protected HitResultsList(
-                       QueryInfo queryInfo,
-                       Hits hits,
-                       WindowStats windowStats,
-                       SampleParameters sampleParameters,
-                       ResultsStats hitsStats,
-                       ResultsStats docsStats) {
+            QueryInfo queryInfo,
+            Hits hits,
+            WindowStats windowStats,
+            SampleParameters sampleParameters,
+            ResultsStats hitsStats,
+            ResultsStats docsStats) {
         super(queryInfo, hits);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;

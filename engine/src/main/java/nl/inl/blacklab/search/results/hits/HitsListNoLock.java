@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.text.CollationKey;
 import java.util.Iterator;
-import java.util.NoSuchElementException;
 
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
