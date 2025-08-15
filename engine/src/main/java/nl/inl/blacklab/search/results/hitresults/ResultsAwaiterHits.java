@@ -2,11 +2,11 @@ package nl.inl.blacklab.search.results.hitresults;
 
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
-class ResultsAwaiterHits implements ResultsStats.ResultsAwaiter {
+public class ResultsAwaiterHits implements ResultsStats.ResultsAwaiter {
 
-    private final HitResultsAbstract hits;
+    private final ResultsAwaitable hits;
 
-    public ResultsAwaiterHits(HitResultsAbstract hits) {
+    public ResultsAwaiterHits(ResultsAwaitable hits) {
         this.hits = hits;
     }
 

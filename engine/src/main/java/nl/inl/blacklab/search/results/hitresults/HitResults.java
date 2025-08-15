@@ -12,7 +12,6 @@ import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.docs.DocResults;
-import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
@@ -31,7 +30,7 @@ public interface HitResults extends Results {
      * @return hits found
      */
     static HitResults fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
-        return HitResultsFromQuery.get(queryInfo, query, searchSettings);
+        return new HitResultsFromQuery(queryInfo, query, searchSettings);
     }
 
     /**
@@ -151,13 +150,4 @@ public interface HitResults extends Results {
 
     ResultsStats docsStats();
 
-    /**
-     * Return a HitsWindow with a single hit.
-     *
-     * Assumes this hit is within our lists.
-     *
-     * @param hit hit for the window
-     * @return hit window
-     */
-    HitResults window(Hit hit);
 }

@@ -1,6 +1,8 @@
 package nl.inl.blacklab.search.results.hits;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,8 +10,16 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Function;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.util.PriorityQueue;
 
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
@@ -17,19 +27,50 @@ import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
+import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
+import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hitresults.HitResultsFiltered;
 import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
-import nl.inl.blacklab.search.results.hitresults.SpansReader;
+import nl.inl.blacklab.search.results.hitresults.ResultsAwaitable;
+import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterDocs;
+import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterHits;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
+import nl.inl.util.CurrentThreadExecutorService;
 
 /**
- * A stable global view of the lists of segment hits
+ * Our main hit fetching class.
+ *
+ * Fetches hits from a query per segment in parallel and provides
+ * a stable global view of the lists of segment hits.
  */
-public class HitsFromQuery extends HitsAbstract {
+public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
+
+    protected static final Logger logger = LogManager.getLogger(HitsFromQuery.class);
+
+    /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
+    protected static final int HIT_POLLING_TIME_MS = 50;
+
+    /**
+     * Minimum number of hits to fetch in an ensureHitsRead() block.
+     *
+     * This prevents locking again and again for a single hit when iterating.
+     *
+     * See {@link HitResultsFromQuery} and {@link HitResultsFiltered}.
+     */
+    protected static final int FETCH_HITS_MIN = 20;
 
     /**
      * The step with which hitToStretchMapping records mappings.
@@ -70,39 +111,83 @@ public class HitsFromQuery extends HitsAbstract {
      */
     private static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
 
-    private final HitResultsFromQuery hitResults;
-
+    private final QueryInfo queryInfo;
+    
     private final MatchInfoDefs matchInfoDefs;
 
-    private final int numThreads;
+    /** Number of threads to use for fetching hits. */
+    protected int numThreads;
 
     private final ExecutorService executorService;
 
-    public HitsFromQuery(HitResultsFromQuery hitResults, MatchInfoDefs matchInfoDefs, int numThreads,
-            ExecutorService executorService) {
-        this.hitResults = hitResults;
-        this.matchInfoDefs = matchInfoDefs;
-        this.numThreads = numThreads;
-        this.executorService = executorService;
-        if (hitsPerSegment == null) {
-            // (can only happen if there are no spans - normally initialized in getSpansReaderStrategy())
-            hitsPerSegment = new LinkedHashMap<>();
+    /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
+    protected final long maxHitsToProcess;
+
+    /** Configured upper limit of requestedHitsToCount, to which it will always be clamped. */
+    protected final long maxHitsToCount;
+
+    /** Query context, keeping track of e.g. match info defitions */
+    protected final HitQueryContext hitQueryContext;
+
+    /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
+    protected final AtomicLong requestedHitsToProcess = new AtomicLong();
+
+    /** Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1 */
+    protected final AtomicLong requestedHitsToCount = new AtomicLong();
+
+    /** Used to make sure that only 1 thread can be fetching hits at a time. */
+    protected final Lock ensureHitsReadLock = new ReentrantLock();
+
+    /** If true, we're done. */
+    protected boolean allSourceSpansFullyRead = false;
+
+    /** Objects getting the actual hits from each index segment and adding them to the global results list. */
+    protected final List<SpansReader> spansReaders = new ArrayList<>();
+
+    private final ResultsStatsPassive hitsStats;
+
+    private final ResultsStatsPassive docsStats;
+
+    public HitsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
+        this.queryInfo = queryInfo;
+        maxHitsToProcess = searchSettings.maxHitsToProcess();
+        maxHitsToCount = searchSettings.maxHitsToCount();
+        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this),
+                searchSettings.maxHitsToProcess(),
+                searchSettings.maxHitsToCount());
+        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
+        hitQueryContext = new HitQueryContext(queryInfo.index(), null, queryInfo.field()); // each spans will get a copy
+        numThreads = Math.max(queryInfo.index().blackLab().maxThreadsPerSearch(), 1);
+
+        this.matchInfoDefs = hitQueryContext.getMatchInfoDefs();
+        this.executorService = getExecutorService();
+        hitsPerSegment = new LinkedHashMap<>();
+
+        BLSpanWeight weight = rewriteAndCreateWeight(queryInfo, sourceQuery, searchSettings.fiMatchFactor());
+        for (LeafReaderContext leafReaderContext: queryInfo.index().reader().leaves()) {
+            spansReaders.add(new SpansReader(
+                    weight,
+                    leafReaderContext,
+                    this.hitQueryContext,
+                    getSpansReaderStrategy(leafReaderContext),
+                    this.requestedHitsToProcess,
+                    this.requestedHitsToCount,
+                    hitsStats,
+                    docsStats
+            ));
         }
+
+        if (spansReaders.isEmpty())
+            setDone();
     }
 
-    /**
-     * The hits per segment.
-     */
+    /** The hits per segment. */
     private Map<LeafReaderContext, HitsMutable> hitsPerSegment;
 
-    /**
-     * Number of hits in the global view.
-     */
+    /** Number of hits in the global view. */
     protected long numHitsGlobalView = 0;
 
-    /**
-     * The stretches that make up our global hits view, in order
-     */
+    /** The stretches that make up our global hits view, in order */
     private final ObjectList<HitsStretch> stretches = new ObjectArrayList<>();
 
     /**
@@ -112,34 +197,70 @@ public class HitsFromQuery extends HitsAbstract {
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
+    /***
+     * Make equal groups of items, so that each group has approximately the same total size.
+     * This is useful for distributing work evenly over multiple threads.
+     *
+     * @param items the items to group
+     * @param sizeGetter a function that returns the size of each item, used to determine how to group them
+     * @param numberOfGroups the number of groups to create
+     * @return a list of groups, each group is a list of items
+     * @param <T> the type of items to group
+     */
+    public static <T> List<List<T>> makeEqualGroups(List<T> items, Function<T, Long> sizeGetter, int numberOfGroups) {
+        items.sort(Comparator.comparing(sizeGetter).reversed());
+
+        // Now divide the segments into groups by repeatedly adding the largest remaining segment to
+        // the smallest group.
+        List<List<T>> groups =
+                new ArrayList<>(numberOfGroups);
+        List<Long> hitsInGroup = new ArrayList<>(numberOfGroups);
+        for (int i = 0; i < numberOfGroups; i++) {
+            groups.add(new ArrayList<>()); // create empty group for each thread}
+            hitsInGroup.add(0L);
+        }
+        for (T segment: items) {
+            // Find the group with the least hits so far, and add this segment to that group.
+            int minGroupIndex = 0;
+            for (int i = 1; i < hitsInGroup.size(); i++) {
+                if (hitsInGroup.get(i) < hitsInGroup.get(minGroupIndex)) {
+                    minGroupIndex = i;
+                }
+            }
+            groups.get(minGroupIndex).add(segment);
+            hitsInGroup.set(minGroupIndex, hitsInGroup.get(minGroupIndex) + sizeGetter.apply(segment));
+        }
+        return groups;
+    }
+
     @Override
     public AnnotatedField field() {
-        return hitResults.field();
+        return queryInfo.field();
     }
 
     @Override
     public MatchInfoDefs matchInfoDefs() {
-        return hitResults.getMatchInfoDefs();
+        return hitQueryContext.getMatchInfoDefs();
     }
 
     @Override
     public long size() {
-        hitResults.ensureResultsRead(-1);
-        synchronized (hitResults) {
+        ensureResultsRead(-1);
+        synchronized (this) {
             return numHitsGlobalView;
         }
     }
 
     @Override
     public boolean isEmpty() {
-        return !hitResults.ensureResultsRead(1);
+        return !ensureResultsRead(1);
     }
 
     /**
      * Get the stretch a certain hit is part of
      */
     private HitsStretch getHitsStretch(long index) {
-        synchronized (hitResults) {
+        synchronized (this) {
             if (index < 0 || index >= numHitsGlobalView)
                 throw new IndexOutOfBoundsException(
                         "Hit index " + index + " is out of bounds (size: " + numHitsGlobalView + ")");
@@ -160,7 +281,7 @@ public class HitsFromQuery extends HitsAbstract {
 
     @Override
     public void getEphemeral(long index, EphemeralHit hit) {
-        hitResults.ensureResultsRead(index + 1);
+        ensureResultsRead(index + 1);
         HitsStretch stretch = getHitsStretch(index);
         stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
         hit.segmentToGlobal(stretch.docBase);
@@ -168,35 +289,35 @@ public class HitsFromQuery extends HitsAbstract {
 
     @Override
     public int doc(long index) {
-        hitResults.ensureResultsRead(index + 1);
+        ensureResultsRead(index + 1);
         HitsStretch stretch = getHitsStretch(index);
         return stretch.segmentHits().doc(stretch.globalToSegmentIndex(index)) + stretch.docBase;
     }
 
     @Override
     public int start(long index) {
-        hitResults.ensureResultsRead(index + 1);
+        ensureResultsRead(index + 1);
         HitsStretch stretch = getHitsStretch(index);
         return stretch.segmentHits().start(stretch.globalToSegmentIndex(index));
     }
 
     @Override
     public int end(long index) {
-        hitResults.ensureResultsRead(index + 1);
+        ensureResultsRead(index + 1);
         HitsStretch stretch = getHitsStretch(index);
         return stretch.segmentHits().end(stretch.globalToSegmentIndex(index));
     }
 
     @Override
     public MatchInfo[] matchInfos(long hitIndex) {
-        hitResults.ensureResultsRead(hitIndex + 1);
+        ensureResultsRead(hitIndex + 1);
         HitsStretch stretch = getHitsStretch(hitIndex);
         return stretch.segmentHits().matchInfos(stretch.globalToSegmentIndex(hitIndex));
     }
 
     @Override
     public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
-        hitResults.ensureResultsRead(hitIndex + 1);
+        ensureResultsRead(hitIndex + 1);
         HitsStretch stretch = getHitsStretch(hitIndex);
         return stretch.segmentHits().matchInfo(stretch.globalToSegmentIndex(hitIndex), matchInfoIndex);
     }
@@ -210,9 +331,9 @@ public class HitsFromQuery extends HitsAbstract {
     public Hits sublist(long start, long length) {
         if (length == 0)
             return Hits.empty(field(), matchInfoDefs());
-        hitResults.ensureResultsRead(start + length);
+        ensureResultsRead(start + length);
         long end = start + length;
-        synchronized (hitResults) {
+        synchronized (this) {
             if (end > numHitsGlobalView)
                 end = numHitsGlobalView;
         }
@@ -273,7 +394,7 @@ public class HitsFromQuery extends HitsAbstract {
             @Override
             public boolean hasNext() {
                 long nextHitIndex = globalIndex + 1;
-                return hitResults.ensureResultsRead(nextHitIndex + 1);
+                return ensureResultsRead(nextHitIndex + 1);
             }
 
             @Override
@@ -306,6 +427,99 @@ public class HitsFromQuery extends HitsAbstract {
 
     public long globalHitsSoFar() {
         return numHitsGlobalView;
+    }
+
+    public boolean ensureResultsRead(long number) {
+        // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
+        final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number + FETCH_HITS_MIN, maxHitsToCount);
+
+        if (allSourceSpansFullyRead || globalHitsSoFar() >= clampedNumber) {
+            return globalHitsSoFar() >= number;
+        }
+
+        // NOTE: we first update to process, then to count. If we do it the other way around, and spansReaders
+        //       are running, they might check in between the two statements and conclude that they don't need to save
+        //       hits anymore, only count them.
+        this.requestedHitsToProcess.getAndUpdate(c -> Math.max(Math.min(clampedNumber, maxHitsToProcess), c)); // update process
+        this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
+
+        boolean hasLock = false;
+        List<? extends Future<?>> pendingResults = null;
+        try {
+            while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
+                /*
+                 * Another thread is already working on hits, we don't want to straight up block until it's done,
+                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
+                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
+                 */
+                if (allSourceSpansFullyRead || (globalHitsSoFar() >= clampedNumber)) {
+                    return globalHitsSoFar() >= number;
+                }
+            }
+            hasLock = true;
+
+            // This is the blocking portion, start worker threads, then wait for them to finish.
+            final ExecutorService executorService = getExecutorService();
+
+            // Distribute the SpansReaders over the threads.
+            // Make sure the number of documents per segment is roughly equal for each thread.
+            Function<SpansReader, Long> sizeGetter = spansReader ->
+                    spansReader.leafReaderContext == null ? 0 : (long) spansReader.leafReaderContext.reader().maxDoc();
+            pendingResults = makeEqualGroups(spansReaders, sizeGetter, numThreads).stream()
+                    .map(list -> executorService.submit(() -> list.forEach(SpansReader::run)))
+                    .toList();
+
+            // Wait for workers to complete.
+            // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
+            // NOTE: the worker will not automatically abort, so we should also interrupt our workers should that happen.
+            // The workers themselves won't ever throw InterruptedException, it would be wrapped in ExecutionException.
+            // (Besides, we're the only thread that can call interrupt() on our worker anyway, and we don't ever do that.
+            //  Technically, it could happen if the Executor were to shut down, but it would still result in an ExecutionException anyway.)
+            for (Future<?> p : pendingResults)
+                p.get();
+        } catch (InterruptedException e) {
+            // We were interrupted while waiting for workers to finish.
+            // If we were the thread that created the workers, cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
+            // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new Runnables/Futures of them.
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            if (pendingResults != null) {
+                for (Future<?> p : pendingResults)
+                    p.cancel(true);
+            }
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException rte)
+                throw rte;
+            else
+                throw new IllegalStateException(e.getCause());
+        } catch (Exception e) {
+            // something unforseen happened in our thread
+            // Should generally never happen unless there's a bug or something catastrophic happened.
+            throw new IllegalStateException(e);
+        } finally {
+            // Don't do this unless we're the thread that's actually using the SpansReaders.
+            if (hasLock) {
+                // Remove all SpansReaders that have finished.
+                spansReaders.removeIf(spansReader -> spansReader.isDone);
+                if (spansReaders.isEmpty())
+                    setDone(); // all spans have been read, so we're done
+                ensureHitsReadLock.unlock();
+            }
+        }
+        return globalHitsSoFar() >= number;
+    }
+
+    @Override
+    public ResultsStats resultsStats() {
+        return hitsStats;
+    }
+    
+    public ResultsStats docsStats() {
+        return docsStats;
+    }
+
+    public MatchInfoDefs getMatchInfoDefs() {
+        return hitQueryContext.getMatchInfoDefs();
     }
 
     /**
@@ -434,7 +648,7 @@ public class HitsFromQuery extends HitsAbstract {
         for (Map.Entry<LeafReaderContext, HitsMutable> entry: hitsPerSegment.entrySet()) {
             segmentsHits.add(new SegmentHits(entry.getKey(), entry.getValue()));
         }
-        return HitResultsFromQuery.makeEqualGroups(segmentsHits, SegmentHits::numberOfHits, numThreads);
+        return makeEqualGroups(segmentsHits, SegmentHits::numberOfHits, numThreads);
     }
 
     /**
@@ -583,7 +797,7 @@ public class HitsFromQuery extends HitsAbstract {
             // Start where the last stretch in this segment ended.
             long length = segmentHits.size() - indexInSegmentHits;
             assert length > 0;
-            synchronized (hitResults) {
+            synchronized (this) {
                 HitsStretch stretch = new HitsStretch(
                         stretches.size(), lrc.docBase,
                         segmentHits, indexInSegmentHits, numHitsGlobalView, length);
@@ -672,4 +886,70 @@ public class HitsFromQuery extends HitsAbstract {
                     "}";
         }
     }
+
+    /** Call optimize() and rewrite() on the source query, and create a weight for it.
+     *
+     * @param queryInfo query info for this query
+     * @param sourceQuery the source query to optimize and rewrite
+     * @param fiMatchFactor override FI match threshold (debug use only, -1 means no override)
+     * @return the weight for the optimized/rewritten query
+     */
+    protected static BLSpanWeight rewriteAndCreateWeight(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+            long fiMatchFactor) {
+        QueryTimings timings = queryInfo.timings();
+        timings.start();
+
+        // Override FI match threshold? (debug use only!)
+        try {
+            BLSpanQuery optimizedQuery;
+            synchronized (ClauseCombinerNfa.class) {
+                long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
+                if (fiMatchFactor != -1) {
+                    logger.debug("setting NFA threshold for this query to " + fiMatchFactor);
+                    ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
+                }
+
+                sourceQuery.setQueryInfo(queryInfo);
+                boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
+                if (traceOptimization)
+                    logger.debug("Query before optimize()/rewrite(): " + sourceQuery);
+
+                optimizedQuery = sourceQuery.optimize(queryInfo.index().reader());
+                if (traceOptimization)
+                    logger.debug("Query after optimize(): " + optimizedQuery);
+
+                optimizedQuery = optimizedQuery.rewrite(queryInfo.index().reader());
+                if (traceOptimization)
+                    logger.debug("Query after rewrite(): " + optimizedQuery);
+
+                // Restore previous FI match threshold
+                if (fiMatchFactor != -1) {
+                    ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
+                }
+            }
+            timings.record("rewrite");
+
+            // This call can take a long time
+            BLSpanWeight weight = optimizedQuery.createWeight(queryInfo.index().searcher(),
+                    ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+            timings.record("createWeight");
+            return weight;
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
+    }
+
+    protected ExecutorService getExecutorService() {
+        final ExecutorService executorService = numThreads >= 2
+                ? index().blackLab().searchExecutorService()
+                : new CurrentThreadExecutorService();
+        return executorService;
+    }
+
+    void setDone() {
+        allSourceSpansFullyRead = true;
+        hitsStats.setDone();
+        docsStats.setDone();
+    }
+
 }

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.search.results.hitresults;
+package nl.inl.blacklab.search.results.hits;
 
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicLong;
@@ -17,8 +17,7 @@ import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.HitsMutable;
+import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.util.ThreadAborter;
 

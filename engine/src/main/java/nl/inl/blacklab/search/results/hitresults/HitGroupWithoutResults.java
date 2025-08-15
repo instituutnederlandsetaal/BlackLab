@@ -15,12 +15,12 @@ public class HitGroupWithoutResults extends HitGroup {
     /**
      * A Hits object that only stores statistics about a set of hits, not the actual hits themselves (because we don't need them).
      */
-    private static class HitResultsWithoutResults extends HitResultsAbstract {
+    private static class HitResultsWithoutResults extends HitResultsWithHitsInternal {
         private final ResultsStatsSaved hitsStats;
         private final ResultsStatsSaved docsStats;
 
         public HitResultsWithoutResults(QueryInfo queryInfo, long totalHits, long totalDocuments, boolean maxHitsProcessed, boolean maxHitsCounted) {
-            super(queryInfo, Hits.empty(queryInfo.field(), null), false);
+            super(queryInfo, Hits.empty(queryInfo.field(), null));
 
             MaxStats maxStats = MaxStats.get(maxHitsProcessed, maxHitsCounted);
             hitsStats = new ResultsStatsSaved(0, totalHits, maxStats);

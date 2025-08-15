@@ -16,7 +16,16 @@ import nl.inl.util.ThreadAborter;
 /**
  * A Hits object that filters another.
  */
-public class HitResultsFiltered extends HitResultsAbstract {
+public class HitResultsFiltered extends HitResultsWithHitsInternal implements ResultsAwaitable {
+
+    /**
+     * Minimum number of hits to fetch in an ensureHitsRead() block.
+     *
+     * This prevents locking again and again for a single hit when iterating.
+     *
+     * See {@link HitResultsFromQuery} and {@link HitResultsFiltered}.
+     */
+    protected static final int FETCH_HITS_MIN = 20;
 
     private final Lock ensureHitsReadLock = new ReentrantLock();
 
@@ -30,6 +39,9 @@ public class HitResultsFiltered extends HitResultsAbstract {
     private final HitProperty filterProperty;
 
     private final PropertyValue filterValue;
+
+    /** Mutable interface to our list of hits being fetched, if mutation is allowed. */
+    protected final HitsMutable hitsMutable;
 
     private boolean doneFiltering = false;
 
@@ -47,8 +59,9 @@ public class HitResultsFiltered extends HitResultsAbstract {
      * @param value value to filter with
      */
     protected HitResultsFiltered(HitResults hitResults, HitProperty property, PropertyValue value) {
-        super(hitResults.queryInfo(), HitsMutable.create(hitResults.field(), hitResults.getHits().matchInfoDefs(), -1, true, true), true);
+        super(hitResults.queryInfo(), HitsMutable.create(hitResults.field(), hitResults.getHits().matchInfoDefs(), -1, true, true));
         this.source = hitResults;
+        hitsMutable = (HitsMutable) hitsInternal;
 
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
         // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigated by

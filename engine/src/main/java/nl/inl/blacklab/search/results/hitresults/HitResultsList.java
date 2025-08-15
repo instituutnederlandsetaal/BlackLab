@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 /**
  * An immutable list of hits.
  */
-public class HitResultsList extends HitResultsAbstract {
+public class HitResultsList extends HitResultsWithHitsInternal {
 
     private final ResultsStats hitsStats;
 
@@ -32,7 +32,7 @@ public class HitResultsList extends HitResultsAbstract {
      * @param hits the list of hits to wrap
      */
     protected HitResultsList(QueryInfo queryInfo, Hits hits) {
-        super(queryInfo, hits, false);
+        super(queryInfo, hits);
 
         // Count docs
         int prevDoc = -1;
@@ -60,7 +60,7 @@ public class HitResultsList extends HitResultsAbstract {
                        SampleParameters sampleParameters,
                        ResultsStats hitsStats,
                        ResultsStats docsStats) {
-        super(queryInfo, hits, false);
+        super(queryInfo, hits);
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
         assert hitsStats.processedSoFar() == hits.size();

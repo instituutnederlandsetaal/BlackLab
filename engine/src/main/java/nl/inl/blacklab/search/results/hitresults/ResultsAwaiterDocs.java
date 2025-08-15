@@ -3,11 +3,11 @@ package nl.inl.blacklab.search.results.hitresults;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /** Used by ResultsStatsPassive to wait until some number of docs have been seen. */
-class ResultsAwaiterDocs implements ResultsStats.ResultsAwaiter {
+public class ResultsAwaiterDocs implements ResultsStats.ResultsAwaiter {
 
-    HitResultsAbstract results;
+    ResultsAwaitable results;
 
-    public ResultsAwaiterDocs(HitResultsAbstract hits) {
+    public ResultsAwaiterDocs(ResultsAwaitable hits) {
         this.results = hits;
     }
 
