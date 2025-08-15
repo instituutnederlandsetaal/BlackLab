@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
@@ -119,14 +121,21 @@ public abstract class HitsAbstract implements Hits {
 
     @Override
     public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup) {
-        Hits hits = getStatic(); // use most efficient implementation
-        // temporary copy used in grouping (don't keep reference to hits)
-        groupBy = groupBy.copyWith(hits);
-
         Map<PropertyValue, Group> groups = new HashMap<>();
+        return groupHits(getStatic(), groupBy, maxResultsToStorePerGroup, groups, null);
+    }
+
+    static Map<PropertyValue, Group> groupHits(Hits hits, HitProperty groupBy,
+            long maxResultsToStorePerGroup, Map<PropertyValue, Group> groups, LeafReaderContext lrc) {
+        // temporary copy used in grouping (don't keep reference to hits)
+        groupBy = groupBy.copyWith(hits, lrc, false);
+        //groupBy.setDocBase(lrc.docBase); // convert segment hits to global while grouping
+
         int hitIndex = 0;
         for (EphemeralHit hit: hits) {
+            hit.segmentToGlobal(lrc == null ? 0 : lrc.docBase);
             PropertyValue identity = groupBy.get(hitIndex);
+            identity = identity.toGlobal();
             Group group = groups.get(identity);
             if (group == null) {
                 if (groups.size() >= HitGroups.MAX_NUMBER_OF_GROUPS)

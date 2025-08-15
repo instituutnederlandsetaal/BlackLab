@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results.hits;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -104,7 +105,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     /**
      * Below this number of hits, we'll sort in a single thread to save overhead.
      */
-    private static final int THRESHOLD_SINGLE_THREADED_SORT = 100;
+    private static final int THRESHOLD_SINGLE_THREADED = 100;
 
     private final AnnotatedField field;
     
@@ -621,10 +622,77 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     }
 
     @Override
+    public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxValuesToStorePerGroup) {
+        // Fetch all the hits and determine size.
+        size();
+        if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
+            // If there are only a few hits, just group them in a single thread.
+            Map<PropertyValue, Group> groups = new HashMap<>();
+            for (Map.Entry<LeafReaderContext, HitsMutable> entry: hitsPerSegment.entrySet()) {
+                groupHits(entry.getValue(), groupBy, maxValuesToStorePerGroup, groups, entry.getKey());
+            }
+            return groups;
+        }
+
+        // Group them together so that each group has approximately the same number of hits.
+        List<List<SegmentHits>> threadGroups = makeEqualGroups(hitsPerSegment, numThreads);
+
+        // Group each group of segments in a separate thread.
+        List<Future<List<Map<PropertyValue, Group>>>> pendingResults = makeSegmentGroupings(threadGroups, groupBy,
+                maxValuesToStorePerGroup, getExecutorService());
+
+        // Now merge the grouped hits from each segment.
+        Map<PropertyValue, Group> mergedGroups = mergedSegmentGroupings(maxValuesToStorePerGroup, pendingResults);
+
+        return mergedGroups;
+    }
+
+    private static List<Future<List<Map<PropertyValue, Group>>>> makeSegmentGroupings(List<List<SegmentHits>> threadGroups, HitProperty groupBy, long maxValuesToStorePerGroup, ExecutorService executorService) {
+        List<Future<List<Map<PropertyValue, Group>>>> pendingResults = new ArrayList<>();
+        for (List<SegmentHits> group: threadGroups) {
+            Future<List<Map<PropertyValue, Group>>> future = executorService.submit(() ->
+                    group.stream().map(segment -> {
+                        // For each segment, group the hits using the specified property.
+                        HitProperty groupBySegment = groupBy.copyWith(segment.hits, segment.lrc, false);
+                        Map<PropertyValue, Group> groups = new HashMap<>();
+                        groupHits(segment.hits, groupBySegment, maxValuesToStorePerGroup, groups,
+                                segment.lrc);
+                        return groups;
+                    }).toList());
+            pendingResults.add(future);
+        }
+        return pendingResults;
+    }
+
+    private static Map<PropertyValue, Group> mergedSegmentGroupings(long maxValuesToStorePerGroup,
+            List<Future<List<Map<PropertyValue, Group>>>> pendingResults) {
+        Map<PropertyValue, Group> mergedGroups = new HashMap<>();
+        for (Future<List<Map<PropertyValue, Group>>> future: pendingResults) {
+            try {
+                List<Map<PropertyValue, Group>> listGroups = future.get();
+                for (Map<PropertyValue, Group> groups: listGroups) {
+                    for (Map.Entry<PropertyValue, Group> entry: groups.entrySet()) {
+                        PropertyValue groupId = entry.getKey();
+                        Group segmentGroup = entry.getValue();
+                        mergedGroups.compute(groupId, (PropertyValue k, Group v) ->
+                                v == null ? segmentGroup : v.merge(segmentGroup, maxValuesToStorePerGroup));
+                    }
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // preserve interrupted status
+                throw new InterruptedSearch(e);
+            } catch (ExecutionException e) {
+                throw new InterruptedSearch(e);
+            }
+        }
+        return mergedGroups;
+    }
+
+    @Override
     public Hits sorted(HitProperty sortProp) {
         // Fetch all the hits and determine size.
         size();
-        if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED_SORT) {
+        if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             // If there are only a few hits, just sort them in a single thread.
             return sortedSingleThread(sortProp);
         }
@@ -632,8 +700,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         // We need to sort the hits from each segment separately (in parallel), then merge them.
 
         // Group them together so that each group has approximately the same number of hits.
-        List<List<SegmentHits>> groups =
-                sortMakeEqualGroups(hitsPerSegment, numThreads);
+        List<List<SegmentHits>> groups = makeEqualGroups(hitsPerSegment, numThreads);
 
         // TODO: make sort and merge steps abortable (ThreadAborter)
 
@@ -652,7 +719,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     /**
      * Separate the hits from each segment into numThreads equals groups
      */
-    private static List<List<SegmentHits>> sortMakeEqualGroups(
+    private static List<List<SegmentHits>> makeEqualGroups(
             Map<LeafReaderContext, HitsMutable> hitsPerSegment, int numThreads) {
 
         // First sort segment hits by decreasing size.

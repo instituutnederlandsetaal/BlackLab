@@ -88,6 +88,19 @@ public class PropertyValueContextWords extends PropertyValueContext {
         this.reverseOnDisplay = reverseOnDisplay;
     }
 
+    boolean isGlobal() {
+        return value != null;
+    }
+
+    @Override
+    public PropertyValue toGlobal() {
+        if (isGlobal())
+            return this;
+        // Convert to global variant (strings)
+        String[] value = terms.idsToTerms(valueTokenId);
+        return new PropertyValueContextWords(annotation, sensitivity, value, reverseOnDisplay);
+    }
+
     @Override
     public int compareTo(Object o) {
         if (value != null)

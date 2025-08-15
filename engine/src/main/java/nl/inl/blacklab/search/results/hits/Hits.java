@@ -225,7 +225,7 @@ public interface Hits extends Iterable<EphemeralHit> {
 
     Hits filteredByDocId(int docId);
 
-    /** Used during the actual grouping */
+    /** For grouping */
     class Group {
 
         HitsMutable storedHits;
@@ -245,5 +245,21 @@ public interface Hits extends Iterable<EphemeralHit> {
             return totalNumberOfHits;
         }
 
+        public Group merge(Group segmentGroup, long maxValuesToStorePerGroup) {
+            if (maxValuesToStorePerGroup >= 0 && storedHits.size() + segmentGroup.storedHits.size() > maxValuesToStorePerGroup) {
+                // Can we hold any more hits?
+                if (storedHits.size() < maxValuesToStorePerGroup) {
+                    // We can add a limited number of hits, so we need to trim the segment group
+                    Hits hitsToAdd = segmentGroup.storedHits
+                            .sublist(0, maxValuesToStorePerGroup - storedHits.size());
+                    storedHits.addAll(hitsToAdd);
+                }
+            } else {
+                // Just add all the hits
+                storedHits.addAll(segmentGroup.getStoredHits());
+            }
+            totalNumberOfHits += segmentGroup.totalNumberOfHits;
+            return this;
+        }
     }
 }

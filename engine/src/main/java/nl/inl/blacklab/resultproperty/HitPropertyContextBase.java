@@ -334,11 +334,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     @Override
     public Class<? extends PropertyValue> getValueType() {
-        return PropertyValueContext.class;
+        return PropertyValueContextWords.class;
     }
 
     @Override
-    public PropertyValueContext get(long hitIndex) {
+    public PropertyValueContextWords get(long hitIndex) {
         ensureContextFetched();
         if (isGlobal()) {
             String[] terms = globalContextTerms.get(hitIndex);

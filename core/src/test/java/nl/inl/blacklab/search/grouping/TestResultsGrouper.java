@@ -10,11 +10,11 @@ import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
+import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
-import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.search.results.Results;
 
 public class TestResultsGrouper {
     final int[] doc   = { 1, 2, 1, 3, 2, 1 };
