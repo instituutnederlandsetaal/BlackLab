@@ -26,6 +26,7 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
+import nl.inl.util.CurrentThreadExecutorService;
 import nl.inl.util.VersionFile;
 
 /**
@@ -343,6 +344,22 @@ public final class BlackLabEngine implements AutoCloseable {
 
     public ExecutorService searchExecutorService() {
         return searchExecutorService;
+    }
+
+    /**
+     * Get the appropriate search executor service for the given number of threads.
+     *
+     * If the number of threads is 2 or more, we use the regular
+     * search executor service. If the number of threads is 1, we just use a
+     * CurrentThreadExecutorService.
+     *
+     * @param numThreads number of threads to use for searching
+     * @return the executor service
+     */
+    public ExecutorService searchExecutorService(int numThreads) {
+        return numThreads >= 2
+                ? searchExecutorService()
+                : new CurrentThreadExecutorService();
     }
 
     /**
