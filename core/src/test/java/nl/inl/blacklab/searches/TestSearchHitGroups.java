@@ -90,14 +90,14 @@ public class TestSearchHitGroups {
         SearchHitGroups searchHitGroups = searchHits.groupWithStoredHits(groupBy, 1);
         SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupPropertyIdentity.get());
         HitGroups groups = sortedGroups.execute();
-//        Assert.assertEquals("# groups", 4, groups.size());
-//        Iterator<HitGroup> it = groups.iterator();
-//        HitGroup g = it.next();
-//        Assert.assertEquals("1st group size", 5, g.size());
-//        Assert.assertEquals("1st group id", "aap", g.identity().toString());
-//        g = it.next();
-//        Assert.assertEquals("2nd group size", 1, g.size());
-//        Assert.assertEquals("2nd group id", "be", g.identity().toString());
+        Assert.assertEquals("# groups", 4, groups.size());
+        Iterator<HitGroup> it = groups.iterator();
+        HitGroup g = it.next();
+        Assert.assertEquals("1st group size", 10, g.size());
+        Assert.assertEquals("1st group id", "Bastardized Shakespeare", g.identity().toString());
+        g = it.next();
+        Assert.assertEquals("2nd group size", 12, g.size());
+        Assert.assertEquals("2nd group id", "Learning words", g.identity().toString());
     }
 
 }

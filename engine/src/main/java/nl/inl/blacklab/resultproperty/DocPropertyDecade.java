@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.util.BytesRef;
@@ -22,8 +23,8 @@ public class DocPropertyDecade extends DocProperty {
     
     private final DocPropertyStoredField docPropStoredField;
 
-    DocPropertyDecade(DocPropertyDecade prop, boolean invert) {
-        super(prop, invert);
+    DocPropertyDecade(DocPropertyDecade prop, LeafReaderContext lrc, boolean invert) {
+        super(prop, lrc, invert);
         index = prop.index;
         fieldName = prop.fieldName;
         docPropStoredField = prop.docPropStoredField;
@@ -122,8 +123,8 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     @Override
-    public DocProperty reverse() {
-        return new DocPropertyDecade(this, true);
+    public DocPropertyDecade copyWith(LeafReaderContext lrc, boolean invert) {
+        return new DocPropertyDecade(this, lrc, invert);
     }
 
     @Override

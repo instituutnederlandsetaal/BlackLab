@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -23,15 +24,28 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class DocProperty implements ResultProperty, Comparator<DocResult> {
     protected static final Logger logger = LogManager.getLogger(DocProperty.class);
 
+    /** The segment, if these are segment-local hits */
+    protected final LeafReaderContext lrc;
+
+    /** docBase to add to our docIds */
+    protected int docBase = 0;
+
     /** Reverse comparison result or not? */
     protected final boolean reverse;
 
-    protected DocProperty(DocProperty prop, boolean invert) {
+    protected DocProperty(DocProperty prop, LeafReaderContext lrc, boolean invert) {
+        this.lrc = lrc == null ? prop.lrc : lrc;
+        docBase = lrc == null ? prop.docBase : lrc.docBase;
         reverse = invert ? !prop.reverse : prop.reverse;
     }
 
     protected DocProperty() {
+        this.lrc = null;
         this.reverse = sortDescendingByDefault();
+    }
+
+    public void setDocBase(int docBase) {
+        this.docBase = docBase;
     }
 
     /**
@@ -165,7 +179,11 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
      * @return document property with the comparison reversed
      */
     @Override
-    public abstract DocProperty reverse();
+    public DocProperty reverse() {
+        return copyWith(null, true);
+    }
+
+    public abstract DocProperty copyWith(LeafReaderContext lrc, boolean invert);
 
     @Override
     public String toString() {

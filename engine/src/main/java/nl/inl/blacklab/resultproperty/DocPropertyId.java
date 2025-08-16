@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -11,8 +12,8 @@ import nl.inl.blacklab.search.results.docs.DocResult;
  */
 public class DocPropertyId extends DocProperty {
 
-    DocPropertyId(DocPropertyId prop, boolean invert) {
-        super(prop, invert);
+    DocPropertyId(DocPropertyId prop, LeafReaderContext lrc, boolean invert) {
+        super(prop, lrc, invert);
     }
 
     public DocPropertyId() {
@@ -25,7 +26,7 @@ public class DocPropertyId extends DocProperty {
 
     @Override
     public PropertyValueInt get(DocResult result) {
-        return new PropertyValueInt(result.identity().value());
+        return new PropertyValueInt(result.identity().value() + lrc.docBase);
     }
 
     /**
@@ -57,8 +58,8 @@ public class DocPropertyId extends DocProperty {
     }
 
     @Override
-    public DocProperty reverse() {
-        return new DocPropertyId(this, true);
+    public DocPropertyId copyWith(LeafReaderContext lrc, boolean invert) {
+        return new DocPropertyId(this, lrc, invert);
     }
 
     @Override

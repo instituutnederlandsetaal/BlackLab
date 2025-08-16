@@ -42,8 +42,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     
     private final BlackLabIndex index;
 
-    DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, boolean invert) {
-        super(prop, invert);
+    DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, LeafReaderContext lrc, boolean invert) {
+        super(prop, lrc, invert);
         index = prop.index;
         fieldName = prop.fieldName;
         friendlyName = prop.friendlyName;
@@ -140,8 +140,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     @Override
-    public DocProperty reverse() {
-        return new DocPropertyAnnotatedFieldLength(this, true);
+    public DocPropertyAnnotatedFieldLength copyWith(LeafReaderContext lrc, boolean invert) {
+        return new DocPropertyAnnotatedFieldLength(this, lrc, invert);
     }
 
     @Override

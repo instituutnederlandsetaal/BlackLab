@@ -21,7 +21,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, LeafReaderContext lrc, boolean invert) {
         super(prop, hits, lrc, invert);
         this.fieldName = prop.fieldName;
-        this.docPropStoredField = prop.docPropStoredField;
+        this.docPropStoredField = prop.docPropStoredField.copyWith(lrc, false);
         assert docPropStoredField != null;
     }
 
@@ -38,6 +38,12 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     @Override
     public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
         return new HitPropertyDocumentStoredField(this, newHits, lrc, invert);
+    }
+
+    @Override
+    public void setDocBase(int docBase) {
+        this.docPropStoredField.setDocBase(docBase);
+        super.setDocBase(docBase);
     }
 
     @Override

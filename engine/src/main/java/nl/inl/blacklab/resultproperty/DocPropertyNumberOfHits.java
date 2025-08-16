@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -13,8 +14,8 @@ public class DocPropertyNumberOfHits extends DocProperty {
 
     public static final String ID = "numhits";
 
-    DocPropertyNumberOfHits(DocPropertyNumberOfHits prop, boolean invert) {
-        super(prop, invert);
+    DocPropertyNumberOfHits(DocPropertyNumberOfHits prop, LeafReaderContext lrc, boolean invert) {
+        super(prop, lrc, invert);
     }
     
     public DocPropertyNumberOfHits() {
@@ -61,8 +62,8 @@ public class DocPropertyNumberOfHits extends DocProperty {
     }
 
     @Override
-    public DocProperty reverse() {
-        return new DocPropertyNumberOfHits(this, true);
+    public DocPropertyNumberOfHits copyWith(LeafReaderContext lrc, boolean invert) {
+        return new DocPropertyNumberOfHits(this, lrc, invert);
     }
 
     @Override

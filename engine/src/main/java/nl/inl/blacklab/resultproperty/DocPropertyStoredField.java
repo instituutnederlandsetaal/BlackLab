@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
@@ -22,6 +23,7 @@ import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -55,17 +57,20 @@ public class DocPropertyStoredField extends DocProperty {
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues! */
     private Map<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> docValues = null;
+
     /** Null unless the field is numeric. */
     private Map<Integer, NumericDocValuesCacher> numericDocValues = null;
 
     /** Our index */
     private final BlackLabIndex index;
 
-    public DocPropertyStoredField(DocPropertyStoredField prop, boolean invert) {
-        super(prop, invert);
+    public DocPropertyStoredField(DocPropertyStoredField prop, LeafReaderContext lrc, boolean invert) {
+        super(prop, lrc, invert);
         this.index = prop.index;
         this.fieldName = prop.fieldName;
         this.friendlyName = prop.friendlyName;
+        this.docValues = prop.docValues;
+        this.numericDocValues = prop.numericDocValues;
     }
 
     @Override
@@ -86,11 +91,11 @@ public class DocPropertyStoredField extends DocProperty {
             if (index.reader() != null) { // skip for MockIndex (testing)
                 if (index.metadataField(fieldName).type().equals(FieldType.NUMERIC)) {
                     numericDocValues = new TreeMap<>();
-                    for (LeafReaderContext rc : index.reader().leaves()) {
-                        LeafReader r = rc.reader();
+                    for (LeafReaderContext lrc : index.reader().leaves()) {
+                        LeafReader r = lrc.reader();
                         // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
                         NumericDocValues values = r.getNumericDocValues(fieldName);
-                        numericDocValues.put(rc.docBase, DocValuesUtil.cacher(values));
+                        numericDocValues.put(lrc.docBase, DocValuesUtil.cacher(values));
                     }
                 } else { // regular string doc values.
                     docValues = new TreeMap<>();
@@ -123,6 +128,7 @@ public class DocPropertyStoredField extends DocProperty {
      */
     public String[] get(int docId) {
         if  (docValues != null) {
+            docId += docBase;
             // Find the value in the correct segment
             Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> target = null;
             for (Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> e : this.docValues.entrySet()) {
@@ -149,6 +155,7 @@ public class DocPropertyStoredField extends DocProperty {
             }
             return ret;
         } else if (numericDocValues != null) {
+            docId += docBase;
             // Find the value in the correct segment
             Entry<Integer, NumericDocValuesCacher> target = null;
             for (Entry<Integer, NumericDocValuesCacher> e : this.numericDocValues.entrySet()) {
@@ -169,8 +176,15 @@ public class DocPropertyStoredField extends DocProperty {
             return ret.toArray(new String[0]);
         }
 
-        // We don't have DocValues; just get the property from the document.
-        return index.luceneDoc(docId).getValues(fieldName);
+        try {
+            // We don't have DocValues; just get the property from the document.
+            if (lrc == null)
+                return index.reader().document(docId + docBase, Set.of(fieldName)).getValues(fieldName);
+            else
+                return lrc.reader().document(docId, Set.of(fieldName)).getValues(fieldName);
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
     /**
@@ -248,8 +262,8 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     @Override
-    public DocProperty reverse() {
-        return new DocPropertyStoredField(this, true);
+    public DocPropertyStoredField copyWith(LeafReaderContext lrc, boolean invert) {
+        return new DocPropertyStoredField(this, lrc, invert);
     }
 
     @Override
