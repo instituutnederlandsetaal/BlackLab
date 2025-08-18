@@ -102,7 +102,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     private static final int STRETCH_SIZE_DIVIDER = 10;
 
     /**
-     * Below this number of hits, we'll sort in a single thread to save overhead.
+     * Below this number of hits, we'll sort/group in a single thread to save overhead.
      */
     private static int THRESHOLD_SINGLE_THREADED = 100;
 

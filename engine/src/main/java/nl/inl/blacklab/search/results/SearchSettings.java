@@ -49,7 +49,7 @@ public final class SearchSettings {
      */
     private SearchSettings(long maxHitsToProcess, long maxHitsToCount, long fiMatchFactor) {
         this.maxHitsToCount = maxHitsToCount < 0 ? Results.NO_LIMIT : maxHitsToCount;
-        this.maxHitsToProcess = maxHitsToProcess < 0 ? maxHitsToCount : Math.min(maxHitsToCount, maxHitsToProcess);
+        this.maxHitsToProcess = maxHitsToProcess < 0 ? this.maxHitsToCount : Math.min(this.maxHitsToCount, maxHitsToProcess);
         this.fiMatchFactor = fiMatchFactor;
     }
 
