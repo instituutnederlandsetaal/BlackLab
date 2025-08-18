@@ -104,7 +104,11 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     /**
      * Below this number of hits, we'll sort in a single thread to save overhead.
      */
-    private static final int THRESHOLD_SINGLE_THREADED = 100;
+    private static int THRESHOLD_SINGLE_THREADED = 100;
+
+    public static void setThresholdSingleThreadedGroupAndSort(int n) {
+        THRESHOLD_SINGLE_THREADED = n;
+    }
 
     private final AnnotatedField field;
     
@@ -159,9 +163,6 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
-    /** Helps us perform parallel operations */
-    final Parallel parallel;
-
     public HitsFromQuery(AnnotatedField field, QueryTimings timings, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         this.field = field;
         this.timings = timings;
@@ -173,7 +174,6 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
         hitQueryContext = new HitQueryContext(field.index(), null, field); // each spans will get a copy
         numThreads = Math.max(field.index().blackLab().maxThreadsPerSearch(), 1);
-        parallel = new Parallel(index(), numThreads);
 
         this.matchInfoDefs = hitQueryContext.getMatchInfoDefs();
         hitsPerSegment = new LinkedHashMap<>();
@@ -349,7 +349,10 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         if (indexInSegment < 0)
             throw new IllegalStateException("Negative index in segment: " + indexInSegment +
                     " (global index: " + globalIndex + ", stretch: " + currentStretch + ")");
-        long hitsLeftInStretch = currentStretch.stretchLength - (start - currentStretch.firstHitGlobal);
+        if (indexInSegment >= currentStretch.segmentHits().size())
+            throw new IllegalStateException("Index in segment out of bounds: " + indexInSegment +
+                    " (global index: " + globalIndex + ", stretch: " + currentStretch + ")");
+        long hitsLeftInStretch = currentStretch.stretchLength - (globalIndex - currentStretch.firstHitGlobal);
         while (true) {
             // Add a hit from the current stretch to the sublist.
             currentStretch.segmentHits().getEphemeral(indexInSegment, h);
@@ -365,9 +368,11 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // If we reached the end of the current stretch, go to the next stretch.
             hitsLeftInStretch--;
             if (hitsLeftInStretch == 0) {
-                currentStretch = stretches.get(currentStretch.stretchIndex + 1);
+                synchronized (this) {
+                    currentStretch = stretches.get(currentStretch.stretchIndex + 1);
+                }
                 indexInSegment = currentStretch.globalToSegmentIndex(globalIndex);
-                hitsLeftInStretch = currentStretch.stretchLength - (start - currentStretch.firstHitGlobal);
+                hitsLeftInStretch = currentStretch.stretchLength - (globalIndex - currentStretch.firstHitGlobal);
             }
         }
         return sublist;
@@ -419,14 +424,14 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         hitsPerSegment.put(lrc, segmentHits); // only called from constructor, so no need to synchronize
     }
 
-    private synchronized void addStretchFromSegment(LeafReaderContext lrc, Hits segmentHits, long startFrom) {
+    private synchronized void addStretchFromSegment(LeafReaderContext lrc, Hits segmentHits, long segmentIndexStart) {
         // Create a new stretch for the global hits view.
         // Start where the last stretch in this segment ended.
-        long stretchLength = segmentHits.size() - startFrom;
+        long stretchLength = segmentHits.size() - segmentIndexStart;
         assert stretchLength > 0;
         HitsStretch stretch = new HitsStretch(
                 stretches.size(), lrc.docBase,
-                segmentHits, startFrom, numHitsGlobalView, stretchLength);
+                segmentHits, segmentIndexStart, numHitsGlobalView, stretchLength);
         stretches.add(stretch);
         numHitsGlobalView += stretchLength;
 
@@ -462,7 +467,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
 
         boolean hasLock = false;
-        List<Future<?>> pendingResults = null;
+        List<Future<List<Void>>> pendingResults = null;
+        Parallel<SpansReader, Void> parallel = new Parallel<>(index(), numThreads);
         try {
             while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
                 /*
@@ -482,7 +488,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // Make sure the number of documents per segment is roughly equal for each thread.
             Function<SpansReader, Long> sizeGetter = spansReader ->
                     spansReader.leafReaderContext == null ? 0 : (long) spansReader.leafReaderContext.reader().maxDoc();
-            pendingResults = parallel.forEach(spansReaders, sizeGetter, SpansReader::run);
+            pendingResults = parallel.forEach(spansReaders, sizeGetter,
+                    l -> l.forEach(SpansReader::run));
 
             // Wait for workers to complete.
             // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
@@ -490,15 +497,12 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // The workers themselves won't ever throw InterruptedException, it would be wrapped in ExecutionException.
             // (Besides, we're the only thread that can call interrupt() on our worker anyway, and we don't ever do that.
             //  Technically, it could happen if the Executor were to shut down, but it would still result in an ExecutionException anyway.)
-            for (Future<?> p : pendingResults)
-                p.get();
-        } catch (InterruptedException e) {
-            // We were interrupted while waiting for workers to finish.
-            // If we were the thread that created the workers, cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
-            // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new Runnables/Futures of them.
-            Thread.currentThread().interrupt(); // preserve interrupted status
-            parallel.cancelTasks(pendingResults);
-            throw new InterruptedSearch(e);
+            //
+            // If we're interrupted while waiting for workers to finish, and we were the thread that created the workers,
+            // cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
+            // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new
+            // Runnables/Futures of them.
+            parallel.waitForAll(pendingResults);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof RuntimeException rte)
                 throw rte;
@@ -552,18 +556,18 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         /**
          * Property to sort on
          */
-        HitProperty sortProp;
+        HitProperty sortBy;
 
         /**
          * Index of the next hit from this segment to merge
          */
         int index;
 
-        public SegmentInMerge(Hits segmentHits, int docBase, HitProperty globalSortProp) {
+        public SegmentInMerge(Hits segmentHits, int docBase, HitProperty globalSortBy) {
             this.hits = segmentHits;
             this.docBase = docBase;
-            this.sortProp = globalSortProp.copyWith(segmentHits);
-            sortProp.setDocBase(docBase);
+            this.sortBy = globalSortBy.copyWith(segmentHits);
+            sortBy.setDocBase(docBase);
             this.index = 0;
         }
 
@@ -572,7 +576,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         }
 
         PropertyValue sortValue() {
-            return sortProp.get(index);
+            return sortBy.get(index);
         }
 
         void getHitAndAdvance(EphemeralHit hit) {
@@ -634,15 +638,20 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         }
 
         // Group in parallel and merge the results.
+        Parallel<Map.Entry<LeafReaderContext, HitsMutable>, Map<PropertyValue, Group>> parallel =
+                new Parallel<>(index(), numThreads);
         return parallel.mapReduce(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
-                entry -> {
-                    SegmentHits sh = new SegmentHits(entry.getKey(), entry.getValue());
-                    // For each segment, group the hits using the specified property.
-                    HitProperty groupBySegment = groupBy.copyWith(sh.hits, sh.lrc, false);
+                threadItems -> {
+                    // Group items in these segments into a single map.
                     Map<PropertyValue, Group> groups = new HashMap<>();
-                    groupHits(sh.hits, groupBySegment, maxValuesToStorePerGroup, groups, sh.lrc);
-                    return groups;
+                    for (Map.Entry<LeafReaderContext, HitsMutable> entry: threadItems) {
+                        SegmentHits sh = new SegmentHits(entry.getKey(), entry.getValue());
+                        // For each segment, group the hits using the specified property.
+                        HitProperty groupBySegment = groupBy.copyWith(sh.hits, sh.lrc, false);
+                        groupHits(sh.hits, groupBySegment, maxValuesToStorePerGroup, groups, sh.lrc);
+                    }
+                    return List.of(groups);
                 },
                 (acc, results) -> {
                     for (Map.Entry<PropertyValue, Group> entry: results.entrySet()) {
@@ -652,7 +661,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                                 v == null ? segmentGroup : v.merge(segmentGroup, maxValuesToStorePerGroup));
                     }
                 },
-                new HashMap<>()
+                HashMap::new
         );
     }
 
@@ -670,31 +679,33 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         // We need to sort the hits from each segment separately (in parallel), then merge them.
 
         // Sort each group of segments in a separate thread.
+        Parallel<Map.Entry<LeafReaderContext, HitsMutable>, SegmentHits> parallel = new Parallel<>(index(), numThreads);
         List<Future<List<SegmentHits>>> pendingResults = parallel.map(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
-                entry -> {
+                entryList -> entryList.stream().map(entry -> {
                     // For each segment, sort the hits using the specified property.
                     HitsMutable hits = entry.getValue();
                     LeafReaderContext lrc = entry.getKey();
                     Hits sorted = hits.sorted(sortBy.copyWith(hits, lrc, false));
                     return new SegmentHits(lrc, sorted);
-                });
+                }).toList());
 
-        // Now merge the results
-        return sortMerge(sortBy, pendingResults);
+        // Merge the results from all segments.
+        MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortBy, pendingResults, parallel);
+        return sortMergeResults(queue, sortBy);
     }
 
     /**
      * Gather sorted segment hits and put them in the merge queue
      */
-    private MergePriorityQueue sortGatherResults(int numberOfSegments, HitProperty sortProp,
-            List<Future<List<SegmentHits>>> pendingResults) {
+    private MergePriorityQueue sortGatherResults(int numberOfSegments, HitProperty sortBy,
+            List<Future<List<SegmentHits>>> pendingResults,
+            Parallel<Map.Entry<LeafReaderContext, HitsMutable>, SegmentHits> parallel) {
         MergePriorityQueue queue = new MergePriorityQueue(numberOfSegments);
-        for (Future<List<SegmentHits>> future: pendingResults) {
+        for (int i = 0; i < pendingResults.size(); i++) {
             try {
-                for (SegmentHits segmentResults: future.get()) {
-                    queue.add(new SegmentInMerge(segmentResults.hits, segmentResults.lrc.docBase, sortProp));
-                }
+                for (SegmentHits segmentResults: parallel.nextResult())
+                    queue.add(new SegmentInMerge(segmentResults.hits, segmentResults.lrc.docBase, sortBy));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // preserve interrupted status
                 parallel.cancelTasks(pendingResults);
@@ -706,13 +717,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         return queue;
     }
 
-    /**
-     * Merge the sorted segment hits
-     */
-    private HitsMutable sortMerge(HitProperty sortProp, List<Future<List<SegmentHits>>> pendingResults) {
-        // Add the results to the priority queue for merging.
-        MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
-
+    private HitsMutable sortMergeResults(MergePriorityQueue queue, HitProperty sortBy) {
         // Now merge the sorted hits from each segment.
         HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
                 numHitsGlobalView, numHitsGlobalView, false);
@@ -731,7 +736,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     /**
      * Sort the hits in a single thread.
      */
-    private Hits sortedSingleThread(HitProperty sortProp) {
+    private Hits sortedSingleThread(HitProperty sortBy) {
         size(); // Fetch all hits. Was already called, but just in case we reuse this method.
         HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
                 numHitsGlobalView, numHitsGlobalView, false);
@@ -741,7 +746,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                 mergedHits.add(hit);
             }
         }
-        return mergedHits.sorted(sortProp);
+        return mergedHits.sorted(sortBy);
     }
 
     /**
@@ -862,15 +867,17 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             assert containsGlobalIndex(globalIndex);
             long indexInSegment = globalIndex - firstHitGlobal + firstHitSegment;
             assert indexInSegment >= 0 : "Index in segment out of bounds: " + indexInSegment;
+            assert indexInSegment < segmentHits.size() :
+                    "Index in segment out of bounds: " + indexInSegment + " (segment size: " + segmentHits.size() + ")";
             return indexInSegment;
         }
 
         @Override
         public String toString() {
             return "HitsStretch{" +
-                    "docBase=" + segmentHits +
+                    "docBase=" + docBase +
                     ", stretchIndex=" + stretchIndex +
-                    ", segHits=" + segmentHits +
+                    ", segHits=" + segmentHits.size() +
                     ", segStart=" + firstHitSegment +
                     ", globalStart=" + firstHitGlobal +
                     ", length=" + stretchLength +

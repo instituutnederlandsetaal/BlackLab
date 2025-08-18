@@ -133,15 +133,15 @@ public abstract class HitResultsWithHitsInternal extends HitResultsAbstract {
         }
 
         @Override
-        public Hits sublist(long first, long windowSize) {
-            ensureResultsRead(first + windowSize);
-            return hitsInternal.sublist(first, windowSize);
+        public Hits sublist(long first, long length) {
+            ensureResultsRead(first + length);
+            return hitsInternal.sublist(first, length);
         }
 
         @Override
-        public Hits sorted(HitProperty sortProp) {
+        public Hits sorted(HitProperty sortBy) {
             ensureResultsRead(-1);
-            return hitsInternal.sorted(sortProp);
+            return hitsInternal.sorted(sortBy);
         }
 
         @Override

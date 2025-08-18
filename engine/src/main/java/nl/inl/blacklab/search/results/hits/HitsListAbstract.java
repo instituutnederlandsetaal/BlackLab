@@ -123,32 +123,32 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     abstract long countDocsNoLock();
 
     @Override
-    public Hits sorted(HitProperty p) {
+    public Hits sorted(HitProperty sortBy) {
         if (lock != null) {
             lock.readLock().lock();
             try {
-                return sortedNoLock(p);
+                return sortedNoLock(sortBy);
             } finally {
                 lock.readLock().unlock();
             }
         } else {
-            return sortedNoLock(p);
+            return sortedNoLock(sortBy);
         }
     }
 
     abstract Hits sortedNoLock(HitProperty p);
 
     @Override
-    public Hits sublist(long first, long windowSize) {
+    public Hits sublist(long first, long length) {
         if (lock != null) {
             lock.readLock().lock();
             try {
-                return super.sublist(first, windowSize);
+                return super.sublist(first, length);
             } finally {
                 lock.readLock().unlock();
             }
         } else {
-            return super.sublist(first, windowSize);
+            return super.sublist(first, length);
         }
     }
 

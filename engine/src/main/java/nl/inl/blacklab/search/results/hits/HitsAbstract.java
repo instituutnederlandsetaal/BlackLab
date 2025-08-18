@@ -51,14 +51,14 @@ public abstract class HitsAbstract implements Hits {
     }
 
     @Override
-    public Hits sublist(long start, long windowSize) {
+    public Hits sublist(long start, long length) {
         if (start < 0)
             throw new IndexOutOfBoundsException("Window start must be non-negative, but was " + start);
-        if (windowSize < 0)
-            throw new IllegalArgumentException("Window size must be non-negative, but was " + windowSize);
-        if (start > size() || windowSize == 0)
+        if (length < 0)
+            throw new IllegalArgumentException("Window size must be non-negative, but was " + length);
+        if (start > size() || length == 0)
             return Hits.empty(field(), matchInfoDefs());
-        long end = start + windowSize;
+        long end = start + length;
         if (end > size())
             end = size();
         HitsMutable window = HitsMutable.create(field(), matchInfoDefs(), end - start, false, false);

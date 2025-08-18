@@ -10,12 +10,16 @@ import java.util.concurrent.TimeUnit;
 import org.apache.lucene.index.Term;
 import org.junit.Test;
 
+import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
+import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.testutil.TestIndex;
 
-public class TestSearchBehavior {
+public class TestHitsFromQuery {
     public final TestIndex testIndex = TestIndex.get();
 
     @Test
@@ -100,5 +104,34 @@ public class TestSearchBehavior {
         }
 
         assertEquals(thrownException, exceptionToThrow);
+    }
+
+    @Test
+    public void testSublist() {
+        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
+        Hits whole = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
+        int subListStart = 11;
+        int subListLength = 15;
+        Hits sub = whole.sublist(subListStart, subListLength);
+        assertEquals("sublist size", subListLength, sub.size());
+        for (int i = 0; i < subListLength; i++) {
+            assertEquals("sublist element " + i, whole.get(subListStart + i), sub.get(i));
+        }
+    }
+
+    @Test
+    public void testSort() {
+        QueryInfo queryInfo = QueryInfo.create(testIndex.index());
+        BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
+        HitsFromQuery.setThresholdSingleThreadedGroupAndSort(0); // test with multithreaded sorting
+        Hits unsorted = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
+        HitProperty sortBy = new HitPropertyDocumentStoredField(testIndex.index(), "title");
+        Hits sorted = unsorted.sorted(sortBy);
+        assertEquals("same size", unsorted.size(), sorted.size());
+        sortBy = sortBy.copyWith(sorted);
+        for (int i = 1; i < sorted.size(); i++) {
+            assertTrue("sorted element " + i, sortBy.compare(i - 1, i) <= 0);
+        }
     }
 }

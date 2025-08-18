@@ -187,10 +187,10 @@ public interface Hits extends Iterable<EphemeralHit> {
     /**
      * Return a new hits object with these hits sorted by the given property.
      *
-     * @param sortProp the hit property to sort on
+     * @param sortBy the hit property to sort on
      * @return a new hits object with the same hits, sorted in the specified way
      */
-    Hits sorted(HitProperty sortProp);
+    Hits sorted(HitProperty sortBy);
 
     default Map<PropertyValue, Group> grouped(HitProperty groupBy) {
         return grouped(groupBy, Long.MAX_VALUE);
