@@ -1,5 +1,8 @@
 package nl.inl.blacklab.forwardindex;
 
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -7,6 +10,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Should be thread-safe.
  */
 public interface Terms {
+
+    /** Charset we use for serializing terms. */
+    Charset TERMS_CHARSET = StandardCharsets.UTF_8;
 
     /**
      * Get the term string for a term id.

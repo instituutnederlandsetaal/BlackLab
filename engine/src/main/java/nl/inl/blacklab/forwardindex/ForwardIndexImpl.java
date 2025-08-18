@@ -2,10 +2,13 @@ package nl.inl.blacklab.forwardindex;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.store.AlreadyClosedException;
 
+import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -13,9 +16,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 /**
  * Global forward index implementation.
  */
-public class GForwardIndexImpl implements GForwardIndex {
+public class ForwardIndexImpl implements ForwardIndex {
 
-    protected static final Logger logger = LogManager.getLogger(GForwardIndexImpl.class);
+    protected static final Logger logger = LogManager.getLogger(ForwardIndexImpl.class);
 
     /** Check that the requested snippet can be taken from a document of this length.
      * @param docLength length of the document
@@ -42,14 +45,41 @@ public class GForwardIndexImpl implements GForwardIndex {
 
     private final AnnotatedField field;
 
-    private final Map<Annotation, GAnnotationForwardIndex> fis = new HashMap<>();
+    private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
+
+    /** Used to ensure that no new FIs are opened after the constructor. */
+    private final boolean initialized;
 
     /** Ensure that we don't try to use the FI after closing it. */
     private boolean closed = false;
 
-    public GForwardIndexImpl(BlackLabIndex index, AnnotatedField field) {
+    public ForwardIndexImpl(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
         this.field = field;
+
+        // Open forward indexes
+        ExecutorService executorService = index.blackLab().initializationExecutorService();
+        for (Annotation annotation: field.annotations()) {
+            if (!annotation.hasForwardIndex())
+                continue;
+            AnnotationForwardIndex afi = get(annotation);
+            // Automatically initialize forward index (in the background)
+            executorService.execute(() -> {
+                try {
+                    afi.initialize();
+                } catch (AlreadyClosedException|InterruptedSearch e) {
+                    // Initialization was interrupted. Ignore.
+                    // This can happen if e.g. a commandline utility completes
+                    // before the full initialization is done. The running threads
+                    // are interrupted and the forward index remains uninitialized.
+                    // If for some reason the program keeps running and tries to use
+                    // the forward index, it will simply try to initialize again
+                    // (running in the foreground).
+                }
+            });
+        }
+
+        initialized = true;
     }
 
     /**
@@ -69,18 +99,18 @@ public class GForwardIndexImpl implements GForwardIndex {
     }
 
     @Override
-    public GAnnotationForwardIndex get(Annotation annotation) {
+    public AnnotationForwardIndex get(Annotation annotation) {
         assert annotation != null;
         if (closed)
             throw new IllegalStateException("ForwardIndex was closed");
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation has no forward index, according to itself: " + annotation);
-        GAnnotationForwardIndex afi;
+        AnnotationForwardIndex afi;
         synchronized (fis) {
             afi = fis.get(annotation);
         }
         if (afi == null) {
-            afi = GAnnotationForwardIndexImpl.open(this, index, annotation, index.collator());
+            afi = AnnotationForwardIndexImpl.open(this, index, annotation, index.collator());
             add(annotation, afi);
         }
         return afi;
@@ -91,7 +121,9 @@ public class GForwardIndexImpl implements GForwardIndex {
         return "ForwardIndexImpl(" + index.name() + ")";
     }
 
-    protected void add(Annotation annotation, GAnnotationForwardIndex afi) {
+    protected void add(Annotation annotation, AnnotationForwardIndex afi) {
+        if (initialized)
+            throw new IllegalStateException("All forward indexes should have been opened while initializing!");
         if (closed)
             throw new IllegalStateException("ForwardIndex was closed");
         synchronized (fis) {

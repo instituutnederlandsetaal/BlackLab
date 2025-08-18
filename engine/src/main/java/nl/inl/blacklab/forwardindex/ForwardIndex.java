@@ -10,11 +10,11 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * A component that can quickly tell you what word occurs at a specific position
  * of a specific document.
  * 
- * This allows access to all annotations for a document, as opposed to {@link GAnnotationForwardIndex},
+ * This allows access to all annotations for a document, as opposed to {@link AnnotationForwardIndex},
  * which allows access to just one.
  */
 @ThreadSafe
-public interface GForwardIndex {
+public interface ForwardIndex {
 
     /**
      * The field for which this is the forward index
@@ -29,5 +29,5 @@ public interface GForwardIndex {
      * @param annotation annotation to get a view of
      * @return single-annotation forward index view
      */
-    GAnnotationForwardIndex get(Annotation annotation);
+    AnnotationForwardIndex get(Annotation annotation);
 }

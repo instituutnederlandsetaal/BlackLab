@@ -13,7 +13,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
-import nl.inl.blacklab.forwardindex.GForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -89,7 +89,7 @@ public class ExportForwardIndex {
 
         try (BlackLabIndex index = BlackLab.open(indexDir)) {
             AnnotatedField annotatedField = index.annotatedField(annotatedFieldName);
-            GForwardIndex forwardIndex = index.forwardIndex(annotatedField);
+            ForwardIndex forwardIndex = index.forwardIndex(annotatedField);
 
             if (doTerms)
                 exportTerms(index, annotatedField);
@@ -98,7 +98,7 @@ public class ExportForwardIndex {
         }
     }
 
-    private static void exportDocs(BlackLabIndex index, AnnotatedField annotatedField, GForwardIndex forwardIndex, boolean doLengths, boolean doTokens) {
+    private static void exportDocs(BlackLabIndex index, AnnotatedField annotatedField, ForwardIndex forwardIndex, boolean doLengths, boolean doTokens) {
         // Export tokens in each doc
         System.out.println("\nDOCS");
         AtomicInteger n = new AtomicInteger(0);

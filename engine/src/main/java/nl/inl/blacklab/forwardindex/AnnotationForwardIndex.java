@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  * Global forward index for a single annotation on a field.
  */
 @ThreadSafe
-public interface GAnnotationForwardIndex {
+public interface AnnotationForwardIndex {
 
     /**
      * The annotation for which this is the forward index
@@ -18,6 +18,8 @@ public interface GAnnotationForwardIndex {
 
     @Override
     String toString();
+
+    void initialize();
 
     int numberOfTerms();
 }

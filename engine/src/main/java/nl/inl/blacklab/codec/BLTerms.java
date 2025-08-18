@@ -13,6 +13,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.forwardindex.TermsIntegrated;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -40,6 +41,12 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
     /** The Lucene terms object we're wrapping */
     private final org.apache.lucene.index.Terms terms;
+
+    /** The global terms object */
+    private TermsIntegrated termsIntegrated;
+
+    /** Our segment number */
+    private int ord;
 
     private IndexInput _termIndexFile;
     private IndexInput _termsFile;
@@ -293,6 +300,11 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 return numberOfTerms;
             }
         };
+    }
+
+    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
+        this.termsIntegrated = termsIntegrated;
+        this.ord = ord;
     }
 
 }

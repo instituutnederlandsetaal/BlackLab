@@ -8,8 +8,8 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
-import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -30,7 +30,7 @@ public class TermSerialization {
         BlackLabIndex index = BlackLab.open(new File(path));
         AnnotatedField field = index.annotatedField("contents");
         Annotation annotation = annotationName.isEmpty() ? field.mainAnnotation() : field.annotation(annotationName);
-        GAnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
+        AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
 
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
         for (LeafReaderContext lrc: index.reader().leaves()) {

@@ -19,8 +19,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.GForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
@@ -281,7 +281,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return the ForwardIndex if found/created
      * @throws RuntimeException if the annotation has no forward index
      */
-    GAnnotationForwardIndex annotationForwardIndex(Annotation annotation);
+    AnnotationForwardIndex annotationForwardIndex(Annotation annotation);
 
     /**
      * Get forward index for the specified annotated field.
@@ -289,7 +289,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field field to get forward index for
      * @return forward index
      */
-    GForwardIndex forwardIndex(AnnotatedField field);
+    ForwardIndex forwardIndex(AnnotatedField field);
 
 
     

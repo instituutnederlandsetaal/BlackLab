@@ -21,8 +21,8 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
-import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
@@ -196,11 +196,11 @@ public class HitGroupsTokenFrequencies {
 
     /** Info about an annotation we're grouping on. */
     private static final class AnnotInfo {
-        private final GAnnotationForwardIndex annotationForwardIndex;
+        private final AnnotationForwardIndex annotationForwardIndex;
 
         private final MatchSensitivity matchSensitivity;
 
-        public GAnnotationForwardIndex getAnnotationForwardIndex() {
+        public AnnotationForwardIndex getAnnotationForwardIndex() {
             return annotationForwardIndex;
         }
 
@@ -208,7 +208,7 @@ public class HitGroupsTokenFrequencies {
             return matchSensitivity;
         }
 
-        public AnnotInfo(GAnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
+        public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
             this.annotationForwardIndex = annotationForwardIndex;
             this.matchSensitivity = matchSensitivity;
         }
@@ -271,7 +271,7 @@ public class HitGroupsTokenFrequencies {
                         Annotation annotation = ((HitPropertyHitText)p).getAnnotation();
 
                         final int positionInUnpackedList = hitProperties.size();
-                        final GAnnotationForwardIndex annotationFI = index.annotationForwardIndex(annotation);
+                        final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annotation);
                         final MatchSensitivity sensitivity = ((HitPropertyHitText) p).getSensitivity();
                         hitProperties.add(new AnnotInfo(annotationFI, sensitivity));
                         originalOrderOfUnpackedProperties.add(PropInfo.hit(positionInUnpackedList));

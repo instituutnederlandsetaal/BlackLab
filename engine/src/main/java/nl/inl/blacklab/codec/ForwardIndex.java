@@ -15,8 +15,8 @@ import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
-import nl.inl.blacklab.forwardindex.GForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.Terms;
 
 /**
@@ -169,7 +169,7 @@ public class ForwardIndex implements AutoCloseable {
                 start = 0;
             if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
                 end = docLength;
-            GForwardIndexImpl.validateSnippetParameters(docLength, start, end);
+            ForwardIndexImpl.validateSnippetParameters(docLength, start, end);
 
             // Read the snippet from the tokens file
             try {

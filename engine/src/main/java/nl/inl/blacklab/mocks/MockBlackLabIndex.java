@@ -18,8 +18,8 @@ import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
-import nl.inl.blacklab.forwardindex.GForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -55,7 +55,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     private final SearchSettings searchSettings;
 
-    private final Map<Annotation, GAnnotationForwardIndex> forwardIndices = new HashMap<>();
+    private final Map<Annotation, AnnotationForwardIndex> forwardIndices = new HashMap<>();
 
     private final Analyzer analyzer;
 
@@ -125,7 +125,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
         this.searcher = searcher;
     }
 
-    public void setForwardIndex(Annotation fieldPropName, GAnnotationForwardIndex forwardIndex) {
+    public void setForwardIndex(Annotation fieldPropName, AnnotationForwardIndex forwardIndex) {
         forwardIndices.put(fieldPropName, forwardIndex);
     }
 
@@ -180,12 +180,12 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public GAnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
+    public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
         return forwardIndices.get(annotation);
     }
 
     @Override
-    public GForwardIndex forwardIndex(AnnotatedField field) {
+    public ForwardIndex forwardIndex(AnnotatedField field) {
         return null;
     }
 

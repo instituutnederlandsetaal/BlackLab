@@ -13,8 +13,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
-import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -70,7 +70,7 @@ class CalcTokenFrequencies {
 
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
         final List<AnnotInfo> hitProperties = annotations.stream().map(ann -> {
-            GAnnotationForwardIndex afi = index.annotationForwardIndex(ann);
+            AnnotationForwardIndex afi = index.annotationForwardIndex(ann);
             return new AnnotInfo(afi, MatchSensitivity.INSENSITIVE);
         }).toList();
         final List<String> docProperties = new ArrayList<>(metadataFields);

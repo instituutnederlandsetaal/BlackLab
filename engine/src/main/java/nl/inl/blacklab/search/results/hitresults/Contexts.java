@@ -14,8 +14,8 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
-import nl.inl.blacklab.forwardindex.GAnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Kwic;
@@ -66,7 +66,7 @@ public class Contexts {
      */
     static void makeKwicsSingleDocForwardIndex(
             Hits hits,
-            List<GAnnotationForwardIndex> forwardIndexes,
+            List<AnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
             BiConsumer<Hit, Kwic> kwicConsumer
     ) {
@@ -79,7 +79,7 @@ public class Contexts {
                 contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
-                .map(GAnnotationForwardIndex::annotation)
+                .map(AnnotationForwardIndex::annotation)
                 .toList();
         int docId = hits.doc(0);
         LeafReaderContext lrc = hits.index().getLeafReaderContext(docId);
@@ -122,7 +122,7 @@ public class Contexts {
      * @return the context words for each hit, as an array of int arrays.
      */
     private static int[][] getContextWordsSingleDocument(Hits hits, long start, long end,
-            ContextSize contextSize, List<GAnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
+            ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
@@ -142,7 +142,7 @@ public class Contexts {
         int doc = hits.doc(start);
         int[][] contexts = new int[n][];
         LeafReaderContext lrc = hits.index().getLeafReaderContext(doc);
-        for (GAnnotationForwardIndex forwardIndex: contextSources) {
+        for (AnnotationForwardIndex forwardIndex: contextSources) {
             if (forwardIndex == null)
                 throw new IllegalArgumentException("Cannot get context from without a forward index");
             // Get all the words from the forward index
@@ -192,7 +192,7 @@ public class Contexts {
         if (annotations == null || annotations.isEmpty())
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        List<GAnnotationForwardIndex> fis = new ArrayList<>();
+        List<AnnotationForwardIndex> fis = new ArrayList<>();
         for (Annotation annotation: annotations) {
             fis.add(hits.index().annotationForwardIndex(annotation));
         }
@@ -254,7 +254,7 @@ public class Contexts {
         if (annotation == null)
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        GAnnotationForwardIndex fi = hits.index().annotationForwardIndex(annotation);
+        AnnotationForwardIndex fi = hits.index().annotationForwardIndex(annotation);
 
         // Get the context
         // Group hits per document
@@ -299,7 +299,7 @@ public class Contexts {
         return contexts;
     }
 
-    private static String[][] getCollocationWordsSingleDocumentStrings(Hits hits, long start, long end, ContextSize contextSize, GAnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
+    private static String[][] getCollocationWordsSingleDocumentStrings(Hits hits, long start, long end, ContextSize contextSize, AnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
         int[][] contexts = getContextWordsSingleDocument(hits, start, end, contextSize, List.of(contextSource), matchInfoDefs);
         if (contextSize.isInlineTag())
             throw new IllegalArgumentException("Cannot build contexts with inline tags");

@@ -25,8 +25,8 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.GForwardIndex;
-import nl.inl.blacklab.forwardindex.GForwardIndexImpl;
+import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -172,8 +172,8 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     }
 
     @Override
-    protected GForwardIndex createForwardIndex(AnnotatedField field) {
-        return new GForwardIndexImpl(this, field);
+    protected ForwardIndex createForwardIndex(AnnotatedField field) {
+        return new ForwardIndexImpl(this, field);
     }
 
     @Override
