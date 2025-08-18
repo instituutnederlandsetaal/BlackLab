@@ -216,7 +216,7 @@ public class SpansReader implements Runnable {
     }
 
     /**
-     * Collect all hits from our spans object.
+     * Collect hits from our spans object.
      * Updates the global counters, shared with other SpansReader objects operating on the same result set.
      * {@link Strategy::onDocumentBoundary} is called when we encounter a document boundary.
      * <p>

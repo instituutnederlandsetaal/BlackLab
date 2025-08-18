@@ -10,13 +10,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 import org.apache.logging.log4j.LogManager;
@@ -34,7 +32,6 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
@@ -162,6 +159,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
+    /** Helps us perform parallel operations */
+    final Parallel parallel;
+
     public HitsFromQuery(AnnotatedField field, QueryTimings timings, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
         this.field = field;
         this.timings = timings;
@@ -173,6 +173,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
         hitQueryContext = new HitQueryContext(field.index(), null, field); // each spans will get a copy
         numThreads = Math.max(field.index().blackLab().maxThreadsPerSearch(), 1);
+        parallel = new Parallel(index(), numThreads);
 
         this.matchInfoDefs = hitQueryContext.getMatchInfoDefs();
         hitsPerSegment = new LinkedHashMap<>();
@@ -461,7 +462,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
 
         boolean hasLock = false;
-        List<? extends Future<?>> pendingResults = null;
+        List<Future<?>> pendingResults = null;
         try {
             while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
                 /*
@@ -479,12 +480,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
             // Distribute the SpansReaders over the threads.
             // Make sure the number of documents per segment is roughly equal for each thread.
-            ExecutorService executorService = index().blackLab().searchExecutorService(numThreads);
             Function<SpansReader, Long> sizeGetter = spansReader ->
                     spansReader.leafReaderContext == null ? 0 : (long) spansReader.leafReaderContext.reader().maxDoc();
-            pendingResults = makeEqualGroups(spansReaders, sizeGetter, numThreads).stream()
-                    .map(list -> executorService.submit(() -> list.forEach(SpansReader::run)))
-                    .toList();
+            pendingResults = parallel.forEach(spansReaders, sizeGetter, SpansReader::run);
 
             // Wait for workers to complete.
             // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
@@ -499,10 +497,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // If we were the thread that created the workers, cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
             // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new Runnables/Futures of them.
             Thread.currentThread().interrupt(); // preserve interrupted status
-            if (pendingResults != null) {
-                for (Future<?> p : pendingResults)
-                    p.cancel(true);
-            }
+            parallel.cancelTasks(pendingResults);
             throw new InterruptedSearch(e);
         } catch (ExecutionException e) {
             if (e.getCause() instanceof RuntimeException rte)
@@ -624,76 +619,13 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         }
     }
 
-    static class MapReduce {
-
-        public static <I, O, H> O perform(
-                BlackLabIndex index,
-                int numThreads,
-                Collection<I> items,
-                Function<I, Long> sizeGetter,
-                Function<I, H> mapper,
-                BiConsumer<O, H> reducer,
-                O emptyResult) {
-            return new MapReduce(index,numThreads).mapReduce(
-                    items, sizeGetter, mapper, reducer, emptyResult);
-        }
-
-        private final int numThreads;
-
-        private final ExecutorService executorService;
-
-        public MapReduce(BlackLabIndex index, int numThreads) {
-            this.numThreads = numThreads;
-            executorService = index.blackLab().searchExecutorService(numThreads);
-        }
-
-        public <I, O, H> O mapReduce(
-                Collection<I> items,
-                Function<I, Long> sizeGetter,
-                Function<I, H> mapper,
-                BiConsumer<O, H> reducer,
-                O emptyResult) {
-            return reduce(parallelMap(items, sizeGetter, mapper), reducer, emptyResult);
-        }
-
-        public <I, O> List<Future<List<O>>> parallelMap(
-                Collection<I> items,
-                Function<I, Long> sizeGetter,
-                Function<I, O> mapper) {
-            List<List<I>> threadInputs = makeEqualGroups(items, sizeGetter, numThreads);
-            List<Future<List<O>>> futures = new ArrayList<>();
-            for (List<I> threadItems: threadInputs) {
-                Future<List<O>> future = executorService.submit(() -> threadItems.stream().map(mapper).toList());
-                futures.add(future);
-            }
-            return futures;
-        }
-
-        public <I, O> O reduce(
-                List<Future<List<I>>> futures,
-                BiConsumer<O, I> reducer,
-                O emptyResult) {
-            O accumulator = emptyResult;
-            for (Future<List<I>> future: futures) {
-                try {
-                    future.get().forEach(partialResult -> reducer.accept(accumulator, partialResult));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt(); // preserve interrupted status
-                    throw new InterruptedSearch(e);
-                } catch (ExecutionException e) {
-                    throw new InterruptedSearch(e);
-                }
-            }
-            return accumulator;
-        }
-    }
-
     @Override
     public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxValuesToStorePerGroup) {
-        // Fetch all the hits and determine size.
-        size();
+        // Fetch all the hits first.
+        ensureResultsRead(-1);
+
+        // If there are only a few hits, just group them in a single thread.
         if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
-            // If there are only a few hits, just group them in a single thread.
             Map<PropertyValue, Group> groups = new HashMap<>();
             for (Map.Entry<LeafReaderContext, HitsMutable> entry: hitsPerSegment.entrySet()) {
                 groupHits(entry.getValue(), groupBy, maxValuesToStorePerGroup, groups, entry.getKey());
@@ -702,10 +634,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         }
 
         // Group in parallel and merge the results.
-        return MapReduce.perform(index(),
-                numThreads,
-                hitsPerSegment.entrySet(),
-                entry -> (long) entry.getValue().size(),
+        return parallel.mapReduce(hitsPerSegment.entrySet(),
+                entry -> entry.getValue().size(),
                 entry -> {
                     SegmentHits sh = new SegmentHits(entry.getKey(), entry.getValue());
                     // For each segment, group the hits using the specified property.
@@ -727,71 +657,37 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     }
 
     @Override
-    public Hits sorted(HitProperty sortProp) {
+    public Hits sorted(HitProperty sortBy) {
         // Fetch all the hits and determine size.
         size();
         if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             // If there are only a few hits, just sort them in a single thread.
-            return sortedSingleThread(sortProp);
+            return sortedSingleThread(sortBy);
         }
-
-        // We need to sort the hits from each segment separately (in parallel), then merge them.
-
-        // Group them together so that each group has approximately the same number of hits.
-        List<List<SegmentHits>> groups = makeEqualGroups(hitsPerSegment, numThreads);
 
         // TODO: make sort and merge steps abortable (ThreadAborter)
 
+        // We need to sort the hits from each segment separately (in parallel), then merge them.
+
         // Sort each group of segments in a separate thread.
-        List<Future<List<SegmentHits>>> pendingResults = sortGroups(groups, sortProp, index(), numThreads);
+        List<Future<List<SegmentHits>>> pendingResults = parallel.map(hitsPerSegment.entrySet(),
+                entry -> entry.getValue().size(),
+                entry -> {
+                    // For each segment, sort the hits using the specified property.
+                    HitsMutable hits = entry.getValue();
+                    LeafReaderContext lrc = entry.getKey();
+                    Hits sorted = hits.sorted(sortBy.copyWith(hits, lrc, false));
+                    return new SegmentHits(lrc, sorted);
+                });
 
-        // Add the results to the priority queue for merging.
-        MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
-
-        // Now merge the sorted hits from each segment.
-        HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
-                numHitsGlobalView, numHitsGlobalView, false);
-        return sortMerge(queue, mergedHits);
-    }
-
-    /**
-     * Separate the hits from each segment into numThreads equals groups
-     */
-    private static List<List<SegmentHits>> makeEqualGroups(
-            Map<LeafReaderContext, HitsMutable> hitsPerSegment, int numThreads) {
-
-        // First sort segment hits by decreasing size.
-        List<SegmentHits> segmentsHits = new ArrayList<>();
-        for (Map.Entry<LeafReaderContext, HitsMutable> entry: hitsPerSegment.entrySet()) {
-            segmentsHits.add(new SegmentHits(entry.getKey(), entry.getValue()));
-        }
-        return makeEqualGroups(segmentsHits, SegmentHits::numberOfHits, numThreads);
-    }
-
-    /**
-     * Sort each group of segment hits in a separate thread
-     */
-    private static List<Future<List<SegmentHits>>> sortGroups(
-            List<List<SegmentHits>> groups, HitProperty sortProp, BlackLabIndex index, int numThreads) {
-        List<Future<List<SegmentHits>>> pendingResults = new ArrayList<>();
-        ExecutorService executorService = index.blackLab().searchExecutorService(numThreads);
-        for (List<SegmentHits> group: groups) {
-            Future<List<SegmentHits>> future = executorService.submit(() ->
-                    group.stream().map(segment -> {
-                        // For each segment, sort the hits using the specified property.
-                        HitProperty sortPropSegment =
-                                sortProp.copyWith(segment.hits, segment.lrc, false);
-                        return new SegmentHits(segment.lrc, segment.hits.sorted(sortPropSegment));
-                    }).toList());
-            pendingResults.add(future);
-        }
-        return pendingResults;
+        // Now merge the results
+        return sortMerge(sortBy, pendingResults);
     }
 
     /**
      * Gather sorted segment hits and put them in the merge queue
      */
-    private static MergePriorityQueue sortGatherResults(int numberOfSegments, HitProperty sortProp,
+    private MergePriorityQueue sortGatherResults(int numberOfSegments, HitProperty sortProp,
             List<Future<List<SegmentHits>>> pendingResults) {
         MergePriorityQueue queue = new MergePriorityQueue(numberOfSegments);
         for (Future<List<SegmentHits>> future: pendingResults) {
@@ -801,6 +697,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // preserve interrupted status
+                parallel.cancelTasks(pendingResults);
                 throw new InterruptedSearch(e);
             } catch (ExecutionException e) {
                 throw new InterruptedSearch(e);
@@ -812,7 +709,14 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     /**
      * Merge the sorted segment hits
      */
-    private static HitsMutable sortMerge(MergePriorityQueue queue, HitsMutable mergedHits) {
+    private HitsMutable sortMerge(HitProperty sortProp, List<Future<List<SegmentHits>>> pendingResults) {
+        // Add the results to the priority queue for merging.
+        MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortProp, pendingResults);
+
+        // Now merge the sorted hits from each segment.
+        HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
+                numHitsGlobalView, numHitsGlobalView, false);
+
         while (!queue.top().done()) {
             SegmentInMerge segment = queue.top();
             EphemeralHit hit = new EphemeralHit();
