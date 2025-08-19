@@ -163,6 +163,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             // can happen if segment only contains index metadata doc
             return;
         }
+        segmentTerms.setTermsIntegrated(this, lrc.ord);
         TermsIntegratedSegment s = new TermsIntegratedSegment(BlackLabPostingsReader.forSegment(lrc),
                 luceneField, lrc.ord);
 
@@ -180,7 +181,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
             segmentToGlobal[t.id] = tii.globalTermId;
         }
         s.close();
-        segmentTerms.setTermsIntegrated(this, lrc.ord, segmentToGlobal);
+        segmentTerms.setTermsSegmentToGlobal(segmentToGlobal);
     }
 
     private int[] determineSort(TermInIndex[] terms, Comparator<TermInIndex> cmp) {

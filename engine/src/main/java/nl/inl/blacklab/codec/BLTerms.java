@@ -15,6 +15,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.forwardindex.TermsIntegrated;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -25,9 +26,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Thread-safe.
  */
 public class BLTerms extends org.apache.lucene.index.Terms {
-
-    /** A mapping from this segment's term ids to global term ids */
-    private int[] segmentToGlobal;
 
     public static BLTerms forSegment(LeafReaderContext lrc, String luceneField) {
         try {
@@ -46,11 +44,16 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** The Lucene terms object we're wrapping */
     private final org.apache.lucene.index.Terms terms;
 
+    private BlackLabIndex index;
+
     /** The global terms object */
     private TermsIntegrated termsIntegrated;
 
     /** Our segment number */
     private int ord;
+
+    /** A mapping from this segment's term ids to global term ids */
+    private int[] segmentToGlobal;
 
     private IndexInput _termIndexFile;
     private IndexInput _termsFile;
@@ -345,10 +348,16 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         };
     }
 
-    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord, int[] segmentToGlobal) {
-        this.termsIntegrated = termsIntegrated;
-        this.ord = ord;
-        this.segmentToGlobal = segmentToGlobal;
+    public void setIndex(BlackLabIndex index) {
+        this.index = index;
     }
 
+    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
+        this.termsIntegrated = termsIntegrated;
+        this.ord = ord;
+    }
+
+    public void setTermsSegmentToGlobal(int[] segmentToGlobal) {
+        this.segmentToGlobal = segmentToGlobal;
+    }
 }
