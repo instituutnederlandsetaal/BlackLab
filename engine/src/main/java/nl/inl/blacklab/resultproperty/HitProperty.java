@@ -22,10 +22,10 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    /** If we're a segment hit property, this will be set */
+    /** If our document and term ids are segment-local, this will be set */
     LeafReaderContext lrc = null;
 
-    /** If we're a global hit poperty, this will be > 0 */
+    /** What to add to docId to get a global doc id */
     int docBase = 0;
 
     /** Find the global doc id for a specific hit */

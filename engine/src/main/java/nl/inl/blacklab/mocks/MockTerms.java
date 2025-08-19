@@ -1,5 +1,10 @@
 package nl.inl.blacklab.mocks;
 
+import java.text.Collator;
+
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
+import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -26,6 +31,26 @@ public class MockTerms implements Terms {
     }
 
     @Override
+    public int indexOf(String word) {
+        for (int i = 0; i < numberOfTerms(); i++) {
+            if (words[i].equals(word)) {
+                return i;
+            }
+        }
+        return -1; // Not found
+    }
+
+    @Override
+    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+        Collator collator = Collators.getDefault().get(sensitivity);
+        for (int i = 0; i < numberOfTerms(); i++) {
+            if (collator.compare(term, words[i]) == 0) {
+                results.add(i);
+            }
+        }
+    }
+
+    @Override
     public int numberOfTerms() {
         return words.length;
     }
@@ -35,5 +60,4 @@ public class MockTerms implements Terms {
         //
         return id;
     }
-
 }

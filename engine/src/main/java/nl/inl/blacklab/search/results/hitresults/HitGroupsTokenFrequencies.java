@@ -20,6 +20,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
+import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
@@ -65,15 +66,8 @@ public class HitGroupsTokenFrequencies {
     /** Precalculated hashcode for group id, to save time while grouping and sorting. */
     private static class GroupIdHash {
         private final int[] tokenIds;
-        private final int[] tokenSortPositions;
 
-        /**
-         * The tokens as strings.
-         * <p>
-         * Set after merging per-segment results into global results.
-         * tokenIds and tokenSortPositions are null in this case.
-         */
-        private final String[] tokens;
+        private final int[] tokenSortPositions;
 
         private final PropertyValue[] metadataValues;
 
@@ -90,24 +84,8 @@ public class HitGroupsTokenFrequencies {
         public GroupIdHash(int[] tokenIds, int[] tokenSortPositions, PropertyValue[] metadataValues, int metadataValuesHash) {
             this.tokenIds = tokenIds;
             this.tokenSortPositions = tokenSortPositions;
-            this.tokens = null;
             this.metadataValues = metadataValues;
             hash = Arrays.hashCode(this.tokenSortPositions) ^ metadataValuesHash;
-        }
-
-        /**
-         * Construct the version with token strings.
-         *
-         * @param tokens token term for each token in the group id
-         * @param metadataValues relevant metadatavalues
-         * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
-         */
-        public GroupIdHash(String[] tokens, PropertyValue[] metadataValues, int metadataValuesHash) {
-            this.tokenIds = null;
-            this.tokenSortPositions = null;
-            this.tokens = tokens;
-            this.metadataValues = metadataValues;
-            hash = Arrays.hashCode(this.tokens) ^ metadataValuesHash;
         }
 
         @Override
@@ -123,36 +101,25 @@ public class HitGroupsTokenFrequencies {
                 return false;
             if (!Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues))
                 return false;
-            if (tokens != null) {
-                // String form
-                return Arrays.equals(tokens, ((GroupIdHash) obj).tokens);
-            } else {
-                // Segment sort order form
-                return Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions);
-            }
+            return Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions);
         }
 
-        /** Convert term ids to their string representation.
-         * Done when merging per-segment results into global results.
-         */
-        public GroupIdHash termIdsToStrings(LeafReaderContext lrc, List<AnnotInfo> hitProperties) {
-            if (tokens != null) {
-                // Already converted to strings
-                return this;
-            }
-            if (tokenIds == null || tokenSortPositions == null) {
-                throw new IllegalStateException("Cannot convert term ids to strings, no term ids available");
-            }
-            String[] tokenStrings = new String[tokenIds.length];
+        public GroupIdHash toGlobalTermIds(LeafReaderContext lrc, List<AnnotInfo> hitProperties) {
+            int[] globalTermIds = new int[tokenIds.length];
+            int[] globalSortPositions = new int[tokenIds.length];
             for (int i = 0; i < tokenIds.length; i++) {
-                String luceneFieldName = hitProperties.get(i).annotationForwardIndex.annotation().forwardIndexSensitivity().luceneField();
-                FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneFieldName);
-                int tokensSegmentTermId = tokenIds[i];
-                tokenStrings[i] = tokensSegmentTermId >= 0 ?
-                        forwardIndex.terms().get(tokensSegmentTermId) :
-                        null;
+                // Convert segment-local term ids to global term ids
+                // (this is necessary because the same term can have different ids in different segments)
+                AnnotInfo hitProp = hitProperties.get(i);
+                String luceneField = hitProp.getAnnotationForwardIndex().annotation().forwardIndexSensitivity()
+                        .luceneField();
+                Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
+                globalTermIds[i] = terms.toGlobalTermId(tokenIds[i]);
+                globalSortPositions[i] = terms.getGlobalTerms().idToSortPosition(globalTermIds[i],
+                        hitProp.getMatchSensitivity());
             }
-            return new GroupIdHash(tokenStrings, metadataValues, Arrays.hashCode(metadataValues));
+            return new GroupIdHash(globalTermIds, globalSortPositions,
+                    metadataValues, Arrays.hashCode(metadataValues));
         }
     }
 
@@ -518,7 +485,7 @@ public class HitGroupsTokenFrequencies {
                         // Merge occurrences in this doc with global occurrences
                         // (the group ids are converted to their string representation here)
                         occsInSegment.forEach(
-                                (groupId, occurrenceInSegment) -> globalOccurrences.compute(groupId.termIdsToStrings(lrc, hitProperties),
+                                (groupId, occurrenceInSegment) -> globalOccurrences.compute(groupId.toGlobalTermIds(lrc, hitProperties),
                                         (__, globalGroup) -> {
                                             if (globalGroup != null) {
                                                 // Merge local & global counts
@@ -544,7 +511,8 @@ public class HitGroupsTokenFrequencies {
                 groups = globalOccurrences.entrySet().parallelStream().map(e -> {
                     final long groupSizeHits = e.getValue().hits;
                     final int groupSizeDocs = e.getValue().docs;
-                    final String[] annotationValues = e.getKey().tokens;
+                    final int[] annotationValues = e.getKey().tokenIds;
+                    final int[] annotationSortValues = e.getKey().tokenSortPositions;
                     final PropertyValue[] metadataValues = e.getKey().metadataValues;
                     // allocate new - is not copied when moving into propertyvaluemultiple
                     final PropertyValue[] groupIdAsList = new PropertyValue[numAnnotations + numMetadataValues];
@@ -562,8 +530,10 @@ public class HitGroupsTokenFrequencies {
                             AnnotInfo annotInfo = hitProperties.get(indexInInput);
                             Annotation annot = annotInfo.getAnnotationForwardIndex().annotation();
                             MatchSensitivity sens = annotInfo.getMatchSensitivity();
+                            Terms terms = annotInfo.getAnnotationForwardIndex().terms();
                             groupIdAsList[indexInOutput++] = new PropertyValueContextWords(annot, sens,
-                                    new String[] {annotationValues[indexInInput]}, false);
+                                    terms, new int[] {annotationValues[indexInInput]},
+                                    new int[] {annotationSortValues[indexInInput]}, false);
                         }
                     }
 

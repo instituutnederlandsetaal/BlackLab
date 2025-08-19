@@ -12,7 +12,7 @@ import nl.inl.blacklab.codec.ForwardIndexField;
  * Implementations are not intended to be threadsafe, but to be used by a single
  * thread.
  */
-public class FieldForwardIndex {
+public class FieldForwardIndex implements AnnotForwardIndex {
 
     /** Our terms object */
     private Terms terms;
@@ -37,6 +37,7 @@ public class FieldForwardIndex {
      * @param ends ending token positions
      * @return snippets (with segment-local term ids)
      */
+    @Override
     public List<int[]> retrieveParts(int docId, int[] starts, int[] ends) {
         return forwardIndex.retrieveParts(field, docId, starts, ends);
     }
@@ -48,6 +49,7 @@ public class FieldForwardIndex {
      * @param end ending token positions
      * @return snippets (with segment-local term ids)
      */
+    @Override
     public int[] retrievePart(int docId, int start, int end) {
         return forwardIndex.retrievePart(field, docId, start, end);
     }
@@ -62,6 +64,7 @@ public class FieldForwardIndex {
      * @param docId segment-local docId of document to get length for
      * @return doc length in tokens (including the "extra closing token")
      */
+    @Override
     public long docLength(int docId) {
         return forwardIndex.docLength(field, docId);
     }
@@ -75,6 +78,7 @@ public class FieldForwardIndex {
      *
      * @return terms object for the given field
      */
+    @Override
     public Terms terms() {
         if (terms == null) {
             // cache it, we don't need new instance every time

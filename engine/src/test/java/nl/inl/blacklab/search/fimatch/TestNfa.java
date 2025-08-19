@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -66,6 +67,16 @@ public class TestNfa {
                         @Override
                         public int numberOfTerms() {
                             return 0;
+                        }
+
+                        @Override
+                        public int indexOf(String word) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+                            throw new UnsupportedOperationException();
                         }
                     };
                 }

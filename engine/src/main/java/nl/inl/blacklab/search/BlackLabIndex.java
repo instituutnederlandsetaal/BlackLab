@@ -18,6 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -63,6 +64,8 @@ public interface BlackLabIndex extends AutoCloseable {
 
     /** Get the strategy to use for indexing/searching relations. */
     RelationsStrategy getRelationsStrategy();
+
+    LeafReaderLookup getLeafReaderLookup();
 
     enum IndexType {
         EXTERNAL_FILES, // (NO LONGER SUPPORTED) classic index with external forward index, etc.
@@ -290,6 +293,10 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return forward index
      */
     ForwardIndex forwardIndex(AnnotatedField field);
+
+    default AnnotationForwardIndex forwardIndex(Annotation annotation) {
+        return forwardIndex(annotation.field()).get(annotation);
+    }
 
 
     

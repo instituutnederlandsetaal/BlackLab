@@ -3,6 +3,8 @@ package nl.inl.blacklab.forwardindex;
 import java.text.Collator;
 import java.util.Arrays;
 
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
 import gnu.trove.iterator.TIntObjectIterator;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import it.unimi.dsi.fastutil.BigArrays;
@@ -276,27 +278,27 @@ public abstract class TermsReaderAbstract implements Terms {
         termCharData.trim(); // clear extra space.
     }
 
-//    @Override
-//    public int indexOf(String term) {
-//        int groupOffset = getGroupOffset(term, sensitivePosition2GroupOffset, collatorSensitive);
-//        if (groupOffset == -1)
-//            return -1;
-//        // Return the first term in this group
-//        return groupTermIds[groupOffset + 1];
-//    }
-//
-//    @Override
-//    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-//        int groupOffset = getGroupOffset(term, sensitivity);
-//        if (groupOffset == -1) {
-//            results.add(-1);
-//            return;
-//        }
-//        int groupSize = groupTermIds[groupOffset];
-//        for (int i = 0; i < groupSize; ++i) {
-//            results.add(groupTermIds[groupOffset + 1 + i]);
-//        }
-//    }
+    @Override
+    public int indexOf(String term) {
+        int groupOffset = getGroupOffset(term, sensitivePosition2GroupOffset, collatorSensitive);
+        if (groupOffset == -1)
+            return -1;
+        // Return the first term in this group
+        return groupTermIds[groupOffset + 1];
+    }
+
+    @Override
+    public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+        int groupOffset = getGroupOffset(term, sensitivity);
+        if (groupOffset == -1) {
+            results.add(-1);
+            return;
+        }
+        int groupSize = groupTermIds[groupOffset];
+        for (int i = 0; i < groupSize; ++i) {
+            results.add(groupTermIds[groupOffset + 1 + i]);
+        }
+    }
 
     @Override
     public int numberOfTerms() {

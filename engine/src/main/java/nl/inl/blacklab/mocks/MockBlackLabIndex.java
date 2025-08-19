@@ -17,6 +17,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -298,6 +299,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
 
     @Override
     public RelationsStrategy getRelationsStrategy() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public LeafReaderLookup getLeafReaderLookup() {
         throw new UnsupportedOperationException();
     }
 }

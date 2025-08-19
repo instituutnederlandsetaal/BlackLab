@@ -282,7 +282,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         ensureResultsRead(index + 1);
         HitsStretch stretch = getHitsStretch(index);
         stretch.segmentHits().getEphemeral(stretch.globalToSegmentIndex(index), hit);
-        hit.segmentToGlobal(stretch.docBase);
+        hit.convertDocIdToGlobal(stretch.docBase);
     }
 
     @Override
@@ -356,7 +356,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         while (true) {
             // Add a hit from the current stretch to the sublist.
             currentStretch.segmentHits().getEphemeral(indexInSegment, h);
-            h.segmentToGlobal(currentStretch.docBase);
+            h.convertDocIdToGlobal(currentStretch.docBase);
             sublist.add(h);
             indexInSegment++;
 
@@ -412,7 +412,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                     currentStretch = stretchIterator.next();
                 }
                 currentStretch.segmentHits().getEphemeral(currentStretch.globalToSegmentIndex(globalIndex), hit);
-                hit.segmentToGlobal(currentStretch.docBase);
+                hit.convertDocIdToGlobal(currentStretch.docBase);
                 return hit;
             }
         };
@@ -726,7 +726,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             SegmentInMerge segment = queue.top();
             EphemeralHit hit = new EphemeralHit();
             segment.getHitAndAdvance(hit);
-            hit.segmentToGlobal(segment.docBase);
+            hit.convertDocIdToGlobal(segment.docBase);
             mergedHits.add(hit);
             queue.updateTop(); // re-order the queue after taking a hit
         }
@@ -742,7 +742,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                 numHitsGlobalView, numHitsGlobalView, false);
         for (Map.Entry<LeafReaderContext, HitsMutable> segmentHits: hitsPerSegment.entrySet()) {
             for (EphemeralHit hit: segmentHits.getValue()) {
-                hit.segmentToGlobal(segmentHits.getKey().docBase);
+                hit.convertDocIdToGlobal(segmentHits.getKey().docBase);
                 mergedHits.add(hit);
             }
         }

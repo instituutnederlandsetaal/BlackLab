@@ -133,9 +133,14 @@ public abstract class HitsAbstract implements Hits {
 
         int hitIndex = 0;
         for (EphemeralHit hit: hits) {
-            hit.segmentToGlobal(lrc == null ? 0 : lrc.docBase);
             PropertyValue identity = groupBy.get(hitIndex);
-            identity = identity.toGlobal();
+            if (lrc != null) {
+                // This is a segment hit. Convert identity and doc id to global.
+                // (identity because it may be term ids, which differ between segment and global;
+                //  doc id because we have to add docBase)
+                identity = identity.toGlobal();
+                hit.convertDocIdToGlobal(lrc.docBase);
+            }
             Group group = groups.get(identity);
             if (group == null) {
                 if (groups.size() >= HitGroups.MAX_NUMBER_OF_GROUPS)

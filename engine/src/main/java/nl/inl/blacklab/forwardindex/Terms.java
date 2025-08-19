@@ -3,6 +3,8 @@ package nl.inl.blacklab.forwardindex;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -88,5 +90,26 @@ public interface Terms {
             values[i] = get(termIds[i]);
         }
         return values;
+    }
+
+    int indexOf(String word);
+
+    void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity);
+
+    /**
+     * Convert an array of segment term ids to global term ids.
+     *
+     * @param segmentTermIds segment term ids
+     */
+    default void convertToGlobalTermIds(int[] segmentTermIds) {
+        throw new UnsupportedOperationException();
+    }
+
+    default int toGlobalTermId(int tokenId) {
+        throw new UnsupportedOperationException();
+    }
+
+    default Terms getGlobalTerms() {
+        throw new UnsupportedOperationException();
     }
 }

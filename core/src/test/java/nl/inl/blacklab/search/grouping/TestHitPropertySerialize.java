@@ -26,7 +26,7 @@ public class TestHitPropertySerialize {
 
     private static final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
-    private static final MockTerms terms = new MockTerms();
+    private static final MockTerms terms = new MockTerms("aap", "noot", "mies");
 
     private static final Hits hits = Hits.empty(mockIndex.mainAnnotatedField(), null);
 
@@ -54,7 +54,7 @@ public class TestHitPropertySerialize {
         String exp;
 
         val1 = new PropertyValueContextWords(lemmaAnnotation, MatchSensitivity.SENSITIVE,
-                new String[] { "mies" }, false);
+                terms, new int[] { terms.indexOf("mies") }, null, false);
         exp = "cws:contents%lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());

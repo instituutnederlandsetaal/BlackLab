@@ -6,8 +6,10 @@ import java.util.List;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
  * Precalculated hashcode for group id, to save time while grouping and sorting.
@@ -20,14 +22,6 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
 
     /** Tokens as (segment-local) sort positions */
     private final int[] tokenSortPositions;
-
-    /**
-     * The tokens as strings.
-     * <p>
-     * Set after merging per-segment results into global results.
-     * tokenIds and tokenSortPositions are null in this case.
-     */
-    private final String[] tokens;
 
     private final String[] metadataValues;
 
@@ -43,29 +37,8 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
         this.ngramSize = ngramSize;
         this.tokenIds = tokenIds;
         this.tokenSortPositions = tokenSortPositions;
-        this.tokens = null;
         this.metadataValues = metadataValues;
         hash = Arrays.hashCode(tokenSortPositions) ^ metadataValuesHash;
-    }
-
-    /**
-     * Construct the version with token strings.
-     *
-     * @param tokens token term for each token in the group id
-     * @param metadataValues relevant metadatavalues
-     * @param metadataValuesHash since many tokens per document, precalculate md hash for that thing
-     */
-    public GroupIdHash(int ngramSize, String[] tokens, String[] metadataValues, int metadataValuesHash) {
-        this.ngramSize = ngramSize;
-        this.tokenIds = null;
-        this.tokenSortPositions = null;
-        this.tokens = tokens;
-        this.metadataValues = metadataValues;
-        hash = Arrays.hashCode(this.tokens) ^ metadataValuesHash;
-    }
-
-    public String[] getTokens() {
-        return tokens;
     }
 
     public String[] getMetadataValues() {
@@ -85,27 +58,14 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
             return false;
         if (!Arrays.deepEquals(((GroupIdHash) obj).metadataValues, this.metadataValues))
             return false;
-        if (tokens != null) {
-            // String form
-            return Arrays.equals(tokens, ((GroupIdHash) obj).tokens);
-        } else {
-            // Segment sort order form
-            return Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions);
-        }
+        return Arrays.equals(((GroupIdHash) obj).tokenSortPositions, this.tokenSortPositions);
     }
 
     @Override
     public int compareTo(GroupIdHash other) {
         int cmp = Integer.compare(hash, other.hash);
-        if (cmp == 0) {
-            if (tokens != null) {
-                // String form
-                cmp = Arrays.compare(tokens, other.tokens);
-            } else {
-                // Segment sort order form
-                cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
-            }
-        }
+        if (cmp == 0)
+            cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
         if (cmp == 0)
             cmp = Arrays.compare(metadataValues, other.metadataValues);
         return cmp;
@@ -115,26 +75,25 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
         return ngramSize;
     }
 
-    /** Convert term ids to their string representation.
-     * Done when merging per-segment results into global results.
-     */
-    public GroupIdHash termIdsToStrings(LeafReaderContext lrc, List<Annotation> hitProperties) {
-        if (tokens != null) {
-            // Already converted to strings
-            return this;
-        }
-        if (tokenIds == null || tokenSortPositions == null) {
-            throw new IllegalStateException("Cannot convert term ids to strings, no term ids available");
-        }
-        String[] tokenStrings = new String[tokenIds.length];
+    public int[] getTokenIds() {
+        return tokenIds;
+    }
+
+    public GroupIdHash toGlobalTermIds(LeafReaderContext lrc, List<Annotation> hitProperties) {
+        int[] globalTermIds = new int[tokenIds.length];
+        int[] globalSortPositions = new int[tokenIds.length];
         for (int i = 0; i < tokenIds.length; i++) {
-            String luceneFieldName = hitProperties.get(i).forwardIndexSensitivity().luceneField();
-            FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneFieldName);
-            int tokensSegmentTermId = tokenIds[i];
-            tokenStrings[i] = tokensSegmentTermId >= 0 ?
-                    forwardIndex.terms().get(tokensSegmentTermId) :
-                    null;
+            // Convert segment-local term ids to global term ids
+            // (this is necessary because the same term can have different ids in different segments)
+            Annotation hitProp = hitProperties.get(i);
+            String luceneField = hitProp.forwardIndexSensitivity()
+                    .luceneField();
+            Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
+            globalTermIds[i] = terms.toGlobalTermId(tokenIds[i]);
+            globalSortPositions[i] = terms.getGlobalTerms().idToSortPosition(globalTermIds[i],
+                    MatchSensitivity.INSENSITIVE);
         }
-        return new GroupIdHash(ngramSize, tokenStrings, metadataValues, Arrays.hashCode(metadataValues));
+        return new GroupIdHash(ngramSize, globalTermIds, globalSortPositions,
+                metadataValues, Arrays.hashCode(metadataValues));
     }
 }

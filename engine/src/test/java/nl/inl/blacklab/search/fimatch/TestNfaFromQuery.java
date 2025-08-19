@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -85,11 +86,17 @@ public class TestNfaFromQuery {
                         public int numberOfTerms() {
                             return terms.size();
                         }
-                    };
-                }
 
-                public String getTermString(int annotIndex, int segmentTermId) {
-                    return MockForwardIndexAccessor.this.getTermString(annotIndex, segmentTermId);
+                        @Override
+                        public int indexOf(String word) {
+                            throw new UnsupportedOperationException();
+                        }
+
+                        @Override
+                        public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+                            throw new UnsupportedOperationException();
+                        }
+                    };
                 }
 
                 /**

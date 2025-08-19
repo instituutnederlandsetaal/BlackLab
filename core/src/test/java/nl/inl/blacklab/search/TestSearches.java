@@ -20,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
@@ -557,8 +558,9 @@ public class TestSearches {
         BlackLabIndex index = testIndex.index();
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        String[] words = { "noot", "aap", "aap" };
-        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, words, false);
+        Terms terms = index.forwardIndex(annotation).terms();
+        int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
+        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words, null, false);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
     }
 
@@ -570,8 +572,9 @@ public class TestSearches {
         BlackLabIndex index = testIndex.index();
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
-        String[] words = { "noot", "aap", "aap" };
-        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, words, false);
+        Terms terms = index.forwardIndex(annotation).terms();
+        int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
+        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words, null, false);
         // Query below will be rewritten using POSFILTER(ANYTOKEN(1,INF), NOTCONTAINING, 'noot');
         // there used to be an issue with determining doc length that messed this up
         Assert.assertEquals(expected, testIndex.findConc("'noot'+ [word != 'noot']+ group:('aap')+", prop, value));

@@ -71,7 +71,7 @@ public class EphemeralHit implements Hit {
      *
      * @param docBase the document base to add
      */
-    public void segmentToGlobal(int docBase) {
+    public void convertDocIdToGlobal(int docBase) {
         if (doc_ != -1)
             doc_ += docBase;
     }

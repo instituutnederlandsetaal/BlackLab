@@ -8,6 +8,7 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.RandomAccessInput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
+import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
@@ -24,6 +25,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  * Thread-safe.
  */
 public class BLTerms extends org.apache.lucene.index.Terms {
+
+    /** A mapping from this segment's term ids to global term ids */
+    private int[] segmentToGlobal;
 
     public static BLTerms forSegment(LeafReaderContext lrc, String luceneField) {
         try {
@@ -221,6 +225,25 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             }
 
             @Override
+            public int indexOf(String word) {
+                for (int i = 0; i < numberOfTerms; i++) {
+                    if (compareTerms(get(i), word, MatchSensitivity.SENSITIVE) == 0) {
+                        return i;
+                    }
+                }
+                return Constants.NO_TERM; // Not found
+            }
+
+            @Override
+            public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
+                for (int i = 0; i < numberOfTerms; i++) {
+                    if (compareTerms(get(i), term, sensitivity) == 0) {
+                        results.add(i);
+                    }
+                }
+            }
+
+            @Override
             public int idToSortPosition(int id, MatchSensitivity sensitivity) {
                 if (id == Constants.NO_TERM)
                     return Constants.NO_TERM;
@@ -296,15 +319,36 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             }
 
             @Override
+            public void convertToGlobalTermIds(int[] segmentTermIds) {
+                for (int i = 0; i < segmentTermIds.length; i++) {
+                    if (segmentTermIds[i] != Constants.NO_TERM)
+                        segmentTermIds[i] = segmentToGlobal[segmentTermIds[i]];
+                }
+            }
+
+            @Override
+            public int toGlobalTermId(int segmentTermId) {
+                if (segmentTermId != Constants.NO_TERM)
+                    return segmentToGlobal[segmentTermId];
+                return Constants.NO_TERM;
+            }
+
+            @Override
+            public Terms getGlobalTerms() {
+                return termsIntegrated;
+            }
+
+            @Override
             public int numberOfTerms() {
                 return numberOfTerms;
             }
         };
     }
 
-    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
+    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord, int[] segmentToGlobal) {
         this.termsIntegrated = termsIntegrated;
         this.ord = ord;
+        this.segmentToGlobal = segmentToGlobal;
     }
 
 }

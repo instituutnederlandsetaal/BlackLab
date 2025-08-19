@@ -18,6 +18,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.QuoteMode;
 
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -35,19 +36,20 @@ class FreqListOutputTsv implements FreqListOutput {
                     .withEscape('\\')
                     .withQuoteMode(QuoteMode.NONE);
 
-    static void writeGroupRecord(MatchSensitivity[] sensitivity, CSVPrinter csv, GroupIdHash groupId, int hits) throws IOException {
+    static void writeGroupRecord(MatchSensitivity[] sensitivity, Terms[] terms, CSVPrinter csv, GroupIdHash groupId, int hits) throws IOException {
         List<String> record = new ArrayList<>();
         // - annotation values
-        String[] tokens = groupId.getTokens();
+        int[] tokenIds = groupId.getTokenIds();
         // for each annotation construct a string for the ngram
         int ngramSize = groupId.getNgramSize();
-        for (int i = 0, tokenArrIndex = 0; tokenArrIndex < tokens.length; i++, tokenArrIndex += ngramSize) {
+        for (int i = 0, tokenArrIndex = 0; tokenArrIndex < tokenIds.length; i++, tokenArrIndex += ngramSize) {
             // get respective sensitivity and term index for the annotation
             MatchSensitivity matchSensitivity = sensitivity == null ? MatchSensitivity.INSENSITIVE : sensitivity[i];
+            Terms termIndex = terms[i]; // contains id to string mapping
             // map token int ids to their string values
             String[] tokenList = new String[ngramSize];
             for (int j = 0; j < ngramSize; j++) {
-                tokenList[j] = matchSensitivity.desensitize(tokens[tokenArrIndex + j]);
+                tokenList[j] = matchSensitivity.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
             }
             // join with a space
             String token = String.join(" ", tokenList);
@@ -119,12 +121,15 @@ class FreqListOutputTsv implements FreqListOutput {
                 stream = new GZIPOutputStream(stream);
             try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
                  CSVPrinter printer = new CSVPrinter(out, TAB_SEPARATED_FORMAT)) {
+                Terms[] terms = annotationNames.stream()
+                        .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                        .toArray(Terms[]::new);
                 MatchSensitivity[] sensitivity = new MatchSensitivity[annotationNames.size()];
                 Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
                 for (Map.Entry<GroupIdHash,
                         OccurrenceCounts> e : occurrences.entrySet()) {
                     OccurrenceCounts occ = e.getValue();
-                    writeGroupRecord(sensitivity, printer, e.getKey(), occ.hits);
+                    writeGroupRecord(sensitivity, terms, printer, e.getKey(), occ.hits);
                 }
             }
             return outputFile;

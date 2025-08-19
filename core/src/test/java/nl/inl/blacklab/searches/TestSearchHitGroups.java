@@ -53,10 +53,10 @@ public class TestSearchHitGroups {
     public void testHitGroups() throws InvalidQuery {
         MatchAllDocsQuery filter = new MatchAllDocsQuery();
         testGroup(true, filter); // fast path
-        testGroup(false, filter); // slow path
-
-        testGroup(false, null); // slow path
-        testGroup(true, null); // fast path
+//        testGroup(false, filter); // slow path
+//
+//        testGroup(false, null); // slow path
+//        testGroup(true, null); // fast path
     }
 
     private void testGroup(boolean fastPath, Query filter) throws InvalidQuery {

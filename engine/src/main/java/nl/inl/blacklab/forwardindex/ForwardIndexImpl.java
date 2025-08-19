@@ -110,7 +110,7 @@ public class ForwardIndexImpl implements ForwardIndex {
             afi = fis.get(annotation);
         }
         if (afi == null) {
-            afi = AnnotationForwardIndexImpl.open(this, index, annotation, index.collator());
+            afi = AnnotationForwardIndexImpl.open(index, annotation);
             add(annotation, afi);
         }
         return afi;

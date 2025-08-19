@@ -1,11 +1,11 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.text.Collator;
+import java.util.List;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -29,12 +29,13 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
      * @param collator collator to use
      * @return forward index
      */
-    public static AnnotationForwardIndex open(ForwardIndex forwardIndex, BlackLabIndex index, Annotation annotation, Collator collator) {
+    public static AnnotationForwardIndex open(BlackLabIndex index, Annotation annotation) {
         if (!annotation.hasForwardIndex())
             throw new IllegalArgumentException("Annotation doesn't have a forward index: " + annotation);
 
-        Collators collators = new Collators(collator);
-        return new AnnotationForwardIndexImpl(index, annotation, collators);
+        Collators collators = new Collators(index.collator());
+        LeafReaderLookup leafReaderLookup = index.getLeafReaderLookup();
+        return new AnnotationForwardIndexImpl(index, annotation, collators, leafReaderLookup);
     }
 
     private final IndexReader indexReader;
@@ -51,7 +52,10 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
 
     private boolean initialized = false;
 
-    public AnnotationForwardIndexImpl(BlackLabIndex index, Annotation annotation, Collators collators) {
+    /** Index of segments by their doc base (the number to add to get global docId) */
+    private final LeafReaderLookup leafReaderLookup;
+
+    public AnnotationForwardIndexImpl(BlackLabIndex index, Annotation annotation, Collators collators, LeafReaderLookup leafReaderLookup) {
         super();
         this.indexReader = index.reader();
         this.annotation = annotation;
@@ -61,6 +65,9 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
                 annotation.sensitivity(MatchSensitivity.SENSITIVE) :
                 annotation.sensitivity(MatchSensitivity.INSENSITIVE);
         this.luceneField = annotSens.luceneField();
+
+        // Ensure quick lookup of the segment we need
+        this.leafReaderLookup = leafReaderLookup;
     }
 
     @Override
@@ -79,14 +86,37 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     }
 
     @Override
-    public int numberOfTerms() {
-        int numberOfTerms = 0;
-        for (LeafReaderContext lrc: indexReader.leaves()) {
-            Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
-            // FIXME: INCORRECT, we're counting terms multiple times this way.
-            numberOfTerms += terms.numberOfTerms();
-        }
-        return numberOfTerms;
+    public Terms terms() {
+        initialize();
+        return terms;
+    }
+
+    @Override
+    public List<int[]> retrieveParts(int docId, int[] start, int[] end) {
+        initialize();
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+        List<int[]> parts = fi.retrieveParts(docId - lrc.docBase, start, end);
+        Terms segmentTerms = fi.terms();
+        parts.stream().forEach(segmentTerms::convertToGlobalTermIds);
+        return parts;
+    }
+
+    @Override
+    public int[] retrievePart(int docId, int start, int end) {
+        initialize();
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+        int[] part = fi.retrievePart(docId - lrc.docBase, start, end);
+        fi.terms().convertToGlobalTermIds(part);
+        return part;
+    }
+
+    @Override
+    public long docLength(int docId) {
+        LeafReaderContext lrc = leafReaderLookup.forId(docId);
+        FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+        return (int)fi.docLength(docId - lrc.docBase);
     }
 
     @Override
@@ -94,8 +124,18 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
         return annotation;
     }
 
+//    @Override
+//    public Collators collators() {
+//        return collators;
+//    }
+//
+//    @Override
+//    public int numDocs() {
+//        return indexReader.numDocs();
+//    }
+
     @Override
     public String toString() {
-        return "AnnotationForwardIndexIntegrated (" + this.luceneField + ")";
+        return getClass().getSimpleName() + "(" + this.luceneField + ")";
     }
 }

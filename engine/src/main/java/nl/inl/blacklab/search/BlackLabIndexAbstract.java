@@ -334,6 +334,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return indexMetadata;
     }
 
+    public LeafReaderLookup getLeafReaderLookup() {
+        return leafReaderLookup;
+    }
+
     @Override
     public void forEachDocument(boolean parallel, DocTask task) {
         List<LeafReaderContext> leaves = reader.leaves();

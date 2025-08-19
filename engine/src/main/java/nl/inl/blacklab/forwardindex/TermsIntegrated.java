@@ -71,11 +71,10 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     private final String luceneField;
 
-    /** Per segment (by ord number): the translation of that segment's term ids to
+    /** Per segment (by term object): the translation of that segment's term ids to
      *  global term ids.
-     *  Hopefully eventually no longer needed.
      */
-    private final Map<Integer, int[]> segmentToGlobalTermIds = new HashMap<>();
+    private final Map<BLTerms, int[]> segmentToGlobalTermIds = new HashMap<>();
 
     public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField)
             throws InterruptedException {
@@ -164,12 +163,11 @@ public class TermsIntegrated extends TermsReaderAbstract {
             // can happen if segment only contains index metadata doc
             return;
         }
-        segmentTerms.setTermsIntegrated(this, lrc.ord);
         TermsIntegratedSegment s = new TermsIntegratedSegment(BlackLabPostingsReader.forSegment(lrc),
                 luceneField, lrc.ord);
 
         Iterator<TermsIntegratedSegment.TermInSegment> it = s.iterator();
-        int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(s.ord(), __ -> new int[s.size()]);
+        int[] segmentToGlobal = segmentToGlobalTermIds.computeIfAbsent(segmentTerms, __ -> new int[s.size()]);
         while (it.hasNext()) {
             // Make sure this can be interrupted if e.g. a commandline utility completes
             // before this initialization is finished.
@@ -181,8 +179,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
             // Remember the mapping from segment id to global id
             segmentToGlobal[t.id] = tii.globalTermId;
         }
-
         s.close();
+        segmentTerms.setTermsIntegrated(this, lrc.ord, segmentToGlobal);
     }
 
     private int[] determineSort(TermInIndex[] terms, Comparator<TermInIndex> cmp) {
@@ -253,4 +251,18 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return 0;
     }
 
+    @Override
+    public void convertToGlobalTermIds(int[] segmentTermIds) {
+        throw new UnsupportedOperationException("Don't call toGlobalTermIds on global Terms object");
+    }
+
+    @Override
+    public int toGlobalTermId(int tokenId) {
+        throw new UnsupportedOperationException("Don't call toGlobalTermId on global Terms object");
+    }
+
+    @Override
+    public Terms getGlobalTerms() {
+        throw new UnsupportedOperationException("Don't call getGlobalTerms on global Terms object");
+    }
 }

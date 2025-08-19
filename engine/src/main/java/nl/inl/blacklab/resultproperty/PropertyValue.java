@@ -112,16 +112,7 @@ public abstract class PropertyValue implements Comparable<Object> {
     
     public abstract Object value();
 
-    /**
-     * Convert a segment-local value to a global value.
-     *
-     * This only changes anything for PropertyValueContextWords.
-     * Segments use term ids, but when we combine segment results,
-     * we need string values.
-     *
-     * @return global variant of this value, or this if no change is needed
-     */
     public PropertyValue toGlobal() {
-        return this; // by default, we don't change anything
+        return this;
     }
 }

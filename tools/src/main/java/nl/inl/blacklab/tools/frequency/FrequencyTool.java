@@ -37,6 +37,7 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
@@ -49,8 +50,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.util.LuceneUtil;
@@ -184,6 +185,9 @@ public class FrequencyTool {
 
         // Use specifically optimized CalcTokenFrequencies
         List<String> annotationNames = freqList.getAnnotations();
+        Terms[] terms = annotationNames.stream()
+                .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                .toArray(Terms[]::new);
         List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation).toList();
         List<String> metadataFields = freqList.getMetadataFields();
         final Map<LeafReaderContext, List<Integer>> docIds = getDocIds(index, freqList);
@@ -221,7 +225,7 @@ public class FrequencyTool {
                     // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
                     //       because we use ConcurrentSkipListMap, which may call the remapping function
                     //       multiple times if there's potential concurrency issues.
-                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.termIdsToStrings(lrc, annotations), (__, groupSize) -> {
+                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.toGlobalTermIds(lrc, annotations), (__, groupSize) -> {
                         if (groupSize == null)
                             return occ; // reusing occ here is okay because it doesn't change on subsequent calls
                         else
@@ -230,7 +234,7 @@ public class FrequencyTool {
                 } else {
                     // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
                     // because our remapping function will only be called once.
-                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.termIdsToStrings(lrc, annotations), (__, groupSize) -> {
+                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.toGlobalTermIds(lrc, annotations), (__, groupSize) -> {
                         // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
                         //       because we use ConcurrentSkipListMap, which may call the remapping function
                         //       multiple times if there's potential concurrency issues.
@@ -263,7 +267,7 @@ public class FrequencyTool {
                         chunkFiles.add(chunkFile);
                     } else {
                         // Write separate TSV file per chunk; don't merge at the end
-                        writeTsvFile(chunkFile, sorted);
+                        writeTsvFile(chunkFile, sorted, terms);
                     }
                     globalOccurrences.clear();
                 }
@@ -277,7 +281,7 @@ public class FrequencyTool {
             MatchSensitivity[] sensitivity = new MatchSensitivity[annotationNames.size()];
             Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);
             mergeChunkFiles(chunkFiles, outputDir, reportName, outputType == FreqListOutput.Type.TSV_GZIP,
-                    sensitivity, config.isCompressTempFiles());
+                    terms, sensitivity, config.isCompressTempFiles());
 
             // Remove chunk files
             for (File chunkFile: chunkFiles) {
@@ -370,7 +374,7 @@ public class FrequencyTool {
         }
     }
 
-    private static void writeTsvFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences) {
+    private static void writeTsvFile(File chunkFile, Map<GroupIdHash, OccurrenceCounts> occurrences, Terms[] terms) {
         boolean compress = true;
         try (FileOutputStream fileOutputStream = new FileOutputStream(chunkFile)) {
             OutputStream outputStream = compress ? new GZIPOutputStream(fileOutputStream) : fileOutputStream;
@@ -380,7 +384,7 @@ public class FrequencyTool {
                     for (Map.Entry<GroupIdHash, OccurrenceCounts> entry: occurrences.entrySet()) {
                         GroupIdHash key = entry.getKey();
                         OccurrenceCounts value = entry.getValue();
-                        FreqListOutputTsv.writeGroupRecord(null, csv, key, value.hits);
+                        FreqListOutputTsv.writeGroupRecord(null, terms, csv, key, value.hits);
                     }
                 }
             } finally {
@@ -395,7 +399,7 @@ public class FrequencyTool {
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.
     // This takes very little memory even if the final output file is huge.
     private static void mergeChunkFiles(List<File> chunkFiles, File outputDir, String reportName, boolean gzip,
-            MatchSensitivity[] sensitivity, boolean chunksCompressed) {
+            Terms[] terms, MatchSensitivity[] sensitivity, boolean chunksCompressed) {
         File outputFile = new File(outputDir, reportName + ".tsv" + (gzip ? ".gz" : ""));
         System.out.println("  Merging " + chunkFiles.size() + " chunk files to produce " + outputFile);
         try (OutputStream outputStream = new FileOutputStream(outputFile)) {
@@ -464,7 +468,7 @@ public class FrequencyTool {
 
                         // Finally, write the merged group to the output file.
                         if (nextGroupToMerge != null)
-                            FreqListOutputTsv.writeGroupRecord(sensitivity, csv, nextGroupToMerge, hits);
+                            FreqListOutputTsv.writeGroupRecord(sensitivity, terms, csv, nextGroupToMerge, hits);
                     }
 
                 } catch (ClassNotFoundException e) {

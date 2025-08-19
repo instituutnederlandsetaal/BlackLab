@@ -753,7 +753,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             CorpusSize.Count fieldCount = countPerField.get(field.name());
                             // Add up token counts for all the documents
                             Annotation annot = field.mainAnnotation();
-                            String luceneField = index.forwardIndex(field).get(annot).annotation()
+                            String luceneField = annot
                                     .forwardIndexSensitivity().luceneField();
                             FieldForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                             int docLength = (int) fi.docLength(segmentDocId);
