@@ -14,7 +14,8 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.forwardindex.TermsIntegrated;
+import nl.inl.blacklab.forwardindex.TermsIntegratedRef;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -47,10 +48,10 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     private BlackLabIndex index;
 
     /** The global terms object */
-    private TermsIntegrated termsIntegrated;
+    private TermsIntegratedRef globalTermsRef;
 
-    /** Our segment number */
-    private int ord;
+//    /** Our segment number */
+//    private int ord;
 
     /** A mapping from this segment's term ids to global term ids */
     private int[] segmentToGlobal;
@@ -59,13 +60,33 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     private IndexInput _termsFile;
     private IndexInput _termOrderFile;
 
-    public BLTerms(ForwardIndexField forwardIndexField, Collators collators, org.apache.lucene.index.Terms terms, BlackLabPostingsReader postingsReader) throws IOException {
+    public BLTerms(ForwardIndexField forwardIndexField, Collators collators, org.apache.lucene.index.Terms terms,
+            BlackLabPostingsReader postingsReader,
+            TermsIntegratedRef globalTermsRef) throws IOException {
         this.forwardIndexField = forwardIndexField;
         this.collators = collators;
         this.terms = terms;
+        this.globalTermsRef = globalTermsRef;
         this._termIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
         this._termsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMS_EXT);
         this._termOrderFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMORDER_EXT);
+    }
+
+    public static BLTerms get(BlackLabPostingsReader postingsReader, String fieldName, ForwardIndexField field) {
+        try {
+            org.apache.lucene.index.Terms delegateTerms = postingsReader.delegateFieldsProducer.terms(fieldName);
+            if (delegateTerms != null) {
+                // Use state.directory to find the correct TermsIntegrated
+                TermsIntegratedRef globalTermsRef = field == null ? null :
+                        TermsIntegratedRef.get(postingsReader.state.directory, fieldName);
+
+                Collators collators = BLFieldTypeLucene.getFieldCollators(postingsReader.state.fieldInfos.fieldInfo(fieldName));
+                return new BLTerms(field, collators, delegateTerms, postingsReader, globalTermsRef);
+            }
+            return null;
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
     private synchronized IndexInput getCloneOfTermIndexFile() {
@@ -338,7 +359,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public Terms getGlobalTerms() {
-                return termsIntegrated;
+                return globalTermsRef.get();
             }
 
             @Override
@@ -352,10 +373,10 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         this.index = index;
     }
 
-    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
-        this.termsIntegrated = termsIntegrated;
-        this.ord = ord;
-    }
+//    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
+//        this.termsIntegrated = termsIntegrated;
+//        this.ord = ord;
+//    }
 
     public void setTermsSegmentToGlobal(int[] segmentToGlobal) {
         this.segmentToGlobal = segmentToGlobal;

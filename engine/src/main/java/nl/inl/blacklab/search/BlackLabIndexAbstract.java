@@ -46,6 +46,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.TermsIntegratedRef;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -596,6 +597,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         analyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
     }
 
+    protected Directory getIndexDirectory() {
+        return ((DirectoryReader) reader()).directory();
+    }
+
     @Override
     public void close() {
         synchronized(this) {
@@ -604,6 +609,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             closed = true;
         }
         try {
+            TermsIntegratedRef.remove(getIndexDirectory());
             blackLab.removeIndex(this);
             if (shouldCloseIndex) {
                 reader.close();

@@ -12,20 +12,16 @@ import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.codecs.FieldsProducer;
 import org.apache.lucene.codecs.PostingsFormat;
 import org.apache.lucene.index.CodecReader;
-import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexFileNames;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.SegmentReadState;
-import org.apache.lucene.index.Terms;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
-import nl.inl.blacklab.index.BLFieldTypeLucene;
 
 public abstract class BlackLabPostingsReader extends FieldsProducer {
 
@@ -140,21 +136,16 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
 
     @Override
     public BLTerms terms(String field) {
-        FieldInfo fieldInfo = this.state.fieldInfos.fieldInfo(field);
-        if (fieldInfo == null) {
-            // Field does not exist in this segment
-            return null;
-        }
         synchronized (termsPerField) {
             BLTerms terms = termsPerField.get(field);
             if (terms == null) {
-                try {
-                    Terms delegateTerms = delegateFieldsProducer.terms(field);
-                    Collators collators = BLFieldTypeLucene.getFieldCollators(fieldInfo);
-                    ForwardIndexField forwardIndexField = forwardIndex.getForwardIndexField(field);
-                    terms = delegateTerms == null ? null : new BLTerms(forwardIndexField, collators, delegateTerms, this);
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
+                ForwardIndexField forwardIndexField = forwardIndex.getForwardIndexField(field);
+                if (forwardIndexField == null) {
+                    // No forward index. We'll create the object there.
+                    terms = BLTerms.get(this, field, null);
+                } else {
+                    // Let ForwardIndexField manage the BLTerms object.
+                    terms = forwardIndexField.getTerms(this);
                 }
                 termsPerField.put(field, terms);
             }

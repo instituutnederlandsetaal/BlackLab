@@ -8,14 +8,17 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
+import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.util.BlockTimer;
 
@@ -28,6 +31,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
     private static final Comparator<TermInIndex> CMP_TERM_SENSITIVE = Comparator.comparing(a -> a.ckSensitive);
 
     private static final Comparator<TermInIndex> CMP_TERM_INSENSITIVE = Comparator.comparing(a -> a.ckInsensitive);
+
+    private boolean initialized = false;
 
     /** Information about a term in the index, and the sort positions in each segment
      *  it occurs in. We'll use this to speed up comparisons where possible (comparing
@@ -67,8 +72,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
 
     }
 
-    private IndexReader indexReader;
-
+    /** Our lucene field */
     private final String luceneField;
 
     /** Per segment (by term object): the translation of that segment's term ids to
@@ -76,18 +80,29 @@ public class TermsIntegrated extends TermsReaderAbstract {
      */
     private final Map<BLTerms, int[]> segmentToGlobalTermIds = new HashMap<>();
 
-    public TermsIntegrated(Collators collators, IndexReader indexReader, String luceneField)
+    public TermsIntegrated(String luceneField)
             throws InterruptedException {
-        super(collators);
+        super();
+        this.luceneField = luceneField;
+        //intialize(indexReader);  // needs to be called as soon as we have an IndexReader
+    }
+
+    public synchronized void initialize(IndexReader indexReader) throws InterruptedException {
+        if (initialized)
+            return;
+        initialized = true;
+
+        FieldInfo fi = indexReader.leaves().stream().map(lrc -> lrc.reader().getFieldInfos()
+                .fieldInfo(luceneField)).filter(Objects::nonNull).findFirst().orElseThrow();
+        Collators collators = BLFieldTypeLucene.getFieldCollators(fi);
+        setCollators(collators);
 
         try (BlockTimer bt = BlockTimer.create(LOG_TIMINGS, "Determine " + luceneField + " terms list")) {
-            this.indexReader = indexReader;
-            this.luceneField = luceneField;
 
             // Read the terms from all the different segments and determine global term ids
             Pair<TermInIndex[], String[]> termAndStrings;
             try (BlockTimer bt2 = BlockTimer.create(LOG_TIMINGS, luceneField + ": readTermsFromIndex")) {
-                termAndStrings = readTermsFromIndex();
+                termAndStrings = readTermsFromIndex(indexReader, luceneField);
             }
             TermInIndex[] terms = termAndStrings.getLeft();
             String[] termStrings = termAndStrings.getRight();
@@ -136,19 +151,18 @@ public class TermsIntegrated extends TermsReaderAbstract {
             }
 
             // clear temporary variables
-            this.indexReader = null;
         }
     }
 
-    private Pair<TermInIndex[], String[]> readTermsFromIndex() throws InterruptedException {
+    private Pair<TermInIndex[], String[]> readTermsFromIndex(IndexReader indexReader, String luceneField) throws InterruptedException {
         // Globally unique terms that occur in our index (sorted by global id)
         Map<String, TermInIndex> globalTermIds = new LinkedHashMap<>();
 
         // Intentionally single-threaded; multi-threaded is slower.
         // Probably because reading from a single file sequentially is more efficient than alternating between
         // several files..?
-        for (LeafReaderContext l: indexReader.leaves()) {
-            readTermsFromSegment(globalTermIds, l);
+        for (LeafReaderContext lrc: indexReader.leaves()) {
+            readTermsFromSegment(globalTermIds, lrc, luceneField);
         }
 
         TermInIndex[] terms = globalTermIds.values().toArray(TermInIndex[]::new);
@@ -156,14 +170,14 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return Pair.of(terms, termStrings);
     }
 
-    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc)
+    private void readTermsFromSegment(Map<String, TermInIndex> globalTermIds, LeafReaderContext lrc, String luceneField)
             throws InterruptedException {
         BLTerms segmentTerms = BLTerms.forSegment(lrc, luceneField);
         if (segmentTerms == null) {
             // can happen if segment only contains index metadata doc
             return;
         }
-        segmentTerms.setTermsIntegrated(this, lrc.ord);
+//        segmentTerms.setTermsIntegrated(this, lrc.ord);
         TermsIntegratedSegment s = new TermsIntegratedSegment(BlackLabPostingsReader.forSegment(lrc),
                 luceneField, lrc.ord);
 

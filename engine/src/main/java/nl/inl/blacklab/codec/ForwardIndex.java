@@ -252,11 +252,7 @@ public class ForwardIndex implements AutoCloseable {
 
         @Override
         public synchronized Terms terms(ForwardIndexField field) {
-            if (field.terms == null) {
-                // Cache the terms reader for this field to avoid repeated lookups
-                field.terms = fieldsProducer.terms(field.getFieldName());
-            }
-            return field.terms.reader();
+            return field.getTerms(fieldsProducer).reader();
         }
     }
 }

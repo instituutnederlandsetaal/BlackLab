@@ -127,16 +127,19 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
         // whole input document) we don't generally want returned when requesting
         // a Document)
         allExceptContentStoreFields = new HashSet<>();
-        boolean fieldsFounds = false; // is this a completely empty index..? (except for the metadata doc)
+        boolean anyFieldsFounds = false; // is this a completely empty index..? (except for the metadata doc)
         for (LeafReaderContext lrc: reader().leaves()) {
             boolean relStratSet = false;
             for (FieldInfo fi: lrc.reader().getFieldInfos()) {
+
+                // Keep a list of non-content store fields
                 if (!BLFieldTypeLucene.isContentStoreField(fi))
                     allExceptContentStoreFields.add(fi.name);
 
+                // Ignore special fields that only exist in the metadata document
                 if (IndexMetadataImpl.isMetadataDocField(fi.name))
                     continue;
-                fieldsFounds = true;
+                anyFieldsFounds = true;
 
                 // Also determine the relations strategy used when indexing,
                 // so we can use the same one for searching.
@@ -151,7 +154,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
                 }
             }
         }
-        if (createNewIndex || !fieldsFounds)
+        if (createNewIndex || !anyFieldsFounds)
             relationsStrategy = RelationsStrategy.forNewIndex();
         if (relationsStrategy == null)
             relationsStrategy = RelationsStrategy.ifNotRecorded();

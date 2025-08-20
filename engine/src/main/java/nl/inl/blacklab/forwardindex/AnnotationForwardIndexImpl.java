@@ -6,7 +6,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.LeafReaderLookup;
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -76,13 +75,9 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
             return;
         }
 
-        try {
-            this.terms = new TermsIntegrated(collators, indexReader, luceneField);
-            this.initialized = true;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // preserve interrupted status
-            throw new InterruptedSearch("Intialization of Forward Index was interrupted", e);
-        }
+        TermsIntegratedRef ref = TermsIntegratedRef.get(indexReader, luceneField);
+        this.terms = ref.get();
+        this.initialized = true;
     }
 
     @Override
