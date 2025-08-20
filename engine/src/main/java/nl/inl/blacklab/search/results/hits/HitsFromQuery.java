@@ -104,7 +104,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     /**
      * Below this number of hits, we'll sort/group in a single thread to save overhead.
      */
-    private static int THRESHOLD_SINGLE_THREADED = 100;
+    private static int THRESHOLD_SINGLE_THREADED = 100; //1_000_000_000;
 
     public static void setThresholdSingleThreadedGroupAndSort(int n) {
         THRESHOLD_SINGLE_THREADED = n;
@@ -741,7 +741,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
                 numHitsGlobalView, numHitsGlobalView, false);
         for (Map.Entry<LeafReaderContext, HitsMutable> segmentHits: hitsPerSegment.entrySet()) {
-            for (EphemeralHit hit: segmentHits.getValue()) {
+            HitsMutable hits = segmentHits.getValue();
+            for (EphemeralHit hit: hits) {
                 hit.convertDocIdToGlobal(segmentHits.getKey().docBase);
                 mergedHits.add(hit);
             }

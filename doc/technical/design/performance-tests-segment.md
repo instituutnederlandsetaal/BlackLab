@@ -4,21 +4,13 @@ http://localhost:8080/blacklab-server/search-test/index.html
 
 ## SORT
 
-### ALL WORDS; BL5; PARALLEL; WERK; GLOBAL TERM IDS
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        []
-sort        hit:word:i
-
-hits        50672559
-timeMs      116399
-
 ### ALL WORDS; BL5; PARALLEL; THUIS
 Corpus URL  /blacklab-server/corpora/parlamint
 patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      116399
+timeMs      91400   (116399 zonder global term ids)
 
 ### BL5 SINGLE-THREADED ALL WORDS THUIS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -26,7 +18,7 @@ patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      >5 min
+timeMs      59344    (>5 min zonder global term ids)
 
 ### BL4 ALL WORDS THUIS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -42,7 +34,7 @@ patt        [word = 'de']
 sort        hit:word:i
 
 hits        50672559
-timeMs      1531
+timeMs      1446 (1531 zonder global term ids)
 
 ### BL5 SINGLE-THREADED 'de'
 Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)
@@ -50,7 +42,7 @@ patt        [word = 'de']
 sort        hit:word:i
 
 hits        2641884
-timeMs      5748
+timeMs      1662 (5748 zonder global term ids)
 
 ### BL4 'de'
 Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)

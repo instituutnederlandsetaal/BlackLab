@@ -16,7 +16,6 @@ import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.forwardindex.TermsIntegratedRef;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -45,13 +44,8 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** The Lucene terms object we're wrapping */
     private final org.apache.lucene.index.Terms terms;
 
-    private BlackLabIndex index;
-
     /** The global terms object */
     private TermsIntegratedRef globalTermsRef;
-
-//    /** Our segment number */
-//    private int ord;
 
     /** A mapping from this segment's term ids to global term ids */
     private int[] segmentToGlobal;
@@ -344,6 +338,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public void convertToGlobalTermIds(int[] segmentTermIds) {
+                getGlobalTerms(); // ensure global terms are loaded
                 for (int i = 0; i < segmentTermIds.length; i++) {
                     if (segmentTermIds[i] != Constants.NO_TERM)
                         segmentTermIds[i] = segmentToGlobal[segmentTermIds[i]];
@@ -352,6 +347,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public int toGlobalTermId(int segmentTermId) {
+                getGlobalTerms(); // ensure global terms are loaded
                 if (segmentTermId != Constants.NO_TERM)
                     return segmentToGlobal[segmentTermId];
                 return Constants.NO_TERM;
@@ -368,15 +364,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             }
         };
     }
-
-    public void setIndex(BlackLabIndex index) {
-        this.index = index;
-    }
-
-//    public void setTermsIntegrated(TermsIntegrated termsIntegrated, int ord) {
-//        this.termsIntegrated = termsIntegrated;
-//        this.ord = ord;
-//    }
 
     public void setTermsSegmentToGlobal(int[] segmentToGlobal) {
         this.segmentToGlobal = segmentToGlobal;
