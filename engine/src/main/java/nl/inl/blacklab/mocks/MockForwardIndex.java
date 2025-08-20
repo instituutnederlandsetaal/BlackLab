@@ -40,4 +40,9 @@ public record MockForwardIndex(Terms terms) implements AnnotationForwardIndex {
     public long docLength(int docId) {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public String getLuceneFieldName() {
+        return "test";
+    }
 }

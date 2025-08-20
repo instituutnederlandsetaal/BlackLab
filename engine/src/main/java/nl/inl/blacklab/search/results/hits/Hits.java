@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.results.hits;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.apache.lucene.index.LeafReaderContext;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -183,6 +185,53 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @return iterator over the hits in this Hits object
      */
     Iterator<EphemeralHit> iterator();
+
+    /**
+     * Return an iterator over the hits in this Hits object that are in the specified segment.
+     *
+     * NOTE: returns the hits unchanged, so does NOT subtract docBase from the document ids!
+     *
+     * @param lrc the LeafReaderContext for the segment to iterate over
+     * @return iterator over the segment hits
+     */
+    default Iterator<EphemeralHit> segmentIterator(LeafReaderContext lrc) {
+        return new Iterator<>() {
+
+            long nextHit = -1; // "not started yet"
+
+            EphemeralHit hit = new EphemeralHit();
+
+            {
+                // Find first hit
+                findNextHit();
+            }
+
+            @Override
+            public boolean hasNext() {
+                return nextHit < size();
+            }
+
+            @Override
+            public EphemeralHit next() {
+                if (nextHit >= size())
+                    throw new IndexOutOfBoundsException("No more hits available");
+                getEphemeral(nextHit, hit);
+                findNextHit();
+                return hit;
+            }
+
+            private void findNextHit() {
+                nextHit++;
+                while (nextHit < size()) {
+                    if (doc(nextHit) >= lrc.docBase && doc(nextHit) < lrc.docBase + lrc.reader().maxDoc()) {
+                        // Found a hit in this segment
+                        return;
+                    }
+                    nextHit++;
+                }
+            }
+        };
+    }
 
     /**
      * Return a new hits object with these hits sorted by the given property.

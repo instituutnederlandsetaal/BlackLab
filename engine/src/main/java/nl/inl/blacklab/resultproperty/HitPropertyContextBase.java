@@ -2,7 +2,9 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.lucene.index.LeafReaderContext;
@@ -293,7 +295,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         if (isGlobal()) {
             // [GLOBAL]
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            FieldForwardIndex segmentForwardIndex = FieldForwardIndex.get(lrc, luceneField);
+            AnnotForwardIndex segmentForwardIndex = getFieldForwardIndex(lrc);
             Terms segmentTerms = segmentForwardIndex.terms();
             int segmentDocId = docId - lrc.docBase;
             for (int[] termIds: segmentForwardIndex.retrieveParts(segmentDocId, starts, ends)) {
@@ -317,6 +319,13 @@ public abstract class HitPropertyContextBase extends HitProperty {
                 contextSortOrder.add(sortOrder);
             }
         }
+    }
+
+    private Map<LeafReaderContext, AnnotForwardIndex> fieldForwardIndexes = new HashMap<>();
+
+    private synchronized AnnotForwardIndex getFieldForwardIndex(LeafReaderContext lrc) {
+        return fieldForwardIndexes.computeIfAbsent(lrc,
+                key -> FieldForwardIndex.get(key, luceneField));
     }
 
     private boolean isGlobal() {

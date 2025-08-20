@@ -300,4 +300,49 @@ class HitsListNoLock extends HitsListAbstract {
         }
         return r;
     }
+
+    @Override
+    public void addAllConvertDocBaseNoLock(Hits hits, int docBase) {
+        if (hits instanceof HitsListLock hil) {
+            // We have to lock this.
+            hil.withReadLock(hil2 -> {
+                addAllConvertDocBaseNoLockSource(hil, docBase);
+            });
+        } else if (hits instanceof HitsListLock32 hil32) {
+            // We have to lock this.
+            hil32.withReadLock(hil32_2 -> {
+                addAllConvertDocBaseNoLock32(hil32, docBase);
+            });
+        } else if (hits instanceof HitsListNoLock hinl) {
+            // No need to lock
+            addAllConvertDocBaseNoLockSource(hinl, docBase);
+        } else if (hits instanceof HitsListNoLock32 hinl32) {
+            // No need to lock
+            addAllConvertDocBaseNoLock32(hinl32, docBase);
+        } else {
+            super.addAllNoLock(hits);
+        }
+    }
+
+    private void addAllConvertDocBaseNoLockSource(HitsListNoLock hil, int docBase) {
+        assert HitsListAbstract.debugCheckAllReasonable(hil);
+        for (int i = 0; i < hil.docs.size64(); i++) {
+            docs.add(hil.docs.getInt(i) + docBase);
+        }
+        starts.addAll(hil.starts);
+        ends.addAll(hil.ends);
+        matchInfos.addAll(hil.matchInfos);
+        assert matchInfos.isEmpty() || matchInfos.size64() == docs.size64() : "Wrong number of matchInfos";
+    }
+
+    private void addAllConvertDocBaseNoLock32(HitsListNoLock32 hil, int docBase) {
+        assert HitsListAbstract.debugCheckAllReasonable(hil);
+        for (int i = 0; i < hil.docs.size(); i++) {
+            docs.add(hil.docs.getInt(i) + docBase);
+        }
+        starts.addAll(hil.starts);
+        ends.addAll(hil.ends);
+        matchInfos.addAll(hil.matchInfos);
+        assert matchInfos.isEmpty() || matchInfos.size64() == docs.size64() : "Wrong number of matchInfos";
+    }
 }

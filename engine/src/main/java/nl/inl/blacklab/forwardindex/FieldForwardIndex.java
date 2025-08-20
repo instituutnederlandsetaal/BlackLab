@@ -17,7 +17,7 @@ public class FieldForwardIndex implements AnnotForwardIndex {
     /** Our terms object */
     private Terms terms;
 
-    public static FieldForwardIndex get(LeafReaderContext lrc, String luceneField) {
+    public static AnnotForwardIndex get(LeafReaderContext lrc, String luceneField) {
         return BlackLabPostingsReader.forSegment(lrc).forwardIndex(luceneField);
     }
 
@@ -85,5 +85,10 @@ public class FieldForwardIndex implements AnnotForwardIndex {
             terms = forwardIndex.terms(field);
         }
         return terms;
+    }
+
+    @Override
+    public String getLuceneFieldName() {
+        return field.getFieldName();
     }
 }

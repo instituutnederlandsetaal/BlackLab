@@ -22,6 +22,7 @@ import org.apache.lucene.search.SimpleCollector;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -351,6 +352,16 @@ public class HitGroupsTokenFrequencies {
                         LeafReaderContext lrc = entry.getKey();
                         List<Integer> segmentDocIds = entry.getValue();
 
+                        // Create a forward index reader for each hit property, so we can retrieve the token values
+                        AnnotForwardIndex[] forwardIndexes = new FieldForwardIndex[hitProperties.size()];
+                        int hitPropIndex = 0;
+                        for (AnnotInfo annot : hitProperties) {
+                            String luceneField = annot.annotationForwardIndex.annotation()
+                                    .forwardIndexSensitivity().luceneField();
+                            forwardIndexes[hitPropIndex] = FieldForwardIndex.get(lrc, luceneField);
+                            hitPropIndex++;
+                        }
+
                         // Keep track of term occurrences in this segment; later we'll merge it with the global term frequencies
                         Map<GroupIdHash, OccurrenceCounts> occsInSegment = new HashMap<>();
 
@@ -374,10 +385,9 @@ public class HitGroupsTokenFrequencies {
                                 final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                                 try (BlockTimer ignored = c.child("Read annotations from forward index")) {
+                                    hitPropIndex = 0;
                                     for (AnnotInfo annot : hitProperties) {
-                                        String luceneField = annot.annotationForwardIndex.annotation()
-                                                .forwardIndexSensitivity().luceneField();
-                                        FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+                                        AnnotForwardIndex forwardIndex = forwardIndexes[hitPropIndex];
                                         final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
                                                         new int[] { -1 }, new int[] { -1 }).get(0);
                                         Terms segmentTerms = forwardIndex.terms();
@@ -395,6 +405,7 @@ public class HitGroupsTokenFrequencies {
                                                     annot.getMatchSensitivity());
                                         }
                                         sortValuesPerAnnotation.add(sortValues);
+                                        hitPropIndex++;
                                     }
                                 }
 

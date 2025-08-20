@@ -10,7 +10,7 @@ patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      91400   (116399 zonder global term ids)
+timeMs      61413
 
 ### BL5 SINGLE-THREADED ALL WORDS THUIS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -18,7 +18,7 @@ patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      59344    (>5 min zonder global term ids)
+timeMs      18295
 
 ### BL4 ALL WORDS THUIS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -42,7 +42,7 @@ patt        [word = 'de']
 sort        hit:word:i
 
 hits        2641884
-timeMs      1662 (5748 zonder global term ids)
+timeMs      555 (5748 zonder global term ids)
 
 ### BL4 'de'
 Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)

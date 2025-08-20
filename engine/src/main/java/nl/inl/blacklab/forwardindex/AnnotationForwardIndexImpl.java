@@ -90,7 +90,7 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     public List<int[]> retrieveParts(int docId, int[] start, int[] end) {
         initialize();
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+        AnnotForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
         List<int[]> parts = fi.retrieveParts(docId - lrc.docBase, start, end);
         Terms segmentTerms = fi.terms();
         parts.stream().forEach(segmentTerms::convertToGlobalTermIds);
@@ -101,7 +101,7 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     public int[] retrievePart(int docId, int start, int end) {
         initialize();
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+        AnnotForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
         int[] part = fi.retrievePart(docId - lrc.docBase, start, end);
         fi.terms().convertToGlobalTermIds(part);
         return part;
@@ -110,7 +110,7 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     @Override
     public long docLength(int docId) {
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
-        FieldForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+        AnnotForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
         return (int)fi.docLength(docId - lrc.docBase);
     }
 
@@ -132,5 +132,10 @@ public class AnnotationForwardIndexImpl implements AnnotationForwardIndex {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" + this.luceneField + ")";
+    }
+
+    @Override
+    public String getLuceneFieldName() {
+        return annotation.forwardIndexSensitivity().luceneField();
     }
 }

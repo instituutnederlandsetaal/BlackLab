@@ -58,4 +58,19 @@ public interface HitsMutable extends Hits {
 
     void setMatchInfoDefs(MatchInfoDefs matchInfoDefs);
 
+    /**
+     * Add segment hits to this global hits list.
+     *
+     * This adds the docBase to the document ids, to convert
+     * the segment doc ids to global doc ids.
+     *
+     * @param segmentHits segment hits to add
+     * @param docBase docBase to add to doc ids
+     */
+    default void addAllConvertDocBase(Hits segmentHits, int docBase) {
+        for (EphemeralHit hit: segmentHits) {
+            hit.convertDocIdToGlobal(docBase);
+            add(hit);
+        }
+    }
 }

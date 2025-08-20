@@ -11,4 +11,5 @@ public interface AnnotForwardIndex {
 
     Terms terms();
 
+    String getLuceneFieldName();
 }

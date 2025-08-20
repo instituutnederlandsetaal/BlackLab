@@ -742,10 +742,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                 numHitsGlobalView, numHitsGlobalView, false);
         for (Map.Entry<LeafReaderContext, HitsMutable> segmentHits: hitsPerSegment.entrySet()) {
             HitsMutable hits = segmentHits.getValue();
-            for (EphemeralHit hit: hits) {
-                hit.convertDocIdToGlobal(segmentHits.getKey().docBase);
-                mergedHits.add(hit);
-            }
+            mergedHits.addAllConvertDocBase(hits, segmentHits.getKey().docBase);
         }
         return mergedHits.sorted(sortBy);
     }

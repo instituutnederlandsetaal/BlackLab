@@ -162,7 +162,7 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
         for (int i = 0; i < indices.length; ++i)
             indices[i] = i;
 
-        IntArrays.quickSort(indices, p::compare);
+        //IntArrays.quickSort(indices, p::compare);
 
         // Sort the indices using the given HitProperty
         if (p.getValueType() == PropertyValueString.class) {
@@ -229,4 +229,19 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
         return this;
     }
 
+    @Override
+    public void addAllConvertDocBase(Hits segmentHits, int docBase) {
+        if (this.lock != null) {
+            this.lock.writeLock().lock();
+            try {
+                addAllConvertDocBaseNoLock(segmentHits, docBase);
+            } finally {
+                this.lock.writeLock().unlock();
+            }
+        } else {
+            addAllConvertDocBaseNoLock(segmentHits, docBase);
+        }
+    }
+
+    public abstract void addAllConvertDocBaseNoLock(Hits segmentHits, int docBase);
 }

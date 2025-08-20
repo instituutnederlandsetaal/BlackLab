@@ -13,6 +13,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -112,7 +113,7 @@ class CalcTokenFrequencies {
                         for (AnnotInfo annot : hitProperties) {
                             String luceneField = annot.getAnnotationForwardIndex().annotation()
                                     .forwardIndexSensitivity().luceneField();
-                            FieldForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+                            AnnotForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
                             final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
                                             new int[] { -1 }, new int[] { -1 }).get(0);
                             Terms segmentTerms = forwardIndex.terms();
