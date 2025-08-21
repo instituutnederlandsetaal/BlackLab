@@ -15,6 +15,7 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
+import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -293,13 +294,32 @@ public abstract class HitPropertyContextBase extends HitProperty {
             setStartEnd.setStartEnd(starts, ends, j, hit);
         }
 
-        for (int[] termIds: forwardIndex.retrieveParts(docId, starts, ends)) {
-            if (compareInReverse)
-                ArrayUtils.reverse(termIds);
-            contextTermId.add(termIds);
-            int[] sortOrder = new int[termIds.length];
-            forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
-            contextSortOrder.add(sortOrder);
+        if (isGlobal() || toGlobal) {
+            // [GLOBAL]
+            LeafReaderContext lrc = index.getLeafReaderContext(docId);
+            AnnotForwardIndex segmentForwardIndex = getFieldForwardIndex(lrc);
+            Terms segmentTerms = segmentForwardIndex.terms();
+            int segmentDocId = docId - lrc.docBase;
+            for (int[] termIds: segmentForwardIndex.retrieveParts(segmentDocId, starts, ends)) {
+                segmentTerms.convertToGlobalTermIds(termIds);
+                if (compareInReverse)
+                    ArrayUtils.reverse(termIds);
+                contextTermId.add(termIds);
+                int[] sortOrder = new int[termIds.length];
+                forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
+                contextSortOrder.add(sortOrder);
+            }
+        } else {
+            // [SEGMENT] Retrieve term ids
+            // Also determine sort orders so we don't have to do that for each compare
+            for (int[] termIds: forwardIndex.retrieveParts(docId, starts, ends)) {
+                if (compareInReverse)
+                    ArrayUtils.reverse(termIds);
+                contextTermId.add(termIds);
+                int[] sortOrder = new int[termIds.length];
+                forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
+                contextSortOrder.add(sortOrder);
+            }
         }
     }
 

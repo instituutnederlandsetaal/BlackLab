@@ -26,7 +26,7 @@ public class DocPropertyId extends DocProperty {
 
     @Override
     public PropertyValueInt get(DocResult result) {
-        return new PropertyValueInt(result.identity().value() + lrc.docBase);
+        return new PropertyValueInt(result.identity().value() + (lrc == null ? 0 : lrc.docBase));
     }
 
     /**

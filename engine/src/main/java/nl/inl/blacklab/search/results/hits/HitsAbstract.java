@@ -122,13 +122,14 @@ public abstract class HitsAbstract implements Hits {
     @Override
     public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup) {
         Map<PropertyValue, Group> groups = new HashMap<>();
-        return groupHits(getStatic(), groupBy, maxResultsToStorePerGroup, groups, null);
+        return groupHits(this, groupBy, maxResultsToStorePerGroup, groups, null);
     }
 
     static Map<PropertyValue, Group> groupHits(Hits hits, HitProperty groupBy,
             long maxResultsToStorePerGroup, Map<PropertyValue, Group> groups, LeafReaderContext lrc) {
         // temporary copy used in grouping (don't keep reference to hits)
         // NOTE: we pass toGlobal = true because segment hits must be grouped by global identity (so we can merge them)
+        hits = hits.getStatic(); // get most efficient (non-locking list) version of hits if possible
         groupBy = groupBy.copyWith(hits, lrc, true, false);
 
         int hitIndex = 0;

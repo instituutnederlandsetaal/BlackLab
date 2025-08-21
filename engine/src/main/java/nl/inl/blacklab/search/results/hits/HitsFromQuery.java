@@ -619,24 +619,27 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     record SegmentHits(
             LeafReaderContext lrc,
             Hits hits) {
-        public Long numberOfHits() {
-            return hits.size();
-        }
     }
 
     @Override
     public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxValuesToStorePerGroup) {
+        logger.debug("GROUP: fetch all hits");
         // Fetch all the hits first.
         ensureResultsRead(-1);
 
         // If there are only a few hits, just group them in a single thread.
         if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
+            logger.debug("GROUP: single thread");
+
             Map<PropertyValue, Group> groups = new HashMap<>();
             for (Map.Entry<LeafReaderContext, HitsMutable> entry: hitsPerSegment.entrySet()) {
                 groupHits(entry.getValue(), groupBy, maxValuesToStorePerGroup, groups, entry.getKey());
             }
+            logger.debug("GROUP: single thread finished");
             return groups;
         }
+
+        logger.debug("GROUP: launch threads");
 
         // Group in parallel and merge the results.
         Parallel<Map.Entry<LeafReaderContext, HitsMutable>, Map<PropertyValue, Group>> parallel =
@@ -644,22 +647,27 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         return parallel.mapReduce(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
                 threadItems -> {
+                    int threadNum = threadItems.hashCode() % 1000;
+                    logger.debug("GROUP:    a thread started: " + threadNum);
                     // Group items in these segments into a single map.
                     Map<PropertyValue, Group> groups = new HashMap<>();
                     for (Map.Entry<LeafReaderContext, HitsMutable> entry: threadItems) {
-                        SegmentHits sh = new SegmentHits(entry.getKey(), entry.getValue());
                         // For each segment, group the hits using the specified property.
-                        groupHits(sh.hits, groupBy, maxValuesToStorePerGroup, groups, sh.lrc);
+                        logger.debug("GROUP:      thread " + threadNum + ", hits size " + entry.getValue().size());
+                        groupHits(entry.getValue(), groupBy, maxValuesToStorePerGroup, groups, entry.getKey());
                     }
+                    logger.debug("GROUP:    a thread finished: " + threadNum);
                     return List.of(groups);
                 },
                 (acc, results) -> {
+                    logger.debug("GROUP:    merging results from a thread");
                     for (Map.Entry<PropertyValue, Group> entry: results.entrySet()) {
                         PropertyValue groupId = entry.getKey();
                         Group segmentGroup = entry.getValue();
                         acc.compute(groupId, (PropertyValue k, Group v) ->
                                 v == null ? segmentGroup : v.merge(segmentGroup, maxValuesToStorePerGroup));
                     }
+                    logger.debug("GROUP:    merging results from a thread finished");
                 },
                 HashMap::new
         );
@@ -667,12 +675,20 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
     @Override
     public Hits sorted(HitProperty sortBy) {
+        logger.debug("SORT: start");
         // Fetch all the hits and determine size.
         size();
         if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             // If there are only a few hits, just sort them in a single thread.
-            return sortedSingleThread(sortBy);
+            logger.debug("SORT: single thread");
+            try {
+                return sortedSingleThread(sortBy);
+            } finally {
+                logger.debug("SORT: done single thread");
+            }
         }
+
+        logger.debug("SORT: launch threads");
 
         // TODO: make sort and merge steps abortable (ThreadAborter). same for grouping.
 
@@ -684,15 +700,21 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                 entry -> entry.getValue().size(),
                 entryList -> entryList.stream().map(entry -> {
                     // For each segment, sort the hits using the specified property.
-                    HitsMutable hits = entry.getValue();
+                    Hits hits = entry.getValue().getStatic();
                     LeafReaderContext lrc = entry.getKey();
                     Hits sorted = hits.sorted(sortBy.copyWith(hits, lrc, false, false));
                     return new SegmentHits(lrc, sorted);
                 }).toList());
 
+        logger.debug("SORT: gather results");
         // Merge the results from all segments.
         MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortBy, pendingResults, parallel);
-        return sortMergeResults(queue, sortBy);
+        logger.debug("SORT: merge results");
+        try {
+            return sortMergeResults(queue, sortBy);
+        } finally {
+            logger.debug("SORT: done");
+        }
     }
 
     /**
@@ -742,7 +764,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
                 numHitsGlobalView, numHitsGlobalView, false);
         for (Map.Entry<LeafReaderContext, HitsMutable> segmentHits: hitsPerSegment.entrySet()) {
-            HitsMutable hits = segmentHits.getValue();
+            Hits hits = segmentHits.getValue().getStatic();
             mergedHits.addAllConvertDocBase(hits, segmentHits.getKey().docBase);
         }
         return mergedHits.sorted(sortBy);

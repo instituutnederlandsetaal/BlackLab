@@ -72,21 +72,8 @@ public class PropertyValueContextWords extends PropertyValueContext {
 
     @Override
     public int compareTo(Object o) {
+        assert lrc == ((PropertyValueContextWords)o).lrc;
         return Arrays.compare(valueSortOrder, ((PropertyValueContextWords) o).valueSortOrder);
-    }
-
-    public static int compareStringArrays(String[] a, String[] b) {
-        int n = Math.min(a.length, b.length);
-        for (int i = 0; i < n; i++) {
-            int c = collator.compare(a[i], b[i]);
-            if (c != 0)
-                return c;
-        }
-        if (a.length < b.length)
-            return -1; // this value is shorter, so comes first
-        if (a.length > b.length)
-            return 1; // this value is longer, so comes last
-        return 0; // equal
     }
 
     @Override
