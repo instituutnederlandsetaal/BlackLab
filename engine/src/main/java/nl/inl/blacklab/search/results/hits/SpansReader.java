@@ -254,6 +254,10 @@ public class SpansReader implements Runnable {
                 hasPrefetchedHit = advanceSpansToNextHit(liveDocs);
             }
 
+            // If we reach or exceed the limit when at a document boundary, we stop storing hits,
+            // but we still count them.
+            boolean stillStoringHits = true;
+
             while (hasPrefetchedHit) {
                 // Find all the hit information
                 assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
@@ -282,10 +286,12 @@ public class SpansReader implements Runnable {
 
                     // only if unique hit and previous value (which is returned) was not yet at the limit
                     // (and thus we actually incremented) do we store this hit.
-                    final boolean storeThisHit =
+                    final boolean storeThisHit = stillStoringHits &&
                             this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMaxAndBoundary,
                                     atDocumentBoundary)
                                     < this.globalHitsToProcess.get() || requestedCountReached;
+                    if (!storeThisHit)
+                        stillStoringHits = false;
 
                     if (atDocumentBoundary) {
                         docsStats.increment(storeThisHit);
