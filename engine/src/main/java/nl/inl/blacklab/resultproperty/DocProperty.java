@@ -27,25 +27,17 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
     /** The segment, if these are segment-local hits */
     protected final LeafReaderContext lrc;
 
-    /** docBase to add to our docIds */
-    protected int docBase = 0;
-
     /** Reverse comparison result or not? */
     protected final boolean reverse;
 
     protected DocProperty(DocProperty prop, LeafReaderContext lrc, boolean invert) {
         this.lrc = lrc == null ? prop.lrc : lrc;
-        docBase = lrc == null ? prop.docBase : lrc.docBase;
         reverse = invert ? !prop.reverse : prop.reverse;
     }
 
     protected DocProperty() {
         this.lrc = null;
         this.reverse = sortDescendingByDefault();
-    }
-
-    public void setDocBase(int docBase) {
-        this.docBase = docBase;
     }
 
     /**

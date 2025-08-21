@@ -31,8 +31,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     private final DocPropertyDecade docPropertyDocumentDecade;
 
-    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert);
+    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
         this.index = prop.index;
         this.reader = index.reader();
         this.fieldName = prop.fieldName;
@@ -53,20 +53,20 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyDocumentDecade(this, newHits, lrc, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyDocumentDecade(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override
     public PropertyValueDecade get(long hitIndex) {
-        return docPropertyDocumentDecade.get(globalDocIdOfHit(hitIndex));
+        return docPropertyDocumentDecade.get(globalDocIdForHit(hitIndex));
     }
 
     @Override
     public int compare(long indexA, long indexB) {
         return docPropertyDocumentDecade.compare(
-            globalDocIdOfHit(indexA),
-            globalDocIdOfHit(indexB)
+            adjustedDocIdForHit(indexA),
+            adjustedDocIdForHit(indexB)
         ) * (reverse ? -1 : 1);
     }
 

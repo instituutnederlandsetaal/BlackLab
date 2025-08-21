@@ -14,8 +14,8 @@ public class HitPropertyDocumentId extends HitProperty {
 
     public static final String ID = "docid";
 
-    HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert);
+    HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
     }
 
     public HitPropertyDocumentId() {
@@ -28,13 +28,13 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyDocumentId(this, newHits, lrc, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyDocumentId(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override
     public PropertyValueInt get(long hitIndex) {
-        return new PropertyValueInt(globalDocIdOfHit(hitIndex));
+        return new PropertyValueInt(adjustedDocIdForHit(hitIndex));
     }
 
     @Override

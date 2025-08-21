@@ -15,7 +15,6 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
-import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -170,8 +169,8 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, LeafReaderContext lrc, boolean invert, AnnotatedField overrideField) {
-        super(prop, hits, lrc, invert);
+    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert, AnnotatedField overrideField) {
+        super(prop, hits, lrc, toGlobal, invert);
         this.index = hits == null ? prop.index : hits.index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
         this.sensitivity = prop.sensitivity;
@@ -206,10 +205,12 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     void initForwardIndex() {
         luceneField = annotation.forwardIndexSensitivity().luceneField();
-        if (!isGlobal()) {
-            forwardIndex = FieldForwardIndex.get(lrc, luceneField);
-        } else {
+        if (isGlobal() || toGlobal) {
+            // To produce global term ids, we need the global forward index
             forwardIndex = index.forwardIndex(annotation);
+        } else {
+            // Use the forward index for the segment we're in
+            forwardIndex = FieldForwardIndex.get(lrc, luceneField);
         }
     }
 
@@ -249,11 +250,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
         final long size = hits.size();
         contextTermId = new ObjectBigArrayBigList<>(size);
         contextSortOrder = new ObjectBigArrayBigList<>(size);
-        int prevDoc = size == 0 ? -1 : globalDocIdOfHit(0);
+        int prevDoc = size == 0 ? -1 : adjustedDocIdForHit(0);
         long firstHitInCurrentDoc = 0;
         if (size > 0) {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-                final int curDoc = globalDocIdOfHit(i);
+                final int curDoc = adjustedDocIdForHit(i);
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
@@ -292,32 +293,13 @@ public abstract class HitPropertyContextBase extends HitProperty {
             setStartEnd.setStartEnd(starts, ends, j, hit);
         }
 
-        if (isGlobal()) {
-            // [GLOBAL]
-            LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            AnnotForwardIndex segmentForwardIndex = getFieldForwardIndex(lrc);
-            Terms segmentTerms = segmentForwardIndex.terms();
-            int segmentDocId = docId - lrc.docBase;
-            for (int[] termIds: segmentForwardIndex.retrieveParts(segmentDocId, starts, ends)) {
-                segmentTerms.convertToGlobalTermIds(termIds);
-                if (compareInReverse)
-                    ArrayUtils.reverse(termIds);
-                contextTermId.add(termIds);
-                int[] sortOrder = new int[termIds.length];
-                forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
-                contextSortOrder.add(sortOrder);
-            }
-        } else {
-            // [SEGMENT] Retrieve term ids
-            // Also determine sort orders so we don't have to do that for each compare
-            for (int[] termIds: forwardIndex.retrieveParts(docId, starts, ends)) {
-                if (compareInReverse)
-                    ArrayUtils.reverse(termIds);
-                contextTermId.add(termIds);
-                int[] sortOrder = new int[termIds.length];
-                forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
-                contextSortOrder.add(sortOrder);
-            }
+        for (int[] termIds: forwardIndex.retrieveParts(docId, starts, ends)) {
+            if (compareInReverse)
+                ArrayUtils.reverse(termIds);
+            contextTermId.add(termIds);
+            int[] sortOrder = new int[termIds.length];
+            forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
+            contextSortOrder.add(sortOrder);
         }
     }
 
@@ -342,7 +324,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         ensureContextFetched();
         int[] termIds = contextTermId.get(hitIndex);
         int[] sortPositions = contextSortOrder.get(hitIndex);
-        return new PropertyValueContextWords(annotation, sensitivity, lrc, termIds, sortPositions,
+        return new PropertyValueContextWords(annotation, sensitivity, toGlobal ? null : lrc, termIds, sortPositions,
                 compareInReverse);
     }
 

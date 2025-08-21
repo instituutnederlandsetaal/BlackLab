@@ -36,8 +36,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         return hitProp;
     }
 
-    HitPropertyAfterHit(HitPropertyAfterHit prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert, null);
+    HitPropertyAfterHit(HitPropertyAfterHit prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
@@ -67,8 +67,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyAfterHit(this, newHits, lrc, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyAfterHit(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

@@ -18,8 +18,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private final DocPropertyStoredField docPropStoredField;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert);
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
         this.fieldName = prop.fieldName;
         this.docPropStoredField = prop.docPropStoredField.copyWith(lrc, false);
         assert docPropStoredField != null;
@@ -36,14 +36,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyDocumentStoredField(this, newHits, lrc, invert);
-    }
-
-    @Override
-    public void setDocBase(int docBase) {
-        this.docPropStoredField.setDocBase(docBase);
-        super.setDocBase(docBase);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyDocumentStoredField(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override
@@ -54,14 +48,14 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     @Override
     public PropertyValueString get(long result) {
         // NOTE: DocPropertyStoredField will convert the doc id to global
-        return DocPropertyStoredField.fromArray(docPropStoredField.get(hits.doc(result)));
+        return DocPropertyStoredField.fromArray(docPropStoredField.get(globalDocIdForHit(result)));
     }
 
     @Override
     public int compare(long a, long b) {
         // NOTE: DocPropertyStoredField will convert the doc id to global
-        final int docA = hits.doc(a);
-        final int docB = hits.doc(b);
+        final int docA = adjustedDocIdForHit(a);
+        final int docB = adjustedDocIdForHit(b);
         return reverse ?
                 docPropStoredField.compare(docB, docA) :
                 docPropStoredField.compare(docA, docB);

@@ -15,7 +15,7 @@ public class EphemeralHit implements Hit {
     int end_ = -1;
     MatchInfo[] matchInfo = null;
 
-    public Hit toHit() {
+    public HitImpl toHit() {
         return new HitImpl(doc_, start_, end_, matchInfo);
     }
 

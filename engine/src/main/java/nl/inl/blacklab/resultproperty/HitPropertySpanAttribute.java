@@ -58,8 +58,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     /** The sensitivity of the match */
     private final MatchSensitivity sensitivity;
 
-    HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert);
+    HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
         groupName = prop.groupName;
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
@@ -87,8 +87,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertySpanAttribute(this, newHits, lrc, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertySpanAttribute(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

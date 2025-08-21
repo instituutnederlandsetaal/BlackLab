@@ -10,7 +10,7 @@ patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      26055 (WERK)
+timeMs      26055 (WERK)   <-- waarom trager dan single-threaded? merge ook parallel?
 
 ### BL5 SINGLE-THREADED ALL WORDS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -20,38 +20,13 @@ sort        hit:word:i
 hits        50672559
 timeMs      12982 (WERK)
 
-### BL4 ALL WORDS THUIS
+### BL4 ALL WORDS
 Corpus URL  /blacklab-server/corpora/parlamint
 patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      49038
-
-### BL5 PARALLEL 'de'
-Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)
-patt        [word = 'de']
-sort        hit:word:i
-
-hits        2641884
-timeMs      990 (WERK)
-
-### BL5 SINGLE-THREADED 'de'
-Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)
-patt        [word = 'de']
-sort        hit:word:i
-
-hits        2641884
-timeMs      464 (5748 zonder global term ids)
-
-### BL4 'de'
-Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)
-patt        [word = 'de']
-sort        hit:word:i
-
-hits        2641884
-timeMs      638
-
+timeMs      39762 (WERK)
 
 
 ## GROUP
@@ -62,7 +37,7 @@ patt        [word != 'abcdefg']
 group       hit:word:i
 
 hits        50672559
-timeMs      17815 (WERK)
+timeMs      17815 (WERK) / 6485 (fast path met [])
 
 ### BL5 SINGLE-THREADED
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -70,7 +45,7 @@ patt        [word != 'abcdefg']
 group       hit:word:i
 
 hits        50672559
-timeMs      42631 (WERK)
+timeMs      42631 (WERK)  <-- waarom trager dan BL4? docBase..?
 
 ### BL4
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -78,20 +53,4 @@ patt        [word != 'abcdefg']
 group       hit:word:i
 
 hits        50672559
-timeMs      20994
-
-### BL5 PARALLEL 'de'
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        [word != 'abcdefg']
-group       hit:word:i
-
-hits        2641884
-timeMs      1023 (WERK)
-
-### BL5 SINGLE-THREADED 'de'
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        [word != 'abcdefg']
-group       hit:word:i
-
-hits        2641884
-timeMs      1822 (WERK)
+timeMs      23181 (WERK)

@@ -155,8 +155,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     /** Description of the context to use (starting point, direction, start/end index) */
     private ContextPart part;
 
-    HitPropertyContextPart(HitPropertyContextPart prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert, null);
+    HitPropertyContextPart(HitPropertyContextPart prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert, null);
         this.part = prop.part;
     }
 
@@ -178,8 +178,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyContextPart(this, newHits, lrc, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyContextPart(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override

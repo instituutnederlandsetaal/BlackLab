@@ -79,11 +79,6 @@ public class Contexts {
         int[][] contexts = getContextWordsSingleDocument(hits, 0, hits.size(),
                 contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
-//        List<Annotation> annotations = forwardIndexes.stream()
-//                .map(AnnotForwardIndex::getFieldName)
-//                .map()
-//                .toList();
-        int docId = hits.doc(0);
         List<Terms> annotationTerms = forwardIndexes.stream()
                 .map(AnnotForwardIndex::terms)
                 .toList();

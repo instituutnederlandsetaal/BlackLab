@@ -128,17 +128,14 @@ public abstract class HitsAbstract implements Hits {
     static Map<PropertyValue, Group> groupHits(Hits hits, HitProperty groupBy,
             long maxResultsToStorePerGroup, Map<PropertyValue, Group> groups, LeafReaderContext lrc) {
         // temporary copy used in grouping (don't keep reference to hits)
-        groupBy = groupBy.copyWith(hits, lrc, false);
-        //groupBy.setDocBase(lrc.docBase); // convert segment hits to global while grouping
+        // NOTE: we pass toGlobal = true because segment hits must be grouped by global identity (so we can merge them)
+        groupBy = groupBy.copyWith(hits, lrc, true, false);
 
         int hitIndex = 0;
         for (EphemeralHit hit: hits) {
             PropertyValue identity = groupBy.get(hitIndex);
             if (lrc != null) {
-                // This is a segment hit. Convert identity and doc id to global.
-                // (identity because it may be term ids, which differ between segment and global;
-                //  doc id because we have to add docBase)
-                identity = identity.toGlobal();
+                // This is a segment hit. Convert doc id to global.
                 hit.convertDocIdToGlobal(lrc.docBase);
             }
             Group group = groups.get(identity);

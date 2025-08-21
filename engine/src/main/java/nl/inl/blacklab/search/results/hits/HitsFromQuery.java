@@ -563,11 +563,12 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
          */
         int index;
 
-        public SegmentInMerge(Hits segmentHits, int docBase, HitProperty globalSortBy) {
-            this.hits = segmentHits;
-            this.docBase = docBase;
-            this.sortBy = globalSortBy.copyWith(segmentHits);
-            sortBy.setDocBase(docBase);
+        public SegmentInMerge(SegmentHits segmentResults, HitProperty sortBy) {
+            this.hits = segmentResults.hits;
+            this.docBase = segmentResults.lrc.docBase;
+
+            // We need global sort values (term/doc ids) for the merge operation.
+            this.sortBy = sortBy.copyWith(hits, segmentResults.lrc, true, false);
             this.index = 0;
         }
 
@@ -648,8 +649,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                     for (Map.Entry<LeafReaderContext, HitsMutable> entry: threadItems) {
                         SegmentHits sh = new SegmentHits(entry.getKey(), entry.getValue());
                         // For each segment, group the hits using the specified property.
-                        HitProperty groupBySegment = groupBy.copyWith(sh.hits, sh.lrc, false);
-                        groupHits(sh.hits, groupBySegment, maxValuesToStorePerGroup, groups, sh.lrc);
+                        groupHits(sh.hits, groupBy, maxValuesToStorePerGroup, groups, sh.lrc);
                     }
                     return List.of(groups);
                 },
@@ -686,7 +686,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                     // For each segment, sort the hits using the specified property.
                     HitsMutable hits = entry.getValue();
                     LeafReaderContext lrc = entry.getKey();
-                    Hits sorted = hits.sorted(sortBy.copyWith(hits, lrc, false));
+                    Hits sorted = hits.sorted(sortBy.copyWith(hits, lrc, false, false));
                     return new SegmentHits(lrc, sorted);
                 }).toList());
 
@@ -704,8 +704,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         MergePriorityQueue queue = new MergePriorityQueue(numberOfSegments);
         for (int i = 0; i < pendingResults.size(); i++) {
             try {
-                for (SegmentHits segmentResults: parallel.nextResult())
-                    queue.add(new SegmentInMerge(segmentResults.hits, segmentResults.lrc.docBase, sortBy));
+                for (SegmentHits segmentResults: parallel.nextResult()) {
+                    queue.add(new SegmentInMerge(segmentResults, sortBy));
+                }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // preserve interrupted status
                 parallel.cancelTasks(pendingResults);

@@ -128,7 +128,6 @@ public class DocPropertyStoredField extends DocProperty {
      */
     public String[] get(int docId) {
         if  (docValues != null) {
-            docId += docBase;
             // Find the value in the correct segment
             Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> target = null;
             for (Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> e : this.docValues.entrySet()) {
@@ -155,7 +154,6 @@ public class DocPropertyStoredField extends DocProperty {
             }
             return ret;
         } else if (numericDocValues != null) {
-            docId += docBase;
             // Find the value in the correct segment
             Entry<Integer, NumericDocValuesCacher> target = null;
             for (Entry<Integer, NumericDocValuesCacher> e : this.numericDocValues.entrySet()) {
@@ -179,7 +177,7 @@ public class DocPropertyStoredField extends DocProperty {
         try {
             // We don't have DocValues; just get the property from the document.
             if (lrc == null)
-                return index.reader().document(docId + docBase, Set.of(fieldName)).getValues(fieldName);
+                return index.reader().document(docId, Set.of(fieldName)).getValues(fieldName);
             else
                 return lrc.reader().document(docId, Set.of(fieldName)).getValues(fieldName);
         } catch (IOException e) {

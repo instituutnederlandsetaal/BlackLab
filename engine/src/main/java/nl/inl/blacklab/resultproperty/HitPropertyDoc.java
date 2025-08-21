@@ -14,8 +14,8 @@ public class HitPropertyDoc extends HitProperty {
 
     private final BlackLabIndex index;
 
-    HitPropertyDoc(HitPropertyDoc prop, Hits hits, LeafReaderContext lrc, boolean invert) {
-        super(prop, hits, lrc, invert);
+    HitPropertyDoc(HitPropertyDoc prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        super(prop, hits, lrc, toGlobal, invert);
         this.index = hits.index();
     }
 
@@ -25,8 +25,8 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean invert) {
-        return new HitPropertyDoc(this, newHits, lrc, invert);
+    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
+        return new HitPropertyDoc(this, newHits, lrc, toGlobal, invert);
     }
 
     @Override
@@ -36,7 +36,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public PropertyValueDoc get(long hitIndex) {
-        return new PropertyValueDoc(globalDocIdOfHit(hitIndex));
+        return new PropertyValueDoc(adjustedDocIdForHit(hitIndex));
     }
 
     @Override

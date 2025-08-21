@@ -18,14 +18,14 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
 
-    private static Terms getTerms(Annotation annotation, LeafReaderContext lrc) {
+    static Terms getTerms(Annotation annotation, LeafReaderContext lrc) {
         if (lrc == null)
-            return annotation.field().index().forwardIndex(annotation).terms();
+            return annotation.field().index().forwardIndex(annotation).terms(); // use global terms
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
         return BLTerms.forSegment(lrc, luceneField).reader();
     }
 
-    /** Segment our term ids came from (will be null if have term strings, or if arrays are length 0) */
+    /** Segment our term ids came from (will be null if this is a global value, or if arrays are length 0) */
     private LeafReaderContext lrc;
 
     /** Term ids for this value */
@@ -42,7 +42,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
      * front to back (e.g. right to left for English), but display should still
      * be from back to front.
      */
-    private boolean reverseOnDisplay;
+    boolean reverseOnDisplay;
 
     public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
             LeafReaderContext lrc, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
@@ -158,8 +158,14 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return valueTokenId;
     }
 
+    boolean isGlobal() {
+        return lrc == null;
+    }
+
     @Override
     public PropertyValue toGlobal() {
+        if (isGlobal())
+            throw new IllegalStateException("Don't call toGlobal on already-global value!");
         int[] globalTermIds = Arrays.copyOf(valueTokenId, valueTokenId.length);
         terms.convertToGlobalTermIds(globalTermIds);
         int[] globalSortOrder = new int[globalTermIds.length];
