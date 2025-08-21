@@ -162,8 +162,6 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
         for (int i = 0; i < indices.length; ++i)
             indices[i] = i;
 
-        //IntArrays.quickSort(indices, p::compare);
-
         // Sort the indices using the given HitProperty
         if (p.getValueType() == PropertyValueString.class) {
             // Collator.compare() is synchronized and therefore slow.

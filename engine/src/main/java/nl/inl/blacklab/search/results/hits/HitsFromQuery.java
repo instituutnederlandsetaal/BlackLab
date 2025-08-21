@@ -674,7 +674,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             return sortedSingleThread(sortBy);
         }
 
-        // TODO: make sort and merge steps abortable (ThreadAborter)
+        // TODO: make sort and merge steps abortable (ThreadAborter). same for grouping.
 
         // We need to sort the hits from each segment separately (in parallel), then merge them.
 
@@ -722,9 +722,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
                 numHitsGlobalView, numHitsGlobalView, false);
 
+        EphemeralHit hit = new EphemeralHit();
         while (!queue.top().done()) {
             SegmentInMerge segment = queue.top();
-            EphemeralHit hit = new EphemeralHit();
             segment.getHitAndAdvance(hit);
             hit.convertDocIdToGlobal(segment.docBase);
             mergedHits.add(hit);

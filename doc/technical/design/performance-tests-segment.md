@@ -10,7 +10,7 @@ patt        []
 sort        hit:word:i
 
 hits        50672559
-timeMs      61413
+timeMs      61413 (THUIS?); 4776 (WERK interne SSD, extern is veel trager, >5 min)
 
 ### BL5 SINGLE-THREADED ALL WORDS THUIS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -62,7 +62,7 @@ patt        [word != 'abcdefg']
 group       hit:word:i
 
 hits        50672559
-timeMs      44141
+timeMs      3956 (WERK interne SSD), 44141 (THUIS)
 
 ### BL5 SINGLE-THREADED
 Corpus URL  /blacklab-server/corpora/parlamint (op PC thuis)

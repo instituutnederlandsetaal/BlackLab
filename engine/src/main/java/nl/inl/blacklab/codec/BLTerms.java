@@ -170,11 +170,16 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         return terms.getStats();
     }
 
+    /** Array of term strings, if we read them into memory */
+    private String[] termStringsArr = null;
+
     public Terms reader() {
         if (forwardIndexField == null)
             throw new InvalidIndex("No forward index field specified for this terms reader");
 
         return new Terms() { // not thread-safe
+            private static final boolean READ_TERM_STRINGS_INTO_MEMORY = true;
+
             private final int numberOfTerms;
 
             /** For looking up sort position for a term id (sensitive) */
@@ -222,6 +227,18 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     long termStringOffsetsLength = (long) numberOfTerms * Long.BYTES;
                     termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(forwardIndexField.getTermIndexOffset(), termStringOffsetsLength);
                     termStrings = getCloneOfTermsFile();
+
+                    synchronized (BLTerms.this) {
+                        if (termStringsArr == null && READ_TERM_STRINGS_INTO_MEMORY) {
+                            // Read all term strings into memory for fast access
+                            termStringsArr = new String[numberOfTerms];
+                            long firstTermStringOffset = termStringOffsets.readLong(0);
+                            termStrings.seek(firstTermStringOffset);
+                            for (int i = 0; i < numberOfTerms; i++) {
+                                termStringsArr[i] = termStrings.readString();
+                            }
+                        }
+                    }
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
@@ -233,6 +250,13 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 if (id == Constants.NO_TERM)
                     return "";
                 assert id >= 0 && id < numberOfTerms : "Term id " + id + " is out of bounds (max is " + (numberOfTerms - 1) + ")";
+
+                // If we read the term strings into memory, use that
+                if (termStringsArr != null) {
+                    return termStringsArr[id];
+                }
+                // Otherwise, read the term string from the file (slow unless you have a lot of memory for cache or a
+                // very fast SSD)
                 try {
                     long termStringOffset = termStringOffsets.readLong((long) id * Long.BYTES);
                     termStrings.seek(termStringOffset);
