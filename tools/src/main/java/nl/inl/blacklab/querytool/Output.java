@@ -11,7 +11,6 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.WordUtils;
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -45,7 +44,6 @@ import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
-import nl.inl.blacklab.tools.QueryTool;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.XmlUtil;
 
@@ -182,24 +180,25 @@ class Output {
     }
 
     static void usage() {
-        System.err.println(
-                "Usage: " + QueryTool.class.getName() + " [options] <indexDir>\n" +
-                        "\n" +
-                        "Options (mostly useful for batch testing):\n" +
-                        "-f <file>            Execute batch commands from file and exit\n" +
-                        "-v                   Start in verbose mode (show query & rewrite)\n" +
-                        "--mode all           Show results and timings (default without -f)\n" +
-                        "--mode correctness,  Show results but no timings (default for -f)\n" +
-                        "--mode c\n" +
-                        "--mode performance,  Show timings but no results\n" +
-                        "--mode p,\n" +
-                        "-e <encoding>        Specify what output encoding to use [system default]\n" +
-                        "\n" +
-                        WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
-                        "commands on a single line separated by && (use this e.g. to time " +
-                        "querying and sorting together). Lines starting with # are comments. " +
-                        "Comments are printed on stdout as well. Lines starting with - will " +
-                        "not be reported. Start a line with -# for an unreported comment.", 80));
+        Config.showUsage();
+//        System.err.println(
+//                "Usage: " + QueryTool.class.getName() + " [options] <indexDir>\n" +
+//                        "\n" +
+//                        "Options (mostly useful for batch testing):\n" +
+//                        "-f <file>            Execute batch commands from file and exit\n" +
+//                        "-v                   Start in verbose mode (show query & rewrite)\n" +
+//                        "--mode all           Show results and timings (default without -f)\n" +
+//                        "--mode correctness,  Show results but no timings (default for -f)\n" +
+//                        "--mode c\n" +
+//                        "--mode performance,  Show timings but no results\n" +
+//                        "--mode p,\n" +
+//                        "-e <encoding>        Specify what output encoding to use [system default]\n" +
+//                        "\n" +
+//                        WordUtils.wrap("Batch command files should contain one command per line, or multiple " +
+//                        "commands on a single line separated by && (use this e.g. to time " +
+//                        "querying and sorting together). Lines starting with # are comments. " +
+//                        "Comments are printed on stdout as well. Lines starting with - will " +
+//                        "not be reported. Start a line with -# for an unreported comment.", 80));
     }
 
     void showIndexMetadata(BlackLabIndex index) {
