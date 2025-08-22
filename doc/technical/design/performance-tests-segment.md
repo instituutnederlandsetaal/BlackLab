@@ -10,13 +10,15 @@ NOTE:
 
 ## SORT
 
-### ALL WORDS; BL5; PARALLEL
 Corpus URL  /blacklab-server/corpora/parlamint
 patt        []
 sort        hit:word:i
-
 hits        50672559
-timeMs      24229 (WERK)   <-- waarom trager dan single-threaded? ws. merge?
+
+### ALL WORDS; BL5; PARALLEL
+
+WERK 2 THREADS: 24229   <-- waarom trager dan single-threaded? ws. merge?
+THUIS 6 THREADS: 34959
 
 ### BL5 SINGLE-THREADED ALL WORDS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -37,26 +39,21 @@ timeMs      39762 (WERK)
 
 ## GROUP
 
-### BL5 PARALLEL
 Corpus URL  /blacklab-server/corpora/parlamint
 patt        [word != 'abcdefg']
 group       hit:word:i
-
 hits        50672559
-timeMs      11042 (WERK) / 6485 (fast path met []) <-- NB dit is met 2 threads; 4 is trager!!!
+
+### BL5 PARALLEL
+
+WERK 2 THREADS: 11042 regular path; 6485 fast path
+WERK 4 THREADS: TRAGER
+THUIS 6 THREADS: ~14s
 
 ### BL5 SINGLE-THREADED
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        [word != 'abcdefg']
-group       hit:word:i
 
-hits        50672559
 timeMs      17373 (WERK)
 
 ### BL4
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        [word != 'abcdefg']
-group       hit:word:i
 
-hits        50672559
 timeMs      23181 (WERK)

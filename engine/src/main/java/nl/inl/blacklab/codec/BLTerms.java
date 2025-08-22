@@ -173,32 +173,31 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** Array of term strings, if we read them into memory */
     private String[] termStringsArr = null;
 
-    public Terms reader() {
+    /** For looking up sort position for a term id (sensitive) */
+    private int[] termIdToSensitivePos;
+
+    /** For looking up sort position for a term id (insensitive) */
+    private int[] termIdToInsensitivePos;
+
+    /** For looking up term id for a sort position (sensitive) */
+    private int[] sensitivePosToTermId;
+
+    /** For looking up term id for a sort position (insensitive) */
+    private int[] insensitivePosToTermId;
+
+    public synchronized Terms reader() { // synchronized because the first one loads term data
         if (forwardIndexField == null)
             throw new InvalidIndex("No forward index field specified for this terms reader");
 
-        return new Terms() { // not thread-safe
+        return new Terms() {  // not thread-safe
+
             private static final boolean READ_TERM_STRINGS_INTO_MEMORY = true;
 
-            private final int numberOfTerms;
-
-            /** For looking up sort position for a term id (sensitive) */
-            private final RandomAccessInput termIdToSensitivePos;
-
-            /** For looking up sort position for a term id (insensitive) */
-            private final RandomAccessInput termIdToInsensitivePos;
-
-            /** For looking up term id for a sort position (sensitive) */
-            private final RandomAccessInput sensitivePosToTermId;
-
-            /** For looking up term id for a sort position (insensitive) */
-            private final RandomAccessInput insensitivePosToTermId;
-
             /** Offset of each term in termStrings */
-            private final RandomAccessInput termStringOffsets;
+            private RandomAccessInput termStringOffsets;
 
             /** Where to read term strings */
-            final IndexInput termStrings;
+            IndexInput termStrings;
 
             {
                 try {
@@ -211,33 +210,36 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     // int[n] sensitivePos2TermID      ( offset [3+n*int] )
 
                     // Get random access to the sort order arrays for this field
-                    numberOfTerms = forwardIndexField.getNumberOfTerms();
-                    long arrayLength = ((long) numberOfTerms) * Integer.BYTES;
-                    IndexInput termOrderFile = getCloneOfTermOrderFile();
-                    long offset = forwardIndexField.getTermOrderOffset();
-                    termIdToInsensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
-                    offset += arrayLength;
-                    insensitivePosToTermId = termOrderFile.randomAccessSlice(offset, arrayLength);
-                    offset += arrayLength;
-                    termIdToSensitivePos = termOrderFile.randomAccessSlice(offset, arrayLength);
-                    offset += arrayLength;
-                    sensitivePosToTermId = termOrderFile.randomAccessSlice(offset, arrayLength);
+                    int numberOfTerms = forwardIndexField.numberOfTerms;
+                    if (termIdToInsensitivePos == null) {
+                        IndexInput termOrderFile = getCloneOfTermOrderFile();
+                        long offset = forwardIndexField.getTermOrderOffset();
+                        int arrayLength = numberOfTerms * Integer.BYTES;
+                        termIdToInsensitivePos = readTermOrderIntArray(termOrderFile, offset);
+                        offset += arrayLength;
+                        insensitivePosToTermId = readTermOrderIntArray(termOrderFile, offset);
+                        offset += arrayLength;
+                        termIdToSensitivePos = readTermOrderIntArray(termOrderFile, offset);
+                        offset += arrayLength;
+                        sensitivePosToTermId = readTermOrderIntArray(termOrderFile, offset);
+                    }
 
                     // All fields share the same strings file.  Move to the start of our section in the file.
                     long termStringOffsetsLength = (long) numberOfTerms * Long.BYTES;
-                    termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(forwardIndexField.getTermIndexOffset(), termStringOffsetsLength);
+                    termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(
+                            forwardIndexField.getTermIndexOffset(), termStringOffsetsLength);
                     termStrings = getCloneOfTermsFile();
 
-                    synchronized (BLTerms.this) {
-                        if (termStringsArr == null && READ_TERM_STRINGS_INTO_MEMORY) {
-                            // Read all term strings into memory for fast access
-                            termStringsArr = new String[numberOfTerms];
-                            long firstTermStringOffset = termStringOffsets.readLong(0);
-                            termStrings.seek(firstTermStringOffset);
-                            for (int i = 0; i < numberOfTerms; i++) {
-                                termStringsArr[i] = termStrings.readString();
-                            }
+                    if (termStringsArr == null && READ_TERM_STRINGS_INTO_MEMORY) {
+                        // Read all term strings into memory for fast access
+                        termStringsArr = new String[numberOfTerms];
+                        long firstTermStringOffset = termStringOffsets.readLong(0);
+                        termStrings.seek(firstTermStringOffset);
+                        for (int i = 0; i < numberOfTerms; i++) {
+                            termStringsArr[i] = termStrings.readString();
                         }
+                        termStringOffsets = null;
+                        termStrings = null;
                     }
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
@@ -245,11 +247,24 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             }
 
+            private int[] readTermOrderIntArray(IndexInput termOrderFile, long offset) {
+                try {
+                    termOrderFile.seek(offset);
+                    int[] arr = new int[numberOfTerms()];
+                    for (int i = 0; i < arr.length; i++) {
+                        arr[i] = termOrderFile.readInt();
+                    }
+                    return arr;
+                } catch (IOException e) {
+                    throw new InvalidIndex(e);
+                }
+            }
+
             @Override
             public String get(int id) {
                 if (id == Constants.NO_TERM)
                     return "";
-                assert id >= 0 && id < numberOfTerms : "Term id " + id + " is out of bounds (max is " + (numberOfTerms - 1) + ")";
+                assert id >= 0 && id < numberOfTerms() : "Term id " + id + " is out of bounds (max is " + (numberOfTerms() - 1) + ")";
 
                 // If we read the term strings into memory, use that
                 if (termStringsArr != null) {
@@ -268,7 +283,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public int indexOf(String word) {
-                for (int i = 0; i < numberOfTerms; i++) {
+                // Simple linear search. We could use binary search via sort positions, but this is only used by
+                // PropertyValueContext.deserializeToken(), which is not called often.
+                for (int i = 0; i < numberOfTerms(); i++) {
                     if (compareTerms(get(i), word, MatchSensitivity.SENSITIVE) == 0) {
                         return i;
                     }
@@ -278,7 +295,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-                for (int i = 0; i < numberOfTerms; i++) {
+                for (int i = 0; i < numberOfTerms(); i++) {
                     if (compareTerms(get(i), term, sensitivity) == 0) {
                         results.add(i);
                     }
@@ -289,13 +306,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             public int idToSortPosition(int id, MatchSensitivity sensitivity) {
                 if (id == Constants.NO_TERM)
                     return Constants.NO_TERM;
-                try {
-                    RandomAccessInput array = sensitivity == MatchSensitivity.SENSITIVE ? termIdToSensitivePos :
-                            termIdToInsensitivePos;
-                    return array.readInt((long) id * Integer.BYTES);
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
-                }
+                int[] termIdToPos = sensitivity == MatchSensitivity.SENSITIVE ?
+                        termIdToSensitivePos : termIdToInsensitivePos;
+                return termIdToPos[id];
             }
 
             private int compareTerms(String term1, String term2, MatchSensitivity sensitivity) {
@@ -309,7 +322,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 // First, find the index in the sort position array.
                 // This may not be the actual sort position because multiple terms can have the same sort position.
                 // In this case, the index of first term determines the sort position for all those terms.
-                RandomAccessInput sortPosToTermId = sensitivity == MatchSensitivity.SENSITIVE ?
+                int[] sortPosToTermId = sensitivity == MatchSensitivity.SENSITIVE ?
                         sensitivePosToTermId : insensitivePosToTermId;
                 indexOfTerm = findIndexInSortPositionArray(term, sensitivity, sortPosToTermId);
                 if (indexOfTerm < 0) {
@@ -319,42 +332,33 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
                 // Now, find the first term equal to this one.
                 int sortPos = indexOfTerm - 1;
-                try {
-                    while (sortPos > 0 &&
-                            compareTerms(get(sortPosToTermId.readInt((long) sortPos * Integer.BYTES)), term, sensitivity) == 0) {
-                        // If the term is equal to the one we're looking for, we have to go back further
-                        // until we find the first occurrence of this term.
-                        // (NOTE: this is relatively inefficient and we could precalculate it, but this method isn't
-                        //  used in any hot loops)
-                        sortPos--;
-                    }
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
+                while (sortPos > 0 &&
+                        compareTerms(get(sortPosToTermId[sortPos]), term, sensitivity) == 0) {
+                    // If the term is equal to the one we're looking for, we have to go back further
+                    // until we find the first occurrence of this term.
+                    // (NOTE: this is relatively inefficient and we could precalculate it, but this method isn't
+                    //  used in any hot loops)
+                    sortPos--;
                 }
                 return sortPos + 1; // +1 because we went one too far
             }
 
-            private int findIndexInSortPositionArray(String term, MatchSensitivity sensitivity,
-                    RandomAccessInput sortPosToTermId) {
+            private int findIndexInSortPositionArray(String term, MatchSensitivity sensitivity, int[] sortPosToTermId) {
                 // Use binary search by sort position to find the term's sort position.
                 int low = 0;
                 int high = numberOfTerms() - 1;
-                try {
-                    while (low <= high) {
-                        int mid = (low + high) >>> 1;
-                        String midVal = get(sortPosToTermId.readInt((long) mid * Integer.BYTES));
-                        int cmp = compareTerms(midVal, term, sensitivity);
-                        if (cmp < 0) {
-                            low = mid + 1;
-                        } else if (cmp > 0) {
-                            high = mid - 1;
-                        } else {
-                            // found it!
-                            return mid;
-                        }
+                while (low <= high) {
+                    int mid = (low + high) >>> 1;
+                    String midVal = get(sortPosToTermId[mid]);
+                    int cmp = compareTerms(midVal, term, sensitivity);
+                    if (cmp < 0) {
+                        low = mid + 1;
+                    } else if (cmp > 0) {
+                        high = mid - 1;
+                    } else {
+                        // found it!
+                        return mid;
                     }
-                } catch (IOException e) {
-                    throw new InvalidIndex(e);
                 }
                 // not found
                 return Constants.NO_TERM;
@@ -384,7 +388,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             @Override
             public int numberOfTerms() {
-                return numberOfTerms;
+                return forwardIndexField.numberOfTerms;
             }
         };
     }

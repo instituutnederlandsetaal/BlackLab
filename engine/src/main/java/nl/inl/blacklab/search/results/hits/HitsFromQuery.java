@@ -628,7 +628,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         ensureResultsRead(-1);
 
         // If there are only a few hits, just group them in a single thread.
-        if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
+        if (numThreads == 1 || numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             logger.debug("GROUP: single thread");
 
             Map<PropertyValue, Group> groups = new HashMap<>();
@@ -678,7 +678,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         logger.debug("SORT: start");
         // Fetch all the hits and determine size.
         size();
-        if (numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
+        if (numThreads == 1 || numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             // If there are only a few hits, just sort them in a single thread.
             logger.debug("SORT: single thread");
             try {

@@ -94,6 +94,7 @@ public interface Terms {
 
     int indexOf(String word);
 
+    // SEEMS TO BE UNUSED...?
     void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity);
 
     /**
