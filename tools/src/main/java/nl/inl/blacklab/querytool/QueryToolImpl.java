@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.function.LongFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +52,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.Results;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
@@ -333,7 +335,6 @@ public class QueryToolImpl {
         switch (action) {
         case "groups", "hits", "docs", "colloc" -> changeShowSettings(action);
         case "clear", "reset" -> cmdClear();
-        case "concfi" -> cmdConcFi(arguments);
         case "context" -> cmdContext(arguments);
         case "doc" -> cmdDocumentMetadata(arguments);
         case "doccontents" -> cmdDocumentContents(arguments); // Get plain document contents (no highlighting)
@@ -343,6 +344,8 @@ public class QueryToolImpl {
         case "field" -> cmdField(arguments);
         case "filter" -> cmdFilter(arguments);
         case "group" -> cmdGroupBy(arguments);
+        case "maxcount" -> cmdMaxCount(arguments);
+        case "maxretrieve" -> cmdMaxRetrieve(arguments);
         case "next", "n" -> cmdNextPage();
         case "page" -> cmdShowPage(arguments);
         case "pagesize" -> cmdPageSize(arguments);
@@ -356,7 +359,9 @@ public class QueryToolImpl {
         case "stripxml" -> cmdStripXml(arguments);
         case "struct", "structure" -> cmdCorpusStructure();
         case "switch", "sw" -> cmdSwitchQueryLanguage();
+        case "threads" -> cmdThreads(arguments);
         case "total" -> cmdTotal(arguments);
+        case "usecontent" -> cmdUseContent(arguments);
         case "verbose", "v" -> cmdVerbose(arguments);
         case "wordlist" -> cmdWordList(arguments);
         default ->
@@ -376,14 +381,16 @@ public class QueryToolImpl {
         output.line("Query and results cleared.");
     }
 
-    private void cmdConcFi(String arguments) {
-        concType = parseBoolean(arguments) ? ConcordanceType.FORWARD_INDEX : ConcordanceType.CONTENT_STORE;
+    private void cmdUseContent(String arguments) {
+        concType = arguments.equalsIgnoreCase("orig") ?
+                ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
     }
 
     private void cmdContext(String arguments) {
-        contextSize = ContextSize.get(parseInt(arguments, 0), Integer.MAX_VALUE);
+        contextSize = ContextSize.fromContextDef(arguments, Integer.MAX_VALUE);
         collocations = null;
         showResultsPage();
+        output.line("Show hit context: " + contextSize);
     }
 
     private void cmdCorpusStructure() {
@@ -488,6 +495,38 @@ public class QueryToolImpl {
 
     private void cmdHelp() {
         output.printHelp(getCurrentParser());
+    }
+
+    private void cmdMaxCount(String arguments) {
+        if (!arguments.isEmpty()) {
+            long maxHitsToProcess = index.searchSettings().maxHitsToProcess();
+            long maxHitsToCount = Long.parseLong(arguments);
+            if (maxHitsToCount < 0)
+                maxHitsToCount = Results.NO_LIMIT;
+            if (maxHitsToCount < maxHitsToProcess)
+                maxHitsToProcess = maxHitsToCount;
+            index.setSearchSettings(SearchSettings.get(maxHitsToProcess, maxHitsToCount));
+        }
+        reportMaxRetrieveCount();
+    }
+
+    private void cmdMaxRetrieve(String arguments) {
+        if (!arguments.isEmpty()) {
+            long maxHitsToProcess = Long.parseLong(arguments);
+            if (maxHitsToProcess < 0)
+                maxHitsToProcess = Results.NO_LIMIT;
+            long maxHitsToCount = index.searchSettings().maxHitsToCount();
+            if (maxHitsToProcess > maxHitsToCount)
+                maxHitsToCount = maxHitsToProcess;
+            index.setSearchSettings(SearchSettings.get(maxHitsToProcess, maxHitsToCount));
+        }
+        reportMaxRetrieveCount();
+    }
+
+    private void reportMaxRetrieveCount() {
+        LongFunction<String> limitStr = (long l) -> l >= 0 && l != Results.NO_LIMIT ? Long.toString(l) : "no limit";
+        output.line("maxretrieve: " + limitStr.apply(index.searchSettings().maxHitsToProcess()));
+        output.line("maxcount: " + limitStr.apply(index.searchSettings().maxHitsToCount()));
     }
 
     /**
@@ -604,6 +643,16 @@ public class QueryToolImpl {
             currentParserIndex = 0;
         output.line("Switching to " + getCurrentParser().getName() + ".\n");
         output.printQueryHelp(getCurrentParser());
+    }
+
+    private void cmdThreads(String arguments) {
+        if (!arguments.isEmpty()) {
+            int n = parseInt(arguments, 1);
+            if (n < 1)
+                n = 1;
+            index.blackLab().setMaxThreadsPerSearch(n);
+        }
+        output.line("Number of threads for searching: " + index.blackLab().maxThreadsPerSearch());
     }
 
     private void cmdTotal(String arguments) {

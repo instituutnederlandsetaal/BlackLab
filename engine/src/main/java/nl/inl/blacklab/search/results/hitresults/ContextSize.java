@@ -144,6 +144,33 @@ public class ContextSize {
     }
 
     /**
+     * Parse a context definition string.
+     *
+     * Examples: "5" (5 words before and after), "3:7" (3 words before, 7 after),
+     * "s" (whole sentence containing hit).
+     *
+     * @param str
+     * @param maxSnippetLength
+     * @return
+     */
+    public static ContextSize fromContextDef(String str, int maxSnippetLength) {
+        int before = 0, after = 0;
+        String inlineTagName = null;
+        if (str.matches("\\d+")) {
+            before = after = Integer.parseInt(str);
+        } else if (str.matches("\\d+:\\d+")) {
+            String[] parts = str.split(":");
+            before = Integer.parseInt(parts[0]);
+            after = Integer.parseInt(parts[1]);
+        } else if (str.matches("\\w+")) {
+            inlineTagName = str;
+        } else {
+            throw new IllegalArgumentException("Invalid context value: " + str);
+        }
+        return get(before, after, true, inlineTagName, maxSnippetLength);
+    }
+
+    /**
      * Get the start and end position of the snippet for the specified hit.
      *
      * Because this may involve finding a named match info group (e.g. if we want a whole sentence

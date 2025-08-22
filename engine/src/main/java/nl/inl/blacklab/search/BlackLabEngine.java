@@ -89,7 +89,7 @@ public final class BlackLabEngine implements AutoCloseable {
     private final ExecutorService searchExecutorService;
 
     /** How many threads may a single search use? */
-    private final int maxThreadsPerSearch;
+    private int maxThreadsPerSearch;
 
     /** Give each searchthread a unique number */
     private final AtomicInteger threadCounter = new AtomicInteger(1);
@@ -391,6 +391,12 @@ public final class BlackLabEngine implements AutoCloseable {
 
     public int maxThreadsPerSearch() {
         return maxThreadsPerSearch;
+    }
+
+    public void setMaxThreadsPerSearch(int max) {
+        if (max < 1)
+            throw new IllegalArgumentException("maxThreadsPerSearch must be at least 1 (got " + max + ")");
+        this.maxThreadsPerSearch = max;
     }
 
     public BLIndexObjectFactory indexObjectFactory() {

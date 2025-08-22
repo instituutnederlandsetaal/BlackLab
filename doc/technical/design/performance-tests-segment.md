@@ -18,7 +18,8 @@ hits        50672559
 ### ALL WORDS; BL5; PARALLEL
 
 WERK 2 THREADS: 24229   <-- waarom trager dan single-threaded? ws. merge?
-THUIS 6 THREADS: 34959
+THUIS 2 THREADS: 28884
+THUIS 11 THREADS: 28884
 
 ### BL5 SINGLE-THREADED ALL WORDS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -48,7 +49,6 @@ hits        50672559
 
 WERK 2 THREADS: 11042 regular path; 6485 fast path
 WERK 4 THREADS: TRAGER
-THUIS 6 THREADS: ~14s
 
 ### BL5 SINGLE-THREADED
 
