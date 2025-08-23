@@ -1,23 +1,13 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.TreeMap;
-
-import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.util.PropertySerializeUtil;
-import nl.inl.util.DocValuesUtil;
-import nl.inl.util.NumericDocValuesCacher;
 
 /**
  * Retrieves the length of an annotated field (i.e. the main "contents" field) in
@@ -38,8 +28,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     private final String friendlyName;
 
     /** The DocValues per segment (keyed by docBase), or null if we don't have docValues */
-    private Map<Integer, NumericDocValuesCacher> docValues = null;
-    
+    private DocValuesGetter docValuesGetter;
+
     private final BlackLabIndex index;
 
     DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, LeafReaderContext lrc, boolean invert) {
@@ -47,32 +37,14 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         index = prop.index;
         fieldName = prop.fieldName;
         friendlyName = prop.friendlyName;
+        docValuesGetter = (lrc == null || lrc == prop.lrc) ? prop.docValuesGetter : DocValuesGetter.get(index, lrc, fieldName);
     }
 
     public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String fieldName, String friendlyName) {
         this.index = index;
         this.fieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
         this.friendlyName = friendlyName;
-        docValues = new TreeMap<>();
-        try {
-            for (LeafReaderContext rc : index.reader().leaves()) {
-                LeafReader r = rc.reader();
-                NumericDocValues numericDocValues = r.getNumericDocValues(this.fieldName);
-                if (numericDocValues == null) {
-                    // (should never happen)
-                    throw new UnsupportedOperationException("no DocValues available");
-                }
-                if (numericDocValues != null) {
-                    docValues.put(rc.docBase, DocValuesUtil.cacher(numericDocValues));
-                }
-            }
-            if (docValues.isEmpty()) {
-                // We don't actually have DocValues.
-                docValues = null;
-            }
-        } catch (IOException e) {
-            throw BlackLabException.wrapRuntime(e);
-        }
+        docValuesGetter = DocValuesGetter.get(index, lrc, fieldName);
     }
 
     public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String fieldName) {
@@ -85,29 +57,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     public long get(int docId) {
-        if (docValues != null) {
-            // Find the value in the correct segment
-            Entry<Integer, NumericDocValuesCacher> prev = null;
-            for (Entry<Integer, NumericDocValuesCacher> e : docValues.entrySet()) {
-                Integer docBase = e.getKey();
-                if (docBase > docId) {
-                    // Previous segment (the highest docBase lower than docId) is the right one
-                    assert prev != null;
-                    Integer prevDocBase = prev.getKey();
-                    NumericDocValuesCacher prevDocValues = prev.getValue();
-                    return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-                }
-                prev = e;
-            }
-            // Last segment is the right one
-            assert prev != null;
-            Integer prevDocBase = prev.getKey();
-            NumericDocValuesCacher prevDocValues = prev.getValue();
-            return prevDocValues.get(docId - prevDocBase) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-        }
-        
-        // Not cached; find value by reading stored value from Document now
-        return Long.parseLong(index.luceneDoc(docId).get(fieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+        return docValuesGetter.getLong(docId) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
     @Override

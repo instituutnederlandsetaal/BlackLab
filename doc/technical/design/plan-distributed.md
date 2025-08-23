@@ -77,10 +77,7 @@ We really just want a global _view_ of the unsorted hits. This view should grow 
 
 SMALLER ISSUES
 
-- `BlackLabPostingsReader.forwardIndex()` creates a reader object
-- `BLTerms.reader()` creates a reader object
-
-- BUG `AnnotationForwardIndex.numberOfTerms`: terms are counted multiple times!
+- DocProperty per-segment (DocValues)
 
 - Store sorted hits using indexes to the original hits object to save memory?
 
@@ -127,7 +124,6 @@ SMALLER ISSUES
   segment.
 
 - andere TODOs:
-    - liefst alles met Iterator<EphemeralHit> doen, Iterator<Hit> weg?
     - minder met doc(index), start(index), etc. doen, zo veel mogelijk met getEphemeral(index, hit)
 
 

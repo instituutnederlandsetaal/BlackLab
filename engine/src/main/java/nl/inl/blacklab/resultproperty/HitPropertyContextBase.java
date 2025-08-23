@@ -251,11 +251,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
         final long size = hits.size();
         contextTermId = new ObjectBigArrayBigList<>(size);
         contextSortOrder = new ObjectBigArrayBigList<>(size);
-        int prevDoc = size == 0 ? -1 : adjustedDocIdForHit(0);
+        int prevDoc = size == 0 ? -1 : resultDocIdForHit(0);
         long firstHitInCurrentDoc = 0;
         if (size > 0) {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-                final int curDoc = adjustedDocIdForHit(i);
+                final int curDoc = resultDocIdForHit(i);
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:

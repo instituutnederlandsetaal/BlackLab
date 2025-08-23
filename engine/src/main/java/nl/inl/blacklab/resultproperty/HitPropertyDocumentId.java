@@ -34,7 +34,7 @@ public class HitPropertyDocumentId extends HitProperty {
 
     @Override
     public PropertyValueInt get(long hitIndex) {
-        return new PropertyValueInt(adjustedDocIdForHit(hitIndex));
+        return new PropertyValueInt(resultDocIdForHit(hitIndex));
     }
 
     @Override

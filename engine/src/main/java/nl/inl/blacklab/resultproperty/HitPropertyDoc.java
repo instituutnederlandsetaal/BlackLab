@@ -36,7 +36,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public PropertyValueDoc get(long hitIndex) {
-        return new PropertyValueDoc(adjustedDocIdForHit(hitIndex));
+        return new PropertyValueDoc(resultDocIdForHit(hitIndex));
     }
 
     @Override

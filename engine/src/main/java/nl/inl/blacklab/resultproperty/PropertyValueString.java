@@ -1,5 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueString extends PropertyValue {
@@ -10,6 +12,13 @@ public class PropertyValueString extends PropertyValue {
 
     public PropertyValueString(String value) {
         this.value = value == null ? "" : value;
+    }
+
+    /** Convert an array of string values to a PropertyValueString. */
+    public static PropertyValueString fromArray(String[] values) {
+        if (values.length == 1)
+            return new PropertyValueString(values[0]);
+        return new PropertyValueString(StringUtils.join(values, " · "));
     }
 
     @Override

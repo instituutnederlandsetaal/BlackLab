@@ -78,5 +78,4 @@ public class SortedSetDocValuesCacher {
             throw BlackLabException.wrapRuntime(e);
         }
     }
-
 }

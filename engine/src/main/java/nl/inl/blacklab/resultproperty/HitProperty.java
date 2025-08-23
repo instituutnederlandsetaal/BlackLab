@@ -40,7 +40,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param index hit index
      * @return (possibly) adjusted doc id
      */
-    int adjustedDocIdForHit(long index) {
+    int resultDocIdForHit(long index) {
         return hits.doc(index) + (toGlobal ? lrc.docBase : 0);
     }
 

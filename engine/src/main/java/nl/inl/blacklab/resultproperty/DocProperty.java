@@ -27,6 +27,10 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
     /** The segment, if these are segment-local hits */
     protected final LeafReaderContext lrc;
 
+    /** If true, we have segment hits (lrc != null) and we should convert the
+     *  segment doc/term ids to global when determining the property values. */
+    boolean toGlobal;
+
     /** Reverse comparison result or not? */
     protected final boolean reverse;
 
@@ -38,6 +42,32 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
     protected DocProperty() {
         this.lrc = null;
         this.reverse = sortDescendingByDefault();
+    }
+
+    /**
+     * If we have segment hits and intend to produce global property values,
+     * this method will adjust the doc id to be global.
+     *
+     * This is different from globalDocIdForHit below: that always returns a
+     * global doc id, while this method will return a segment-local doc id
+     * if toGlobal is false.
+     *
+     * @param docId document id
+     * @return (possibly) adjusted doc id
+     */
+    int adjustedDocId(int docId) {
+        return docId + (toGlobal ? lrc.docBase : 0);
+    }
+
+    /**
+     * Get a global doc id for a segment hit.
+     * (because DocProperty only works with global doc ids right now)
+     *
+     * @param docId document id
+     * @return (possibly) adjusted doc id
+     */
+    int globalDocIdForHit(int docId) {
+        return docId + (lrc != null ? lrc.docBase : 0);
     }
 
     /**

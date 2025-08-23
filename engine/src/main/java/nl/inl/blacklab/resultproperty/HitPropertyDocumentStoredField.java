@@ -48,14 +48,14 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     @Override
     public PropertyValueString get(long result) {
         // NOTE: DocPropertyStoredField will convert the doc id to global
-        return DocPropertyStoredField.fromArray(docPropStoredField.get(globalDocIdForHit(result)));
+        return PropertyValueString.fromArray(docPropStoredField.get(hits.doc(result)));
     }
 
     @Override
     public int compare(long a, long b) {
         // NOTE: DocPropertyStoredField will convert the doc id to global
-        final int docA = adjustedDocIdForHit(a);
-        final int docB = adjustedDocIdForHit(b);
+        final int docA = hits.doc(a);
+        final int docB = hits.doc(b);
         return reverse ?
                 docPropStoredField.compare(docB, docA) :
                 docPropStoredField.compare(docA, docB);

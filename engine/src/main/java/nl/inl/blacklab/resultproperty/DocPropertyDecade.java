@@ -42,7 +42,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     /** Parses the value, UNKNOWN_VALUE is returned if the string is unparseable */
-    public int parse(String strYear) {
+    public int getDecade(String strYear) {
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -52,22 +52,14 @@ public class DocPropertyDecade extends DocProperty {
         }
         return year;
     }
-    
-    public int getRaw(int docId) {
-        return parse(docPropStoredField.getFirstValue(docId));
-    }
-    
-    public int getRaw(DocResult result) {
-        return parse(docPropStoredField.getFirstValue(result));
-    }
-    
+
     public PropertyValueDecade get(int docId) {
-        return new PropertyValueDecade(getRaw(docId));
+        return new PropertyValueDecade(getDecade(docPropStoredField.getFirstValue(docId)));
     }
  
     @Override
     public PropertyValueDecade get(DocResult result) {
-        return new PropertyValueDecade(getRaw(result));
+        return new PropertyValueDecade(getDecade(docPropStoredField.getFirstValue(result)));
     }
 
     /**
@@ -79,36 +71,23 @@ public class DocPropertyDecade extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        String strYearA = docPropStoredField.getFirstValue(a);
-        String strYearB = docPropStoredField.getFirstValue(b);
-        if (strYearA.isEmpty()) { // sort missing year at the end
-            if (strYearB.isEmpty())
-                return 0;
-            else
-                return reverse ? -1 : 1;
-        }
-        if (strYearB.isEmpty()) // sort missing year at the end
-            return reverse ? 1 : -1;
-
-        int year1 = parse(strYearA);
-        int year2 = parse(strYearB);
-        return reverse ? year2 - year1 : year1 - year2;
+        return compareGeneric(docPropStoredField.getFirstValue(a), docPropStoredField.getFirstValue(b));
     }
     
     public int compare(int docIdA, int docIdb) {
-        String strYearA = docPropStoredField.getFirstValue(docIdA);
-        String strYearB = docPropStoredField.getFirstValue(docIdb);
-        if (strYearA.isEmpty()) { // sort missing year at the end
-            if (strYearB.isEmpty())
+        return compareGeneric(docPropStoredField.getFirstValue(docIdA), docPropStoredField.getFirstValue(docIdb));
+    }
+
+    private int compareGeneric(String strYear1, String strYear2) {
+        if (strYear1.isEmpty()) { // sort missing year at the end
+            if (strYear2.isEmpty())
                 return 0;
             else
                 return reverse ? -1 : 1;
-        }
-        if (strYearB.isEmpty()) // sort missing year at the end
+        } else if (strYear2.isEmpty()) // sort missing year at the end
             return reverse ? 1 : -1;
-
-        int year1 = parse(strYearA);
-        int year2 = parse(strYearB);
+        int year1 = getDecade(strYear1);
+        int year2 = getDecade(strYear2);
         return reverse ? year2 - year1 : year1 - year2;
     }
 

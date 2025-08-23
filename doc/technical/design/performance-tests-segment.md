@@ -8,6 +8,18 @@ NOTE:
 
 - grouping seems to always be slow; why?
 
+## SORT BY TITLE
+
+QueryTool parlamint
+showconc no && maxretrieve 1000000 && verbose
+
+## ALL WORDS; BL5; PARALLEL
+
+threads 1 && [] && sort field:title    8.6s
+threads 2 && [] && sort field:title   19.3s <-- merge makes it slow!
+threads 4 && [] && sort field:title   17.7s
+threads 8 && [] && sort field:title   28.5s <-- too much locking of index files?
+
 ## SORT
 
 Corpus URL  /blacklab-server/corpora/parlamint

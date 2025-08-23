@@ -65,8 +65,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
     @Override
     public int compare(long indexA, long indexB) {
         return docPropertyDocumentDecade.compare(
-            adjustedDocIdForHit(indexA),
-            adjustedDocIdForHit(indexB)
+            resultDocIdForHit(indexA),
+            resultDocIdForHit(indexB)
         ) * (reverse ? -1 : 1);
     }
 
