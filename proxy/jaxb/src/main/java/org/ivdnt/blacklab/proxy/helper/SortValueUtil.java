@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.proxy.helper;
 
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 
 /**
  * Utility methods for generating a sortable string from various values.

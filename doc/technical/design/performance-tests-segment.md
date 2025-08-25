@@ -52,20 +52,40 @@ timeMs      39762 (WERK)
 
 ## GROUP
 
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        [word != 'abcdefg']
-group       hit:word:i
-hits        50672559
+QueryTool parlamint
+showconc no && maxretrieve -1 && verbose
 
-### BL5 PARALLEL
+### BL5; THUIS
 
-WERK 2 THREADS: 11042 regular path; 6485 fast path
-WERK 4 THREADS: TRAGER
+FAST PATH
+threads 1 && [] && group hit:word:i     17s
+threads 2 && [] && group hit:word:i     15.5s
+threads 4 && [] && group hit:word:i     16s
 
-### BL5 SINGLE-THREADED
-
-timeMs      17373 (WERK)
+SLOW PATH
+threads 1 && [word != 'abcdefg'] && group hit:word:i     18.5s
+threads 2 && [word != 'abcdefg'] && group hit:word:i     13.5s
+threads 4 && [word != 'abcdefg'] && group hit:word:i     17.0s
 
 ### BL4
 
 timeMs      23181 (WERK)
+
+## GROUP BY TITLE
+
+QueryTool parlamint
+showconc no && maxretrieve -1 && verbose
+
+## BL5
+
+FAST PATH
+threads 1 && [] && group field:title   8s
+threads 2 && [] && group field:title   7s
+threads 4 && [] && group field:title   7s
+threads 8 && [] && group field:title   8s
+
+SLOWER PATH
+threads 1 && [word != 'abcdefg'] && group field:title   7s
+threads 2 && [word != 'abcdefg'] && group field:title   6s
+threads 4 && [word != 'abcdefg'] && group field:title   7s
+threads 8 && [word != 'abcdefg'] && group field:title   6.5s

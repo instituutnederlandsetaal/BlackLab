@@ -1,11 +1,12 @@
 package org.ivdnt.blacklab.proxy.helper;
 
-import java.text.Collator;
 import java.util.Locale;
 import java.util.Random;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.ibm.icu.text.Collator;
 
 public class TestSortValueUtil {
 
@@ -88,6 +89,7 @@ public class TestSortValueUtil {
     public void testComparisonInt() {
         Random r = new Random(45678);
         Collator coll = Collator.getInstance(Locale.ENGLISH);
+        coll.freeze();
         for (int i = 0; i < 1000; i++) {
             int a = Math.abs(r.nextInt());
             int b = Math.abs(r.nextInt());

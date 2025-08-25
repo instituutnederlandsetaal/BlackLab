@@ -1,6 +1,6 @@
 package nl.inl.blacklab.mocks;
 
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 

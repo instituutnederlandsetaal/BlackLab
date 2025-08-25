@@ -1,6 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;

@@ -1,10 +1,11 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.text.CollationKey;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
 import org.apache.lucene.queries.spans.Spans;
+
+import com.ibm.icu.text.CollationKey;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;

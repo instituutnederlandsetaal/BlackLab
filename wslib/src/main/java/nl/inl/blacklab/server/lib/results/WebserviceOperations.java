@@ -2,7 +2,7 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.io.File;
 import java.io.InputStream;
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;

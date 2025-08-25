@@ -2,7 +2,7 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;

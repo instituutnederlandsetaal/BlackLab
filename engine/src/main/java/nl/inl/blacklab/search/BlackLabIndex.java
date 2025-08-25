@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.Map;
 import java.util.Set;
 

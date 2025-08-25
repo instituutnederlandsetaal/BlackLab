@@ -1,6 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.text.CollationKey;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -14,6 +13,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
+
+import com.ibm.icu.text.CollationKey;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;

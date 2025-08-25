@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search;
 
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;

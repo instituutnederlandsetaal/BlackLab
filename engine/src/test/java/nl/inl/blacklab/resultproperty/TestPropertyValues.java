@@ -1,11 +1,12 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -67,8 +68,8 @@ public class TestPropertyValues {
         Assert.assertEquals( 1, regularCollator.compare( "aapap",          "aapaap"));         // a > b
         Assert.assertEquals( 1, regularCollator.compare(       "ap",             "a ap"));     // a > b
 
-        Assert.assertEquals(-1, regularCollator.compare(" aap | a",       "-aap | a"));        // a < b
-        Assert.assertEquals(-1, regularCollator.compare(" aap",           "-aap"));            // a < b
+        Assert.assertEquals(0, regularCollator.compare(" aap | a",       "-aap | a"));        // a == b
+        Assert.assertEquals(0, regularCollator.compare(" aap",           "-aap"));            // a == b
 
         // ...but Terms collator does not!
         Assert.assertEquals(-1, termsCollator.compare(" aap | ap | ap", "-aap | a ap | p"));

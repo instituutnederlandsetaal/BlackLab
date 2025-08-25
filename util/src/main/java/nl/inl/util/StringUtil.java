@@ -270,7 +270,7 @@ public final class StringUtil {
         return Normalizer.normalize(value, Normalizer.Form.NFC);
     }
 
-    public static Pattern insensitiveCollatorPattern = Pattern.compile("[\t\n\r" + CHAR_EM_SPACE + CHAR_NON_BREAKING_SPACE + CHAR_DELETE + "]");
+    public static Pattern insensitiveCollatorPattern = Pattern.compile("[" /*+"\t\n\r" + CHAR_EM_SPACE*/ + CHAR_DELETE + "-\u009F" + "]");
 
     public static String removeCharsIgnoredByInsensitiveCollator(String s) {
         return insensitiveCollatorPattern.matcher(s).replaceAll("");

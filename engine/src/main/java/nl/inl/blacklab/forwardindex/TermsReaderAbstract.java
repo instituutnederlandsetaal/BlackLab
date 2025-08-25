@@ -1,6 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.Arrays;
 
 import org.eclipse.collections.api.set.primitive.MutableIntSet;

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.text.CollationKey;
+import com.ibm.icu.text.CollationKey;
 import java.util.Iterator;
 
 import it.unimi.dsi.fastutil.BigArrays;
