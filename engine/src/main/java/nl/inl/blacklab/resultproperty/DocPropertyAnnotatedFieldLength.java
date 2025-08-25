@@ -23,7 +23,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     public static final String ID = "fieldlen";
 
-    private final String fieldName;
+    private final String lengthTokensFieldName;
     
     private final String friendlyName;
 
@@ -35,20 +35,17 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, LeafReaderContext lrc, boolean invert) {
         super(prop, lrc, invert);
         index = prop.index;
-        fieldName = prop.fieldName;
+        lengthTokensFieldName = prop.lengthTokensFieldName;
         friendlyName = prop.friendlyName;
-        docValuesGetter = (lrc == null || lrc == prop.lrc) ? prop.docValuesGetter : DocValuesGetter.get(index, lrc, fieldName);
+        docValuesGetter = (lrc == null || lrc == prop.lrc) ? prop.docValuesGetter : DocValuesGetter.get(index, lrc,
+                lengthTokensFieldName);
     }
 
-    public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String fieldName, String friendlyName) {
+    public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String annotatedFieldName) {
         this.index = index;
-        this.fieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
-        this.friendlyName = friendlyName;
-        docValuesGetter = DocValuesGetter.get(index, lrc, fieldName);
-    }
-
-    public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String fieldName) {
-        this(index, fieldName, fieldName + " length");
+        this.lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(annotatedFieldName);
+        this.friendlyName = annotatedFieldName + " length";
+        docValuesGetter = DocValuesGetter.get(index, lrc, this.lengthTokensFieldName);
     }
 
     @Override
@@ -86,7 +83,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     @Override
     public String serialize() {
-        return serializeReverse() + PropertySerializeUtil.combineParts(ID, fieldName);
+        return serializeReverse() + PropertySerializeUtil.combineParts(ID, lengthTokensFieldName);
     }
 
     @Override
@@ -98,7 +95,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((fieldName == null) ? 0 : fieldName.hashCode());
+        result = prime * result + ((lengthTokensFieldName == null) ? 0 : lengthTokensFieldName.hashCode());
         return result;
     }
 
@@ -111,10 +108,10 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
         if (getClass() != obj.getClass())
             return false;
         DocPropertyAnnotatedFieldLength other = (DocPropertyAnnotatedFieldLength) obj;
-        if (fieldName == null) {
-            if (other.fieldName != null)
+        if (lengthTokensFieldName == null) {
+            if (other.lengthTokensFieldName != null)
                 return false;
-        } else if (!fieldName.equals(other.fieldName))
+        } else if (!lengthTokensFieldName.equals(other.lengthTokensFieldName))
             return false;
         return true;
     }

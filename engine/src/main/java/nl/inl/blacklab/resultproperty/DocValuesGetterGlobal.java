@@ -1,10 +1,9 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
@@ -13,7 +12,6 @@ import org.apache.lucene.index.SortedSetDocValues;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.util.DocValuesUtil;
 import nl.inl.util.NumericDocValuesCacher;
 import nl.inl.util.SortedDocValuesCacher;
@@ -21,48 +19,50 @@ import nl.inl.util.SortedSetDocValuesCacher;
 
 class DocValuesGetterGlobal implements DocValuesGetter {
 
+    private final BlackLabIndex index;
+
     /**
      * The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
      */
-    private Map<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> docValues = null;
+    private Map<LeafReaderContext, SortedDocValuesCacher> sortedDocValues = null;
+
+    /**
+     * The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
+     */
+    private Map<LeafReaderContext, SortedSetDocValuesCacher> sortedSetDocValues = null;
 
     /**
      * Null unless the field is numeric.
      */
-    private Map<Integer, NumericDocValuesCacher> numericDocValues = null;
+    private Map<LeafReaderContext, NumericDocValuesCacher> numericDocValues = null;
 
     public DocValuesGetterGlobal(BlackLabIndex index, String fieldName) {
+        this.index = index;
         try {
             if (index.reader() != null) { // skip for MockIndex (testing)
-                if (index.metadataField(fieldName).type().equals(FieldType.NUMERIC)) {
-                    numericDocValues = new TreeMap<>();
-                    for (LeafReaderContext lrc: index.reader().leaves()) {
-                        LeafReader r = lrc.reader();
-                        // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
-                        NumericDocValues values = r.getNumericDocValues(fieldName);
-                        numericDocValues.put(lrc.docBase, DocValuesUtil.cacher(values));
-                    }
-                    if (numericDocValues.isEmpty()) {
-                        // We don't actually have DocValues.
-                        numericDocValues = null;
-                    }
-                } else { // regular string doc values.
-                    docValues = new TreeMap<>();
-                    for (LeafReaderContext rc: index.reader().leaves()) {
-                        LeafReader r = rc.reader();
-                        // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
-                        SortedSetDocValues sortedSetDocValues = r.getSortedSetDocValues(fieldName);
-                        SortedDocValues sortedDocValues = r.getSortedDocValues(fieldName);
-                        if (sortedSetDocValues != null || sortedDocValues != null) {
-                            docValues.put(rc.docBase, Pair.of(DocValuesUtil.cacher(sortedDocValues),
-                                    DocValuesUtil.cacher(sortedSetDocValues)));
+//                boolean isNumericMetadataField = index.metadataField(fieldName).type().equals(FieldType.NUMERIC);
+                for (LeafReaderContext lrc: index.reader().leaves()) {
+                    LeafReader leafReader = lrc.reader();
+                    // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
+                    NumericDocValues numericDv = leafReader.getNumericDocValues(fieldName);
+                    if (numericDv != null) {
+                        if (numericDocValues == null)
+                            numericDocValues = new HashMap<>();
+                        numericDocValues.put(lrc, DocValuesUtil.withRandomAccess(numericDv));
+                    } else {
+                        SortedSetDocValues sortedSetDv = leafReader.getSortedSetDocValues(fieldName);
+                        if (sortedSetDv != null) {
+                            if (sortedSetDocValues == null)
+                                sortedSetDocValues = new HashMap<>();
+                            sortedSetDocValues.put(lrc, DocValuesUtil.withRandomAccess(sortedSetDv));
                         } else {
-                            docValues.put(rc.docBase, null);
+                            SortedDocValues sortedDv = leafReader.getSortedDocValues(fieldName);
+                            if (sortedDv != null) {
+                                if (sortedDocValues == null)
+                                    sortedDocValues = new HashMap<>();
+                                sortedDocValues.put(lrc, DocValuesUtil.withRandomAccess(sortedDv));
+                            }
                         }
-                    }
-                    if (docValues.isEmpty()) {
-                        // We don't actually have DocValues.
-                        docValues = null;
                     }
                 }
             }
@@ -72,37 +72,24 @@ class DocValuesGetterGlobal implements DocValuesGetter {
     }
 
     public boolean isValid() {
-        return docValues != null || numericDocValues != null;
+        return sortedSetDocValues != null || sortedDocValues != null || numericDocValues != null;
     }
 
     public String[] get(int docId) {
-        if (docValues != null) {
-            // Find the value in the correct segment
-            Map.Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> target = null;
-            for (Map.Entry<Integer, Pair<SortedDocValuesCacher, SortedSetDocValuesCacher>> e: this.docValues.entrySet()) {
-                if (e.getKey() > docId) {
-                    break;
-                }
-                target = e;
-            }
-            if (target != null) {
-                final int targetDocBase = target.getKey();
-                final Pair<SortedDocValuesCacher, SortedSetDocValuesCacher> targetDocValues = target.getValue();
-                if (targetDocValues != null) {
-                    SortedDocValuesCacher a = targetDocValues.getLeft();
-                    SortedSetDocValuesCacher b = targetDocValues.getRight();
-                    if (a != null) { // old index, only one value
-                        String value = a.get(docId - targetDocBase);
-                        return value == null ? new String[0] : new String[] { value };
-                    } else { // newer index, (possibly) multiple values.
-                        return b.get(docId - targetDocBase);
-                    }
-                }
-                // If no docvalues for this segment - no values were indexed for this field (in this segment).
-                // So returning the empty array is good.
-            }
+        LeafReaderContext lrc = index.getLeafReaderContext(docId);
+        int segmentDocId = docId - lrc.docBase;
+        if (sortedSetDocValues != null) {
+            // newer index, (possibly) multiple values.
+            return sortedSetDocValues.get(lrc).get(segmentDocId);
         } else if (numericDocValues != null) {
-            return new String[] { getLong(docId) + "" };
+            // numeric field
+            long value = numericDocValues.get(lrc).get(segmentDocId);
+            return new String[] { value + "" };
+        } else if (sortedDocValues != null) {
+            // old index, only one value
+            String value = sortedDocValues.get(lrc).get(segmentDocId);
+            if (value != null)
+                return new String[] { value };
         }
         return new String[0];
     }
@@ -110,24 +97,9 @@ class DocValuesGetterGlobal implements DocValuesGetter {
     @Override
     public long getLong(int docId) {
         if (numericDocValues != null) {
-            // Find the value in the correct segment
-            Map.Entry<Integer, NumericDocValuesCacher> target = null;
-            for (Map.Entry<Integer, NumericDocValuesCacher> e: this.numericDocValues.entrySet()) {
-                if (e.getKey() > docId) {
-                    break;
-                }
-                target = e;
-            }
-
-            if (target != null) {
-                final Integer targetDocBase = target.getKey();
-                final NumericDocValuesCacher targetDocValues = target.getValue();
-                if (targetDocValues != null) {
-                    return targetDocValues.get(docId - targetDocBase);
-                }
-                // If no docvalues for this segment - no values were indexed for this field (in this segment).
-                // So returning the empty array is good.
-            }
+            LeafReaderContext lrc = index.getLeafReaderContext(docId);
+            int segmentDocId = docId - lrc.docBase;
+            return numericDocValues.get(lrc).get(segmentDocId);
         }
         return DocValuesGetter.super.getLong(docId);
     }

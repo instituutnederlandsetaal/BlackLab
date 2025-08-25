@@ -18,15 +18,18 @@ public class DocValuesUtil {
     private DocValuesUtil() {
     }
 
-    public static SortedDocValuesCacher cacher(SortedDocValues dv) {
+    /** Make the DocValues random-access instead of only in order */
+    public static SortedDocValuesCacher withRandomAccess(SortedDocValues dv) {
         return dv == null ? null : new SortedDocValuesCacher(dv);
     }
 
-    public static SortedSetDocValuesCacher cacher(SortedSetDocValues dv) {
+    /** Make the DocValues random-access instead of only in order */
+    public static SortedSetDocValuesCacher withRandomAccess(SortedSetDocValues dv) {
         return dv == null ? null : new SortedSetDocValuesCacher(dv);
     }
 
-    public static NumericDocValuesCacher cacher(NumericDocValues dv) {
+    /** Make the DocValues random-access instead of only in order */
+    public static NumericDocValuesCacher withRandomAccess(NumericDocValues dv) {
         return dv == null ? null : new NumericDocValuesCacher(dv);
     }
 
