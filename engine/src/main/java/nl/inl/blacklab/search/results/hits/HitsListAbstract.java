@@ -1,15 +1,15 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.text.CollationKey;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
 import org.apache.lucene.queries.spans.Spans;
 
+import com.ibm.icu.text.CollationKey;
+
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
@@ -153,25 +153,26 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     }
 
     /** Sort a list of hits less than 2 billion long. */
-    HitsMutable sort32(HitProperty p) {
+    HitsMutable sort32(HitProperty sortBy) {
         if (size() > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new IllegalArgumentException("This method cannot sort more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits at once");
-        p = p.copyWith(this);
+        assert sortBy.getContext().hits() == this : "HitProperty context hits object is not this hits object";
         int size = (int)size();
         int[] indices = new int[size];
         for (int i = 0; i < indices.length; ++i)
             indices[i] = i;
 
         // Sort the indices using the given HitProperty
-        if (p.getValueType() == PropertyValueString.class) {
+        if (sortBy.getValueType() == PropertyValueString.class) {
             // Collator.compare() is synchronized and therefore slow.
             // It is faster to calculate all the collationkeys first, then parallel sort them.
             CollationKey[] sortValues = new CollationKey[size];
-            for (int i = 0; i < sortValues.length; ++i)
-                sortValues[i] = PropertyValue.collator.getCollationKey(p.get(i).toString());
+            for (int i = 0; i < sortValues.length; ++i) {
+                sortValues[i] = sortBy.getCollationKey(i);
+            }
             IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));
         } else {
-            IntArrays.parallelQuickSort(indices, p::compare);
+            IntArrays.parallelQuickSort(indices, sortBy::compare);
         }
 
         HitsMutable r = HitsMutable.create(field(), matchInfoDefs(), size, false, false);

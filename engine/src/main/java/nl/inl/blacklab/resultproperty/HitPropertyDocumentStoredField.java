@@ -1,9 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -18,10 +15,10 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     private final DocPropertyStoredField docPropStoredField;
 
-    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
+    HitPropertyDocumentStoredField(HitPropertyDocumentStoredField prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
         this.fieldName = prop.fieldName;
-        this.docPropStoredField = prop.docPropStoredField.copyWith(lrc, false);
+        this.docPropStoredField = prop.docPropStoredField.copyWith(context, false);
         assert docPropStoredField != null;
     }
 
@@ -36,8 +33,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyDocumentStoredField(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyDocumentStoredField(this, context, invert);
     }
 
     @Override
@@ -46,16 +43,24 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     }
 
     @Override
-    public PropertyValueString get(long result) {
+    public PropertyValueString get(long hitIndex) {
         // NOTE: DocPropertyStoredField will convert the doc id to global
-        return PropertyValueString.fromArray(docPropStoredField.get(hits.doc(result)));
+        return new PropertyValueString(getString(hitIndex), context.collationCache());
+    }
+
+    @Override
+    public String getString(long hitIndex) {
+        String[] v = docPropStoredField.get(context.hits().doc(hitIndex));
+        if (v.length == 1)
+            return v[0];
+        return PropertyValueString.joinValues(v);
     }
 
     @Override
     public int compare(long a, long b) {
         // NOTE: DocPropertyStoredField will convert the doc id to global
-        final int docA = hits.doc(a);
-        final int docB = hits.doc(b);
+        final int docA = context.hits().doc(a);
+        final int docB = context.hits().doc(b);
         return reverse ?
                 docPropStoredField.compare(docB, docA) :
                 docPropStoredField.compare(docA, docB);

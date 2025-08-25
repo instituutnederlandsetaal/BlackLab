@@ -1,9 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping per document.
@@ -14,9 +11,9 @@ public class HitPropertyDoc extends HitProperty {
 
     private final BlackLabIndex index;
 
-    HitPropertyDoc(HitPropertyDoc prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
-        this.index = hits.index();
+    HitPropertyDoc(HitPropertyDoc prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
+        this.index = context.hits().index();
     }
 
     public HitPropertyDoc(BlackLabIndex index) {
@@ -25,8 +22,8 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyDoc(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyDoc(this, context, invert);
     }
 
     @Override
@@ -36,7 +33,7 @@ public class HitPropertyDoc extends HitProperty {
 
     @Override
     public PropertyValueDoc get(long hitIndex) {
-        return new PropertyValueDoc(resultDocIdForHit(hitIndex));
+        return new PropertyValueDoc(context.resultDocIdForHit(hitIndex));
     }
 
     @Override
@@ -47,8 +44,8 @@ public class HitPropertyDoc extends HitProperty {
     @Override
     public int compare(long indexA, long indexB) {
         // no need to add docBase here, because we're just comparing
-        int docA = hits.doc(indexA);
-        int docB = hits.doc(indexB);
+        int docA = context.hits().doc(indexA);
+        int docB = context.hits().doc(indexB);
         return reverse ? docB - docA : docA - docB;
     }
 

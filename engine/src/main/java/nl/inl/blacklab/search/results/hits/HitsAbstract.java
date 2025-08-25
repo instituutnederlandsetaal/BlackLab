@@ -10,6 +10,7 @@ import java.util.Set;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
@@ -130,7 +131,7 @@ public abstract class HitsAbstract implements Hits {
         // temporary copy used in grouping (don't keep reference to hits)
         // NOTE: we pass toGlobal = true because segment hits must be grouped by global identity (so we can merge them)
         hits = hits.getStatic(); // get most efficient (non-locking list) version of hits if possible
-        groupBy = groupBy.copyWith(hits, lrc, true, false);
+        groupBy = groupBy.copyWith(PropContext.segmentToGlobal(hits, lrc));
 
         int hitIndex = 0;
         for (EphemeralHit hit: hits) {

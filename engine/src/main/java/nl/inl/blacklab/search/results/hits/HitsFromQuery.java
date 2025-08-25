@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +24,8 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.util.PriorityQueue;
 
+import com.ibm.icu.text.CollationKey;
+
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -30,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -568,7 +572,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             this.docBase = segmentResults.lrc.docBase;
 
             // We need global sort values (term/doc ids) for the merge operation.
-            this.sortBy = sortBy.copyWith(hits, segmentResults.lrc, true, false);
+            this.sortBy = sortBy.copyWith(PropContext.segmentToGlobal(hits, segmentResults.lrc));
             this.index = 0;
         }
 
@@ -633,7 +637,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
             Map<PropertyValue, Group> groups = new HashMap<>();
             for (Map.Entry<LeafReaderContext, HitsMutable> entry: hitsPerSegment.entrySet()) {
-                groupHits(entry.getValue(), groupBy, maxValuesToStorePerGroup, groups, entry.getKey());
+                groupHits(entry.getValue(), groupBy.copyWith(PropContext.globalHits(entry.getValue(), new HashMap<>())), maxValuesToStorePerGroup, groups, entry.getKey());
             }
             logger.debug("GROUP: single thread finished");
             return groups;
@@ -644,6 +648,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         // Group in parallel and merge the results.
         Parallel<Map.Entry<LeafReaderContext, HitsMutable>, Map<PropertyValue, Group>> parallel =
                 new Parallel<>(index(), numThreads);
+        HitProperty groupByWithCache = groupBy.copyWith(PropContext.globalHits(null, new ConcurrentHashMap<>()));
         return parallel.mapReduce(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
                 threadItems -> {
@@ -654,7 +659,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                     for (Map.Entry<LeafReaderContext, HitsMutable> entry: threadItems) {
                         // For each segment, group the hits using the specified property.
                         logger.debug("GROUP:      thread " + threadNum + ", hits size " + entry.getValue().size());
-                        groupHits(entry.getValue(), groupBy, maxValuesToStorePerGroup, groups, entry.getKey());
+                        groupHits(entry.getValue(), groupByWithCache, maxValuesToStorePerGroup, groups, entry.getKey());
                     }
                     logger.debug("GROUP:    a thread finished: " + threadNum);
                     return List.of(groups);
@@ -695,6 +700,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         // We need to sort the hits from each segment separately (in parallel), then merge them.
 
         // Sort each group of segments in a separate thread.
+        Map<String, CollationKey> collationKeyCache = new ConcurrentHashMap<>();
         Parallel<Map.Entry<LeafReaderContext, HitsMutable>, SegmentHits> parallel = new Parallel<>(index(), numThreads);
         List<Future<List<SegmentHits>>> pendingResults = parallel.map(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
@@ -702,7 +708,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                     // For each segment, sort the hits using the specified property.
                     Hits hits = entry.getValue().getStatic();
                     LeafReaderContext lrc = entry.getKey();
-                    Hits sorted = hits.sorted(sortBy.copyWith(hits, lrc, false, false));
+                    HitProperty sortByWithContext = sortBy.copyWith(PropContext.segmentHits(hits, lrc,
+                            collationKeyCache));
+                    Hits sorted = hits.sorted(sortByWithContext);
                     return new SegmentHits(lrc, sorted);
                 }).toList());
 
@@ -711,7 +719,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         MergePriorityQueue queue = sortGatherResults(hitsPerSegment.size(), sortBy, pendingResults, parallel);
         logger.debug("SORT: merge results");
         try {
-            return sortMergeResults(queue, sortBy);
+            return sortMergeResults(queue);
         } finally {
             logger.debug("SORT: done");
         }
@@ -740,7 +748,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         return queue;
     }
 
-    private HitsMutable sortMergeResults(MergePriorityQueue queue, HitProperty sortBy) {
+    private HitsMutable sortMergeResults(MergePriorityQueue queue) {
         // Now merge the sorted hits from each segment.
         HitsMutable mergedHits = HitsMutable.create(field(), matchInfoDefs(),
                 numHitsGlobalView, numHitsGlobalView, false);
@@ -767,7 +775,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             Hits hits = segmentHits.getValue().getStatic();
             mergedHits.addAllConvertDocBase(hits, segmentHits.getKey().docBase);
         }
-        return mergedHits.sorted(sortBy);
+        HitProperty sortByWithContext = sortBy.copyWith(PropContext.globalHits(mergedHits, new ConcurrentHashMap<>()));
+        return mergedHits.sorted(sortByWithContext);
     }
 
     /**

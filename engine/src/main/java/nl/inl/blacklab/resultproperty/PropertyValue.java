@@ -1,10 +1,11 @@
 package nl.inl.blacklab.resultproperty;
 
-import java.text.Collator;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -66,7 +67,7 @@ public abstract class PropertyValue implements Comparable<Object> {
                     PropertyValueContextWords.deserialize(index, field, infos, type.equals("cwsr"));
             case "dec" -> PropertyValueDecade.deserialize(infos.isEmpty() ? "unknown" : infos.get(0));
             case "int" -> PropertyValueInt.deserialize(infos.isEmpty() ? "-1" : infos.get(0));
-            case "str" -> new PropertyValueString(infos.isEmpty() ? "" : infos.get(0));
+            case "str" -> new PropertyValueString(infos.isEmpty() ? "" : infos.get(0), null);
             case "doc" -> PropertyValueDoc.deserialize(infos.isEmpty() ? "NO_DOC_ID_SPECIFIED" : infos.get(0));
             default -> {
                 logger.debug("Unknown HitPropValue '" + type + "'");

@@ -1,9 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.LeafReaderContext;
-
-import nl.inl.blacklab.search.results.hits.Hits;
-
 /**
  * A hit property for grouping per document id.
  * 
@@ -14,8 +10,8 @@ public class HitPropertyDocumentId extends HitProperty {
 
     public static final String ID = "docid";
 
-    HitPropertyDocumentId(HitPropertyDocumentId prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
+    HitPropertyDocumentId(HitPropertyDocumentId prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
     }
 
     public HitPropertyDocumentId() {
@@ -28,13 +24,13 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyDocumentId(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyDocumentId(this, context, invert);
     }
 
     @Override
     public PropertyValueInt get(long hitIndex) {
-        return new PropertyValueInt(resultDocIdForHit(hitIndex));
+        return new PropertyValueInt(context.resultDocIdForHit(hitIndex));
     }
 
     @Override
@@ -45,8 +41,8 @@ public class HitPropertyDocumentId extends HitProperty {
     @Override
     public int compare(long indexA, long indexB) {
         // no need to add docBase here, we're just comparing
-        final int docA = hits.doc(indexA);
-        final int docB = hits.doc(indexB);
+        final int docA = context.hits().doc(indexA);
+        final int docB = context.hits().doc(indexB);
         return reverse ? docB - docA : docA - docB;
     }
 

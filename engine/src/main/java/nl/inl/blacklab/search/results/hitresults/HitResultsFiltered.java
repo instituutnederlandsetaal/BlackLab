@@ -1,10 +1,12 @@
 package nl.inl.blacklab.search.results.hitresults;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -66,7 +68,7 @@ public class HitResultsFiltered extends HitResultsWithHitsInternal implements Re
         // NOTE: this class normally filter lazily, but fetching Contexts will trigger fetching all hits first.
         // We'd like to fix this, but fetching necessary context per hit might be slow. Might be mitigated by
         // implementing a ForwardIndex that stores documents linearly, making it just a single read.
-        filterProperty = property.copyWith(hitResults.getHits());
+        filterProperty = property.copyWith(PropContext.globalHits(hitResults.getHits(), new ConcurrentHashMap<>()));
         this.filterValue = value;
         hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this));
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));

@@ -2,7 +2,7 @@ package nl.inl.blacklab.mocks;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;

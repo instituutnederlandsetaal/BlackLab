@@ -64,12 +64,12 @@ public class TestHitPropertySerialize {
         Assert.assertEquals(exp, val1.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("blabla") });
+        val = new PropertyValueMultiple(new PropertyValue[] { val1, new PropertyValueString("blabla", null) });
         exp = "dec:1980,str:blabla";
         Assert.assertEquals(exp, val.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
 
-        val = new PropertyValueMultiple(val1, new PropertyValueString("$bl:ab,la"));
+        val = new PropertyValueMultiple(val1, new PropertyValueString("$bl:ab,la", null));
         exp = "dec:1980,str:$DLbl$CLab$CMla";
         Assert.assertEquals(exp, val.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());

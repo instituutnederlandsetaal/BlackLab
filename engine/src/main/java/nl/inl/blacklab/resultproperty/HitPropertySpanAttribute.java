@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -13,7 +12,6 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -58,8 +56,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     /** The sensitivity of the match */
     private final MatchSensitivity sensitivity;
 
-    HitPropertySpanAttribute(HitPropertySpanAttribute prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
+    HitPropertySpanAttribute(HitPropertySpanAttribute prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
         groupName = prop.groupName;
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
@@ -87,8 +85,8 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertySpanAttribute(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertySpanAttribute(this, context, invert);
     }
 
     @Override
@@ -103,19 +101,24 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public PropertyValueString get(long hitIndex) {
+    public PropertyValue get(long hitIndex) {
+        return new PropertyValueString(getString(hitIndex), context.collationCache());
+    }
+
+    @Override
+    public String getString(long hitIndex) {
         if (groupIndex < 0) {
             // Determine group index. Done lazily because the group might only be registered
             // when the second index segment is processed, for example.
-            groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
+            groupIndex = groupName.isEmpty() ? 0 : context.hits().matchInfoDefs().indexOf(groupName);
             if (groupIndex < 0) {
                 // Match info not registered (yet). Return empty value.
-                return PropertyValueString.NO_VALUE;
+                return PropertyValueString.NO_VALUE_STR;
             }
         }
-        MatchInfo matchInfo = hits.get(hitIndex).matchInfos(groupIndex);
+        MatchInfo matchInfo = context.hits().get(hitIndex).matchInfos(groupIndex);
         if (matchInfo == null)
-            return PropertyValueString.NO_VALUE;
+            return PropertyValueString.NO_VALUE_STR;
 
         String value;
         if (relNameInList != null && matchInfo instanceof RelationListInfo relList) {
@@ -143,14 +146,14 @@ public class HitPropertySpanAttribute extends HitProperty {
                 }
             }
             if (!found)
-                return PropertyValueString.NO_VALUE;
+                return PropertyValueString.NO_VALUE_STR;
             value = b.toString();
         } else {
             if (!(matchInfo instanceof RelationInfo span))
-                return PropertyValueString.NO_VALUE;
+                return PropertyValueString.NO_VALUE_STR;
             value = StringUtils.join(span.getAttributes().get(attributeName), SEPARATOR_MULTIPLE_VALUES);
         }
-        return new PropertyValueString(value);
+        return value;
     }
 
     private String listIfMultiple(List<String> values) {

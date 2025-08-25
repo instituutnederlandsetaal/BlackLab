@@ -2,14 +2,11 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hits.Hit;
-import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on the text actually matched.
@@ -23,8 +20,8 @@ public class HitPropertyHitText extends HitPropertyContextBase {
         return new HitPropertyHitText(index, i.annotation, i.sensitivity);
     }
 
-    HitPropertyHitText(HitPropertyHitText prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert, null);
+    HitPropertyHitText(HitPropertyHitText prop, PropContext context, boolean invert) {
+        super(prop, context, invert, null);
     }
 
     public HitPropertyHitText(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity) {
@@ -44,13 +41,13 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyHitText(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyHitText(this, context, invert);
     }
 
     @Override
     public void fetchContext() {
-        if (annotation.field() == hits.field()) {
+        if (annotation.field() == context.hits().field()) {
             // Regular hit; use start and end offsets from the hit itself
             fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
                 starts[hitIndex] = hit.start();

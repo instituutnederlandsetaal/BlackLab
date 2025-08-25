@@ -1,12 +1,15 @@
 package nl.inl.blacklab.testutil;
 
-import java.text.CollationKey;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.lang3.RandomStringUtils;
+
+import com.ibm.icu.text.CollationKey;
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
+import com.ibm.icu.util.ULocale;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.ints.IntComparator;
@@ -41,9 +44,9 @@ public class TestSortPerformance {
 
         System.out.println("         n    FQS   FPQ");
         int[] testSizes = { 1000, 10000, 100_000, 150_000, 250_000,
-                500_000, 750_000, 1_000_000, 2_500_000, 5_000_000, 7_500_000, 10_000_000 };
+                500_000, 750_000, 1_000_000, 2_500_000, 5_000_000/*, 7_500_000, 10_000_000*/ };
         for (int size: testSizes) {
-            ComparatorFactory f = indirectStringComparator;
+            ComparatorFactory f = indirectCollationKeyComparator;
             test(size, f);
         }
     }
@@ -60,10 +63,17 @@ public class TestSortPerformance {
             str[i] = RandomStringUtils.randomAlphanumeric(6);
         }
         // Comparator compares strings at the specified indexes
-        Collator collator = Collator.getInstance();
+        Collator collator = getCollator();
         IntComparator comp = (a, b) -> collator.compare(str[a], str[b]);
         return comp;
     };
+
+    private static Collator getCollator() {
+        RuleBasedCollator instance = (RuleBasedCollator)Collator.getInstance(new ULocale("nl", "NL"));
+        instance.setAlternateHandlingShifted(true);
+        instance.freeze();
+        return instance;
+    }
 
     private static final ComparatorFactory indirectStringListComparator = (numberOfItems) -> {
         // Create an array of random strings of length 6
@@ -72,7 +82,7 @@ public class TestSortPerformance {
             str.add(RandomStringUtils.randomAlphanumeric(6));
         }
         // Comparator compares strings at the specified indexes
-        Collator collator = Collator.getInstance();
+        Collator collator = getCollator();
         IntComparator comp = (a, b) -> collator.compare(str.get(a), str.get(b));
         return comp;
     };
@@ -80,7 +90,7 @@ public class TestSortPerformance {
     private static final ComparatorFactory indirectCollationKeyComparator = (numberOfItems) -> {
         // Create an array of random strings of length 6
         List<CollationKey> str = new ArrayList<>(numberOfItems);
-        Collator collator = Collator.getInstance();
+        Collator collator = getCollator();
         for (int i = 0; i < numberOfItems; i++) {
             str.add(collator.getCollationKey(RandomStringUtils.randomAlphanumeric(6)));
         }

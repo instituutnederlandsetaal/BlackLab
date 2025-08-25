@@ -1,11 +1,12 @@
 package nl.inl.blacklab.server.lib.results;
 
-import java.text.Collator;
 import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLab;
@@ -70,6 +71,6 @@ public class TestValueSort {
         );
         Collator coll = new Collators(BlackLab.defaultCollator()).get(MatchSensitivity.INSENSITIVE);
         list.sort(coll);
-        Assert.assertEquals(list, expected);
+        Assert.assertEquals(expected, list);
     }
 }

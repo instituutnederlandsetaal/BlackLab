@@ -32,6 +32,7 @@ import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyAnnotatedFieldLength;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
+import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.resultproperty.PropertyValueInt;
@@ -244,7 +245,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      */
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
         this(queryInfo);
-        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(hits, null, false, false);
+        this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(PropContext.globalHits(hits));
         this.matchInfoDefs = hits.matchInfoDefs();
         this.sourceHitsIterator = hits.iterator();
         stats.setDone(false); // we're still actively gathering hits, unlike with the other constructors

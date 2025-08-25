@@ -1,11 +1,9 @@
 package nl.inl.blacklab.resultproperty;
 
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -31,8 +29,8 @@ public class HitPropertyDocumentDecade extends HitProperty {
 
     private final DocPropertyDecade docPropertyDocumentDecade;
 
-    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
+    HitPropertyDocumentDecade(HitPropertyDocumentDecade prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
         this.index = prop.index;
         this.reader = index.reader();
         this.fieldName = prop.fieldName;
@@ -53,20 +51,20 @@ public class HitPropertyDocumentDecade extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyDocumentDecade(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyDocumentDecade(this, context, invert);
     }
 
     @Override
     public PropertyValueDecade get(long hitIndex) {
-        return docPropertyDocumentDecade.get(globalDocIdForHit(hitIndex));
+        return docPropertyDocumentDecade.get(context.globalDocIdForHit(hitIndex));
     }
 
     @Override
     public int compare(long indexA, long indexB) {
         return docPropertyDocumentDecade.compare(
-            resultDocIdForHit(indexA),
-            resultDocIdForHit(indexB)
+            context.resultDocIdForHit(indexA),
+            context.resultDocIdForHit(indexB)
         ) * (reverse ? -1 : 1);
     }
 

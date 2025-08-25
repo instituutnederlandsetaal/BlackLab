@@ -1,7 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
@@ -12,8 +10,8 @@ public class HitPropertyHitPosition extends HitProperty {
 
     public static final String ID = "hitposition";
 
-    HitPropertyHitPosition(HitPropertyHitPosition prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
+    HitPropertyHitPosition(HitPropertyHitPosition prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
     }
     
     public HitPropertyHitPosition() {
@@ -21,8 +19,8 @@ public class HitPropertyHitPosition extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyHitPosition(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyHitPosition(this, context, invert);
     }
 
     @Override
@@ -32,7 +30,7 @@ public class HitPropertyHitPosition extends HitProperty {
 
     @Override
     public PropertyValueInt get(long hitIndex) {
-        return new PropertyValueInt(hits.start(hitIndex));
+        return new PropertyValueInt(context.hits().start(hitIndex));
     }
 
     @Override
@@ -42,6 +40,7 @@ public class HitPropertyHitPosition extends HitProperty {
 
     @Override
     public int compare(long indexA, long indexB) {
+        Hits hits = context.hits();
         int startA = hits.start(indexA);
         int startB = hits.start(indexB);
         int endA = hits.end(indexA);

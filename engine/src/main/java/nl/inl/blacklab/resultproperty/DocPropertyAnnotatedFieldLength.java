@@ -1,6 +1,5 @@
 package nl.inl.blacklab.resultproperty;
 
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -32,20 +31,20 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
 
     private final BlackLabIndex index;
 
-    DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, LeafReaderContext lrc, boolean invert) {
-        super(prop, lrc, invert);
+    DocPropertyAnnotatedFieldLength(DocPropertyAnnotatedFieldLength prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
         index = prop.index;
         lengthTokensFieldName = prop.lengthTokensFieldName;
         friendlyName = prop.friendlyName;
-        docValuesGetter = (lrc == null || lrc == prop.lrc) ? prop.docValuesGetter : DocValuesGetter.get(index, lrc,
-                lengthTokensFieldName);
+        docValuesGetter = this.context.lrc() == prop.context.lrc() ?
+                prop.docValuesGetter : DocValuesGetter.get(index, this.context.lrc(), lengthTokensFieldName);
     }
 
     public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String annotatedFieldName) {
         this.index = index;
         this.lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(annotatedFieldName);
         this.friendlyName = annotatedFieldName + " length";
-        docValuesGetter = DocValuesGetter.get(index, lrc, this.lengthTokensFieldName);
+        docValuesGetter = DocValuesGetter.get(index, context.lrc(), this.lengthTokensFieldName);
     }
 
     @Override
@@ -87,8 +86,8 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     @Override
-    public DocPropertyAnnotatedFieldLength copyWith(LeafReaderContext lrc, boolean invert) {
-        return new DocPropertyAnnotatedFieldLength(this, lrc, invert);
+    public DocPropertyAnnotatedFieldLength copyWith(PropContext context, boolean invert) {
+        return new DocPropertyAnnotatedFieldLength(this, context, invert);
     }
 
     @Override

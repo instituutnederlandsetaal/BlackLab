@@ -24,7 +24,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hit;
-import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.ThreadAborter;
 
@@ -88,7 +87,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             if (mi == null)
                 continue;
             if (mi.getField().equals(fieldName) && mi.getType() == MatchInfo.Type.SPAN &&
-                    hits.matchInfoDefs().get(i).getName().endsWith(
+                    context.hits().matchInfoDefs().get(i).getName().endsWith(
                     SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
                 startEnd[0] = Math.min(startEnd[0], mi.getSpanStart());
@@ -170,16 +169,16 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert, AnnotatedField overrideField) {
-        super(prop, hits, lrc, toGlobal, invert);
-        this.index = hits == null ? prop.index : hits.index();
+    protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, AnnotatedField overrideField) {
+        super(prop, context, invert);
+        this.index = context.hits() == null ? prop.index : context.hits().index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
         this.sensitivity = prop.sensitivity;
         this.name = prop.name;
         this.serializeName = prop.serializeName;
         this.compareInReverse = prop.compareInReverse;
         initForwardIndex();
-        if (prop.hits == hits) {
+        if (prop.context.hits() == context.hits()) {
             // Same hits object; reuse context arrays
             copyContext(prop);
         }
@@ -206,12 +205,12 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     void initForwardIndex() {
         luceneField = annotation.forwardIndexSensitivity().luceneField();
-        if (isGlobal() || toGlobal) {
+        if (isGlobal() || context.toGlobal()) {
             // To produce global term ids, we need the global forward index
             forwardIndex = index.forwardIndex(annotation);
         } else {
             // Use the forward index for the segment we're in
-            forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+            forwardIndex = FieldForwardIndex.get(context.lrc(), luceneField);
         }
     }
 
@@ -248,14 +247,14 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     protected synchronized void fetchContext(StartEndSetter setStartEnd) {
-        final long size = hits.size();
+        final long size = context.hits().size();
         contextTermId = new ObjectBigArrayBigList<>(size);
         contextSortOrder = new ObjectBigArrayBigList<>(size);
-        int prevDoc = size == 0 ? -1 : resultDocIdForHit(0);
+        int prevDoc = size == 0 ? -1 : context.resultDocIdForHit(0);
         long firstHitInCurrentDoc = 0;
         if (size > 0) {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
-                final int curDoc = resultDocIdForHit(i);
+                final int curDoc = context.resultDocIdForHit(i);
                 if (curDoc != prevDoc) {
                     try { ThreadAborter.checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
@@ -290,11 +289,11 @@ public abstract class HitPropertyContextBase extends HitProperty {
         EphemeralHit hit = new EphemeralHit();
         long hitIndex = fromIndex;
         for (int j = 0; j < n; ++j, ++hitIndex) {
-            hits.getEphemeral(hitIndex, hit);
+            context.hits().getEphemeral(hitIndex, hit);
             setStartEnd.setStartEnd(starts, ends, j, hit);
         }
 
-        if (isGlobal() || toGlobal) {
+        if (isGlobal() || context.toGlobal()) {
             // [GLOBAL]
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
             AnnotForwardIndex segmentForwardIndex = getFieldForwardIndex(lrc);
@@ -331,7 +330,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     private boolean isGlobal() {
-        return lrc == null;
+        return context.lrc() == null;
     }
 
     @Override
@@ -344,8 +343,8 @@ public abstract class HitPropertyContextBase extends HitProperty {
         ensureContextFetched();
         int[] termIds = contextTermId.get(hitIndex);
         int[] sortPositions = contextSortOrder.get(hitIndex);
-        return new PropertyValueContextWords(annotation, sensitivity, toGlobal ? null : lrc, termIds, sortPositions,
-                compareInReverse);
+        return new PropertyValueContextWords(annotation, sensitivity, context.toGlobal() ? null : context.lrc(),
+                termIds, sortPositions, compareInReverse);
     }
 
     private boolean isContextAvailable() {

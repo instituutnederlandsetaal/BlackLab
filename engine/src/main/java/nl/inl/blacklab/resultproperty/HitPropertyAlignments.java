@@ -4,12 +4,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for grouping on an attribute of a matched span.
@@ -27,17 +24,17 @@ public class HitPropertyAlignments extends HitProperty {
         return new HitPropertyAlignments();
     }
 
-    HitPropertyAlignments(HitPropertyAlignments prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert);
+    HitPropertyAlignments(HitPropertyAlignments prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
     }
 
     private synchronized List<Integer> getTargetHitGroupIndexes() {
         if (targetHitGroupIndexes == null) {
             // We look this up dynamically, because we can only do this after all hits have been fetched
             // (actually, after all Spans have been initialized and therefore all capture groups registered)
-            if (this.hits != null) {
+            if (context.hits() != null) {
                 // Find indexes of foreign hits in matchInfo
-                targetHitGroupIndexes = hits.matchInfoDefs().currentListFiltered(MatchInfo.Def::isForeignHit).stream()
+                targetHitGroupIndexes = context.hits().matchInfoDefs().currentListFiltered(MatchInfo.Def::isForeignHit).stream()
                         .map(MatchInfo.Def::getIndex)
                         .toList();
             } else {
@@ -61,8 +58,8 @@ public class HitPropertyAlignments extends HitProperty {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyAlignments(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyAlignments(this, context, invert);
     }
 
     @Override
@@ -73,7 +70,7 @@ public class HitPropertyAlignments extends HitProperty {
 
     @Override
     public PropertyValue get(long hitIndex) {
-        MatchInfo[] matchInfos = hits.matchInfos(hitIndex);
+        MatchInfo[] matchInfos = context.hits().matchInfos(hitIndex);
         int n = 0;
         if (matchInfos != null) {
             // NOTE: below conditional should prevent synchronized method call if not necessary.

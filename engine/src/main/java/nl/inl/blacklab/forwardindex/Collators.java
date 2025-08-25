@@ -1,7 +1,7 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.text.Collator;
-import java.text.RuleBasedCollator;
+import com.ibm.icu.text.Collator;
+import com.ibm.icu.text.RuleBasedCollator;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLab;
@@ -29,10 +29,14 @@ public class Collators {
         //            Collators with this strength are therefore STRICTER
         //            (e.g. 'APE' and 'ape' are considered different, and 'APE' comes before 'ape')
 
-        sensitive = (Collator) base.clone();
-        sensitive.setStrength(Collator.TERTIARY); // NOTE: TERTIARY considers differently-normalized characters to be,
-        // identical which can cause problems if the input data is not consistently normalized the same way.
+        sensitive = base.cloneAsThawed();
+        // NOTE: TERTIARY considers differently-normalized characters to be
+        // identical, which could cause problems if the input data is not consistently normalized the same way.
+        // But we do normalize data while indexing, so this should not be an issue.
+        sensitive.setStrength(Collator.TERTIARY);
+        sensitive.freeze();
         insensitive = desensitize(base);
+        insensitive.freeze();
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -58,14 +62,14 @@ public class Collators {
             // Case- and accent-insensitive collator that doesn't
             // ignore dash and space like the regular insensitive collator (V1) does.
             String rules = ((RuleBasedCollator)coll).getRules().replace(",'-'", ""); // don't ignore dash
-            rules = rules.replace("<'_'", "<' '<'-'<'_'"); // sort dash and space before underscore
+            rules += "&' ' < '-' < '_'"; // sort dash and space before underscore
             try {
                 coll = new RuleBasedCollator(rules);
             } catch (Exception e) {
                 throw BlackLabException.wrapRuntime(e);
             }
         } else {
-            coll = (Collator)coll.clone();
+            coll = coll.cloneAsThawed();
         }
         coll.setStrength(Collator.PRIMARY); // ignore case and accent differences
         return coll;

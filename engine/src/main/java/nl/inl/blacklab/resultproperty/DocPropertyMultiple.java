@@ -7,7 +7,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
@@ -23,8 +22,8 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public class DocPropertyMultiple extends DocProperty implements Iterable<DocProperty> {
     final List<DocProperty> criteria;
 
-    DocPropertyMultiple(DocPropertyMultiple mprop, LeafReaderContext lrc, boolean invert) {
-        super(mprop, lrc, invert);
+    DocPropertyMultiple(DocPropertyMultiple mprop, PropContext context, boolean invert) {
+        super(mprop, context, invert);
         this.criteria = mprop.criteria;
     }
 
@@ -156,8 +155,8 @@ public class DocPropertyMultiple extends DocProperty implements Iterable<DocProp
     }
 
     @Override
-    public DocPropertyMultiple copyWith(LeafReaderContext lrc, boolean invert) {
-        return new DocPropertyMultiple(this, lrc, invert);
+    public DocPropertyMultiple copyWith(PropContext context, boolean invert) {
+        return new DocPropertyMultiple(this, context, invert);
     }
 
     @Override

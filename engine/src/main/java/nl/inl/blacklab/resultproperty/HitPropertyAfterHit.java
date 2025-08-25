@@ -4,15 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.Hit;
-import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
  * A hit property for sorting on a number of tokens after a hit.
@@ -36,8 +33,8 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
         return hitProp;
     }
 
-    HitPropertyAfterHit(HitPropertyAfterHit prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert, null);
+    HitPropertyAfterHit(HitPropertyAfterHit prop, PropContext context, boolean invert) {
+        super(prop, context, invert, null);
         this.numberOfTokens = prop.numberOfTokens;
     }
 
@@ -67,13 +64,13 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyAfterHit(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyAfterHit(this, context, invert);
     }
 
     @Override
     public void fetchContext() {
-        if (annotation.field() == hits.field()) {
+        if (annotation.field() == context.hits().field()) {
             // Regular hit; use start and end offsets from the hit itself
             fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
                 starts[hitIndex] = hit.end();

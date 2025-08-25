@@ -1,7 +1,8 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.text.CollationKey;
 import java.util.Iterator;
+
+import com.ibm.icu.text.CollationKey;
 
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
@@ -12,7 +13,6 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -241,7 +241,6 @@ class HitsListNoLock extends HitsListAbstract {
 
     @Override
     Hits sortedNoLock(HitProperty p) {
-        p = p.copyWith(this);
         HitsMutable r;
         if (docs.size64() > Constants.JAVA_MAX_ARRAY_SIZE) {
             r = sort64(p);
@@ -252,7 +251,8 @@ class HitsListNoLock extends HitsListAbstract {
         return r;
     }
 
-    private HitsMutable sort64(HitProperty p) {
+    private HitsMutable sort64(HitProperty sortBy) {
+        assert sortBy.getContext().hits() == this : "HitProperty context hits object is not this hits object";
         // Fill an indices BigArray with 0 ... size
         long size = docs.size64();
         long[][] indices = LongBigArrays.newBigArray(size);
@@ -265,14 +265,15 @@ class HitsListNoLock extends HitsListAbstract {
         }
 
         // Sort the indices using the given HitProperty
-        if (p.getValueType() == PropertyValueString.class) {
+        if (sortBy.getValueType() == PropertyValueString.class) {
             // Collator.compare() is synchronized and therefore slow.
             // It is faster to calculate all the collationkeys first, then parallel sort them.
+            // We use a cache because there's often multiple hits with the same value (e.g. document title, year, etc.)
             CollationKey[][] sortValues = (CollationKey[][])ObjectBigArrays.newBigArray(size);
             hitIndex = 0;
             for (final CollationKey[] segment: sortValues) {
                 for (int displacement = 0; displacement < segment.length; displacement++) {
-                    segment[displacement] = PropertyValue.collator.getCollationKey(p.get(hitIndex).toString());
+                    segment[displacement] = sortBy.getCollationKey(hitIndex);
                     hitIndex++;
                 }
             }
@@ -282,7 +283,7 @@ class HitsListNoLock extends HitsListAbstract {
                 return o1.compareTo(o2);
             });
         } else {
-            LongBigArrays.parallelQuickSort(indices, p);
+            LongBigArrays.parallelQuickSort(indices, sortBy);
         }
 
         // Now use the sorted indices to fill a new HitsInternal with the actual hits

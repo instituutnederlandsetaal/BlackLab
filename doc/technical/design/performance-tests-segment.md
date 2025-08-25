@@ -2,44 +2,46 @@
 
 http://localhost:8080/blacklab-server/search-test/index.html
 
-NOTE:
-- sorting on `docid,hitposition` is fast, while sorting on `hit:word:i` or `field:title` is slow
-  so reading from the Lucene index seems to be the bottleneck. Could we cache more data in memory?
-
-- grouping seems to always be slow; why?
+- fetching hits in multiple threads is slower than in a single thread... (3s for 2 threads vs. 2s for 1 thread, 50M hits, work pc)
+- sorting is slower in multiple threads than in a single thread (17.5s for 1 thread, 23s for 2 threads, 50M hits, work pc)
 
 ## SORT BY TITLE
 
 QueryTool parlamint
-showconc no && maxretrieve 1000000 && verbose
+showconc no && total on && maxretrieve -1 && verbose
 
-## ALL WORDS; BL5; PARALLEL
+## BL5
 
-threads 1 && [] && sort field:title    8.6s
-threads 2 && [] && sort field:title   19.3s <-- merge makes it slow!
-threads 4 && [] && sort field:title   17.7s
-threads 8 && [] && sort field:title   28.5s <-- too much locking of index files?
+THUIS
+threads 1 && [] && sort field:title    17.5s
+threads 2 && [] && sort field:title    23s <-- merge makes it slower
+threads 4 && [] && sort field:title    23s <-- I/O bound or dominated by the merge phase
+threads 8 && [] && sort field:title    24s      (same)
 
-## SORT
+WERK
+threads 1 && [] && sort field:title    15.5s
+threads 2 && [] && sort field:title    22s <-- merge makes it slower
+threads 4 && [] && sort field:title    24s <-- I/O bound or dominated by the merge phase
+threads 8 && [] && sort field:title    24s      (same)
 
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        []
-sort        hit:word:i
-hits        50672559
+## SORT BY CONTEXT
 
-### ALL WORDS; BL5; PARALLEL
+QueryTool parlamint
+showconc no && total on && maxretrieve -1 && verbose
 
-WERK 2 THREADS: 24229   <-- waarom trager dan single-threaded? ws. merge?
-THUIS 2 THREADS: 28884
-THUIS 11 THREADS: 28884
+### BL5
 
-### BL5 SINGLE-THREADED ALL WORDS
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        []
-sort        hit:word:i
+THUIS
+threads 1 && [] && sort hit:word:i   17s
+threads 2 && [] && sort hit:word:i   27s <-- merge makes it slower
+threads 4 && [] && sort hit:word:i   32s
+threads 8 && [] && sort hit:word:i   30s
 
-hits        50672559
-timeMs      12982 (WERK)
+WERK
+threads 1 && [] && sort hit:word:i   15s
+threads 2 && [] && sort hit:word:i   30s <-- merge makes it slower
+threads 4 && [] && sort hit:word:i   33s
+threads 8 && [] && sort hit:word:i   31s
 
 ### BL4 ALL WORDS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -49,23 +51,46 @@ sort        hit:word:i
 hits        50672559
 timeMs      39762 (WERK)
 
-
 ## GROUP
 
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        [word != 'abcdefg']
-group       hit:word:i
-hits        50672559
+QueryTool parlamint
+showconc no && total on && maxretrieve -1 && verbose
 
-### BL5 PARALLEL
+### BL5; THUIS
 
-WERK 2 THREADS: 11042 regular path; 6485 fast path
-WERK 4 THREADS: TRAGER
+THUIS
 
-### BL5 SINGLE-THREADED
+threads 1 && [] && group hit:word:i     18.5s
+threads 2 && [] && group hit:word:i     13.5s
+threads 4 && [] && group hit:word:i     17.0s
 
-timeMs      17373 (WERK)
+WERK
+
+threads 1 && [] && group hit:word:i     14.5s
+threads 2 && [] && group hit:word:i     14.5s
+threads 4 && [] && group hit:word:i     22s
 
 ### BL4
 
 timeMs      23181 (WERK)
+
+## GROUP BY TITLE
+
+QueryTool parlamint
+showconc no && total on && maxretrieve -1 && verbose
+
+## BL5
+
+THUIS
+
+threads 1 && [] && group field:title   7s
+threads 2 && [] && group field:title   6s
+threads 4 && [] && group field:title   7s
+threads 8 && [] && group field:title   6.5s
+
+WERK
+
+threads 1 && [] && group field:title    5.0s
+threads 2 && [] && group field:title    6.5s
+threads 4 && [] && group field:title    9.0s
+threads 8 && [] && group field:title   10.0s

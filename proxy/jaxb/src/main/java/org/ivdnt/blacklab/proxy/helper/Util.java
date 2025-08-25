@@ -1,7 +1,8 @@
 package org.ivdnt.blacklab.proxy.helper;
 
-import java.text.Collator;
 import java.util.Locale;
+
+import com.ibm.icu.text.Collator;
 
 public class Util {
 
@@ -12,8 +13,10 @@ public class Util {
     static {
         DEFAULT_COLLATOR = Collator.getInstance(new Locale("nl", "NL"));
         DEFAULT_COLLATOR.setStrength(Collator.TERTIARY);
+        DEFAULT_COLLATOR.freeze();
 
         DEFAULT_COLLATOR_INSENSITIVE = Collator.getInstance(new Locale("nl", "NL"));
         DEFAULT_COLLATOR_INSENSITIVE.setStrength(Collator.PRIMARY);
+        DEFAULT_COLLATOR_INSENSITIVE.freeze();
     }
 }

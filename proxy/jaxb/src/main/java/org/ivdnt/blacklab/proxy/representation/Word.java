@@ -1,6 +1,6 @@
 package org.ivdnt.blacklab.proxy.representation;
 
-import java.text.Collator;
+import com.ibm.icu.text.Collator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

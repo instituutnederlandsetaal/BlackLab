@@ -1,8 +1,6 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.text.CollationKey;
-import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -20,6 +18,9 @@ import org.apache.lucene.store.DataOutput;
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
+
+import com.ibm.icu.text.CollationKey;
+import com.ibm.icu.text.Collator;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;

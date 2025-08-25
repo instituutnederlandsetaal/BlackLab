@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +13,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -130,13 +132,14 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      * This keeps the existing sort (or lack of one) intact and allows you to cache
      * different sorts of the same result set.
      *
-     * @param sortProp the hit property to sort on
+     * @param sortBy the hit property to sort on
      * @return a new Hits object with the same hits, sorted in the specified way
      */
     @Override
-    public HitResults sorted(HitProperty sortProp) {
+    public HitResults sorted(HitProperty sortBy) {
         ensureResultsRead(-1);
-        return new HitResultsList(queryInfo(), getHits().sorted(sortProp), null, null,
+        HitProperty sortByWithContext = sortBy.copyWith(PropContext.globalHits(getHits(), new ConcurrentHashMap<>()));
+        return new HitResultsList(queryInfo(), getHits().sorted(sortByWithContext), null, null,
                 resultsStats(), docsStats());
     }
 

@@ -51,8 +51,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     /** If set: use the first tag/relation with this name in the match info list */
     private boolean relNameIsFullRelType = false;
 
-    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        super(prop, hits, lrc, toGlobal, invert, determineMatchInfoField(hits, prop.groupName, prop.spanMode));
+    HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, PropContext context, boolean invert) {
+        super(prop, context, invert, determineMatchInfoField(context.hits(), prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
@@ -97,8 +97,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     }
 
     @Override
-    public HitProperty copyWith(Hits newHits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        return new HitPropertyCaptureGroup(this, newHits, lrc, toGlobal, invert);
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyCaptureGroup(this, context, invert);
     }
 
     @Override
@@ -106,7 +106,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         if (groupIndex < 0) {
             // Determine group index. Done lazily because the group might only be registered
             // when the second index segment is processed, for example.
-            groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
+            groupIndex = groupName.isEmpty() ? 0 : context.hits().matchInfoDefs().indexOf(groupName);
         }
         fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
             if (groupIndex < 0) {

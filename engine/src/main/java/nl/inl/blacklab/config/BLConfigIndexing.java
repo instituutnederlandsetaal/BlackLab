@@ -33,6 +33,9 @@ public class BLConfigIndexing {
      */
     int maxValueLength = 0;
 
+    @Deprecated
+    int maxMetadataValuesToStore = 0;
+
     public DownloadCache.Config downloadCacheConfig() {
         return new DownloadCache.Config() {
             @Override
@@ -148,5 +151,9 @@ public class BLConfigIndexing {
             throw new IllegalArgumentException("maxValueLength must be >= 0");
         }
         this.maxValueLength = maxValueLength;
+    }
+
+    public void setMaxMetadataValuesToStore(int maxMetadataValuesToStore) {
+        this.maxMetadataValuesToStore = maxMetadataValuesToStore;
     }
 }

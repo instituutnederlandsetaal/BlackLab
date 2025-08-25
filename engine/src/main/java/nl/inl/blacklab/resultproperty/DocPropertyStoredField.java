@@ -1,7 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
@@ -40,12 +39,13 @@ public class DocPropertyStoredField extends DocProperty {
     /** Our index */
     private final BlackLabIndex index;
 
-    public DocPropertyStoredField(DocPropertyStoredField prop, LeafReaderContext lrc, boolean invert) {
-        super(prop, lrc, invert);
+    public DocPropertyStoredField(DocPropertyStoredField prop, PropContext context, boolean invert) {
+        super(prop, context, invert);
         this.index = prop.index;
         this.fieldName = prop.fieldName;
         this.friendlyName = prop.friendlyName;
-        this.docValuesGetter = (lrc == null || lrc == prop.lrc) ? prop.docValuesGetter : DocValuesGetter.get(index, lrc, fieldName);
+        this.docValuesGetter = (this.context.lrc() == prop.context.lrc()) ? prop.docValuesGetter :
+                DocValuesGetter.get(index, this.context.lrc(), fieldName);
     }
 
     @Override
@@ -88,7 +88,7 @@ public class DocPropertyStoredField extends DocProperty {
     @Override
     public PropertyValueString get(DocResult result) {
         String[] values = get(result.identity());
-        return PropertyValueString.fromArray(values);
+        return PropertyValueString.fromArray(values, context.collationCache());
     }
 
     /** Get the first value. The empty string is returned if there are no values for this document */
@@ -115,7 +115,9 @@ public class DocPropertyStoredField extends DocProperty {
      * @return 0 if equal, negative if a < b, positive if a > b.
      */
     public int compare(int docId1, int docId2) {
-        return PropertyValueString.fromArray(get(docId1)).compareTo(PropertyValueString.fromArray(get(docId2))) * (reverse ? -1 : 1);
+        PropertyValueString a = PropertyValueString.fromArray(get(docId1), context.collationCache());
+        PropertyValueString b = PropertyValueString.fromArray(get(docId2), context.collationCache());
+        return a.compareTo(b) * (reverse ? -1 : 1);
     }
 
     /**
@@ -143,8 +145,8 @@ public class DocPropertyStoredField extends DocProperty {
     }
 
     @Override
-    public DocPropertyStoredField copyWith(LeafReaderContext lrc, boolean invert) {
-        return new DocPropertyStoredField(this, lrc, invert);
+    public DocPropertyStoredField copyWith(PropContext context, boolean invert) {
+        return new DocPropertyStoredField(this, context, invert);
     }
 
     @Override

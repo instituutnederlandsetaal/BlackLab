@@ -141,7 +141,7 @@ public abstract class HitResultsWithHitsInternal extends HitResultsAbstract {
         @Override
         public Hits sorted(HitProperty sortBy) {
             ensureResultsRead(-1);
-            return hitsInternal.sorted(sortBy);
+            return hitsInternal.sorted(sortBy.copyWith(hitsInternal));
         }
 
         @Override

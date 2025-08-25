@@ -1,11 +1,13 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.LeafReaderContext;
+
+import com.ibm.icu.text.CollationKey;
 
 import it.unimi.dsi.fastutil.longs.LongComparator;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -22,38 +24,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
 public abstract class HitProperty implements ResultProperty, LongComparator {
     protected static final Logger logger = LogManager.getLogger(HitProperty.class);
 
-    /** If our document and term ids are segment-local, this will be set */
-    LeafReaderContext lrc;
-
-    /** If true, we have segment hits (lrc != null) and we should convert the
-     *  segment doc/term ids to global when determining the property values. */
-    boolean toGlobal;
-
-    /**
-     * If we have segment hits and intend to produce global property values,
-     * this method will adjust the doc id to be global.
-     *
-     * This is different from globalDocIdForHit below: that always returns a
-     * global doc id, while this method will return a segment-local doc id
-     * if toGlobal is false.
-     *
-     * @param index hit index
-     * @return (possibly) adjusted doc id
-     */
-    int resultDocIdForHit(long index) {
-        return hits.doc(index) + (toGlobal ? lrc.docBase : 0);
-    }
-
-    /**
-     * Get a global doc id for a segment hit.
-     * (because DocProperty only works with global doc ids right now)
-     *
-     * @param index hit index
-     * @return (possibly) adjusted doc id
-     */
-    int globalDocIdForHit(long index) {
-        return hits.doc(index) + (lrc != null ? lrc.docBase : 0);
-    }
+    protected final PropContext context;
 
     public static HitProperty deserialize(Hits hits, String serialized, ContextSize contextSize) {
         return deserialize(hits.index(), hits.field(), serialized, contextSize);
@@ -188,16 +159,11 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         return contextSize;
     }
 
-    /** The Hits object we're looking at */
-    protected final Hits hits;
-
     /** Reverse comparison result or not? */
     protected boolean reverse;
 
     protected HitProperty() {
-        this.hits = null;
-        this.lrc = null;
-        this.toGlobal = false;
+        this.context = PropContext.NO_CHANGE;
         this.reverse = sortDescendingByDefault();
     }
 
@@ -205,14 +171,11 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * Copy a HitProperty, with some optional changes.
      *
      * @param prop property to copy
-     * @param hits new hits to use, or null to inherit
-     * @param toGlobal if true, convert to global doc/term ids; if false, inherit
+     * @param context requested changes in context, if any
      * @param invert true to invert the previous sort order; false to keep it the same
      */
-    HitProperty(HitProperty prop, Hits hits, LeafReaderContext lrc, boolean toGlobal, boolean invert) {
-        this.hits = hits == null ? prop.hits : hits;
-        this.lrc = lrc == null ? prop.lrc : lrc;
-        this.toGlobal = lrc != null && (toGlobal || prop.toGlobal);
+    HitProperty(HitProperty prop, PropContext context, boolean invert) {
+        this.context = prop.context.adjustedWith(context);
         this.reverse = invert ? !prop.reverse : prop.reverse;
     }
 
@@ -228,6 +191,17 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     }
 
     public abstract PropertyValue get(long hitIndex);
+
+    public String getString(long hitIndex) {
+        return get(hitIndex).value().toString();
+    }
+
+    public CollationKey getCollationKey(long hitIndex) {
+        Map<String, CollationKey> cache = context.collationCache();
+        String str = getString(hitIndex);
+        return cache == null ? PropertyValue.collator.getCollationKey(str) :
+                cache.computeIfAbsent(str, PropertyValue.collator::getCollationKey);
+    }
 
     // A default implementation is nice, but slow.
     @Override
@@ -257,7 +231,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     @Override
     public HitProperty reverse() {
-        return copyWith(hits, null, false, true);
+        return copyWith(PropContext.NO_CHANGE, true);
     }
 
     /**
@@ -267,23 +241,33 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @return the new HitProperty object
      */
     public HitProperty copyWith(Hits hits) {
-        if (this.hits == hits)
+        if (context.hits() == hits)
             return this;
-        return copyWith(hits, null, false, false);
+        return copyWith(PropContext.globalHits(hits), false);
     }
 
     /**
      * Produce a copy of this HitProperty object with a different Hits and Contexts
      * object.
      *
-     * @param newHits           new Hits to use, or null to inherit
-     * @param leafReaderContext the LeafReaderContext to use, or null to inherit
-     * @param toGlobal          true if we should produce global property values (e.g. global term/doc ids)
+     * @param context           property context (hits, segment, etc.)
+     * @return the new HitProperty object
+     */
+    public HitProperty copyWith(PropContext context) {
+        if (this.context.equals(context))
+            return this;
+        return copyWith(context, false);
+    }
+
+    /**
+     * Produce a copy of this HitProperty object with a different Hits and Contexts
+     * object.
+     *
+     * @param context           property context (hits, segment, etc.)
      * @param invert            true if we should invert the previous sort order; false to keep it the same
      * @return the new HitProperty object
      */
-    public abstract HitProperty copyWith(Hits newHits, LeafReaderContext leafReaderContext, boolean toGlobal,
-            boolean invert);
+    public abstract HitProperty copyWith(PropContext context, boolean invert);
 
     @Override
     public boolean isReverse() {
@@ -356,4 +340,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      */
     public abstract boolean isDocPropOrHitText();
 
+    public PropContext getContext() {
+        return context;
+    }
 }
