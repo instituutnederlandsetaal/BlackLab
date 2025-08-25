@@ -8,17 +8,19 @@ public class PropertyValueString extends PropertyValue {
     /** Indicates no value was found (i.e. group by capture, but the capture wasn't found for this hit) */
     public static final PropertyValueString NO_VALUE = new PropertyValueString(NO_VALUE_STR);
 
-    final String value;
-
-    public PropertyValueString(String value) {
-        this.value = value == null ? "" : value;
-    }
+    private static final String MULTIPLE_VALUES_DELIMITER = " · ";
 
     /** Convert an array of string values to a PropertyValueString. */
     public static PropertyValueString fromArray(String[] values) {
         if (values.length == 1)
             return new PropertyValueString(values[0]);
-        return new PropertyValueString(StringUtils.join(values, " · "));
+        return new PropertyValueString(StringUtils.join(values, MULTIPLE_VALUES_DELIMITER));
+    }
+
+    final String value;
+
+    public PropertyValueString(String value) {
+        this.value = value == null ? "" : value;
     }
 
     @Override

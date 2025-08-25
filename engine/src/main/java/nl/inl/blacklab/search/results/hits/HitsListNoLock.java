@@ -1,7 +1,10 @@
 package nl.inl.blacklab.search.results.hits;
 
-import com.ibm.icu.text.CollationKey;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
+
+import com.ibm.icu.text.CollationKey;
 
 import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
@@ -268,11 +271,14 @@ class HitsListNoLock extends HitsListAbstract {
         if (p.getValueType() == PropertyValueString.class) {
             // Collator.compare() is synchronized and therefore slow.
             // It is faster to calculate all the collationkeys first, then parallel sort them.
+            // We use a cache because there's often multiple hits with the same value (e.g. document title, year, etc.)
             CollationKey[][] sortValues = (CollationKey[][])ObjectBigArrays.newBigArray(size);
             hitIndex = 0;
+            Map<String, CollationKey> cache = new HashMap<>();
             for (final CollationKey[] segment: sortValues) {
                 for (int displacement = 0; displacement < segment.length; displacement++) {
-                    segment[displacement] = PropertyValue.collator.getCollationKey(p.get(hitIndex).toString());
+                    String str = p.get(hitIndex).toString();
+                    segment[displacement] = cache.computeIfAbsent(str, PropertyValue.collator::getCollationKey);
                     hitIndex++;
                 }
             }

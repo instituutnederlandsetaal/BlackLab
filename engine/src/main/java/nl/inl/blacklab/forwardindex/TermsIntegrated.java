@@ -13,6 +13,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
 
 import com.ibm.icu.text.CollationKey;
 
@@ -245,26 +246,12 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return result;
     }
 
-//    @Override
-//    public int[] segmentIdsToGlobalIds(int ord, int[] snippet) {
-//        int[] mapping = segmentToGlobalTermIds.get(ord);
-//        int[] converted = new int[snippet.length];
-//        for (int i = 0; i < snippet.length; i++) {
-//            converted[i] = snippet[i] < 0 ? snippet[i] : mapping[snippet[i]];
-//        }
-//        return converted;
-//    }
-//
-//    @Override
-//    public int segmentIdToGlobalId(int ord, int id) {
-//        int[] mapping = segmentToGlobalTermIds.get(ord);
-//        return id < 0 ? id : mapping[id];
-//    }
-
     @Override
     public int termToSortPosition(String term, MatchSensitivity sensitivity) {
-        // FIXME
-        return 0;
+        IntHashSet s = new IntHashSet();
+        indexOf(s, term, sensitivity);
+        int id = s.intIterator().next();
+        return idToSortPosition(id, sensitivity);
     }
 
     @Override

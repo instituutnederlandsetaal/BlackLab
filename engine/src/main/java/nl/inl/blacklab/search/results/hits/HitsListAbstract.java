@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results.hits;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
@@ -168,8 +170,11 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
             // Collator.compare() is synchronized and therefore slow.
             // It is faster to calculate all the collationkeys first, then parallel sort them.
             CollationKey[] sortValues = new CollationKey[size];
-            for (int i = 0; i < sortValues.length; ++i)
-                sortValues[i] = PropertyValue.collator.getCollationKey(p.get(i).toString());
+            Map<String, CollationKey> cache = new HashMap<>();
+            for (int i = 0; i < sortValues.length; ++i) {
+                String str = p.get(i).toString();
+                sortValues[i] = cache.computeIfAbsent(str, PropertyValue.collator::getCollationKey);
+            }
             IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));
         } else {
             IntArrays.parallelQuickSort(indices, p::compare);

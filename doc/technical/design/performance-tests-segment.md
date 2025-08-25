@@ -11,35 +11,29 @@ NOTE:
 ## SORT BY TITLE
 
 QueryTool parlamint
-showconc no && maxretrieve 1000000 && verbose
+showconc no && maxretrieve -1 && verbose
 
-## ALL WORDS; BL5; PARALLEL
+## BL5
 
-threads 1 && [] && sort field:title    8.6s
-threads 2 && [] && sort field:title   19.3s <-- merge makes it slow!
-threads 4 && [] && sort field:title   17.7s
-threads 8 && [] && sort field:title   28.5s <-- too much locking of index files?
+THUIS
+threads 1 && [] && sort field:title    19s
+threads 2 && [] && sort field:title    24s <-- merge makes it slower
+threads 4 && [] && sort field:title    24s <-- I/O bound or dominated by the merge phase
+threads 8 && [] && sort field:title    24s      (same)
 
-## SORT
 
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        []
-sort        hit:word:i
-hits        50672559
+## SORT BY CONTEXT
 
-### ALL WORDS; BL5; PARALLEL
+QueryTool parlamint
+showconc no && maxretrieve -1 && verbose
 
-WERK 2 THREADS: 24229   <-- waarom trager dan single-threaded? ws. merge?
-THUIS 2 THREADS: 28884
-THUIS 11 THREADS: 28884
+### BL5
 
-### BL5 SINGLE-THREADED ALL WORDS
-Corpus URL  /blacklab-server/corpora/parlamint
-patt        []
-sort        hit:word:i
-
-hits        50672559
-timeMs      12982 (WERK)
+THUIS
+threads 1 && [] && sort hit:word:i   17s
+threads 2 && [] && sort hit:word:i   27s <-- merge makes it slower
+threads 4 && [] && sort hit:word:i   32s
+threads 8 && [] && sort hit:word:i   30s
 
 ### BL4 ALL WORDS
 Corpus URL  /blacklab-server/corpora/parlamint
@@ -48,7 +42,6 @@ sort        hit:word:i
 
 hits        50672559
 timeMs      39762 (WERK)
-
 
 ## GROUP
 
