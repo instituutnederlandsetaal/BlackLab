@@ -229,6 +229,10 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     public abstract PropertyValue get(long hitIndex);
 
+    public String getString(long hitIndex) {
+        return get(hitIndex).value().toString();
+    }
+
     // A default implementation is nice, but slow.
     @Override
     public int compare(long indexA, long indexB) {
@@ -355,5 +359,4 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @return true if it does, false if not
      */
     public abstract boolean isDocPropOrHitText();
-
 }

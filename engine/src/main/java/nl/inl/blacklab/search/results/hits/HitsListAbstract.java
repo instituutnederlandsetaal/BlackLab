@@ -172,7 +172,7 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
             CollationKey[] sortValues = new CollationKey[size];
             Map<String, CollationKey> cache = new HashMap<>();
             for (int i = 0; i < sortValues.length; ++i) {
-                String str = p.get(i).toString();
+                String str = p.getString(i);
                 sortValues[i] = cache.computeIfAbsent(str, PropertyValue.collator::getCollationKey);
             }
             IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));

@@ -16,9 +16,9 @@ showconc no && maxretrieve -1 && verbose
 ## BL5
 
 THUIS
-threads 1 && [] && sort field:title    19s
-threads 2 && [] && sort field:title    24s <-- merge makes it slower
-threads 4 && [] && sort field:title    24s <-- I/O bound or dominated by the merge phase
+threads 1 && [] && sort field:title    17.5s
+threads 2 && [] && sort field:title    23s <-- merge makes it slower
+threads 4 && [] && sort field:title    23s <-- I/O bound or dominated by the merge phase
 threads 8 && [] && sort field:title    24s      (same)
 
 

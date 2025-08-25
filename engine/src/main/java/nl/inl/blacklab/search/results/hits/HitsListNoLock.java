@@ -277,7 +277,7 @@ class HitsListNoLock extends HitsListAbstract {
             Map<String, CollationKey> cache = new HashMap<>();
             for (final CollationKey[] segment: sortValues) {
                 for (int displacement = 0; displacement < segment.length; displacement++) {
-                    String str = p.get(hitIndex).toString();
+                    String str = p.getString(hitIndex);
                     segment[displacement] = cache.computeIfAbsent(str, PropertyValue.collator::getCollationKey);
                     hitIndex++;
                 }

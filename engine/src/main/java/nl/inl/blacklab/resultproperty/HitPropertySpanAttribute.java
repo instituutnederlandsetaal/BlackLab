@@ -103,19 +103,24 @@ public class HitPropertySpanAttribute extends HitProperty {
     }
 
     @Override
-    public PropertyValueString get(long hitIndex) {
+    public PropertyValue get(long hitIndex) {
+        return new PropertyValueString(getString(hitIndex));
+    }
+
+    @Override
+    public String getString(long hitIndex) {
         if (groupIndex < 0) {
             // Determine group index. Done lazily because the group might only be registered
             // when the second index segment is processed, for example.
             groupIndex = groupName.isEmpty() ? 0 : this.hits.matchInfoDefs().indexOf(groupName);
             if (groupIndex < 0) {
                 // Match info not registered (yet). Return empty value.
-                return PropertyValueString.NO_VALUE;
+                return PropertyValueString.NO_VALUE_STR;
             }
         }
         MatchInfo matchInfo = hits.get(hitIndex).matchInfos(groupIndex);
         if (matchInfo == null)
-            return PropertyValueString.NO_VALUE;
+            return PropertyValueString.NO_VALUE_STR;
 
         String value;
         if (relNameInList != null && matchInfo instanceof RelationListInfo relList) {
@@ -143,14 +148,14 @@ public class HitPropertySpanAttribute extends HitProperty {
                 }
             }
             if (!found)
-                return PropertyValueString.NO_VALUE;
+                return PropertyValueString.NO_VALUE_STR;
             value = b.toString();
         } else {
             if (!(matchInfo instanceof RelationInfo span))
-                return PropertyValueString.NO_VALUE;
+                return PropertyValueString.NO_VALUE_STR;
             value = StringUtils.join(span.getAttributes().get(attributeName), SEPARATOR_MULTIPLE_VALUES);
         }
-        return new PropertyValueString(value);
+        return value;
     }
 
     private String listIfMultiple(List<String> values) {
