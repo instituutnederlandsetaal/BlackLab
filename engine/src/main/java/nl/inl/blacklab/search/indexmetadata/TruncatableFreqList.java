@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
@@ -50,17 +49,13 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
     }
 
     public void add(String value, long count) {
-        if (values.containsKey(value)) {
-            // Seen this value before; increment frequency
-            values.compute(value, (__, prevCount) -> prevCount + count);
+        if (values.size() < limitValues || values.containsKey(value)) {
+            // Count as normal
+            values.compute(value, (__, prevCount) ->
+                    prevCount == null ? count : prevCount + count);
         } else {
-            // New value; add it
-            if (values.size() >= limitValues) {
-                // Reached the limit; stop storing now and indicate that there's more.
-                truncated = true;
-            } else {
-                values.put(value, count);
-            }
+            // Reached the limit; stop storing now and indicate that there's more.
+            truncated = true;
         }
     }
 
@@ -80,20 +75,8 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
         return values.size();
     }
 
-    public void setTruncated(boolean truncated) {
-        this.truncated = truncated;
-    }
-
-    public void subtract(String value, int amount) {
-        values.compute(value, (__, prevCount) -> prevCount == null || prevCount <= amount ? null : prevCount - amount);
-    }
-
     @Override
     public TruncatableFreqList withLimit(long max) {
         return truncated(max);
-    }
-
-    public void addAll(Collection<String> values) {
-        values.forEach(this::add);
     }
 }

@@ -24,9 +24,6 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 @ThreadSafe
 public class SegmentRelationInfo implements AutoCloseable {
 
-    /** Our fields producer */
-    private final BlackLabPostingsReader fieldsProducer;
-
     /** Contains field names and offsets to term index file, where the terms for the field can be found */
     private final Map<String, RelationInfoField> fieldsByName = new LinkedHashMap<>();
 
@@ -56,7 +53,6 @@ public class SegmentRelationInfo implements AutoCloseable {
     }
 
     private SegmentRelationInfo(BlackLabPostingsReader postingsReader, IndexInput fieldsFile) throws IOException {
-        this.fieldsProducer = postingsReader;
 
         // Read fields file
         while (fieldsFile.getFilePointer() < (fieldsFile.length() - CodecUtil.footerLength())) {

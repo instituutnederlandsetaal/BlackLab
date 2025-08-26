@@ -8,7 +8,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -46,13 +46,13 @@ public class ForwardIndexAccessorIntegrated extends ForwardIndexAccessorAbstract
 
         private final DocFieldLengthGetter lengthGetter;
 
-        private final List<AnnotForwardIndex> fiPerSegment = new ArrayList<>();
+        private final List<AnnotationForwardIndex> fiPerSegment = new ArrayList<>();
 
         ForwardIndexAccessorLeafReaderIntegrated(LeafReaderContext readerContext) {
             this.readerContext = readerContext;
             postingsReader = BlackLabPostingsReader.forSegment(readerContext);
             for (String luceneField: luceneFields) {
-                AnnotForwardIndex e = postingsReader.forwardIndex(luceneField);
+                AnnotationForwardIndex e = postingsReader.forwardIndex(luceneField);
                 fiPerSegment.add(e);
             }
             lengthGetter = new DocFieldLengthGetter(readerContext.reader(), annotatedField.name());

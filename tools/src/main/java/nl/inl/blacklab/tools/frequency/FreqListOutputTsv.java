@@ -122,7 +122,7 @@ class FreqListOutputTsv implements FreqListOutput {
             try (Writer out = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
                  CSVPrinter printer = new CSVPrinter(out, TAB_SEPARATED_FORMAT)) {
                 Terms[] terms = annotationNames.stream()
-                        .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                        .map(name -> index.forwardIndex(annotatedField.annotation(name)).terms())
                         .toArray(Terms[]::new);
                 MatchSensitivity[] sensitivity = new MatchSensitivity[annotationNames.size()];
                 Arrays.fill(sensitivity, MatchSensitivity.INSENSITIVE);

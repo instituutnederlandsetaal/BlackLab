@@ -6,9 +6,7 @@ import java.util.concurrent.ExecutorService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.store.AlreadyClosedException;
 
-import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -63,11 +61,12 @@ public class ForwardIndexImpl implements ForwardIndex {
             if (!annotation.hasForwardIndex())
                 continue;
             AnnotationForwardIndex afi = get(annotation);
-            // Automatically initialize forward index (in the background)
+            // Automatically initialize global terms (in the background)
             executorService.execute(() -> {
                 try {
-                    afi.initialize();
-                } catch (AlreadyClosedException|InterruptedSearch e) {
+                    // Retrieve global terms, initializing if necessary
+                    afi.terms();
+                } catch (RuntimeException e) {
                     // Initialization was interrupted. Ignore.
                     // This can happen if e.g. a commandline utility completes
                     // before the full initialization is done. The running threads
@@ -75,6 +74,7 @@ public class ForwardIndexImpl implements ForwardIndex {
                     // If for some reason the program keeps running and tries to use
                     // the forward index, it will simply try to initialize again
                     // (running in the foreground).
+                    logger.error(e);
                 }
             });
         }
@@ -94,11 +94,6 @@ public class ForwardIndexImpl implements ForwardIndex {
     }
 
     @Override
-    public AnnotatedField field() {
-        return field;
-    }
-
-    @Override
     public AnnotationForwardIndex get(Annotation annotation) {
         assert annotation != null;
         if (closed)
@@ -110,7 +105,7 @@ public class ForwardIndexImpl implements ForwardIndex {
             afi = fis.get(annotation);
         }
         if (afi == null) {
-            afi = AnnotationForwardIndexImpl.open(index, annotation);
+            afi = AnnotationForwardIndexGlobal.open(index, annotation);
             add(annotation, afi);
         }
         return afi;

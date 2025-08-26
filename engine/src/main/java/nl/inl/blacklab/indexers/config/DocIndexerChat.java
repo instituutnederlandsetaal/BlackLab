@@ -29,7 +29,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.util.CollUtil;
+import nl.inl.util.CollectionsUtil;
 import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 
@@ -455,7 +455,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             }
         }
 
-        Map<String, List<String>> atts = CollUtil.toMapOfLists(blockMetadata);
+        Map<String, List<String>> atts = CollectionsUtil.toMapOfLists(blockMetadata);
         inlineTag(blockTagName, true, atts);
     }
 

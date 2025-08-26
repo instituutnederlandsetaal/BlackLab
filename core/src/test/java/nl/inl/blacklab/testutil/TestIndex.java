@@ -332,7 +332,19 @@ public class TestIndex {
      * @return the resulting BlackLab text pattern
      */
     public List<String> findConc(BLSpanQuery query) {
-        return getConcordances(index.find(query, null).getHits(), word);
+        return findConc(query, null);
+    }
+
+    /**
+     * Find hits from a Corpus Query Language query.
+     *
+     * @param query what to find
+     * @return the resulting BlackLab text pattern
+     */
+    public List<String> findConc(BLSpanQuery query, HitProperty sortBy) {
+        Hits hits = index.find(query, null).getHits();
+        Hits sorted = sortBy == null ? hits : hits.sorted(sortBy);
+        return getConcordances(sorted, word);
     }
 
     /**

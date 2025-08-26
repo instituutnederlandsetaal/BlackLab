@@ -30,9 +30,9 @@ class DocValuesGetterFallback implements DocValuesGetter {
         try {
             // We don't have DocValues for this field; just get the property from the document.
             if (lrc == null)
-                return index.reader().document(docId, Set.of(fieldName)).getValues(fieldName);
+                return index.reader().storedFields().document(docId, Set.of(fieldName)).getValues(fieldName);
             else
-                return lrc.reader().document(docId, Set.of(fieldName)).getValues(fieldName);
+                return lrc.reader().storedFields().document(docId, Set.of(fieldName)).getValues(fieldName);
         } catch (IOException e) {
             throw new InvalidIndex(e);
         }

@@ -245,9 +245,9 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     public Document luceneDoc(int docId, boolean includeContentStores) {
         try {
             if (includeContentStores) {
-                return reader().document(docId);
+                return reader().storedFields().document(docId);
             } else {
-                return reader().document(docId, allExceptContentStoreFields);
+                return reader().storedFields().document(docId, allExceptContentStoreFields);
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);

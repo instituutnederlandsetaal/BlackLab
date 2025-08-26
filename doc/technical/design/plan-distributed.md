@@ -12,7 +12,7 @@ Integrating with Solr will involve the following steps.
 
 ### Forward index
 
-- [ ] (maybe) capture tokens codec in a class as well, like `ContentStoreBlockCodec`. Could be useful to run-length encode sparse fields that only have a value occasionally, or usually have the same default value. Consider pooling encoder/decoder as well if useful.
+- [x] (maybe) capture tokens codec in a class as well, like `ContentStoreBlockCodec`. Could be useful to run-length encode sparse fields that only have a value occasionally, or usually have the same default value.
 
 LATER?
 - [ ] (PROBABLY VERY DIFFICULT AND MAY NOT BE WORTH THE EFFORT) can we implement a custom merge here like CS? i.e. copy bytes from old segment files to new segment file instead of re-reversing the reverse index.
@@ -24,7 +24,7 @@ LATER?
 - [ ] implement custom merge? The problem is that we need to split the `MergeState` we get into two separate ones, one with content store fields (which we must merge) and one with regular stored fields (which must be merged by the delegate), but we cannot instantiate `MergeState`. Probably doable through a hack (ctor is package-private, so place class in Lucene's package or use reflection), but let's hold off until we're sure this is necessary.
 
 
-## Improve parallellisation and get rid of global term ids
+## Improve parallellisation
 
 Grouping and sorting is currently not done per segment, but only once we've gathered hits from each segment. When we group/sort/filter on context, we thus have to return to the segment each hit came from, which is relatively inefficient.
 
@@ -47,52 +47,25 @@ We really just want a global _view_ of the unsorted hits. This view should grow 
 ### Done so far
 
 - remove old external index
-- `HitsSimple`, implemented by the `HitsInternal*` classes among others, is where we can iterate over hits. `Hits` does not implement this interface anymore; call `getHits()` to get a `HitsSimple` object. This removes a layer of indirection and separates functionality.
-- Got rid of global term ids. We use the per-segment forward index and terms object everywhere now. Large indexes should open much faster now, because we don't determine the global term id mappings anymore.
-- could we do away with PropertyValue hierarchy and use Object / String/Integer/... directly?
-- try to get rid of more useless abstract base classes like `Result` (?)
+- `Hits`, implemented by the `HitsList*` classes among others, is where we can iterate over hits. `Hits` does not implement this interface anymore; call `getHits()` to get a `Hits` object. This removes a layer of indirection and separates functionality.
+- Do more per-segment. We use the per-segment forward index and terms object everywhere now.
+
+
+### Improvements to be made
+
+STARTUP TIME
+- BLTerms.close() is never called...
+- MetadataFieldValuesFromIndex takes quite a while.
+  Can we speed it up?
+  Can we run it in a separate thread, and only block when we actually need the values?
+- Caching collator that keeps a Map<String, CollationKey> internally, so we don't calculate the same collationkeys
+  for e.g. word/lemma, for each segment, etc.
 - 
-
-### Still to do
-
-- [ ] optimize how we use the per-segment forward index and terms objects (try to batch things by segment more)
-- [ ] Check the last remnants of the global forward index; clean up if possible.
-
-
-- [ ] Implement:
-  - [ ] Ensure several of these can be merged into another `HitsInternal` object _dynamically_, while the hits are being gathered (in the case where no sort has been requested).
-  - [ ] Add a subclass that gathers hits from a single segment, sorts them, and allows them to be merged based on the sort value later.
-  - [ ] Follow a similar approach for grouping.
-
-- [ ] Implement merging:
-  - [ ] `HitsFromQuerySorted` merges hits from several `SpansSorted` instances
-  - [ ] `HitsGroupedFromQuery` merges hits from several `GroupedSpans` instances
-  
-  Merging should be based on (`String`/`CollationKey` and maybe `Integer` and `Double` as well?) comparison of the stored sort and group values.
-
-- [ ] Optimize `SpansSorted`, `GroupedSpans` for the new, per-segment situation (i.e. don't use `Hits`, `Kwics` anymore).
-
-
-### Optimize handling of various codec objects
 
 SMALLER ISSUES
 
-- DocProperty per-segment (DocValues)
-
-- Store sorted hits using indexes to the original hits object to save memory?
-
-- `ForwardIndex.forField()` created two objects; can we do it with one? See below.
-
-```java
-  /**
-    * Get a new FieldForwardIndex on this segment.
-    * Though the reader is not Threadsafe, a new instance is returned every time,
-    * So this function can be used from multiple threads.
-    */
-    public FieldForwardIndex forField(String luceneField) {
-        return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
-    }
-```
+- could we do away with PropertyValue hierarchy and use Object / String/Integer/... directly?
+- try to get rid of more useless abstract base classes like `Result` (?)
 
 ## BL5 major refactorings (Dutch)
 
@@ -112,20 +85,11 @@ SMALLER ISSUES
   snelle merge op stringbasis.
   Nu wordt er nog wat te veel randomly tussen segmenten gesprongen (globalDocId > segment)
 
-- (WIP)
-  HitsFromQueryKeepSegments: alternatief voor (subclass van) HitsFromQuery.
-  Doel is om hits per segment op te slaan maar ook een global view te bieden (zonder alles
-  2x in geheugen te houden).
-  Global view gebeurt door stretches bij te houden.
-  (segment / start in segment / start in global view / length)
-  Global view is relatief traag natuurlijk, maar wordt uiteindelijk hopelijk alleen gebruikt
-  als je een pagina unsorted hits vraagt, dus niet heel performancekritisch. Andere operaties
-  (sort, group, sample, etc.) werken met de hele set hits en gebruiken direct de hitlijsten per
-  segment.
+- HitsFromQuery aangepast om een global view op segment hits te bieden ipv een global list op te bouwen,
+  en sort/group zo veel mogelijk per segment te doen. Global view is trager maar wordt niet zo veel gebruikt.
+  Doet ook minder locking. Houdt zich minder strikt aan de maxHitsToProcess/Counts (kan er overheen gaan, maar stopt uiteindelijk wel)
 
-- andere TODOs:
-    - minder met doc(index), start(index), etc. doen, zo veel mogelijk met getEphemeral(index, hit)
-
+- 
 
 
 ## Optimization opportunities

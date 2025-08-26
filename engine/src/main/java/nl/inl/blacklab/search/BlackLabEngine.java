@@ -59,6 +59,15 @@ public final class BlackLabEngine implements AutoCloseable {
      */
     private static final Map<IndexReader, BlackLabEngine> indexReader2BlackLabEngine = new IdentityHashMap<>();
 
+    /** When autodetecting maxThreadsPerSearch, divide #CPUs by this number */
+    private static final int THREADS_PER_SEARCH_AUTO_DIVIDER = 2;
+
+    /** Minimum for maxThreadsPerSearch when autodetecting. */
+    private static final int THREADS_PER_SEARCH_AUTO_MIN = 2;
+
+    /** Maximum for maxThreadsPerSearch when autodetecting. */
+    private static final int THREADS_PER_SEARCH_AUTO_MAX = 6;
+
     /** Close all opened engines */
     static synchronized void closeAll() {
         List<BlackLabEngine> copy = new ArrayList<>(engines);
@@ -118,7 +127,14 @@ public final class BlackLabEngine implements AutoCloseable {
             return worker;
         });
 
-        this.maxThreadsPerSearch = maxThreadsPerSearch;
+        this.maxThreadsPerSearch = maxThreadsPerSearch < 0 ? chooseDefaultMaxThreadsPerSearch() :
+                maxThreadsPerSearch;
+    }
+
+    public static int chooseDefaultMaxThreadsPerSearch() {
+        int n = Runtime.getRuntime().availableProcessors() / THREADS_PER_SEARCH_AUTO_DIVIDER;
+        n = Math.max(Math.min(n, THREADS_PER_SEARCH_AUTO_MAX), THREADS_PER_SEARCH_AUTO_MIN);
+        return n;
     }
 
     /**

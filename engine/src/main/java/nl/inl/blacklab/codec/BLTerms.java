@@ -8,13 +8,13 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.RandomAccessInput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.forwardindex.TermsIntegratedRef;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -44,38 +44,30 @@ public class BLTerms extends org.apache.lucene.index.Terms {
     /** The Lucene terms object we're wrapping */
     private final org.apache.lucene.index.Terms terms;
 
-    /** The global terms object */
-    private TermsIntegratedRef globalTermsRef;
-
-    /** A mapping from this segment's term ids to global term ids */
-    private int[] segmentToGlobal;
-
     private IndexInput _termIndexFile;
     private IndexInput _termsFile;
     private IndexInput _termOrderFile;
 
     public BLTerms(ForwardIndexField forwardIndexField, Collators collators, org.apache.lucene.index.Terms terms,
-            BlackLabPostingsReader postingsReader,
-            TermsIntegratedRef globalTermsRef) throws IOException {
+            BlackLabPostingsReader postingsReader) throws IOException {
         this.forwardIndexField = forwardIndexField;
         this.collators = collators;
         this.terms = terms;
-        this.globalTermsRef = globalTermsRef;
         this._termIndexFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMINDEX_EXT);
         this._termsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMS_EXT);
         this._termOrderFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TERMORDER_EXT);
+    }
+
+    public Collators getCollators() {
+        return collators;
     }
 
     public static BLTerms get(BlackLabPostingsReader postingsReader, String fieldName, ForwardIndexField field) {
         try {
             org.apache.lucene.index.Terms delegateTerms = postingsReader.delegateFieldsProducer.terms(fieldName);
             if (delegateTerms != null) {
-                // Use state.directory to find the correct TermsIntegrated
-                TermsIntegratedRef globalTermsRef = field == null ? null :
-                        TermsIntegratedRef.get(postingsReader.state.directory, fieldName);
-
                 Collators collators = BLFieldTypeLucene.getFieldCollators(postingsReader.state.fieldInfos.fieldInfo(fieldName));
-                return new BLTerms(field, collators, delegateTerms, postingsReader, globalTermsRef);
+                return new BLTerms(field, collators, delegateTerms, postingsReader);
             }
             return null;
         } catch (IOException e) {
@@ -191,7 +183,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
         return new Terms() {  // not thread-safe
 
-            private static final boolean READ_TERM_STRINGS_INTO_MEMORY = true;
+            private static final boolean READ_TERM_STRINGS_INTO_MEMORY = false;
 
             /** Offset of each term in termStrings */
             private RandomAccessInput termStringOffsets;
@@ -236,7 +228,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                         long firstTermStringOffset = termStringOffsets.readLong(0);
                         termStrings.seek(firstTermStringOffset);
                         for (int i = 0; i < numberOfTerms; i++) {
-                            termStringsArr[i] = termStrings.readString();
+                            termStringsArr[i] = termStrings.readString(); //.intern();
                         }
                         termStringOffsets = null;
                         termStrings = null;
@@ -282,24 +274,18 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             }
 
             @Override
-            public int indexOf(String word) {
+            public int indexOf(String word, MatchSensitivity sensitivity) {
                 // Simple linear search. We could use binary search via sort positions, but this is only used by
-                // PropertyValueContext.deserializeToken(), which is not called often.
+                // PropertyValueContext.deserializeToken(), which is not called often, and should only be called
+                // on the global terms object anyway.
+                Collator collator = collators.get(sensitivity);
                 for (int i = 0; i < numberOfTerms(); i++) {
-                    if (compareTerms(get(i), word, MatchSensitivity.SENSITIVE) == 0) {
+                    String term1 = get(i);
+                    if (collator.compare(term1, word) == 0) {
                         return i;
                     }
                 }
                 return Constants.NO_TERM; // Not found
-            }
-
-            @Override
-            public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-                for (int i = 0; i < numberOfTerms(); i++) {
-                    if (compareTerms(get(i), term, sensitivity) == 0) {
-                        results.add(i);
-                    }
-                }
             }
 
             @Override
@@ -309,10 +295,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 int[] termIdToPos = sensitivity == MatchSensitivity.SENSITIVE ?
                         termIdToSensitivePos : termIdToInsensitivePos;
                 return termIdToPos[id];
-            }
-
-            private int compareTerms(String term1, String term2, MatchSensitivity sensitivity) {
-                return collators.get(sensitivity).compare(term1, term2);
             }
 
             @Override
@@ -332,8 +314,11 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
                 // Now, find the first term equal to this one.
                 int sortPos = indexOfTerm - 1;
-                while (sortPos > 0 &&
-                        compareTerms(get(sortPosToTermId[sortPos]), term, sensitivity) == 0) {
+                Collator collator = collators.get(sensitivity);
+                while (sortPos > 0) {
+                    String term1 = get(sortPosToTermId[sortPos]);
+                    if (collator.compare(term1, term) != 0)
+                        break;
                     // If the term is equal to the one we're looking for, we have to go back further
                     // until we find the first occurrence of this term.
                     // (NOTE: this is relatively inefficient and we could precalculate it, but this method isn't
@@ -347,10 +332,11 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 // Use binary search by sort position to find the term's sort position.
                 int low = 0;
                 int high = numberOfTerms() - 1;
+                Collator collator = collators.get(sensitivity);
                 while (low <= high) {
                     int mid = (low + high) >>> 1;
                     String midVal = get(sortPosToTermId[mid]);
-                    int cmp = compareTerms(midVal, term, sensitivity);
+                    int cmp = collator.compare(midVal, term);
                     if (cmp < 0) {
                         low = mid + 1;
                     } else if (cmp > 0) {
@@ -364,36 +350,27 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 return Constants.NO_TERM;
             }
 
-            @Override
-            public void convertToGlobalTermIds(int[] segmentTermIds) {
-                getGlobalTerms(); // ensure global terms are loaded
-                for (int i = 0; i < segmentTermIds.length; i++) {
-                    if (segmentTermIds[i] != Constants.NO_TERM)
-                        segmentTermIds[i] = segmentToGlobal[segmentTermIds[i]];
-                }
-            }
-
-            @Override
-            public int toGlobalTermId(int segmentTermId) {
-                getGlobalTerms(); // ensure global terms are loaded
-                if (segmentTermId != Constants.NO_TERM)
-                    return segmentToGlobal[segmentTermId];
-                return Constants.NO_TERM;
-            }
-
-            @Override
-            public Terms getGlobalTerms() {
-                return globalTermsRef.get();
-            }
+//            @Override
+//            public void convertToGlobalTermIds(int[] segmentTermIds) {
+//                getGlobalTerms(); // ensure global terms are loaded
+//                for (int i = 0; i < segmentTermIds.length; i++) {
+//                    if (segmentTermIds[i] != Constants.NO_TERM)
+//                        segmentTermIds[i] = segmentToGlobal[segmentTermIds[i]];
+//                }
+//            }
+//
+//            @Override
+//            public int toGlobalTermId(int segmentTermId) {
+//                getGlobalTerms(); // ensure global terms are loaded
+//                if (segmentTermId != Constants.NO_TERM)
+//                    return segmentToGlobal[segmentTermId];
+//                return Constants.NO_TERM;
+//            }
 
             @Override
             public int numberOfTerms() {
                 return forwardIndexField.numberOfTerms;
             }
         };
-    }
-
-    public void setTermsSegmentToGlobal(int[] segmentToGlobal) {
-        this.segmentToGlobal = segmentToGlobal;
     }
 }

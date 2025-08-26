@@ -17,7 +17,6 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
-import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
@@ -256,71 +255,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         private final IndexInput valueIndexFile = _valueIndexFile.clone();
         private final IndexInput blockIndexFile = _blockIndexFile.clone();
         private final IndexInput blocksFile = _blocksFile.clone();
-
-        /**
-         * Get the field value as bytes.
-         *
-         * @param docId     document id
-         * @param luceneField field to get
-         * @return field value as bytes, or null if no value
-         */
-        @Override
-        public byte[] getBytes(int docId, String luceneField) {
-            try {
-                // Find the value length in characters, and position the valueIndex file pointer
-                // to read the rest of the information we need: where to find the block indexes
-                // and where the blocks start.
-                final int valueLengthChar = findValueLengthChar(docId, luceneField);
-                if (valueLengthChar == 0)
-                    return null; // no value stored for this document
-                ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
-                final long blockIndexOffset = valueIndexFile.readLong();
-                final long blocksOffset = valueIndexFile.readLong();
-
-                // Determine what blocks we'll need
-                final int firstBlockNeeded = 0;
-                final int lastBlockNeeded = valueLengthChar / blockSizeChars; // implicitly does a floor()
-                // add one block for spillover discarded by the floor().
-                // NOTE: don't add a spillover block if the document fits exactly in the block size.
-                final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + ((valueLengthChar % blockSizeChars) == 0 ? 0 : 1);
-
-                // Determine where our first block starts, and position blockindex file
-                // to start reading subsequent after-block positions
-                int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
-
-                // Try to make sure we have a large enough buffer available
-                long decodeBufferLengthLong = (long) valueLengthChar * BlackLabStoredFieldsReader.UTF8_MAX_BYTES_PER_CHAR
-                        + BlackLabStoredFieldsReader.ESTIMATED_DECODE_OVERHEAD;
-                if (decodeBufferLengthLong > Constants.JAVA_MAX_ARRAY_SIZE)
-                    decodeBufferLengthLong = Constants.JAVA_MAX_ARRAY_SIZE;
-                final int decodeBufferLength = (int) decodeBufferLengthLong;
-                if (decodedValue == null || decodedValue.length < decodeBufferLength)
-                    decodedValue = new byte[decodeBufferLength];
-
-                int decodedOffset = 0; // write position in the decodedValue buffer
-                int blocksLeftToRead = numBlocksNeeded; // how many blocks do we still need to read
-                try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
-                    while (blocksLeftToRead > 0) {
-
-                        // Read a block and decompress it.
-                        final int blockEndOffset = blockIndexFile.readInt();
-                        final int blockSizeBytes = blockEndOffset - blockStartOffset;
-
-                        decodedOffset = getNextBlock(blockSizeBytes, decoder, decodedOffset, blocksLeftToRead);
-
-                        // Update variables to read the next block
-                        blockStartOffset = blockEndOffset;
-                        blocksLeftToRead--;
-                    }
-                }
-                // Copy result to a new array of the right size
-                final byte[] result = new byte[decodedOffset];
-                System.arraycopy(decodedValue, 0, result, 0, result.length);
-                return result;
-            } catch (IOException e) {
-                throw new InvalidIndex(e);
-            }
-        }
 
         private int getNextBlock(int blockSizeBytes, ContentStoreBlockCodec.Decoder decoder, int decodedOffset,
                 int blocksLeftToRead) throws IOException {

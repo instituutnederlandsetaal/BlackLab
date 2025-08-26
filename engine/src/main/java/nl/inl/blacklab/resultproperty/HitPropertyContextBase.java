@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -43,7 +43,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     private String luceneField;
 
     /** [SEGMENT/GLOBAL] forward index */
-    private AnnotForwardIndex forwardIndex;
+    private AnnotationForwardIndex forwardIndex;
 
     /** [SEGMENT/GLOBAL] Stores the relevant context tokens for each hit index */
     private BigList<int[]> contextTermId;
@@ -177,10 +177,22 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.name = prop.name;
         this.serializeName = prop.serializeName;
         this.compareInReverse = prop.compareInReverse;
-        initForwardIndex();
         if (prop.context.hits() == context.hits()) {
             // Same hits object; reuse context arrays
             copyContext(prop);
+        } else {
+            initForwardIndex();
+        }
+    }
+
+    void initForwardIndex() {
+        luceneField = annotation.forwardIndexSensitivity().luceneField();
+        if (isGlobal() || context.toGlobal()) {
+            // To produce global term ids, we need the global forward index
+            forwardIndex = index.forwardIndex(annotation);
+        } else {
+            // Use the forward index for the segment we're in
+            forwardIndex = FieldForwardIndex.get(context.lrc(), luceneField);
         }
     }
 
@@ -201,17 +213,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.sensitivity = sensitivity == null ? index.defaultMatchSensitivity() : sensitivity;
         this.compareInReverse = compareInReverse;
         initForwardIndex();
-    }
-
-    void initForwardIndex() {
-        luceneField = annotation.forwardIndexSensitivity().luceneField();
-        if (isGlobal() || context.toGlobal()) {
-            // To produce global term ids, we need the global forward index
-            forwardIndex = index.forwardIndex(annotation);
-        } else {
-            // Use the forward index for the segment we're in
-            forwardIndex = FieldForwardIndex.get(context.lrc(), luceneField);
-        }
     }
 
     public Annotation getAnnotation() {
@@ -296,16 +297,16 @@ public abstract class HitPropertyContextBase extends HitProperty {
         if (isGlobal() || context.toGlobal()) {
             // [GLOBAL]
             LeafReaderContext lrc = index.getLeafReaderContext(docId);
-            AnnotForwardIndex segmentForwardIndex = getFieldForwardIndex(lrc);
-            Terms segmentTerms = segmentForwardIndex.terms();
+            AnnotationForwardIndex segmentForwardIndex = getFieldForwardIndex(lrc);
+            Terms globalTerms = forwardIndex.terms();
             int segmentDocId = docId - lrc.docBase;
             for (int[] termIds: segmentForwardIndex.retrieveParts(segmentDocId, starts, ends)) {
-                segmentTerms.convertToGlobalTermIds(termIds);
+                globalTerms.convertToGlobalTermIds(lrc, termIds);
                 if (compareInReverse)
                     ArrayUtils.reverse(termIds);
                 contextTermId.add(termIds);
                 int[] sortOrder = new int[termIds.length];
-                forwardIndex.terms().idsToSortOrder(termIds, sortOrder, sensitivity);
+                globalTerms.idsToSortOrder(termIds, sortOrder, sensitivity);
                 contextSortOrder.add(sortOrder);
             }
         } else {
@@ -322,9 +323,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    private Map<LeafReaderContext, AnnotForwardIndex> fieldForwardIndexes = new HashMap<>();
+    private Map<LeafReaderContext, AnnotationForwardIndex> fieldForwardIndexes = new HashMap<>();
 
-    private synchronized AnnotForwardIndex getFieldForwardIndex(LeafReaderContext lrc) {
+    private synchronized AnnotationForwardIndex getFieldForwardIndex(LeafReaderContext lrc) {
         return fieldForwardIndexes.computeIfAbsent(lrc,
                 key -> FieldForwardIndex.get(key, luceneField));
     }
@@ -343,8 +344,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
         ensureContextFetched();
         int[] termIds = contextTermId.get(hitIndex);
         int[] sortPositions = contextSortOrder.get(hitIndex);
-        return new PropertyValueContextWords(annotation, sensitivity, context.toGlobal() ? null : context.lrc(),
-                termIds, sortPositions, compareInReverse);
+        return new PropertyValueContextWords(annotation, sensitivity, forwardIndex.terms(), termIds, sortPositions,
+                compareInReverse, context.toGlobal() ? null : context.lrc()
+        );
     }
 
     private boolean isContextAvailable() {

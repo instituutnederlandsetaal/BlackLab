@@ -58,7 +58,6 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     @Override
     public int compare(long a, long b) {
-        // NOTE: DocPropertyStoredField will convert the doc id to global
         final int docA = context.hits().doc(a);
         final int docB = context.hits().doc(b);
         return reverse ?

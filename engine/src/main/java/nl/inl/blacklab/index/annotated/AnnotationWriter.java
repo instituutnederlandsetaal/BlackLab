@@ -31,7 +31,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.blacklab.search.lucene.RelationInfo;
-import nl.inl.util.CollUtil;
+import nl.inl.util.CollectionsUtil;
 
 /**
  * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
@@ -239,7 +239,7 @@ public class AnnotationWriter {
     }
 
     public List<Integer> positionIncrements() {
-        return CollUtil.toJavaList(increments);
+        return CollectionsUtil.toJavaList(increments);
     }
 
     public int lastValuePosition() {

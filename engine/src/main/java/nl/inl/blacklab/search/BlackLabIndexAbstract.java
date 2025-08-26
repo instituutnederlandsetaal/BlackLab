@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import com.ibm.icu.text.Collator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +32,8 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
+import com.ibm.icu.text.Collator;
+
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.codec.LeafReaderLookupArray;
@@ -44,9 +45,7 @@ import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.TermsIntegratedRef;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -434,11 +433,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
-    public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
-        return forwardIndex(annotation.field()).get(annotation);
-    }
-
-    @Override
     public MatchSensitivity defaultMatchSensitivity() {
         return defaultMatchSensitivity;
     }
@@ -562,7 +556,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                         // This annotation has a forward index. Make sure it is open.
                         if (traceIndexOpening())
                             logger.debug("    " + annotation.luceneFieldPrefix() + "...");
-                        annotationForwardIndex(annotation);
+                        forwardIndex(annotation);
                     }
                 }
             }
@@ -609,7 +603,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             closed = true;
         }
         try {
-            TermsIntegratedRef.remove(getIndexDirectory());
             blackLab.removeIndex(this);
             if (shouldCloseIndex) {
                 reader.close();

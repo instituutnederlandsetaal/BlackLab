@@ -34,8 +34,6 @@ import nl.inl.blacklab.testutil.TestIndex;
 @RunWith(Parameterized.class)
 public class TestHitProperties {
 
-    private static final int NO_TERM = Constants.NO_TERM;
-
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<TestIndex> typeToUse() {
         return TestIndex.typesForTests();
@@ -57,8 +55,8 @@ public class TestHitProperties {
         terms = index.forwardIndex(wordAnnotation).terms(); //testIndex.getTermsSegment(wordAnnotation);
     }
 
-    private int term(String word) {
-        return terms.indexOf(word);
+    private int termId(String word) {
+        return terms.indexOf(word, MatchSensitivity.SENSITIVE);
     }
 
     @Test
@@ -66,11 +64,11 @@ public class TestHitProperties {
         HitResults hitResults = testIndex.find(" 'the' ");
         HitProperty p = new HitPropertyHitText(index, MatchSensitivity.SENSITIVE);
         HitGroups g = hitResults.group(p, Results.NO_LIMIT);
-        HitGroup group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE,
-                terms, new int[] { term("the") }, null, false));
+        HitGroup group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE, terms,
+                new int[] { termId("the") }, null, false, null));
         Assert.assertEquals(3, group.size());
-        group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE,
-                terms, new int[] { term("The") }, null, false));
+        group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE, terms,
+                new int[] { termId("The") }, null, false, null));
         Assert.assertEquals(1, group.size());
     }
 
@@ -79,18 +77,18 @@ public class TestHitProperties {
         HitResults hitResults = testIndex.find(" A:'the' ");
         HitProperty p = new HitPropertyCaptureGroup(index, index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE, "A", RelationInfo.SpanMode.FULL_SPAN);
         HitGroups g = hitResults.group(p, Results.NO_LIMIT);
-        HitGroup group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE,
-                terms, new int[] { term("the") }, null, false));
+        HitGroup group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE, terms,
+                new int[] { termId("the") }, null, false, null));
         Assert.assertEquals(3, group.size());
-        group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE,
-                terms, new int[] { term("The") }, null, false));
+        group = g.get(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE, terms,
+                new int[] { termId("The") }, null, false, null));
         Assert.assertEquals(1, group.size());
     }
 
     public PropertyValue multipleContextWordsValues(int[]... termsArray) {
         List<PropertyValue> l = new ArrayList<>();
         for (int[] termIds: termsArray) {
-            l.add(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE, terms, termIds, null, false));
+            l.add(new PropertyValueContextWords(wordAnnotation, MatchSensitivity.SENSITIVE, terms, termIds, null, false, null));
         }
         return new PropertyValueMultiple(l);
     }
@@ -102,13 +100,13 @@ public class TestHitProperties {
         HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         Assert.assertEquals(4, g.size());
         HitGroup group;
-        group = g.get(multipleContextWordsValues(new int[0], new int[] { term("The") }));
+        group = g.get(multipleContextWordsValues(new int[0], new int[] { termId("The") }));
         Assert.assertEquals(1, group.size());
-        group = g.get(multipleContextWordsValues(new int[] { term("over") }, new int[] { term("the") }));
+        group = g.get(multipleContextWordsValues(new int[] { termId("over") }, new int[] { termId("the") }));
         Assert.assertEquals(1, group.size());
-        group = g.get(multipleContextWordsValues(new int[] { term("May") }, new int[] { term("the") }));
+        group = g.get(multipleContextWordsValues(new int[] { termId("May") }, new int[] { termId("the") }));
         Assert.assertEquals(1, group.size());
-        group = g.get(multipleContextWordsValues(new int[] { term("is") }, new int[] { term("the") }));
+        group = g.get(multipleContextWordsValues(new int[] { termId("is") }, new int[] { termId("the") }));
         Assert.assertEquals(1, group.size());
     }
 
@@ -120,7 +118,7 @@ public class TestHitProperties {
         Assert.assertEquals(1, g.size());
         HitGroup group;
         group = g.get(
-                multipleContextWordsValues(new int[] { term("over") }, new int[] { term("lazy"), term("the") }, new int[] { term("dog") }));
+                multipleContextWordsValues(new int[] { termId("over") }, new int[] { termId("lazy"), termId("the") }, new int[] { termId("dog") }));
         Assert.assertEquals(1, group.size());
     }
 

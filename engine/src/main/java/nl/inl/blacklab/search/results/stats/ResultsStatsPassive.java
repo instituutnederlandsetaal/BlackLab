@@ -2,7 +2,8 @@ package nl.inl.blacklab.search.results.stats;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.BiFunction;
+
+import nl.inl.blacklab.search.results.hits.SpansReader;
 
 /** ResultsStats that relies on being informed of progress by its owner. */
 public class ResultsStatsPassive extends ResultsStats {
@@ -70,14 +71,6 @@ public class ResultsStatsPassive extends ResultsStats {
             this.processed.incrementAndGet();
     }
 
-    public long getAndUpdateCount(BiFunction<Long, Boolean, Long> incrementCountUnlessAtMaxAndBoundary, boolean atDocBoundary) {
-        return this.counted.getAndUpdate(l -> incrementCountUnlessAtMaxAndBoundary.apply(l, atDocBoundary));
-    }
-
-    public long getAndUpdateProcessed(BiFunction<Long, Boolean, Long> incrementProcessUnlessAtMaxAndBoundary, boolean atDocBoundary) {
-        return this.processed.getAndUpdate(l -> incrementProcessUnlessAtMaxAndBoundary.apply(l, atDocBoundary));
-    }
-
     public synchronized void set(long processed, long counted, boolean done) {
         this.processed.set(processed);
         this.counted.set(counted);
@@ -93,5 +86,16 @@ public class ResultsStatsPassive extends ResultsStats {
             throw new IllegalArgumentException("maxStats cannot be null");
         this.maxStats = maxStats;
         setDone(true);
+    }
+
+    public synchronized SpansReader.Phase add(long processed, long counted) {
+        long p = this.processed.updateAndGet(l -> l + processed);
+        long c = this.counted.updateAndGet(l -> l + counted);
+        if (c >= maxHitsToCount)
+            return SpansReader.Phase.DONE;
+        else if (p >= maxHitsToProcess)
+            return SpansReader.Phase.COUNTING_ONLY;
+        else
+            return SpansReader.Phase.STORING_AND_COUNTING;
     }
 }

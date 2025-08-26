@@ -215,6 +215,12 @@ public class SpansReader implements Runnable {
         }
     }
 
+    public enum Phase {
+        STORING_AND_COUNTING,
+        COUNTING_ONLY,
+        DONE
+    }
+
     /**
      * Collect hits from our spans object.
      * Updates the global counters, shared with other SpansReader objects operating on the same result set.
@@ -233,6 +239,7 @@ public class SpansReader implements Runnable {
         final int numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
         final HitsMutable results = HitsMutable.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
+        long counted = 0;
         final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
 
         // Increment if we're NOT at a document boundary OR we haven't reached the currently requested number of hits yet.
@@ -256,9 +263,9 @@ public class SpansReader implements Runnable {
 
             // If we reach or exceed the limit when at a document boundary, we stop storing hits,
             // but we still count them.
-            boolean stillStoringHits = true;
+            Phase phase = Phase.STORING_AND_COUNTING;
 
-            while (hasPrefetchedHit) {
+            while (phase != Phase.DONE && hasPrefetchedHit) {
                 // Find all the hit information
                 assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
                 assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
@@ -279,27 +286,15 @@ public class SpansReader implements Runnable {
                 if (!isSameAsLast) {
                     // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     // Otherwise, don't store it either. We're done, just return.
-                    final boolean requestedCountReached = this.hitsStats.getAndUpdateCount(incrementCountUnlessAtMaxAndBoundary, atDocumentBoundary)
-                            >= this.globalHitsToCount.get();
-                    if (requestedCountReached && atDocumentBoundary)
-                        return;
-
-                    // only if unique hit and previous value (which is returned) was not yet at the limit
-                    // (and thus we actually incremented) do we store this hit.
-                    final boolean storeThisHit = stillStoringHits &&
-                            this.hitsStats.getAndUpdateProcessed(incrementProcessUnlessAtMaxAndBoundary,
-                                    atDocumentBoundary)
-                                    < this.globalHitsToProcess.get() || requestedCountReached;
-                    if (!storeThisHit)
-                        stillStoringHits = false;
+                    counted++;
 
                     if (atDocumentBoundary) {
-                        docsStats.increment(storeThisHit);
-                        if (!results.isEmpty())
-                            spansReaderStrategy.onDocumentBoundary(results);
+                        docsStats.increment(phase == Phase.STORING_AND_COUNTING);
+                        phase = spansReaderStrategy.onDocumentBoundary(results, counted);
+                        counted = 0;
                     }
 
-                    if (storeThisHit) {
+                    if (phase == Phase.STORING_AND_COUNTING) {
                         assert start >= 0;
                         assert end >= 0;
                         results.add(doc, start, end, matchInfo);
@@ -321,7 +316,7 @@ public class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-            spansReaderStrategy.onFinished(results);
+            spansReaderStrategy.onFinished(results, counted);
         }
 
         // If we're here, the loop reached its natural end - we're done.
@@ -337,14 +332,15 @@ public class SpansReader implements Runnable {
         /**
          * Called when the SpansReader has reached the end of a document.
          * @param results the hits collected so far
+         * @return whether to continue storing hits, or just count them, or stop altogether
          */
-        void onDocumentBoundary(HitsMutable results);
+        Phase onDocumentBoundary(HitsMutable results, long counted);
 
         /**
          * Called when the SpansReader is done.
          * @param results the hits collected so far
          */
-        void onFinished(HitsMutable results);
+        void onFinished(HitsMutable results, long counted);
     }
 
 }

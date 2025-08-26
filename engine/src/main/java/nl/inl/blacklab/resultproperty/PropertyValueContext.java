@@ -3,6 +3,7 @@ package nl.inl.blacklab.resultproperty;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public abstract class PropertyValueContext extends PropertyValue {
 
@@ -15,7 +16,7 @@ public abstract class PropertyValueContext extends PropertyValue {
         this.terms = terms;
     }
 
-    public static int deserializeToken(Terms terms, String term) {
+    public static int deserializeToken(Terms terms, String term, MatchSensitivity sensitivity) {
         int termId;
         if (term.equals("~"))
             termId = Constants.NO_TERM; // no token, effectively a "null" value
@@ -25,7 +26,7 @@ public abstract class PropertyValueContext extends PropertyValue {
                 // because of how null value is encoded
                 term = term.substring(1);
             }
-            termId = terms.indexOf(term);
+            termId = terms.indexOf(term, sensitivity);
         }
         return termId;
     }

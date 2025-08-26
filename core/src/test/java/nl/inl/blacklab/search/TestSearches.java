@@ -559,9 +559,14 @@ public class TestSearches {
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
         Terms terms = index.forwardIndex(annotation).terms();
-        int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words, null, false);
+        int[] words = { termId(terms, "noot"), termId(terms, "aap"), termId(terms, "aap") };
+        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words,
+                null, false, null);
         Assert.assertEquals(expected, testIndex.findConc("(c:'NOTININDEX')? a:[] 'aap' b:[] :: c -> a.word = b.word", prop, value));
+    }
+
+    private int termId(Terms terms, String word) {
+        return terms.indexOf(word, MatchSensitivity.SENSITIVE);
     }
 
     @Test
@@ -573,8 +578,9 @@ public class TestSearches {
         HitProperty prop = new HitPropertyHitText(index, MatchSensitivity.INSENSITIVE);
         Annotation annotation = index.mainAnnotatedField().mainAnnotation();
         Terms terms = index.forwardIndex(annotation).terms();
-        int[] words = { terms.indexOf("noot"), terms.indexOf("aap"), terms.indexOf("aap") };
-        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words, null, false);
+        int[] words = { termId(terms, "noot"), termId(terms, "aap"), termId(terms, "aap") };
+        PropertyValue value = new PropertyValueContextWords(annotation, MatchSensitivity.INSENSITIVE, terms, words,
+                null, false, null);
         // Query below will be rewritten using POSFILTER(ANYTOKEN(1,INF), NOTCONTAINING, 'noot');
         // there used to be an issue with determining doc length that messed this up
         Assert.assertEquals(expected, testIndex.findConc("'noot'+ [word != 'noot']+ group:('aap')+", prop, value));
@@ -696,14 +702,16 @@ public class TestSearches {
     @Test
     public void testFixedSpan() throws InvalidQuery {
         List<String> expected = Arrays.asList(
-                "The [quick] brown",
-                "noot [mier] aap",
                 "May [the] Force",
+                "noot [mier] aap",
+                "The [quick] brown",
                 "To [find] or");
         TextPattern patt = new TextPatternFixedSpan(1, 2);
+        HitProperty sortBy = new HitPropertyBeforeHit(testIndex.index(), null,
+                MatchSensitivity.INSENSITIVE, 5);
         BLSpanQuery query = patt.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
-        Assert.assertEquals(expected, testIndex.findConc(query));
+        Assert.assertEquals(expected, testIndex.findConc(query, sortBy));
     }
 
     @Test

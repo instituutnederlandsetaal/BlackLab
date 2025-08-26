@@ -13,9 +13,9 @@ import org.eclipse.collections.api.iterator.IntIterator;
 import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
-public class CollUtil {
+public class CollectionsUtil {
 
-    private CollUtil() {
+    private CollectionsUtil() {
     }
 
     public static AbstractSet<Integer> toJavaSet(final MutableIntSet keySet) {

@@ -22,7 +22,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
-import nl.inl.util.CollUtil;
+import nl.inl.util.CollectionsUtil;
 
 /**
  * Gets spans for relations matches.
@@ -181,7 +181,7 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      */
     public static void setIndexedTerm(RelationInfo info, String term, int docId, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
         info.setFullRelationType(relStrat.fullTypeFromIndexedTerm(term));
-        Map<String, List<String>> attributes = CollUtil.toMapOfLists(relStrat.getAllAttributesFromIndexedTerm(term));
+        Map<String, List<String>> attributes = CollectionsUtil.toMapOfLists(relStrat.getAllAttributesFromIndexedTerm(term));
         if (attributes == null && relInfo != null) {
             if (info.mayHaveInfoInRelationIndex()) {
                 // Get them from relation info index

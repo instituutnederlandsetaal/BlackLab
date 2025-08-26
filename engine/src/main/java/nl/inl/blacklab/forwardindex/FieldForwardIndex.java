@@ -12,12 +12,12 @@ import nl.inl.blacklab.codec.ForwardIndexField;
  * Implementations are not intended to be threadsafe, but to be used by a single
  * thread.
  */
-public class FieldForwardIndex implements AnnotForwardIndex {
+public class FieldForwardIndex implements AnnotationForwardIndex {
 
     /** Our terms object */
     private Terms terms;
 
-    public static AnnotForwardIndex get(LeafReaderContext lrc, String luceneField) {
+    public static AnnotationForwardIndex get(LeafReaderContext lrc, String luceneField) {
         return BlackLabPostingsReader.forSegment(lrc).forwardIndex(luceneField);
     }
 

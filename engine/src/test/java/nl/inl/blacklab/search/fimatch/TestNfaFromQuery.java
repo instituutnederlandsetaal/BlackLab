@@ -10,7 +10,6 @@ import java.util.Map.Entry;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -88,14 +87,10 @@ public class TestNfaFromQuery {
                         }
 
                         @Override
-                        public int indexOf(String word) {
+                        public int indexOf(String word, MatchSensitivity sensitivity) {
                             throw new UnsupportedOperationException();
                         }
 
-                        @Override
-                        public void indexOf(MutableIntSet results, String term, MatchSensitivity sensitivity) {
-                            throw new UnsupportedOperationException();
-                        }
                     };
                 }
 

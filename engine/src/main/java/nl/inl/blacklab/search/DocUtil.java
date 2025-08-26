@@ -232,7 +232,7 @@ public class DocUtil {
             if (!field.hasContentStore()) {
                 String fieldName = field.contentsFieldName();
                 if (d == null)
-                    d = index.reader().document(docId, Set.of(fieldName));
+                    d = index.reader().storedFields().document(docId, Set.of(fieldName));
                 return d.get(fieldName).substring(startAtChar, endAtChar);
             } else {
                 return index.contentAccessor(field).getSubstringsFromDocument(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
@@ -308,7 +308,7 @@ public class DocUtil {
                 String[] content;
                 String fieldName = field.contentsFieldName();
                 if (d == null)
-                    d = index.reader().document(docId, Set.of(fieldName));
+                    d = index.reader().storedFields().document(docId, Set.of(fieldName));
                 String fieldContent = d.get(fieldName);
                 content = new String[starts.length];
                 for (int i = 0; i < starts.length; i++) {
@@ -398,7 +398,7 @@ public class DocUtil {
                 // Regular stored field
                 String fieldName = field.contentsFieldName();
                 if (d == null)
-                    d = index.reader().document(docId, Set.of(fieldName));
+                    d = index.reader().storedFields().document(docId, Set.of(fieldName));
                 // No special content accessor set; assume a stored field
                 String content = d.get(fieldName);
                 if (content == null)

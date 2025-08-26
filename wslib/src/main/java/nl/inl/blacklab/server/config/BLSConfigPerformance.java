@@ -3,21 +3,14 @@ package nl.inl.blacklab.server.config;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.search.BlackLabEngine;
+
 public class BLSConfigPerformance {
 
     private static final Logger logger = LogManager.getLogger(BLSConfigPerformance.class);
 
     /** Minimum for maxConcurrentSearches when autodetecting. */
     private static final int CONCURRENT_SEARCHES_AUTO_MIN = 4;
-
-    /** When autodetecting maxThreadsPerSearch, divide #CPUs by this number */
-    private static final int THREADS_PER_SEARCH_AUTO_DIVIDER = 4;
-
-    /** Minimum for maxThreadsPerSearch when autodetecting. */
-    private static final int THREADS_PER_SEARCH_AUTO_MIN = 2;
-
-    /** Maximum for maxThreadsPerSearch when autodetecting. */
-    private static final int THREADS_PER_SEARCH_AUTO_MAX = 6;
 
     /** How many search jobs may be running at the same time. */
     int maxConcurrentSearches = -1;
@@ -50,18 +43,11 @@ public class BLSConfigPerformance {
     }
 
     public int getMaxThreadsPerSearch() {
-        if (maxThreadsPerSearch < 0)
-            setDefaultMaxThreadsPerSearch();
+        if (maxThreadsPerSearch < 0) {
+            maxThreadsPerSearch = BlackLabEngine.chooseDefaultMaxThreadsPerSearch();
+            logger.debug("performance.maxThreadsPerSearch not configured, setting it to " + maxThreadsPerSearch);
+        }
         return maxThreadsPerSearch;
-    }
-
-    private void setDefaultMaxThreadsPerSearch() {
-        int n = Runtime.getRuntime().availableProcessors() / THREADS_PER_SEARCH_AUTO_DIVIDER;
-        n = Math.max(Math.min(n, THREADS_PER_SEARCH_AUTO_MAX), THREADS_PER_SEARCH_AUTO_MIN);
-        logger.debug("performance.maxThreadsPerSearch not configured, setting it to clamp(CPUS / " +
-                THREADS_PER_SEARCH_AUTO_DIVIDER + ", " + THREADS_PER_SEARCH_AUTO_MIN + ", " +
-                THREADS_PER_SEARCH_AUTO_MAX + ") == " + n);
-        maxThreadsPerSearch = n;
     }
 
     @SuppressWarnings("unused")

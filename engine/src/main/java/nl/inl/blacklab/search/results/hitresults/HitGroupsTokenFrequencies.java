@@ -20,9 +20,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
-import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -112,11 +110,9 @@ public class HitGroupsTokenFrequencies {
                 // Convert segment-local term ids to global term ids
                 // (this is necessary because the same term can have different ids in different segments)
                 AnnotInfo hitProp = hitProperties.get(i);
-                String luceneField = hitProp.getAnnotationForwardIndex().annotation().forwardIndexSensitivity()
-                        .luceneField();
-                Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
-                globalTermIds[i] = terms.toGlobalTermId(tokenIds[i]);
-                globalSortPositions[i] = terms.getGlobalTerms().idToSortPosition(globalTermIds[i],
+                Terms globalTerms = hitProp.getTerms();
+                globalTermIds[i] = globalTerms.toGlobalTermId(lrc, tokenIds[i]);
+                globalSortPositions[i] = globalTerms.idToSortPosition(globalTermIds[i],
                         hitProp.getMatchSensitivity());
             }
             return new GroupIdHash(globalTermIds, globalSortPositions,
@@ -164,21 +160,28 @@ public class HitGroupsTokenFrequencies {
 
     /** Info about an annotation we're grouping on. */
     private static final class AnnotInfo {
-        private final AnnotationForwardIndex annotationForwardIndex;
+        private final Annotation annotation;
 
         private final MatchSensitivity matchSensitivity;
 
-        public AnnotationForwardIndex getAnnotationForwardIndex() {
-            return annotationForwardIndex;
+        private final Terms terms;
+
+        public Annotation getAnnotation() {
+            return annotation;
         }
 
         public MatchSensitivity getMatchSensitivity() {
             return matchSensitivity;
         }
 
-        public AnnotInfo(AnnotationForwardIndex annotationForwardIndex, MatchSensitivity matchSensitivity) {
-            this.annotationForwardIndex = annotationForwardIndex;
+        public Terms getTerms() {
+            return terms;
+        }
+
+        public AnnotInfo(Annotation annotation, MatchSensitivity matchSensitivity, Terms terms) {
+            this.annotation = annotation;
             this.matchSensitivity = matchSensitivity;
+            this.terms = terms;
         }
     }
 
@@ -237,11 +240,10 @@ public class HitGroupsTokenFrequencies {
                     } else { // Property couldn't be converted to DocProperty (is null). The current property is an actual HitProperty (applies to annotation/token/hit value)
                         assert p instanceof HitPropertyHitText : "HitProperty should be HitPropertyHitText, should never happen";
                         Annotation annotation = ((HitPropertyHitText)p).getAnnotation();
-
                         final int positionInUnpackedList = hitProperties.size();
-                        final AnnotationForwardIndex annotationFI = index.annotationForwardIndex(annotation);
                         final MatchSensitivity sensitivity = ((HitPropertyHitText) p).getSensitivity();
-                        hitProperties.add(new AnnotInfo(annotationFI, sensitivity));
+                        Terms terms = index.forwardIndex(annotation).terms();
+                        hitProperties.add(new AnnotInfo(annotation, sensitivity, terms));
                         originalOrderOfUnpackedProperties.add(PropInfo.hit(positionInUnpackedList));
                     }
                 }
@@ -353,11 +355,10 @@ public class HitGroupsTokenFrequencies {
                         List<Integer> segmentDocIds = entry.getValue();
 
                         // Create a forward index reader for each hit property, so we can retrieve the token values
-                        AnnotForwardIndex[] forwardIndexes = new FieldForwardIndex[hitProperties.size()];
+                        AnnotationForwardIndex[] forwardIndexes = new FieldForwardIndex[hitProperties.size()];
                         int hitPropIndex = 0;
                         for (AnnotInfo annot : hitProperties) {
-                            String luceneField = annot.annotationForwardIndex.annotation()
-                                    .forwardIndexSensitivity().luceneField();
+                            String luceneField = annot.annotation.forwardIndexSensitivity().luceneField();
                             forwardIndexes[hitPropIndex] = FieldForwardIndex.get(lrc, luceneField);
                             hitPropIndex++;
                         }
@@ -380,14 +381,14 @@ public class HitGroupsTokenFrequencies {
                                 // Step 1: read all values for the to-be-grouped annotations for this document
                                 // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
-                                final Document doc = lrc.reader().document(segmentDocId, fieldsToLoad);
+                                final Document doc = lrc.reader().storedFields().document(segmentDocId, fieldsToLoad);
                                 final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
                                 final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                                 try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                                     hitPropIndex = 0;
                                     for (AnnotInfo annot : hitProperties) {
-                                        AnnotForwardIndex forwardIndex = forwardIndexes[hitPropIndex];
+                                        AnnotationForwardIndex forwardIndex = forwardIndexes[hitPropIndex];
                                         final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
                                                         new int[] { -1 }, new int[] { -1 }).get(0);
                                         Terms segmentTerms = forwardIndex.terms();
@@ -446,7 +447,7 @@ public class HitGroupsTokenFrequencies {
                                                 logger.debug("tokenIndex = " + tokenIndex);
                                                 logger.debug("annotationIndex = " + annotationIndex);
                                                 logger.debug("annotation = " + (hitProperties.get(annotationIndex)
-                                                        .getAnnotationForwardIndex().annotation().name()));
+                                                        .getAnnotation().name()));
                                             }
                                             annotationValuesForThisToken[annotationIndex] = tokenValues[tokenIndex];
                                             int[] sortValuesThisAnnotation = sortValuesPerAnnotation.get(annotationIndex);
@@ -539,12 +540,12 @@ public class HitGroupsTokenFrequencies {
                         } else {
                              // is hitprop, convert value to PropertyValue.
                             AnnotInfo annotInfo = hitProperties.get(indexInInput);
-                            Annotation annot = annotInfo.getAnnotationForwardIndex().annotation();
+                            Annotation annot = annotInfo.getAnnotation();
                             MatchSensitivity sens = annotInfo.getMatchSensitivity();
-                            Terms terms = annotInfo.getAnnotationForwardIndex().terms();
-                            groupIdAsList[indexInOutput++] = new PropertyValueContextWords(annot, sens,
-                                    terms, new int[] {annotationValues[indexInInput]},
-                                    new int[] {annotationSortValues[indexInInput]}, false);
+                            Terms terms = annotInfo.getTerms();
+                            groupIdAsList[indexInOutput++] = new PropertyValueContextWords(annot, sens, terms,
+                                    new int[] {annotationValues[indexInInput]},
+                                    new int[] {annotationSortValues[indexInInput]}, false, null);
                         }
                     }
 

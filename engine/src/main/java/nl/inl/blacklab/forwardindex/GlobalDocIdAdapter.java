@@ -4,13 +4,13 @@ import java.util.List;
 
 /** Adapts a FieldForwardIndex to accept global doc ids.
  */
-public class GlobalDocIdAdapter implements AnnotForwardIndex {
+public class GlobalDocIdAdapter implements AnnotationForwardIndex {
 
-    private final AnnotForwardIndex forwardIndex;
+    private final AnnotationForwardIndex forwardIndex;
 
     private final int docBase;
 
-    public GlobalDocIdAdapter(AnnotForwardIndex forwardIndex, int docBase) {
+    public GlobalDocIdAdapter(AnnotationForwardIndex forwardIndex, int docBase) {
         this.forwardIndex = forwardIndex;
         this.docBase = docBase;
     }

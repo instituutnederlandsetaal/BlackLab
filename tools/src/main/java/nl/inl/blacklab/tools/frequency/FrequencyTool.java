@@ -186,9 +186,10 @@ public class FrequencyTool {
         // Use specifically optimized CalcTokenFrequencies
         List<String> annotationNames = freqList.getAnnotations();
         Terms[] terms = annotationNames.stream()
-                .map(name -> index.annotationForwardIndex(annotatedField.annotation(name)).terms())
+                .map(name -> index.forwardIndex(annotatedField.annotation(name)).terms())
                 .toArray(Terms[]::new);
         List<Annotation> annotations = annotationNames.stream().map(annotatedField::annotation).toList();
+        List<Terms> termsList = Arrays.asList(terms);
         List<String> metadataFields = freqList.getMetadataFields();
         final Map<LeafReaderContext, List<Integer>> docIds = getDocIds(index, freqList);
 
@@ -216,7 +217,7 @@ public class FrequencyTool {
                 List<Integer> docIdsInSegment = entry.getValue();
 
                 // Keep track of term occurrences in this segment; later we'll merge it with the global term frequencies
-                Map<GroupIdHash, OccurrenceCounts> occsInSegment = CalcTokenFrequencies.get(index, lrc, annotations,
+                Map<GroupIdHash, OccurrenceCounts> occsInSegment = CalcTokenFrequencies.get(lrc, annotations,
                         metadataFields, docIdsInSegment, freqList.getNgramSize());
 
                 // Merge occurrences in this segment with global occurrences
@@ -225,7 +226,7 @@ public class FrequencyTool {
                     // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
                     //       because we use ConcurrentSkipListMap, which may call the remapping function
                     //       multiple times if there's potential concurrency issues.
-                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.toGlobalTermIds(lrc, annotations), (__, groupSize) -> {
+                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.toGlobalTermIds(index, lrc, termsList), (__, groupSize) -> {
                         if (groupSize == null)
                             return occ; // reusing occ here is okay because it doesn't change on subsequent calls
                         else
@@ -234,7 +235,7 @@ public class FrequencyTool {
                 } else {
                     // Not using ConcurrentSkipListMap but ConcurrentHashMap. It's okay to re-use occ,
                     // because our remapping function will only be called once.
-                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.toGlobalTermIds(lrc, annotations), (__, groupSize) -> {
+                    occsInSegment.forEach((groupId, occ) -> globalOccurrences.compute(groupId.toGlobalTermIds(index, lrc, termsList), (__, groupSize) -> {
                         // NOTE: we cannot modify groupSize or occ here like we do in HitGroupsTokenFrequencies,
                         //       because we use ConcurrentSkipListMap, which may call the remapping function
                         //       multiple times if there's potential concurrency issues.

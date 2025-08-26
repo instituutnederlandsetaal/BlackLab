@@ -24,10 +24,6 @@ public enum TokensCodec {
         this.code = code;
     }
 
-    public byte getCode() {
-        return code;
-    }
-
     public static TokensCodec fromCode(byte code) {
         for (TokensCodec t: values()) {
             if (t.code == code)

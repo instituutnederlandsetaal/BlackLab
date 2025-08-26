@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import com.ibm.icu.text.Collator;
 import java.util.Map;
 import java.util.Set;
 
@@ -17,6 +16,8 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -43,7 +44,6 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
-import nl.inl.util.VersionFile;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
 /** Interface for reading/searching a BlackLab index. For writing, see {@link BlackLabIndexWriter}. */
@@ -90,12 +90,6 @@ public interface BlackLabIndex extends AutoCloseable {
      */
     static boolean isIndex(File indexDir) {
         try {
-            if (VersionFile.exists(indexDir)) {
-                VersionFile vf = VersionFile.read(indexDir);
-                String version = vf.getVersion();
-                return vf.getType().equals("blacklab") && (version.equals("1") || version.equals("2"));
-            }
-
             // We also support integrated indexes which don't have a version file.
             // So just see if it's a Lucene index and assume it's a BlackLab index if so.
             // (Lucene index always has a segments_* file)
@@ -274,6 +268,14 @@ public interface BlackLabIndex extends AutoCloseable {
     ContentAccessor contentAccessor(Field field);
 
     /**
+     * Get forward index for the specified annotated field.
+     * 
+     * @param field field to get forward index for
+     * @return forward index
+     */
+    ForwardIndex forwardIndex(AnnotatedField field);
+
+    /**
      * Tries to get the ForwardIndex object for the specified field name.
      *
      * Looks for an already-opened forward index first. If none is found, and if
@@ -284,16 +286,6 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return the ForwardIndex if found/created
      * @throws RuntimeException if the annotation has no forward index
      */
-    AnnotationForwardIndex annotationForwardIndex(Annotation annotation);
-
-    /**
-     * Get forward index for the specified annotated field.
-     * 
-     * @param field field to get forward index for
-     * @return forward index
-     */
-    ForwardIndex forwardIndex(AnnotatedField field);
-
     default AnnotationForwardIndex forwardIndex(Annotation annotation) {
         return forwardIndex(annotation.field()).get(annotation);
     }

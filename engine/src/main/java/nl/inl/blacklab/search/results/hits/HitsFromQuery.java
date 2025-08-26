@@ -33,6 +33,7 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyContextBase;
 import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
@@ -77,6 +78,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      * hitToStretchMapping only has a value for every nth hit index in the
      * global view. So hitToStretchMapping.getInt(i) will return the stretch
      * for hit index i * HIT_INDEX_TO_STRETCH_STEP.
+     *
+     * Larger values make the global hits view a bit slower,
+     * but gathering hits a bit faster.
      */
     private static final long HIT_INDEX_TO_STRETCH_STEP = 100;
 
@@ -95,7 +99,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      * We don't want to add stretches that are too large, because that would
      * make it take too long for the hits to become available in the global view.
      */
-    private static final int STRETCH_THRESHOLD_MAXIMUM = 1000;
+    private static final int STRETCH_THRESHOLD_MAXIMUM = 10000;
 
     /**
      * Divider for the size of new stretches.
@@ -104,6 +108,19 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
      * so the size of new stretches grows as the number of hits retrieved grows.
      */
     private static final int STRETCH_SIZE_DIVIDER = 10;
+
+    /**
+     * Testing reveals this to be a good number of threads for fetching hits in parallel.
+     * More is not useful, and we can afford to use 4 threads as fetching hits is a very fast operation
+     * compared to sort/group.
+     */
+    public static final int IDEAL_NUM_THREADS_FETCHING = 4;
+
+    /**
+     * Grouping hits is best done in 3 threads on average.
+     * Depending on the exact search, 2 or 4 might be a bit better, but that's hard to predict.
+     */
+    private static final int IDEAL_NUM_THREADS_GROUPING = 3;
 
     /**
      * Below this number of hits, we'll sort/group in a single thread to save overhead.
@@ -120,8 +137,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
     private final QueryTimings timings;
 
-    /** Number of threads to use for fetching hits. */
-    private final int numThreads;
+    /** Max. number of threads to use for fetch, sort, group. */
+    private final int maxThreadsPerOperation;
 
     /** Configured upper limit of requestedHitsToProcess, to which it will always be clamped. */
     private final long maxHitsToProcess;
@@ -177,7 +194,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                 searchSettings.maxHitsToCount());
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
         hitQueryContext = new HitQueryContext(field.index(), null, field); // each spans will get a copy
-        numThreads = Math.max(field.index().blackLab().maxThreadsPerSearch(), 1);
+        maxThreadsPerOperation = Math.max(field.index().blackLab().maxThreadsPerSearch(), 1);
 
         this.matchInfoDefs = hitQueryContext.getMatchInfoDefs();
         hitsPerSegment = new LinkedHashMap<>();
@@ -471,7 +488,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         this.requestedHitsToCount.getAndUpdate(c -> Math.max(clampedNumber, c)); // update count
 
         boolean hasLock = false;
-        List<Future<List<Void>>> pendingResults = null;
+        int numThreads = Math.min(IDEAL_NUM_THREADS_FETCHING, maxThreadsPerOperation);
         Parallel<SpansReader, Void> parallel = new Parallel<>(index(), numThreads);
         try {
             while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
@@ -492,7 +509,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             // Make sure the number of documents per segment is roughly equal for each thread.
             Function<SpansReader, Long> sizeGetter = spansReader ->
                     spansReader.leafReaderContext == null ? 0 : (long) spansReader.leafReaderContext.reader().maxDoc();
-            pendingResults = parallel.forEach(spansReaders, sizeGetter,
+            List<Future<List<Void>>> pendingResults = parallel.forEach(spansReaders, sizeGetter,
                     l -> l.forEach(SpansReader::run));
 
             // Wait for workers to complete.
@@ -632,7 +649,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         ensureResultsRead(-1);
 
         // If there are only a few hits, just group them in a single thread.
-        if (numThreads == 1 || numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
+        if (maxThreadsPerOperation == 1 || numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             logger.debug("GROUP: single thread");
 
             Map<PropertyValue, Group> groups = new HashMap<>();
@@ -646,8 +663,9 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         logger.debug("GROUP: launch threads");
 
         // Group in parallel and merge the results.
-        Parallel<Map.Entry<LeafReaderContext, HitsMutable>, Map<PropertyValue, Group>> parallel =
-                new Parallel<>(index(), numThreads);
+        boolean isContext = groupBy instanceof HitPropertyContextBase;
+        int numThreads = Math.min(maxThreadsPerOperation, IDEAL_NUM_THREADS_GROUPING);
+        Parallel<Map.Entry<LeafReaderContext, HitsMutable>, Map<PropertyValue, Group>> parallel = new Parallel<>(index(), numThreads);
         HitProperty groupByWithCache = groupBy.copyWith(PropContext.globalHits(null, new ConcurrentHashMap<>()));
         return parallel.mapReduce(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
@@ -683,16 +701,18 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         logger.debug("SORT: start");
         // Fetch all the hits and determine size.
         size();
-        if (numThreads == 1 || numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
-            // If there are only a few hits, just sort them in a single thread.
+//        if (numThreads == 1 || numHitsGlobalView < THRESHOLD_SINGLE_THREADED) {
             logger.debug("SORT: single thread");
             try {
                 return sortedSingleThread(sortBy);
             } finally {
                 logger.debug("SORT: done single thread");
             }
-        }
+//        }
+//        return sortedMultiThreaded(sortBy);
+    }
 
+    private HitsMutable sortedMultiThreaded(HitProperty sortBy) {
         logger.debug("SORT: launch threads");
 
         // TODO: make sort and merge steps abortable (ThreadAborter). same for grouping.
@@ -701,7 +721,8 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
 
         // Sort each group of segments in a separate thread.
         Map<String, CollationKey> collationKeyCache = new ConcurrentHashMap<>();
-        Parallel<Map.Entry<LeafReaderContext, HitsMutable>, SegmentHits> parallel = new Parallel<>(index(), numThreads);
+        Parallel<Map.Entry<LeafReaderContext, HitsMutable>, SegmentHits> parallel = new Parallel<>(index(),
+                maxThreadsPerOperation);
         List<Future<List<SegmentHits>>> pendingResults = parallel.map(hitsPerSegment.entrySet(),
                 entry -> entry.getValue().size(),
                 entryList -> entryList.stream().map(entry -> {
@@ -810,9 +831,12 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
         }
 
         @Override
-        public void onDocumentBoundary(HitsMutable results) {
+        public SpansReader.Phase onDocumentBoundary(HitsMutable results, long counted) {
             // Add new hits to the segment results.
             segmentHits.addAll(results);
+
+            // Update stats and determine phase (fetching/counting/done)
+            SpansReader.Phase phase = hitsStats.add(results.size(), counted);
 
             // Add them to the global view? We only do this on a boundary
             // between documents, so hits from the same doc remain
@@ -826,23 +850,31 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
                     Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
             addStretchIfLargeEnough(addHitsToGlobalThreshold);
             results.clear();
+
+            return phase;
         }
 
         @Override
-        public void onFinished(HitsMutable results) {
+        public void onFinished(HitsMutable results, long counted) {
             // Add the final batch of hits to the segment results.
             segmentHits.addAll(results);
+
+            // Update stats and determine phase (fetching/counting/done)
+            SpansReader.Phase phase = hitsStats.add(results.size(), counted);
+
             addStretchIfLargeEnough(0);
         }
 
         /**
          * Add the latest stretch of hits we've found to the global view.
+         *
+         * @return
          */
         private void addStretchIfLargeEnough(long threshold) {
-            if (segmentHits.size() - numberAddedToGlobalView <= threshold)
-                return; // not enough hits to add a stretch
-            addStretchFromSegment(lrc, segmentHits, numberAddedToGlobalView);
-            numberAddedToGlobalView = segmentHits.size();
+            if (segmentHits.size() - numberAddedToGlobalView > threshold) {
+                addStretchFromSegment(lrc, segmentHits, numberAddedToGlobalView);
+                numberAddedToGlobalView = segmentHits.size();
+            }
         }
     }
 

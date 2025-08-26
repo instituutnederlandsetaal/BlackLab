@@ -16,7 +16,7 @@ import org.apache.lucene.index.LeafReaderContext;
 /**
  * Represents both a state in an NFA, and a complete NFA with this as the
  * starting state.
- *
+ * <p>
  * (Note that the "matching state" is simply represented as null in the NFAs we
  * build, which is convenient when possibly appending other NFAs to it later)
  */
@@ -215,10 +215,10 @@ public abstract class NfaState {
     /**
      * Return a copy of the fragment starting from this state, and collect all
      * (copied) states with dangling outputs.
-     *
+     * <p>
      * Subclasses can override this (not copy()), so they don't have to look at
      * copiesMade but can always just create a copy of themselves.
-     *
+     * <p>
      * IMPORTANT: implementations MUST add the copied state to copiesMade BEFORE
      *            rewriting any other states! Otherwise, infinite recursion could
      *            occur when copying cyclic NFAs.
@@ -250,15 +250,11 @@ public abstract class NfaState {
      * Visit each node and replace dangling arrows (nulls) with the match state.
      */
     public final void finish() {
-        visit(new HashSet<>(), nfaState -> nfaState.finishInternal());
+        visit(new HashSet<>(), NfaState::finishInternal);
     }
 
     /**
      * Visit each node and replace dangling arrows (nulls) with the match state.
-     *
-     * @param visited nodes visited so far, this one included. finish() uses this to
-     *            make sure we don't visit the same node twice, so always call
-     *            finish() in your implementations, not finishInternal().
      */
     protected void finishInternal() {
         // Default implementation does nothing, subclasses should override this

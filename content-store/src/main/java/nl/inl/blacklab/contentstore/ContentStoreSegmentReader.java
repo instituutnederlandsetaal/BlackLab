@@ -18,15 +18,6 @@ public interface ContentStoreSegmentReader {
      * @param luceneField field to get
      * @return field value
      */
-    byte[] getBytes(int docId, String luceneField);
-
-    /**
-     * Get the entire field value.
-     *
-     * @param docId document id
-     * @param luceneField field to get
-     * @return field value
-     */
     String getValue(int docId, String luceneField);
 
     /**

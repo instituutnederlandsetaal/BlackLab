@@ -41,6 +41,7 @@ public class DocPropertyAnnotatedFieldLength extends DocProperty {
     }
 
     public DocPropertyAnnotatedFieldLength(BlackLabIndex index, String annotatedFieldName) {
+        super();
         this.index = index;
         this.lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(annotatedFieldName);
         this.friendlyName = annotatedFieldName + " length";

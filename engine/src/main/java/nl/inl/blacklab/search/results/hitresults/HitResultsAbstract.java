@@ -95,10 +95,10 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         Hits window = hits.sublist(first, windowSize);
         boolean hasNext = hits.sizeAtLeast(first + windowSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, window.size());
-        ResultsStats hitsStats = new ResultsStatsSaved(window.size());
-        ResultsStats docsStats = new ResultsStatsSaved(window.countDocs());
+//        ResultsStats hitsStats = new ResultsStatsSaved(window.size());
+//        ResultsStats docsStats = new ResultsStatsSaved(window.countDocs());
         return new HitResultsList(queryInfo(), window, windowStats, null,
-                hitsStats, docsStats);
+                this.resultsStats(), this.docsStats());
     }
 
     /**

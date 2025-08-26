@@ -50,8 +50,12 @@ import nl.inl.util.FileUtil;
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
-    /** If no explicit BlackLab instance is created, how many threads per search should we use? */
-    private static final int DEFAULT_MAX_THREADS_PER_SEARCH = 2;
+    /** If no explicit BlackLab instance is created, how many threads per search should we use?
+     *
+     * Note that each operation will use an "optimal" number of threads, but none will ever use
+     * more than specified here.
+     */
+    private static final int DEFAULT_MAX_THREADS_PER_SEARCH = 4;
 
     /**
      * If client doesn't explicitly create a BlackLab instance, one will be instantiated
@@ -152,7 +156,8 @@ public final class BlackLab {
         if (explicitlyCreated)
             throw new UnsupportedOperationException("Already called create(); cannot create an implicit instance anymore! Don't mix implicit and explicit BlackLabEngine!");
         if (implicitInstance == null) {
-            implicitInstance = new BlackLabEngine(DEFAULT_MAX_THREADS_PER_SEARCH);
+            // -1 = choose max. threads per operation automatically
+            implicitInstance = new BlackLabEngine(-1);
         }
         return implicitInstance;
     }
@@ -414,4 +419,5 @@ public final class BlackLab {
         }
         return fieldValueSortCollator;
     }
+
 }

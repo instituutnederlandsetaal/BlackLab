@@ -2,13 +2,13 @@ package nl.inl.blacklab.testutil;
 
 import java.io.File;
 import java.io.IOException;
-import com.ibm.icu.text.Collator;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
+import com.ibm.icu.text.Collator;
+
 import nl.inl.blacklab.codec.BLTerms;
-import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLab;
@@ -30,8 +30,6 @@ public class TermSerialization {
         BlackLabIndex index = BlackLab.open(new File(path));
         AnnotatedField field = index.annotatedField("contents");
         Annotation annotation = annotationName.isEmpty() ? field.mainAnnotation() : field.annotation(annotationName);
-        AnnotationForwardIndex fi = index.annotationForwardIndex(annotation);
-
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
         for (LeafReaderContext lrc: index.reader().leaves()) {
             doTerm(word, lrc, luceneField);

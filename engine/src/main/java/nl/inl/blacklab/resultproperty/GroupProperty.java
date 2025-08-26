@@ -2,9 +2,6 @@ package nl.inl.blacklab.resultproperty;
 
 /**
  * Abstract base class for a property of a group op results.
- * 
- * @param <T> type of result, e.g. Hit
- * @param <G> group type, e.g. HitGroup
  */
 public abstract class GroupProperty implements ResultProperty {
 

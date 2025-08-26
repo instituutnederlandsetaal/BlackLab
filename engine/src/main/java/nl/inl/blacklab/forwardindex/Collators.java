@@ -13,9 +13,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 public class Collators {
 
-    private final Collator sensitive;
+    private Collator sensitive;
 
-    private final Collator insensitive;
+    private Collator insensitive;
 
     public Collators(Collator base) {
         super();

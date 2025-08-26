@@ -182,12 +182,6 @@ public class TestQueryRewrite {
                 "SEQ(TERM(contents%lemma@i:a), TERM(contents%word@i:a))");
     }
 
-    String repTags(String tagName, int attrValue) {
-        if (index.getType() == BlackLabIndex.IndexType.INTEGRATED)
-            return "TAGS(" + tagName + ", {test=" + attrValue + "})";
-        return "POSFILTER(TAGS(" + tagName + "), TERM(contents%" + relName + "@s:@test__" + attrValue + "), starts_at)";
-    }
-
     @Test
     public void testRewriteRepetitionAndOr() {
         assertRewriteResult("('a'|'b') ('a'|'b')",

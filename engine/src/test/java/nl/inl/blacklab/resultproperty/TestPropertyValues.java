@@ -42,21 +42,17 @@ public class TestPropertyValues {
         MockBlackLabIndex index = new MockBlackLabIndex();
         AnnotatedField field = new AnnotatedFieldImpl(index, "contents");
         Annotation annotation = new AnnotationImpl(field, "lemma");
-        PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(annotation, sensitivity,
-                terms, new int[]{2, 3, 3}, null, false);
-        PropertyValueContextWords twoThreeThree2 = new PropertyValueContextWords(annotation, sensitivity,
-                terms, new int[]{2, 3, 3}, null, false);
-        PropertyValueContextWords oneThreeFour = new PropertyValueContextWords(annotation, sensitivity,
-                terms, new int[]{1, 3, 4}, null, false);
-        PropertyValueContextWords twoThreeFive = new PropertyValueContextWords(annotation, sensitivity,
-                terms, new int[]{2, 3, 5}, null, false);
+        PropertyValueContextWords twoThreeThree = new PropertyValueContextWords(annotation, sensitivity, terms,
+                new int[]{2, 3, 3}, null, false, null);
+        PropertyValueContextWords twoThreeThree2 = new PropertyValueContextWords(annotation, sensitivity, terms,
+                new int[]{2, 3, 3}, null, false, null);
+        PropertyValueContextWords oneThreeFour = new PropertyValueContextWords(annotation, sensitivity, terms,
+                new int[]{1, 3, 4}, null, false, null);
+        PropertyValueContextWords twoThreeFive = new PropertyValueContextWords(annotation, sensitivity, terms,
+                new int[]{2, 3, 5}, null, false, null);
         Assert.assertEquals(0, twoThreeThree.compareTo(twoThreeThree2));
         Assert.assertEquals(-1, oneThreeFour.compareTo(twoThreeThree));
         Assert.assertEquals(1, twoThreeFive.compareTo(twoThreeThree));
-    }
-
-    private static int term(String word) {
-        return terms.indexOf(word);
     }
 
     @Test

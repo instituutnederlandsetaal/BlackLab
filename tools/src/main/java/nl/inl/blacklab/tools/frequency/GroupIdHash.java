@@ -6,9 +6,8 @@ import java.util.List;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -79,18 +78,15 @@ class GroupIdHash implements Comparable<GroupIdHash>, Serializable {
         return tokenIds;
     }
 
-    public GroupIdHash toGlobalTermIds(LeafReaderContext lrc, List<Annotation> hitProperties) {
+    public GroupIdHash toGlobalTermIds(BlackLabIndex index, LeafReaderContext lrc, List<Terms> hitProperties) {
         int[] globalTermIds = new int[tokenIds.length];
         int[] globalSortPositions = new int[tokenIds.length];
         for (int i = 0; i < tokenIds.length; i++) {
             // Convert segment-local term ids to global term ids
             // (this is necessary because the same term can have different ids in different segments)
-            Annotation hitProp = hitProperties.get(i);
-            String luceneField = hitProp.forwardIndexSensitivity()
-                    .luceneField();
-            Terms terms = BLTerms.forSegment(lrc, luceneField).reader();
-            globalTermIds[i] = terms.toGlobalTermId(tokenIds[i]);
-            globalSortPositions[i] = terms.getGlobalTerms().idToSortPosition(globalTermIds[i],
+            Terms terms = hitProperties.get(i);
+            globalTermIds[i] = terms.toGlobalTermId(lrc, tokenIds[i]);
+            globalSortPositions[i] = terms.idToSortPosition(globalTermIds[i],
                     MatchSensitivity.INSENSITIVE);
         }
         return new GroupIdHash(ngramSize, globalTermIds, globalSortPositions,

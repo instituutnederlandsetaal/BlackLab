@@ -13,11 +13,9 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -49,14 +47,12 @@ class CalcTokenFrequencies {
     /**
      * Get the token frequencies for the given query and hit property.
      *
-     * @param index index
      * @param annotations annotations to group on
      * @param metadataFields metadata fields to group on
      * @param segmentDocIds (segment-local) document ids to process
      * @param ngramSize size of ngrams to group on (1 for single tokens
      */
     public static Map<GroupIdHash, OccurrenceCounts> get(
-            BlackLabIndex index,
             LeafReaderContext lrc,
             List<Annotation> annotations,
             List<String> metadataFields,
@@ -70,10 +66,9 @@ class CalcTokenFrequencies {
          */
 
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        final List<AnnotInfo> hitProperties = annotations.stream().map(ann -> {
-            AnnotationForwardIndex afi = index.annotationForwardIndex(ann);
-            return new AnnotInfo(afi, MatchSensitivity.INSENSITIVE);
-        }).toList();
+        final List<AnnotInfo> hitProperties = annotations.stream()
+                .map(ann -> new AnnotInfo(ann, MatchSensitivity.INSENSITIVE))
+                .toList();
         final List<String> docProperties = new ArrayList<>(metadataFields);
 
         final int numAnnotations = hitProperties.size();
@@ -105,15 +100,14 @@ class CalcTokenFrequencies {
                     // Step 1: read all values for the to-be-grouped annotations for this document
                     // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
 
-                    final Document doc = lrc.reader().document(segmentDocId, fieldsToLoad);
+                    final Document doc = lrc.reader().storedFields().document(segmentDocId, fieldsToLoad);
                     final List<int[]> tokenValuesPerAnnotation = new ArrayList<>();
                     final List<int[]> sortValuesPerAnnotation = new ArrayList<>();
 
                     try (BlockTimer ignored = c.child("Read annotations from forward index")) {
                         for (AnnotInfo annot : hitProperties) {
-                            String luceneField = annot.getAnnotationForwardIndex().annotation()
-                                    .forwardIndexSensitivity().luceneField();
-                            AnnotForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
+                            String luceneField = annot.annotation().forwardIndexSensitivity().luceneField();
+                            AnnotationForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
                             final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
                                             new int[] { -1 }, new int[] { -1 }).get(0);
                             Terms segmentTerms = forwardIndex.terms();
@@ -127,7 +121,7 @@ class CalcTokenFrequencies {
                             for (int tokenIndex = 0; tokenIndex < docLength; ++tokenIndex) {
                                 final int segmentTermId = tokenValues[tokenIndex];
                                 sortValues[tokenIndex] = segmentTerms.idToSortPosition(segmentTermId,
-                                        annot.getMatchSensitivity());
+                                        annot.matchSensitivity());
                             }
                             sortValuesPerAnnotation.add(sortValues);
                         }

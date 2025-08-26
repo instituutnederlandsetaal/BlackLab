@@ -12,7 +12,7 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -119,7 +119,7 @@ public class ExportForwardIndex {
                         continue;
                     String luceneField = annotation.forwardIndexSensitivity().luceneField();
                     LeafReaderContext lrc = index.getLeafReaderContext(docId);
-                    AnnotForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
+                    AnnotationForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
                     int docLength = (int) fi.docLength(docId - lrc.docBase);
                     String length = doLengths ? " len=" + docLength : "";
                     System.out.println("    " + annotation.name() + length);

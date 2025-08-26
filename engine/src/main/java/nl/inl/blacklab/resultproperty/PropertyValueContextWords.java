@@ -8,7 +8,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -17,13 +16,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 public class PropertyValueContextWords extends PropertyValueContext {
-
-    static Terms getTerms(Annotation annotation, LeafReaderContext lrc) {
-        if (lrc == null)
-            return annotation.field().index().forwardIndex(annotation).terms(); // use global terms
-        String luceneField = annotation.forwardIndexSensitivity().luceneField();
-        return BLTerms.forSegment(lrc, luceneField).reader();
-    }
 
     /** Segment our term ids came from (will be null if this is a global value, or if arrays are length 0) */
     private LeafReaderContext lrc;
@@ -44,20 +36,9 @@ public class PropertyValueContextWords extends PropertyValueContext {
      */
     boolean reverseOnDisplay;
 
-    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
-            LeafReaderContext lrc, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
-        super(getTerms(annotation, lrc), annotation);
-        init(sensitivity, lrc, termIds, sortPositions, reverseOnDisplay);
-    }
-
-    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity,
-            Terms terms, int[] termIds, int[] sortPositions, boolean reverseOnDisplay) {
+    public PropertyValueContextWords(Annotation annotation, MatchSensitivity sensitivity, Terms terms,
+            int[] termIds, int[] sortPositions, boolean reverseOnDisplay, LeafReaderContext lrc) {
         super(terms, annotation);
-        init(sensitivity, null, termIds, sortPositions, reverseOnDisplay);
-    }
-
-    private void init(MatchSensitivity sensitivity, LeafReaderContext lrc, int[] termIds, int[] sortPositions,
-            boolean reverseOnDisplay) {
         this.sensitivity = sensitivity;
         this.lrc = lrc;
         this.valueTokenId = termIds;
@@ -100,14 +81,14 @@ public class PropertyValueContextWords extends PropertyValueContext {
             List<String> infos, List<String> terms, boolean reverseOnDisplay) {
         Annotation annotation = infos.isEmpty() ? field.mainAnnotation() :
                 index.metadata().annotationFromFieldAndName(infos.get(0), field);
-        Terms termsObj = index.annotationForwardIndex(annotation).terms();
+        Terms termsObj = index.forwardIndex(annotation).terms();
         MatchSensitivity sensitivity = infos.size() > 1 ? MatchSensitivity.fromLuceneFieldSuffix(infos.get(1)) :
                 annotation.mainSensitivity().sensitivity();
         int[] ids = new int[terms.size()];
         for (int i = 0; i < terms.size(); i++) {
-            ids[i] = deserializeToken(termsObj, terms.get(i));
+            ids[i] = deserializeToken(termsObj, terms.get(i), sensitivity);
         }
-        return new PropertyValueContextWords(annotation, sensitivity, termsObj, ids, null, reverseOnDisplay);
+        return new PropertyValueContextWords(annotation, sensitivity, termsObj, ids, null, reverseOnDisplay, null);
     }
 
     // get displayable string version; note that we lowercase this if this is case-insensitive
@@ -149,16 +130,4 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return lrc == null;
     }
 
-    @Override
-    public PropertyValue toGlobal() {
-        if (isGlobal())
-            throw new IllegalStateException("Don't call toGlobal on already-global value!");
-        int[] globalTermIds = Arrays.copyOf(valueTokenId, valueTokenId.length);
-        terms.convertToGlobalTermIds(globalTermIds);
-        int[] globalSortOrder = new int[globalTermIds.length];
-        Terms globalTerms = terms.getGlobalTerms();
-        globalTerms.idsToSortOrder(globalTermIds, globalSortOrder, sensitivity);
-        return new PropertyValueContextWords(annotation, sensitivity,
-                globalTerms, globalTermIds, globalSortOrder, reverseOnDisplay);
-    }
 }

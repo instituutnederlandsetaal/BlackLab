@@ -1,15 +1,17 @@
 package nl.inl.blacklab.index;
 
-import com.ibm.icu.text.Collator;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.config.BLConfigCollator;
 import nl.inl.blacklab.forwardindex.Collators;
@@ -129,6 +131,8 @@ public class BLFieldTypeLucene implements BLFieldType {
         this.type = type;
     }
 
+    static Map<String, Collators> collators = new ConcurrentHashMap<>();
+
     /**
      * Set the collator to use for this field.
      *
@@ -144,7 +148,11 @@ public class BLFieldTypeLucene implements BLFieldType {
         String language = parts[0];
         String country = parts.length > 1 ? parts[1] : "";
         String variant = parts.length > 2 ? parts[2] : "";
-        return new Collators(Collator.getInstance(new Locale(language, country, variant)));
+
+        String key = language + ":" + country + ":" + variant;
+        return collators.computeIfAbsent(key, k ->
+                new Collators(Collator.getInstance(new Locale(language, country, variant))));
+        //return new Collators(Collator.getInstance(new Locale(language, country, variant)));
     }
 
     @Override

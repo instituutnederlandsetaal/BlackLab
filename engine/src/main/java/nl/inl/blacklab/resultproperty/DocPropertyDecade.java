@@ -26,7 +26,7 @@ public class DocPropertyDecade extends DocProperty {
         super(prop, context, invert);
         index = prop.index;
         fieldName = prop.fieldName;
-        docPropStoredField = prop.docPropStoredField;
+        docPropStoredField = prop.docPropStoredField.copyWith(context, false);
     }
 
     public DocPropertyDecade(BlackLabIndex index, String fieldName) {
@@ -41,7 +41,7 @@ public class DocPropertyDecade extends DocProperty {
     }
 
     /** Parses the value, UNKNOWN_VALUE is returned if the string is unparseable */
-    public int getDecade(String strYear) {
+    public static int getDecade(String strYear) {
         int year;
         try {
             year = Integer.parseInt(strYear);
@@ -70,14 +70,14 @@ public class DocPropertyDecade extends DocProperty {
      */
     @Override
     public int compare(DocResult a, DocResult b) {
-        return compareGeneric(docPropStoredField.getFirstValue(a), docPropStoredField.getFirstValue(b));
+        return compareYearStrings(docPropStoredField.getFirstValue(a), docPropStoredField.getFirstValue(b));
     }
     
     public int compare(int docIdA, int docIdb) {
-        return compareGeneric(docPropStoredField.getFirstValue(docIdA), docPropStoredField.getFirstValue(docIdb));
+        return compareYearStrings(docPropStoredField.getFirstValue(docIdA), docPropStoredField.getFirstValue(docIdb));
     }
 
-    private int compareGeneric(String strYear1, String strYear2) {
+    private int compareYearStrings(String strYear1, String strYear2) {
         if (strYear1.isEmpty()) { // sort missing year at the end
             if (strYear2.isEmpty())
                 return 0;

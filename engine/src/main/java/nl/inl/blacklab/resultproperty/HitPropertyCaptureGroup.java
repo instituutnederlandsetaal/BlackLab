@@ -3,8 +3,6 @@ package nl.inl.blacklab.resultproperty;
 import java.util.List;
 import java.util.Objects;
 
-import org.apache.lucene.index.LeafReaderContext;
-
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -22,9 +20,6 @@ import nl.inl.blacklab.search.results.hits.Hits;
 public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     public static final String ID = "capture"; //TODO: deprecate, change to matchinfo? (to synch with response)
-
-    /** Returned if match info not registered (yet) */
-    private final PropertyValueContextWords emptyValue;
 
     static HitPropertyCaptureGroup deserializeProp(BlackLabIndex index, AnnotatedField field, List<String> infos) {
         DeserializeInfos i = deserializeInfos(index, field, infos);
@@ -58,7 +53,6 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
         relNameInList = prop.relNameInList;
         relNameIsFullRelType = prop.relNameIsFullRelType;
-        emptyValue = prop.emptyValue;
     }
 
     public HitPropertyCaptureGroup(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, String groupName, RelationInfo.SpanMode spanMode) {
@@ -77,7 +71,6 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         }
 
         this.spanMode = spanMode;
-        emptyValue = new PropertyValueContextWords(annotation, sensitivity, (LeafReaderContext)null, new int[0], new int[0], false);
     }
 
     /**

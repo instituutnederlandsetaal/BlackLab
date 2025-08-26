@@ -20,7 +20,7 @@ import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 
 public abstract class BlackLabPostingsReader extends FieldsProducer {
@@ -104,7 +104,7 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
      *
      * @return forward index segment reader
      */
-    public AnnotForwardIndex forwardIndex(String luceneField) {
+    public AnnotationForwardIndex forwardIndex(String luceneField) {
         return forwardIndex.forField(luceneField);
     }
 
@@ -208,4 +208,5 @@ public abstract class BlackLabPostingsReader extends FieldsProducer {
             throw e;
         }
     }
+
 }

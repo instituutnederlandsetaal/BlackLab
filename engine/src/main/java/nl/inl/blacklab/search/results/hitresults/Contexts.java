@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.GlobalDocIdAdapter;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -67,7 +67,7 @@ public class Contexts {
     static void makeKwicsSingleDocForwardIndex(
             Hits hits,
             List<Annotation> annotations,
-            List<AnnotForwardIndex> forwardIndexes,
+            List<AnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
             BiConsumer<Hit, Kwic> kwicConsumer
     ) {
@@ -80,7 +80,7 @@ public class Contexts {
                 contextSize, forwardIndexes, hits.matchInfoDefs());
         int numberOfAnnotations = forwardIndexes.size();
         List<Terms> annotationTerms = forwardIndexes.stream()
-                .map(AnnotForwardIndex::terms)
+                .map(AnnotationForwardIndex::terms)
                 .toList();
         int hitIndex = 0;
         for (EphemeralHit hit: hits) {
@@ -115,7 +115,7 @@ public class Contexts {
      * @return the context words for each hit, as an array of int arrays.
      */
     private static int[][] getContextWordsSingleDocument(Hits hits, long start, long end,
-            ContextSize contextSize, List<AnnotForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
+            ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
             throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
@@ -134,7 +134,7 @@ public class Contexts {
         int fiNumber = 0;
         int doc = hits.doc(start);
         int[][] contexts = new int[n][];
-        for (AnnotForwardIndex forwardIndex: contextSources) {
+        for (AnnotationForwardIndex forwardIndex: contextSources) {
             if (forwardIndex == null)
                 throw new IllegalArgumentException("Cannot get context from without a forward index");
             // Get all the words from the forward index
@@ -182,8 +182,8 @@ public class Contexts {
         if (annotation == null)
             throw new IllegalArgumentException("Cannot build contexts without annotations");
 
-        //AnnotationForwardIndex fi = hits.index().annotationForwardIndex(annotation);
-        AnnotForwardIndex fi = null;
+        //AnnotForwardIndex fi = hits.index().annotationForwardIndex(annotation);
+        AnnotationForwardIndex fi = null;
         String luceneField = annotation.forwardIndexSensitivity().luceneField();
 
         // Get the context
@@ -246,7 +246,7 @@ public class Contexts {
     }
 
     private static String[][] getCollocationWordsSingleDocumentStrings(Hits hits, long start, long end,
-            ContextSize contextSize, AnnotForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
+            ContextSize contextSize, AnnotationForwardIndex contextSource, MatchInfoDefs matchInfoDefs) {
 
         int[][] contexts = getContextWordsSingleDocument(hits, start, end, contextSize,
                 List.of(contextSource), matchInfoDefs);

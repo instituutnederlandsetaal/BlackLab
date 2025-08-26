@@ -55,9 +55,9 @@ public class QueryTimings {
         if (timer.elapsed() > 0)
             record("BEFORE-SUMMARIZE");
         StringBuilder b = new StringBuilder();
-        for (Map.Entry<String, Long> e: timings.entrySet()) {
-            b.append(String.format("  %s: %d ms\n", e.getKey(), e.getValue()));
-        }
+//        for (Map.Entry<String, Long> e: timings.entrySet()) {
+//            b.append(String.format("  %s: %d ms\n", e.getKey(), e.getValue()));
+//        }
         b.append(String.format("  TOTAL: %d ms\n", totalTimer.elapsed()));
         return b.toString();
     }

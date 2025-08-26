@@ -2,7 +2,6 @@ package nl.inl.blacklab.mocks;
 
 import java.io.File;
 import java.io.IOException;
-import com.ibm.icu.text.Collator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -15,6 +14,8 @@ import org.apache.lucene.search.BooleanQuery.TooManyClauses;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.Query;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
@@ -181,7 +182,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public AnnotationForwardIndex annotationForwardIndex(Annotation annotation) {
+    public AnnotationForwardIndex forwardIndex(Annotation annotation) {
         return forwardIndices.get(annotation);
     }
 

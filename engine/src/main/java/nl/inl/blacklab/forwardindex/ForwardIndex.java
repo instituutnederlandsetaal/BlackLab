@@ -1,7 +1,6 @@
 package nl.inl.blacklab.forwardindex;
 
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -15,13 +14,6 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
  */
 @ThreadSafe
 public interface ForwardIndex {
-
-    /**
-     * The field for which this is the forward index
-     * 
-     * @return field
-     */
-    AnnotatedField field();
 
     /**
      * Get a single-annotation view of the forward index.

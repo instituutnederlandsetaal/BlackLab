@@ -6,7 +6,6 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.mocks.MockForwardIndex;
-import nl.inl.blacklab.mocks.MockMetadataField;
 import nl.inl.blacklab.mocks.MockTerms;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.DocPropertyDecade;
@@ -17,12 +16,9 @@ import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestHitPropertySerialize {
-
-    private static final MetadataField decadeField = new MockMetadataField("decade");
 
     private static final MockBlackLabIndex mockIndex = new MockBlackLabIndex();
 
@@ -53,8 +49,8 @@ public class TestHitPropertySerialize {
         PropertyValue val, val1;
         String exp;
 
-        val1 = new PropertyValueContextWords(lemmaAnnotation, MatchSensitivity.SENSITIVE,
-                terms, new int[] { terms.indexOf("mies") }, null, false);
+        val1 = new PropertyValueContextWords(lemmaAnnotation, MatchSensitivity.SENSITIVE, terms,
+                new int[] { terms.id("mies") }, null, false, null);
         exp = "cws:contents%lemma:s:mies";
         Assert.assertEquals(exp, val1.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
@@ -74,4 +70,5 @@ public class TestHitPropertySerialize {
         Assert.assertEquals(exp, val.serialize());
         Assert.assertEquals(exp, PropertyValue.deserialize(hits, exp).serialize());
     }
+
 }

@@ -1,24 +1,21 @@
 package nl.inl.blacklab.forwardindex;
 
-import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.search.indexmetadata.Annotation;
+import java.util.List;
 
 /**
- * Global forward index for a single annotation on a field.
+ * Forward index for a single annotation.
+ *
+ * Implementations may operate on the entire index (with global doc ids)
+ * or on a single segment (with segment doc ids).
  */
-@ThreadSafe
-public interface AnnotationForwardIndex extends AnnotForwardIndex {
+public interface AnnotationForwardIndex {
+    List<int[]> retrieveParts(int docId, int[] starts, int[] ends);
 
-    /**
-     * The annotation for which this is the forward index
-     *
-     * @return annotation
-     */
-    Annotation annotation();
+    int[] retrievePart(int docId, int start, int end);
 
-    @Override
-    String toString();
+    long docLength(int docId);
 
-    void initialize();
+    Terms terms();
 
+    String getLuceneFieldName();
 }

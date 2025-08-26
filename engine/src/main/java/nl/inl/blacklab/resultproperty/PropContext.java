@@ -6,6 +6,9 @@ import org.apache.lucene.index.LeafReaderContext;
 
 import com.ibm.icu.text.CollationKey;
 
+import nl.inl.blacklab.codec.BLTerms;
+import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.results.hits.Hits;
 
 public record PropContext(Hits hits, LeafReaderContext lrc, boolean toGlobal, Map<String, CollationKey> collationCache) {
@@ -47,7 +50,7 @@ public record PropContext(Hits hits, LeafReaderContext lrc, boolean toGlobal, Ma
      * @return (possibly) adjusted doc id
      */
     int resultDocIdForHit(long index) {
-        return hits.doc(index) + (toGlobal ? lrc.docBase : 0);
+        return hits.doc(index) + (lrc != null && toGlobal ? lrc.docBase : 0);
     }
 
     /**
@@ -70,5 +73,12 @@ public record PropContext(Hits hits, LeafReaderContext lrc, boolean toGlobal, Ma
         Map<String, CollationKey> collationCache = contextChanges.collationCache == null ? this.collationCache :
                 contextChanges.collationCache;
         return new PropContext(hits, lrc, toGlobal, collationCache);
+    }
+
+    public Terms terms(Annotation annotation) {
+        if (lrc == null)
+            return annotation.field().index().forwardIndex(annotation).terms(); // use global terms
+        String luceneField = annotation.forwardIndexSensitivity().luceneField();
+        return BLTerms.forSegment(lrc, luceneField).reader();
     }
 }

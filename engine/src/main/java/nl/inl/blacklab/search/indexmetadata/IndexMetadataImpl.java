@@ -29,7 +29,7 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -756,7 +756,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                             Annotation annot = field.mainAnnotation();
                             String luceneField = annot
                                     .forwardIndexSensitivity().luceneField();
-                            AnnotForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
+                            AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                             int docLength = (int) fi.docLength(segmentDocId);
                             if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                                 // Positive docLength means that this document has a value for this annotated field

@@ -14,7 +14,7 @@ import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.AnnotForwardIndex;
+import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -88,7 +88,7 @@ public class ForwardIndex implements AutoCloseable {
      * Though the reader is not Threadsafe, a new instance is returned every time,
      * So this function can be used from multiple threads.
      */
-    public AnnotForwardIndex forField(String luceneField) {
+    public AnnotationForwardIndex forField(String luceneField) {
         return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
     }
 
