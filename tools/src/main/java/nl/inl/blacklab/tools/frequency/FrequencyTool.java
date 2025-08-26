@@ -115,7 +115,9 @@ public class FrequencyTool {
             builder.makeFrequencyList();
             // if database format, write lookup tables
             if (bCfg.isDatabaseFormat()) {
-                new LookupTableWriter(index, bCfg, fCfg).write();
+                if (fCfg.ngramSize() == 1) {
+                    new LookupTableWriter(index, bCfg, fCfg).write();
+                }
                 new MetaGroupWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
                 new AnnotationWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
             }

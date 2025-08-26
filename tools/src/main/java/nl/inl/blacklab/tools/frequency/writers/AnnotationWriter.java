@@ -18,6 +18,10 @@ public final class AnnotationWriter extends FreqListWriter {
 
     public void write() {
         final var t = new Timer();
+        if (fCfg.annotations().isEmpty()) {
+            System.out.println("  No annotations found, skipping annotation IDs report.");
+            return;
+        }
 
         final var file = getFile();
         final var map = aInfo.getWordToId().getMap();

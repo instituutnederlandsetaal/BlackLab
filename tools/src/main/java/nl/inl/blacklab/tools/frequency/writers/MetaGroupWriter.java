@@ -24,6 +24,10 @@ public final class MetaGroupWriter extends FreqListWriter {
 
         final var file = getFile();
         final var map = aInfo.getMetaToId().getMap();
+        if (map.isEmpty()) {
+            System.out.println("  No metadata found, skipping grouped metadata IDs report.");
+            return;
+        }
         // sort map for consistent output
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
