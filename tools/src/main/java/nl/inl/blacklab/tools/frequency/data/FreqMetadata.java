@@ -3,7 +3,6 @@ package nl.inl.blacklab.tools.frequency.data;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
 
 import java.util.List;
@@ -16,18 +15,22 @@ final public class FreqMetadata {
         metaFieldToValues = new Object2ObjectArrayMap<>();
         for (final var meta : fCfg.metadataFields()) {
             final var valueSet = new ObjectArrayList<String>();
-            final var valueFreqs = ((MetadataField)index.field(meta.name())).values(Long.MAX_VALUE).valueList().getValues();
-            valueSet.addAll(valueFreqs.keySet());
+            final var valueFreqs = AnnotationInfo.UniqueTermsFromField(index, meta.name());
+            valueSet.addAll(valueFreqs);
             // if this metadata has a custom null value, add it
             if (meta.nullValue() != null) {
                 valueSet.add(meta.nullValue());
             }
             metaFieldToValues.put(meta.name(), valueSet);
+            System.out.println("  " + valueSet.size() + " unique values of " + meta.name());
         }
     }
 
     public int getIdx(final String field, final String value) {
-        return metaFieldToValues.get(field).indexOf(value);
+        final int i = metaFieldToValues.get(field).indexOf(value);
+        if (i < 0)
+            throw new RuntimeException("Value '" + value + "' not found in metadata field '" + field + "'");
+        return i;
     }
 
     public String getValue(final String field, final int idx) {

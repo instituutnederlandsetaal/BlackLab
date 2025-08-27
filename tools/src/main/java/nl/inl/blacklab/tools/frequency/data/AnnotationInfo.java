@@ -61,20 +61,13 @@ public final class AnnotationInfo {
                 .mapToInt(m -> fCfg.metadataFields().indexOf(m)).toArray();
     }
 
-    public static Set<String> UniqueTermsFromField(IndexReader reader, String field) throws IOException {
+    public static Set<String> UniqueTermsFromField(BlackLabIndex index, String field) {
         final var values = new ObjectLinkedOpenHashSet<String>();
-        for (final var ctx : reader.leaves()) {
-            final var terms = ctx.reader().terms(field);
-            if (terms != null) {
-                final var it = terms.iterator();
-                BytesRef cur;
-                while ((cur = it.next()) != null) {
-                    final String term = cur.toString();
-                    values.add(term);
-                }
-            }
-
-        }
+        index.forEachDocument((__, id) -> {
+            final var f = index.luceneDoc(id).getField(field);
+            if (f != null)
+                values.add(f.stringValue());
+        });
         // return a sorted set for consistent ordering
         return values;
     }
