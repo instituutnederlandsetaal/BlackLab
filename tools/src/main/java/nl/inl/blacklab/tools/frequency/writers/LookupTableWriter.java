@@ -34,7 +34,8 @@ public final class LookupTableWriter extends FreqListWriter {
                 // id is simply the index in the terms list
                 for (int id = 1, len = terms.numberOfTerms(); id < len; id++) {
                     final String token = getToken(terms, id);
-                    csv.writeRecord(String.valueOf(id), token);
+                    final int sortedID = terms.idToSortPosition(id, MatchSensitivity.INSENSITIVE);
+                    csv.writeRecord(String.valueOf(sortedID), token);
                 }
             } catch (final IOException e) {
                 throw reportIOException(e);

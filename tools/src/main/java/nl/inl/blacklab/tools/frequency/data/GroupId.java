@@ -27,6 +27,10 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
         return tokenIds;
     }
 
+    public  int[] getTokenSortPositions() {
+        return tokenSortPositions;
+    }
+
     public int[] getMetadataValues() {
         return metadataValues;
     }
