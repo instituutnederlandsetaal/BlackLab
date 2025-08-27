@@ -32,7 +32,7 @@ public final class LookupTableWriter extends FreqListWriter {
             try (final var csv = getCsvWriter(file)) {
                 final var terms = aInfo.getTerms()[i];
                 // id is simply the index in the terms list
-                for (int id = 0, len = terms.numberOfTerms(); id < len; id++) {
+                for (int id = 1, len = terms.numberOfTerms(); id < len; id++) {
                     final String token = getToken(terms, id);
                     csv.writeRecord(String.valueOf(id), token);
                 }
