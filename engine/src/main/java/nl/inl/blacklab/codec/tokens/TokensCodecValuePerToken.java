@@ -43,9 +43,9 @@ public class TokensCodecValuePerToken implements TokensCodec {
     }
 
     @Override
-    public void readSnippet(IndexInput tokensFile, long fileOffset, int startPosition, int[] snippet)
+    public void readSnippet(IndexInput tokensFile, long docTokensOffset, int startPosition, int[] snippet)
             throws IOException {
-        tokensFile.seek(fileOffset + startPosition * tokenType.sizeBytes());
+        tokensFile.seek(docTokensOffset + startPosition * tokenType.sizeBytes());
         for (int j = 0; j < snippet.length; j++) {
             snippet[j] = tokenType.read(tokensFile);
         }

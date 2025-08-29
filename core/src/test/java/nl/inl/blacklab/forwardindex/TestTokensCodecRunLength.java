@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.codec.tokens.TokenValueType;
 import nl.inl.blacklab.codec.tokens.TokensCodec;
+import nl.inl.blacklab.codec.tokens.TokensCodecRunLengthEncoded;
 import nl.inl.blacklab.codec.tokens.TokensCodecType;
 
 public class TestTokensCodecRunLength {
@@ -25,6 +26,7 @@ public class TestTokensCodecRunLength {
     public void setUp() {
         codec = TokensCodec.fromType(TokensCodecType.RUN_LENGTH_ENCODING,
                 TokenValueType.BYTE.code);
+        ((TokensCodecRunLengthEncoded)codec).setDecodedBlockSize((short)5);
         ByteBuffer buffer = ByteBuffer.allocate(1024);
         out = new MockIndexOutput(buffer);
         in = new MockIndexInput("test", buffer);
@@ -32,9 +34,26 @@ public class TestTokensCodecRunLength {
 
     private void testWriteAndReadBack(int[] tokens) throws IOException {
         codec.writeTokens(tokens, out);
-        int[] snippet = new int[tokens.length];
-        codec.readSnippet(in, 0, 0, snippet);
-        Assert.assertArrayEquals(tokens, snippet);
+        int[][] snippets = codec.readSnippets(in, 0, new int[] { 0, 0 }, new int[] { tokens.length, tokens.length });
+        Assert.assertArrayEquals(tokens, snippets[0]);
+        Assert.assertArrayEquals(tokens, snippets[1]);
+        final int CUTOFF = 3;
+        if (tokens.length > CUTOFF) {
+            int[] snippet = new int[tokens.length];
+            int[] smallSnippet = new int[CUTOFF - 1];
+            snippet[0] = tokens[0];
+            codec.readSnippet(in, 0, 1, smallSnippet);
+            System.arraycopy(smallSnippet, 0, snippet, 1, smallSnippet.length);
+            smallSnippet = new int[tokens.length - CUTOFF];
+            codec.readSnippet(in, 0, CUTOFF, smallSnippet);
+            System.arraycopy(smallSnippet, 0, snippet, CUTOFF, smallSnippet.length);
+            Assert.assertArrayEquals(tokens, snippet);
+        }
+    }
+
+    @Test
+    public void testNoRepeat() throws IOException {
+        testWriteAndReadBack(new int[] {1, 2, 3, 4, 5, 6, 7, 8, 9, 10});
     }
 
     @Test
@@ -62,12 +81,12 @@ public class TestTokensCodecRunLength {
         }
 
         @Override
-        public void writeByte(byte b) throws IOException {
+        public void writeByte(byte b) {
             buffer.put(b);
         }
 
         @Override
-        public void writeBytes(byte[] b, int offset, int length) throws IOException {
+        public void writeBytes(byte[] b, int offset, int length) {
             buffer.put(b, offset, length);
         }
 

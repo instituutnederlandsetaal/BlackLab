@@ -1,7 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.util.List;
-
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
@@ -38,7 +36,7 @@ public class FieldForwardIndex implements AnnotationForwardIndex {
      * @return snippets (with segment-local term ids)
      */
     @Override
-    public List<int[]> retrieveParts(int docId, int[] starts, int[] ends) {
+    public int[][] retrieveParts(int docId, int[] starts, int[] ends) {
         return forwardIndex.retrieveParts(field, docId, starts, ends);
     }
 

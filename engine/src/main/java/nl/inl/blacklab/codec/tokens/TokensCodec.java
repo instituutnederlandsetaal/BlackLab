@@ -43,8 +43,11 @@ public interface TokensCodec {
         //   (RLE can be slower, so we want a significant gain)
         //   (also, we encode in blocks, so the gain will be less than calculated here)
         // - otherwise, value per token
-        //(sizeWithRunLengthEncoding < tokensInDoc.length * 2 ? TokensCodecType.RUN_LENGTH_ENCODING : TokensCodecType.VALUE_PER_TOKEN);
-        TokensCodecType codec = allTheSame ? TokensCodecType.ALL_TOKENS_THE_SAME : TokensCodecType.VALUE_PER_TOKEN;
+        TokensCodecType codec = (sizeWithRunLengthEncoding < tokensInDoc.length / 2 ?
+                TokensCodecType.RUN_LENGTH_ENCODING :
+                TokensCodecType.VALUE_PER_TOKEN);
+        //TokensCodecType codec = TokensCodecType.RUN_LENGTH_ENCODING; //TEST
+        //TokensCodecType codec = allTheSame ? TokensCodecType.ALL_TOKENS_THE_SAME : TokensCodecType.VALUE_PER_TOKEN;
 
         // determine parameter byte for codec.
         byte codecParameter = 0;
@@ -67,7 +70,20 @@ public interface TokensCodec {
         };
     }
 
-    void readSnippet(IndexInput tokensFile, long fileOffset, int startPosition, int[] snippet)
+    default int[][] readSnippets(IndexInput tokensFile, long docTokensOffset, int[] starts, int[] ends)
+            throws IOException {
+        int n = starts.length;
+        if (n != ends.length)
+            throw new IllegalArgumentException("start and end must be of equal length");
+        int[][] snippets = new int[n][];
+        for (int i = 0; i < n; i++) {
+            snippets[i] = new int[ends[i] - starts[i]];
+            readSnippet(tokensFile, docTokensOffset, starts[i], snippets[i]);
+        }
+        return snippets;
+    }
+
+    void readSnippet(IndexInput tokensFile, long docTokensOffset, int startPosition, int[] snippet)
             throws IOException;
 
     void writeTokens(int[] tokensInDoc, IndexOutput outTokensFile) throws IOException;

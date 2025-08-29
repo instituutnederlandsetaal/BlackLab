@@ -1,6 +1,9 @@
 package nl.inl.blacklab.codec.tokens;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
@@ -40,7 +43,7 @@ public class TokensCodecRunLengthEncoded implements TokensCodec {
     }
 
     /** Block size. Static for now, but recorded, so can be changed later. */
-    final short DECODED_BLOCK_SIZE_TOKENS = 100;
+    private short decodedBlockSizeTokens = 100;
 
     private final TokenValueType tokenType;
 
@@ -63,77 +66,152 @@ public class TokensCodecRunLengthEncoded implements TokensCodec {
         return tokenType.code;
     }
 
-    @Override
-    public void readSnippet(IndexInput tokensFile, long fileOffset, int startPosition, int[] snippet)
+    public int[][] readSnippets(IndexInput tokensFile, long docTokensOffset, int[] starts, int[] ends)
             throws IOException {
-        tokensFile.seek(fileOffset);
-        short blockSize = tokensFile.readShort();
-        int numberOfBlocks = tokensFile.readInt();
-        long blockIndexOffset = tokensFile.getFilePointer();
-        long blockDataStart = blockIndexOffset + (long) numberOfBlocks * Integer.BYTES;
-        int[] decoded = null;
-        int blockNumber = (startPosition / blockSize) - 1; // -1 so we read the first block below
-        int indexInBlock = (startPosition % blockSize) + DECODED_BLOCK_SIZE_TOKENS; // will be corrected below
-        int snippetIndex = 0;
-        while (snippetIndex < snippet.length) {
-            // Make sure we have the right block decoded
-            if (decoded == null) {
-                blockNumber++;
-                if (blockNumber >= numberOfBlocks)
-                    throw new IOException("Trying to read past end of document");
-                decoded = decodeBlock(tokensFile, blockNumber, blockIndexOffset, blockDataStart);
-                indexInBlock -= DECODED_BLOCK_SIZE_TOKENS;
-            }
+        Doc doc = new Doc(tokensFile, docTokensOffset);
+        int n = starts.length;
+        if (n != ends.length)
+            throw new IllegalArgumentException("start and end must be of equal length");
+        int[][] snippets = new int[n][];
+        for (int i = 0; i < n; i++) {
+            snippets[i] = new int[ends[i] - starts[i]];
+            doc.readSnippet(starts[i], snippets[i]);
+        }
+        return snippets;
+    }
 
-            // Copy from decoded block to snippet
-            if (indexInBlock > decoded.length)
-                throw new IOException("Error reading tokens: index in block " + indexInBlock + " > decoded block size " + decoded.length);
-            snippet[snippetIndex] = decoded[indexInBlock];
-            indexInBlock++;
-            if (indexInBlock == DECODED_BLOCK_SIZE_TOKENS) {
-                decoded = null;
-                indexInBlock = -1;
+    @Override
+    public void readSnippet(IndexInput tokensFile, long docTokensOffset, int startPosition, int[] snippet)
+            throws IOException {
+        Doc doc = new Doc(tokensFile, docTokensOffset);
+        doc.readSnippet(startPosition, snippet);
+    }
+
+    public void setDecodedBlockSize(short i) {
+        this.decodedBlockSizeTokens = i;
+    }
+
+    /** State for a document we're getting snippets from */
+    private class Doc {
+
+        private final short decodedBlockSizeTokens;
+
+        private final int numberOfBlocks;
+
+        private final long blockIndexOffset;
+
+        private final IndexInput tokensFile;
+
+        private final long blockDataStart;
+
+        /** Cache of blocks (partially or fully decoded) in this doc, by block number */
+        Map<Integer, Block> blocks = new HashMap<>();
+
+        public Doc(IndexInput tokensFile, long docTokensOffset) throws IOException {
+            this.tokensFile = tokensFile;
+            tokensFile.seek(docTokensOffset);
+            decodedBlockSizeTokens = tokensFile.readShort();
+            numberOfBlocks = tokensFile.readInt();
+            blockIndexOffset = tokensFile.getFilePointer();
+            blockDataStart = blockIndexOffset + (long) numberOfBlocks * Integer.BYTES;
+        }
+
+        public void readSnippet(int startPosition, int[] snippet) throws IOException {
+            int[] decodedBlock = null;
+            int blockNumber = (startPosition / decodedBlockSizeTokens) - 1; // -1 so we read the first block below
+            int indexInBlock = (startPosition % decodedBlockSizeTokens) + decodedBlockSizeTokens; // will be corrected below
+            int snippetIndex = 0;
+            while (snippetIndex < snippet.length) {
+                // Make sure we have the right block decoded
+                if (decodedBlock == null) {
+                    blockNumber++;
+                    if (blockNumber >= numberOfBlocks)
+                        throw new IOException("Trying to read past end of document");
+                    Block block = blocks.get(blockNumber);
+                    if (block == null) {
+                        block = new Block(this, blockNumber);
+                        blocks.put(blockNumber, block);
+                    }
+                    indexInBlock -= decodedBlockSizeTokens;
+                    int howManyMoreCharsNeeded = snippet.length - snippetIndex;
+                    decodedBlock = block.decodeUpTo(indexInBlock + howManyMoreCharsNeeded);
+                }
+
+                // Copy from decoded block to snippet
+                if (indexInBlock > decodedBlock.length)
+                    throw new IOException("Error reading tokens: index in block " + indexInBlock + " > decoded block size " + decodedBlock.length);
+                snippet[snippetIndex] = decodedBlock[indexInBlock];
+                indexInBlock++;
+                if (indexInBlock == decodedBlockSizeTokens) {
+                    decodedBlock = null;
+                }
+                snippetIndex++;
             }
-            snippetIndex++;
         }
     }
 
-    private int[] decodeBlock(IndexInput tokensFile, int blockNumber, long blockIndexOffset, long blockDataStart)
-            throws IOException {
-        int blockStartOffset = 0;
-        if (blockNumber > 0) {
-            tokensFile.seek(blockIndexOffset + (long) (blockNumber - 1) * Integer.BYTES);
-            blockStartOffset = tokensFile.readInt();
+    /** A (partially decoded) block read from the index. */
+    private class Block {
+
+        Doc doc;
+
+        private final int encodedLength;
+
+        private final ByteBuffer encodedBlock;
+
+        private final int[] decodedBlock;
+
+        private int decodedIndex;
+
+        public Block(Doc doc, int blockNumber) throws IOException {
+            this.doc = doc;
+            decodedBlock = new int[doc.decodedBlockSizeTokens];
+            decodedIndex = 0;
+
+            // Determine where the block starts and ends
+            int blockStartOffset = 0;
+            if (blockNumber > 0) {
+                doc.tokensFile.seek(doc.blockIndexOffset + (long) (blockNumber - 1) * Integer.BYTES);
+                blockStartOffset = doc.tokensFile.readInt();
+            } else {
+                doc.tokensFile.seek(doc.blockIndexOffset);
+            }
+            int blockEndOffset = doc.tokensFile.readInt();
+
+            // Read the encoded block
+            doc.tokensFile.seek(doc.blockDataStart + blockStartOffset);
+            encodedLength = blockEndOffset - blockStartOffset;
+            byte[] buf = new byte[encodedLength];
+            doc.tokensFile.readBytes(buf, 0, encodedLength);
+            encodedBlock = ByteBuffer.wrap(buf);
         }
-        int blockEndOffset = tokensFile.readInt();
-        tokensFile.seek(blockDataStart + blockStartOffset);
-        int[] decoded = new int[DECODED_BLOCK_SIZE_TOKENS];
-        int decodedIndex = 0;
-        while (tokensFile.getFilePointer() < blockDataStart + blockEndOffset) {
-            int value = tokenType.read(tokensFile);
-            if (value <= -2) {
-                // Run length
-                int runLength = -value;
-                int token = tokenType.read(tokensFile);
-                for (int i = 0; i < runLength; i++) {
-                    decoded[decodedIndex] = token;
+
+        private int[] decodeUpTo(int stopAtPosition) throws IOException {
+            // Wrap encodedBlock in ByteBuffer
+            while (encodedBlock.position() < encodedLength && decodedIndex < stopAtPosition) {
+                int value = tokenType.read(encodedBlock);
+                if (value <= -2) {
+                    // Run length
+                    int runLength = -value;
+                    int token = tokenType.read(encodedBlock);
+                    for (int i = 0; i < runLength; i++) {
+                        decodedBlock[decodedIndex] = token;
+                        decodedIndex++;
+                    }
+                } else {
+                    // Single value
+                    decodedBlock[decodedIndex] = value;
                     decodedIndex++;
                 }
-            } else {
-                // Single value
-                decoded[decodedIndex] = value;
-                decodedIndex++;
             }
+            return decodedBlock;
         }
-        if (decodedIndex > DECODED_BLOCK_SIZE_TOKENS) {
-            throw new IOException("Error decoding tokens: expected at most " + DECODED_BLOCK_SIZE_TOKENS + " tokens, got " + decodedIndex);
-        }
-        return decoded;
+
     }
 
     @Override
     public void writeTokens(int[] tokensInDoc, IndexOutput outTokensFile) throws IOException {
-        outTokensFile.writeShort(DECODED_BLOCK_SIZE_TOKENS);
+        outTokensFile.writeShort(decodedBlockSizeTokens);
 
         // Encode blocks, write block index and finally the encoded blocks
         int[][] blocks = determineBlocks(tokensInDoc);
@@ -151,12 +229,12 @@ public class TokensCodecRunLengthEncoded implements TokensCodec {
     }
 
     private int[][] determineBlocks(int[] tokensInDoc) {
-        int numBlocks = (tokensInDoc.length + DECODED_BLOCK_SIZE_TOKENS - 1) / DECODED_BLOCK_SIZE_TOKENS;
+        int numBlocks = (tokensInDoc.length + decodedBlockSizeTokens - 1) / decodedBlockSizeTokens;
         int[][] blocks = new int[numBlocks][];
         for (int block = 0; block < numBlocks; block++) {
-            int[] buffer = new int[DECODED_BLOCK_SIZE_TOKENS * 2]; // (worst case, we'll truncate it later)
-            int tokenStart = block * DECODED_BLOCK_SIZE_TOKENS;
-            int tokenEnd = Math.min(tokenStart + DECODED_BLOCK_SIZE_TOKENS, tokensInDoc.length);
+            int[] buffer = new int[decodedBlockSizeTokens * 2]; // (worst case, we'll truncate it later)
+            int tokenStart = block * decodedBlockSizeTokens;
+            int tokenEnd = Math.min(tokenStart + decodedBlockSizeTokens, tokensInDoc.length);
             int last = -2; // -2 means "no last token"
             int currentRunLength = 0;
             int indexInBlock = 0;

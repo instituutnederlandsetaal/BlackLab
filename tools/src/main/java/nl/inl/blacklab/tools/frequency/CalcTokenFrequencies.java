@@ -109,7 +109,7 @@ class CalcTokenFrequencies {
                             String luceneField = annot.annotation().forwardIndexSensitivity().luceneField();
                             AnnotationForwardIndex forwardIndex = FieldForwardIndex.get(lrc, luceneField);
                             final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
-                                            new int[] { -1 }, new int[] { -1 }).get(0);
+                                            new int[] { -1 }, new int[] { -1 })[0];
                             Terms segmentTerms = forwardIndex.terms();
                             tokenValuesPerAnnotation.add(tokenValues);
 

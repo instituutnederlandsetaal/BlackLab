@@ -1,9 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.codecs.CodecUtil;
@@ -134,7 +132,7 @@ public class ForwardIndex implements AutoCloseable {
 
         /** Retrieve parts of a document from the forward index. */
         @Override
-        public List<int[]> retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends) {
+        public int[][] retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends) {
             int n = starts.length;
             if (n != ends.length)
                 throw new IllegalArgumentException("start and end must be of equal length");
@@ -145,37 +143,27 @@ public class ForwardIndex implements AutoCloseable {
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             tokens(); // ensure available
-            List<int[]> result = new ArrayList<>(n);
-            for (int i = 0; i < n; i++) {
-                result.add(retrievePart(starts[i], ends[i]));
-            }
-            return result;
+            return retrieveParts(starts, ends);
         }
 
         /** Retrieve parts of a document from the forward index. */
         @Override
         public int[] retrievePart(ForwardIndexField field, int docId, int start, int end) {
-            // ensure both inputs available
-            getDocOffsetAndLength(field, docId);
-            // We don't exclude the closing token here because we didn't do that with the external index format either.
-            // And you might want to fetch the extra closing token.
-            //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-            tokens(); // ensure we have this input available
-            return retrievePart(start, end);
+            return retrieveParts(field, docId, new int[] { start }, new int[] { end })[0];
         }
 
-        private int[] retrievePart(int start, int end) {
-            if (start == -1)
-                start = 0;
-            if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
-                end = docLength;
-            ForwardIndexImpl.validateSnippetParameters(docLength, start, end);
+        private int[][] retrieveParts(int[] starts, int[] ends) {
+            for (int i = 0; i < starts.length; i++) {
+                if (starts[i] == -1)
+                    starts[i] = 0;
+                if (ends[i] == -1 || ends[i] > docLength) // Can happen while making KWICs because we don't know the doc length until here
+                    ends[i] = docLength;
+                ForwardIndexImpl.validateSnippetParameters(docLength, starts[i], ends[i]);
+            }
 
-            // Read the snippet from the tokens file
+            // Read the snippets from the tokens file
             try {
-                int[] snippet = new int[end - start];
-                tokensCodec.readSnippet(_tokens, docTokensOffset, start, snippet);
-                return snippet;
+                return tokensCodec.readSnippets(_tokens, docTokensOffset, starts, ends);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }

@@ -1,7 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.util.List;
-
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -79,11 +77,13 @@ public class AnnotationForwardIndexGlobal implements AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrieveParts(int docId, int[] start, int[] end) {
+    public int[][] retrieveParts(int docId, int[] start, int[] end) {
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
         AnnotationForwardIndex fi = FieldForwardIndex.get(lrc, luceneField);
-        List<int[]> parts = fi.retrieveParts(docId - lrc.docBase, start, end);
-        parts.forEach(part -> terms().convertToGlobalTermIds(lrc, part));
+        int[][] parts = fi.retrieveParts(docId - lrc.docBase, start, end);
+        for (int[] part: parts) {
+            terms().convertToGlobalTermIds(lrc, part);
+        }
         return parts;
     }
 

@@ -28,9 +28,9 @@ public class TokensCodecAllTheSame implements TokensCodec {
     }
 
     @Override
-    public void readSnippet(IndexInput tokensFile, long fileOffset, int startPosition, int[] snippet)
+    public void readSnippet(IndexInput tokensFile, long docTokensOffset, int startPosition, int[] snippet)
             throws IOException {
-        tokensFile.seek(fileOffset);
+        tokensFile.seek(docTokensOffset);
         int value = tokensFile.readInt();
         Arrays.fill(snippet, value);
     }

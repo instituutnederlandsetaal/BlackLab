@@ -1,6 +1,7 @@
 package nl.inl.blacklab.codec.tokens;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
@@ -60,6 +61,15 @@ public enum TokenValueType {
             outTokensFile.writeInt((int) token);
             break;
         }
+    }
+
+    public int read(ByteBuffer buffer) throws IOException {
+        return switch (this) {
+            case BYTE -> buffer.get();
+            case SHORT -> buffer.getShort();
+            case THREE_BYTES -> ThreeByteInt.read(buffer::get);
+            case INT -> buffer.getInt();
+        };
     }
 
     public int read(IndexInput tokensFile) throws IOException {
