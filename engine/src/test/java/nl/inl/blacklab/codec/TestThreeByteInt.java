@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.blacklab.codec.tokens.ThreeByteInt;
+
 public class TestThreeByteInt {
 
     @Test

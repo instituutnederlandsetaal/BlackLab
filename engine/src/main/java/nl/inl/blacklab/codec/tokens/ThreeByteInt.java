@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.tokens;
 
 import java.io.IOException;
 
@@ -10,6 +10,8 @@ import java.io.IOException;
  * of this.
  */
 public class ThreeByteInt {
+
+    public static final int BYTES = 3;
 
     private ThreeByteInt() {
     }

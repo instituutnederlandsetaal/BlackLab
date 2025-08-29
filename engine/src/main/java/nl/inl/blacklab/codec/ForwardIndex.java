@@ -2,7 +2,6 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +11,7 @@ import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
+import nl.inl.blacklab.codec.tokens.TokensCodec;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
@@ -175,48 +174,7 @@ public class ForwardIndex implements AutoCloseable {
             // Read the snippet from the tokens file
             try {
                 int[] snippet = new int[end - start];
-                switch (tokensCodec) {
-                case VALUE_PER_TOKEN:
-                    switch(VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
-                        case INT: 
-                            _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readInt();
-                            }
-                            break;
-                        case THREE_BYTES:
-                            _tokens.seek(docTokensOffset + (long) start * 3);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = ThreeByteInt.read( () -> _tokens.readByte() );
-
-                            }
-                            break;
-                        case SHORT: 
-                            _tokens.seek(docTokensOffset + (long) start * Short.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readShort();
-                            }
-                            break;
-                        case BYTE: 
-                            // Simplest encoding, just one 4-byte int per token
-                            _tokens.seek(docTokensOffset + (long) start * Byte.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readByte();
-                            }
-                            break;
-                        default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
-                                + " not implemented.");
-                    }
-                    break;
-                case ALL_TOKENS_THE_SAME:
-                    // All tokens have the same value, so we only have one value stored
-                    _tokens.seek(docTokensOffset);
-                    int value = _tokens.readInt();
-                    Arrays.fill(snippet, value);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Cannot read tokens codec: " + tokensCodec);
-                }
+                tokensCodec.readSnippet(_tokens, docTokensOffset, start, snippet);
                 return snippet;
             } catch (IOException e) {
                 throw new InvalidIndex(e);
@@ -230,8 +188,7 @@ public class ForwardIndex implements AutoCloseable {
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
-                tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
-                tokensCodecParameter = _tokensIndex.readByte();
+                tokensCodec = TokensCodec.fromHeader(_tokensIndex);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }

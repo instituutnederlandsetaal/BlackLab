@@ -25,6 +25,7 @@ import com.ibm.icu.text.Collator;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.PayloadUtils;
+import nl.inl.blacklab.codec.tokens.TokensCodec;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -213,76 +214,14 @@ class PWPluginForwardIndex implements PWPlugin {
      * @throws IOException       When failing to write
      */
     static void writeTokensInDoc(IndexOutput outTokensIndexFile, IndexOutput outTokensFile, int[] tokensInDoc) throws IOException {
-        int max = 0, min = 0;
-        boolean allTheSame = tokensInDoc.length > 0; // if no tokens, then not all the same.
-        int last = -1;
-        for (int token: tokensInDoc) {
-            max = Math.max(max, token);
-            min = Math.min(min, token);
-            allTheSame = allTheSame && (last == -1 || last == token);
-            last = token;
-            if ((min < Short.MIN_VALUE || max > Short.MAX_VALUE) && !allTheSame) // stop if already at worst case (int per token + not all the same).
-                break;
-        }
-
-        // determine codec
-        TokensCodec tokensCodec = allTheSame ? TokensCodec.ALL_TOKENS_THE_SAME : TokensCodec.VALUE_PER_TOKEN;
-
-        // determine parameter byte for codec.
-        byte tokensCodecParameter = 0;
-        switch (tokensCodec) {
-            case ALL_TOKENS_THE_SAME: tokensCodecParameter = 0; break;
-            case VALUE_PER_TOKEN: {
-                if (min >= Byte.MIN_VALUE && max <= Byte.MAX_VALUE) tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.BYTE.code;
-                else if (min >= Short.MIN_VALUE && max <= Short.MAX_VALUE) tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.SHORT.code;
-                else if (min >= ThreeByteInt.MIN_VALUE && max <= ThreeByteInt.MAX_VALUE) tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.THREE_BYTES.code;
-                else tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.INT.code;
-                break;
-            }
-            default: throw new UnsupportedOperationException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
-        }
+        // Choose the best codec for this array of tokens
+        TokensCodec codec = TokensCodec.choose(tokensInDoc);
 
         // Write offset in the tokens file, doc length in tokens and tokens codec used
         outTokensIndexFile.writeLong(outTokensFile.getFilePointer());
         outTokensIndexFile.writeInt(tokensInDoc.length);
-        outTokensIndexFile.writeByte(tokensCodec.code);
-        outTokensIndexFile.writeByte(tokensCodecParameter);
-
-        if (tokensInDoc.length == 0) {
-            return; // done.
-        }
-
-        // Write the tokens
-        switch (tokensCodec) {
-        case VALUE_PER_TOKEN:
-            switch (TokensCodec.VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
-                case BYTE:
-                    for (int token: tokensInDoc) {
-                        outTokensFile.writeByte((byte) token);
-                    }
-                    break;
-                case SHORT:
-                    for (int token: tokensInDoc) {
-                        outTokensFile.writeShort((short) token);
-                    }
-                    break;
-                case THREE_BYTES:
-                    for (int token : tokensInDoc) {
-                        ThreeByteInt.write(outTokensFile::writeByte, token);
-                    }
-                    break;
-                case INT:
-                    for (int token: tokensInDoc) {
-                        outTokensFile.writeInt((int) token);
-                    }
-                    break;
-                    default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
-                }
-                break;
-        case ALL_TOKENS_THE_SAME:
-            outTokensFile.writeInt(tokensInDoc[0]);
-            break;
-        }
+        codec.writeHeader(outTokensIndexFile);
+        codec.writeTokens(tokensInDoc, outTokensFile);
     }
 
     @Override

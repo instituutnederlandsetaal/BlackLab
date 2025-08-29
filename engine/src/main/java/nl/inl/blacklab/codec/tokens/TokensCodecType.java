@@ -1,4 +1,4 @@
-package nl.inl.blacklab.codec;
+package nl.inl.blacklab.codec.tokens;
 
 /**
  * How the tokens in a document are encoded in the tokens file.
@@ -10,46 +10,28 @@ package nl.inl.blacklab.codec;
  * - codec (this) 
  * - codec parameter (usually 0, but can be set depending on codec).
  */
-public enum TokensCodec {
+public enum TokensCodecType {
     /** Simplest possible encoding, one 4-byte integer per token. */
     VALUE_PER_TOKEN((byte) 1),
 
     /** All our tokens have the same value. Stores only that value (as Integer). */
-    ALL_TOKENS_THE_SAME((byte) 2);
+    ALL_TOKENS_THE_SAME((byte) 2),
+
+    /** Tokens are run-length encoded in blocks, with the offset of each block stored. */
+    RUN_LENGTH_ENCODING((byte) 3);
 
     /** How we'll write this encoding to the tokens index file. */
     public final byte code;
 
-    TokensCodec(byte code) {
+    TokensCodecType(byte code) {
         this.code = code;
     }
 
-    public static TokensCodec fromCode(byte code) {
-        for (TokensCodec t: values()) {
+    public static TokensCodecType fromCode(byte code) {
+        for (TokensCodecType t: values()) {
             if (t.code == code)
                 return t;
         }
         throw new IllegalArgumentException("Unknown tokens codec: " + code);
-    }
-
-    public enum VALUE_PER_TOKEN_PARAMETER {
-        BYTE((byte) 0),
-        SHORT((byte) 1),
-        THREE_BYTES((byte) 2),
-        INT((byte) 3);
-
-        public final byte code;
-
-        VALUE_PER_TOKEN_PARAMETER(byte code) {
-            this.code = code;
-        }
-
-        public static VALUE_PER_TOKEN_PARAMETER fromCode(byte code) {
-            for (VALUE_PER_TOKEN_PARAMETER t: values()) {
-                if (t.code == code)
-                    return t;
-            }
-            throw new IllegalArgumentException("Unknown payload value for VALUE_PER_TOKEN: " + code);
-        }
     }
 }
