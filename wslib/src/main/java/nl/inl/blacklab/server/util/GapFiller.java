@@ -43,8 +43,6 @@ public class GapFiller {
 
     private static final char VALUE_SEPARATOR = '\t';
 
-    private static final String OUTPUT_SEPARATOR = "|";
-
     private static final String GAP_REGEX = "@@";
     private static final Pattern GAP_REGEX_PATT = Pattern.compile(GAP_REGEX, Pattern.DOTALL);
 

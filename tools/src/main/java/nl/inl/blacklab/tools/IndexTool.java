@@ -1,18 +1,13 @@
 package nl.inl.blacklab.tools;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -33,7 +28,6 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.indexmetadata.MetadataFieldsWriter;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 
@@ -234,7 +228,7 @@ public class IndexTool {
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
         String strGlob = File.separator;
-        if (glob != null && !glob.isEmpty() && !glob.equals("*")) {
+        if (!glob.isEmpty() && !glob.equals("*")) {
             strGlob += glob;
         }
         System.out.println(op + " index in " + indexDir + File.separator + " from " + inputDir + strGlob +
@@ -246,8 +240,7 @@ public class IndexTool {
         //  and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
         Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent, inputDir));
-        if (!formatDirs.contains(indexDirParent))
-            formatDirs.add(indexDirParent);
+        formatDirs.add(indexDirParent);
 
         DocumentFormats.addConfigFormatsInDirectories(formatDirs);
 
@@ -270,7 +263,7 @@ public class IndexTool {
             }
         }
 
-        Indexer indexer = null;
+        Indexer indexer;
         try {
             BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, forceCreateNew, formatIdentifier);
             indexer = Indexer.create(indexWriter, formatIdentifier);
@@ -298,7 +291,6 @@ public class IndexTool {
                 } else {
                     // Single file.
                     indexer.index(new File(inputDir, glob));
-                    MetadataFieldsWriter mf = indexer.indexWriter().metadata().metadataFields();
                 }
             }
         } catch (Exception e) {
@@ -402,26 +394,4 @@ public class IndexTool {
         }
     }
 
-    /**
-     * Read Properties from the specified file
-     *
-     * @param file the file to read
-     * @return the Properties read
-     */
-    public static Properties readPropertiesFromFile(File file) {
-        try {
-            if (!file.isFile()) {
-                throw new IllegalArgumentException("Annotation file " + file.getCanonicalPath()
-                        + " does not exist or is not a regular file!");
-            }
-
-            try (Reader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.ISO_8859_1))) {
-                Properties properties = new Properties();
-                properties.load(in);
-                return properties;
-            }
-        } catch (Exception e) {
-            throw BlackLabException.wrapRuntime(e);
-        }
-    }
 }

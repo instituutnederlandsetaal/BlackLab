@@ -30,8 +30,6 @@ public class ResultDocInfo {
 
     private Map<String, List<String>> metadata;
 
-    private Integer lengthInTokens;
-
     private final Map<String, Integer> lengthInTokensPerField = new LinkedHashMap<>();
 
     private boolean mayView;
@@ -73,15 +71,6 @@ public class ResultDocInfo {
                 continue;
             metadata.put(f.name(), List.of(values));
         }
-        // TODO: report token length for all annotated fields?
-        String tokenLengthField = index.mainAnnotatedField().tokenLengthField();
-        lengthInTokens = null;
-        if (tokenLengthField != null) {
-            String strDocLength = document.get(tokenLengthField);
-            lengthInTokens = strDocLength == null ? 0 :
-                    Integer.parseInt(strDocLength) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-        }
-
         for (AnnotatedField f: index.annotatedFields()) {
             Integer length = null;
             if (f.tokenLengthField() != null) {

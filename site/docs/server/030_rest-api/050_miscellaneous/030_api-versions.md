@@ -2,15 +2,16 @@
 
 We're evolving the BlackLab web service API over time, using versioning.
 
-There's currently two versions:
-- `4.0`: API used by BlackLab 4.x.
-- `5.0`: Stricter, cleaner API, removing superfluous parameters and response keys. Should be considered experimental until BlackLab 5.0 is released.
+There's currently two supported versions:
+- `4.0`: API used by BlackLab 4.x. Still supported on `dev` branch and (future) Blacklab 5.x.
+- `5.0`: Stricter, cleaner API. Should be considered experimental until BlackLab 5.0 is released.
 
 To know which API version your BLS defaults to, check the server info page (`/`). Look for the key `blacklabResponse.apiVersion`. If this doesn't exist, BLS is using API v3 or lower. If it exists and has the value `4.0` or `5.0`, BLS is using that API version.
 
-On any BLS request, include the `api` parameter to specify which API version to use. So if you want to keep using the older API for now, add `api=4`. If you don't specify an API version, the default version will be used. If you specify an unsupported API version, e.g. `api=2`, you will get an error.
+To set the default API version, configure `parameters.api` in your `blacklab-server.yaml`. So if you want to keep using 
+the older API for now, set this to `4`.
 
-To set the default API version, configure `parameters.api` in your `blacklab-server.yaml`.
+On any BLS request, you can also override the default version to use using the `api` parameter.
 
 Valid values for API version include:
 - Exact version, e.g. `4.0`
@@ -81,9 +82,12 @@ These features still work for now, but will be removed in the future.
 
 ## API changes from 4.0 to 5.0
 
-API v5.0 will become the default in BlackLab 5.0. Right now it's experimental and can be used for testing. Use `api=exp` to test that your client works with this API version.
+API v5.0 will become the default in BlackLab 5.0. Right now it should be considered experimental. Use `api=exp` to test 
+that your client works with this API version.
 
-Note that the new endpoints (like `/corpora/CORPUSNAME/...`) in BlackLab 4.0 always "speak" API v5, so those won't change when going from API v4 to v5. So where we say "changed" or "removed" below, we usually mean that compared to the equivalent old endpoints.
+Note that the new endpoints (like `/corpora/CORPUSNAME/...`) available from BlackLab 4.0 always "speak" API v5, so 
+those won't change when going from API v4 to v5. So where we say "changed" or "removed" below, we usually mean that 
+compared to the equivalent old endpoints.
 
 ### Removed
 

@@ -9,19 +9,15 @@ public class ResultIndexStatus {
     private final long files;
     private final long docs;
     private final long tokens;
-    private final String documentFormat;
     private final Index.IndexStatus indexStatus;
-    private final boolean ownedBySomeoneElse;
 
-    ResultIndexStatus(Index index, long files, long docs, long tokens, boolean ownedBySomeoneElse) {
+    ResultIndexStatus(Index index, long files, long docs, long tokens) {
         this.index = index;
         this.metadata = index.getIndexMetadata();
         this.files = files;
         this.docs = docs;
         this.tokens = tokens;
-        this.documentFormat = metadata.documentFormat();
         this.indexStatus = index.getStatus();
-        this.ownedBySomeoneElse = ownedBySomeoneElse;
     }
 
     public Index getIndex() {
@@ -44,15 +40,8 @@ public class ResultIndexStatus {
         return tokens;
     }
 
-    public String getDocumentFormat() {
-        return documentFormat;
-    }
-
     public Index.IndexStatus getIndexStatus() {
         return indexStatus;
     }
 
-    public boolean isOwnedBySomeoneElse() {
-        return ownedBySomeoneElse;
-    }
 }

@@ -100,7 +100,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
     }
 
     protected String toStringOptFieldName(String defaultField) {
-        return field.equals(defaultField) ? "" : " (" + getField() + ")";
+        return field.name().equals(defaultField) ? "" : " (" + getField() + ")";
     }
 
     public abstract Type getType();

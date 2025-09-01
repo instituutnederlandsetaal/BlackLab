@@ -16,13 +16,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.util.FileUtil;
-import nl.inl.util.Json;
 
 /**
  * Finds and opens a config file to be read.
@@ -39,13 +35,9 @@ public class ConfigFileReader {
         return cfr.getConfig();
     }
 
-    private String configFileRead = "(none)";
-
     private String configFileContents = null;
 
     private boolean configFileIsJson;
-
-    private final JsonNode configFileJsonNode;
 
     public ConfigFileReader(List<File> searchDirs, String configFileName) throws ConfigurationException {
         configFileIsJson = false;
@@ -55,7 +47,6 @@ public class ConfigFileReader {
             logger.debug("Reading configuration file " + configFile);
             try {
                 configFileContents = FileUtils.readFileToString(configFile, CONFIG_ENCODING);
-                configFileRead = configFile.getAbsolutePath();
             } catch (FileNotFoundException e) {
                 throw new ConfigurationException("Config file not found", e);
             } catch (IOException e) {
@@ -79,7 +70,6 @@ public class ConfigFileReader {
                     throw new ConfigurationException("Error reading config file from classpath: " + configFileName, e);
                 }
                 configFileIsJson = ext.equals("json");
-                configFileRead = configFileName + "." + ext + " (from classpath)";
                 break;
             }
         }
@@ -90,13 +80,6 @@ public class ConfigFileReader {
                     + ", or on classpath. Please place this configuration file in one of these locations. "
                     + "See https://blacklab.ivdnt.org/server/configuration.html#minimal-config-file for a "
                     + "minimal configuration file.");
-        } else {
-            ObjectMapper mapper = isJson() ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
-            try {
-                configFileJsonNode = mapper.readTree(new StringReader(configFileContents));
-            } catch (IOException e) {
-                throw new ConfigurationException("Error parsing config file: " + configFileRead, e);
-            }
         }
     }
 

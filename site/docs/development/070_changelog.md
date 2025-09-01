@@ -6,6 +6,35 @@
 
 - BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
 
+### Changed
+
+- Upgraded to Java 17 and Jakarta.
+- Upgraded to Lucene 9.
+- BLS: upgraded to Tomcat 10.
+- trying to use the old URLs like `/blacklab-server/CORPUSNAME/hits?...` will return an API mismatch error unless you set the API to v4 explicitly. Use the new URLs instead, e.g. `/blacklab-server/corpora/CORPUSNAME/hits?...`.
+- ICU4j is now used for collation instead of Java's internal collators. These are more up to date and faster.
+
+### Performance
+
+- more operations are performed per-segment, which allows us to run them in parallel without additional locking.
+- A run-length encoding codec was added for forward indexes. It can reduce disk size for annotations that only occasionally have a value, or often repeat the same value. CPU cost could be a bit higher for these annotations. We only use this codec where it saves a significant amount of disk space.
+
+
+### Refactored
+
+Too much to list, but most importantly:
+- `Hits` is now called `HitsResults` and represents all information needed to write a BLS response. The new `Hits` interface represents only a list of hits.
+- removed excessive use of generics in the `Results` and related class hierarchies.
+
+### Removed
+
+- BLS: support for v3 of the API.
+- support for the old index format with external forward index and content store.
+- rarely-used .blf.yaml inheritance feature (`baseFormat`). Copy and customize manually instead.
+- the VTD-XML processor. We now use Saxon for XML processing exclusively, which provides better XPath support and is generally faster. 
+- legacy DocIndexers. All DocIndexers should be based on `DocIndexerConfig` or `DocIndexerBase`.
+- many deprecated and unused methods.
+
 
 ## v4.0.0
 

@@ -317,8 +317,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
          * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
          * @return requested part
          */
-        @Override
-        public String getValueSubstring(int docId, String luceneField, int startChar, int endChar) {
+        private String getValueSubstring(int docId, String luceneField, int startChar, int endChar) {
             if (startChar < 0)
                 throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
             if (endChar < -1)
@@ -451,22 +450,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
 
             // Read document length, where to find the block indexes and where the blocks start.
             return valueIndexFile.readInt();
-        }
-
-        /**
-         * Get the length of a value in the content store.
-         *
-         * @param docId document id
-         * @param luceneField field to get length for
-         * @return length of the value in characters
-         */
-        @Override
-        public int valueLength(int docId, String luceneField) {
-            try {
-                return findValueLengthChar(docId, luceneField);
-            } catch (IOException e) {
-                throw new InvalidIndex(e);
-            }
         }
 
         /**

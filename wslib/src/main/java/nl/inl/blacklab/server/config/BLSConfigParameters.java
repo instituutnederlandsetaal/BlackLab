@@ -8,11 +8,6 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class BLSConfigParameters {
-    /** What pattern language to use? (defaults to BlackLab Corpus Query Language (BCQL)) */
-    String patternLanguage = "bcql";
-
-    /** What document filter language to use? */
-    String filterLanguage = "luceneql";
 
     /** Should we default to case-/accent-sensitive search or not? */
     MatchSensitivity defaultSearchSensitivity = MatchSensitivity.INSENSITIVE;
@@ -60,24 +55,6 @@ public class BLSConfigParameters {
     @SuppressWarnings("unused")
     public void setDefaultSearchSensitivityName(String value) {
         defaultSearchSensitivity = MatchSensitivity.fromName(value);
-    }
-
-    public String getPatternLanguage() {
-        return patternLanguage;
-    }
-
-    @SuppressWarnings("unused")
-    public void setPatternLanguage(String patternLanguage) {
-        this.patternLanguage = patternLanguage;
-    }
-
-    public String getFilterLanguage() {
-        return filterLanguage;
-    }
-
-    @SuppressWarnings("unused")
-    public void setFilterLanguage(String filterLanguage) {
-        this.filterLanguage = filterLanguage;
     }
 
     public DefaultMax getProcessHits() {

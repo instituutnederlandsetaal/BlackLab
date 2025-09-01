@@ -76,7 +76,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * @param fieldName foreign field we're interested in
      * @return array of length 2, containing start and end positions for the hit in this field
      */
-    protected int[] getForeignHitStartEnd(Hit hit, String fieldName) {
+    protected int[] getForeignHitStartEnd(Hit hit, AnnotatedField field) {
         assert hit != null : "Need a hit";
         MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos == null)
@@ -86,7 +86,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             MatchInfo mi = matchInfos[i];
             if (mi == null)
                 continue;
-            if (mi.getField().equals(fieldName) && mi.getType() == MatchInfo.Type.SPAN &&
+            if (mi.getField().equals(field) && mi.getType() == MatchInfo.Type.SPAN &&
                     context.hits().matchInfoDefs().get(i).getName().endsWith(
                     SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
@@ -155,13 +155,12 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     /**
      * Choose either the specified annotation, or the equivalent in the overrideField if given.
-     * @param index index to use
      * @param annotation annotation to use (or annotation name, if overrideField is given)
      * @param overrideField field to use instead of the annotation's field, or null to return annotation unchanged
      * @return the annotation to use
      */
-    protected static Annotation annotationOverrideField(BlackLabIndex index, Annotation annotation, AnnotatedField overrideField) {
-        if (overrideField != null && !overrideField.equals(annotation.field().name())) {
+    protected static Annotation annotationOverrideField(Annotation annotation, AnnotatedField overrideField) {
+        if (overrideField != null && !overrideField.equals(annotation.field())) {
             // Switch fields if necessary (e.g. for match info in a different annotated field, in a parallel corpus)
             annotation = overrideField.annotation(annotation.name());
         }
@@ -172,7 +171,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected HitPropertyContextBase(HitPropertyContextBase prop, PropContext context, boolean invert, AnnotatedField overrideField) {
         super(prop, context, invert);
         this.index = context.hits() == null ? prop.index : context.hits().index();
-        this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
+        this.annotation = annotationOverrideField(prop.annotation, overrideField);
         this.sensitivity = prop.sensitivity;
         this.name = prop.name;
         this.serializeName = prop.serializeName;

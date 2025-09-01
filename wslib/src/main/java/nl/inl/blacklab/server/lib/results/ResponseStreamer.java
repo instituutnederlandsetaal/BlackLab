@@ -155,11 +155,6 @@ public class ResponseStreamer {
     public static final String KEY_SAMPLE_SIZE = "sampleSize";
     public static final String KEY_GROUP_SIZE = "size";
 
-    /** If an attribute has multiple values, they will be joined together in the response using this separator.
-     *  We could make this configurable in the future.
-     */
-    private static final String SEPARATOR_ATTRIBUTE_MULTIPLE_VALUES = "; ";
-
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;
 

@@ -248,7 +248,7 @@ public class SpanQueryRelations extends BLSpanQuery {
             RelationInfoSegmentReader relInfo = BlackLabPostingsReader.forSegment(context).relationInfo();
             spans = new SpansRelations(baseField, relationType, spans, primaryIndicator,
                     direction, spanMode, captureAs, relInfo, relationsStrategy);
-            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.equals(field))
+            if (spanMode == RelationInfo.SpanMode.TARGET && targetField != null && !targetField.name().equals(field))
                 spans = new SpansOverrideField(spans, targetField);
             return spans;
         }

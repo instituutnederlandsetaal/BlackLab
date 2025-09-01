@@ -56,13 +56,6 @@ public interface WebserviceParams extends QueryParams {
     Query filterQuery() throws BlsException;
 
     /**
-     * Set the document filter query.
-     *
-     * @param query document filter query
-     */
-    void setFilterQuery(Query query);
-
-    /**
      * @return hits - filtered then sorted then sampled then windowed
      */
     SearchHits hitsWindow() throws BlsException;
@@ -87,8 +80,6 @@ public interface WebserviceParams extends QueryParams {
     SearchHits hitsSample() throws BlsException;
 
     AnnotatedField getAnnotatedField();
-
-    AnnotatedField getSearchField();
 
     SearchDocs docsWindow() throws BlsException;
 

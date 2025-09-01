@@ -190,16 +190,6 @@ parameters:
     # "omitemptycaptures" URL parameter.
     # (default: false)
     omitEmptyCaptures: false
-
-    #  Default pattern language to use.
-    #  The pattlang URL parameter override this value.
-    #  (really only useful if you add your own pattern language)
-    patternLanguage: bcql
-
-    #  Default filter language to use.
-    #  The filterlang URL parameter override this value.
-    #  (really only useful if you add your own filter language)
-    filterLanguage: luceneql
 ```
 
 :::

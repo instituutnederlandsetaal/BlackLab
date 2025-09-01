@@ -21,9 +21,6 @@ public class BLSConfigPerformance {
     /** When to abort a count that no client has asked for (seconds). */
     int abandonedCountAbortTimeSec = 30;
 
-    /** How many running jobs one logged-in user may have. */
-    int maxRunningJobsPerUser = 10;
-
     public int getMaxConcurrentSearches() {
         if (maxConcurrentSearches < 0)
             setDefaultMaxConcurrentSearches();
@@ -53,15 +50,6 @@ public class BLSConfigPerformance {
     @SuppressWarnings("unused")
     public void setMaxThreadsPerSearch(int maxThreadsPerSearch) {
         this.maxThreadsPerSearch = maxThreadsPerSearch;
-    }
-
-    public int getMaxRunningJobsPerUser() {
-        return maxRunningJobsPerUser;
-    }
-
-    @SuppressWarnings("unused")
-    public void setMaxRunningJobsPerUser(int maxRunningJobsPerUser) {
-        this.maxRunningJobsPerUser = maxRunningJobsPerUser;
     }
 
     public int getAbandonedCountAbortTimeSec() {

@@ -248,7 +248,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             if (part.direction == 1) {
                 // From hit end forwards.
                 func = (int[] starts, int[] ends, int j, Hit hit) -> {
-                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                     int pos = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                     starts[j] = pos + smaller;
                     ends[j] = pos + larger + 1;
@@ -257,7 +257,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 // From hit end backwards.
                 if (part.confineToHit) {
                     func = (int[] starts, int[] ends, int j, Hit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                         int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                         int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                         starts[j] = Math.max(start, end - larger);
@@ -265,7 +265,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                     };
                 } else {
                     func = (int[] starts, int[] ends, int j, Hit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                         int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                         starts[j] = Math.max(0, end - larger);
                         ends[j] = Math.max(0, end - smaller + 1);
@@ -277,7 +277,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 // From hit start forwards.
                 if (part.confineToHit) {
                     func = (int[] starts, int[] ends, int j, Hit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                         int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                         int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
                         starts[j] = Math.min(end, start + smaller);
@@ -285,7 +285,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                     };
                 } else {
                     func = (int[] starts, int[] ends, int j, Hit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                         int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                         starts[j] = start + smaller;
                         ends[j] = start + larger + 1;
@@ -293,7 +293,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 }
             } else {
                 func = (int[] starts, int[] ends, int j, Hit hit) -> {
-                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                     int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                     starts[j] = Math.max(0, start - larger);
                     ends[j] = Math.max(0, start - smaller + 1);

@@ -26,10 +26,6 @@ public class BLSConfigAuth {
         this.system = system;
     }
 
-    public List<String> getOverrideUserIdIps() {
-        return overrideUserIdIps;
-    }
-
     @SuppressWarnings("unused")
     public void setOverrideUserIdIps(List<String> overrideUserIdIps) {
         this.overrideUserIdIps = overrideUserIdIps;

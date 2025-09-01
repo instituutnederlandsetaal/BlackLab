@@ -2,7 +2,6 @@ package nl.inl.blacklab.server.lib.results;
 
 import java.io.File;
 import java.io.InputStream;
-import com.ibm.icu.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -26,6 +25,8 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
+
+import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -106,11 +107,6 @@ public class WebserviceOperations {
                 ret.add(field);
         }
         return ret;
-    }
-
-    private static MetadataField optCustomField(IndexMetadata metadata, String propName) {
-        String fieldName = metadata.custom().get(propName, "");
-        return fieldName.isEmpty() ? null : metadata.metadataFields().get(fieldName);
     }
 
     /**
@@ -457,13 +453,13 @@ public class WebserviceOperations {
     public static BlsException translateSearchException(Exception e) {
         if (e instanceof InterruptedException) {
             throw new InterruptedSearch(e);
-        } else if (e instanceof InvalidQuery e1) {
+        } else if (e instanceof InvalidQuery) {
             if (e instanceof MatchInfoNotFound e2) {
                 return new BadRequest("UNKNOWN_MATCH_INFO",
                         "Reference to unknown match info (i.e. capture group) '" + e2.getMatchInfoName() + "'",
                         Map.of("name", e2.getMatchInfoName()));
             }
-        } else if (e instanceof ExecutionException e1) {
+        } else if (e instanceof ExecutionException) {
             // See if we recognize the cause of this exception
             if (e.getCause() instanceof BlsException e2) {
                 return e2;
@@ -754,7 +750,7 @@ public class WebserviceOperations {
             tokens = indexerListener.getTokensProcessed();
         }
         boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
-        return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
+        return new ResultIndexStatus(index, files, docs, tokens);
     }
 
     public static ResultDocSnippet docSnippet(WebserviceParams params) {

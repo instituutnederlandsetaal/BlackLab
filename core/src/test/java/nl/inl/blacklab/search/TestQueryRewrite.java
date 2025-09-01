@@ -12,7 +12,6 @@ import org.junit.runners.Parameterized;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -32,13 +31,9 @@ public class TestQueryRewrite {
 
     private BlackLabIndex index;
 
-    /** Name of the relations annotation */
-    private String relName;
-
     @Before
     public void setUp() {
         index = testIndex.index();
-        relName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
         ClauseCombinerNfa.setForwardIndexMatchingEnabled(false);
     }
 

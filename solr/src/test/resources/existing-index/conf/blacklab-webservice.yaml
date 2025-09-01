@@ -63,14 +63,6 @@ parameters:
         max: 200
         #snippet: 200   # just merge this with "max" setting..?
 
-    #  Default pattern language to use.
-    #  The pattlang GET parameter override this value.
-    patternLanguage: corpusql
-
-    #  Default filter language to use.
-    #  The filterlang GET parameter override this value.
-    filterLanguage: luceneql
-
     # Default API version to use
     api: 4
 
@@ -136,14 +128,6 @@ performance:
     # (lower values are easier on the server, but might abort a count too soon)
     abandonedCountAbortTimeSec: 30
 
-    # The maximum number of tasks a user is allowed to have running at the same time.
-    # This only includes tasks that have not finished yet.
-    # The above remark about tasks applies here too: one search request will start multiple tasks.
-    # Therefore, this value shouldn't be set too low. This setting is meant to prevent over-eager scripts
-    # and other abuse from bringing down the server. Regular users should never hit this limit.
-    # [NO LONGER USED IN 2.0, BUT MIGHT MAKE A COMEBACK AT SOME POINT]
-    maxRunningJobsPerUser: 10
-
 
 # Settings for diagnosing problems
 debug:
@@ -167,8 +151,7 @@ authentication:
 
     #  Clients from these IPs may choose their own user id and send it along in a GET parameter userid.
     #  This setting exists for web applications that contact the webservice (partly) through the
-    #  server component. They would get the same session id for each user, making them likely
-    #  to hit the maxRunningJobsPerUser setting. Instead, they should assign session IDs for each of
+    #  server component. They would get the same session id for each user. Instead, they should assign session IDs for each of
     #  their clients and send them along with any request to the webservice.
     overrideUserIdIps:
         - 127.0.0.1       #  IPv4 localhost

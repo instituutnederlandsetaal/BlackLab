@@ -28,7 +28,6 @@ import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
@@ -381,8 +380,6 @@ public abstract class RequestHandler {
         return true;
     }
 
-    private final UserRequestBls userRequest;
-
     protected boolean debugMode;
 
     /** Is this a new API request? (/corpora/... in API v4+)
@@ -433,7 +430,6 @@ public abstract class RequestHandler {
     private RequestInstrumentationProvider requestInstrumentation;
 
     RequestHandler(UserRequestBls userRequest, WebserviceOperation operation) {
-        this.userRequest = userRequest;
         debugMode = userRequest.isDebugMode();
         servlet = userRequest.getServlet();
         searchMan = servlet.getSearchManager();
@@ -554,10 +550,6 @@ public abstract class RequestHandler {
             return ApiVersion.EXPERIMENTAL;
         }
         return api;
-    }
-
-    public WebserviceParams getParams() {
-        return params;
     }
 
     /** Get a parameter value without newlines or carriage returns.

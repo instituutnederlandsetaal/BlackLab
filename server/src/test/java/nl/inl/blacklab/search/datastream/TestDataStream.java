@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.datastream;
 
-import java.io.StringWriter;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -42,7 +41,6 @@ public class TestDataStream {
 
     @Test
     public void testMap() {
-        StringWriter sw = new StringWriter();
         Map<String, Integer> m = new TreeMap<>(Map.of("test", 1, "noot", 2, "mies", 3));
         DataStream dataStream = jsonStream();
         dataStream.value(m);

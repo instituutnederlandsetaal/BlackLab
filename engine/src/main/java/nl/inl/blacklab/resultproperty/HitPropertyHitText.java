@@ -57,7 +57,7 @@ public class HitPropertyHitText extends HitPropertyContextBase {
             // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
             // Determine start and end using matchInfo instead.
             fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
-                int[] startEnd = getForeignHitStartEnd(hit, annotation.field().name());
+                int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                 starts[hitIndex] = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                 ends[hitIndex] = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
             });

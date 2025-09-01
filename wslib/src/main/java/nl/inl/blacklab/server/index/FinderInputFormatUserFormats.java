@@ -19,8 +19,8 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.FinderInputFormat;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.InputFormatWithConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
@@ -298,10 +298,6 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
 
     public static String getUserIdFromFormatIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
         return getUserIdOrFormatName(formatIdentifier, false);
-    }
-
-    public static String getFormatNameFromIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
-        return getUserIdOrFormatName(formatIdentifier, true);
     }
 
     /**

@@ -193,7 +193,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return filterQuery;
     }
 
-    @Override
     public void setFilterQuery(Query query) {
         this.filterQuery = query;
     }
@@ -467,8 +466,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
      *
      * @return the annotated field
      */
-    @Override
-    public AnnotatedField getSearchField() {
+    private AnnotatedField getSearchField() {
         if (params.getSearchFieldName().isPresent())
             return resolveFieldName(params.getSearchFieldName().get()).orElse(getAnnotatedField());
         return getAnnotatedField();

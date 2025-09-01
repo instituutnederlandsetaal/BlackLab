@@ -38,15 +38,6 @@ public class BLSConfigDebug {
         return BlsUtils.wildcardIpsContain(addresses, ip);
     }
 
-    public boolean isAlwaysAllowDebugInfo() {
-        return alwaysAllowDebugInfo;
-    }
-
-    @SuppressWarnings("unused")
-    public void setAlwaysAllowDebugInfo(boolean alwaysAllowDebugInfo) {
-        this.alwaysAllowDebugInfo = alwaysAllowDebugInfo;
-    }
-
     public String getMetricsProvider() {
         return metricsProvider;
     }

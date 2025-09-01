@@ -26,7 +26,7 @@ public class DefaultMax {
         defaultValue = 0;
         max = 0;
     }
-    
+
     DefaultMax(long def, long max) {
         this.defaultValue = def;
         setMax(max);
@@ -36,6 +36,7 @@ public class DefaultMax {
         return defaultValue;
     }
 
+    @SuppressWarnings("unused")
     public void setDefault(long defaultValue) {
         this.defaultValue = defaultValue;
     }

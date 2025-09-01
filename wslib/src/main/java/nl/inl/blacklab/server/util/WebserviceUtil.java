@@ -1,8 +1,6 @@
 package nl.inl.blacklab.server.util;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.server.config.BLSConfig;
@@ -11,7 +9,6 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 
 /** Reusable utilities for implementing BlackLab webservice. */
 public class WebserviceUtil {
-    private static final Logger logger = LogManager.getLogger(WebserviceUtil.class);
 
     private WebserviceUtil() {
     }

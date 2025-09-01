@@ -29,14 +29,11 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultDocsResponse {
     private final Collection<Annotation> annotationsToList;
-    private final Collection<MetadataField> metadataFieldsToList;
     private final BlackLabIndex index;
     private final long totalTokens;
     private final ResultSummaryCommonFields summaryFields;
     private final ResultSummaryNumDocs numResultDocs;
     private final ResultSummaryNumHits numResultHits;
-    private final DocResults window;
-    private final WebserviceParams params;
     private final Map<String, String> docFields;
     private final Map<String, String> metaDisplayNames;
     private Map<String, List<Pair<String, Long>>> facetInfo;
@@ -48,14 +45,11 @@ public class ResultDocsResponse {
             ResultSummaryNumHits numResultHits, DocResults window,
             WebserviceParams params) throws InvalidQuery {
         this.annotationsToList = annotationsToList;
-        this.metadataFieldsToList = metadataFieldsToList;
         this.index = blIndex;
         this.totalTokens = totalTokens;
         this.summaryFields = summaryFields;
         this.numResultDocs = numResultDocs;
         this.numResultHits = numResultHits;
-        this.window = window;
-        this.params = params;
 
         docFields = WebserviceOperations.getDocFields(index);
         metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
@@ -210,14 +204,6 @@ public class ResultDocsResponse {
         return annotationsToList;
     }
 
-    public Collection<MetadataField> getMetadataFieldsToList() {
-        return metadataFieldsToList;
-    }
-
-    public BlackLabIndex getIndex() {
-        return index;
-    }
-
     public long getTotalTokens() {
         return totalTokens;
     }
@@ -232,14 +218,6 @@ public class ResultDocsResponse {
 
     public ResultSummaryNumHits getNumResultHits() {
         return numResultHits;
-    }
-
-    public DocResults getWindow() {
-        return window;
-    }
-
-    public WebserviceParams getParams() {
-        return params;
     }
 
     public Map<String, String> getDocFields() {

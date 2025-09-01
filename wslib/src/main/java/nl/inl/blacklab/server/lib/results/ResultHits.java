@@ -406,10 +406,6 @@ public class ResultHits {
         return cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
     }
 
-    public HitResults getWindow() {
-        return window;
-    }
-
     public long getTotalTokens() {
         return totalTokens;
     }
@@ -466,7 +462,4 @@ public class ResultHits {
         return listOfHits;
     }
 
-    public BlackLabIndex getIndex() {
-        return params.blIndex();
-    }
 }

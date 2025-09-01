@@ -330,9 +330,9 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     private String toStringOptSourceTargetFields(String defaultField) {
-        if (getField().equals(defaultField)) {
+        if (getField().name().equals(defaultField)) {
             // Source field is the default field, don't mention it separately
-            if (targetField.equals(defaultField)) {
+            if (targetField.name().equals(defaultField)) {
                 // Both are default
                 return "";
             } else {

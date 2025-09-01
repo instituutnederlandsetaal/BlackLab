@@ -129,10 +129,6 @@ public class UserRequestBls implements UserRequest {
         return request;
     }
 
-    public HttpServletResponse getResponse() {
-        return response;
-    }
-
     @Override
     public SearchManager getSearchManager() {
         return servlet.getSearchManager();

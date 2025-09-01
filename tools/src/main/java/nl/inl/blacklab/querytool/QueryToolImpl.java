@@ -223,25 +223,6 @@ public class QueryToolImpl {
     }
 
     /**
-     * Switch to a different index.
-     *
-     * @param index the new BlackLabIndex to use
-     */
-    public void setIndex(BlackLabIndex index) {
-        if (shouldCloseIndex)
-            index.close();
-        this.index = index;
-        contentsField = index.mainAnnotatedField();
-        shouldCloseIndex = false; // caller is responsible
-
-        // Reset results
-        hitResults = null;
-        groups = null;
-        sortedHits = null;
-        collocations = null;
-    }
-
-    /**
      * Parse and execute commands and queries.
      */
     public void run() {
@@ -724,7 +705,6 @@ public class QueryToolImpl {
      * @param query the query
      */
     private void parseAndExecuteQuery(String query) {
-        Timer t = new Timer();
         try {
 
             // See if we want to choose any random words
@@ -841,9 +821,6 @@ public class QueryToolImpl {
     /** Desired context size */
     private ContextSize contextSize;
 
-    /** Are we responsible for closing the BlackLabIndex? */
-    private boolean shouldCloseIndex = true;
-
     /**
      * Sort hits by the specified property.
      *
@@ -854,7 +831,6 @@ public class QueryToolImpl {
      *            this is null, uses the "main annotation" (word form, usually).
      */
     private void sortHits(String sortBy, String annotationName) {
-        Timer t = new Timer();
         timings.start();
 
         HitProperty crit = getCrit(sortBy, annotationName, -1);
@@ -902,8 +878,6 @@ public class QueryToolImpl {
     private void groupBy(String groupBy, String annotationName) {
         if (hitResults == null)
             return;
-
-        Timer t = new Timer();
 
         // Group results
         HitProperty crit = getCrit(groupBy, annotationName, 1);
@@ -1001,8 +975,7 @@ public class QueryToolImpl {
      * Close the BlackLabIndex object.
      */
     private void cleanup() {
-        if (shouldCloseIndex)
-            index.close();
+        index.close();
     }
 
     /**

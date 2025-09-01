@@ -148,10 +148,6 @@ public class BLSConfig {
         this.authentication = authentication;
     }
 
-    public int getConfigVersion() {
-        return configVersion;
-    }
-
     @SuppressWarnings("unused")
     public void setConfigVersion(int configVersion) {
         if (configVersion != 2)

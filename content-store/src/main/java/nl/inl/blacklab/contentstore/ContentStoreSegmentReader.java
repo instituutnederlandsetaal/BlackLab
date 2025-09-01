@@ -21,17 +21,6 @@ public interface ContentStoreSegmentReader {
     String getValue(int docId, String luceneField);
 
     /**
-     * Get part of the field value.
-     *
-     * @param docId document id
-     * @param luceneField field to get
-     * @param start first character to get. Must be zero or greater.
-     * @param end character after the last character to get, or -1 for <code>value.length()</code>.
-     * @return requested part
-     */
-    String getValueSubstring(int docId, String luceneField, int start, int end);
-
-    /**
      * Get several parts of the field value.
      *
      * @param docId document id
@@ -42,12 +31,4 @@ public interface ContentStoreSegmentReader {
      */
     String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end);
 
-    /**
-     * Finds the length in characters of a stored value.
-     *
-     * @param docId document id
-     * @param luceneField field to get length for
-     * @return length of the value in characters
-     */
-    int valueLength(int docId, String luceneField);
 }

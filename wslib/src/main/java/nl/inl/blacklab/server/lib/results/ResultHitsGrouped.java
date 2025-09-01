@@ -175,10 +175,6 @@ public class ResultHitsGrouped {
         return docInfos;
     }
 
-    public Index.IndexStatus getIndexStatus() {
-        return indexStatus;
-    }
-
     public WebserviceParams getParams() {
         return params;
     }

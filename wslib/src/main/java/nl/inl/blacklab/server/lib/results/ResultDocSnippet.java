@@ -34,8 +34,6 @@ public class ResultDocSnippet {
 
     private HitResults hitResults;
 
-    private boolean isHit;
-
     private ContextSize context;
 
     private final boolean origContent;
@@ -61,14 +59,12 @@ public class ResultDocSnippet {
         int maxSnippetSize = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
 
         int start, end;
-        isHit = false;
         Optional<Integer> hitStart = params.getHitStart();
         if (hitStart.isPresent()) {
             // A hit was given, and we want some context around it
             start = hitStart.get();
             end = params.getHitEnd();
             context = params.getContext();
-            isHit = true;
         } else {
             // Exact start and end positions to return were given
             start = params.getWordStart();
@@ -123,10 +119,6 @@ public class ResultDocSnippet {
 
     public Hits getHits() {
         return hitResults.getHits();
-    }
-
-    public boolean isHit() {
-        return isHit;
     }
 
     public ContextSize getContext() {
