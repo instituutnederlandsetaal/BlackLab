@@ -5,8 +5,8 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
@@ -14,9 +14,9 @@ import nl.inl.util.Timer;
 public final class ChunkWriter extends FreqListWriter {
     private final File tmpDir;
 
-    public ChunkWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
-        super(bCfg, fCfg, aInfo);
-        this.tmpDir = new File(bCfg.getOutputDir(), "tmp");
+    public ChunkWriter(final Config cfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
+        super(cfg, fCfg, aInfo);
+        this.tmpDir = new File(cfg.outputDir(), "tmp");
     }
 
     public File write(final Map<GroupId, Integer> occurrences) {
@@ -41,8 +41,8 @@ public final class ChunkWriter extends FreqListWriter {
     }
 
     private File getFile() {
-        final String ext = bCfg.isCompressed() ? ".chunk.lz4" : ".chunk";
-        final String chunkName = fCfg.getReportName() + "-" + UUID.randomUUID() + ext;
+        final String ext = cfg.runConfig().compressed() ? ".chunk.lz4" : ".chunk";
+        final String chunkName = fCfg.name() + "-" + UUID.randomUUID() + ext;
         return new File(tmpDir, chunkName);
     }
 }

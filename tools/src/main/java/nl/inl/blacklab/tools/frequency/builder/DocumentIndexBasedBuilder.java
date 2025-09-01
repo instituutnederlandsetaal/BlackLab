@@ -1,7 +1,6 @@
 package nl.inl.blacklab.tools.frequency.builder;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -17,8 +16,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.DocumentMetadata;
@@ -26,33 +25,33 @@ import nl.inl.blacklab.tools.frequency.data.DocumentTokens;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 
 final public class DocumentIndexBasedBuilder {
-    private final FreqListConfig fCfg;
+    private static final int[] EMPTY_ARRAY = new int[0];
+    private final FrequencyListConfig fCfg;
     private final AnnotationInfo aInfo;
     private final Document doc;
     private final int docId;
     private final int docLength;
     private final List<String> metaFieldNames;
-    private final BuilderConfig bCfg;
-    private static final int[] EMPTY_ARRAY = new int[0];
+    private final Config bCfg;
 
-    DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final BuilderConfig bCfg,
-            final FreqListConfig fCfg, final AnnotationInfo aInfo) throws IOException {
+    DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final Config cfg,
+            final FrequencyListConfig fCfg, final AnnotationInfo aInfo) throws IOException {
         this.fCfg = fCfg;
         this.aInfo = aInfo;
         this.docId = docId;
-        this.bCfg = bCfg;
+        this.bCfg = cfg;
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
          * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
          */
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        metaFieldNames = fCfg.metadataFields().stream().map(MetadataConfig::name).toList();
+        metaFieldNames = fCfg.metadata().stream().map(MetadataConfig::name).toList();
 
         // Start actually calculating the requests frequencies.
 
         // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
         // calculate the frequencies.
-        final String fieldName = bCfg.getAnnotatedField();
+        final String fieldName = fCfg.annotatedField();
         final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
         // Determine all the fields we want to be able to load, so we don't need to load the entire document
@@ -64,6 +63,15 @@ final public class DocumentIndexBasedBuilder {
         this.doc = reader.document(docId, fieldsToLoad);
         this.docLength =
                 Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+    }
+
+    /**
+     * Merge occurrences in this doc with global occurrences.
+     */
+    private static void mergeOccurrences(final Map<GroupId, Integer> global, final Map<GroupId, Integer> doc) {
+        doc.forEach((groupId, docCount) -> {
+            global.merge(groupId, docCount, Integer::sum);
+        });
     }
 
     public void process(final Map<GroupId, Integer> occurrences, final Set<String> termFrequencies) {
@@ -106,11 +114,11 @@ final public class DocumentIndexBasedBuilder {
 
     @Nullable
     private DocumentMetadata getDocumentMetadata() {
-        final int numFields = fCfg.metadataFields().size();
+        final int numFields = fCfg.metadata().size();
         final var metaValues = new int[numFields];
         // for each metadata field defined in the config
         for (int i = 0; i < numFields; i++) {
-            final MetadataConfig metaCfg = fCfg.metadataFields().get(i);
+            final MetadataConfig metaCfg = fCfg.metadata().get(i);
             // get its value
             String fieldValue = doc.get(metaCfg.name());
             // and if it's null
@@ -192,14 +200,5 @@ final public class DocumentIndexBasedBuilder {
         }
 
         return occsInDoc;
-    }
-
-    /**
-     * Merge occurrences in this doc with global occurrences.
-     */
-    private static void mergeOccurrences(final Map<GroupId, Integer> global, final Map<GroupId, Integer> doc) {
-        doc.forEach((groupId, docCount) -> {
-            global.merge(groupId, docCount, Integer::sum);
-        });
     }
 }

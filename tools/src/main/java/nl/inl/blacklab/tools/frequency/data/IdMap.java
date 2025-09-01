@@ -1,9 +1,9 @@
 package nl.inl.blacklab.tools.frequency.data;
 
+import java.util.Map;
+
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
-
-import java.util.Map;
 
 public class IdMap {
     private final Object2IntOpenCustomHashMap<int[]> map;

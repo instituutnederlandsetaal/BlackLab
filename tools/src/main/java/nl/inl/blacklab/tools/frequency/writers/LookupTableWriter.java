@@ -7,19 +7,32 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.util.Timer;
 
 public final class LookupTableWriter extends FreqListWriter {
-    public LookupTableWriter(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
+    public LookupTableWriter(final BlackLabIndex index, final Config bCfg, final FrequencyListConfig fCfg) {
         super(bCfg, fCfg, new AnnotationInfo(index, bCfg, fCfg));
     }
 
+    private static String getToken(final Terms terms, final int id) {
+        final var sb = new StringBuilder(MatchSensitivity.INSENSITIVE.desensitize(terms.get(id)));
+        // Escape any \ with \\
+        final int len = sb.length();
+        for (int i = 0; i < len; i++) {
+            if (sb.charAt(i) == '\\') {
+                sb.replace(i, i + 1, "\\\\");
+                i++; // skip the next char, which is now escaped
+            }
+        }
+        return sb.toString();
+    }
+
     private File getFile(final Annotation annotation) {
-        final String fileName = fCfg.getReportName() + "_" + annotation.name() + getExt();
-        return new File(bCfg.getOutputDir(), fileName);
+        final String fileName = fCfg.name() + "_" + annotation.name() + getExt();
+        return new File(cfg.outputDir(), fileName);
     }
 
     public void write() {
@@ -42,18 +55,5 @@ public final class LookupTableWriter extends FreqListWriter {
             }
         }
         System.out.println("  Wrote annotation id lookup tables in " + t.elapsedDescription(true));
-    }
-
-    private static String getToken(final Terms terms, final int id) {
-        final var sb = new StringBuilder(MatchSensitivity.INSENSITIVE.desensitize(terms.get(id)));
-        // Escape any \ with \\
-        final int len = sb.length();
-        for (int i = 0; i < len; i++) {
-            if (sb.charAt(i) == '\\') {
-                sb.replace(i, i + 1, "\\\\");
-                i++; // skip the next char, which is now escaped
-            }
-        }
-        return sb.toString();
     }
 }

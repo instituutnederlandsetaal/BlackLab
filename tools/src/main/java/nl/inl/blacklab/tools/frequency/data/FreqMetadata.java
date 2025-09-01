@@ -1,19 +1,19 @@
 package nl.inl.blacklab.tools.frequency.data;
 
+import java.util.List;
+import java.util.Map;
+
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
-
-import java.util.List;
-import java.util.Map;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 
 final public class FreqMetadata {
     private final Map<String, List<String>> metaFieldToValues;
 
-    FreqMetadata(final BlackLabIndex index, final FreqListConfig fCfg) {
+    FreqMetadata(final BlackLabIndex index, final FrequencyListConfig fCfg) {
         metaFieldToValues = new Object2ObjectArrayMap<>();
-        for (final var meta : fCfg.metadataFields()) {
+        for (final var meta: fCfg.metadata()) {
             final var valueSet = new ObjectArrayList<String>();
             final var valueFreqs = AnnotationInfo.UniqueTermsFromField(index, meta.name());
             valueSet.addAll(valueFreqs);

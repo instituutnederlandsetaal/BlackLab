@@ -4,15 +4,15 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.util.Timer;
 
 public final class AnnotationWriter extends FreqListWriter {
     private final StringBuilder sb = new StringBuilder();
 
-    public AnnotationWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
+    public AnnotationWriter(final Config bCfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
     }
 
@@ -58,7 +58,7 @@ public final class AnnotationWriter extends FreqListWriter {
     }
 
     private File getFile() {
-        final String fileName = fCfg.getReportName() + "_annotations" + getExt();
-        return new File(bCfg.getOutputDir(), fileName);
+        final String fileName = fCfg.name() + "_annotations" + getExt();
+        return new File(cfg.outputDir(), fileName);
     }
 }

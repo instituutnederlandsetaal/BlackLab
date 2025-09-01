@@ -7,8 +7,8 @@ import java.util.List;
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
@@ -17,14 +17,14 @@ import nl.inl.util.Timer;
 public final class ChunkedTsvWriter extends FreqListWriter {
     private final TsvWriter tsvWriter;
 
-    public ChunkedTsvWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
+    public ChunkedTsvWriter(final Config bCfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
         super(bCfg, fCfg, aInfo);
         this.tsvWriter = new TsvWriter(bCfg, fCfg, aInfo);
     }
 
     private File getFile() {
-        final String fileName = fCfg.getReportName() + getExt();
-        return new File(bCfg.getOutputDir(), fileName);
+        final String fileName = fCfg.name() + getExt();
+        return new File(cfg.outputDir(), fileName);
     }
 
     // Merge the sorted subgroupings that were written to disk, writing the resulting TSV as we go.

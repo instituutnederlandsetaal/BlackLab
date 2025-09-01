@@ -1,8 +1,7 @@
 package nl.inl.blacklab.tools.frequency;
 
-import java.io.File;
-
-import org.apache.commons.lang3.StringUtils;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
@@ -10,119 +9,54 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.tools.frequency.builder.IndexBasedBuilder;
 import nl.inl.blacklab.tools.frequency.builder.SearchBasedBuilder;
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.CliArgs;
+import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.writers.AnnotationWriter;
 import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
 import nl.inl.blacklab.tools.frequency.writers.MetaGroupWriter;
 import nl.inl.util.Timer;
 
 /**
- * Determine frequency lists over annotation(s) and
- * metadata field(s) for the entire index.
+ * Determine frequency lists over annotation(s) and metadata field(s) for the entire index.
  */
 public class FrequencyTool {
+    public static void main(final String[] args) throws ErrorOpeningIndex, JsonProcessingException {
+        // read blacklab.yaml if exists and set config from that
+        BlackLab.setConfigFromFile();
+        // parse and verify args
+        final var cliArgs = CliArgs.parse(args);
+        // read config
+        final var config = Config.fromFile(cliArgs.configFile(), cliArgs.outputDir());
+        // pretty print config
+        final var json = new ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(config);
+        System.out.println("Config: " + json);
 
-    private static void exit(final String msg) {
-        System.out.println(msg);
-        System.exit(1);
-    }
-
-    private static void exitUsage(final String msg) {
-        if (!StringUtils.isEmpty(msg)) {
-            System.out.println(msg + "\n");
-        }
-        exit("""
-                Calculate term frequencies over annotation(s) and metadata field(s).
-                
-                Usage:
-                
-                  FrequencyTool INDEX_DIR [CONFIG_FILE] [OUTPUT_DIR]
-                
-                  INDEX_DIR    index to generate frequency lists for
-                  CONFIG_FILE  YAML file specifying what frequency lists to generate. See README.md.
-                               (Defaults to "config.yaml")
-                  OUTPUT_DIR   where to write TSV output files (defaults to current dir)
-                """);
-    }
-
-    public static void main(final String[] args) throws ErrorOpeningIndex {
-
-        BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
-
-        // Check for options
-        int numOpts = 0;
-        for (final String arg: args) {
-            if (arg.startsWith("--")) {
-                numOpts++;
-                switch (arg) {
-                case "--help":
-                    exitUsage("");
-                    break;
-                }
-            } else
-                break;
-        }
-
-        // Process arguments
-        final int numArgs = args.length - numOpts;
-        if (numArgs < 2 || numArgs > 3) {
-            exitUsage("Incorrect number of arguments.");
-        }
-
-        // Read config file
-        final File configFile = new File(args[numOpts + 1]);
-        if (!configFile.canRead()) {
-            exit("Can't read config file " + configFile);
-        }
-        final BuilderConfig config = BuilderConfig.fromFile(configFile);
-
-        // Set output directory
-        File outputDir = new File(System.getProperty("user.dir")); // current dir
-        if (numArgs > 2) {
-            outputDir = new File(args[numOpts + 2]);
-        }
-        if (!outputDir.isDirectory() || !outputDir.canWrite()) {
-            exit("Not a directory or cannot write to output dir " + outputDir);
-        }
-
-        // Set config options
-        config.setOutputDir(outputDir);
-        System.out.println("CONFIGURATION:\n" + config.show());
-
-        // Open index
-        final File indexDir = new File(args[numOpts]);
-        if (!indexDir.isDirectory() || !indexDir.canRead()) {
-            exit("Can't read or not a directory " + indexDir);
-        }
-
-        try (final BlackLabIndex index = BlackLab.open(indexDir)) {
-            config.check(index);
+        try (final BlackLabIndex index = BlackLab.open(cliArgs.indexDir())) {
+            config.verify(index); // verify config
             index.setCache(new SearchCacheDummy()); // don't cache results
-            final var t = new Timer();
             // Generate the frequency lists
+            final var t = new Timer();
             makeFrequencyLists(index, config);
             System.out.println("TOTAL TIME: " + t.elapsedDescription(true));
         }
     }
 
-    private static void makeFrequencyLists(final BlackLabIndex index, final BuilderConfig bCfg) {
-        for (final FreqListConfig fCfg: bCfg.getFrequencyLists()) {
+    private static void makeFrequencyLists(final BlackLabIndex index, final Config cfg) {
+        for (final var fCfg: cfg.frequencyLists()) {
             final var t = new Timer();
-            final var builder = bCfg.useRegularSearch() ?
-                    new SearchBasedBuilder(index, bCfg, fCfg) :
-                    new IndexBasedBuilder(index, bCfg, fCfg);
+            final var builder = cfg.runConfig().regularSearch() ?
+                    new SearchBasedBuilder(index, cfg, fCfg) :
+                    new IndexBasedBuilder(index, cfg, fCfg);
             builder.makeFrequencyList();
             // if database format, write lookup tables
-            if (bCfg.isDatabaseFormat()) {
+            if (cfg.runConfig().databaseFormat()) {
                 if (fCfg.ngramSize() == 1) {
-                    new LookupTableWriter(index, bCfg, fCfg).write();
+                    new LookupTableWriter(index, cfg, fCfg).write();
                 }
-                new MetaGroupWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
-                new AnnotationWriter(bCfg, fCfg, builder.getAnnotationInfo()).write();
+                new MetaGroupWriter(cfg, fCfg, builder.getAnnotationInfo()).write();
+                new AnnotationWriter(cfg, fCfg, builder.getAnnotationInfo()).write();
             }
-            System.out.println(
-                    "  Generating frequency list " + fCfg.getReportName() + " took " + t.elapsedDescription());
+            System.out.println("  Generating " + fCfg.name() + " took " + t.elapsedDescription());
         }
     }
 }

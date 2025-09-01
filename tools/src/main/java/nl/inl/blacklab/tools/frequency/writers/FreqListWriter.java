@@ -16,8 +16,8 @@ import de.siegmar.fastcsv.writer.CsvWriter;
 import de.siegmar.fastcsv.writer.QuoteStrategies;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
@@ -27,12 +27,12 @@ abstract class FreqListWriter {
     private static final CsvWriter.CsvWriterBuilder csvWriterBuilder = CsvWriter.builder()
             .fieldSeparator('\t')
             .quoteStrategy(QuoteStrategies.EMPTY);
-    final BuilderConfig bCfg;
-    final FreqListConfig fCfg;
+    final Config cfg;
+    final FrequencyListConfig fCfg;
     final AnnotationInfo aInfo;
 
-    FreqListWriter(final BuilderConfig bCfg, final FreqListConfig fCfg, final AnnotationInfo aInfo) {
-        this.bCfg = bCfg;
+    FreqListWriter(final Config bCfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
+        this.cfg = bCfg;
         this.fCfg = fCfg;
         this.aInfo = aInfo;
     }
@@ -49,7 +49,7 @@ abstract class FreqListWriter {
     final OutputStream getOutputStream(final File file) {
         try {
             final var fos = new FileOutputStream(file);
-            return bCfg.isCompressed() ? new LZ4FrameOutputStream(fos) : fos;
+            return cfg.runConfig().compressed() ? new LZ4FrameOutputStream(fos) : fos;
         } catch (final IOException e) {
             throw reportIOException(e);
         }
@@ -64,7 +64,7 @@ abstract class FreqListWriter {
     final ForyInputStream getForyInputStream(final File file) {
         try {
             final var fis = new FileInputStream(file);
-            final var zis = bCfg.isCompressed() ? new LZ4FrameInputStream(fis) : fis;
+            final var zis = cfg.runConfig().compressed() ? new LZ4FrameInputStream(fis) : fis;
             return new BufferedForyInputStream(zis, 2 << 12);
         } catch (final IOException e) {
             throw reportIOException(e);
@@ -72,10 +72,10 @@ abstract class FreqListWriter {
     }
 
     final String getExt() {
-        return bCfg.isCompressed() ? ".tsv.lz4" : ".tsv";
+        return cfg.runConfig().compressed() ? ".tsv.lz4" : ".tsv";
     }
 
     final RuntimeException reportIOException(final IOException e) {
-        return new RuntimeException("Error writing output for " + fCfg.getReportName(), e);
+        return new RuntimeException("Error writing output for " + fCfg.name(), e);
     }
 }

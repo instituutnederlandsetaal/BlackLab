@@ -13,7 +13,7 @@ Example config file:
 ```yaml
 ---
 # The number of docs to process in parallel
-docsToProcessInParallel: 500_000
+docsInParallel: 500_000
 
 # The number of groups (i.e. tsv rows) to collect before writing a chunk to disk.
 # Adjusting the value will affect memory usage. Lower it when running out of memory.
@@ -41,7 +41,7 @@ frequencyLists:
         annotations:
             - word
         ngramSize: 2 # bigrams
-        metadataFields: # grouped by year
+        metadata: # grouped by year
             -   name: year
 
 
@@ -50,7 +50,7 @@ frequencyLists:
         annotations:
             - word
         ngramSize: 2 # bigrams
-        metadataFields: # grouped by year
+        metadata: # grouped by year
             -   name: year
         cutoff: # frequency is measured over the entire corpus
             count: 100 # only include ngrams where ALL TOKENS(!) in the ngram occur AT LEAST(!) 100 times in the corpus
@@ -59,7 +59,7 @@ frequencyLists:
     # metadata settings example
     -   annotations:
             - word
-        metadataFields:
+        metadata:
             -   name: year
                 required: true # discards documents where year is null or empty
             -   name: language
@@ -69,7 +69,7 @@ frequencyLists:
     -   annotations:
             - word
         ngramSize: 2 # bigrams
-        metadataFields:
+        metadata:
             -   name: year
                 required: true
             -   name: author

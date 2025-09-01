@@ -20,8 +20,8 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.BuilderConfig;
-import nl.inl.blacklab.tools.frequency.config.FreqListConfig;
+import nl.inl.blacklab.tools.frequency.config.Config;
+import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
@@ -47,14 +47,14 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     private final ChunkedTsvWriter chunkedTsvWriter;
     private final Set<String> termFrequencies; // used for cutoff
 
-    public IndexBasedBuilder(final BlackLabIndex index, final BuilderConfig bCfg, final FreqListConfig fCfg) {
+    public IndexBasedBuilder(final BlackLabIndex index, final Config bCfg, final FrequencyListConfig fCfg) {
         super(index, bCfg, fCfg);
         this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
         this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
         this.termFrequencies = getTermFrequencies(index, fCfg);
     }
 
-    private Set<String> getTermFrequencies(final BlackLabIndex index, final FreqListConfig fCfg) {
+    private Set<String> getTermFrequencies(final BlackLabIndex index, final FrequencyListConfig fCfg) {
         final Set<String> termFrequencies = new ObjectOpenHashSet<>();
         if (fCfg.cutoff() != null) {
             final var t = new Timer();
@@ -84,7 +84,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         final List<Integer> docIds = getDocIds();
 
         // Create tmp dir for the chunk files
-        final File tmpDir = new File(bCfg.getOutputDir(), "tmp");
+        final File tmpDir = new File(cfg.outputDir(), "tmp");
         if (!tmpDir.exists() && !tmpDir.mkdir())
             throw new RuntimeException("Could not create tmp dir: " + tmpDir);
 
@@ -115,22 +115,19 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         // ConcurrentMap because we're counting in parallel.
         final ConcurrentMap<GroupId, Integer> occurrences = new ConcurrentHashMapUnsafe<>();
 
-        final int docsToProcessInParallel = bCfg.getDocsToProcessInParallel();
+        final int docsInParallel = cfg.runConfig().docsInParallel();
         final List<File> chunkFiles = new ArrayList<>();
 
-        for (int rep = 0; rep < bCfg.getRepetitions(); rep++) { // FOR DEBUGGING
+        for (int i = 0; i < docIds.size(); i += docsInParallel) {
+            final int runEnd = Math.min(i + docsInParallel, docIds.size());
+            final List<Integer> docIdsInChunk = docIds.subList(i, runEnd);
 
-            for (int i = 0; i < docIds.size(); i += docsToProcessInParallel) {
-                final int runEnd = Math.min(i + docsToProcessInParallel, docIds.size());
-                final List<Integer> docIdsInChunk = docIds.subList(i, runEnd);
-
-                // Process current run of documents and add to grouping
-                final var t = new Timer();
-                processDocsParallel(docIdsInChunk, occurrences);
-                System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries in "
-                        + t.elapsedDescription(true));
-                writeOccurences(docIds, occurrences, rep, runEnd, chunkFiles);
-            }
+            // Process current run of documents and add to grouping
+            final var t = new Timer();
+            processDocsParallel(docIdsInChunk, occurrences);
+            System.out.println("  Processed docs " + i + "-" + runEnd + ", " + occurrences.size() + " entries in "
+                    + t.elapsedDescription(true));
+            writeOccurences(docIds, occurrences, runEnd, chunkFiles);
         }
         return chunkFiles;
     }
@@ -139,12 +136,12 @@ public final class IndexBasedBuilder extends FreqListBuilder {
      * Write the occurrences to a file. Either a chunk file, or the final output file.
      */
     private void writeOccurences(
-            final List<Integer> docIds, final Map<GroupId, Integer> occurrences, final int rep,
+            final List<Integer> docIds, final Map<GroupId, Integer> occurrences,
             final int runEnd,
             final List<File> chunkFiles) {
         // If the grouping has gotten too large, write it to file so we don't run out of memory.
-        final boolean groupingTooLarge = occurrences.size() > bCfg.getGroupsPerChunk();
-        final boolean isFinalRun = rep == bCfg.getRepetitions() - 1 && runEnd >= docIds.size();
+        final boolean groupingTooLarge = occurrences.size() > cfg.runConfig().groupsPerChunk();
+        final boolean isFinalRun = runEnd >= docIds.size();
 
         if (isFinalRun && chunkFiles.isEmpty()) {
             // There's only one chunk. We can skip writing intermediate file and write result directly.
@@ -205,7 +202,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     ) {
         docIds.parallelStream().forEach(docId -> {
             try {
-                final var doc = new DocumentIndexBasedBuilder(docId, index, bCfg, fCfg, aInfo);
+                final var doc = new DocumentIndexBasedBuilder(docId, index, cfg, fCfg, aInfo);
                 doc.process(occurrences, termFrequencies);
             } catch (final IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
