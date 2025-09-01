@@ -388,10 +388,6 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 if (f.isForEach())
                     continue;
                 MetadataFieldImpl metadataField = metadataFields.addFromConfig(f);
-                // We don't keep track of metadata field values in the integrated
-                // index format because it cannot change during indexing.
-                // Instead we will use DocValues to get the field values when necessary.
-                metadataField.setKeepTrackOfValues(false);
             }
         }
 
@@ -801,12 +797,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
     @Override
     public synchronized MetadataField registerMetadataField(String fieldName) {
-        MetadataFieldImpl f = metadataFields.register(fieldName);
-        // We don't keep track of metadata field values in the integrated
-        // index format because it cannot change during indexing.
-        // Instead we will use DocValues to get the field values when necessary.
-        f.setKeepTrackOfValues(false);
-        return f;
+        return metadataFields.register(fieldName);
     }
 
     /**

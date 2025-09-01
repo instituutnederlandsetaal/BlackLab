@@ -113,10 +113,10 @@ public class TermsGlobal implements Terms {
 
     @Override
     public synchronized String get(int id) {
+        // NOTE: This method is synchronized because we use the Terms instances
+        // we stored in termSegmentTerms, which are not thread-safe.
         if (id >= numberOfTerms || id < 0)
             return "";
-        // This method is synchronized because we use the Terms instances
-        // we stored in termSegmentTerms, which are not thread-safe.
         return termSegmentTerms.get(id).get(termSegmentTermId.getInt(id));
     }
 

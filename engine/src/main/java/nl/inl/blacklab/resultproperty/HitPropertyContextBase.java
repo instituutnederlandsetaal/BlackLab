@@ -2,9 +2,9 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.lucene.index.LeafReaderContext;
@@ -322,9 +322,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    private Map<LeafReaderContext, AnnotationForwardIndex> fieldForwardIndexes = new HashMap<>();
+    private Map<LeafReaderContext, AnnotationForwardIndex> fieldForwardIndexes = new ConcurrentHashMap<>();
 
-    private synchronized AnnotationForwardIndex getFieldForwardIndex(LeafReaderContext lrc) {
+    private AnnotationForwardIndex getFieldForwardIndex(LeafReaderContext lrc) {
         return fieldForwardIndexes.computeIfAbsent(lrc,
                 key -> FieldForwardIndex.get(key, luceneField));
     }
@@ -353,8 +353,17 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     private void ensureContextFetched() {
-        if (!isContextAvailable())
-            fetchContext();
+        // First check without locking (fast path)
+        // (if context has been fetched, this will work fine, but it doesn't guard against two threads
+        //  fetching the context simultaneously)
+        if (!isContextAvailable()) {
+            // Now lock and check again (slow path), so we know only one thread fetches the context
+            synchronized (this) {
+                if (!isContextAvailable()) {
+                    fetchContext();
+                }
+            }
+        }
     }
 
     @Override

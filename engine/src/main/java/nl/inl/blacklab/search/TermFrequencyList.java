@@ -75,7 +75,7 @@ public class TermFrequencyList extends ResultsList<TermFrequency> implements Ite
     }
 
     @Override
-    public synchronized TermFrequency get(long index) {
+    public TermFrequency get(long index) {
         return results.get((int)index);
     }
 

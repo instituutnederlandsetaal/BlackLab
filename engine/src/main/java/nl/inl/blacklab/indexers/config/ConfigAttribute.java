@@ -29,6 +29,8 @@ public class ConfigAttribute {
      */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
+    ProcessingStep processSteps = ProcessingStep.identity();
+
     public ConfigAttribute() {
         // Default constructor for deserialization
     }
@@ -57,18 +59,15 @@ public class ConfigAttribute {
         return exclude;
     }
 
-    ProcessingStep processSteps;
-
-    public synchronized ProcessingStep getProcess() {
-        if (processSteps == null) {
-            processSteps = ProcessingStep.fromConfig(process);
-        }
+    public ProcessingStep getProcess() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }
 
     public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
+        processSteps = ProcessingStep.fromConfig(process);
     }
 
     public void validate() {

@@ -183,8 +183,6 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     @Override
     public TermFrequencyList collocations(Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity,
             boolean sort) {
-        // TODO: implement these using HitProperty objects that return HitPropertyValueContextWord(s);
-        //       more versatile and we can eliminate Contexts?
         return Contexts.collocations(this, annotation, contextSize, sensitivity, sort);
     }
 

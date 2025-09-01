@@ -41,9 +41,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         return field;
     }
 
-    @XmlTransient
-    private boolean keepTrackOfValues = true;
-
     /**
      * The field type: text, untokenized or numeric.
      */
@@ -73,18 +70,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         this.type = type;
         this.factory = factory;
         ensureValuesCreated();
-    }
-
-	/**
-	 * Should we store the values for this field?
-	 *
-	 * We're moving away from storing values separately, because we can just
-	 * use DocValues to find the values when we need them.
-	 *
-	 * @param keepTrackOfValues whether or not to store values here
-	 */
-    public void setKeepTrackOfValues(boolean keepTrackOfValues) {
-        this.keepTrackOfValues = keepTrackOfValues;
     }
 
     @Override
@@ -128,20 +113,6 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
     }
 
     /**
-     * Keep track of unique values of this field so we can store them in the
-     * metadata file.
-     *
-     * @param value field value
-     */
-    public synchronized void addValue(String value) {
-        if (!keepTrackOfValues)
-            return;
-        ensureNotFrozen();
-        ensureValuesCreated();
-        values.addValue(value);
-    }
-
-    /**
      * Remove a previously added value so we can keep track of unique 
      * values of this field correctly
      *
@@ -158,6 +129,5 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
         this.factory = factory;
         assert values == null;
         ensureValuesCreated();
-        setKeepTrackOfValues(false); // integrated uses DocValues for this
     }
 }

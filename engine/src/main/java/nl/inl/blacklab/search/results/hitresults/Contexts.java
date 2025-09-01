@@ -283,7 +283,7 @@ public class Contexts {
      *
      * @return the frequency of each occurring token
      */
-    public static synchronized TermFrequencyList collocations(HitResults hitResults, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+    public static TermFrequencyList collocations(HitResults hitResults, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
         BlackLabIndex index = hitResults.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();

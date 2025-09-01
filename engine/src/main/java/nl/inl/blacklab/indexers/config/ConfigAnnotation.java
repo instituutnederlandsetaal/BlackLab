@@ -48,6 +48,8 @@ public class ConfigAnnotation {
     /** How to process annotation values (if at all) */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
+    ProcessingStep processSteps = ProcessingStep.identity();
+
     /**
      * What sensitivity setting to use to index this annotation (optional, default
      * depends on field name)
@@ -222,23 +224,22 @@ public class ConfigAnnotation {
         this.sensitivity = sensitivity;
     }
 
-    ProcessingStep processSteps;
-
-    public synchronized ProcessingStep getProcess() {
-        if (processSteps == null) {
-            processSteps = ProcessingStep.fromConfig(process);
-            if (!allowDuplicateValues) {
-                // If we don't allow duplicate values (we never do, starting from v2),
-                // add a unique() step to the end of the processing chain
-                processSteps = ProcessingStep.combine(processSteps, new ProcessingStepUnique());
-            }
-        }
+    public ProcessingStep getProcess() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }
 
     public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
+
+        // "Compile" the process steps
+        processSteps = ProcessingStep.fromConfig(this.process);
+        if (!allowDuplicateValues) {
+            // If we don't allow duplicate values (we never do, starting from v2),
+            // add a unique() step to the end of the processing chain
+            processSteps = ProcessingStep.combine(processSteps, new ProcessingStepUnique());
+        }
     }
 
     public boolean createForwardIndex() {

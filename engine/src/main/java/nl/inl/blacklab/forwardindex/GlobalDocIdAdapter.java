@@ -2,7 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.util.List;
 
-/** Adapts a FieldForwardIndex to accept global doc ids.
+/** Adapts a segment forward index to accept global doc ids.
  */
 public class GlobalDocIdAdapter implements AnnotationForwardIndex {
 

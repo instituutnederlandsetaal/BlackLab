@@ -18,11 +18,9 @@ public class ConfigLinkValue {
     /** Operations to perform on this value, if any */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
-    public ConfigLinkValue() {
-    }
+    ProcessingStep processSteps = ProcessingStep.identity();
 
-    public ConfigLinkValue(String valuePath) {
-        this.valuePath = valuePath;
+    public ConfigLinkValue() {
     }
 
     public void validate() {
@@ -59,22 +57,15 @@ public class ConfigLinkValue {
         this.valueField = valueField;
     }
 
-    ProcessingStep processSteps;
-
-    public synchronized ProcessingStep getProcess() {
-        if (processSteps == null) {
-            processSteps = ProcessingStep.fromConfig(process);
-        }
+    public ProcessingStep getProcess() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }
 
     public synchronized void setProcess(List<ConfigProcessStep> p) {
         process.clear();
         process.addAll(p);
-    }
-
-    public void addProcessStep(ConfigProcessStep p) {
-        this.process.add(p);
+        processSteps = ProcessingStep.fromConfig(process);
     }
 
     @Override

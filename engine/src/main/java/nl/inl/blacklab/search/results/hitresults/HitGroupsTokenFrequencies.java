@@ -54,9 +54,6 @@ import nl.inl.util.BlockTimer;
  */
 public class HitGroupsTokenFrequencies {
 
-    /** When true, performs extra checking that we never overwrite a previously created group */
-    public static final boolean DEBUG_DUPLICATE_GROUPS = false;
-
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
 
     private HitGroupsTokenFrequencies() {
@@ -515,8 +512,6 @@ public class HitGroupsTokenFrequencies {
                 }
             }
 
-            Set<PropertyValue> duplicateGroupsDebug = DEBUG_DUPLICATE_GROUPS ? new HashSet<>() : null;
-
             List<HitGroup> groups;
             try (final BlockTimer ignored = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
@@ -550,13 +545,6 @@ public class HitGroupsTokenFrequencies {
                     }
 
                     PropertyValue groupId = groupIdAsList.length > 1 ? new PropertyValueMultiple(groupIdAsList) : groupIdAsList[0];
-                    if (DEBUG_DUPLICATE_GROUPS) {
-                        synchronized (duplicateGroupsDebug) {
-                            if (!duplicateGroupsDebug.add(groupId)) {
-                                throw new IllegalStateException("Identical groups - should never happen");
-                            }
-                        }
-                    }
 
                     return HitGroup.withoutResults(queryInfo, groupId, groupSizeHits,
                             groupSizeDocs, MaxStats.NOT_EXCEEDED);

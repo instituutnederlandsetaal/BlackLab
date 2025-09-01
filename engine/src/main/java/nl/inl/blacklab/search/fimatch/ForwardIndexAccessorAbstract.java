@@ -63,7 +63,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     }
 
     @Override
-    public synchronized int getAnnotationIndex(String annotationName) {
+    public int getAnnotationIndex(String annotationName) {
         return getAnnotationIndex(annotatedField.annotation(annotationName));
     }
 

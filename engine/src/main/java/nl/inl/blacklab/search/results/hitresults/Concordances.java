@@ -75,10 +75,10 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl highlighter
      */
-    private static synchronized void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
+    private static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
-        if (hits.size() == 0)
+        if (hits.isEmpty())
             return;
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;

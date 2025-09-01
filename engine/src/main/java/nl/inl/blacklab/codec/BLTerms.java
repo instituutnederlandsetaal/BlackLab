@@ -75,21 +75,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
         }
     }
 
-    private synchronized IndexInput getCloneOfTermIndexFile() {
-        // synchronized because clone() is not thread-safe
-        return _termIndexFile.clone();
-    }
-
-    private synchronized IndexInput getCloneOfTermsFile() {
-        // synchronized because clone() is not thread-safe
-        return _termsFile.clone();
-    }
-
-    private synchronized IndexInput getCloneOfTermOrderFile() {
-        // synchronized because clone() is not thread-safe
-        return _termOrderFile.clone();
-    }
-
     public void close() throws IOException {
         _termIndexFile.close();
         _termsFile.close();
@@ -186,10 +171,10 @@ public class BLTerms extends org.apache.lucene.index.Terms {
             private static final boolean READ_TERM_STRINGS_INTO_MEMORY = false;
 
             /** Offset of each term in termStrings */
-            private RandomAccessInput termStringOffsets;
+            private final RandomAccessInput termStringOffsets;
 
             /** Where to read term strings */
-            IndexInput termStrings;
+            final IndexInput termStrings;
 
             {
                 try {
@@ -204,7 +189,7 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                     // Get random access to the sort order arrays for this field
                     int numberOfTerms = forwardIndexField.numberOfTerms;
                     if (termIdToInsensitivePos == null) {
-                        IndexInput termOrderFile = getCloneOfTermOrderFile();
+                        IndexInput termOrderFile = _termOrderFile.clone();
                         long offset = forwardIndexField.getTermOrderOffset();
                         int arrayLength = numberOfTerms * Integer.BYTES;
                         termIdToInsensitivePos = readTermOrderIntArray(termOrderFile, offset);
@@ -218,9 +203,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
                     // All fields share the same strings file.  Move to the start of our section in the file.
                     long termStringOffsetsLength = (long) numberOfTerms * Long.BYTES;
-                    termStringOffsets = getCloneOfTermIndexFile().randomAccessSlice(
+                    termStringOffsets = _termIndexFile.clone().randomAccessSlice(
                             forwardIndexField.getTermIndexOffset(), termStringOffsetsLength);
-                    termStrings = getCloneOfTermsFile();
+                    termStrings = _termsFile.clone();
 
                     if (termStringsArr == null && READ_TERM_STRINGS_INTO_MEMORY) {
                         // Read all term strings into memory for fast access

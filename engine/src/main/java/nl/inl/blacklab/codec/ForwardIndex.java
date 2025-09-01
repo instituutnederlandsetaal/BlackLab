@@ -62,16 +62,6 @@ public class ForwardIndex implements AutoCloseable {
         _tokensFile = postingsReader.openIndexFile(BlackLabPostingsFormat.TOKENS_EXT);
     }
 
-    private synchronized IndexInput getCloneOfTokensIndexFile() {
-        // synchronized because clone() is not thread-safe
-        return _tokensIndexFile.clone();
-    }
-
-    private synchronized IndexInput getCloneOfTokensFile() {
-        // synchronized because clone() is not thread-safe
-        return _tokensFile.clone();
-    }
-
     @Override
     public void close() {
         try {
@@ -89,7 +79,12 @@ public class ForwardIndex implements AutoCloseable {
      * So this function can be used from multiple threads.
      */
     public AnnotationForwardIndex forField(String luceneField) {
-        return new FieldForwardIndex(new Reader(), fieldsByName.get(luceneField));
+        Reader reader;
+        // Synchronized because it clones our IndexInputs
+        synchronized (this) {
+            reader = new Reader();
+        }
+        return new FieldForwardIndex(reader, fieldsByName.get(luceneField));
     }
 
     public ForwardIndexField getForwardIndexField(String luceneField) {
@@ -105,9 +100,9 @@ public class ForwardIndex implements AutoCloseable {
     @NotThreadSafe
     public class Reader implements ForwardIndexSegmentReader {
 
-        private IndexInput _tokensIndex;
+        private final IndexInput _tokensIndex;
 
-        private IndexInput _tokens;
+        private final IndexInput _tokens;
 
         // Used by retrievePart(s)
         private long docTokensOffset;
@@ -121,16 +116,9 @@ public class ForwardIndex implements AutoCloseable {
         // to be decoded by the appropriate tokensCodec
         private byte tokensCodecParameter;
 
-        private IndexInput tokensIndex() {
-            if (_tokensIndex == null)
-                _tokensIndex = getCloneOfTokensIndexFile();
-            return _tokensIndex;
-        }
-
-        private IndexInput tokens() {
-            if (_tokens == null)
-                _tokens = getCloneOfTokensFile();
-            return _tokens;
+        Reader() {
+            _tokensIndex = _tokensIndexFile.clone();
+            _tokens = _tokensFile.clone();
         }
 
         /** Retrieve parts of a document from the forward index. */
@@ -145,7 +133,6 @@ public class ForwardIndex implements AutoCloseable {
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-            tokens(); // ensure available
             List<int[]> result = new ArrayList<>(n);
             for (int i = 0; i < n; i++) {
                 result.add(retrievePart(starts[i], ends[i]));
@@ -161,7 +148,6 @@ public class ForwardIndex implements AutoCloseable {
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-            tokens(); // ensure we have this input available
             return retrievePart(start, end);
         }
 
@@ -225,7 +211,6 @@ public class ForwardIndex implements AutoCloseable {
 
         private void getDocOffsetAndLength(ForwardIndexField field, int docId)  {
             try {
-                tokensIndex(); // ensure input available
                 long fieldTokensIndexOffset = field.getTokensIndexOffset();
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();

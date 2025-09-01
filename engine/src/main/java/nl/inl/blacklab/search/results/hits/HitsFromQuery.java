@@ -267,9 +267,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
     @Override
     public long size() {
         ensureResultsRead(-1);
-        synchronized (this) {
-            return numHitsGlobalView;
-        }
+        return numHitsGlobalView;
     }
 
     @Override

@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,33 +74,13 @@ public class SegmentRelationInfo implements AutoCloseable {
         _attrValuesFile = postingsReader.openIndexFile(BlackLabPostingsFormat.RI_ATTR_VALUES_EXT);
     }
 
-    private synchronized IndexInput getCloneOfDocsFile() {
-        // synchronized because clone() is not thread-safe
-        return _docsFile.clone();
-    }
-
-    private synchronized IndexInput getCloneOfRelationsFile() {
-        // synchronized because clone() is not thread-safe
-        return _relationsFile.clone();
-    }
-
-    private synchronized IndexInput getCloneOfAttrSetsFile() {
-        // synchronized because clone() is not thread-safe
-        return _attrSetsFile.clone();
-    }
-
-    private synchronized IndexInput getCloneOfAttrValuesFile() {
-        // synchronized because clone() is not thread-safe
-        return _attrValuesFile.clone();
-    }
-
     @Override
     public void close() {
         try {
             _docsFile.close();
             _relationsFile.close();
             _attrSetsFile.close();
-            _attrValuesFile.clone();
+            _attrValuesFile.close();
             _docsFile = _relationsFile = _attrSetsFile = _attrValuesFile = null;
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -132,28 +113,11 @@ public class SegmentRelationInfo implements AutoCloseable {
 
         private IndexInput _attrValues;
 
-        private IndexInput docs() {
-            if (_docs == null)
-                _docs = getCloneOfDocsFile();
-            return _docs;
-        }
-
-        private IndexInput relations() {
-            if (_relations == null)
-                _relations = getCloneOfRelationsFile();
-            return _relations;
-        }
-
-        private IndexInput attrSets() {
-            if (_attrSets == null)
-                _attrSets = getCloneOfAttrSetsFile();
-            return _attrSets;
-        }
-
-        private IndexInput attrValues() {
-            if (_attrValues == null)
-                _attrValues = getCloneOfAttrValuesFile();
-            return _attrValues;
+        Reader() {
+            _docs = _docsFile.clone();
+            _relations = _relationsFile.clone();
+            _attrSets = _attrSetsFile.clone();
+            _attrValues = _attrValuesFile.clone();
         }
 
         /** Retrieve the attributes for a specific relation in a document.
@@ -171,28 +135,26 @@ public class SegmentRelationInfo implements AutoCloseable {
             try {
                 // Determine where the relations for this doc start
                 assert docsOffset >= 0 : "negative offset in docs file";
-                docs().seek(docsOffset + (long) docId * Long.BYTES);
+                _docs.seek(docsOffset + (long) docId * Long.BYTES);
                 long relationsOffset = _docs.readLong();
                 assert relationsOffset >= 0 : "negative offset in relations file";
                 // Find the attribute set offset for this relation
-                relations().seek(relationsOffset + (long) relationId * Long.BYTES);
+                _relations.seek(relationsOffset + (long) relationId * Long.BYTES);
                 long attrSetOffset = _relations.readLong();
                 // Find the attribute set
                 assert attrSetOffset >= 0 : "negative offset in attrSet file";
-                attrSets().seek(attrSetOffset);
-                int nAttr = attrSets().readVInt();
+                _attrSets.seek(attrSetOffset);
+                int nAttr = _attrSets.readVInt();
                 Map<String, List<String>> attrMap = new LinkedHashMap<>();
                 for (int i = 0; i < nAttr; i++) {
-                    int attrNameIndex = attrSets().readVInt();
-                    long attrValueOffset = attrSets().readLong();
-                    attrValues().seek(attrValueOffset);
-                    String attrValue = attrValues().readString();
+                    int attrNameIndex = _attrSets.readVInt();
+                    long attrValueOffset = _attrSets.readLong();
+                    _attrValues.seek(attrValueOffset);
+                    String attrValue = _attrValues.readString();
                     List<String> values;
-                    if (attrValue.indexOf(RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR) != -1) {
-                        values = new ArrayList<>();
-                        for (String value: attrValue.split(RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR)) {
-                            values.add(value);
-                        }
+                    if (attrValue.contains(RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR)) {
+                        values = new ArrayList<>(Arrays.asList(
+                                        attrValue.split(RelationsStrategySeparateTerms.ATTR_VALUE_SEPARATOR)));
                     } else {
                         values = List.of(attrValue);
                     }

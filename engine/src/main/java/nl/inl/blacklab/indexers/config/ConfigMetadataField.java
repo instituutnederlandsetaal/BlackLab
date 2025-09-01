@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
-import nl.inl.blacklab.indexers.config.process.ProcessingStepMapValues;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 
@@ -29,8 +28,6 @@ public class ConfigMetadataField {
 
     /** How to process annotation values (if at all) */
     private final List<ConfigProcessStep> process = new ArrayList<>();
-
-    private final Map<String, String> mapValues = new HashMap<>();
 
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
@@ -84,7 +81,6 @@ public class ConfigMetadataField {
     public ConfigMetadataField copy() {
         ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
         cp.setProcess(process);
-        cp.setMapValues(mapValues);
         cp.setDisplayName(displayName);
         cp.setDescription(description);
         cp.setType(type);
@@ -194,10 +190,6 @@ public class ConfigMetadataField {
         return Collections.unmodifiableMap(displayValues);
     }
 
-    public void addDisplayValue(String value, String displayValue) {
-        displayValues.put(value, displayValue);
-    }
-
     public void addDisplayValues(Map<String, String> displayValues) {
         this.displayValues.putAll(displayValues);
     }
@@ -210,27 +202,17 @@ public class ConfigMetadataField {
         return sortValues;
     }
 
-    ProcessingStep processSteps;
+    ProcessingStep processSteps = ProcessingStep.identity();
 
-    public synchronized ProcessingStep getProcess() {
-        if (processSteps == null) {
-            processSteps = ProcessingStep.fromConfig(process);
-            if (!mapValues.isEmpty()) {
-                // Deprecated separate mapValues specified. Translate to a regular processing step.
-                processSteps = ProcessingStep.combine(processSteps, new ProcessingStepMapValues(mapValues));
-            }
-        }
+    public ProcessingStep getProcess() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }
 
     public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
-    }
-
-    public void setMapValues(Map<String, String> mapValues) {
-        this.mapValues.clear();
-        this.mapValues.putAll(mapValues);
+        processSteps = ProcessingStep.fromConfig(process);
     }
 
     public void addDisplayOrder(List<String> fields) {
@@ -244,10 +226,6 @@ public class ConfigMetadataField {
     @Override
     public String toString() {
         return "ConfigMetadataField [name=" + name + "]";
-    }
-
-    public Map<String, String> getMapValues() {
-        return mapValues;
     }
 
 }

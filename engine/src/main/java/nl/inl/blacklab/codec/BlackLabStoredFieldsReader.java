@@ -256,27 +256,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         private final IndexInput blockIndexFile = _blockIndexFile.clone();
         private final IndexInput blocksFile = _blocksFile.clone();
 
-        private int getNextBlock(int blockSizeBytes, ContentStoreBlockCodec.Decoder decoder, int decodedOffset,
-                int blocksLeftToRead) throws IOException {
-            int decodedSize = -1;
-            while (decodedSize < 0) {
-                decodedSize = readAndDecodeBlock(blockSizeBytes, decoder, decodedValue, decodedOffset);
-                if (decodedSize < 0) {
-                    // Not enough buffer space. Reallocate and try again (up to a point).
-                    final int availableSpace = decodedValue.length - decodedOffset;
-                    if (availableSpace > BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH)
-                        throw new IOException("Insufficient buffer space for decoding block, even at max (" + BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH
-                                + ")");
-                    // Double the available space for the remaining blocks (probably always just 1 block)
-                    final byte[] newBuffer = new byte[decodedOffset + blocksLeftToRead * availableSpace * 2];
-                    System.arraycopy(decodedValue, 0, newBuffer, 0, decodedOffset);
-                    decodedValue = newBuffer;
-                }
-            }
-            decodedOffset += decodedSize;
-            return decodedOffset;
-        }
-
         private int findBlockStartOffset(long blockIndexOffset, long blocksOffset, int blockNumber)
                 throws IOException {
             int blockStartOffset;

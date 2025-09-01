@@ -9,8 +9,6 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.FieldInfo;
-import org.apache.lucene.index.IndexReader;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -142,54 +140,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     // Methods that mutate data
     // ------------------------------------------------------
-    
-    /**
-     * An index field was found and split into parts, and belongs to this annotated
-     * field. See what type it is and update our fields accordingly.
-     * 
-     * @param parts parts of the Lucene index field name
-     * @param fi the field's FieldInfo structure 
-     */
-    synchronized void processIndexField(String[] parts, FieldInfo fi) {
-        ensureNotFrozen();
-    
-        // See if this is a builtin bookkeeping field or a annotation.
-        if (parts.length == 1)
-            throw new IllegalArgumentException("Annotated field with just basename given, error!");
-    
-        String annotName = parts[1];
-    
-        if (annotName == null && parts.length >= 3) {
-            // Bookkeeping field
-            String bookkeepName = parts[3];
-            switch (parts[3]) {
-            case AnnotatedFieldNameUtil.BOOKKEEP_CONTENT_STORE:
-                // Annotated field has content store
-                // (old external index has content id, new integrated index has content store field)
-                contentStore = true;
-                return;
-            case AnnotatedFieldNameUtil.BOOKKEEP_LENGTH_TOKENS:
-                // Annotated field always has length in tokens
-                return;
-            default:
-                throw new IllegalArgumentException("Unknown bookkeeping field: " + bookkeepName);
-            }
-        }
-    
-        // Not a bookkeeping field; must be a annotation (alternative).
-        AnnotationImpl annotation = getOrCreateAnnotation(annotName);
-        if (annotation.isRelationAnnotation())
-            xmlTags = true;
-        if (parts.length > 2) {
-            if (parts[2] != null) {
-                // Sensitivity alternative for this annotation
-                MatchSensitivity sensitivity = MatchSensitivity.fromLuceneFieldSuffix(parts[2]);
-                annotation.addAlternative(sensitivity);
-            } else {
-                throw new IllegalArgumentException("Unknown annotation bookkeeping field " + parts[3]);
-            }
-        }
-    }
 
     public synchronized AnnotationImpl getOrCreateAnnotation(String name) {
         AnnotationImpl pd = annots.get(name);
@@ -206,48 +156,6 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
         annots.put(annotDesc.name(), annotDesc);
         if (annotDesc.isRelationAnnotation())
             xmlTags = true;
-    }
-
-    synchronized void detectMainAnnotation(IndexReader reader) {
-        ensureNotFrozen();
-        if (mainAnnotationName != null && !mainAnnotationName.isEmpty()) {
-            // Main annotation name was set from index metadata before we
-            // had the annotation desc. available; use that now and don't do
-            // any actual detecting.
-            if (!annots.containsKey(mainAnnotationName))
-                throw new IllegalArgumentException("Main annotation '" + mainAnnotationName + "' (from index metadata) not found!");
-            mainAnnotation = annots.get(mainAnnotationName);
-        }
-        
-        if (annots.isEmpty())
-            return; // dummy field for storing linked documents; has no annotations
-
-        AnnotationImpl firstAnnotation = null;
-        for (AnnotationImpl pr : annots.values()) {
-            if (firstAnnotation == null)
-                firstAnnotation = pr;
-            if (pr.detectOffsetsSensitivity(reader)) {
-                // This field has offsets stored. Must be the main annotation field.
-                if (mainAnnotation == null) {
-                    mainAnnotation = pr;
-                } else {
-                    // Was already set from metadata file; same..?
-                    if (mainAnnotation != pr) {
-                        logger.warn("Metadata says main annotation for field " + name() + " is "
-                                + mainAnnotation.name() + ", but offsets are stored in " + pr.name());
-                    }
-                }
-                return;
-            }
-        }
-    
-        // None have offsets; just assume the first annotation is the main one
-        // (note that not having any offsets makes it impossible to highlight the
-        // original content, but this may not be an issue. We probably need
-        // a better way to keep track of the main annotation)
-        logger.warn("No annotation with offsets found; assume first annotation (" + firstAnnotation.name()
-                + ") is main annotation");
-        mainAnnotation = firstAnnotation;
     }
 
     synchronized void setMainAnnotationName(String mainAnnotationName) {

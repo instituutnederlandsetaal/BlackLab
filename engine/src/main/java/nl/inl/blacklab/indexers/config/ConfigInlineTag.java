@@ -1,12 +1,10 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
@@ -33,22 +31,13 @@ public class ConfigInlineTag {
      */
     private String tokenIdPath = null;
 
-    /** Don't index attributes in this list (unless includeAttributes is set). */
-    private Set<String> excludeAttributes = Collections.emptySet();
-
-    /** If set: ignore excludeAttributes and don't index attributes not in this list. */
-    private List<String> includeAttributes = null;
-
     /** Extra attributes to index with the tag via an XPath expression,
-     *  as well as tag attributes to include (optionally with processing steps). */
-    private List<ConfigAttribute> attributes = Collections.emptyList();
+     *  as well as tag attributes to include/exclude (optionally with processing steps). */
+    private Map<String, ConfigAttribute> attributes = Collections.emptyMap();
 
     /** Should we index all attributes on the tag by default,
      *  or only those explicitly mentioned? */
     private boolean defaultIndexAttributes = true;
-
-    /** The final attribute specification which combines include, exclude and extra. */
-    private Map<String, ConfigAttribute> allAttributes;
 
     public ConfigInlineTag() {
     }
@@ -60,7 +49,7 @@ public class ConfigInlineTag {
 
     public void validate() {
         ConfigInputFormat.req(path, "inline tag", "path");
-        for (ConfigAttribute ea : attributes) {
+        for (ConfigAttribute ea: attributes.values()) {
             ea.validate();
         }
     }
@@ -98,58 +87,28 @@ public class ConfigInlineTag {
         return "ConfigInlineTag [displayAs=" + displayAs + "]";
     }
 
-    public synchronized void setExcludeAttributes(List<String> exclAttr) {
-        this.excludeAttributes = new HashSet<>(exclAttr);
-        allAttributes = null;
-    }
-
-    public synchronized void setIncludeAttributes(List<String> includeAttributes) {
-        if (!includeAttributes.isEmpty())
-            this.defaultIndexAttributes = false; // we're explicitly setting the attributes to include
-        this.includeAttributes = includeAttributes;
-        allAttributes = null;
-    }
-
     public synchronized void setAttributes(List<ConfigAttribute> attributes) {
         // Is there a "default exclude" rule?
         Optional<ConfigAttribute> ex = attributes.stream().filter(ConfigAttribute::isDefaultExclude).findFirst();
         if (ex.isPresent())
             this.defaultIndexAttributes = false;
         // Filter out the default exclude rule
-        this.attributes = attributes.stream().filter(a -> !a.isDefaultExclude()).toList();
-        allAttributes = null;
+        this.attributes = new LinkedHashMap<>();
+        attributes.stream()
+                .filter(a -> !a.isDefaultExclude())
+                .forEach(a -> {
+                    if (this.attributes.containsKey(a.getName()))
+                        throw new InvalidInputFormatConfig("Duplicate attribute name: " + a.getName());
+                    this.attributes.put(a.getName(), a);
+                });
     }
 
     public boolean isDefaultIndexAttributes() {
         return defaultIndexAttributes;
     }
 
-    public synchronized Map<String, ConfigAttribute> getAttributes() {
-        if (allAttributes == null) {
-            allAttributes = new LinkedHashMap<>();
-            if (!excludeAttributes.isEmpty()) {
-                for (String name: excludeAttributes) {
-                    ConfigAttribute ca = new ConfigAttribute();
-                    ca.setName(name);
-                    ca.setExclude(true);
-                    allAttributes.put(ca.getName(), ca);
-                }
-            }
-            if (includeAttributes != null) {
-                for (String name: includeAttributes) {
-                    if (allAttributes.containsKey(name))
-                        throw new InvalidInputFormatConfig("Duplicate attribute name: " + name);
-                    ConfigAttribute ca = new ConfigAttribute();
-                    ca.setName(name);
-                    allAttributes.put(ca.getName(), ca);
-                }
-            }
-            for (ConfigAttribute attr: attributes) {
-                if (allAttributes.containsKey(attr.getName()))
-                    throw new InvalidInputFormatConfig("Duplicate attribute name: " + attr.getName());
-                allAttributes.put(attr.getName(), attr);
-            }
-        }
-        return allAttributes;
+    public Map<String, ConfigAttribute> getAttributes() {
+        // We don't synchronize reads, as attributes is only set once when config is read
+        return attributes;
     }
 }

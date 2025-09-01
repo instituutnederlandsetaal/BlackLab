@@ -111,7 +111,7 @@ public abstract class ResultsList<T> extends ResultsAbstract {
         };
     }
     
-    public synchronized T get(long i) {
+    public T get(long i) {
         if (ensureResultsRead(i + 1)) {
             return results.get((int)i);
         }
