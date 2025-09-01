@@ -47,7 +47,8 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     private boolean relNameIsFullRelType = false;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, PropContext context, boolean invert) {
-        super(prop, context, invert, determineMatchInfoField(context.hits(), prop.groupName, prop.spanMode));
+        super(prop, context, invert, context.hits() == null ? null :
+                        determineMatchInfoField(context.hits(), prop.groupName, prop.spanMode));
         groupName = prop.groupName;
         spanMode = prop.spanMode;
 
