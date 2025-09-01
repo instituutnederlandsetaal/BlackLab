@@ -51,6 +51,12 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
 
     @Override
     public int compareTo(final GroupId other) {
-        return Integer.compare(hash, other.hash);
+        int cmp = Integer.compare(hash, other.hash);
+        if (cmp == 0)
+            // flatmap for comparison
+            cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
+        if (cmp == 0)
+            cmp = Arrays.compare(metadataValues, other.metadataValues);
+        return cmp;
     }
 }
