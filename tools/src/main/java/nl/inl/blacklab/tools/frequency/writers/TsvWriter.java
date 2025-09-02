@@ -116,7 +116,7 @@ public final class TsvWriter extends FreqListWriter {
             for (final int i: idx) {
                 // add metadata value for this index
                 final String name = cfg.metadata().get(i).name();
-                final String metaValue = database.freqMetadata().getValue(name, metadataValues[i]);
+                final String metaValue = database.metadataTerms().getValue(name, metadataValues[i]);
                 record.add(metaValue);
             }
             // then, write the group ID of the grouped metadata
@@ -126,7 +126,7 @@ public final class TsvWriter extends FreqListWriter {
             if (metadataValues != null) {
                 for (int i = 0; i < cfg.metadata().size(); i++) {
                     final String name = cfg.metadata().get(i).name();
-                    final String metaValue = database.freqMetadata().getValue(name, metadataValues[i]);
+                    final String metaValue = database.metadataTerms().getValue(name, metadataValues[i]);
                     record.add(metaValue);
                 }
             }

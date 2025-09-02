@@ -10,10 +10,10 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 
-final public class FreqMetadata {
-    private final Map<String, List<String>> metaFieldToValues;
+final public class MetadataTerms {
+    private final Map<String, List<String>> terms;
 
-    public FreqMetadata(final BlackLabIndex index, final FrequencyListConfig cfg) {
+    public MetadataTerms(final BlackLabIndex index, final FrequencyListConfig cfg) {
         final var uniqueMetadata = new Object2ObjectArrayMap<String, Set<String>>();
         // Initialize with custom null values
         final int numMetadata = cfg.metadata().size();
@@ -36,22 +36,22 @@ final public class FreqMetadata {
             }
         });
         // Add to map with lists for sake of indexing
-        metaFieldToValues = new Object2ObjectArrayMap<>();
+        terms = new Object2ObjectArrayMap<>();
         for (int i = 0; i < numMetadata; i++) {
             final var metadata = cfg.metadata().get(i);
             System.out.println("  " + uniqueMetadata.get(metadata.name()).size() + " unique values of " + metadata.name());
-            metaFieldToValues.put(metadata.name(), new ObjectArrayList<>(uniqueMetadata.get(metadata.name())));
+            terms.put(metadata.name(), new ObjectArrayList<>(uniqueMetadata.get(metadata.name())));
         }
     }
 
     public int getIdx(final String field, final String value) {
-        final int i = metaFieldToValues.get(field).indexOf(value);
+        final int i = terms.get(field).indexOf(value);
         if (i < 0)
             throw new RuntimeException("Value '" + value + "' not found in metadata field '" + field + "'");
         return i;
     }
 
     public String getValue(final String field, final int idx) {
-        return metaFieldToValues.get(field).get(idx);
+        return terms.get(field).get(idx);
     }
 }

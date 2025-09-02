@@ -38,7 +38,7 @@ public final class MetaGroupWriter extends FreqListWriter {
                     // add metadata value for this index
                     final var idxSelection = helper.groupedMetadata();
                     final String name = cfg.metadata().get(idxSelection[i]).name();
-                    final String metaValue = helper.freqMetadata().getValue(name, k[i]);
+                    final String metaValue = helper.metadataTerms().getValue(name, k[i]);
                     record.add(metaValue);
                 }
                 csv.writeRecord(record);

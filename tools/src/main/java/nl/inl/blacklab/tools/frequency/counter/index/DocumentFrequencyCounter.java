@@ -4,9 +4,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Nullable;
+
+import nl.inl.blacklab.tools.frequency.data.MetadataTerms;
 
 import org.apache.lucene.document.Document;
 
@@ -98,6 +99,15 @@ final public class DocumentFrequencyCounter {
 
     @Nullable
     private DocumentMetadata getDocumentMetadata() {
+        final var metaTermIds = getMetadataTermIds(helper.database().metadataTerms(), doc, cfg);
+        if (metaTermIds == null)
+            return null;
+        // precompute, it's the same for all hits in document
+        final int hash = Arrays.hashCode(metaTermIds);
+        return new DocumentMetadata(metaTermIds, hash);
+    }
+
+    public static int[] getMetadataTermIds(final MetadataTerms terms, final Document doc, final FrequencyListConfig cfg) {
         final int numFields = cfg.metadata().size();
         final var metaValues = new int[numFields];
         // for each metadata field defined in the config
@@ -116,13 +126,11 @@ final public class DocumentFrequencyCounter {
                 }
             }
             // retrieve the id for this value
-            final int id = helper.database().freqMetadata().getIdx(metaCfg.name(), fieldValue);
+            final int id = terms.getIdx(metaCfg.name(), fieldValue);
             // add the processed value
             metaValues[i] = id;
         }
-        // precompute, it's the same for all hits in document
-        final int hash = Arrays.hashCode(metaValues);
-        return new DocumentMetadata(metaValues, hash);
+        return metaValues;
     }
 
     private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta) {
