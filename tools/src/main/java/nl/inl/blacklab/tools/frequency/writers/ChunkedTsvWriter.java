@@ -4,21 +4,22 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
+
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.util.BufferedForyInputStream;
 import nl.inl.util.Timer;
 
 public final class ChunkedTsvWriter extends FreqListWriter {
     private final TsvWriter tsvWriter;
 
-    public ChunkedTsvWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
-        super(cfg, aInfo);
-        this.tsvWriter = new TsvWriter(cfg, aInfo);
+    public ChunkedTsvWriter(final FrequencyListConfig cfg, final IndexHelper helper) {
+        super(cfg);
+        this.tsvWriter = new TsvWriter(cfg, helper);
     }
 
     private File getFile() {

@@ -5,7 +5,7 @@ import java.util.Map;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 
-public class IdMap {
+final public class IdMap {
     private final Object2IntOpenCustomHashMap<int[]> map;
     private int _id = 1;
 

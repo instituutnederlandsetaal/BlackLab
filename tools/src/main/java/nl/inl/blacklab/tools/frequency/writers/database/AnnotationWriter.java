@@ -1,21 +1,22 @@
-package nl.inl.blacklab.tools.frequency.writers;
+package nl.inl.blacklab.tools.frequency.writers.database;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
+import nl.inl.blacklab.tools.frequency.data.IdMap;
+import nl.inl.blacklab.tools.frequency.writers.FreqListWriter;
 import nl.inl.util.Timer;
 
 public final class AnnotationWriter extends FreqListWriter {
     private final StringBuilder sb = new StringBuilder();
 
-    public AnnotationWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
-        super(cfg, aInfo);
+    public AnnotationWriter(final FrequencyListConfig cfg) {
+        super(cfg);
     }
 
-    public void write() {
+    public void write(final IdMap wordToId) {
         final var t = new Timer();
         if (cfg.annotations().isEmpty()) {
             System.out.println("  No annotations found, skipping annotation IDs report.");
@@ -23,7 +24,7 @@ public final class AnnotationWriter extends FreqListWriter {
         }
 
         final var file = getFile();
-        final var map = aInfo.getWordToId().getMap();
+        final var map = wordToId.getMap();
         try (final var csv = getCsvWriter(file)) {
             map.forEach((k, v) -> {
                 final var record = new ArrayList<String>();

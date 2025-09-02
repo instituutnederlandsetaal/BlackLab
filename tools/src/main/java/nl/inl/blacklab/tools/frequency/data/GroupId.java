@@ -3,36 +3,16 @@ package nl.inl.blacklab.tools.frequency.data;
 import java.io.Serializable;
 import java.util.Arrays;
 
+import nl.inl.blacklab.tools.frequency.data.document.DocumentMetadata;
+
 /**
- * Group id, with a precalculated hashcode to save time while grouping and sorting.
+ * Group id with precalculated hash to save time while grouping and sorting.
  */
-public final class GroupId implements Comparable<GroupId>, Serializable {
-    private final int[] tokenIds;
-    private final int[] tokenSortPositions;
-    private final int[] metadataValues;
-    private final int hash;
+public record GroupId(int[] tokens, int[] sorting, int[] metadata, int hash)
+        implements Comparable<GroupId>, Serializable {
 
-    /**
-     * @param tokenSortPositions sort position for each token in the group id
-     */
-    public GroupId(final int[] tokenIds, final int[] tokenSortPositions,
-            final DocumentMetadata meta) {
-        this.tokenIds = tokenIds;
-        this.tokenSortPositions = tokenSortPositions;
-        this.metadataValues = meta.values();
-        hash = Arrays.hashCode(tokenSortPositions) ^ meta.hash();
-    }
-
-    public int[] getTokenIds() {
-        return tokenIds;
-    }
-
-    public int[] getTokenSortPositions() {
-        return tokenSortPositions;
-    }
-
-    public int[] getMetadataValues() {
-        return metadataValues;
+    public GroupId(final int[] tokens, final int[] sorting, final DocumentMetadata meta) {
+        this(tokens, sorting, meta.values(), Arrays.hashCode(sorting) ^ meta.hash());
     }
 
     @Override
@@ -40,23 +20,21 @@ public final class GroupId implements Comparable<GroupId>, Serializable {
         return hash;
     }
 
-    // Assume only called with other instances of IdHash (faster for large groupings)
+    // Assume we only call with this class
     @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(final Object obj) {
-        return ((GroupId) obj).hash == hash &&
-                Arrays.equals(((GroupId) obj).tokenSortPositions, tokenSortPositions) &&
-                Arrays.equals(((GroupId) obj).metadataValues, metadataValues);
+        final var other = (GroupId) obj;
+        return other.hash == hash && Arrays.equals(other.sorting, sorting) && Arrays.equals(other.metadata, metadata);
     }
 
     @Override
     public int compareTo(final GroupId other) {
         int cmp = Integer.compare(hash, other.hash);
         if (cmp == 0)
-            // flatmap for comparison
-            cmp = Arrays.compare(tokenSortPositions, other.tokenSortPositions);
+            cmp = Arrays.compare(sorting, other.sorting);
         if (cmp == 0)
-            cmp = Arrays.compare(metadataValues, other.metadataValues);
+            cmp = Arrays.compare(metadata, other.metadata);
         return cmp;
     }
 }

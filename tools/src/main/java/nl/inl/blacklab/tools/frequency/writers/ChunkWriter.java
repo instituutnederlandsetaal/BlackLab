@@ -6,15 +6,14 @@ import java.util.Map;
 import java.util.UUID;
 
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;
 
 public final class ChunkWriter extends FreqListWriter {
     private final File tmpDir;
 
-    public ChunkWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
-        super(cfg, aInfo);
+    public ChunkWriter(final FrequencyListConfig cfg) {
+        super(cfg);
         this.tmpDir = new File(cfg.runConfig().outputDir(), "tmp");
     }
 

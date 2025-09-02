@@ -1,19 +1,19 @@
-package nl.inl.blacklab.tools.frequency.writers;
+package nl.inl.blacklab.tools.frequency.writers.database;
 
 import java.io.File;
 import java.io.IOException;
 
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
+import nl.inl.blacklab.tools.frequency.data.helper.AnnotationHelper;
+import nl.inl.blacklab.tools.frequency.writers.FreqListWriter;
 import nl.inl.util.Timer;
 
 public final class LookupTableWriter extends FreqListWriter {
-    public LookupTableWriter(final BlackLabIndex index, final FrequencyListConfig cfg) {
-        super(cfg, new AnnotationInfo(index, cfg));
+    public LookupTableWriter(final FrequencyListConfig cfg) {
+        super(cfg);
     }
 
     private static String getToken(final Terms terms, final int id) {
@@ -30,19 +30,27 @@ public final class LookupTableWriter extends FreqListWriter {
     }
 
     private File getFile(final Annotation annotation) {
-        final String fileName = cfg.name() + "_" + annotation.name() + getExt();
+        final String fileName = cfg.name() + "_" + cfg.annotationPrettyName(annotation) + getExt();
         return new File(cfg.runConfig().outputDir(), fileName);
     }
 
-    public void write() {
+    public void write(final AnnotationHelper helper) {
+        if (cfg.ngramSize() != 1) {
+            System.out.println("  Ngram size is not 1, skipping annotation id lookup tables.");
+            return;
+        }
+        final var annotations = helper.annotations();
+        if (annotations.isEmpty()) {
+            System.out.println("  No annotations found, skipping annotation id lookup tables.");
+            return;
+        }
         final var t = new Timer();
-        final var annotations = aInfo.getAnnotations();
-        for (int i = 0; i < annotations.length; i++) {
-            final var annotation = annotations[i];
+        for (int i = 0; i < annotations.size(); i++) {
+            final var annotation = annotations.get(i);
             // write individual lookup table for each annotation to a separate file
             final var file = getFile(annotation);
             try (final var csv = getCsvWriter(file)) {
-                final var terms = aInfo.getTerms()[i];
+                final var terms = helper.forwardIndices().get(i).terms();
                 // id is simply the index in the terms list
                 for (int id = 1, len = terms.numberOfTerms(); id < len; id++) {
                     final String token = getToken(terms, id);

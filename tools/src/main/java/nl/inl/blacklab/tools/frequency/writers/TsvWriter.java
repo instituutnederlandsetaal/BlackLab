@@ -12,25 +12,27 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 import nl.inl.util.Timer;
 
 /**
  * Writes frequency results to a TSV file.
  */
 public final class TsvWriter extends FreqListWriter {
+    private final IndexHelper helper;
 
-    public TsvWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
-        super(cfg, aInfo);
+    public TsvWriter(final FrequencyListConfig cfg, final IndexHelper helper) {
+        super(cfg);
+        this.helper = helper;
     }
 
     private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
-            final Terms termIndex) {
+            final Terms terms) {
         // map token int ids to their string values
         final String[] tokenList = new String[ngramSize];
         for (int j = 0; j < ngramSize; j++) {
-            tokenList[j] = MatchSensitivity.INSENSITIVE.desensitize(termIndex.get(tokenIds[tokenArrIndex + j]));
+            tokenList[j] = MatchSensitivity.INSENSITIVE.desensitize(terms.get(tokenIds[tokenArrIndex + j]));
         }
         // join with a space
         return String.join(" ", tokenList);
@@ -87,43 +89,44 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     private void addAnnotationsToRecord(final GroupId groupId, final List<String> record) {
-        final int[] tokenIds = groupId.getTokenSortPositions();
-        if (cfg.runConfig().compressed() && tokenIds.length != 0) {
+        final int[] sorting = groupId.sorting();
+        if (cfg.runConfig().compressed() && sorting.length != 0) {
             // When writing database format, simply register to get an ID and write that.
-            final int wordID = aInfo.getWordToId().putOrGet(tokenIds);
+            final int wordID = helper.database().wordToId().putOrGet(sorting);
             record.add(Integer.toString(wordID));
         } else {
             // for each annotation construct a string for the ngram
             final int ngramSize = cfg.ngramSize();
-            for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
+            for (int i = 0, tokenArrIndex = 0, len = sorting.length;
                  tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
                 // get term index for the annotation
-                final Terms termIndex = aInfo.getTerms()[i]; // contains id to string mapping
-                final String token = writeStringRecord(ngramSize, tokenIds, tokenArrIndex, termIndex);
+                final var terms = helper.annotations().forwardIndices().get(i).terms(); // contains id to string mapping
+                final String token = writeStringRecord(ngramSize, sorting, tokenArrIndex, terms);
                 record.add(token);
             }
         }
     }
 
     private void addMetadataToRecord(final GroupId groupId, final List<String> record) {
-        final int[] metadataValues = groupId.getMetadataValues();
-        if (cfg.runConfig().databaseFormat() && aInfo.getGroupedMetaIdx().length > 0) {
+        final var database = helper.database();
+        final int[] metadataValues = groupId.metadata();
+        if (cfg.runConfig().databaseFormat() && database.groupedMetadata().length > 0) {
             // first write out non-grouped metadata
-            final int[] idx = aInfo.getNonGroupedMetaIdx();
+            final var idx = database.ungroupedMetadata();
             for (final int i: idx) {
                 // add metadata value for this index
                 final String name = cfg.metadata().get(i).name();
-                final String metaValue = aInfo.getFreqMetadata().getValue(name, metadataValues[i]);
+                final String metaValue = database.freqMetadata().getValue(name, metadataValues[i]);
                 record.add(metaValue);
             }
             // then, write the group ID of the grouped metadata
-            final int metaId = aInfo.getMetaToId().putOrGet(groupId.getMetadataValues(), aInfo.getGroupedMetaIdx());
+            final int metaId = database.metaToId().putOrGet(groupId.metadata(), database.groupedMetadata());
             record.add(Integer.toString(metaId));
         } else {
             if (metadataValues != null) {
                 for (int i = 0; i < cfg.metadata().size(); i++) {
                     final String name = cfg.metadata().get(i).name();
-                    final String metaValue = aInfo.getFreqMetadata().getValue(name, metadataValues[i]);
+                    final String metaValue = database.freqMetadata().getValue(name, metadataValues[i]);
                     record.add(metaValue);
                 }
             }

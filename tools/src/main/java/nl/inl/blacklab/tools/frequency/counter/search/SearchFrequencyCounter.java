@@ -18,12 +18,15 @@ import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 
-// Non memory-optimized version
-public final class SearchCounter extends FrequencyCounter {
+/**
+ * Non memory-optimized FrequencyCounter using search queries.
+ */
+public final class SearchFrequencyCounter extends FrequencyCounter {
 
-    public SearchCounter(final BlackLabIndex index, final FrequencyListConfig cfg) {
-        super(index, cfg);
+    public SearchFrequencyCounter(final BlackLabIndex index, final FrequencyListConfig cfg, final IndexHelper helper) {
+        super(index, cfg, helper);
     }
 
     @Override
@@ -43,7 +46,7 @@ public final class SearchCounter extends FrequencyCounter {
 
     private SearchHitGroups getSearch() {
         final var queryInfo = QueryInfo.create(index);
-        final BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, aInfo.getAnnotatedField().name());
+        final BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, helper.annotations().annotatedField().name());
         final var groupBy = getGroupBy();
         return index.search()
                 .find(anyToken)
@@ -54,7 +57,7 @@ public final class SearchCounter extends FrequencyCounter {
     private HitProperty getGroupBy() {
         final var groupProps = new ArrayList<HitProperty>();
         // Add annotations to group by
-        for (final var annotation: aInfo.getAnnotations()) {
+        for (final var annotation: helper.annotations().annotations()) {
             groupProps.add(new HitPropertyHitText(index, annotation));
         }
         // Add metadata fields to group by

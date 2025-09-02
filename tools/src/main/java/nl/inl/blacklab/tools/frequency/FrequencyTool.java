@@ -7,12 +7,10 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.searches.SearchCacheDummy;
-import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 import nl.inl.blacklab.tools.frequency.config.ArgsParser;
 import nl.inl.blacklab.tools.frequency.config.Config;
-import nl.inl.blacklab.tools.frequency.writers.AnnotationWriter;
-import nl.inl.blacklab.tools.frequency.writers.LookupTableWriter;
-import nl.inl.blacklab.tools.frequency.writers.MetaGroupWriter;
+import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 import nl.inl.util.Timer;
 
 /**
@@ -43,16 +41,10 @@ public class FrequencyTool {
     private static void makeFrequencyLists(final BlackLabIndex index, final Config cfg) {
         for (final var fl: cfg.frequencyLists()) {
             final var t = new Timer();
-            final var counter = FrequencyCounter.from(index, fl);
+            final var helper = IndexHelper.create(index, fl);
+            final var counter = FrequencyCounter.create(index, fl, helper);
             counter.count();
-            // if database format, write lookup tables
-            if (cfg.runConfig().databaseFormat()) {
-                if (fl.ngramSize() == 1) {
-                    new LookupTableWriter(index, fl).write();
-                }
-                new MetaGroupWriter(fl, counter.getAnnotationInfo()).write();
-                new AnnotationWriter(fl, counter.getAnnotationInfo()).write();
-            }
+            helper.writeDatabase(fl);
             System.out.println("  Generating " + fl.name() + " took " + t.elapsedDescription());
         }
     }

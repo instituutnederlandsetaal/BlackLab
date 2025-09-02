@@ -17,21 +17,18 @@ import de.siegmar.fastcsv.writer.QuoteStrategies;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.util.BufferedForyInputStream;
 
-abstract class FreqListWriter {
+public abstract class FreqListWriter {
     static final Fory fory = getFory();
     private static final CsvWriter.CsvWriterBuilder csvWriterBuilder = CsvWriter.builder()
             .fieldSeparator('\t')
             .quoteStrategy(QuoteStrategies.EMPTY);
-    final FrequencyListConfig cfg;
-    final AnnotationInfo aInfo;
+    protected final FrequencyListConfig cfg;
 
-    FreqListWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
+    protected FreqListWriter(final FrequencyListConfig cfg) {
         this.cfg = cfg;
-        this.aInfo = aInfo;
     }
 
     private static Fory getFory() {
@@ -52,7 +49,7 @@ abstract class FreqListWriter {
         }
     }
 
-    final CsvWriter getCsvWriter(final File file) {
+    protected final CsvWriter getCsvWriter(final File file) {
         final var stream = getOutputStream(file);
         final var w = new OutputStreamWriter(stream, StandardCharsets.UTF_8);
         return csvWriterBuilder.build(w);
@@ -68,11 +65,11 @@ abstract class FreqListWriter {
         }
     }
 
-    final String getExt() {
+    protected final String getExt() {
         return cfg.runConfig().compressed() ? ".tsv.lz4" : ".tsv";
     }
 
-    final RuntimeException reportIOException(final IOException e) {
+    protected final RuntimeException reportIOException(final IOException e) {
         return new RuntimeException("Error writing output for " + cfg.name(), e);
     }
 }

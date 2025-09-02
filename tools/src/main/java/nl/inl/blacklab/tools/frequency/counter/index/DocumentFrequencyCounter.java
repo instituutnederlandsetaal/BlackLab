@@ -18,31 +18,33 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
-import nl.inl.blacklab.tools.frequency.data.DocumentMetadata;
-import nl.inl.blacklab.tools.frequency.data.DocumentTokens;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.document.DocumentMetadata;
+import nl.inl.blacklab.tools.frequency.data.document.DocumentTokens;
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 
-final public class DocumentCounter {
+/**
+ * Counts frequencies in a single document.
+ */
+final public class DocumentFrequencyCounter {
     private static final int[] EMPTY_ARRAY = new int[0];
     private final FrequencyListConfig cfg;
-    private final AnnotationInfo aInfo;
+    private final IndexHelper helper;
     private final Document doc;
     private final int docId;
     private final int docLength;
-    private final List<String> metaFieldNames;
 
-    DocumentCounter(final int docId, final BlackLabIndex index, final FrequencyListConfig cfg,
-                    final AnnotationInfo aInfo) throws IOException {
+    DocumentFrequencyCounter(final int docId, final BlackLabIndex index, final FrequencyListConfig cfg,
+            final IndexHelper helper) throws IOException {
         this.cfg = cfg;
-        this.aInfo = aInfo;
+        this.helper = helper;
         this.docId = docId;
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
          * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
          */
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        metaFieldNames = cfg.metadata().stream().map(MetadataConfig::name).toList();
+        final var metaFieldNames = cfg.metadata().stream().map(MetadataConfig::name).toList();
 
         // Start actually calculating the requests frequencies.
 
@@ -71,7 +73,7 @@ final public class DocumentCounter {
         });
     }
 
-    public void process(final Map<GroupId, Integer> occurrences, final Set<String> termFrequencies) {
+    public void process(final Map<GroupId, Integer> occurrences) {
         // Step 1: read all values for the to-be-grouped annotations for this document
         // This will create one int[] for every annotation, containing ids that map to the values for this document for this annotation
         final DocumentTokens doc = getDocumentTokens();
@@ -83,30 +85,27 @@ final public class DocumentCounter {
         }
         // now we have all values for all relevant annotations for this document
         // iterate again and pair up the nth entries for all annotations, then store that as a group.
-        final var occsInDoc = getDocumentFrequencies(doc, meta, termFrequencies);
+        final var occsInDoc = getDocumentFrequencies(doc, meta);
         // Step 3: merge the occurrences in this document with the global occurrences
         mergeOccurrences(occurrences, occsInDoc);
     }
 
     private DocumentTokens getDocumentTokens() {
-        final var annotations = aInfo.getAnnotations();
-        final int numAnnotations = annotations.length;
-        final var tokensPerAnnotation = new int[numAnnotations][];
-        final var sortingPerAnnotation = new int[numAnnotations][];
+        final int numAnnotations = helper.annotations().annotations().size();
+        final var tokens = new int[numAnnotations][];
+        final var sorting = new int[numAnnotations][];
 
-        for (int i = 0; i < numAnnotations; i++) {
-            final var annotation = annotations[i];
-            // From forward index
-            final var index = aInfo.getForwardIndexOf(annotation);
+        int i = 0;
+        for (final var fi : helper.annotations().forwardIndices()) {
             // Get the tokens for this annotation
-            final int[] tokenValues = index.getDocument(docId);
-            tokensPerAnnotation[i] = tokenValues;
+            tokens[i] = fi.getDocument(docId);
             // And look up their sort values
-            sortingPerAnnotation[i] = new int[docLength + 1]; // +1 for the extra closing token
-            aInfo.getTerms()[i].toSortOrder(tokenValues, sortingPerAnnotation[i], MatchSensitivity.INSENSITIVE);
+            sorting[i] = new int[docLength + 1]; // +1 for the extra closing token
+            fi.terms().toSortOrder(tokens[i], sorting[i], MatchSensitivity.INSENSITIVE);
+            i++;
         }
 
-        return new DocumentTokens(tokensPerAnnotation, sortingPerAnnotation);
+        return new DocumentTokens(tokens, sorting);
     }
 
     @Nullable
@@ -129,7 +128,7 @@ final public class DocumentCounter {
                 }
             }
             // retrieve the id for this value
-            final int id = aInfo.getFreqMetadata().getIdx(metaCfg.name(), fieldValue);
+            final int id = helper.database().freqMetadata().getIdx(metaCfg.name(), fieldValue);
             // add the processed value
             metaValues[i] = id;
         }
@@ -138,13 +137,11 @@ final public class DocumentCounter {
         return new DocumentMetadata(metaValues, hash);
     }
 
-    private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta,
-            final Set<String> termFrequencies) {
+    private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta) {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
         final Map<GroupId, Integer> occsInDoc = new Object2IntOpenHashMap<>();
         final int ngramSize = cfg.ngramSize();
-        final var cutoffTerms = cfg.cutoff() != null ? aInfo.getTerms()[0] : null;
-        final int numAnnotations = aInfo.getAnnotations().length;
+        final int numAnnotations = helper.annotations().annotations().size();
 
         if (numAnnotations == 0) {
             // just doc length, no annotations
@@ -181,9 +178,9 @@ final public class DocumentCounter {
                 // Check if any of the ngrams tokens is below the cutoff
                 boolean skipGroup = false;
                 for (int j = 0; j < ngramSize; j++) {
-                    final int tokenID = groupId.getTokenIds()[j];
-                    final String token = cutoffTerms.get(tokenID);
-                    if (!termFrequencies.contains(token)) {
+                    final int tokenID = groupId.tokens()[j];
+                    final String token = helper.cutoff().terms().get(tokenID);
+                    if (!helper.cutoff().aboveCutoff().contains(token)) {
                         skipGroup = true;
                         break; // no need to check the rest of the ngram
                     }
@@ -195,7 +192,6 @@ final public class DocumentCounter {
             // Count occurrence in this doc
             occsInDoc.merge(groupId, 1, Integer::sum);
         }
-
         return occsInDoc;
     }
 }

@@ -39,7 +39,7 @@ public record Config(
     }
 
     /**
-     * Verify config for duplicate frequency list names and verifies each frequency list.
+     * Verify config for duplicate frequency list names and verifies each list.
      */
     public void verify(final BlackLabIndex index) {
         final var names = new HashSet<String>();

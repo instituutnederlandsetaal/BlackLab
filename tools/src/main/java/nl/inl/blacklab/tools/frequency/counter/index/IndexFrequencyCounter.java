@@ -3,33 +3,29 @@ package nl.inl.blacklab.tools.frequency.counter.index;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
-import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMapUnsafe;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
 
 /**
- * More optimized version of HitGroupsTokenFrequencies.
+ * More optimized version of FrequencyCounter.
  * Takes shortcuts to be able to process huge corpora without
  * running out of memory, at the expense of genericity.
  * Major changes:
@@ -42,38 +38,14 @@ import nl.inl.util.Timer;
  * (uses ConcurrentSkipListMap, or alternatively wraps a TreeMap at the end;
  * note that using ConcurrentSkipListMap has consequences for the compute() method, see there)
  */
-public final class IndexCounter extends FrequencyCounter {
+public final class IndexFrequencyCounter extends FrequencyCounter {
     private final ChunkWriter chunkWriter;
     private final ChunkedTsvWriter chunkedTsvWriter;
-    private final Set<String> termFrequencies; // used for cutoff
 
-    public IndexCounter(final BlackLabIndex index, final FrequencyListConfig cfg) {
-        super(index, cfg);
-        this.chunkWriter = new ChunkWriter(cfg, aInfo);
-        this.chunkedTsvWriter = new ChunkedTsvWriter(cfg, aInfo);
-        this.termFrequencies = getTermFrequencies(index, cfg);
-    }
-
-    private Set<String> getTermFrequencies(final BlackLabIndex index, final FrequencyListConfig fCfg) {
-        final Set<String> termFrequencies = new ObjectOpenHashSet<>();
-        if (fCfg.cutoff() != null) {
-            final var t = new Timer();
-            final var sensitivity = aInfo.getCutoffAnnotation().sensitivity(MatchSensitivity.SENSITIVE);
-            final var searcher = new IndexSearcher(index.reader());
-            final Map<String, Integer> termFrequenciesMap = LuceneUtil.termFrequencies(searcher, null, sensitivity,
-                    Collections.emptySet());
-            // Only save the strings when the frequency is above the cutoff
-            for (final Map.Entry<String, Integer> entry: termFrequenciesMap.entrySet()) {
-                if (entry.getValue() >= fCfg.cutoff().count()) {
-                    termFrequencies.add(entry.getKey());
-                }
-            }
-            final String logging = " Retrieved " + termFrequenciesMap.size() + " term frequencies " +
-                    "for annotation '" + fCfg.cutoff().annotation() + "' with " +
-                    termFrequencies.size() + " above cutoff in " + t.elapsedDescription(true);
-            System.out.println(logging);
-        }
-        return termFrequencies;
+    public IndexFrequencyCounter(final BlackLabIndex index, final FrequencyListConfig cfg, final IndexHelper helper) {
+        super(index, cfg, helper);
+        this.chunkWriter = new ChunkWriter(cfg);
+        this.chunkedTsvWriter = new ChunkedTsvWriter(cfg, helper);
     }
 
     @Override
@@ -202,8 +174,8 @@ public final class IndexCounter extends FrequencyCounter {
     ) {
         docIds.parallelStream().forEach(docId -> {
             try {
-                final var doc = new DocumentCounter(docId, index, cfg, aInfo);
-                doc.process(occurrences, termFrequencies);
+                final var doc = new DocumentFrequencyCounter(docId, index, cfg, helper);
+                doc.process(occurrences);
             } catch (final IOException e) {
                 throw BlackLabRuntimeException.wrap(e);
             }

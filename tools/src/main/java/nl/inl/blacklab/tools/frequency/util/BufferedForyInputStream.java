@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency.data;
+package nl.inl.blacklab.tools.frequency.util;
 
 import java.io.InputStream;
 

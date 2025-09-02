@@ -1,24 +1,30 @@
-package nl.inl.blacklab.tools.frequency.writers;
+package nl.inl.blacklab.tools.frequency.writers.database;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
+import nl.inl.blacklab.tools.frequency.data.helper.DatabaseHelper;
+import nl.inl.blacklab.tools.frequency.writers.FreqListWriter;
 import nl.inl.util.Timer;
 
 public final class MetaGroupWriter extends FreqListWriter {
 
-    public MetaGroupWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
-        super(cfg, aInfo);
+    public MetaGroupWriter(final FrequencyListConfig cfg) {
+        super(cfg);
     }
 
-    public void write() {
+    public void write(final DatabaseHelper helper) {
+        if (cfg.ngramSize() != 1) {
+            System.out.println("  Ngram size is not 1, skipping grouped metadata IDs report.");
+            return;
+        }
+
         final var t = new Timer();
 
         final var file = getFile();
-        final var map = aInfo.getMetaToId().getMap();
+        final var map = helper.metaToId().getMap();
         if (map.isEmpty()) {
             System.out.println("  No metadata found, skipping grouped metadata IDs report.");
             return;
@@ -30,9 +36,9 @@ public final class MetaGroupWriter extends FreqListWriter {
                 record.add(String.valueOf(v)); // add ID as first column
                 for (int i = 0; i < k.length; i++) {
                     // add metadata value for this index
-                    final int[] idxSelection = aInfo.getGroupedMetaIdx();
+                    final var idxSelection = helper.groupedMetadata();
                     final String name = cfg.metadata().get(idxSelection[i]).name();
-                    final String metaValue = aInfo.getFreqMetadata().getValue(name, k[i]);
+                    final String metaValue = helper.freqMetadata().getValue(name, k[i]);
                     record.add(metaValue);
                 }
                 csv.writeRecord(record);

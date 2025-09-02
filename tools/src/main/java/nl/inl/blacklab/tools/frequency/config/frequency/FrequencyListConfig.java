@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.tools.frequency.config.RunConfig;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.tools.frequency.config.RunConfig;
 
 /**
  * Config of a frequency list.
@@ -43,7 +44,7 @@ public record FrequencyListConfig(
         ngramSize = Math.max(ngramSize, 1); // ngramSize is at least 1
     }
 
-     public FrequencyListConfig changeRunConfig(final RunConfig runConfig) {
+    public FrequencyListConfig changeRunConfig(final RunConfig runConfig) {
         return new FrequencyListConfig(name, ngramSize, annotatedField, annotations, metadata, filter, cutoff,
                 runConfig);
     }
@@ -59,6 +60,9 @@ public record FrequencyListConfig(
         return StringUtils.join(parts, "-");
     }
 
+    /**
+     * Verify if the BlackLabIndex contains the specified annotations and metadata and if it can be run.
+     */
     public void verify(final BlackLabIndex index) {
         // Verify annotated field
         if (!index.annotatedFields().exists(annotatedField))
@@ -75,5 +79,13 @@ public record FrequencyListConfig(
         // Verify run config
         if (runConfig == null)
             throw new IllegalArgumentException("Run config missing");
+    }
+
+    public String annotationPrettyName(final Annotation annotation) {
+        final var config = annotations.stream().filter(cfg -> cfg.name().equals(annotation.name())).findFirst();
+        if (config.isEmpty())
+            return annotation.name();
+        else
+            return config.get().prettyName();
     }
 }
