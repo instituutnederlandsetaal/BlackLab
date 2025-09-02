@@ -38,29 +38,18 @@ final public class DocumentFrequencyCounter {
         this.cfg = cfg;
         this.helper = helper;
         this.docId = docId;
-        /*
-         * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
-         * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
-         */
-        // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        final var metaFieldNames = cfg.metadata().stream().map(MetadataConfig::name).toList();
+        final String docLengthField = AnnotatedFieldNameUtil.lengthTokensField(cfg.annotatedField());
+        this.doc = openDocument(index, docId, cfg, docLengthField);
+        this.docLength = Integer.parseInt(doc.get(docLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+    }
 
-        // Start actually calculating the requests frequencies.
-
-        // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
-        // calculate the frequencies.
-        final String fieldName = cfg.annotatedField();
-        final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
-
+    private static Document openDocument(final BlackLabIndex index, final int docId, final FrequencyListConfig cfg, final String docLengthField) throws IOException {
         // Determine all the fields we want to be able to load, so we don't need to load the entire document
-        final Set<String> fieldsToLoad = new HashSet<>();
-        fieldsToLoad.add(lengthTokensFieldName);
+        final var fieldsToLoad = new HashSet<String>();
+        fieldsToLoad.add(docLengthField);
+        final var metaFieldNames = cfg.metadata().stream().map(MetadataConfig::name).toList();
         fieldsToLoad.addAll(metaFieldNames);
-
-        final var reader = index.reader();
-        this.doc = reader.document(docId, fieldsToLoad);
-        this.docLength =
-                Integer.parseInt(doc.get(lengthTokensFieldName)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+        return index.reader().document(docId, fieldsToLoad);
     }
 
     /**
@@ -122,7 +111,7 @@ final public class DocumentFrequencyCounter {
                 if (metaCfg.nullValue() != null) {
                     fieldValue = metaCfg.nullValue();
                 } else if (metaCfg.required()) {
-                    // if it's required but not preset, discard this document
+                    // if it's required but not present, discard this document
                     return null;
                 }
             }

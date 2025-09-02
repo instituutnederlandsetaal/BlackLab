@@ -14,29 +14,34 @@ final public class FreqMetadata {
     private final Map<String, List<String>> metaFieldToValues;
 
     public FreqMetadata(final BlackLabIndex index, final FrequencyListConfig cfg) {
-        metaFieldToValues = new Object2ObjectArrayMap<>();
-        for (final var meta: cfg.metadata()) {
-            final var valueSet = new ObjectArrayList<String>();
-            final var valueFreqs = UniqueTermsFromField(index, meta.name());
-            valueSet.addAll(valueFreqs);
+        final var uniqueMetadata = new Object2ObjectArrayMap<String, Set<String>>();
+        // Initialize with custom null values
+        final int numMetadata = cfg.metadata().size();
+        for (int i = 0; i < numMetadata; i++) {
+            final var metadata = cfg.metadata().get(i);
+            final var values = new ObjectLinkedOpenHashSet<String>();
             // if this metadata has a custom null value, add it
-            if (meta.nullValue() != null) {
-                valueSet.add(meta.nullValue());
+            if (metadata.nullValue() != null) {
+                values.add(metadata.nullValue());
             }
-            metaFieldToValues.put(meta.name(), valueSet);
-            System.out.println("  " + valueSet.size() + " unique values of " + meta.name());
+            uniqueMetadata.put(metadata.name(), values);
         }
-    }
-
-    public static Set<String> UniqueTermsFromField(final BlackLabIndex index, final String field) {
-        final var values = new ObjectLinkedOpenHashSet<String>();
+        // Fill with document metadata
         index.forEachDocument((__, id) -> {
-            final var f = index.luceneDoc(id).getField(field);
-            if (f != null)
-                values.add(f.stringValue());
+            for (int i = 0; i < numMetadata; i++) {
+                final var metadata = cfg.metadata().get(i);
+                final var field = index.luceneDoc(id).getField(metadata.name());
+                if (field != null)
+                    uniqueMetadata.get(metadata.name()).add(field.stringValue());
+            }
         });
-        // return a sorted set for consistent ordering
-        return values;
+        // Add to map with lists for sake of indexing
+        metaFieldToValues = new Object2ObjectArrayMap<>();
+        for (int i = 0; i < numMetadata; i++) {
+            final var metadata = cfg.metadata().get(i);
+            System.out.println("  " + uniqueMetadata.get(metadata.name()).size() + " unique values of " + metadata.name());
+            metaFieldToValues.put(metadata.name(), new ObjectArrayList<>(uniqueMetadata.get(metadata.name())));
+        }
     }
 
     public int getIdx(final String field, final String value) {
