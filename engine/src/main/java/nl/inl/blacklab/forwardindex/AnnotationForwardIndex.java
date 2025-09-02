@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Forward index for a single annotation.
- *
+ * <p>
  * Implementations may operate on the entire index (with global doc ids)
  * or on a single segment (with segment doc ids).
  */

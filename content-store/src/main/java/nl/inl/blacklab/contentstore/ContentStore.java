@@ -12,12 +12,4 @@ public interface ContentStore {
      */
     String[] retrieveParts(int id, int[] start, int[] end);
 
-    /**
-     * Close the content store
-     */
-    void close();
-
-    /** Initialize the content store. May be run in a background thread. */
-    void initialize();
-
 }

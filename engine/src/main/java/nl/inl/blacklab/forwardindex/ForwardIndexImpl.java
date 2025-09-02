@@ -41,26 +41,18 @@ public class ForwardIndexImpl implements ForwardIndex {
 
     private final BlackLabIndex index;
 
-    private final AnnotatedField field;
-
     private final Map<Annotation, AnnotationForwardIndex> fis = new HashMap<>();
-
-    /** Used to ensure that no new FIs are opened after the constructor. */
-    private final boolean initialized;
-
-    /** Ensure that we don't try to use the FI after closing it. */
-    private boolean closed = false;
 
     public ForwardIndexImpl(BlackLabIndex index, AnnotatedField field) {
         this.index = index;
-        this.field = field;
 
         // Open forward indexes
         ExecutorService executorService = index.blackLab().initializationExecutorService();
         for (Annotation annotation: field.annotations()) {
             if (!annotation.hasForwardIndex())
                 continue;
-            AnnotationForwardIndex afi = get(annotation);
+            AnnotationForwardIndexGlobal afi = AnnotationForwardIndexGlobal.open(index, annotation);
+            fis.put(annotation, afi);
             // Automatically initialize global terms (in the background)
             executorService.execute(() -> {
                 try {
@@ -78,35 +70,16 @@ public class ForwardIndexImpl implements ForwardIndex {
                 }
             });
         }
-
-        initialized = true;
-    }
-
-    /**
-     * Close the forward index. Writes the table of contents to disk if modified.
-     * (needed for ForwardIndexExternal only; can eventually be removed)
-     */
-    public void close() {
-        synchronized (fis) {
-            fis.clear();
-            closed = true;
-        }
     }
 
     @Override
     public AnnotationForwardIndex get(Annotation annotation) {
         assert annotation != null;
-        if (closed)
-            throw new IllegalStateException("ForwardIndex was closed");
-        if (!annotation.hasForwardIndex())
-            throw new IllegalArgumentException("Annotation has no forward index, according to itself: " + annotation);
-        AnnotationForwardIndex afi;
-        synchronized (fis) {
-            afi = fis.get(annotation);
-        }
+        AnnotationForwardIndex afi = fis.get(annotation);
         if (afi == null) {
-            afi = AnnotationForwardIndexGlobal.open(index, annotation);
-            add(annotation, afi);
+            if (!annotation.hasForwardIndex())
+                throw new IllegalArgumentException("Annotation has no forward index, according to itself: " + annotation);
+            throw new IllegalArgumentException("AnnotationForwardIndex not found for: " + annotation);
         }
         return afi;
     }
@@ -116,13 +89,4 @@ public class ForwardIndexImpl implements ForwardIndex {
         return "ForwardIndexImpl(" + index.name() + ")";
     }
 
-    protected void add(Annotation annotation, AnnotationForwardIndex afi) {
-        if (initialized)
-            throw new IllegalStateException("All forward indexes should have been opened while initializing!");
-        if (closed)
-            throw new IllegalStateException("ForwardIndex was closed");
-        synchronized (fis) {
-            fis.put(annotation, afi);
-        }
-    }
 }

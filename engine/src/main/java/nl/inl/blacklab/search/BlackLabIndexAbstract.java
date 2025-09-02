@@ -14,7 +14,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexFormatTooNewException;
 import org.apache.lucene.index.IndexFormatTooOldException;
@@ -38,7 +37,6 @@ import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.codec.LeafReaderLookupArray;
 import nl.inl.blacklab.contentstore.ContentStore;
-import nl.inl.blacklab.contentstore.ContentStoresManager;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
@@ -46,6 +44,7 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
@@ -96,13 +95,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     /** Structure of our index */
     private final IndexMetadataWriter indexMetadata;
 
-    final ContentStoresManager contentStores = new ContentStoresManager();
+    final Map<Field, ContentStore> contentStores = new HashMap<>();
 
     /**
      * ForwardIndices allow us to quickly find what token occurs at a specific
      * position. This speeds up grouping and sorting. There may be several indices
      * on a annotated field, e.g.: word form, lemma, part of speech.
-     *
+     * <p>
      * Indexed by annotation.
      */
     protected final Map<AnnotatedField, ForwardIndex> forwardIndices = new HashMap<>();
@@ -128,7 +127,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     /**
      * Are we responsible for closing the IndexReader?
-     *
+     * <p>
      * True if we were the ones opening it, false if we wrapped an existing one.
      */
     private boolean shouldCloseIndex;
@@ -262,7 +261,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      * @throws IndexVersionMismatch if the index is too old or new
      */
     private void openIndex(boolean createNewIndex) throws IOException, IndexVersionMismatch {
-        checkCanOpenIndex(createNewIndex);
         if (traceIndexOpening())
             logger.debug("Constructing BlackLabIndex...");
         if (indexMode) {
@@ -375,11 +373,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     }
 
     @Override
-    public ContentAccessor contentAccessor(Field field) {
-        synchronized (contentStores) {
-            ContentAccessor ca = contentStores.contentAccessor(field);
-            if (ca == null) {
-                if (indexMode) {
+    public ContentStore contentStore(Field field) {
+        if (indexMode) {
+            synchronized (contentStores) {
+                ContentStore ca = contentStores.get(field);
+                if (ca == null) {
                     // Index mode. Create new content store or open existing one.
                     try {
                         boolean createNewContentStore = isEmptyIndex;
@@ -387,49 +385,30 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                     } catch (ErrorOpeningIndex e) {
                         throw BlackLabException.wrapRuntime(e);
                     }
-                    ca = contentStores.contentAccessor(field);
-                } else if (field instanceof AnnotatedField && field != mainAnnotatedField()) {
+                    ca = contentStores.get(field);
+                }
+                return ca;
+            }
+        } else {
+            ContentStore ca = contentStores.get(field);
+            if (ca == null) {
+                if (field instanceof AnnotatedField && field != mainAnnotatedField()) {
                     // Search mode.
                     // If we don't have a content store for this annotated field, use the main content store.
                     // (e.g. parallel corpus where the content for all languages is stored in the main annotated field)
-                    ca = contentStores.contentAccessor(mainAnnotatedField());
+                    ca = contentStores.get(mainAnnotatedField());
                 }
             }
             return ca;
         }
     }
 
-    /**
-     * Register a ContentStore as a content accessor.
-     *
-     * This tells the BlackLabIndex how the content of different fields may be accessed.
-     * This is used for making concordances, for example. Some fields are stored in
-     * the Lucene index, while others may be stored on the file system, a database,
-     * etc.
-     *
-     * A ContentStore is a filesystem-based way to access the contents.
-     *
-     * @param field the field for which this is the content accessor
-     * @param contentStore the ContentStore object by which to access the content
-     */
-    protected void registerContentStore(Field field, ContentStore contentStore) {
-        contentStores.put(field, contentStore);
-
-        // Start reading the content store's TOC in the background, so it doesn't
-        // trigger on the first search
-        blackLab.initializationExecutorService().execute(contentStore::initialize);
-    }
-
     @Override
     public ForwardIndex forwardIndex(AnnotatedField field) {
-        synchronized (forwardIndices) {
-            ForwardIndex forwardIndex = forwardIndices.get(field);
-            if (forwardIndex == null) {
-                forwardIndex = createForwardIndex(field);
-                forwardIndices.put(field, forwardIndex);
-            }
-            return forwardIndex;
-        }
+        ForwardIndex forwardIndex = forwardIndices.get(field);
+        if (forwardIndex == null)
+            throw new IllegalArgumentException("No forward index for field " + field);
+        return forwardIndex;
     }
 
     @Override
@@ -450,10 +429,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
         return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true), documentFilterQuery);
-    }
-
-    protected void checkCanOpenIndex(boolean createNewIndex) throws IllegalArgumentException {
-        // subclass can override this
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -551,14 +526,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (traceIndexOpening())
                 logger.debug("  Opening forward indices...");
             for (AnnotatedField field: annotatedFields()) {
-                for (Annotation annotation: field.annotations()) {
-                    if (annotation.hasForwardIndex()) {
-                        // This annotation has a forward index. Make sure it is open.
-                        if (traceIndexOpening())
-                            logger.debug("    " + annotation.luceneFieldPrefix() + "...");
-                        forwardIndex(annotation);
-                    }
-                }
+                forwardIndices.put(field, new ForwardIndexImpl(this, field));
             }
         }
     }
@@ -591,10 +559,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         analyzer = new PerFieldAnalyzerWrapper(baseAnalyzer, fieldAnalyzers);
     }
 
-    protected Directory getIndexDirectory() {
-        return ((DirectoryReader) reader()).directory();
-    }
-
     @Override
     public void close() {
         synchronized(this) {
@@ -611,7 +575,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 indexWriter.commit();
                 indexWriter.close();
             }
-            contentStores.close();
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
@@ -768,12 +731,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public boolean isOpen() {
         return indexWriter != null && indexWriter.isOpen();
     }
-
-    protected void deleteFromForwardIndices(Document d) {
-        // subclasses may override
-    }
-
-    protected abstract ForwardIndex createForwardIndex(AnnotatedField field);
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {

@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search;
 
-import com.ibm.icu.text.Collator;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -16,6 +15,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import com.ibm.icu.text.Collator;
+
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -199,12 +201,12 @@ public class TestIndexFormats {
     @Test
     public void testContentStoreRetrieve() {
         AnnotatedField fieldsContents = index.mainAnnotatedField();
-        ContentAccessor ca = index.contentAccessor(fieldsContents);
+        ContentStore ca = index.contentStore(fieldsContents);
         int[] start = { 0, 0, 10, 20 };
         int[] end = { 10, -1, 20, -1 };
         for (int i = 0; i < TestIndex.TEST_DATA.length; i++) {
             int docId = testIndex.getDocIdForDocNumber(i);
-            String[] substrings = ca.getSubstringsFromDocument(docId, start, end);
+            String[] substrings = ca.retrieveParts(docId, start, end);
             Assert.assertEquals(4, substrings.length);
             for (int j = 0; j < substrings.length; j++) {
                 int a = start[j], b = end[j];

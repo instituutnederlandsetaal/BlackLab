@@ -19,13 +19,13 @@ import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.codec.LeafReaderLookup;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.QueryExplanation;
@@ -177,7 +177,7 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public ContentAccessor contentAccessor(Field field) {
+    public ContentStore contentStore(Field field) {
         throw new UnsupportedOperationException();
     }
 

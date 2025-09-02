@@ -20,6 +20,7 @@ import org.apache.lucene.store.FSDirectory;
 import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.codec.LeafReaderLookup;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
@@ -265,7 +266,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field the field
      * @return the content accessor, or null if there is no content accessor for this field
      */
-    ContentAccessor contentAccessor(Field field);
+    ContentStore contentStore(Field field);
 
     /**
      * Get forward index for the specified annotated field.

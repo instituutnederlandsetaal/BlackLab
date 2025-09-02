@@ -18,7 +18,7 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  * A little test utility for comparing the performance of different sorting
  * methods that use an IntComparator. Mainly used to assess what is the fastest
  * way to sort terms in our PostingsWriter and TermsIntegrated.
- *
+ * <p>
  * Main conclusion: precalculate CollationKeys when comparing strings as Collator.compare()
  * is synchronized.
  * Other conclusion: our custom ParallelIntSorter seemed to provide a slight benefit at first,
@@ -46,7 +46,7 @@ public class TestSortPerformance {
         int[] testSizes = { 1000, 10000, 100_000, 150_000, 250_000,
                 500_000, 750_000, 1_000_000, 2_500_000, 5_000_000/*, 7_500_000, 10_000_000*/ };
         for (int size: testSizes) {
-            ComparatorFactory f = indirectCollationKeyComparator;
+            ComparatorFactory f = indirectStringComparator;
             test(size, f);
         }
     }

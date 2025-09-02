@@ -12,6 +12,7 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.DocIdSetIterator;
 
 import nl.inl.blacklab.Constants;
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -235,7 +236,7 @@ public class DocUtil {
                     d = index.reader().storedFields().document(docId, Set.of(fieldName));
                 return d.get(fieldName).substring(startAtChar, endAtChar);
             } else {
-                return index.contentAccessor(field).getSubstringsFromDocument(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
+                return index.contentStore(field).retrieveParts(docId, new int[] { startAtChar }, new int[] { endAtChar })[0];
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -295,14 +296,15 @@ public class DocUtil {
      * @return document with highlighting
      */
     public static String highlightDocument(BlackLabIndex index, AnnotatedField contentsField, int docId, Hits hits) {
-        String contents = index.contentAccessor(contentsField).getDocumentContents(docId);
+        ContentStore contentAccessor = index.contentStore(contentsField);
+        String contents = contentAccessor.retrieveParts(docId, new int[] { -1 }, new int[] { -1 })[0];
         return highlightContent(index, docId, hits, false, 0, contents);
     }
 
     private static String[] getSubstringsFromDocument(BlackLabIndex index,
             int docId, Document d, AnnotatedField field, int[] starts, int[] ends) {
         try {
-            ContentAccessor contentAccessor = index.contentAccessor(field);
+            ContentStore contentAccessor = index.contentStore(field);
             if (contentAccessor == null) {
                 // No special content accessor set; assume a non-annotated stored field
                 String[] content;
@@ -317,7 +319,7 @@ public class DocUtil {
                 return content;
             } else {
                 // Content accessor set. Use it to retrieve the content.
-                return contentAccessor.getSubstringsFromDocument(docId, starts, ends);
+                return contentAccessor.retrieveParts(docId, starts, ends);
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);
@@ -406,7 +408,8 @@ public class DocUtil {
                 return content;
             } else {
                 //int[] startEnd = startEndWordToCharPos(index, docId, field, -1, -1);
-                return index.contentAccessor(field).getDocumentContents(docId);
+                ContentStore contentAccessor = index.contentStore(field);
+                return contentAccessor.retrieveParts(docId, new int[] { -1 }, new int[] { -1 })[0];
             }
         } catch (IOException e) {
             throw new InvalidIndex(e);

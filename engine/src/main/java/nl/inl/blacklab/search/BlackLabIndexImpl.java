@@ -25,13 +25,10 @@ import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndex;
-import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Field;
@@ -53,7 +50,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     /**
      * Is the specified Lucene field a relations field?
-     *
+     * <p>
      * If yes, we should store relations info for this field.
      *
      * @param fieldInfo Lucene field to check
@@ -75,7 +72,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
 
     /**
      * If this directory contains any external index files/subdirs, delete them.
-     *
+     * <p>
      * Doesn't delete the Lucene index (Lucene does this when creating a new index in a dir).
      *
      * @param indexDir the directory to clean up
@@ -171,12 +168,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     protected void openContentStore(Field field, boolean createNewContentStore, File indexDir) {
         String luceneField = AnnotatedFieldNameUtil.contentStoreField(field.name());
         ContentStore cs = new ContentStoreIntegrated(leafReaderLookup, luceneField);
-        registerContentStore(field, cs);
-    }
-
-    @Override
-    protected ForwardIndex createForwardIndex(AnnotatedField field) {
-        return new ForwardIndexImpl(this, field);
+        contentStores.put(field, cs);
     }
 
     @Override

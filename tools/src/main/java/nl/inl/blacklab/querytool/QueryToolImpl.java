@@ -22,6 +22,7 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
@@ -40,7 +41,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.ContentAccessor;
 import nl.inl.blacklab.search.DocUtil;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -384,8 +384,8 @@ public class QueryToolImpl {
             output.line("Document " + docId + " does not exist.");
             return;
         }
-        ContentAccessor ca = index.contentAccessor(contentsField);
-        output.line(ca.getDocumentContents(docId));
+        ContentStore ca = index.contentStore(contentsField);
+        output.line(ca.retrieveParts(docId, new int[] { -1 }, new int[] { -1 })[0]);
     }
 
     private void cmdDocumentHighlight(String arguments) {

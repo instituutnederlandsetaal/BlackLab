@@ -7,7 +7,7 @@ import nl.inl.blacklab.codec.LeafReaderLookup;
 
 /**
  * Global content store interface for the integrated index format.
- *
+ * <p>
  * Will forward any requests to the appropriate {@link ContentStoreSegmentReader}.
  */
 public class ContentStoreIntegrated implements ContentStore {
@@ -29,7 +29,7 @@ public class ContentStoreIntegrated implements ContentStore {
 
     /**
      * Get the content store for an index segment.
-     *
+     * <p>
      * The returned content store should only be used from one thread.
      *
      * @param lrc leafreader context (segment) to get the content store for.
@@ -46,15 +46,5 @@ public class ContentStoreIntegrated implements ContentStore {
         LeafReaderContext lrc = leafReaderLookup.forId(docId);
         ContentStoreSegmentReader cs = contentStore(lrc);
         return cs.getValueSubstrings(docId - lrc.docBase, luceneField, start, end);
-    }
-
-    @Override
-    public void initialize() {
-        // nothing to do here
-    }
-
-    @Override
-    public void close() {
-        // nothing to do here
     }
 }
