@@ -4,6 +4,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hits.FetchFromQuery;
 import nl.inl.blacklab.search.results.hits.HitsFromQuery;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
@@ -12,11 +13,12 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     /** Global view on our segment hits */
     private final HitsFromQuery hits;
 
-    protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery, SearchSettings searchSettings) {
-        // NOTE: we pass an empty hits because we have our own (REFACTOR!)
+    protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+            SearchSettings searchSettings) {
         super(queryInfo.optOverrideField(sourceQuery));
         sourceQuery.setQueryInfo(queryInfo);
-        hits = new HitsFromQuery(queryInfo().field(), queryInfo.timings(), sourceQuery, searchSettings);
+        FetchFromQuery fetcher = new FetchFromQuery(sourceQuery, searchSettings, queryInfo().field());
+        hits = new HitsFromQuery(queryInfo.timings(), fetcher);
     }
 
     @Override
@@ -50,7 +52,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     }
 
     public MatchInfoDefs getMatchInfoDefs() {
-        return hits.getMatchInfoDefs();
+        return hits.matchInfoDefs();
     }
 
 }

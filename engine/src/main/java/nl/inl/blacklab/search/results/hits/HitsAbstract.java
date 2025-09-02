@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -118,12 +117,6 @@ public abstract class HitsAbstract implements Hits {
                 hitsInDoc.add(h);
         }
         return hitsInDoc;
-    }
-
-    @Override
-    public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup) {
-        Map<PropertyValue, Group> groups = new HashMap<>();
-        return groupHits(this, groupBy, maxResultsToStorePerGroup, groups, null);
     }
 
     static Map<PropertyValue, Group> groupHits(Hits hits, HitProperty groupBy,

@@ -31,11 +31,14 @@ public class TestHitsFromQuery {
 
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
+        SearchSettings searchSettings = SearchSettings.defaults();
+        FetchFromQuery hitFetcher = new FetchFromQuery(patternQuery, searchSettings, queryInfo.field());
+        HitsFromQuery h = new HitsFromQuery(queryInfo.timings(), hitFetcher);
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
-        h.spansReaders.clear();
-        h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null) {
+        FetchFromQuery fetchFromQuery = (FetchFromQuery) h.hitFetcher;
+        fetchFromQuery.spansReaders.clear();
+        fetchFromQuery.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null) {
             @Override
             public synchronized void run() {
                 try {
@@ -84,12 +87,14 @@ public class TestHitsFromQuery {
     public void testParallelSearchException() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
+        HitsFromQuery h = new HitsFromQuery(queryInfo.timings(), new FetchFromQuery(patternQuery, SearchSettings.defaults(),
+                queryInfo.field()));
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
-        h.spansReaders.clear();
-        h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null) {
+        FetchFromQuery fetchFromQuery = (FetchFromQuery) h.hitFetcher;
+        fetchFromQuery.spansReaders.clear();
+        fetchFromQuery.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null) {
             @Override
             public synchronized void run() { throw exceptionToThrow; }
         });
@@ -110,7 +115,8 @@ public class TestHitsFromQuery {
     public void testSublist() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        Hits whole = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
+        FetchFromQuery hitFetcher = new FetchFromQuery(patternQuery, SearchSettings.defaults(), queryInfo.field());
+        Hits whole = new HitsFromQuery(queryInfo.timings(), hitFetcher);
         int subListStart = 11;
         int subListLength = 15;
         Hits sub = whole.sublist(subListStart, subListLength);
@@ -124,8 +130,9 @@ public class TestHitsFromQuery {
     public void testSort() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        HitsFromQuery.setThresholdSingleThreadedGroupAndSort(0); // test with multithreaded sorting
-        Hits unsorted = new HitsFromQuery(queryInfo.field(), queryInfo.timings(), patternQuery, SearchSettings.defaults());
+        HitsUtils.setThresholdSingleThreadedGroupAndSort(0); // test with multithreaded sorting
+        FetchFromQuery hitFetcher = new FetchFromQuery(patternQuery, SearchSettings.defaults(), queryInfo.field());
+        Hits unsorted = new HitsFromQuery(queryInfo.timings(), hitFetcher);
         HitProperty sortBy = new HitPropertyDocumentStoredField(testIndex.index(), "title");
         Hits sorted = unsorted.sorted(sortBy);
         assertEquals("same size", unsorted.size(), sorted.size());

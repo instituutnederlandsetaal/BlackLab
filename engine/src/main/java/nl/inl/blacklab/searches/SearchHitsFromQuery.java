@@ -1,12 +1,14 @@
 package nl.inl.blacklab.searches;
 
+import java.util.Objects;
+
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /** A search that yields hits. */
 public class SearchHitsFromQuery extends SearchHits {
@@ -15,7 +17,8 @@ public class SearchHitsFromQuery extends SearchHits {
 
     private final SearchSettings searchSettings;
 
-    public SearchHitsFromQuery(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings) {
+    public SearchHitsFromQuery(QueryInfo queryInfo, BLSpanQuery spanQuery,
+            SearchSettings searchSettings) {
         super(queryInfo);
         if (spanQuery == null)
             throw new IllegalArgumentException("Must specify a query");
@@ -34,43 +37,23 @@ public class SearchHitsFromQuery extends SearchHits {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((spanQuery == null) ? 0 : spanQuery.hashCode());
-        result = prime * result + ((searchSettings == null) ? 0 : searchSettings.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (!(o instanceof SearchHitsFromQuery that))
+            return false;
+        if (!super.equals(o))
+            return false;
+        return Objects.equals(spanQuery, that.spanQuery) && Objects.equals(searchSettings,
+                that.searchSettings);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        SearchHitsFromQuery other = (SearchHitsFromQuery) obj;
-        if (spanQuery == null) {
-            if (other.spanQuery != null)
-                return false;
-        } else if (!spanQuery.equals(other.spanQuery))
-            return false;
-        if (searchSettings == null) {
-            if (other.searchSettings != null)
-                return false;
-        } else if (!searchSettings.equals(other.searchSettings))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), spanQuery, searchSettings);
     }
 
     @Override
     public String toString() {
         return toString("hits", spanQuery);
-    }
-
-    public BLSpanQuery query() {
-        return spanQuery;
     }
 
     @Override

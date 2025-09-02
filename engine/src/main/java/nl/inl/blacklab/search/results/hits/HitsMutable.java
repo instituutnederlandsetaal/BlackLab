@@ -24,12 +24,22 @@ public interface HitsMutable extends Hits {
      * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
      * @return HitsInternal object
      */
-    static HitsMutable create(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity,
+    static HitsListAbstract create(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity,
             boolean allowHugeLists, boolean mustLock) {
         return create(field, matchInfoDefs, initialCapacity, allowHugeLists ? Long.MAX_VALUE : Constants.JAVA_MAX_ARRAY_SIZE, mustLock);
     }
 
-    static HitsMutable create(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity,
+    /**
+     * Create an empty HitsInternal with an initial and maximum capacity.
+     *
+     * Note that the maximum capacitiy simply determines which implementation is used;
+     * it does not enforce a maximum size.
+     *
+     * @param initialCapacity initial hits capacity, or default if negative
+     * @param mustLock if true, return a locking implementation. If false, implementation may not be locking.
+     * @return HitsInternal object
+     */
+    static HitsListAbstract create(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity,
             long maxCapacity, boolean mustLock) {
         if (maxCapacity > Constants.JAVA_MAX_ARRAY_SIZE && BlackLab.config().getSearch().isEnableHugeResultSets()) {
             if (mustLock)

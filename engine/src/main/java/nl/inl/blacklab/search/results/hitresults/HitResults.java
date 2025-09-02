@@ -29,7 +29,8 @@ public interface HitResults extends Results {
      * @param searchSettings settings such as max. hits to process/count
      * @return hits found
      */
-    static HitResults fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query, SearchSettings searchSettings) {
+    static HitResults fromSpanQuery(QueryInfo queryInfo, BLSpanQuery query,
+            SearchSettings searchSettings) {
         return new HitResultsFromQuery(queryInfo, query, searchSettings);
     }
 

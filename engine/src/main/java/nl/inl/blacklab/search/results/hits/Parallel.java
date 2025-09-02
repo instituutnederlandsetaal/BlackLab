@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results.hits;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorCompletionService;
@@ -28,6 +29,43 @@ public class Parallel<I, O> {
         executorCompletionService = new ExecutorCompletionService<>(index.blackLab().searchExecutorService(numThreads));
     }
 
+    /***
+     * Make equal groups of items, so that each group has approximately the same total size.
+     * This is useful for distributing work evenly over multiple threads.
+     *
+     * @param items the items to group
+     * @param sizeGetter a function that returns the size of each item, used to determine how to group them
+     * @param numberOfGroups the number of groups to create
+     * @return a list of groups, each group is a list of items
+     * @param <T> the type of items to group
+     */
+    public static <T> List<List<T>> makeEqualGroups(Collection<T> itemsColl, Function<T, Long> sizeGetter, int numberOfGroups) {
+        List<T> items = new ArrayList<>(itemsColl);
+        items.sort(Comparator.comparing(sizeGetter).reversed());
+
+        // Now divide the segments into groups by repeatedly adding the largest remaining segment to
+        // the smallest group.
+        List<List<T>> groups =
+                new ArrayList<>(numberOfGroups);
+        List<Long> hitsInGroup = new ArrayList<>(numberOfGroups);
+        for (int i = 0; i < numberOfGroups; i++) {
+            groups.add(new ArrayList<>()); // create empty group for each thread}
+            hitsInGroup.add(0L);
+        }
+        for (T segment: items) {
+            // Find the group with the least hits so far, and add this segment to that group.
+            int minGroupIndex = 0;
+            for (int i = 1; i < hitsInGroup.size(); i++) {
+                if (hitsInGroup.get(i) < hitsInGroup.get(minGroupIndex)) {
+                    minGroupIndex = i;
+                }
+            }
+            groups.get(minGroupIndex).add(segment);
+            hitsInGroup.set(minGroupIndex, hitsInGroup.get(minGroupIndex) + sizeGetter.apply(segment));
+        }
+        return groups;
+    }
+
     public O mapReduce(
             Collection<I> items,
             Function<I, Long> sizeGetter,
@@ -41,7 +79,7 @@ public class Parallel<I, O> {
             Collection<I> items,
             Function<I, Long> sizeGetter,
             Function<List<I>, List<O>> mapper) {
-        List<List<I>> threadInputs = HitsFromQuery.makeEqualGroups(items, sizeGetter, numThreads);
+        List<List<I>> threadInputs = makeEqualGroups(items, sizeGetter, numThreads);
         List<Future<List<O>>> futures = new ArrayList<>();
         for (List<I> threadItems: threadInputs) {
             Future<List<O>> future = executorCompletionService.submit(() -> mapper.apply(threadItems));
@@ -54,7 +92,7 @@ public class Parallel<I, O> {
     public List<Future<List<O>>> forEach(List<I> spansReaders,
             Function<I, Long> sizeGetter,
             Consumer<List<I>> task) {
-        List<List<I>> threadInputs = HitsFromQuery.makeEqualGroups(spansReaders, sizeGetter, numThreads);
+        List<List<I>> threadInputs = makeEqualGroups(spansReaders, sizeGetter, numThreads);
         return threadInputs.stream()
                 .map(threadItems -> {
                     Future<List<O>> f = executorCompletionService.submit(() -> {

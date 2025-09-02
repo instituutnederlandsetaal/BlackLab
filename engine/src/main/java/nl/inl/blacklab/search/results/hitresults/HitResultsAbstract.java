@@ -26,6 +26,7 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
+import nl.inl.blacklab.search.results.hits.HitsUtils;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 
@@ -151,7 +152,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
             throw new IllegalArgumentException("Must have criteria to group on");
         Hits hits = getHits();
 
-        Map<PropertyValue, Hits.Group> groupedHits = hits.grouped(groupBy, maxResultsToStorePerGroup);
+        Map<PropertyValue, Hits.Group> groupedHits = HitsUtils.group(hits, groupBy,
+                maxResultsToStorePerGroup);
 
         // (We make a copy of the stats so we don't keep any references to the source hits)
         List<HitGroup> hitGroups = HitGroups.fromBasicGroup(queryInfo(), groupedHits);

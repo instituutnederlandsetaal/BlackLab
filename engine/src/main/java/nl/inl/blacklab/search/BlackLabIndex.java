@@ -172,16 +172,6 @@ public interface BlackLabIndex extends AutoCloseable {
     /**
      * Find hits for a pattern in a field.
      *
-     * @param queryInfo our query info
-     * @param query the pattern to find
-     * @param settings search settings, or null for default
-     * @return the hits found
-     */
-    HitResults find(QueryInfo queryInfo, BLSpanQuery query, SearchSettings settings);
-
-    /**
-     * Find hits for a pattern in a field.
-     * 
      * @param query the pattern to find
      * @param settings search settings, or null for default
      * @return the hits found
@@ -189,6 +179,8 @@ public interface BlackLabIndex extends AutoCloseable {
     default HitResults find(BLSpanQuery query, SearchSettings settings) {
         return find(QueryInfo.create(this, fieldFromQuery(query), true), query, settings);
     }
+
+    HitResults find(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings);
 
     /**
      * Perform a document query only (no hits)

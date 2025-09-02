@@ -30,20 +30,9 @@ import nl.inl.util.ThreadAborter;
  */
 public class SpansReader implements Runnable {
 
-    /** Everything that's only relevant before initialization */
-    class SpansReaderBeforeInit {
-        BLSpanWeight weight;
+    BLSpanWeight weight;
 
-        HitQueryContext sourceHitQueryContext; // Set when uninitialized (needed to construct own hitQueryContext)
-
-        public SpansReaderBeforeInit(BLSpanWeight weight, HitQueryContext hitQueryContext) {
-            this.weight = weight;
-            this.sourceHitQueryContext = hitQueryContext;
-        }
-    }
-
-    // Relevant when SpansReader is uninitialized; discarded afterwards
-    private SpansReaderBeforeInit beforeInit;
+    HitQueryContext sourceHitQueryContext; // Set when uninitialized (needed to construct own hitQueryContext)
 
     BLSpans spans; // usually lazy initialization - takes a long time to set up and holds a large amount of memory.
                    // Set to null after we're finished
@@ -54,16 +43,11 @@ public class SpansReader implements Runnable {
     /** Allows us to check that doc matched by approximation is an actual match */
     private TwoPhaseIterator twoPhaseIt;
 
-    /**
-     * Root hitQueryContext, needs to be shared between instances of SpansReader due to some internal global state.
-     * <p>
-     * TODO refactor or improve documentation in HitQueryContext, the internal backing array is now shared between
-     *   instances of it, and is modified in copyWith(spans), which seems...dirty and it's prone to errors.
-     */
+    /** Root hitQueryContext, needs to be shared between instances of SpansReader due to some internal global state. */
     HitQueryContext hitQueryContext; // Set after initialization. Set to null after we're finished
 
     // Used to check if doc has been removed from the index. Set to null after we're finished.
-    LeafReaderContext leafReaderContext;
+    LeafReaderContext lrc;
 
     // Global counters, shared between instances of SpansReader in order to coordinate progress
     ResultsStatsPassive hitsStats;
@@ -76,13 +60,11 @@ public class SpansReader implements Runnable {
 
     /** What to do when a document boundary is encountered.
      *  (e.g. merge to global hits list) */
-    private final Strategy spansReaderStrategy;
+    private final HitProcessor hitProcessor;
 
     // Internal state
     boolean isDone;
     private boolean isInitialized;
-    /* only valid after initialize() */
-    private int docBase; 
 
     private boolean hasPrefetchedHit = false;
     private int prevDoc = -1;
@@ -103,31 +85,32 @@ public class SpansReader implements Runnable {
      * <p>
      *
      * @param weight                span weight we're querying
-     * @param leafReaderContext     leaf reader we're running on
+     * @param lrc     leaf reader we're running on
      * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
-     * @param spansReaderStrategy   how to handle the hits as they are found, or null not to do anything yet
+     * @param hitProcessor   how to handle the hits as they are found, or null not to do anything yet
      * @param globalHitsToProcess   how many more hits to retrieve
      * @param globalHitsToCount     how many more hits to count
      */
     SpansReader(
         BLSpanWeight weight,
-        LeafReaderContext leafReaderContext,
+        LeafReaderContext lrc,
         HitQueryContext sourceHitQueryContext,
 
-        Strategy spansReaderStrategy,
+        HitProcessor hitProcessor,
         AtomicLong globalHitsToProcess,
         AtomicLong globalHitsToCount,
         ResultsStatsPassive hitsStats,
         ResultsStatsPassive docsStats
     ) {
-        this.beforeInit = new SpansReaderBeforeInit(weight, sourceHitQueryContext);
+        this.weight = weight;
+        this.sourceHitQueryContext = sourceHitQueryContext;
         this.spans = null;
 
         this.hitQueryContext = null;
 
-        this.leafReaderContext = leafReaderContext;
+        this.lrc = lrc;
 
-        this.spansReaderStrategy = spansReaderStrategy;
+        this.hitProcessor = hitProcessor;
         this.globalHitsToCount = globalHitsToCount;
         this.globalHitsToProcess = globalHitsToProcess;
 
@@ -155,8 +138,8 @@ public class SpansReader implements Runnable {
     private void initialize() {
         try {
             this.isInitialized = true;
-            this.docBase = this.leafReaderContext.docBase;
-            BLSpans spansForWeight = this.beforeInit.weight.getSpans(this.leafReaderContext, Postings.OFFSETS);
+            BLSpans spansForWeight = this.weight.getSpans(this.lrc, Postings.OFFSETS);
+            this.weight = null;
             if (spansForWeight == null) { // This is normal, sometimes a section of the index does not contain hits.
                 this.isDone = true;
                 return;
@@ -170,9 +153,9 @@ public class SpansReader implements Runnable {
             this.twoPhaseIt = spans.asTwoPhaseIterator();
             this.twoPhaseApproximation = twoPhaseIt == null ? spans : twoPhaseIt.approximation();
 
-            this.hitQueryContext = this.beforeInit.sourceHitQueryContext.withSpans(this.spans);
+            this.hitQueryContext = this.sourceHitQueryContext.withSpans(this.spans);
+            this.sourceHitQueryContext = null;
             this.spans.setHitQueryContext(this.hitQueryContext);
-            this.beforeInit = null;
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
@@ -224,7 +207,7 @@ public class SpansReader implements Runnable {
     /**
      * Collect hits from our spans object.
      * Updates the global counters, shared with other SpansReader objects operating on the same result set.
-     * {@link Strategy::onDocumentBoundary} is called when we encounter a document boundary.
+     * {@link HitProcessor ::onDocumentBoundary} is called when we encounter a document boundary.
      * <p>
      * Updating the maximums while this is running is allowed.
      */
@@ -232,7 +215,6 @@ public class SpansReader implements Runnable {
     public synchronized void run() {
         if (!isInitialized)
             this.initialize();
-
         if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
             return;
 
@@ -240,7 +222,7 @@ public class SpansReader implements Runnable {
 
         final HitsMutable results = HitsMutable.create(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), -1, true, false);
         long counted = 0;
-        final Bits liveDocs = leafReaderContext.reader().getLiveDocs();
+        final Bits liveDocs = lrc.reader().getLiveDocs();
 
         // Increment if we're NOT at a document boundary OR we haven't reached the currently requested number of hits yet.
         // (that means that we can go over the requested number until we reach a document boundary. This is because
@@ -270,7 +252,7 @@ public class SpansReader implements Runnable {
                 assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
                 assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
                 assert spans.endPosition() != Spans.NO_MORE_POSITIONS;
-                final int doc = spans.docID() /*+ docBase*/;
+                final int doc = spans.docID();
                 boolean atDocumentBoundary = doc != prevDoc;
                 int start = spans.startPosition();
                 int end = spans.endPosition();
@@ -281,16 +263,16 @@ public class SpansReader implements Runnable {
                 }
 
                 // Check that this is a unique hit, not the exact same as the previous one.
-                boolean isSameAsLast = isSameAsLast(results, doc, start, end, matchInfo);
+                boolean ignoreHit = isSameAsLast(results, doc, start, end, matchInfo);
 
-                if (!isSameAsLast) {
+                if (!ignoreHit) {
                     // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     // Otherwise, don't store it either. We're done, just return.
                     counted++;
 
                     if (atDocumentBoundary) {
                         docsStats.increment(phase == Phase.STORING_AND_COUNTING);
-                        phase = spansReaderStrategy.onDocumentBoundary(results, counted);
+                        phase = hitProcessor.onDocumentBoundary(results, counted);
                         counted = 0;
                     }
 
@@ -304,7 +286,8 @@ public class SpansReader implements Runnable {
                 hasPrefetchedHit = advanceSpansToNextHit(liveDocs);
                 prevDoc = doc;
 
-                if (atDocumentBoundary && spansReaderStrategy.shouldPauseFetchingHits()) {
+                if (atDocumentBoundary && hitProcessor.globalProcessedSoFar() >= globalHitsToProcess.get() &&
+                        hitProcessor.globalCountedSoFar() >= globalHitsToCount.get()) {
                     // We've reached the requested number of hits and are at a document boundary.
                     // We'll stop for now. When more hits are requested, this method will be called again.
                     break;
@@ -322,7 +305,7 @@ public class SpansReader implements Runnable {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-            spansReaderStrategy.onFinished(results, counted);
+            hitProcessor.onFinished(results, counted);
         }
 
         // If we're here, the loop reached its natural end - we're done.
@@ -331,25 +314,6 @@ public class SpansReader implements Runnable {
         this.spans = null;
         this.hitQueryContext = null;
         // (don't null out leafReaderContext because we use it to make equal groups of SpansReaders)
-    }
-
-    /** How to deal with the hits found in the segment. */
-    public interface Strategy {
-        /**
-         * Called when the SpansReader has reached the end of a document.
-         * @param results the hits collected so far
-         * @return whether to continue storing hits, or just count them, or stop altogether
-         */
-        Phase onDocumentBoundary(HitsMutable results, long counted);
-
-        /**
-         * Called when the SpansReader is done.
-         * @param results the hits collected so far
-         */
-        void onFinished(HitsMutable results, long counted);
-
-        /** Should we pause fetching hits for now until more are requested? */
-        boolean shouldPauseFetchingHits();
     }
 
 }
