@@ -863,6 +863,12 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable {
             addStretchIfLargeEnough(0);
         }
 
+        @Override
+        public boolean shouldPauseFetchingHits() {
+            return numHitsGlobalView >= requestedHitsToProcess.get() &&
+                    hitsStats.countedSoFar() >= requestedHitsToCount.get();
+        }
+
         /**
          * Add the latest stretch of hits we've found to the global view.
          *

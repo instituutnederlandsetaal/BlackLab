@@ -304,6 +304,12 @@ public class SpansReader implements Runnable {
                 hasPrefetchedHit = advanceSpansToNextHit(liveDocs);
                 prevDoc = doc;
 
+                if (atDocumentBoundary && spansReaderStrategy.shouldPauseFetchingHits()) {
+                    // We've reached the requested number of hits and are at a document boundary.
+                    // We'll stop for now. When more hits are requested, this method will be called again.
+                    break;
+                }
+
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states
                 ThreadAborter.checkAbort();
             }
@@ -341,6 +347,9 @@ public class SpansReader implements Runnable {
          * @param results the hits collected so far
          */
         void onFinished(HitsMutable results, long counted);
+
+        /** Should we pause fetching hits for now until more are requested? */
+        boolean shouldPauseFetchingHits();
     }
 
 }
