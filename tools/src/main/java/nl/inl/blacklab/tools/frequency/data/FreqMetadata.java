@@ -6,7 +6,7 @@ import java.util.Map;
 import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 
 final public class FreqMetadata {
     private final Map<String, List<String>> metaFieldToValues;

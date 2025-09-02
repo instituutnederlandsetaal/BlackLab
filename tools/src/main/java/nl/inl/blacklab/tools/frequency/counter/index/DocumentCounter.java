@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency.builder;
+package nl.inl.blacklab.tools.frequency.counter.index;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -16,14 +16,14 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.DocumentMetadata;
 import nl.inl.blacklab.tools.frequency.data.DocumentTokens;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 
-final public class DocumentIndexBasedBuilder {
+final public class DocumentCounter {
     private static final int[] EMPTY_ARRAY = new int[0];
     private final FrequencyListConfig cfg;
     private final AnnotationInfo aInfo;
@@ -32,8 +32,8 @@ final public class DocumentIndexBasedBuilder {
     private final int docLength;
     private final List<String> metaFieldNames;
 
-    DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final FrequencyListConfig cfg,
-            final AnnotationInfo aInfo) throws IOException {
+    DocumentCounter(final int docId, final BlackLabIndex index, final FrequencyListConfig cfg,
+                    final AnnotationInfo aInfo) throws IOException {
         this.cfg = cfg;
         this.aInfo = aInfo;
         this.docId = docId;

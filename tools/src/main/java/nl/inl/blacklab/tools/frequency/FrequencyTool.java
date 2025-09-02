@@ -7,7 +7,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.searches.SearchCacheDummy;
-import nl.inl.blacklab.tools.frequency.builder.FreqListBuilder;
+import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 import nl.inl.blacklab.tools.frequency.config.ArgsParser;
 import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.writers.AnnotationWriter;
@@ -43,15 +43,15 @@ public class FrequencyTool {
     private static void makeFrequencyLists(final BlackLabIndex index, final Config cfg) {
         for (final var fl: cfg.frequencyLists()) {
             final var t = new Timer();
-            final var builder = FreqListBuilder.from(index, fl);
-            builder.makeFrequencyList();
+            final var counter = FrequencyCounter.from(index, fl);
+            counter.count();
             // if database format, write lookup tables
             if (cfg.runConfig().databaseFormat()) {
                 if (fl.ngramSize() == 1) {
                     new LookupTableWriter(index, fl).write();
                 }
-                new MetaGroupWriter(fl, builder.getAnnotationInfo()).write();
-                new AnnotationWriter(fl, builder.getAnnotationInfo()).write();
+                new MetaGroupWriter(fl, counter.getAnnotationInfo()).write();
+                new AnnotationWriter(fl, counter.getAnnotationInfo()).write();
             }
             System.out.println("  Generating " + fl.name() + " took " + t.elapsedDescription());
         }

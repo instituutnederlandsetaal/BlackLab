@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency.builder;
+package nl.inl.blacklab.tools.frequency.counter.search;
 
 import java.util.ArrayList;
 
@@ -15,19 +15,20 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchHitGroups;
-import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
+import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 
 // Non memory-optimized version
-public final class SearchBasedBuilder extends FreqListBuilder {
+public final class SearchCounter extends FrequencyCounter {
 
-    public SearchBasedBuilder(final BlackLabIndex index, final FrequencyListConfig cfg) {
+    public SearchCounter(final BlackLabIndex index, final FrequencyListConfig cfg) {
         super(index, cfg);
     }
 
     @Override
-    public void makeFrequencyList() {
-        super.makeFrequencyList(); // prints debug info
+    public void count() {
+        super.count(); // prints debug info
         try {
             // Create our search
             final var search = getSearch();

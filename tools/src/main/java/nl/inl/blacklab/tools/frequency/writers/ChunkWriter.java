@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.util.Timer;

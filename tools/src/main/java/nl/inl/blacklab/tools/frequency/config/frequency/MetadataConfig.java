@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency.config;
+package nl.inl.blacklab.tools.frequency.config.frequency;
 
 /**
  * Config of a metadata field in a frequency list.

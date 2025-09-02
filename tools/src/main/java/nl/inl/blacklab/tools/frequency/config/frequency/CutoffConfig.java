@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency.config;
+package nl.inl.blacklab.tools.frequency.config.frequency;
 
 /**
  * Config for a frequency cutoff when generating the frequency list.

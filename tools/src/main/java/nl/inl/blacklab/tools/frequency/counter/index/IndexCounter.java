@@ -1,4 +1,4 @@
-package nl.inl.blacklab.tools.frequency.builder;
+package nl.inl.blacklab.tools.frequency.counter.index;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
+import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -20,7 +21,7 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
@@ -41,12 +42,12 @@ import nl.inl.util.Timer;
  * (uses ConcurrentSkipListMap, or alternatively wraps a TreeMap at the end;
  * note that using ConcurrentSkipListMap has consequences for the compute() method, see there)
  */
-public final class IndexBasedBuilder extends FreqListBuilder {
+public final class IndexCounter extends FrequencyCounter {
     private final ChunkWriter chunkWriter;
     private final ChunkedTsvWriter chunkedTsvWriter;
     private final Set<String> termFrequencies; // used for cutoff
 
-    public IndexBasedBuilder(final BlackLabIndex index, final FrequencyListConfig cfg) {
+    public IndexCounter(final BlackLabIndex index, final FrequencyListConfig cfg) {
         super(index, cfg);
         this.chunkWriter = new ChunkWriter(cfg, aInfo);
         this.chunkedTsvWriter = new ChunkedTsvWriter(cfg, aInfo);
@@ -76,8 +77,8 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     }
 
     @Override
-    public void makeFrequencyList() {
-        super.makeFrequencyList(); // prints debug info
+    public void count() {
+        super.count(); // prints debug info
 
         // Use specifically optimized CalcTokenFrequencies
         final List<Integer> docIds = getDocIds();
@@ -201,7 +202,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     ) {
         docIds.parallelStream().forEach(docId -> {
             try {
-                final var doc = new DocumentIndexBasedBuilder(docId, index, cfg, aInfo);
+                final var doc = new DocumentCounter(docId, index, cfg, aInfo);
                 doc.process(occurrences, termFrequencies);
             } catch (final IOException e) {
                 throw BlackLabRuntimeException.wrap(e);

@@ -1,8 +1,10 @@
-package nl.inl.blacklab.tools.frequency.config;
+package nl.inl.blacklab.tools.frequency.config.frequency;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import nl.inl.blacklab.tools.frequency.config.RunConfig;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,7 +43,7 @@ public record FrequencyListConfig(
         ngramSize = Math.max(ngramSize, 1); // ngramSize is at least 1
     }
 
-    FrequencyListConfig changeRunConfig(final RunConfig runConfig) {
+     public FrequencyListConfig changeRunConfig(final RunConfig runConfig) {
         return new FrequencyListConfig(name, ngramSize, annotatedField, annotations, metadata, filter, cutoff,
                 runConfig);
     }
@@ -57,7 +59,7 @@ public record FrequencyListConfig(
         return StringUtils.join(parts, "-");
     }
 
-    void verify(final BlackLabIndex index) {
+    public void verify(final BlackLabIndex index) {
         // Verify annotated field
         if (!index.annotatedFields().exists(annotatedField))
             throw new IllegalArgumentException("Annotated field not found: " + annotatedField);

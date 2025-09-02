@@ -9,9 +9,9 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.tools.frequency.config.AnnotationConfig;
-import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
-import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.AnnotationConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
+import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
 
 /**
  * Info about an annotation we're grouping on.
