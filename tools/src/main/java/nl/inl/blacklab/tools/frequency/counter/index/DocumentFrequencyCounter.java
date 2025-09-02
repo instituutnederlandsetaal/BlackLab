@@ -3,7 +3,6 @@ package nl.inl.blacklab.tools.frequency.counter.index;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -96,7 +95,7 @@ final public class DocumentFrequencyCounter {
         final var sorting = new int[numAnnotations][];
 
         int i = 0;
-        for (final var fi : helper.annotations().forwardIndices()) {
+        for (final var fi: helper.annotations().forwardIndices()) {
             // Get the tokens for this annotation
             tokens[i] = fi.getDocument(docId);
             // And look up their sort values

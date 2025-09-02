@@ -46,7 +46,8 @@ public final class SearchFrequencyCounter extends FrequencyCounter {
 
     private SearchHitGroups getSearch() {
         final var queryInfo = QueryInfo.create(index);
-        final BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1, helper.annotations().annotatedField().name());
+        final BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1,
+                helper.annotations().annotatedField().name());
         final var groupBy = getGroupBy();
         return index.search()
                 .find(anyToken)

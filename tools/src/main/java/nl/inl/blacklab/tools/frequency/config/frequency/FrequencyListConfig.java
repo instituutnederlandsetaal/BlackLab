@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.search.indexmetadata.Annotation;
-
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.tools.frequency.config.RunConfig;
 
 /**

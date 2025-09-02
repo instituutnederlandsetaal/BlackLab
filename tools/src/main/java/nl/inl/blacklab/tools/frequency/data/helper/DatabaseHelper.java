@@ -18,6 +18,7 @@ public record DatabaseHelper(
                 .mapToInt(m -> cfg.metadata().indexOf(m)).toArray();
         final var ungroupedMetadata = cfg.metadata().stream().filter(m -> !m.outputAsId())
                 .mapToInt(m -> cfg.metadata().indexOf(m)).toArray();
-        return new DatabaseHelper(new IdMap(), new IdMap(), new FreqMetadata(index, cfg), groupedMetadata, ungroupedMetadata);
+        return new DatabaseHelper(new IdMap(), new IdMap(), new FreqMetadata(index, cfg), groupedMetadata,
+                ungroupedMetadata);
     }
 }

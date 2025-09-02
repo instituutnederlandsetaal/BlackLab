@@ -4,13 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
-
 import org.apache.fory.io.ForyInputStream;
 
 import de.siegmar.fastcsv.writer.CsvWriter;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 import nl.inl.blacklab.tools.frequency.util.BufferedForyInputStream;
 import nl.inl.util.Timer;
 
