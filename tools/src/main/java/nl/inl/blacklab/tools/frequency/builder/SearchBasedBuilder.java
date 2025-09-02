@@ -15,15 +15,14 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.searches.SearchHitGroups;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 
 // Non memory-optimized version
 public final class SearchBasedBuilder extends FreqListBuilder {
 
-    public SearchBasedBuilder(final BlackLabIndex index, final Config bCfg, final FrequencyListConfig fCfg) {
-        super(index, bCfg, fCfg);
+    public SearchBasedBuilder(final BlackLabIndex index, final FrequencyListConfig cfg) {
+        super(index, cfg);
     }
 
     @Override
@@ -37,7 +36,7 @@ public final class SearchBasedBuilder extends FreqListBuilder {
             // write output file
             tsvWriter.write(result);
         } catch (final InvalidQuery e) {
-            throw new BlackLabRuntimeException("Error creating frequency list: " + fCfg.name(), e);
+            throw new BlackLabRuntimeException("Error creating frequency list: " + cfg.name(), e);
         }
     }
 
@@ -58,7 +57,7 @@ public final class SearchBasedBuilder extends FreqListBuilder {
             groupProps.add(new HitPropertyHitText(index, annotation));
         }
         // Add metadata fields to group by
-        for (final String name: fCfg.metadata().stream().map(MetadataConfig::name).toList()) {
+        for (final String name: cfg.metadata().stream().map(MetadataConfig::name).toList()) {
             groupProps.add(new HitPropertyDocumentStoredField(index, name));
         }
         return new HitPropertyMultiple(groupProps);

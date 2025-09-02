@@ -11,9 +11,9 @@ import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 final public class FreqMetadata {
     private final Map<String, List<String>> metaFieldToValues;
 
-    FreqMetadata(final BlackLabIndex index, final FrequencyListConfig fCfg) {
+    FreqMetadata(final BlackLabIndex index, final FrequencyListConfig cfg) {
         metaFieldToValues = new Object2ObjectArrayMap<>();
-        for (final var meta: fCfg.metadata()) {
+        for (final var meta: cfg.metadata()) {
             final var valueSet = new ObjectArrayList<String>();
             final var valueFreqs = AnnotationInfo.UniqueTermsFromField(index, meta.name());
             valueSet.addAll(valueFreqs);

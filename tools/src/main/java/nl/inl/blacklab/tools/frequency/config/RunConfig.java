@@ -1,5 +1,7 @@
 package nl.inl.blacklab.tools.frequency.config;
 
+import java.io.File;
+
 /**
  * Config for how frequency list generation is run.
  *
@@ -11,13 +13,15 @@ package nl.inl.blacklab.tools.frequency.config;
  * @param regularSearch  Use regular search instead of specifically optimized one.
  * @param databaseFormat Whether to output in database format. Results in outputting ID's instead of string values for the annotations.
  *                       (Metadata is left as is.) Also outputs a 'lookup table' for each annotation, mapping the ID's to the string values.
+ * @param outputDir      Output directory for frequency lists.
  */
 public record RunConfig(
         Integer docsInParallel,
         Integer groupsPerChunk,
         Boolean compressed,
         Boolean regularSearch,
-        Boolean databaseFormat
+        Boolean databaseFormat,
+        File outputDir
 ) {
     public RunConfig {
         if (docsInParallel == null)
@@ -30,5 +34,9 @@ public record RunConfig(
             regularSearch = false;
         if (databaseFormat == null)
             databaseFormat = false;
+    }
+
+    RunConfig changeDir(final File dir) {
+        return new RunConfig(docsInParallel, groupsPerChunk, compressed, regularSearch, databaseFormat, dir);
     }
 }

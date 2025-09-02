@@ -10,7 +10,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.tools.frequency.config.AnnotationConfig;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 
@@ -29,22 +28,22 @@ public final class AnnotationInfo {
     private final int[] nonGroupedMetaIdx;
     private final FreqMetadata freqMetadata;
 
-    public AnnotationInfo(final BlackLabIndex index, final Config bCfg, final FrequencyListConfig fCfg) {
+    public AnnotationInfo(final BlackLabIndex index, final FrequencyListConfig cfg) {
         this.index = index;
-        this.annotatedField = index.annotatedField(fCfg.annotatedField());
-        this.annotations = fCfg.annotations().stream().map((AnnotationConfig a) -> annotatedField.annotation(a.name()))
+        this.annotatedField = index.annotatedField(cfg.annotatedField());
+        this.annotations = cfg.annotations().stream().map((AnnotationConfig a) -> annotatedField.annotation(a.name()))
                 .toArray(Annotation[]::new);
         this.terms = Arrays.stream(annotations).map(index::annotationForwardIndex).map(AnnotationForwardIndex::terms)
                 .toArray(Terms[]::new);
-        this.cutoffAnnotation = fCfg.cutoff() != null ? annotatedField.annotation(fCfg.cutoff().annotation()) : null;
+        this.cutoffAnnotation = cfg.cutoff() != null ? annotatedField.annotation(cfg.cutoff().annotation()) : null;
         this.metaToId = new IdMap();
         this.wordToId = new IdMap();
-        this.freqMetadata = new FreqMetadata(index, fCfg);
-        this.groupedMetaIdx = fCfg.metadata().stream().filter(MetadataConfig::outputAsId)
-                .mapToInt(m -> fCfg.metadata().indexOf(m)).toArray();
+        this.freqMetadata = new FreqMetadata(index, cfg);
+        this.groupedMetaIdx = cfg.metadata().stream().filter(MetadataConfig::outputAsId)
+                .mapToInt(m -> cfg.metadata().indexOf(m)).toArray();
 
-        this.nonGroupedMetaIdx = fCfg.metadata().stream().filter(m -> !m.outputAsId())
-                .mapToInt(m -> fCfg.metadata().indexOf(m)).toArray();
+        this.nonGroupedMetaIdx = cfg.metadata().stream().filter(m -> !m.outputAsId())
+                .mapToInt(m -> cfg.metadata().indexOf(m)).toArray();
     }
 
     public static Set<String> UniqueTermsFromField(final BlackLabIndex index, final String field) {

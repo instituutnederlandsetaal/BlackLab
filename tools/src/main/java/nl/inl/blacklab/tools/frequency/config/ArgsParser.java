@@ -4,12 +4,19 @@ import java.io.File;
 
 import org.apache.commons.lang3.StringUtils;
 
-public record CliArgs(
+/**
+ * Parse and verify CLI arguments.
+ *
+ * @param indexDir   index to generate frequency lists for
+ * @param configFile YAML file specifying what frequency lists to generate
+ * @param outputDir  where to write TSV output files
+ */
+public record ArgsParser(
         File indexDir,
         File configFile,
         File outputDir
 ) {
-    public static CliArgs parse(final String[] args) {
+    public static ArgsParser parse(final String[] args) {
         // Print help
         for (final String arg: args) {
             if ("--help".equals(arg) || "-h".equals(arg)) {
@@ -41,7 +48,7 @@ public record CliArgs(
             exit("Can't write or not a directory " + outputDir);
         }
 
-        return new CliArgs(indexDir, configFile, outputDir);
+        return new ArgsParser(indexDir, configFile, outputDir);
     }
 
     private static void exit(final String msg) {

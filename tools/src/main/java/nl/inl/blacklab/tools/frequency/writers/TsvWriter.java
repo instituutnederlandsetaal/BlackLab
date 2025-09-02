@@ -11,7 +11,6 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.HitGroup;
 import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
@@ -22,8 +21,8 @@ import nl.inl.util.Timer;
  */
 public final class TsvWriter extends FreqListWriter {
 
-    public TsvWriter(final Config bCfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
-        super(bCfg, fCfg, aInfo);
+    public TsvWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
+        super(cfg, aInfo);
     }
 
     private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
@@ -95,7 +94,7 @@ public final class TsvWriter extends FreqListWriter {
             record.add(Integer.toString(wordID));
         } else {
             // for each annotation construct a string for the ngram
-            final int ngramSize = fCfg.ngramSize();
+            final int ngramSize = cfg.ngramSize();
             for (int i = 0, tokenArrIndex = 0, len = tokenIds.length;
                  tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
                 // get term index for the annotation
@@ -113,7 +112,7 @@ public final class TsvWriter extends FreqListWriter {
             final int[] idx = aInfo.getNonGroupedMetaIdx();
             for (final int i: idx) {
                 // add metadata value for this index
-                final String name = fCfg.metadata().get(i).name();
+                final String name = cfg.metadata().get(i).name();
                 final String metaValue = aInfo.getFreqMetadata().getValue(name, metadataValues[i]);
                 record.add(metaValue);
             }
@@ -122,8 +121,8 @@ public final class TsvWriter extends FreqListWriter {
             record.add(Integer.toString(metaId));
         } else {
             if (metadataValues != null) {
-                for (int i = 0; i < fCfg.metadata().size(); i++) {
-                    final String name = fCfg.metadata().get(i).name();
+                for (int i = 0; i < cfg.metadata().size(); i++) {
+                    final String name = cfg.metadata().get(i).name();
                     final String metaValue = aInfo.getFreqMetadata().getValue(name, metadataValues[i]);
                     record.add(metaValue);
                 }
@@ -133,7 +132,7 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     private File getFile() {
-        final String fileName = fCfg.name() + getExt();
-        return new File(cfg.outputDir(), fileName);
+        final String fileName = cfg.name() + getExt();
+        return new File(cfg.runConfig().outputDir(), fileName);
     }
 }

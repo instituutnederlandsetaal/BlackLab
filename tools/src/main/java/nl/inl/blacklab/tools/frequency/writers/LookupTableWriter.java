@@ -7,14 +7,13 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.util.Timer;
 
 public final class LookupTableWriter extends FreqListWriter {
-    public LookupTableWriter(final BlackLabIndex index, final Config bCfg, final FrequencyListConfig fCfg) {
-        super(bCfg, fCfg, new AnnotationInfo(index, bCfg, fCfg));
+    public LookupTableWriter(final BlackLabIndex index, final FrequencyListConfig cfg) {
+        super(cfg, new AnnotationInfo(index, cfg));
     }
 
     private static String getToken(final Terms terms, final int id) {
@@ -31,8 +30,8 @@ public final class LookupTableWriter extends FreqListWriter {
     }
 
     private File getFile(final Annotation annotation) {
-        final String fileName = fCfg.name() + "_" + annotation.name() + getExt();
-        return new File(cfg.outputDir(), fileName);
+        final String fileName = cfg.name() + "_" + annotation.name() + getExt();
+        return new File(cfg.runConfig().outputDir(), fileName);
     }
 
     public void write() {

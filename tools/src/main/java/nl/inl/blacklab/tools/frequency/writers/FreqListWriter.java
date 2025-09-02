@@ -16,7 +16,6 @@ import de.siegmar.fastcsv.writer.CsvWriter;
 import de.siegmar.fastcsv.writer.QuoteStrategies;
 import net.jpountz.lz4.LZ4FrameInputStream;
 import net.jpountz.lz4.LZ4FrameOutputStream;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.BufferedForyInputStream;
@@ -27,13 +26,11 @@ abstract class FreqListWriter {
     private static final CsvWriter.CsvWriterBuilder csvWriterBuilder = CsvWriter.builder()
             .fieldSeparator('\t')
             .quoteStrategy(QuoteStrategies.EMPTY);
-    final Config cfg;
-    final FrequencyListConfig fCfg;
+    final FrequencyListConfig cfg;
     final AnnotationInfo aInfo;
 
-    FreqListWriter(final Config bCfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
-        this.cfg = bCfg;
-        this.fCfg = fCfg;
+    FreqListWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
+        this.cfg = cfg;
         this.aInfo = aInfo;
     }
 
@@ -76,6 +73,6 @@ abstract class FreqListWriter {
     }
 
     final RuntimeException reportIOException(final IOException e) {
-        return new RuntimeException("Error writing output for " + fCfg.name(), e);
+        return new RuntimeException("Error writing output for " + cfg.name(), e);
     }
 }

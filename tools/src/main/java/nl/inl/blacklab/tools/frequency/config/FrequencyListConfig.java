@@ -26,7 +26,8 @@ public record FrequencyListConfig(
         List<AnnotationConfig> annotations,
         List<MetadataConfig> metadata,
         String filter,
-        CutoffConfig cutoff
+        CutoffConfig cutoff,
+        RunConfig runConfig
 ) {
     public FrequencyListConfig {
         if (annotatedField == null)
@@ -38,6 +39,11 @@ public record FrequencyListConfig(
         if (name == null)
             name = generateName();
         ngramSize = Math.max(ngramSize, 1); // ngramSize is at least 1
+    }
+
+    FrequencyListConfig changeRunConfig(final RunConfig runConfig) {
+        return new FrequencyListConfig(name, ngramSize, annotatedField, annotations, metadata, filter, cutoff,
+                runConfig);
     }
 
     /**
@@ -64,5 +70,8 @@ public record FrequencyListConfig(
         for (final var m: metadata)
             if (!index.metadataFields().exists(m.name()))
                 throw new IllegalArgumentException("Metadata field not found: " + m.name());
+        // Verify run config
+        if (runConfig == null)
+            throw new IllegalArgumentException("Run config missing");
     }
 }

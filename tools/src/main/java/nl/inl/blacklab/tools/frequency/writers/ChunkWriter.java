@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.UUID;
 
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
@@ -14,9 +13,9 @@ import nl.inl.util.Timer;
 public final class ChunkWriter extends FreqListWriter {
     private final File tmpDir;
 
-    public ChunkWriter(final Config cfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
-        super(cfg, fCfg, aInfo);
-        this.tmpDir = new File(cfg.outputDir(), "tmp");
+    public ChunkWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
+        super(cfg, aInfo);
+        this.tmpDir = new File(cfg.runConfig().outputDir(), "tmp");
     }
 
     public File write(final Map<GroupId, Integer> occurrences) {
@@ -42,7 +41,7 @@ public final class ChunkWriter extends FreqListWriter {
 
     private File getFile() {
         final String ext = cfg.runConfig().compressed() ? ".chunk.lz4" : ".chunk";
-        final String chunkName = fCfg.name() + "-" + UUID.randomUUID() + ext;
+        final String chunkName = cfg.name() + "-" + UUID.randomUUID() + ext;
         return new File(tmpDir, chunkName);
     }
 }

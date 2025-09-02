@@ -20,7 +20,6 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
@@ -47,11 +46,11 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     private final ChunkedTsvWriter chunkedTsvWriter;
     private final Set<String> termFrequencies; // used for cutoff
 
-    public IndexBasedBuilder(final BlackLabIndex index, final Config bCfg, final FrequencyListConfig fCfg) {
-        super(index, bCfg, fCfg);
-        this.chunkWriter = new ChunkWriter(bCfg, fCfg, aInfo);
-        this.chunkedTsvWriter = new ChunkedTsvWriter(bCfg, fCfg, aInfo);
-        this.termFrequencies = getTermFrequencies(index, fCfg);
+    public IndexBasedBuilder(final BlackLabIndex index, final FrequencyListConfig cfg) {
+        super(index, cfg);
+        this.chunkWriter = new ChunkWriter(cfg, aInfo);
+        this.chunkedTsvWriter = new ChunkedTsvWriter(cfg, aInfo);
+        this.termFrequencies = getTermFrequencies(index, cfg);
     }
 
     private Set<String> getTermFrequencies(final BlackLabIndex index, final FrequencyListConfig fCfg) {
@@ -84,7 +83,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
         final List<Integer> docIds = getDocIds();
 
         // Create tmp dir for the chunk files
-        final File tmpDir = new File(cfg.outputDir(), "tmp");
+        final File tmpDir = new File(cfg.runConfig().outputDir(), "tmp");
         if (!tmpDir.exists() && !tmpDir.mkdir())
             throw new RuntimeException("Could not create tmp dir: " + tmpDir);
 
@@ -174,9 +173,9 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     private List<Integer> getDocIds() {
         final var t = new Timer();
         final var docIds = new ArrayList<Integer>();
-        if (fCfg.filter() != null) {
+        if (cfg.filter() != null) {
             try {
-                final Query q = LuceneUtil.parseLuceneQuery(index, fCfg.filter(), index.analyzer(), "");
+                final Query q = LuceneUtil.parseLuceneQuery(index, cfg.filter(), index.analyzer(), "");
                 index.queryDocuments(q).forEach(d -> docIds.add(d.docId()));
             } catch (final ParseException e) {
                 throw new RuntimeException(e);
@@ -185,7 +184,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
             // No filter: include all documents.
             index.forEachDocument((__, id) -> docIds.add(id));
         }
-        System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + fCfg.filter() + "' in "
+        System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + cfg.filter() + "' in "
                 + t.elapsedDescription(true));
         return docIds;
     }
@@ -202,7 +201,7 @@ public final class IndexBasedBuilder extends FreqListBuilder {
     ) {
         docIds.parallelStream().forEach(docId -> {
             try {
-                final var doc = new DocumentIndexBasedBuilder(docId, index, cfg, fCfg, aInfo);
+                final var doc = new DocumentIndexBasedBuilder(docId, index, cfg, aInfo);
                 doc.process(occurrences, termFrequencies);
             } catch (final IOException e) {
                 throw BlackLabRuntimeException.wrap(e);

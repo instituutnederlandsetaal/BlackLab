@@ -4,15 +4,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
 import nl.inl.util.Timer;
 
 public final class MetaGroupWriter extends FreqListWriter {
 
-    public MetaGroupWriter(final Config bCfg, final FrequencyListConfig fCfg, final AnnotationInfo aInfo) {
-        super(bCfg, fCfg, aInfo);
+    public MetaGroupWriter(final FrequencyListConfig cfg, final AnnotationInfo aInfo) {
+        super(cfg, aInfo);
     }
 
     public void write() {
@@ -32,7 +31,7 @@ public final class MetaGroupWriter extends FreqListWriter {
                 for (int i = 0; i < k.length; i++) {
                     // add metadata value for this index
                     final int[] idxSelection = aInfo.getGroupedMetaIdx();
-                    final String name = fCfg.metadata().get(idxSelection[i]).name();
+                    final String name = cfg.metadata().get(idxSelection[i]).name();
                     final String metaValue = aInfo.getFreqMetadata().getValue(name, k[i]);
                     record.add(metaValue);
                 }
@@ -46,7 +45,7 @@ public final class MetaGroupWriter extends FreqListWriter {
     }
 
     private File getFile() {
-        final String fileName = fCfg.name() + "_metadata" + getExt();
-        return new File(cfg.outputDir(), fileName);
+        final String fileName = cfg.name() + "_metadata" + getExt();
+        return new File(cfg.runConfig().outputDir(), fileName);
     }
 }

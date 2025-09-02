@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.config.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.data.AnnotationInfo;
@@ -26,32 +25,30 @@ import nl.inl.blacklab.tools.frequency.data.GroupId;
 
 final public class DocumentIndexBasedBuilder {
     private static final int[] EMPTY_ARRAY = new int[0];
-    private final FrequencyListConfig fCfg;
+    private final FrequencyListConfig cfg;
     private final AnnotationInfo aInfo;
     private final Document doc;
     private final int docId;
     private final int docLength;
     private final List<String> metaFieldNames;
-    private final Config bCfg;
 
-    DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final Config cfg,
-            final FrequencyListConfig fCfg, final AnnotationInfo aInfo) throws IOException {
-        this.fCfg = fCfg;
+    DocumentIndexBasedBuilder(final int docId, final BlackLabIndex index, final FrequencyListConfig cfg,
+            final AnnotationInfo aInfo) throws IOException {
+        this.cfg = cfg;
         this.aInfo = aInfo;
         this.docId = docId;
-        this.bCfg = cfg;
         /*
          * Document properties that are used in the grouping. (e.g. for query "all tokens, grouped by lemma + document year", will contain DocProperty("document year")
          * This is not necessarily limited to just metadata, can also contain any other DocProperties such as document ID, document length, etc.
          */
         // Token properties that need to be grouped on, with sensitivity (case-sensitive grouping or not) and Terms
-        metaFieldNames = fCfg.metadata().stream().map(MetadataConfig::name).toList();
+        metaFieldNames = cfg.metadata().stream().map(MetadataConfig::name).toList();
 
         // Start actually calculating the requests frequencies.
 
         // We do have hit properties, so we need to use both document metadata and the tokens from the forward index to
         // calculate the frequencies.
-        final String fieldName = fCfg.annotatedField();
+        final String fieldName = cfg.annotatedField();
         final String lengthTokensFieldName = AnnotatedFieldNameUtil.lengthTokensField(fieldName);
 
         // Determine all the fields we want to be able to load, so we don't need to load the entire document
@@ -114,11 +111,11 @@ final public class DocumentIndexBasedBuilder {
 
     @Nullable
     private DocumentMetadata getDocumentMetadata() {
-        final int numFields = fCfg.metadata().size();
+        final int numFields = cfg.metadata().size();
         final var metaValues = new int[numFields];
         // for each metadata field defined in the config
         for (int i = 0; i < numFields; i++) {
-            final MetadataConfig metaCfg = fCfg.metadata().get(i);
+            final MetadataConfig metaCfg = cfg.metadata().get(i);
             // get its value
             String fieldValue = doc.get(metaCfg.name());
             // and if it's null
@@ -145,8 +142,8 @@ final public class DocumentIndexBasedBuilder {
             final Set<String> termFrequencies) {
         // Keep track of term occurrences in this document; later we'll merge it with the global term frequencies
         final Map<GroupId, Integer> occsInDoc = new Object2IntOpenHashMap<>();
-        final int ngramSize = fCfg.ngramSize();
-        final var cutoffTerms = fCfg.cutoff() != null ? aInfo.getTerms()[0] : null;
+        final int ngramSize = cfg.ngramSize();
+        final var cutoffTerms = cfg.cutoff() != null ? aInfo.getTerms()[0] : null;
         final int numAnnotations = aInfo.getAnnotations().length;
 
         if (numAnnotations == 0) {
@@ -180,7 +177,7 @@ final public class DocumentIndexBasedBuilder {
             final var groupId = new GroupId(tokenIds, sortPositions, meta);
 
             // Only add if it is above the cutoff
-            if (fCfg.cutoff() != null) {
+            if (cfg.cutoff() != null) {
                 // Check if any of the ngrams tokens is below the cutoff
                 boolean skipGroup = false;
                 for (int j = 0; j < ngramSize; j++) {
