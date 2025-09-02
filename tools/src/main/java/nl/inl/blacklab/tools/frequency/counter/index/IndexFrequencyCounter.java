@@ -53,7 +53,7 @@ public final class IndexFrequencyCounter extends FrequencyCounter {
         super.count(); // prints debug info
 
         // Use specifically optimized CalcTokenFrequencies
-        final List<Integer> docIds = getDocIds();
+        final List<Integer> docIds = getDocIds(index, cfg);
 
         // Create tmp dir for the chunk files
         final File tmpDir = new File(cfg.runConfig().outputDir(), "tmp");
@@ -137,29 +137,6 @@ public final class IndexFrequencyCounter extends FrequencyCounter {
             // free memory, allocate new on next iteration
             occurrences.clear();
         }
-    }
-
-    /**
-     * Get all document IDs matching the filter.
-     * If no filter is defined, return all document IDs.
-     */
-    private List<Integer> getDocIds() {
-        final var t = new Timer();
-        final var docIds = new ArrayList<Integer>();
-        if (cfg.filter() != null) {
-            try {
-                final Query q = LuceneUtil.parseLuceneQuery(index, cfg.filter(), index.analyzer(), "");
-                index.queryDocuments(q).forEach(d -> docIds.add(d.docId()));
-            } catch (final ParseException e) {
-                throw new RuntimeException(e);
-            }
-        } else {
-            // No filter: include all documents.
-            index.forEachDocument((__, id) -> docIds.add(id));
-        }
-        System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + cfg.filter() + "' in "
-                + t.elapsedDescription(true));
-        return docIds;
     }
 
     /**
