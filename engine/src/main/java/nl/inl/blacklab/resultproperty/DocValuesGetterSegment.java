@@ -10,15 +10,15 @@ import org.apache.lucene.index.SortedSetDocValues;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.util.DocValuesUtil;
-import nl.inl.util.NumericDocValuesCacher;
-import nl.inl.util.SortedDocValuesCacher;
-import nl.inl.util.SortedSetDocValuesCacher;
+import nl.inl.util.DocValuesRandomAccess;
 
 class DocValuesGetterSegment implements DocValuesGetter {
-    private SortedDocValuesCacher sortedDocValues;
-    private SortedSetDocValuesCacher sortedSetDocValues;
-    private NumericDocValuesCacher numericDocValues;
+
+    private DocValuesRandomAccess<SortedDocValues, String> sortedDocValues;
+
+    private DocValuesRandomAccess<SortedSetDocValues, String[]> sortedSetDocValues;
+
+    private DocValuesRandomAccess<NumericDocValues, Long> numericDocValues;
 
     public DocValuesGetterSegment(BlackLabIndex index, LeafReaderContext lrc, String fieldName) {
         try {
@@ -27,15 +27,15 @@ class DocValuesGetterSegment implements DocValuesGetter {
                 // NOTE: can be null! This is valid and indicates the documents in this segment does not contain any values for this field.
                 NumericDocValues numericDv = leafReader.getNumericDocValues(fieldName);
                 if (numericDv != null) {
-                    numericDocValues = DocValuesUtil.withRandomAccess(lrc.reader().getNumericDocValues(fieldName));
+                    numericDocValues = DocValuesRandomAccess.to(numericDv);
                 } else {
                     SortedSetDocValues sortedSetDv = leafReader.getSortedSetDocValues(fieldName);
                     if (sortedSetDv != null) {
-                        sortedSetDocValues = DocValuesUtil.withRandomAccess(sortedSetDv);
+                        sortedSetDocValues = DocValuesRandomAccess.to(sortedSetDv);
                     } else {
                         SortedDocValues sortedDv = leafReader.getSortedDocValues(fieldName);
                         if (sortedDv != null) {
-                            sortedDocValues = DocValuesUtil.withRandomAccess(sortedDv);
+                            sortedDocValues = DocValuesRandomAccess.to(sortedDv);
                         }
                     }
                 }

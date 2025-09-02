@@ -12,10 +12,7 @@ import org.apache.lucene.index.SortedSetDocValues;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.util.DocValuesUtil;
-import nl.inl.util.NumericDocValuesCacher;
-import nl.inl.util.SortedDocValuesCacher;
-import nl.inl.util.SortedSetDocValuesCacher;
+import nl.inl.util.DocValuesRandomAccess;
 
 class DocValuesGetterGlobal implements DocValuesGetter {
 
@@ -24,17 +21,17 @@ class DocValuesGetterGlobal implements DocValuesGetter {
     /**
      * The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
      */
-    private Map<LeafReaderContext, SortedDocValuesCacher> sortedDocValues = null;
+    private Map<LeafReaderContext, DocValuesRandomAccess<SortedDocValues, String>> sortedDocValues = null;
 
     /**
      * The DocValues per segment (keyed by docBase), or null if we don't have docValues. New indexes all have SortedSetDocValues, but some very old indexes may still contain regular SortedDocValues!
      */
-    private Map<LeafReaderContext, SortedSetDocValuesCacher> sortedSetDocValues = null;
+    private Map<LeafReaderContext, DocValuesRandomAccess<SortedSetDocValues, String[]>> sortedSetDocValues = null;
 
     /**
      * Null unless the field is numeric.
      */
-    private Map<LeafReaderContext, NumericDocValuesCacher> numericDocValues = null;
+    private Map<LeafReaderContext, DocValuesRandomAccess<NumericDocValues, Long>> numericDocValues = null;
 
     public DocValuesGetterGlobal(BlackLabIndex index, String fieldName) {
         this.index = index;
@@ -48,19 +45,19 @@ class DocValuesGetterGlobal implements DocValuesGetter {
                     if (numericDv != null) {
                         if (numericDocValues == null)
                             numericDocValues = new HashMap<>();
-                        numericDocValues.put(lrc, DocValuesUtil.withRandomAccess(numericDv));
+                        numericDocValues.put(lrc, DocValuesRandomAccess.to(numericDv));
                     } else {
                         SortedSetDocValues sortedSetDv = leafReader.getSortedSetDocValues(fieldName);
                         if (sortedSetDv != null) {
                             if (sortedSetDocValues == null)
                                 sortedSetDocValues = new HashMap<>();
-                            sortedSetDocValues.put(lrc, DocValuesUtil.withRandomAccess(sortedSetDv));
+                            sortedSetDocValues.put(lrc, DocValuesRandomAccess.to(sortedSetDv));
                         } else {
                             SortedDocValues sortedDv = leafReader.getSortedDocValues(fieldName);
                             if (sortedDv != null) {
                                 if (sortedDocValues == null)
                                     sortedDocValues = new HashMap<>();
-                                sortedDocValues.put(lrc, DocValuesUtil.withRandomAccess(sortedDv));
+                                sortedDocValues.put(lrc, DocValuesRandomAccess.to(sortedDv));
                             }
                         }
                     }

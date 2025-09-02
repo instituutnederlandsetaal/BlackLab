@@ -79,4 +79,12 @@ public class TruncatableFreqList implements LimitUtil.Limitable<TruncatableFreqL
     public TruncatableFreqList withLimit(long max) {
         return truncated(max);
     }
+
+    public long getLimit() {
+        return limitValues;
+    }
+
+    public void addAll(TruncatableFreqList tfl) {
+        tfl.values.forEach(this::add);
+    }
 }

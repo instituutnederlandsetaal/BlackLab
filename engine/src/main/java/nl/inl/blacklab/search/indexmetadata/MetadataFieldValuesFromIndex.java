@@ -14,7 +14,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.util.DocValuesUtil;
 
 /**
  * List of values with freqencies of a metadata field.
@@ -22,41 +21,6 @@ import nl.inl.util.DocValuesUtil;
  * This is the version that is determined from the Lucene index via DocValues.
  */
 class MetadataFieldValuesFromIndex implements MetadataFieldValues {
-    /**
-     * Get the current value from a DocValues instance and cast to string.
-     * NOTE: For multi-value fields, only returns the first value!
-     *
-     * @param dv     DocValues instance positioned at a valid document
-     */
-    public void getCurrentValues(DocIdSetIterator dv) {
-        try {
-            if (dv instanceof NumericDocValues)
-                synchronized (values) {
-                    values.add(Long.toString(((NumericDocValues) dv).longValue()));
-                }
-            else if (dv instanceof SortedSetDocValues ssdv) {
-                synchronized (values) {
-                    for (int i = 0; i < ssdv.docValueCount(); i++) {
-                        long ord = ssdv.nextOrd();
-                        values.add(ssdv.lookupOrd(ord).utf8ToString());
-                    }
-                }
-            } else if (dv instanceof SortedDocValues sdv) {
-                // OPT: avoid looking up the value and just use the ord directly if possible
-                // (e.g. while determining frequencies in MetadataFieldVAluesFromIndex.determineValueDistribution())
-                // See LUCENE-9796 in https://lucene.apache.org/core/9_0_0/MIGRATE.html
-                synchronized (values) {
-                    values.add(sdv.lookupOrd(sdv.ordValue()).utf8ToString());
-                }
-            } else {
-                throw new IllegalStateException("Unexpected DocValues type");
-            }
-        } catch (IOException e) {
-            throw new InvalidIndex(e);
-        }
-    }
-
-    //    private static final Logger logger = LogManager.getLogger(MetadataFieldValuesFromIndex.class);
 
     static class Factory implements MetadataFieldValues.Factory {
 
@@ -114,26 +78,64 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
     private void determineValueDistribution(IndexReader reader) {
         reader.leaves().parallelStream().forEach(lrc -> {
             try {
-                getDocValues(lrc.reader(), isNumeric);
+                TruncatableFreqList tfl = getDocValues(lrc.reader(), isNumeric);
+                if (tfl != null) {
+                    synchronized (values) {
+                        values.addAll(tfl);
+                    }
+                }
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
         });
     }
 
-    private void getDocValues(LeafReader reader, boolean isNumeric) throws IOException {
+    private TruncatableFreqList getDocValues(LeafReader reader, boolean isNumeric) throws IOException {
+        TruncatableFreqList tfl = new TruncatableFreqList(this.values.getLimit());
         Bits liveDocs = reader.getLiveDocs();
-        DocIdSetIterator dv = DocValuesUtil.docValuesIterator(reader, fieldName, isNumeric);
-        if (dv != null) { // If null, the documents in this segment do not contain any values for this field
+        if (isNumeric) {
+            // Numeric doc values
+            NumericDocValues dv = reader.getNumericDocValues(fieldName);
+            if (dv == null)
+                return null;
             while (true) {
                 int docId = dv.nextDoc();
                 if (docId == DocIdSetIterator.NO_MORE_DOCS)
                     break;
                 if (liveDocs == null || liveDocs.get(docId)) { // not deleted?
-                    getCurrentValues(dv);
+                    tfl.add(Long.toString(dv.longValue()));
+                }
+            }
+        } else {
+            SortedSetDocValues dv = reader.getSortedSetDocValues(fieldName);
+            if (dv == null) {
+                // Must be sorted doc values
+                SortedDocValues sdv = reader.getSortedDocValues(fieldName);
+                if (sdv == null)
+                    return null;
+                while (true) {
+                    int docId = sdv.nextDoc();
+                    if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                        break;
+                    if (liveDocs == null || liveDocs.get(docId)) { // not deleted?
+                        tfl.add(sdv.lookupOrd(sdv.ordValue()).utf8ToString());
+                    }
+                }
+            } else {
+                // Sorted set doc values
+                while (true) {
+                    int docId = dv.nextDoc();
+                    if (docId == DocIdSetIterator.NO_MORE_DOCS)
+                        break;
+                    if (liveDocs == null || liveDocs.get(docId)) { // not deleted?
+                        for (int i = 0; i < dv.docValueCount(); i++) {
+                            tfl.add(dv.lookupOrd(dv.nextOrd()).utf8ToString());
+                        }
+                    }
                 }
             }
         }
+        return tfl;
     }
 
     @Override
