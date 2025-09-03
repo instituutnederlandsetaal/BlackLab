@@ -108,6 +108,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
                 // Might be registered later in the matching process.
                 starts[indexInArrays] = 0;
                 ends[indexInArrays] = 0;
+                return;
             }
             MatchInfo group = hit.matchInfos(groupIndex);
             

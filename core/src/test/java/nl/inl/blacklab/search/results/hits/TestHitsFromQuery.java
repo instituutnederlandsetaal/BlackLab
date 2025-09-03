@@ -66,7 +66,7 @@ public class TestHitsFromQuery {
         });
 
         // start the to-be-interrupted work.
-        try { h.ensureResultsRead(-1); }
+        try { h.size(); }
         catch (Exception e) {
             // probably InterruptedException, but we don't care about that here.
         }
@@ -87,8 +87,9 @@ public class TestHitsFromQuery {
     public void testParallelSearchException() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitsFromQuery h = new HitsFromQuery(queryInfo.timings(), new FetchFromQuery(patternQuery, SearchSettings.defaults(),
-                queryInfo.field()));
+        FetchFromQuery hitFetcher = new FetchFromQuery(patternQuery, SearchSettings.defaults(),
+                queryInfo.field());
+        HitsFromQuery h = new HitsFromQuery(queryInfo.timings(), hitFetcher);
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
@@ -101,7 +102,7 @@ public class TestHitsFromQuery {
 
         Throwable thrownException = null;
         try {
-            h.ensureResultsRead(-1);
+            h.size();
         } catch (Exception e) {
             // get to the root cause, which should be the exception we threw in the SpansReader.
             thrownException = e;
