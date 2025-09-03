@@ -76,7 +76,7 @@ public final class HitImpl implements Hit {
             return false;
         if (o instanceof EphemeralHit that) {
             return doc == that.doc_ && start == that.start_ && end == that.end_ && Arrays.equals(matchInfo,
-                    that.matchInfo);
+                    that.matchInfos_);
         } else if (o instanceof HitImpl hit) {
             return doc == hit.doc && start == hit.start && end == hit.end && Arrays.equals(matchInfo,
                     hit.matchInfo);

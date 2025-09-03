@@ -19,7 +19,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
-import nl.inl.blacklab.index.ZipHandleManager;
 
 /**
  * Process (trees of) files, which may include archives that we want to

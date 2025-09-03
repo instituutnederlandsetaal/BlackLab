@@ -4,21 +4,21 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.results.hits.FetchFromQuery;
-import nl.inl.blacklab.search.results.hits.HitsFromQuery;
+import nl.inl.blacklab.search.results.hits.HitsFromFetcher;
+import nl.inl.blacklab.search.results.hits.fetch.HitFetcherQuery;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 public class HitResultsFromQuery extends HitResultsAbstract {
 
     /** Global view on our segment hits */
-    private final HitsFromQuery hits;
+    private final HitsFromFetcher hits;
 
     protected HitResultsFromQuery(QueryInfo queryInfo, BLSpanQuery sourceQuery,
             SearchSettings searchSettings) {
         super(queryInfo.optOverrideField(sourceQuery));
         sourceQuery.setQueryInfo(queryInfo);
-        FetchFromQuery fetcher = new FetchFromQuery(sourceQuery, searchSettings, queryInfo().field());
-        hits = new HitsFromQuery(queryInfo.timings(), fetcher);
+        HitFetcherQuery fetcher = new HitFetcherQuery(sourceQuery, searchSettings);
+        hits = new HitsFromFetcher(queryInfo.timings(), fetcher);
     }
 
     @Override
@@ -27,13 +27,8 @@ public class HitResultsFromQuery extends HitResultsAbstract {
     }
 
     @Override
-    public HitsFromQuery getHits() {
+    public HitsFromFetcher getHits() {
         return hits;
-    }
-
-    @Override
-    public boolean ensureResultsRead(long number) {
-        return hits.ensureResultsRead(number);
     }
 
     @Override

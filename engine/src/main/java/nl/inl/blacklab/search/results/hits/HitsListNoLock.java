@@ -99,8 +99,8 @@ class HitsListNoLock extends HitsListAbstract {
         docs.add(hit.doc_);
         starts.add(hit.start_);
         ends.add(hit.end_);
-        if (hit.matchInfo != null) {
-            matchInfos.add(hit.matchInfo);
+        if (hit.matchInfos_ != null) {
+            matchInfos.add(hit.matchInfos_);
         } else {
             // Either all hits have matchInfo, or none do.
             assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
@@ -193,7 +193,7 @@ class HitsListNoLock extends HitsListAbstract {
         h.doc_ = docs.getInt(index);
         h.start_ = starts.getInt(index);
         h.end_ = ends.getInt(index);
-        h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
+        h.matchInfos_ = matchInfos.isEmpty() ? null : matchInfos.get(index);
         assert HitsListAbstract.debugCheckReasonableHit(h);
     }
 

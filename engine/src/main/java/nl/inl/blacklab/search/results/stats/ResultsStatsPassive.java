@@ -3,7 +3,7 @@ package nl.inl.blacklab.search.results.stats;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
-import nl.inl.blacklab.search.results.hits.SpansReader;
+import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
 
 /** ResultsStats that relies on being informed of progress by its owner. */
 public class ResultsStatsPassive extends ResultsStats {
@@ -82,14 +82,14 @@ public class ResultsStatsPassive extends ResultsStats {
         setDone(true);
     }
 
-    public synchronized SpansReader.Phase add(long processed, long counted) {
+    public synchronized HitFetcher.Phase add(long processed, long counted) {
         this.processed.add(processed);
         this.counted.add(counted);
         if (this.counted.sum() >= maxHitsToCount)
-            return SpansReader.Phase.DONE;
+            return HitFetcher.Phase.DONE;
         else if (this.processed.sum() >= maxHitsToProcess)
-            return SpansReader.Phase.COUNTING_ONLY;
+            return HitFetcher.Phase.COUNTING_ONLY;
         else
-            return SpansReader.Phase.STORING_AND_COUNTING;
+            return HitFetcher.Phase.STORING_AND_COUNTING;
     }
 }

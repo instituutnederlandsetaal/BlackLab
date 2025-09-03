@@ -40,7 +40,7 @@ public class HitsSingle extends HitsAbstract {
         hit.doc_ = this.hit.doc();
         hit.start_ = this.hit.start();
         hit.end_ = this.hit.end();
-        hit.matchInfo = this.hit.matchInfos();
+        hit.matchInfos_ = this.hit.matchInfos();
     }
 
     @Override
@@ -87,6 +87,6 @@ public class HitsSingle extends HitsAbstract {
         hit.doc_ = doc;
         hit.start_ = start;
         hit.end_ = end;
-        hit.matchInfo = matchInfo;
+        hit.matchInfos_ = matchInfo;
     }
 }

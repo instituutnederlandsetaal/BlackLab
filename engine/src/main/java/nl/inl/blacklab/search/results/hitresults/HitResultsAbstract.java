@@ -138,19 +138,17 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults sorted(HitProperty sortBy) {
-        ensureResultsRead(-1);
-        HitProperty sortByWithContext = sortBy.copyWith(PropContext.globalHits(getHits(), new ConcurrentHashMap<>()));
-        return new HitResultsList(queryInfo(), getHits().sorted(sortByWithContext), null, null,
+        Hits hits = getHits().getStatic(); // ensure all read
+        HitProperty sortByWithContext = sortBy.copyWith(PropContext.globalHits(hits, new ConcurrentHashMap<>()));
+        return new HitResultsList(queryInfo(), hits.sorted(sortByWithContext), null, null,
                 resultsStats(), docsStats());
     }
 
     @Override
     public HitGroups group(HitProperty groupBy, long maxResultsToStorePerGroup) {
-        ensureResultsRead(-1);
-
         if (groupBy == null)
             throw new IllegalArgumentException("Must have criteria to group on");
-        Hits hits = getHits();
+        Hits hits = getHits().getStatic(); // ensure all read
 
         Map<PropertyValue, Hits.Group> groupedHits = HitsUtils.group(hits, groupBy,
                 maxResultsToStorePerGroup);
@@ -170,7 +168,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults filter(HitProperty property, PropertyValue value) {
-        return new HitResultsFiltered(this, property, value);
+        //return new HitResultsFiltered(this, property, value);
+        return new HitResultsFiltered(queryInfo(), getHits(), property, value);
     }
 
     /**

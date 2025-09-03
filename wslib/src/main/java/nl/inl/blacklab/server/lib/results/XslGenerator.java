@@ -1,8 +1,5 @@
 package nl.inl.blacklab.server.lib.results;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +9,7 @@ import nl.inl.blacklab.indexers.config.ConfigAnnotation;
 import nl.inl.blacklab.indexers.config.ConfigInlineTag;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.exceptions.NotFound;
+import nl.inl.util.XPathUtil;
 
 public class XslGenerator {
 
@@ -30,81 +28,6 @@ public class XslGenerator {
     }
 
     private static final String endTemplate = "</xsl:template>";
-
-    /*
-     * NOTE: leaves start as-is, but strips ./ if needed (//a/b will work)
-     * handles nulls
-     */
-    private static String joinXpath(String a, String b) {
-
-        // 	a 			-> a
-        //	/a			-> a
-        // 	./a			-> a
-        // 	//a 		-> //a
-        // 	.//a		-> //a
-
-        // 	b			-> /b
-        // 	/b			-> /b
-        // 	./b			-> /b
-        // 	//b			-> //b
-        // .//b			-> //b
-
-        // return a+/+b
-
-        // strip any leading . (since it's implicit)
-        a = normalizeXpath(a);
-        b = normalizeXpath(b);
-
-        // split and explode into cartesian product...
-        // a|b c -> a/c | b/c
-        // because a/(b|c) is not valid xpath
-        String[] asplit = StringUtils.split(a, "|");
-        String[] bsplit = StringUtils.split(b, "|");
-        List<String> result = new ArrayList<>();
-        if (asplit != null && asplit.length > 0) {
-            for (String _a: asplit) {
-                if (bsplit != null && bsplit.length > 0) {
-                    for (String _b: bsplit) {
-                        if (_b.startsWith("/"))
-                            result.add(StringUtils.join(_a, _b));
-                        else
-                            result.add(StringUtils.join(new String[] { _a, _b }, '/'));
-                    }
-                } else {
-                    result.add(_a);
-                }
-            }
-        } else if (bsplit != null && bsplit.length > 0) {
-            Collections.addAll(result, bsplit);
-        }
-
-        String joined = StringUtils.join(result, "|");
-        if (joined.isEmpty())
-            return ".";
-
-        return joined;
-    }
-
-    // Strip leading and trailing (./)
-    // leading // is preserved
-    // normalizeXpath(null) -> null
-    private static String normalizeXpath(String xpath) {
-        xpath = StringUtils.stripStart(xpath, ".");
-        if (!StringUtils.startsWith(xpath, "//"))
-            xpath = StringUtils.stripStart(xpath, "/");
-
-        xpath = StringUtils.stripEnd(xpath, "./");
-        return xpath;
-    }
-
-    private static String joinXpath(String... strings) {
-        // accumulate over all strings
-        String result = null;
-        for (String s: strings)
-            result = joinXpath(result, s);
-
-        return result;
-    }
 
     /**
      * Generate an xslt document that can transform documents into a basic html view
@@ -177,7 +100,7 @@ public class XslGenerator {
 
             // Begin word template
             // TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
-            String wordBase = joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
+            String wordBase = XPathUtil.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
             xslt.append(beginTemplate(wordBase))
                     .append("<span class=\"word\">");
 
@@ -186,13 +109,13 @@ public class XslGenerator {
                 xslt.append("<xsl:attribute name=\"data-toggle\" select=\"'tooltip'\"/>");
                 xslt.append("<xsl:attribute name=\"data-lemma\">")
                         .append("<xsl:value-of select='"
-                                + joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()).replace("'", "&apos;") + "'/>")
+                                + XPathUtil.joinXpath(lemmaAnnot.getBasePath(), lemmaAnnot.getValuePath()).replace("'", "&apos;") + "'/>")
                         .append("</xsl:attribute>");
             }
 
             // extract word
             xslt.append("<xsl:value-of select=\""
-                    + joinXpath(wordAnnot.getBasePath(), wordAnnot.getValuePath()).replace("'", "&apos;") + "\"/>");
+                    + XPathUtil.joinXpath(wordAnnot.getBasePath(), wordAnnot.getValuePath()).replace("'", "&apos;") + "\"/>");
 
             // end word template
             xslt.append("</span>")
@@ -201,7 +124,7 @@ public class XslGenerator {
 
             // Generate rules for inline tags
             for (ConfigInlineTag inlineTag : f.getInlineTags()) {
-                String inlineTagPath = joinXpath(config.getDocumentPath(), f.getContainerPath(),
+                String inlineTagPath = XPathUtil.joinXpath(config.getDocumentPath(), f.getContainerPath(),
                         inlineTag.getPath());
                 String cssClass;
                 if (!inlineTag.getDisplayAs().isEmpty())

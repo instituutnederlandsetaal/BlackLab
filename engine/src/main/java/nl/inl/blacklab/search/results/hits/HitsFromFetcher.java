@@ -15,19 +15,21 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryTimings;
-import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaitable;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterDocs;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterHits;
+import nl.inl.blacklab.search.results.hits.fetch.HitCollector;
+import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
+import nl.inl.blacklab.search.results.hits.fetch.HitProcessor;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 
 /**
  * Our main hit fetching class.
  * <p>
- * Fetches hits from a query per segment in parallel and provides
+ * Fetches hits from a hit fetcher per segment in parallel and provides
  * a stable global view of the lists of segment hits.
  */
-public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable, HitCollector {
+public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, HitCollector {
 
     /**
      * The step with which hitToStretchMapping records mappings.
@@ -70,7 +72,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable, Hit
 
     private final QueryTimings timings;
 
-    HitFetcher hitFetcher;
+    public HitFetcher hitFetcher;
 
     /** Hits that have been fetched.
      * CAUTION: Might be larger than numHitsGlobalView because hits are added to that in batches!
@@ -100,14 +102,13 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable, Hit
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
-    public HitsFromQuery(QueryTimings timings, HitFetcher hitFetcher) {
+    public HitsFromFetcher(QueryTimings timings, HitFetcher hitFetcher) {
         this.field = hitFetcher.field();
         this.timings = timings;
         this.hitFetcher = hitFetcher;
-        SearchSettings searchSettings = hitFetcher.getSearchSettings();
         hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this),
-                searchSettings.maxHitsToProcess(),
-                searchSettings.maxHitsToCount());
+                hitFetcher.getMaxHitsToProcess(),
+                hitFetcher.getMaxHitsToCount());
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
 
         hitsPerSegment = new LinkedHashMap<>();
@@ -311,7 +312,7 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable, Hit
         long stretchLength = segmentHits.size() - segmentIndexStart;
         assert stretchLength > 0;
         HitsStretch stretch = new HitsStretch(
-                stretches.size(), lrc.docBase,
+                stretches.size(), lrc == null ? 0 : lrc.docBase,
                 segmentHits, segmentIndexStart, numHitsGlobalView, stretchLength);
         stretches.add(stretch);
         numHitsGlobalView += stretchLength;
@@ -346,104 +347,86 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable, Hit
         return docsStats;
     }
 
+    public void setDone() {
+        hitsStats.setDone();
+        docsStats.setDone();
+    }
+
     @Override
     public Map<LeafReaderContext, Hits> hitsPerSegment() {
         return Collections.unmodifiableMap(hitsPerSegment);
     }
 
     public HitProcessor getHitProcessor(LeafReaderContext lrc) {
-        return new ProcessSegmentHits(lrc, this);
-    }
+        return new HitProcessor() {
+            /** The list of hits in this segment to add new hits to */
+            private final HitsMutable segmentHits;
 
-    /**
-     * Deal with new segment hits by adding stretches to the global view.
-     */
-    private class ProcessSegmentHits implements HitProcessor {
+            /** Number of hits already added to the global view.
+             * <p>
+             * Therefore also the first hit index that's not yet part of the global view.
+             */
+            long numberAddedToGlobalView;
 
-        /**
-         * The segment we're looking at
-         */
-        private final LeafReaderContext lrc;
-
-        HitCollector globalView;
-
-        /**
-         * The list of hits in this segment to add new hits to
-         */
-        private final HitsMutable segmentHits;
-
-        /**
-         * Number of hits already added to the global view.
-         * <p>
-         * Therefore also the first hit index that's not yet part of the global view.
-         */
-        long numberAddedToGlobalView;
-
-        public ProcessSegmentHits(LeafReaderContext lrc, HitCollector globalView) {
-            // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from it.
-            this.lrc = lrc;
-            this.globalView = globalView;
-            this.segmentHits = HitsMutable.create(field(), matchInfoDefs(), -1, true, true);
-            registerSegment(lrc, segmentHits);
-            numberAddedToGlobalView = 0;
-        }
-
-        @Override
-        public SpansReader.Phase onDocumentBoundary(HitsMutable results, long counted) {
-            // Add new hits to the segment results.
-            segmentHits.addAll(results);
-
-            // Update stats and determine phase (fetching/counting/done)
-            SpansReader.Phase phase = hitsStats.add(results.size(), counted);
-
-            // Add them to the global view? We only do this on a boundary
-            // between documents, so hits from the same doc remain
-            // contiguous in the global view.
-
-            // Note that we add small stretches at first, so the first page of hits is
-            // available quickly. Later, we add them in larger batches to reduce overhead.
-            // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
-            //  out of date (i.e. too small) value here)
-            long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
-                    Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
-            addStretchIfLargeEnough(addHitsToGlobalThreshold);
-            results.clear();
-
-            return phase;
-        }
-
-        @Override
-        public void onFinished(HitsMutable results, long counted) {
-            // Add the final batch of hits to the segment results.
-            segmentHits.addAll(results);
-
-            // Update stats and determine phase (fetching/counting/done)
-            SpansReader.Phase phase = hitsStats.add(results.size(), counted);
-
-            addStretchIfLargeEnough(0);
-        }
-
-        @Override
-        public long globalProcessedSoFar() {
-            return globalView.globalHitsSoFar();
-        }
-
-        @Override
-        public long globalCountedSoFar() {
-            return globalView.resultsStats().countedSoFar();
-        }
-
-        /**
-         * Add the latest stretch of hits we've found to the global view.
-         *
-         * @return
-         */
-        private void addStretchIfLargeEnough(long threshold) {
-            if (segmentHits.size() - numberAddedToGlobalView > threshold) {
-                addStretchFromSegment(lrc, segmentHits, numberAddedToGlobalView);
-                numberAddedToGlobalView = segmentHits.size();
+            {
+                // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from it.
+                this.segmentHits = HitsMutable.create(field(), matchInfoDefs(), -1, true, true);
+                registerSegment(lrc, segmentHits);
+                numberAddedToGlobalView = 0;
             }
-        }
+
+            @Override
+            public HitFetcher.Phase onDocumentBoundary(HitsMutable results, long counted) {
+                // Add new hits to the segment results.
+                segmentHits.addAll(results);
+
+                // Update stats and determine phase (fetching/counting/done)
+                HitFetcher.Phase phase = hitsStats.add(results.size(), counted);
+
+                // Add them to the global view? We only do this on a boundary
+                // between documents, so hits from the same doc remain
+                // contiguous in the global view.
+
+                // Note that we add small stretches at first, so the first page of hits is
+                // available quickly. Later, we add them in larger batches to reduce overhead.
+                // (note that we don't synchronize for numberOfHits because we don't care if we get a slightly
+                //  out of date (i.e. too small) value here)
+                long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
+                        Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
+                addStretchIfLargeEnough(addHitsToGlobalThreshold);
+                results.clear();
+
+                return phase;
+            }
+
+            @Override
+            public void onFinished(HitsMutable results, long counted) {
+                // Add the final batch of hits to the segment results.
+                segmentHits.addAll(results);
+
+                // Update stats
+                hitsStats.add(results.size(), counted);
+                addStretchIfLargeEnough(0);
+            }
+
+            /** Add the latest stretch of hits we've found to the global view. */
+            private void addStretchIfLargeEnough(long threshold) {
+                if (segmentHits.size() - numberAddedToGlobalView > threshold) {
+                    addStretchFromSegment(lrc, segmentHits, numberAddedToGlobalView);
+                    numberAddedToGlobalView = segmentHits.size();
+                }
+            }
+
+            @Override
+            public long globalProcessedSoFar() {
+                return globalHitsSoFar();
+            }
+
+            @Override
+            public long globalCountedSoFar() {
+                return resultsStats().countedSoFar();
+            }
+        };
     }
 
     /** A stretch of hits from a segment.
@@ -513,10 +496,5 @@ public class HitsFromQuery extends HitsAbstract implements ResultsAwaitable, Hit
                     ", length=" + stretchLength +
                     "}";
         }
-    }
-
-    public void setDone() {
-        hitsStats.setDone();
-        docsStats.setDone();
     }
 }

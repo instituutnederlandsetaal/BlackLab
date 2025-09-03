@@ -53,6 +53,16 @@ public abstract class HitResultsWithHitsInternal extends HitResultsAbstract {
         return hitsView;
     }
 
+    /**
+     * Ensure that we have read at least as many results as specified in the parameter.
+     *
+     * @param number the minimum number of results that will have been read when this
+     *            method returns (unless there are fewer hits than this); if
+     *            negative, reads all hits
+     * @return true if the requested number of results were read, false if there are fewer results
+     */
+    public abstract boolean ensureResultsRead(long number);
+
     private class LazyHitsView extends HitsAbstract {
         @Override
         public AnnotatedField field() {

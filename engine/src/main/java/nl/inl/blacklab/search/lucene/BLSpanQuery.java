@@ -327,7 +327,7 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     @Override
     public String getField() {
         // Return only base name of annotated field!
-        return AnnotatedFieldNameUtil.getBaseName(getRealField());
+        return annotatedField.name(); //AnnotatedFieldNameUtil.getBaseName(getRealField());
     }
 
     public AnnotatedField getAnnotatedField() {

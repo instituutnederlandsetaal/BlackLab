@@ -23,10 +23,10 @@ import nl.inl.blacklab.config.BlackLabConfig;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.PluginManager;
-import nl.inl.blacklab.index.ZipHandleManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileUtil;
+import nl.inl.util.ZipHandleManager;
 
 /**
  * Main BlackLab class, from which indexes can be opened.

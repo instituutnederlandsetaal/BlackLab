@@ -106,9 +106,9 @@ public final class QueryInfo {
      * @return a QueryInfo with the correct field
      */
     public QueryInfo optOverrideField(BLSpanQuery query) {
-        if (query.getField().equals(field.name()))
+        if (query.getAnnotatedField().equals(field))
             return this;
-        return new QueryInfo(index, index.annotatedField(query.getField()), useCache);
+        return new QueryInfo(index, query.getAnnotatedField(), useCache);
     }
 }
 

@@ -1,4 +1,4 @@
-package nl.inl.blacklab.index;
+package nl.inl.util;
 
 import java.io.File;
 import java.io.IOException;

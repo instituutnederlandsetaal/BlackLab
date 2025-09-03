@@ -42,8 +42,8 @@ class HitsListLock extends HitsListNoLock {
             docs.add(hit.doc_);
             starts.add(hit.start_);
             ends.add(hit.end_);
-            if (hit.matchInfo != null)
-                matchInfos.add(hit.matchInfo);
+            if (hit.matchInfos_ != null)
+                matchInfos.add(hit.matchInfos_);
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -74,7 +74,7 @@ class HitsListLock extends HitsListNoLock {
             h.doc_ = docs.getInt(index);
             h.start_ = starts.getInt(index);
             h.end_ = ends.getInt(index);
-            h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
+            h.matchInfos_ = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             assert HitsListAbstract.debugCheckReasonableHit(h);
         } finally {
             lock.readLock().unlock();

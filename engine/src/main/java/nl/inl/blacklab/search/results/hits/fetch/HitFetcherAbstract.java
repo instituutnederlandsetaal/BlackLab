@@ -1,6 +1,5 @@
-package nl.inl.blacklab.search.results.hits;
+package nl.inl.blacklab.search.results.hits.fetch;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -11,25 +10,16 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.ScoreMode;
-
-import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
-import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hits.Parallel;
 
 /**
- * Fetches hits from a query in parallel (using SpansReader).
+ * (Lazily) fetches hits from a source, in parallel if possible.
  */
-public class FetchFromQuery implements HitFetcher {
+public abstract class HitFetcherAbstract implements HitFetcher {
 
     /**
      * Testing reveals this to be a good number of threads for fetching hits in parallel.
@@ -37,7 +27,6 @@ public class FetchFromQuery implements HitFetcher {
      * compared to sort/group.
      */
     public static final int IDEAL_NUM_THREADS_FETCHING = 4;
-    private static final Logger logger = LogManager.getLogger(FetchFromQuery.class);
 
     /**
      * If another thread is busy fetching hits and we're monitoring it, how often should we check?
@@ -71,45 +60,41 @@ public class FetchFromQuery implements HitFetcher {
      */
     private final Lock ensureHitsReadLock = new ReentrantLock();
 
-    private final HitQueryContext hitQueryContext;
+    final HitQueryContext hitQueryContext;
 
     /**
      * Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1
      */
-    private final AtomicLong requestedHitsToProcess = new AtomicLong();
+    final AtomicLong requestedHitsToProcess = new AtomicLong();
 
     /**
      * Should be normalized and clamped to configured maximum, i.e. always max >= requested >= 1
      */
-    private final AtomicLong requestedHitsToCount = new AtomicLong();
-
-    private final BLSpanWeight weight;
+    final AtomicLong requestedHitsToCount = new AtomicLong();
 
     private final SearchSettings searchSettings;
 
-    private HitCollector hitCollector;
+    HitCollector hitCollector;
 
-    private final BlackLabIndex index;
+    final BlackLabIndex index;
 
     /**
-     * If true, we're done.
+     * If true, all hits have been processed.
      */
-    private boolean allSourceSpansFullyRead = false;
+    boolean done = false;
 
     /**
      * Objects getting the actual hits from each index segment and adding them to the global results list.
      */
-    final List<SpansReader> spansReaders = new ArrayList<>();
+    final List<HitFetcherSegment> segmentReaders = new ArrayList<>();
 
-    public FetchFromQuery(
-            BLSpanQuery sourceQuery, SearchSettings searchSettings, AnnotatedField field) {
+    public HitFetcherAbstract(AnnotatedField field, SearchSettings searchSettings) {
         this.index = field.index();
         this.searchSettings = searchSettings;
         hitQueryContext = new HitQueryContext(index, null, field); // each spans will get a copy
         maxThreadsPerOperation = Math.max(index.blackLab().maxThreadsPerSearch(), 1);
-        maxHitsToProcess = searchSettings.maxHitsToProcess();
-        maxHitsToCount = searchSettings.maxHitsToCount();
-        this.weight = rewriteAndCreateWeight(sourceQuery, searchSettings.fiMatchFactor());
+        maxHitsToProcess = searchSettings == null ? Long.MAX_VALUE : searchSettings.maxHitsToProcess();
+        maxHitsToCount = searchSettings == null ? Long.MAX_VALUE : searchSettings.maxHitsToCount();
     }
 
     @Override
@@ -130,7 +115,7 @@ public class FetchFromQuery implements HitFetcher {
 
         boolean hasLock = false;
         int numThreads = Math.min(IDEAL_NUM_THREADS_FETCHING, maxThreadsPerOperation);
-        Parallel<SpansReader, Void> parallel = new Parallel<>(index, numThreads);
+        Parallel<HitFetcherSegment, Void> parallel = new Parallel<>(index, numThreads);
         try {
             while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
                 /*
@@ -138,7 +123,7 @@ public class FetchFromQuery implements HitFetcher {
                  * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
-                if (allSourceSpansFullyRead || (hitCollector.globalHitsSoFar() >= clampedNumber)) {
+                if (done || (hitCollector.globalHitsSoFar() >= clampedNumber)) {
                     return hitCollector.globalHitsSoFar() >= number;
                 }
             }
@@ -148,10 +133,10 @@ public class FetchFromQuery implements HitFetcher {
 
             // Distribute the SpansReaders over the threads.
             // Make sure the number of documents per segment is roughly equal for each thread.
-            Function<SpansReader, Long> sizeGetter = spansReader ->
-                    spansReader.lrc == null ? 0 : (long) spansReader.lrc.reader().maxDoc();
-            List<Future<List<Void>>> pendingResults = parallel.forEach(spansReaders, sizeGetter,
-                    l -> l.forEach(SpansReader::run));
+            Function<HitFetcherSegment, Long> sizeGetter = spansReader ->
+                    spansReader.getLeafReaderContext() == null ? 0 : (long) spansReader.getLeafReaderContext().reader().maxDoc();
+            List<Future<List<Void>>> pendingResults = parallel.forEach(segmentReaders, sizeGetter,
+                    l -> l.forEach(HitFetcherSegment::run));
 
             // Wait for workers to complete.
             // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
@@ -178,8 +163,8 @@ public class FetchFromQuery implements HitFetcher {
             // Don't do this unless we're the thread that's actually using the SpansReaders.
             if (hasLock) {
                 // Remove all SpansReaders that have finished.
-                spansReaders.removeIf(spansReader -> spansReader.isDone);
-                if (spansReaders.isEmpty())
+                segmentReaders.removeIf(HitFetcherSegment::isDone);
+                if (segmentReaders.isEmpty())
                     hitCollector.setDone(); // all spans have been read, so we're done
                 ensureHitsReadLock.unlock();
             }
@@ -187,54 +172,9 @@ public class FetchFromQuery implements HitFetcher {
         return hitCollector.globalHitsSoFar() >= number;
     }
 
-    /**
-     * Call optimize() and rewrite() on the source query, and create a weight for it.
-     *
-     * @param sourceQuery   the source query to optimize and rewrite
-     * @param fiMatchFactor override FI match threshold (debug use only, -1 means no override)
-     * @return the weight for the optimized/rewritten query
-     */
-    protected BLSpanWeight rewriteAndCreateWeight(BLSpanQuery sourceQuery,
-            long fiMatchFactor) {
-        // Override FI match threshold? (debug use only!)
-        try {
-            BLSpanQuery optimizedQuery;
-            synchronized (ClauseCombinerNfa.class) {
-                long oldFiMatchValue = ClauseCombinerNfa.getNfaThreshold();
-                if (fiMatchFactor != -1) {
-                    logger.debug("setting NFA threshold for this query to {}", fiMatchFactor);
-                    ClauseCombinerNfa.setNfaThreshold(fiMatchFactor);
-                }
-
-                boolean traceOptimization = BlackLab.config().getLog().getTrace().isOptimization();
-                if (traceOptimization)
-                    logger.debug("Query before optimize()/rewrite(): {}", sourceQuery);
-
-                optimizedQuery = sourceQuery.optimize(index.reader());
-                if (traceOptimization)
-                    logger.debug("Query after optimize(): {}", optimizedQuery);
-
-                optimizedQuery = optimizedQuery.rewrite(index.reader());
-                if (traceOptimization)
-                    logger.debug("Query after rewrite(): {}", optimizedQuery);
-
-                // Restore previous FI match threshold
-                if (fiMatchFactor != -1) {
-                    ClauseCombinerNfa.setNfaThreshold(oldFiMatchValue);
-                }
-            }
-
-            // This call can take a long time
-            return optimizedQuery.createWeight(index.searcher(),
-                    ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-        } catch (IOException e) {
-            throw new InvalidIndex(e);
-        }
-    }
-
     @Override
     public boolean isDone() {
-        return allSourceSpansFullyRead;
+        return done;
     }
 
     @Override
@@ -243,38 +183,17 @@ public class FetchFromQuery implements HitFetcher {
     }
 
     @Override
-    public void fetchHits(HitCollector hitCollector) {
-        this.hitCollector = hitCollector;
-        for (LeafReaderContext lrc: index.reader().leaves()) {
-            // Hit processor: gathers the hits from this segment and (when there's enough) adds them
-            // to the global view.
-            HitProcessor hitProcessor = hitCollector.getHitProcessor(lrc);
-
-            // Spans reader: fetch hits from segment and feed them to the hit processor.
-            spansReaders.add(new SpansReader(
-                    weight,
-                    lrc,
-                    hitQueryContext,
-                    hitProcessor,
-                    this.requestedHitsToProcess,
-                    this.requestedHitsToCount,
-                    hitCollector.resultsStats(),
-                    hitCollector.docsStats()
-            ));
-        }
-        if (spansReaders.isEmpty()) {
-            allSourceSpansFullyRead = true;
-            hitCollector.setDone();
-        }
-    }
-
-    @Override
     public AnnotatedField field() {
         return hitQueryContext.getField();
     }
 
     @Override
-    public SearchSettings getSearchSettings() {
-        return searchSettings;
+    public long getMaxHitsToProcess() {
+        return maxHitsToProcess;
+    }
+
+    @Override
+    public long getMaxHitsToCount() {
+        return maxHitsToCount;
     }
 }

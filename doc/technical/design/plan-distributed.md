@@ -62,9 +62,8 @@ STARTUP TIME
   for e.g. word/lemma, for each segment, etc.
 - 
 
-SMALLER ISSUES
-
-- could we do away with PropertyValue hierarchy and use Object / String/Integer/... directly?
+OTHER ISSUES
+- Look at QueryInfo / SearchSettings
 - try to get rid of more useless abstract base classes like `Result` (?)
 
 ## BL5 major refactorings (Dutch)
