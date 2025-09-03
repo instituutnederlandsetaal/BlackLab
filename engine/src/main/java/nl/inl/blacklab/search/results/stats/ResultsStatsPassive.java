@@ -1,7 +1,7 @@
 package nl.inl.blacklab.search.results.stats;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import nl.inl.blacklab.search.results.hits.SpansReader;
 
@@ -18,21 +18,21 @@ public class ResultsStatsPassive extends ResultsStats {
         this.maxHitsToCount = maxHitsToCount;
     }
 
-    private final AtomicLong processed = new AtomicLong(0);
+    private final LongAdder processed = new LongAdder();
 
-    private final AtomicLong counted = new AtomicLong(0);
+    private final LongAdder counted = new LongAdder();
 
     private final AtomicBoolean done = new AtomicBoolean(false);
 
     private MaxStats maxStats = new MaxStats() {
         @Override
         public boolean isTooManyToProcess() {
-            return processed.get() >= maxHitsToProcess;
+            return processed.sum() >= maxHitsToProcess;
         }
 
         @Override
         public boolean isTooManyToCount() {
-            return counted.get() >= maxHitsToCount;
+            return counted.sum() >= maxHitsToCount;
         }
     };
 
@@ -41,11 +41,11 @@ public class ResultsStatsPassive extends ResultsStats {
     private final long maxHitsToCount;
 
     public long processedSoFar() {
-        return processed.get();
+        return processed.sum();
     }
 
     public long countedSoFar() {
-        return counted.get();
+        return counted.sum();
     }
 
     public synchronized boolean done() {
@@ -66,15 +66,9 @@ public class ResultsStatsPassive extends ResultsStats {
     }
 
     public void increment(boolean storeThisHit) {
-        this.counted.incrementAndGet();
+        this.counted.add(1);
         if (storeThisHit)
-            this.processed.incrementAndGet();
-    }
-
-    public synchronized void set(long processed, long counted, boolean done) {
-        this.processed.set(processed);
-        this.counted.set(counted);
-        this.done.set(done);
+            this.processed.add(1);
     }
 
     public void setDone(boolean b) {
@@ -89,11 +83,11 @@ public class ResultsStatsPassive extends ResultsStats {
     }
 
     public synchronized SpansReader.Phase add(long processed, long counted) {
-        long p = this.processed.updateAndGet(l -> l + processed);
-        long c = this.counted.updateAndGet(l -> l + counted);
-        if (c >= maxHitsToCount)
+        this.processed.add(processed);
+        this.counted.add(counted);
+        if (this.counted.sum() >= maxHitsToCount)
             return SpansReader.Phase.DONE;
-        else if (p >= maxHitsToProcess)
+        else if (this.processed.sum() >= maxHitsToProcess)
             return SpansReader.Phase.COUNTING_ONLY;
         else
             return SpansReader.Phase.STORING_AND_COUNTING;

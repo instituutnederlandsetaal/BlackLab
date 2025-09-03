@@ -244,11 +244,11 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * @param maxHitsToStorePerDoc hits to store per document
      */
     protected DocResults(QueryInfo queryInfo, Hits hits, long maxHitsToStorePerDoc) {
-        this(queryInfo);
+        super(queryInfo);
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(PropContext.globalHits(hits));
         this.matchInfoDefs = hits.matchInfoDefs();
         this.sourceHitsIterator = hits.iterator();
-        stats.setDone(false); // we're still actively gathering hits, unlike with the other constructors
+        stats = new ResultsStatsPassive(waitUntil);
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();
@@ -275,7 +275,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         this.results = results;
         this.sampleParameters = sampleParameters;
         this.windowStats = windowStats;
-        stats.set(results.size(), results.size(), true);
+        stats.add(results.size(), results.size());
     }
 
     private DocResults(QueryInfo queryInfo, Query query) {
@@ -400,7 +400,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
             docResult = DocResult.fromHits(doc, docHits.window(0, maxHitsToStorePerDoc), totalNumberOfHits);
         else
             docResult = DocResult.fromHits(doc, docHits, totalNumberOfHits);
-        ((ResultsStatsPassive)stats).increment(true);
+        stats.increment(true);
         results.add(docResult);
         if (docHits.size() > mostHitsInDocument)
             mostHitsInDocument = docHits.size();
