@@ -3,6 +3,7 @@ package nl.inl.blacklab.tools.frequency.writers.database;
 import java.io.File;
 import java.io.IOException;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -49,13 +50,18 @@ public final class LookupTableWriter extends FreqListWriter {
             final var annotation = annotations.get(i);
             // write individual lookup table for each annotation to a separate file
             final var file = getFile(annotation);
+            final var seenIds = new IntOpenHashSet();
             try (final var csv = getCsvWriter(file)) {
                 final var terms = helper.forwardIndices().get(i).terms();
                 // id is simply the index in the terms list
                 for (int id = 1, len = terms.numberOfTerms(); id < len; id++) {
                     final String token = getToken(terms, id);
                     final int sortedID = terms.idToSortPosition(id, MatchSensitivity.INSENSITIVE);
-                    csv.writeRecord(String.valueOf(sortedID), token);
+                    // avoid duplicates due to insensitivity
+                    if (!seenIds.contains(sortedID)) {
+                        seenIds.add(sortedID);
+                        csv.writeRecord(String.valueOf(sortedID), token);
+                    }
                 }
             } catch (final IOException e) {
                 throw reportIOException(e);
