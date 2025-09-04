@@ -30,7 +30,6 @@ public class FrequencyTool {
 
         try (final var index = BlackLab.open(parsedArgs.indexDir())) {
             config.verify(index); // verify config
-            index.setCache(new SearchCacheDummy()); // don't cache results
             // Generate the frequency lists
             final var t = new Timer();
             makeFrequencyLists(index, config);

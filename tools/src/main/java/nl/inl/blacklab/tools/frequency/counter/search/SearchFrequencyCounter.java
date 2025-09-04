@@ -14,6 +14,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.HitGroups;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
@@ -34,6 +35,7 @@ public final class SearchFrequencyCounter extends FrequencyCounter {
         super.count(); // prints debug info
         try {
             // Create our search
+            index.setCache(new SearchCacheDummy()); // don't cache results
             final var search = getSearch();
             // Execute search
             final HitGroups result = search.execute();
