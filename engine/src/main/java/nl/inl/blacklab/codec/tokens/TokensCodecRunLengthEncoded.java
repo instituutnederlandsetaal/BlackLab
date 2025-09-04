@@ -1,7 +1,6 @@
 package nl.inl.blacklab.codec.tokens;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -155,12 +154,17 @@ public class TokensCodecRunLengthEncoded implements TokensCodec {
 
         Doc doc;
 
+        private final int blockStartOffset;
+
         private final int encodedLength;
 
-        private final ByteBuffer encodedBlock;
+        /** Next byte in encoded block to decode */
+        private int encodedIndex;
 
+        /** The (partially) decoded block */
         private final int[] decodedBlock;
 
+        /** Next position in decodedBlock to write */
         private int decodedIndex;
 
         public Block(Doc doc, int blockNumber) throws IOException {
@@ -169,31 +173,34 @@ public class TokensCodecRunLengthEncoded implements TokensCodec {
             decodedIndex = 0;
 
             // Determine where the block starts and ends
-            int blockStartOffset = 0;
             if (blockNumber > 0) {
+                // Block starts where the previous one ended
                 doc.tokensFile.seek(doc.blockIndexOffset + (long) (blockNumber - 1) * Integer.BYTES);
                 blockStartOffset = doc.tokensFile.readInt();
             } else {
+                // First block starts at offset 0
+                blockStartOffset = 0;
                 doc.tokensFile.seek(doc.blockIndexOffset);
             }
             int blockEndOffset = doc.tokensFile.readInt();
-
-            // Read the encoded block
-            doc.tokensFile.seek(doc.blockDataStart + blockStartOffset);
             encodedLength = blockEndOffset - blockStartOffset;
-            byte[] buf = new byte[encodedLength];
-            doc.tokensFile.readBytes(buf, 0, encodedLength);
-            encodedBlock = ByteBuffer.wrap(buf);
+            encodedIndex = 0;
         }
 
         private int[] decodeUpTo(int stopAtPosition) throws IOException {
+            // Read the encoded block
+            doc.tokensFile.seek(doc.blockDataStart + blockStartOffset + encodedIndex);
+
             // Wrap encodedBlock in ByteBuffer
-            while (encodedBlock.position() < encodedLength && decodedIndex < stopAtPosition) {
-                int value = tokenType.read(encodedBlock);
+            int bytesPerValue = tokenType.sizeBytes();
+            while (encodedIndex < encodedLength && decodedIndex < stopAtPosition) {
+                int value = tokenType.read(doc.tokensFile);
+                encodedIndex += bytesPerValue;
                 if (value <= -2) {
                     // Run length
                     int runLength = -value;
-                    int token = tokenType.read(encodedBlock);
+                    int token = tokenType.read(doc.tokensFile);
+                    encodedIndex += bytesPerValue;
                     for (int i = 0; i < runLength; i++) {
                         decodedBlock[decodedIndex] = token;
                         decodedIndex++;
