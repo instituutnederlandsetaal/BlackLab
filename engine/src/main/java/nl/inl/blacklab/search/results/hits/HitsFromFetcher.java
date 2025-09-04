@@ -14,14 +14,13 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaitable;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterDocs;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterHits;
 import nl.inl.blacklab.search.results.hits.fetch.HitCollector;
+import nl.inl.blacklab.search.results.hits.fetch.HitCollectorSegment;
 import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
 import nl.inl.blacklab.search.results.hits.fetch.HitFilter;
-import nl.inl.blacklab.search.results.hits.fetch.HitProcessor;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 
 /**
@@ -71,8 +70,6 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
 
     private final AnnotatedField field;
 
-    private final QueryTimings timings;
-
     public HitFetcher hitFetcher;
 
     /** Hits that have been fetched.
@@ -103,11 +100,10 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
-    public HitsFromFetcher(QueryTimings timings, HitFetcher hitFetcher, HitFilter filter) {
+    public HitsFromFetcher(HitFetcher hitFetcher, HitFilter filter) {
         if (filter == null)
             throw new IllegalArgumentException("filter cannot be null");
         this.field = hitFetcher.field();
-        this.timings = timings;
         this.hitFetcher = hitFetcher;
         hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this),
                 hitFetcher.getMaxHitsToProcess(),
@@ -360,8 +356,8 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
         return Collections.unmodifiableMap(hitsPerSegment);
     }
 
-    public HitProcessor getHitProcessor(LeafReaderContext lrc) {
-        return new HitProcessor() {
+    public HitCollectorSegment getHitProcessor(LeafReaderContext lrc) {
+        return new HitCollectorSegment() {
             /** The list of hits in this segment to add new hits to */
             private final HitsMutable segmentHits;
 

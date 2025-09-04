@@ -9,11 +9,11 @@ import nl.inl.blacklab.search.results.hits.Hits;
 /**
  * Fetches hits from a (lazy) Hits object, in parallel if possible.
  */
-public class HitFetcherFilterHits extends HitFetcherAbstract {
+public class HitFetcherHits extends HitFetcherAbstract {
 
     private final Hits source;
 
-    public HitFetcherFilterHits(Hits source) {
+    public HitFetcherHits(Hits source) {
         super(source.field(), null);
         this.source = source;
     }
@@ -36,23 +36,16 @@ public class HitFetcherFilterHits extends HitFetcherAbstract {
             addFetchTask(hitCollector, null, source);
         }
         if (segmentReaders.isEmpty()) {
-            done = true;
+            allHitsFetched = true;
             hitCollector.setDone();
         }
     }
 
     private void addFetchTask(HitCollector hitCollector, LeafReaderContext lrc, Hits segmentHits) {
         // Spans reader: fetch hits from segment and feed them to the hit processor.
-        HitFetcherSegment.State state = new HitFetcherSegment.State(
-                lrc,
-                hitQueryContext,
-                filter.forSegment(segmentHits, lrc, collationCache),
-                hitCollector.getHitProcessor(lrc),
-                requestedHitsToProcess,
-                requestedHitsToCount,
-                hitCollector.resultsStats(),
-                hitCollector.docsStats(),
-                collationCache);
+        HitFetcherSegment.State state = getState(hitCollector, lrc, segmentHits,
+                filter.forSegment(segmentHits, lrc, collationCache));
         segmentReaders.add(new HitFetcherSegmentFilterHits(segmentHits, state));
     }
+
 }

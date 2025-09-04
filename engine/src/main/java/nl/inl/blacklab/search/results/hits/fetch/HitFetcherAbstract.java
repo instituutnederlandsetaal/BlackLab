@@ -8,9 +8,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+
+import org.apache.lucene.index.LeafReaderContext;
 
 import com.ibm.icu.text.CollationKey;
 
@@ -18,6 +21,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.Parallel;
 
 /**
@@ -83,15 +87,16 @@ public abstract class HitFetcherAbstract implements HitFetcher {
 
     final BlackLabIndex index;
 
-    /**
-     * If true, all hits have been processed.
-     */
-    boolean done = false;
+    /** If true, there are no more hits to fetch. */
+    boolean allHitsFetched = false;
 
     /**
      * Objects getting the actual hits from each index segment and adding them to the global results list.
      */
     final List<HitFetcherSegment> segmentReaders = new ArrayList<>();
+
+    /** How many hits have we reported to the collector? */
+    LongAdder hitsProduced = new LongAdder();
 
     public HitFetcherAbstract(AnnotatedField field, SearchSettings searchSettings) {
         this.index = field.index();
@@ -113,10 +118,6 @@ public abstract class HitFetcherAbstract implements HitFetcher {
         // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
         final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number + FETCH_HITS_MIN, maxHitsToCount);
 
-        if (isDone() || hitCollector.globalHitsSoFar() >= clampedNumber) {
-            return hitCollector.globalHitsSoFar() >= number;
-        }
-
         // NOTE: we first update to process, then to count. If we do it the other way around, and spansReaders
         //       are running, they might check in between the two statements and conclude that they don't need to save
         //       hits anymore, only count them.
@@ -134,8 +135,8 @@ public abstract class HitFetcherAbstract implements HitFetcher {
                  * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
-                if (done || (hitCollector.globalHitsSoFar() >= clampedNumber)) {
-                    return hitCollector.globalHitsSoFar() >= number;
+                if (allHitsFetched || sizeAtLeast(clampedNumber)) {
+                    return sizeAtLeast(number);
                 }
             }
             hasLock = true;
@@ -180,11 +181,15 @@ public abstract class HitFetcherAbstract implements HitFetcher {
                 ensureHitsReadLock.unlock();
             }
         }
-        return hitCollector.globalHitsSoFar() >= number;
+        return sizeAtLeast(number);
+    }
+
+    private boolean sizeAtLeast(long n) {
+        return hitCollector.globalHitsSoFar() >= n;
     }
 
     public boolean isDone() {
-        return done;
+        return allHitsFetched;
     }
 
     @Override
@@ -205,5 +210,19 @@ public abstract class HitFetcherAbstract implements HitFetcher {
     @Override
     public long getMaxHitsToCount() {
         return maxHitsToCount;
+    }
+
+    HitFetcherSegment.State getState(HitCollector hitCollector, LeafReaderContext lrc, Hits segmentHits, HitFilter filter) {
+        return new HitFetcherSegment.State(
+                lrc,
+                hitQueryContext,
+                filter,
+                hitCollector.getHitProcessor(lrc),
+                requestedHitsToProcess,
+                requestedHitsToCount,
+                hitCollector.resultsStats(),
+                hitCollector.docsStats(),
+                collationCache,
+                hitsProduced);
     }
 }

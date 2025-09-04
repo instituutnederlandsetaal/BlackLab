@@ -19,7 +19,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         super(queryInfo.optOverrideField(sourceQuery));
         sourceQuery.setQueryInfo(queryInfo);
         HitFetcherQuery fetcher = new HitFetcherQuery(sourceQuery, searchSettings);
-        hits = new HitsFromFetcher(queryInfo.timings(), fetcher, HitFilter.ACCEPT_ALL);
+        hits = new HitsFromFetcher(fetcher, HitFilter.ACCEPT_ALL);
     }
 
     @Override

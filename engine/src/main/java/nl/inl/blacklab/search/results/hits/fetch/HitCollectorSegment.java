@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.results.hits.HitsMutable;
  *
  * Implementations don't need to be thread-safe, as each segment is handled by a single thread.
  */
-public interface HitProcessor {
+public interface HitCollectorSegment {
     /**
      * Called when the SpansReader has reached the end of a document.
      *

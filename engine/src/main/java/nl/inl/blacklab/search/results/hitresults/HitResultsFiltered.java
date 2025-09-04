@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsFromFetcher;
 import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
-import nl.inl.blacklab.search.results.hits.fetch.HitFetcherFilterHits;
+import nl.inl.blacklab.search.results.hits.fetch.HitFetcherHits;
 import nl.inl.blacklab.search.results.hits.fetch.HitFilter;
 import nl.inl.blacklab.search.results.hits.fetch.HitFilterPropertyValue;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
@@ -20,9 +20,9 @@ public class HitResultsFiltered extends HitResultsAbstract {
     protected HitResultsFiltered(QueryInfo queryInfo, Hits toFilter,
             HitProperty filterProp, PropertyValue filterValue) {
         super(queryInfo);
-        HitFetcher fetcher = new HitFetcherFilterHits(toFilter);
+        HitFetcher fetcher = new HitFetcherHits(toFilter);
         HitFilter filter = new HitFilterPropertyValue(filterProp, filterValue);
-        hits = new HitsFromFetcher(queryInfo.timings(), fetcher, filter);
+        hits = new HitsFromFetcher(fetcher, filter);
     }
 
     @Override

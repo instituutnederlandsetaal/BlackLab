@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results.hits.fetch;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -18,7 +19,7 @@ public interface HitFetcherSegment extends Runnable {
     /** State a HitFetcherSegment receives to do its job. */
     class State {
 
-        public static final State DUMMY = new State(null, null, null, null, null, null, null, null, null);
+        public static final State DUMMY = new State();
 
         /** Used to check if doc has been removed from the index. */
         public final LeafReaderContext lrc;
@@ -30,7 +31,7 @@ public interface HitFetcherSegment extends Runnable {
         public HitFilter filter;
 
         /** What to do when a document boundary is encountered. (e.g. merge to global hits list) */
-        public final HitProcessor hitProcessor;
+        public final HitCollectorSegment collector;
 
         /** Target number of hits to store in the results list */
         public final AtomicLong globalHitsToProcess;
@@ -45,20 +46,30 @@ public interface HitFetcherSegment extends Runnable {
         public final ResultsStatsPassive docsStats;
 
         /** Cache for calculating CollationKeys (if we're filtering) */
-        public Map<String, CollationKey> collationCache;
+        public final Map<String, CollationKey> collationCache;
 
-        public State(LeafReaderContext lrc, HitQueryContext hitQueryContext, HitFilter filter, HitProcessor hitProcessor,
+        public final LongAdder hitsProduced;
+
+        public State(LeafReaderContext lrc, HitQueryContext hitQueryContext, HitFilter filter, HitCollectorSegment collector,
                 AtomicLong globalHitsToProcess, AtomicLong globalHitsToCount, ResultsStatsPassive hitsStats,
-                ResultsStatsPassive docsStats, Map<String, CollationKey> collationCache) {
+                ResultsStatsPassive docsStats, Map<String, CollationKey> collationCache, LongAdder hitsProduced) {
             this.lrc = lrc;
             this.hitQueryContext = hitQueryContext;
             this.filter = filter;
-            this.hitProcessor = hitProcessor;
+            this.collector = collector;
             this.globalHitsToProcess = globalHitsToProcess;
             this.globalHitsToCount = globalHitsToCount;
             this.hitsStats = hitsStats;
             this.docsStats = docsStats;
             this.collationCache = collationCache;
+            this.hitsProduced = hitsProduced;
+        }
+
+        private State() {
+            this(null, null, null,
+                    null, null, null,
+                    null, null, null,
+                    null);
         }
     }
 

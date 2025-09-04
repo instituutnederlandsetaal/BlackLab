@@ -38,7 +38,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
     /**
      * Collect hits from our source.
      * Updates the global counters, shared with the other HitFetcherSegment objects operating on the same result set.
-     * {@link HitProcessor#onDocumentBoundary} is called when we encounter a document boundary.
+     * {@link HitCollectorSegment#onDocumentBoundary} is called when we encounter a document boundary.
      * <p>
      * Updating the maximums while this is running is allowed.
      */
@@ -95,7 +95,8 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
 
                     if (atDocumentBoundary) {
                         state.docsStats.increment(phase == HitFetcher.Phase.STORING_AND_COUNTING);
-                        phase = state.hitProcessor.onDocumentBoundary(results, counted);
+                        phase = state.collector.onDocumentBoundary(results, counted);
+                        state.hitsProduced.add(results.size());
                         counted = 0;
                     }
 
@@ -108,8 +109,8 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                 }
 
                 if (atDocumentBoundary &&
-                        state.hitProcessor.globalProcessedSoFar() >= state.globalHitsToProcess.get() &&
-                        state.hitProcessor.globalCountedSoFar() >= state.globalHitsToCount.get()) {
+                        state.collector.globalProcessedSoFar() >= state.globalHitsToProcess.get() &&
+                        state.collector.globalCountedSoFar() >= state.globalHitsToCount.get()) {
                     // We've reached the requested number of hits and are at a document boundary.
                     // We'll stop for now. When more hits are requested, this method will be called again.
                     return;
@@ -127,7 +128,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
-            state.hitProcessor.onFinished(results, counted);
+            state.collector.onFinished(results, counted);
         }
 
         // If we're here, the loop reached its natural end - we're done.

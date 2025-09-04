@@ -13,15 +13,15 @@ public final class SearchSettings {
         return new SearchSettings(maxHitsToProcess, maxHitsToCount, -1);
     }
 
-    public static SearchSettings defaults() {
-        return new SearchSettings(DEFAULT_MAX_PROCESS, DEFAULT_MAX_COUNT, -1);
-    }
-    
     /** How many hits to process by default */
-    public static final long DEFAULT_MAX_PROCESS = 10_000_000;
-    
+    private static final long DEFAULT_MAX_PROCESS = 10_000_000;
+
     /** How many hits to count by default */
-    public static final long DEFAULT_MAX_COUNT = Results.NO_LIMIT;
+    private static final long DEFAULT_MAX_COUNT = Results.NO_LIMIT;
+
+    public static SearchSettings DEFAULT = new SearchSettings(DEFAULT_MAX_PROCESS, DEFAULT_MAX_COUNT, -1);
+
+    public static SearchSettings UNLIMITED = new SearchSettings(Results.NO_LIMIT, Results.NO_LIMIT, -1);
     
     /**
      * Stop processing hits after this number.

@@ -34,9 +34,9 @@ public class TestHitsFromFetcher {
 
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        SearchSettings searchSettings = SearchSettings.defaults();
+        SearchSettings searchSettings = SearchSettings.DEFAULT;
         HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, searchSettings);
-        HitsFromFetcher h = new HitsFromFetcher(queryInfo.timings(), hitFetcher, HitFilter.ACCEPT_ALL);
+        HitsFromFetcher h = new HitsFromFetcher(hitFetcher, HitFilter.ACCEPT_ALL);
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         HitFetcherQuery hitFetcherQuery = (HitFetcherQuery) h.hitFetcher;
@@ -90,8 +90,8 @@ public class TestHitsFromFetcher {
     public void testParallelSearchException() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanTermQuery patternQuery = new BLSpanTermQuery(queryInfo, new Term("contents%word@i", "the"));
-        HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, SearchSettings.defaults());
-        HitsFromFetcher h = new HitsFromFetcher(queryInfo.timings(), hitFetcher, HitFilter.ACCEPT_ALL);
+        HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, SearchSettings.DEFAULT);
+        HitsFromFetcher h = new HitsFromFetcher(hitFetcher, HitFilter.ACCEPT_ALL);
 
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that will just throw an exception.
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
@@ -118,8 +118,8 @@ public class TestHitsFromFetcher {
     public void testSublist() {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
-        HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, SearchSettings.defaults());
-        Hits whole = new HitsFromFetcher(queryInfo.timings(), hitFetcher, HitFilter.ACCEPT_ALL);
+        HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, SearchSettings.DEFAULT);
+        Hits whole = new HitsFromFetcher(hitFetcher, HitFilter.ACCEPT_ALL);
         int subListStart = 11;
         int subListLength = 15;
         Hits sub = whole.sublist(subListStart, subListLength);
@@ -134,8 +134,8 @@ public class TestHitsFromFetcher {
         QueryInfo queryInfo = QueryInfo.create(testIndex.index());
         BLSpanQuery patternQuery = new SpanQueryAnyToken(queryInfo, 1, 1, "contents%word@i");
         HitsUtils.setThresholdSingleThreadedGroupAndSort(0); // test with multithreaded sorting
-        HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, SearchSettings.defaults());
-        Hits unsorted = new HitsFromFetcher(queryInfo.timings(), hitFetcher, HitFilter.ACCEPT_ALL);
+        HitFetcherQuery hitFetcher = new HitFetcherQuery(patternQuery, SearchSettings.DEFAULT);
+        Hits unsorted = new HitsFromFetcher(hitFetcher, HitFilter.ACCEPT_ALL);
         HitProperty sortBy = new HitPropertyDocumentStoredField(testIndex.index(), "title");
         Hits sorted = unsorted.sorted(sortBy);
         assertEquals("same size", unsorted.size(), sorted.size());

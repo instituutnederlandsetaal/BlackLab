@@ -14,7 +14,7 @@ public interface HitCollector {
     /**
      * Get hit processor for this segment.
      */
-    HitProcessor getHitProcessor(LeafReaderContext lrc);
+    HitCollectorSegment getHitProcessor(LeafReaderContext lrc);
 
     void setDone();
 

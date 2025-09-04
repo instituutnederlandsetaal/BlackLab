@@ -82,19 +82,11 @@ public class HitFetcherQuery extends HitFetcherAbstract {
             // to the global view.
 
             // Spans reader: fetch hits from segment and feed them to the hit processor.
-            HitFetcherSegment.State state = new HitFetcherSegment.State(lrc,
-                    hitQueryContext,
-                    this.filter,
-                    hitCollector.getHitProcessor(lrc),
-                    requestedHitsToProcess,
-                    requestedHitsToCount,
-                    hitCollector.resultsStats(),
-                    hitCollector.docsStats(),
-                    collationCache);
+            HitFetcherSegment.State state = getState(hitCollector, lrc, null, filter);
             segmentReaders.add(new HitFetcherSegmentQuery(weight, state));
         }
         if (segmentReaders.isEmpty()) {
-            done = true;
+            allHitsFetched = true;
             hitCollector.setDone();
         }
     }
