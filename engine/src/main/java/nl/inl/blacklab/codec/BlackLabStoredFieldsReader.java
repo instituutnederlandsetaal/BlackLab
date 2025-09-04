@@ -17,6 +17,7 @@ import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.IOContext;
 import org.apache.lucene.store.IndexInput;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLFieldTypeLucene;
@@ -200,9 +201,13 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
      */
     private void visitContentStoreDocument(int docId, FieldInfo fieldInfo, StoredFieldVisitor storedFieldVisitor)
             throws IOException {
-        String contents = contentStore().getValue(docId, fieldInfo.name);
-        if (contents != null)
-            storedFieldVisitor.stringField(fieldInfo, contents);
+        // TODO look into character encoding
+        byte[] contents = contentStore().getBytes(docId, fieldInfo.name);
+        //String contents = contentStore().getValue(docId, fieldInfo.name);
+        if (contents != null) {
+            String value = new String(contents, StandardCharsets.UTF_8);
+            storedFieldVisitor.stringField(fieldInfo, value);
+        }
     }
 
     @Override
@@ -255,6 +260,87 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         private final IndexInput valueIndexFile = _valueIndexFile.clone();
         private final IndexInput blockIndexFile = _blockIndexFile.clone();
         private final IndexInput blocksFile = _blocksFile.clone();
+
+        /**
+         * Get the field value as bytes.
+         *
+         * @param docId     document id
+         * @param luceneField field to get
+         * @return field value as bytes, or null if no value
+         */
+        @Override
+        public byte[] getBytes(int docId, String luceneField) {
+            try {
+                // Find the value length in characters, and position the valueIndex file pointer
+                // to read the rest of the information we need: where to find the block indexes
+                // and where the blocks start.
+                final int valueLengthChar = findValueLengthChar(docId, luceneField);
+                if (valueLengthChar == 0)
+                    return null; // no value stored for this document
+                ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
+                final long blockIndexOffset = valueIndexFile.readLong();
+                final long blocksOffset = valueIndexFile.readLong();
+
+                // Determine what blocks we'll need
+                final int firstBlockNeeded = 0;
+                final int lastBlockNeeded = valueLengthChar / blockSizeChars; // implicitly does a floor()
+                // add one block for spillover discarded by the floor().
+                // NOTE: don't add a spillover block if the document fits exactly in the block size.
+                final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + ((valueLengthChar % blockSizeChars) == 0 ? 0 : 1);
+
+                // Determine where our first block starts, and position blockindex file
+                // to start reading subsequent after-block positions
+                int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
+
+                // Try to make sure we have a large enough buffer available
+                long decodeBufferLengthLong = (long) valueLengthChar * BlackLabStoredFieldsReader.UTF8_MAX_BYTES_PER_CHAR
+                        + BlackLabStoredFieldsReader.ESTIMATED_DECODE_OVERHEAD;
+                if (decodeBufferLengthLong > Constants.JAVA_MAX_ARRAY_SIZE)
+                    decodeBufferLengthLong = Constants.JAVA_MAX_ARRAY_SIZE;
+                final int decodeBufferLength = (int) decodeBufferLengthLong;
+                if (decodedValue == null || decodedValue.length < decodeBufferLength)
+                    decodedValue = new byte[decodeBufferLength];
+
+                int decodedOffset = 0; // write position in the decodedValue buffer
+                int numBlocksRead = 0;
+                try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
+                    while (numBlocksRead < numBlocksNeeded) {
+
+                        // Read a block and decompress it.
+                        final int blockEndOffset = blockIndexFile.readInt();
+                        final int blockSizeBytes = blockEndOffset - blockStartOffset;
+
+                        int decodedSize = -1;
+                        while (decodedSize < 0) {
+                            decodedSize = readAndDecodeBlock(blockSizeBytes, decoder, decodedValue, decodedOffset);
+                            if (decodedSize < 0) {
+                                // Not enough buffer space. Reallocate and try again (up to a point).
+                                final int availableSpace = decodedValue.length - decodedOffset;
+                                if (availableSpace > BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH)
+                                    throw new IOException("Insufficient buffer space for decoding block, even at max (" + BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH
+                                            + ")");
+                                // Double the available space for the remaining blocks (probably always just 1 block)
+                                final int blocksLeftToRead = numBlocksNeeded - numBlocksRead;
+                                final byte[] newBuffer = new byte[decodedOffset + blocksLeftToRead * availableSpace * 2];
+                                System.arraycopy(decodedValue, 0, newBuffer, 0, decodedOffset);
+                                decodedValue = newBuffer;
+                            }
+                        }
+                        decodedOffset += decodedSize;
+
+                        // Update variables to read the next block
+                        blockStartOffset = blockEndOffset;
+                        numBlocksRead++;
+                    }
+                }
+                // Copy result to a new array of the right size
+                final byte[] result = new byte[decodedOffset];
+                System.arraycopy(decodedValue, 0, result, 0, result.length);
+                return result;
+            } catch (IOException e) {
+                throw new InvalidIndex(e);
+            }
+        }
 
         private int findBlockStartOffset(long blockIndexOffset, long blocksOffset, int blockNumber)
                 throws IOException {

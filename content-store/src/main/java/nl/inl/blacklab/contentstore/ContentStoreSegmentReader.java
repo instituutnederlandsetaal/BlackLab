@@ -31,4 +31,12 @@ public interface ContentStoreSegmentReader {
      */
     String[] getValueSubstrings(int docId, String luceneField, int[] start, int[] end);
 
+    /**
+     * Get field value as bytes.
+     *
+     * @param docId document id
+     * @param luceneField field to get
+     * @return requested parts
+     */
+    byte[] getBytes(int docId, String luceneField);
 }
