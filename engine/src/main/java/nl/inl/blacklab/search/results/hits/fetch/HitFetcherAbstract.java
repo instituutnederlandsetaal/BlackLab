@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.results.hits.fetch;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -9,6 +11,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
+
+import com.ibm.icu.text.CollationKey;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -39,6 +43,7 @@ public abstract class HitFetcherAbstract implements HitFetcher {
      * This prevents locking again and again for a single hit when iterating.
      */
     private static final int FETCH_HITS_MIN = 20;
+    protected final Map<String, CollationKey> collationCache;
 
     /**
      * Max. number of threads to use for fetch, sort, group.
@@ -72,7 +77,7 @@ public abstract class HitFetcherAbstract implements HitFetcher {
      */
     final AtomicLong requestedHitsToCount = new AtomicLong();
 
-    private final SearchSettings searchSettings;
+    HitFilter filter;
 
     HitCollector hitCollector;
 
@@ -90,11 +95,17 @@ public abstract class HitFetcherAbstract implements HitFetcher {
 
     public HitFetcherAbstract(AnnotatedField field, SearchSettings searchSettings) {
         this.index = field.index();
-        this.searchSettings = searchSettings;
         hitQueryContext = new HitQueryContext(index, null, field); // each spans will get a copy
         maxThreadsPerOperation = Math.max(index.blackLab().maxThreadsPerSearch(), 1);
         maxHitsToProcess = searchSettings == null ? Long.MAX_VALUE : searchSettings.maxHitsToProcess();
         maxHitsToCount = searchSettings == null ? Long.MAX_VALUE : searchSettings.maxHitsToCount();
+        this.collationCache = new ConcurrentHashMap<>();
+    }
+
+    @Override
+    public void fetchHits(HitFilter filter, HitCollector hitCollector) {
+        this.filter = filter;
+        this.hitCollector = hitCollector;
     }
 
     @Override

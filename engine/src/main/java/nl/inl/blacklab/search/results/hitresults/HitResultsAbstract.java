@@ -168,7 +168,6 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
      */
     @Override
     public HitResults filter(HitProperty property, PropertyValue value) {
-        //return new HitResultsFiltered(this, property, value);
         return new HitResultsFiltered(queryInfo(), getHits(), property, value);
     }
 

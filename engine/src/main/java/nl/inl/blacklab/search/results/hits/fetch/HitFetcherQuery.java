@@ -75,21 +75,22 @@ public class HitFetcherQuery extends HitFetcherAbstract {
     }
 
     @Override
-    public void fetchHits(HitCollector hitCollector) {
-        this.hitCollector = hitCollector;
+    public void fetchHits(HitFilter filter, HitCollector hitCollector) {
+        super.fetchHits(filter, hitCollector);
         for (LeafReaderContext lrc: index.reader().leaves()) {
             // Hit processor: gathers the hits from this segment and (when there's enough) adds them
             // to the global view.
-            HitProcessor hitProcessor = hitCollector.getHitProcessor(lrc);
 
             // Spans reader: fetch hits from segment and feed them to the hit processor.
             HitFetcherSegment.State state = new HitFetcherSegment.State(lrc,
                     hitQueryContext,
-                    hitProcessor,
-                    this.requestedHitsToProcess,
-                    this.requestedHitsToCount,
+                    this.filter,
+                    hitCollector.getHitProcessor(lrc),
+                    requestedHitsToProcess,
+                    requestedHitsToCount,
                     hitCollector.resultsStats(),
-                    hitCollector.docsStats());
+                    hitCollector.docsStats(),
+                    collationCache);
             segmentReaders.add(new HitFetcherSegmentQuery(weight, state));
         }
         if (segmentReaders.isEmpty()) {

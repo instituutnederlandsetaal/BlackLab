@@ -20,9 +20,9 @@ public class HitResultsFiltered extends HitResultsAbstract {
     protected HitResultsFiltered(QueryInfo queryInfo, Hits toFilter,
             HitProperty filterProp, PropertyValue filterValue) {
         super(queryInfo);
+        HitFetcher fetcher = new HitFetcherFilterHits(toFilter);
         HitFilter filter = new HitFilterPropertyValue(filterProp, filterValue);
-        HitFetcher fetcher = new HitFetcherFilterHits(toFilter, filter);
-        hits = new HitsFromFetcher(queryInfo.timings(), fetcher);
+        hits = new HitsFromFetcher(queryInfo.timings(), fetcher, filter);
     }
 
     @Override

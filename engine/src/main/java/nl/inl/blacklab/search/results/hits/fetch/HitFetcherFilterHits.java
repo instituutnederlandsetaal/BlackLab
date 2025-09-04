@@ -1,11 +1,8 @@
 package nl.inl.blacklab.search.results.hits.fetch;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.index.LeafReaderContext;
-
-import com.ibm.icu.text.CollationKey;
 
 import nl.inl.blacklab.search.results.hits.Hits;
 
@@ -16,20 +13,14 @@ public class HitFetcherFilterHits extends HitFetcherAbstract {
 
     private final Hits source;
 
-    private final HitFilter filter;
-
-    private final Map<String, CollationKey> collationCache;
-
-    public HitFetcherFilterHits(Hits source, HitFilter filter) {
+    public HitFetcherFilterHits(Hits source) {
         super(source.field(), null);
         this.source = source;
-        this.filter = filter;
-        this.collationCache = new ConcurrentHashMap<>();
     }
 
     @Override
-    public void fetchHits(HitCollector hitCollector) {
-        this.hitCollector = hitCollector;
+    public void fetchHits(HitFilter filter, HitCollector hitCollector) {
+        super.fetchHits(filter, hitCollector);
         Map<LeafReaderContext, Hits> hitsPerSegment = source.hitsPerSegment();
         if (hitsPerSegment != null) {
             // Fetch per segment
@@ -55,11 +46,13 @@ public class HitFetcherFilterHits extends HitFetcherAbstract {
         HitFetcherSegment.State state = new HitFetcherSegment.State(
                 lrc,
                 hitQueryContext,
+                filter.forSegment(segmentHits, lrc, collationCache),
                 hitCollector.getHitProcessor(lrc),
                 requestedHitsToProcess,
                 requestedHitsToCount,
                 hitCollector.resultsStats(),
-                hitCollector.docsStats());
-        segmentReaders.add(new HitFetcherSegmentFilterHits(segmentHits, filter, collationCache, state));
+                hitCollector.docsStats(),
+                collationCache);
+        segmentReaders.add(new HitFetcherSegmentFilterHits(segmentHits, state));
     }
 }

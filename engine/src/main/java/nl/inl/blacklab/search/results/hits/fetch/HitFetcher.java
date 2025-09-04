@@ -28,9 +28,10 @@ public interface HitFetcher {
 
     /** Actually fetch the hits and pass them to the collector.
      *
+     * @param filter which hits to include (or null for all)
      * @param hitCollector where to report the hits
      */
-    void fetchHits(HitCollector hitCollector);
+    void fetchHits(HitFilter filter, HitCollector hitCollector);
 
     AnnotatedField field();
 

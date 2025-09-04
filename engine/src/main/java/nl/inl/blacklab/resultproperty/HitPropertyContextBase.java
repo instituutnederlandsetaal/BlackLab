@@ -271,7 +271,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     @Override
     public synchronized void disposeContext() {
-        forwardIndex = null;
+        //forwardIndex = null; // no, we sometimes reuse HitProperty after disposing (e.g. with HitsSingle to filter)
         contextTermId = null;
         contextSortOrder = null;
     }

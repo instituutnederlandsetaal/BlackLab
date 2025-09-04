@@ -56,9 +56,7 @@ public interface Hits extends Iterable<EphemeralHit> {
         if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
             throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
         }
-        HitsMutable hits = HitsMutable.create(field, matchInfoDefs, 1, false, false);
-        hits.add(doc, matchStart, matchEnd, null);
-        return hits;
+        return new HitsSingle(field, matchInfoDefs, doc, matchStart, matchEnd);
     }
 
     /**

@@ -11,6 +11,7 @@ import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.hits.Hits;
 
+/** Filters hits based on a specific hit property value */
 public class HitFilterPropertyValue implements HitFilter {
     private final HitProperty filterProp;
     private final PropertyValue filterValue;
@@ -21,8 +22,14 @@ public class HitFilterPropertyValue implements HitFilter {
     }
 
     @Override
-    public boolean test(long hitIndex) {
+    public boolean accept(long hitIndex) {
         return filterProp.get(hitIndex).equals(filterValue);
+    }
+
+    @Override
+    public void disposeContext() {
+        // sometimes necessary, e.g. if we have to re-use HitsSingle to filter
+        filterProp.disposeContext();
     }
 
     @Override

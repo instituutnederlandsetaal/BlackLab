@@ -6,6 +6,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.HitsFromFetcher;
 import nl.inl.blacklab.search.results.hits.fetch.HitFetcherQuery;
+import nl.inl.blacklab.search.results.hits.fetch.HitFilter;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 public class HitResultsFromQuery extends HitResultsAbstract {
@@ -18,7 +19,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         super(queryInfo.optOverrideField(sourceQuery));
         sourceQuery.setQueryInfo(queryInfo);
         HitFetcherQuery fetcher = new HitFetcherQuery(sourceQuery, searchSettings);
-        hits = new HitsFromFetcher(queryInfo.timings(), fetcher);
+        hits = new HitsFromFetcher(queryInfo.timings(), fetcher, HitFilter.ACCEPT_ALL);
     }
 
     @Override

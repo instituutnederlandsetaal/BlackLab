@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterDocs;
 import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterHits;
 import nl.inl.blacklab.search.results.hits.fetch.HitCollector;
 import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
+import nl.inl.blacklab.search.results.hits.fetch.HitFilter;
 import nl.inl.blacklab.search.results.hits.fetch.HitProcessor;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 
@@ -102,7 +103,9 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
      */
     private final IntBigList hitToStretchMapping = new IntBigArrayBigList();
 
-    public HitsFromFetcher(QueryTimings timings, HitFetcher hitFetcher) {
+    public HitsFromFetcher(QueryTimings timings, HitFetcher hitFetcher, HitFilter filter) {
+        if (filter == null)
+            throw new IllegalArgumentException("filter cannot be null");
         this.field = hitFetcher.field();
         this.timings = timings;
         this.hitFetcher = hitFetcher;
@@ -112,7 +115,7 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
         docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
 
         hitsPerSegment = new LinkedHashMap<>();
-        hitFetcher.fetchHits(this);
+        hitFetcher.fetchHits(filter, this);
     }
 
     @Override

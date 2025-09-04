@@ -7,16 +7,23 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 /** A single hit. Used because HitProperty requires a Hits instance. */
 public class HitsSingle extends HitsAbstract {
 
-    public HitsSingle(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        this.field = field;
-        this.matchInfoDefs = matchInfoDefs;
-    }
-
     private final AnnotatedField field;
 
     private final MatchInfoDefs matchInfoDefs;
 
     EphemeralHit hit = new EphemeralHit();
+
+    public HitsSingle(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+        this.field = field;
+        this.matchInfoDefs = matchInfoDefs;
+    }
+
+    public HitsSingle(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
+        this(field, matchInfoDefs);
+        hit.doc_ = doc;
+        hit.start_ = matchStart;
+        hit.end_ = matchEnd;
+    }
 
     @Override
     public AnnotatedField field() {
@@ -83,6 +90,25 @@ public class HitsSingle extends HitsAbstract {
         return this;
     }
 
+    /** Set the hit to return.
+     *
+     * Note that this will not make a copy; the EphemeralHit you pass in will be used directly.
+     * Only suitable for very temporary use.
+     *
+     * @param hit the hit
+     */
+    public void set(EphemeralHit hit) {
+        this.hit = hit;
+    }
+
+    /**
+     * Set the hit to return.
+     *
+     * @param doc document id
+     * @param start start position
+     * @param end end position
+     * @param matchInfo match info
+     */
     public void set(int doc, int start, int end, MatchInfo[] matchInfo) {
         hit.doc_ = doc;
         hit.start_ = start;

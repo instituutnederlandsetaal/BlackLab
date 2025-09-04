@@ -61,12 +61,8 @@ public class HitFetcherSegmentQuery extends HitFetcherSegmentAbstract {
      * dealt with later (when merging two matchInfo[] arrays of different length).
      * <p>
      *
-     * @param weight                span weight we're querying
-     * @param lrc     leaf reader we're running on
-     * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
-     * @param hitProcessor   how to handle the hits as they are found, or null not to do anything yet
-     * @param globalHitsToProcess   how many more hits to retrieve
-     * @param globalHitsToCount     how many more hits to count
+     * @param weight    span weight we're querying
+     * @param state     our state
      */
     HitFetcherSegmentQuery(
         BLSpanWeight weight,
@@ -167,6 +163,7 @@ public class HitFetcherSegmentQuery extends HitFetcherSegmentAbstract {
         } else {
             hit.matchInfos_ = null;
         }
+
         // Position spans for the next hit after this
         hasPrefetchedHit = advanceSpansToNextHit(liveDocs);
         return true;

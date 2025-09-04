@@ -8,6 +8,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
+import nl.inl.blacklab.search.results.hits.HitsSingle;
 import nl.inl.util.ThreadAborter;
 
 /** 
@@ -27,6 +28,9 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
     /** What doc was the previous hit in? */
     int prevDoc = -1;
 
+    /** Used to filter because HitProperty needs a Hits instance... */
+    private HitsSingle filterHit;
+
     HitFetcherSegmentAbstract(State state) {
         this.state = state;
     }
@@ -40,8 +44,13 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
      */
     @Override
     public void run() {
+        boolean hasFilter = state.filter != HitFilter.ACCEPT_ALL;
         if (!isInitialized) {
             initialize();
+            if (hasFilter) {
+                filterHit = new HitsSingle(state.hitQueryContext.getField(), state.hitQueryContext.getMatchInfoDefs());
+                state.filter = state.filter.forSegment(filterHit, state.lrc, state.collationCache);
+            }
             isInitialized = true;
         }
         if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
@@ -67,8 +76,18 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                     break; // we're done
                 boolean atDocumentBoundary = hit.doc_ != prevDoc;
 
+                // Check filter
+                boolean ignoreHit = false;
+                if (hasFilter) {
+                    filterHit.set(hit);
+                    state.filter.disposeContext(); // get rid of context for previous hit
+                    if (!state.filter.accept(0)) {
+                        ignoreHit = true;
+                    }
+                }
+
                 // Check that this is a unique hit, not the exact same as the previous one.
-                boolean ignoreHit = HitFetcherSegment.isSameAsLast(results, hit);
+                ignoreHit = ignoreHit || HitFetcherSegment.isSameAsLast(results, hit);
                 if (!ignoreHit) {
                     // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
                     // Otherwise, don't store it either. We're done, just return.
@@ -85,8 +104,8 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                         assert hit.end_ >= 0;
                         results.add(hit);
                     }
+                    prevDoc = hit.doc_;
                 }
-                prevDoc = hit.doc_;
 
                 if (atDocumentBoundary &&
                         state.hitProcessor.globalProcessedSoFar() >= state.globalHitsToProcess.get() &&

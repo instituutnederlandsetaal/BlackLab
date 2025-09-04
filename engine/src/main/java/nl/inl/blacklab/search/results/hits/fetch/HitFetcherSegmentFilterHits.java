@@ -1,9 +1,5 @@
 package nl.inl.blacklab.search.results.hits.fetch;
 
-import java.util.Map;
-
-import com.ibm.icu.text.CollationKey;
-
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 
@@ -13,18 +9,13 @@ import nl.inl.blacklab.search.results.hits.Hits;
 class HitFetcherSegmentFilterHits extends HitFetcherSegmentAbstract {
     Hits hits;
 
-    private final HitFilter filter;
-
     long hitIndex = -1;
 
     public HitFetcherSegmentFilterHits(
             Hits hits,
-            HitFilter hitFilter,
-            Map<String, CollationKey> collationCache,
             State state) {
         super(state);
         this.hits = hits;
-        this.filter = hitFilter.forSegment(hits, state.lrc, collationCache);
     }
 
     @Override
@@ -44,10 +35,8 @@ class HitFetcherSegmentFilterHits extends HitFetcherSegmentAbstract {
                 // No more hits, we're done
                 return false;
             }
-            if (filter != null && filter.test(hitIndex)) {
-                hits.getEphemeral(hitIndex, hit);
-                return true;
-            }
+            hits.getEphemeral(hitIndex, hit);
+            return true;
         }
     }
 

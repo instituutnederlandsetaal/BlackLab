@@ -1,8 +1,11 @@
 package nl.inl.blacklab.search.results.hits.fetch;
 
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.index.LeafReaderContext;
+
+import com.ibm.icu.text.CollationKey;
 
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -15,39 +18,47 @@ public interface HitFetcherSegment extends Runnable {
     /** State a HitFetcherSegment receives to do its job. */
     class State {
 
-        public static final State DUMMY = new State(null, null, null, null, null, null, null);
+        public static final State DUMMY = new State(null, null, null, null, null, null, null, null, null);
 
         /** Used to check if doc has been removed from the index. */
-        public LeafReaderContext lrc;
+        public final LeafReaderContext lrc;
 
         /** Root hitQueryContext, needs to be shared between instances of HitFetcherSegment due to some internal global state. */
         public HitQueryContext hitQueryContext;
 
+        /** What hits to include/exclude (or null for all) */
+        public HitFilter filter;
+
         /** What to do when a document boundary is encountered. (e.g. merge to global hits list) */
-        public HitProcessor hitProcessor;
+        public final HitProcessor hitProcessor;
 
         /** Target number of hits to store in the results list */
-        public AtomicLong globalHitsToProcess;
+        public final AtomicLong globalHitsToProcess;
 
         /** Target number of hits to count, must always be >= globalHitsToProcess */
-        public AtomicLong globalHitsToCount;
+        public final AtomicLong globalHitsToCount;
 
         /** Global counters, shared between instances of HitFetcherQuerySegment in order to coordinate progress */
-        public ResultsStatsPassive hitsStats;
+        public final ResultsStatsPassive hitsStats;
 
         /** Global counters, shared between instances of HitFetcherQuerySegment in order to coordinate progress */
-        public ResultsStatsPassive docsStats;
+        public final ResultsStatsPassive docsStats;
 
-        public State(LeafReaderContext lrc, HitQueryContext hitQueryContext, HitProcessor hitProcessor,
+        /** Cache for calculating CollationKeys (if we're filtering) */
+        public Map<String, CollationKey> collationCache;
+
+        public State(LeafReaderContext lrc, HitQueryContext hitQueryContext, HitFilter filter, HitProcessor hitProcessor,
                 AtomicLong globalHitsToProcess, AtomicLong globalHitsToCount, ResultsStatsPassive hitsStats,
-                ResultsStatsPassive docsStats) {
+                ResultsStatsPassive docsStats, Map<String, CollationKey> collationCache) {
             this.lrc = lrc;
             this.hitQueryContext = hitQueryContext;
+            this.filter = filter;
             this.hitProcessor = hitProcessor;
             this.globalHitsToProcess = globalHitsToProcess;
             this.globalHitsToCount = globalHitsToCount;
             this.hitsStats = hitsStats;
             this.docsStats = docsStats;
+            this.collationCache = collationCache;
         }
     }
 
