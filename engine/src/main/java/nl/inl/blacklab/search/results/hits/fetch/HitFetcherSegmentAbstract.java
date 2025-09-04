@@ -93,7 +93,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                         state.hitProcessor.globalCountedSoFar() >= state.globalHitsToCount.get()) {
                     // We've reached the requested number of hits and are at a document boundary.
                     // We'll stop for now. When more hits are requested, this method will be called again.
-                    break;
+                    return;
                 }
 
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states

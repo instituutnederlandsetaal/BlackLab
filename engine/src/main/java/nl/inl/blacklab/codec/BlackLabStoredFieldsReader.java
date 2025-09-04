@@ -2,6 +2,7 @@ package nl.inl.blacklab.codec;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -277,16 +278,18 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
                 final int valueLengthChar = findValueLengthChar(docId, luceneField);
                 if (valueLengthChar == 0)
                     return null; // no value stored for this document
+
+                int startChar = 0;
+                int endChar = valueLengthChar;
+
                 ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
                 final long blockIndexOffset = valueIndexFile.readLong();
                 final long blocksOffset = valueIndexFile.readLong();
 
                 // Determine what blocks we'll need
                 final int firstBlockNeeded = 0;
-                final int lastBlockNeeded = valueLengthChar / blockSizeChars; // implicitly does a floor()
-                // add one block for spillover discarded by the floor().
-                // NOTE: don't add a spillover block if the document fits exactly in the block size.
-                final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + ((valueLengthChar % blockSizeChars) == 0 ? 0 : 1);
+                final int lastBlockNeeded = (endChar - 1) / blockSizeChars;
+                final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
 
                 // Determine where our first block starts, and position blockindex file
                 // to start reading subsequent after-block positions
@@ -321,9 +324,8 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
                                             + ")");
                                 // Double the available space for the remaining blocks (probably always just 1 block)
                                 final int blocksLeftToRead = numBlocksNeeded - numBlocksRead;
-                                final byte[] newBuffer = new byte[decodedOffset + blocksLeftToRead * availableSpace * 2];
-                                System.arraycopy(decodedValue, 0, newBuffer, 0, decodedOffset);
-                                decodedValue = newBuffer;
+                                int newLength = decodedOffset + blocksLeftToRead * availableSpace * 2;
+                                decodedValue = Arrays.copyOf(decodedValue, newLength);
                             }
                         }
                         decodedOffset += decodedSize;
@@ -334,9 +336,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
                     }
                 }
                 // Copy result to a new array of the right size
-                final byte[] result = new byte[decodedOffset];
-                System.arraycopy(decodedValue, 0, result, 0, result.length);
-                return result;
+                return Arrays.copyOf(decodedValue, decodedOffset);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
@@ -360,18 +360,6 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
         }
 
         /**
-         * Get the entire field value.
-         *
-         * @param docId document id
-         * @param luceneField field to get
-         * @return field value
-         */
-        @Override
-        public String getValue(int docId, String luceneField) {
-            return getValueSubstring(docId, luceneField, 0, -1);
-        }
-
-        /**
          * Get part of the field value.
          *
          * If startChar or endChar are larger than <code>value.length()</code>, they will be clamped to that value.
@@ -380,67 +368,77 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
          * @param luceneField field to get
          * @param startChar first character to get. Must be zero or greater.
          * @param endChar character after the last character to get, or -1 for <code>value.length()</code>.
-         * @return requested part
+         * @return requested part, or null if we don't have a value for this document
          */
         private String getValueSubstring(int docId, String luceneField, int startChar, int endChar) {
-            if (startChar < 0)
-                throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
-            if (endChar < -1)
-                throw new IllegalArgumentException("Illegal endChar value, must be >= -1: " + endChar);
-            if (endChar != -1 && startChar > endChar)
-                throw new IllegalArgumentException("Illegal startChar/endChar values, startChar > endChar: " +
-                        startChar + "-" + endChar);
-
             try {
                 // Find the value length in characters, and position the valueIndex file pointer
                 // to read the rest of the information we need: where to find the block indexes
                 // and where the blocks start.
-                int valueLengthChar = findValueLengthChar(docId, luceneField);
+                final int valueLengthChar = findValueLengthChar(docId, luceneField);
                 if (valueLengthChar == 0)
-                    return ""; // no value stored for this document
+                    return null; // no value stored for this document
+
+                if (startChar < 0)
+                    throw new IllegalArgumentException("Illegal startChar value, must be >= 0: " + startChar);
+                if (endChar < -1)
+                    throw new IllegalArgumentException("Illegal endChar value, must be >= -1: " + endChar);
+                if (endChar != -1 && startChar > endChar)
+                    throw new IllegalArgumentException("Illegal startChar/endChar values, startChar > endChar: " +
+                            startChar + "-" + endChar);
                 if (startChar > valueLengthChar)
                     startChar = valueLengthChar;
                 if (endChar == -1 || endChar > valueLengthChar)
                     endChar = valueLengthChar;
+
                 ContentStoreBlockCodec blockCodec = ContentStoreBlockCodec.fromCode(valueIndexFile.readByte());
-                long blockIndexOffset = valueIndexFile.readLong();
-                long blocksOffset = valueIndexFile.readLong();
+                final long blockIndexOffset = valueIndexFile.readLong();
+                final long blocksOffset = valueIndexFile.readLong();
 
                 // Determine what blocks we'll need
-                int firstBlockNeeded = startChar / blockSizeChars;
-                int lastBlockNeeded = endChar / blockSizeChars;
-                int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
+                final int firstBlockNeeded = startChar / blockSizeChars;
+                final int lastBlockNeeded = (endChar - 1) / blockSizeChars;
+                final int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
 
                 // Determine where our first block starts, and position blockindex file
                 // to start reading subsequent after-block positions
                 int blockStartOffset = findBlockStartOffset(blockIndexOffset, blocksOffset, firstBlockNeeded);
 
-                int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
-                int blocksRead = 0;
+                // Try to make sure we have a large enough buffer available
+                final int decodeBufferLength = blockSizeChars * BlackLabStoredFieldsReader.UTF8_MAX_BYTES_PER_CHAR
+                        + BlackLabStoredFieldsReader.ESTIMATED_DECODE_OVERHEAD;
+                if (decodedValue == null || decodedValue.length < decodeBufferLength)
+                    decodedValue = new byte[decodeBufferLength];
+
                 StringBuilder result = new StringBuilder();
-                byte[] decodedBlock = new byte[blockSizeChars * BlackLabStoredFieldsReader.UTF8_MAX_BYTES_PER_CHAR
-                        + BlackLabStoredFieldsReader.ESTIMATED_DECODE_OVERHEAD];
+                int decodedOffset = 0; // write position in the decodedValue buffer (always 0 here)
+                int numBlocksRead = 0;
                 try (ContentStoreBlockCodec.Decoder decoder = blockCodec.getDecoder()) {
-                    while (blocksRead < numBlocksNeeded) {
+                    while (numBlocksRead < numBlocksNeeded) {
 
                         // Read a block and decompress it.
-                        int blockEndOffset = blockIndexFile.readInt();
-                        int blockSizeBytes = blockEndOffset - blockStartOffset;
+                        final int blockEndOffset = blockIndexFile.readInt();
+                        final int blockSizeBytes = blockEndOffset - blockStartOffset;
                         int decodedSize = -1;
                         while (decodedSize < 0) {
-                            decodedSize = readAndDecodeBlock(blockSizeBytes, decoder, decodedBlock, 0);
+                            decodedSize = readAndDecodeBlock(blockSizeBytes, decoder, decodedValue, decodedOffset);
                             if (decodedSize < 0) {
-                                if (decodedBlock.length > BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH)
-                                    throw new IOException("Insufficient buffer space for decoding block, even at max (" + BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH
-                                            + ")");
-                                decodedBlock = new byte[decodedBlock.length * 2];
+                                // Not enough buffer space. Reallocate and try again (up to a point).
+                                final int availableSpace = decodedValue.length - decodedOffset;
+                                if (availableSpace > BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH)
+                                    throw new IOException("Insufficient buffer space for decoding block, even at max (" +
+                                            BlackLabStoredFieldsReader.MAX_DECODE_BUFFER_LENGTH + ")");
+                                // Double the buffer space
+                                int newLength = decodedValue.length * 2;
+                                decodedValue = new byte[newLength];
                             }
                         }
-                        String blockDecompressed = new String(decodedBlock, 0, decodedSize, StandardCharsets.UTF_8);
+                        String blockDecompressed = new String(decodedValue, 0, decodedSize, StandardCharsets.UTF_8);
 
                         // Append the content we need to the result.
-                        if (blocksRead == 0) {
+                        if (numBlocksRead == 0) {
                             // First block. Only take the part we need.
+                            int currentBlockCharOffset = firstBlockNeeded * blockSizeChars;
                             if (numBlocksNeeded == 1) {
                                 // This is the only block we need. Take the requested part from the middle.
                                 result.append(blockDecompressed, startChar - currentBlockCharOffset,
@@ -450,8 +448,9 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
                                 result.append(blockDecompressed, startChar - currentBlockCharOffset,
                                         blockSizeChars);
                             }
-                        } else if (blocksRead == numBlocksNeeded - 1) {
+                        } else if (numBlocksRead == numBlocksNeeded - 1) {
                             // Last block. Take the part we need from the beginning.
+                            int currentBlockCharOffset = (firstBlockNeeded + numBlocksRead) * blockSizeChars;
                             result.append(blockDecompressed, 0, endChar - currentBlockCharOffset);
                         } else {
                             // Middle block. Append the whole thing.
@@ -460,8 +459,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
 
                         // Update variables to read the next block
                         blockStartOffset = blockEndOffset;
-                        currentBlockCharOffset += blockSizeChars;
-                        blocksRead++;
+                        numBlocksRead++;
                     }
                 }
                 return result.toString();

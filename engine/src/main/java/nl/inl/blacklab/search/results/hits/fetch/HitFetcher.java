@@ -6,12 +6,30 @@ import nl.inl.blacklab.search.lucene.HitQueryContext;
 /** Fetches hits from index segments in parallel,
  * reporting them to HitCollector/HitProcessor */
 public interface HitFetcher {
-    boolean ensureResultsReader(long number);
 
-    boolean isDone();
+    /** Phases of the hit fetching process. */
+    enum Phase {
+        STORING_AND_COUNTING,
+        COUNTING_ONLY,
+        DONE
+    }
+
+    /** Block until this many results are available or there are no more results.
+     *
+     * If we hit the maximum number of results to process before reaching the specified
+     * number, we stop reading more results and return false.
+     *
+     * @param number minimum number of results we want available. If negative, read all hits.
+     * @return true if the requested number was reached, false if we were done before reaching it
+     */
+    boolean ensureResultsRead(long number);
 
     HitQueryContext getHitQueryContext();
 
+    /** Actually fetch the hits and pass them to the collector.
+     *
+     * @param hitCollector where to report the hits
+     */
     void fetchHits(HitCollector hitCollector);
 
     AnnotatedField field();
@@ -19,10 +37,4 @@ public interface HitFetcher {
     long getMaxHitsToProcess();
 
     long getMaxHitsToCount();
-
-    enum Phase {
-        STORING_AND_COUNTING,
-        COUNTING_ONLY,
-        DONE
-    }
 }

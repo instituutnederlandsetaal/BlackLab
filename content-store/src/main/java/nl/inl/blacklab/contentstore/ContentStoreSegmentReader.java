@@ -12,15 +12,6 @@ import net.jcip.annotations.NotThreadSafe;
 public interface ContentStoreSegmentReader {
 
     /**
-     * Get the entire field value.
-     *
-     * @param docId document id
-     * @param luceneField field to get
-     * @return field value
-     */
-    String getValue(int docId, String luceneField);
-
-    /**
      * Get several parts of the field value.
      *
      * @param docId document id

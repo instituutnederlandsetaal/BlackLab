@@ -98,7 +98,7 @@ public abstract class HitFetcherAbstract implements HitFetcher {
     }
 
     @Override
-    public boolean ensureResultsReader(long number) {
+    public boolean ensureResultsRead(long number) {
         // clamp number to [current requested, number, max. requested], defaulting to max if number < 0
         final long clampedNumber = number < 0 ? maxHitsToCount : Math.min(number + FETCH_HITS_MIN, maxHitsToCount);
 
@@ -172,7 +172,6 @@ public abstract class HitFetcherAbstract implements HitFetcher {
         return hitCollector.globalHitsSoFar() >= number;
     }
 
-    @Override
     public boolean isDone() {
         return done;
     }

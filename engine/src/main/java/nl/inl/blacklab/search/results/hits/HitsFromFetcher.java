@@ -335,7 +335,7 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
     }
 
     public boolean ensureResultsRead(long number) {
-        return hitFetcher.ensureResultsReader(number);
+        return hitFetcher.ensureResultsRead(number);
     }
 
     @Override
