@@ -33,9 +33,10 @@ final public class MetadataTerms {
         // Fill with document metadata
         final var docIds = FrequencyCounter.getDocIds(index, cfg);
         for (final int id : docIds) {
+            final var doc = index.luceneDoc(id);
             for (int i = 0; i < numMetadata; i++) {
                 final var metadata = cfg.metadata().get(i);
-                final var field = index.luceneDoc(id).getField(metadata.name());
+                final var field = doc.getField(metadata.name());
                 if (field != null)
                     uniqueMetadata.get(metadata.name()).add(field.stringValue());
             }
