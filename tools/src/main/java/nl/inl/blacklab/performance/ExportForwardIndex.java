@@ -117,7 +117,7 @@ public class ExportForwardIndex {
                 String length = doLengths ? " len=" + docLength : "";
                 System.out.println("    " + annotation.name() + length);
                 if (doTokens) {
-                    int[] doc = fi.retrieveParts(docId - lrc.docBase, new int[] { -1 }, new int[] { -1 }).get(0);
+                    int[] doc = fi.retrieveParts(docId - lrc.docBase, new int[] { -1 }, new int[] { -1 })[0];
                     Terms terms = fi.terms();
                     for (int tokenId: doc) {
                         String token = terms.get(tokenId);

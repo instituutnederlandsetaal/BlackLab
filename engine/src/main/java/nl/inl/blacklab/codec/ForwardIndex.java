@@ -1,10 +1,7 @@
 package nl.inl.blacklab.codec;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.codecs.CodecUtil;
@@ -12,7 +9,7 @@ import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
-import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
+import nl.inl.blacklab.codec.tokens.TokensCodec;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
@@ -123,7 +120,7 @@ public class ForwardIndex implements AutoCloseable {
 
         /** Retrieve parts of a document from the forward index. */
         @Override
-        public List<int[]> retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends) {
+        public int[][] retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends) {
             int n = starts.length;
             if (n != ends.length)
                 throw new IllegalArgumentException("start and end must be of equal length");
@@ -133,11 +130,7 @@ public class ForwardIndex implements AutoCloseable {
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-            List<int[]> result = new ArrayList<>(n);
-            for (int i = 0; i < n; i++) {
-                result.add(retrievePart(starts[i], ends[i]));
-            }
-            return result;
+            return retrieveParts(starts, ends);
         }
 
         /** Retrieve parts of a document from the forward index. */
@@ -148,62 +141,21 @@ public class ForwardIndex implements AutoCloseable {
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
-            return retrievePart(start, end);
+            return retrieveParts(field, docId, new int[] { start }, new int[] { end })[0];
         }
 
-        private int[] retrievePart(int start, int end) {
-            if (start == -1)
-                start = 0;
-            if (end == -1 || end > docLength) // Can happen while making KWICs because we don't know the doc length until here
-                end = docLength;
-            ForwardIndexImpl.validateSnippetParameters(docLength, start, end);
+        private int[][] retrieveParts(int[] starts, int[] ends) {
+            for (int i = 0; i < starts.length; i++) {
+                if (starts[i] == -1)
+                    starts[i] = 0;
+                if (ends[i] == -1 || ends[i] > docLength) // Can happen while making KWICs because we don't know the doc length until here
+                    ends[i] = docLength;
+                ForwardIndexImpl.validateSnippetParameters(docLength, starts[i], ends[i]);
+            }
 
-            // Read the snippet from the tokens file
+            // Read the snippets from the tokens file
             try {
-                int[] snippet = new int[end - start];
-                switch (tokensCodec) {
-                case VALUE_PER_TOKEN:
-                    switch(VALUE_PER_TOKEN_PARAMETER.fromCode(tokensCodecParameter)) {
-                        case INT: 
-                            _tokens.seek(docTokensOffset + (long) start * Integer.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readInt();
-                            }
-                            break;
-                        case THREE_BYTES:
-                            _tokens.seek(docTokensOffset + (long) start * 3);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = ThreeByteInt.read( () -> _tokens.readByte() );
-
-                            }
-                            break;
-                        case SHORT: 
-                            _tokens.seek(docTokensOffset + (long) start * Short.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readShort();
-                            }
-                            break;
-                        case BYTE: 
-                            // Simplest encoding, just one 4-byte int per token
-                            _tokens.seek(docTokensOffset + (long) start * Byte.BYTES);
-                            for (int j = 0; j < snippet.length; j++) {
-                                snippet[j] = _tokens.readByte();
-                            }
-                            break;
-                        default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
-                                + " not implemented.");
-                    }
-                    break;
-                case ALL_TOKENS_THE_SAME:
-                    // All tokens have the same value, so we only have one value stored
-                    _tokens.seek(docTokensOffset);
-                    int value = _tokens.readInt();
-                    Arrays.fill(snippet, value);
-                    break;
-                default:
-                    throw new UnsupportedOperationException("Cannot read tokens codec: " + tokensCodec);
-                }
-                return snippet;
+                return tokensCodec.readSnippets(_tokens, docTokensOffset, starts, ends);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
@@ -215,8 +167,7 @@ public class ForwardIndex implements AutoCloseable {
                 _tokensIndex.seek(fieldTokensIndexOffset + (long) docId * TOKENS_INDEX_RECORD_SIZE);
                 docTokensOffset = _tokensIndex.readLong();
                 docLength = _tokensIndex.readInt();
-                tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
-                tokensCodecParameter = _tokensIndex.readByte();
+                tokensCodec = TokensCodec.fromHeader(_tokensIndex);
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }

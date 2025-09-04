@@ -387,7 +387,7 @@ public class HitGroupsTokenFrequencies {
                                     for (AnnotInfo annot : hitProperties) {
                                         AnnotationForwardIndex forwardIndex = forwardIndexes[hitPropIndex];
                                         final int[] tokenValues = forwardIndex.retrieveParts(globalDocId - lrc.docBase,
-                                                        new int[] { -1 }, new int[] { -1 }).get(0);
+                                                        new int[] { -1 }, new int[] { -1 })[0];
                                         Terms segmentTerms = forwardIndex.terms();
 
                                         tokenValuesPerAnnotation.add(tokenValues);

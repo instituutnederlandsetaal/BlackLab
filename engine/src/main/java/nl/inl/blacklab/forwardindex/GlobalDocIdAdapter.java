@@ -1,7 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.util.List;
-
 /** Adapts a segment forward index to accept global doc ids.
  */
 public class GlobalDocIdAdapter implements AnnotationForwardIndex {
@@ -16,7 +14,7 @@ public class GlobalDocIdAdapter implements AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrieveParts(int docId, int[] starts, int[] ends) {
+    public int[][] retrieveParts(int docId, int[] starts, int[] ends) {
         return forwardIndex.retrieveParts(docId - docBase, starts, ends);
     }
 

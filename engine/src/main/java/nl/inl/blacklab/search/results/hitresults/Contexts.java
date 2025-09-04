@@ -138,13 +138,13 @@ public class Contexts {
             if (forwardIndex == null)
                 throw new IllegalArgumentException("Cannot get context from without a forward index");
             // Get all the words from the forward index
-            List<int[]> words = forwardIndex.retrieveParts(doc, startsOfSnippets, endsOfSnippets);
+            int[][] words = forwardIndex.retrieveParts(doc, startsOfSnippets, endsOfSnippets);
 
             // Build the actual concordances
 //            int hitNum = 0;
             for (int i = 0; i < n; ++i) {
                 long hitIndex = start + i;
-                int[] theseWords = words.get(i);
+                int[] theseWords = words[i];
                 hits.getEphemeral(hitIndex, hit);
 
                 int firstWordIndex = startsOfSnippets[i];

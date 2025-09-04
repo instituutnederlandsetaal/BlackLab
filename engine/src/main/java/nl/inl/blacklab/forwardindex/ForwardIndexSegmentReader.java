@@ -1,7 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.util.List;
-
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.codec.ForwardIndexField;
 
@@ -22,7 +20,7 @@ public interface ForwardIndexSegmentReader {
      * @param ends ending token positions
      * @return snippets (with segment-local term ids)
      */
-    List<int[]> retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends);
+    int[][] retrieveParts(ForwardIndexField field, int docId, int[] starts, int[] ends);
 
     /** Retrieve a single part of a document from a forward index.
      *

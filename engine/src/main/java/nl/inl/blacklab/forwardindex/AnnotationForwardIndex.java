@@ -1,7 +1,5 @@
 package nl.inl.blacklab.forwardindex;
 
-import java.util.List;
-
 /**
  * Forward index for a single annotation.
  * <p>
@@ -9,7 +7,7 @@ import java.util.List;
  * or on a single segment (with segment doc ids).
  */
 public interface AnnotationForwardIndex {
-    List<int[]> retrieveParts(int docId, int[] starts, int[] ends);
+    int[][] retrieveParts(int docId, int[] starts, int[] ends);
 
     int[] retrievePart(int docId, int start, int end);
 

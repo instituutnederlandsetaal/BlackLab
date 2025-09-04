@@ -134,7 +134,7 @@ public class TestIndexFormats {
     int getToken(String luceneField, int docId, int pos) {
         LeafReaderContext lrc = testIndex.index().getLeafReaderContext(docId);
         int[] context = FieldForwardIndex.get(lrc, luceneField)
-                .retrieveParts(docId - lrc.docBase, new int[] { pos }, new int[] { pos + 1 }).get(0);
+                .retrieveParts(docId - lrc.docBase, new int[] { pos }, new int[] { pos + 1 })[0];
         if (context.length == 0)
             throw new IllegalArgumentException("Token offset out of range");
         return context[0];

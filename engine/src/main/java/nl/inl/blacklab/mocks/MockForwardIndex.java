@@ -1,7 +1,5 @@
 package nl.inl.blacklab.mocks;
 
-import java.util.List;
-
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 
@@ -16,7 +14,7 @@ public record MockForwardIndex(Terms terms) implements AnnotationForwardIndex {
     }
 
     @Override
-    public List<int[]> retrieveParts(int docId, int[] starts, int[] ends) {
+    public int[][] retrieveParts(int docId, int[] starts, int[] ends) {
         throw new UnsupportedOperationException();
     }
 
