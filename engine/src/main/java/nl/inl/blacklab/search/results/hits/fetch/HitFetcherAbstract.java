@@ -8,7 +8,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Function;
@@ -21,8 +20,9 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.results.SearchSettings;
-import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.Parallel;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 
 /**
  * (Lazily) fetches hits from a source, in parallel if possible.
@@ -47,6 +47,7 @@ public abstract class HitFetcherAbstract implements HitFetcher {
      * This prevents locking again and again for a single hit when iterating.
      */
     private static final int FETCH_HITS_MIN = 20;
+
     protected final Map<String, CollationKey> collationCache;
 
     /**
@@ -81,6 +82,10 @@ public abstract class HitFetcherAbstract implements HitFetcher {
      */
     final AtomicLong requestedHitsToCount = new AtomicLong();
 
+    private final ResultsStatsPassive hitsStats;
+
+    private final ResultsStatsPassive docsStats;
+
     HitFilter filter;
 
     HitCollector hitCollector;
@@ -95,16 +100,23 @@ public abstract class HitFetcherAbstract implements HitFetcher {
      */
     final List<HitFetcherSegment> segmentReaders = new ArrayList<>();
 
-    /** How many hits have we reported to the collector? */
-    LongAdder hitsProduced = new LongAdder();
-
     public HitFetcherAbstract(AnnotatedField field, SearchSettings searchSettings) {
         this.index = field.index();
         hitQueryContext = new HitQueryContext(index, null, field); // each spans will get a copy
         maxThreadsPerOperation = Math.max(index.blackLab().maxThreadsPerSearch(), 1);
         maxHitsToProcess = searchSettings == null ? Long.MAX_VALUE : searchSettings.maxHitsToProcess();
         maxHitsToCount = searchSettings == null ? Long.MAX_VALUE : searchSettings.maxHitsToCount();
-        this.collationCache = new ConcurrentHashMap<>();
+        hitsStats = new ResultsStatsPassive(new WaitForHits(), maxHitsToProcess, maxHitsToCount);
+        docsStats = new ResultsStatsPassive(new WaitForDocs());
+        collationCache = new ConcurrentHashMap<>();
+    }
+
+    public ResultsStats hitsStats() {
+        return hitsStats;
+    }
+
+    public ResultsStats docsStats() {
+        return docsStats;
     }
 
     @Override
@@ -135,8 +147,10 @@ public abstract class HitFetcherAbstract implements HitFetcher {
                  * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
                  * So instead poll our own state, then if we're still missing results after that just count them ourselves
                  */
-                if (allHitsFetched || sizeAtLeast(clampedNumber)) {
-                    return sizeAtLeast(number);
+                synchronized (this) { // when we see allHitsFetched == true, we need hitsStats to also be up to date
+                    if (allHitsFetched || hitsStats.processedSoFar() >= clampedNumber) {
+                        return hitsStats.processedSoFar() >= number;
+                    }
                 }
             }
             hasLock = true;
@@ -177,19 +191,17 @@ public abstract class HitFetcherAbstract implements HitFetcher {
                 // Remove all SpansReaders that have finished.
                 segmentReaders.removeIf(HitFetcherSegment::isDone);
                 if (segmentReaders.isEmpty())
-                    hitCollector.setDone(); // all spans have been read, so we're done
+                    setDone(); // all spans have been read, so we're done
                 ensureHitsReadLock.unlock();
             }
         }
-        return sizeAtLeast(number);
+        return hitsStats.processedSoFar() >= number;
     }
 
-    private boolean sizeAtLeast(long n) {
-        return hitCollector.globalHitsSoFar() >= n;
-    }
-
-    public boolean isDone() {
-        return allHitsFetched;
+    synchronized void setDone() {
+        allHitsFetched = true;
+        hitsStats.setDone();
+        docsStats.setDone();
     }
 
     @Override
@@ -202,17 +214,7 @@ public abstract class HitFetcherAbstract implements HitFetcher {
         return hitQueryContext.getField();
     }
 
-    @Override
-    public long getMaxHitsToProcess() {
-        return maxHitsToProcess;
-    }
-
-    @Override
-    public long getMaxHitsToCount() {
-        return maxHitsToCount;
-    }
-
-    HitFetcherSegment.State getState(HitCollector hitCollector, LeafReaderContext lrc, Hits segmentHits, HitFilter filter) {
+    HitFetcherSegment.State getState(HitCollector hitCollector, LeafReaderContext lrc, HitFilter filter) {
         return new HitFetcherSegment.State(
                 lrc,
                 hitQueryContext,
@@ -220,9 +222,55 @@ public abstract class HitFetcherAbstract implements HitFetcher {
                 hitCollector.getHitProcessor(lrc),
                 requestedHitsToProcess,
                 requestedHitsToCount,
-                hitCollector.resultsStats(),
-                hitCollector.docsStats(),
-                collationCache,
-                hitsProduced);
+                hitsStats,
+                docsStats,
+                collationCache);
+    }
+
+    public class WaitForHits implements ResultsStats.ResultsAwaiter {
+        @Override
+        public boolean processedAtLeast(long lowerBound) {
+            return ensureResultsRead(lowerBound);
+        }
+
+        @Override
+        public long allProcessed() {
+            ensureResultsRead(-1);
+            return hitsStats.processedSoFar();
+        }
+
+        @Override
+        public long allCounted() {
+            ensureResultsRead(-1);
+            return hitsStats.countedSoFar();
+        }
+    }
+
+    /** Used by ResultsStatsPassive to wait until some number of docs have been seen. */
+    public class WaitForDocs implements ResultsStats.ResultsAwaiter {
+        @Override
+        public boolean processedAtLeast(long lowerBound) {
+            // There's no ensureDocsRead() method, so loop until the requested number of docs have been read
+            while (!hitsStats.done() && docsStats.processedSoFar() < lowerBound) {
+                hitsStats.processedAtLeast(hitsStats.processedSoFar() + 1);
+            }
+            return docsStats.processedSoFar() >= lowerBound;
+        }
+
+        @Override
+        public long allProcessed() {
+            // Ensure all results have been seen
+            ensureResultsRead(-1);
+            // Return number of docs processed
+            return docsStats.processedSoFar();
+        }
+
+        @Override
+        public long allCounted() {
+            // Ensure all results have been seen
+            ensureResultsRead(-1);
+            // Return number of docs counted
+            return docsStats.countedSoFar();
+        }
     }
 }

@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.results.hits.fetch;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /** Fetches hits from index segments in parallel,
  * reporting them to HitCollector/HitProcessor */
@@ -35,7 +36,7 @@ public interface HitFetcher {
 
     AnnotatedField field();
 
-    long getMaxHitsToProcess();
+    ResultsStats hitsStats();
 
-    long getMaxHitsToCount();
+    ResultsStats docsStats();
 }

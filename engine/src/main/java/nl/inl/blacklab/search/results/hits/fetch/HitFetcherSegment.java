@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.results.hits.fetch;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -48,11 +47,9 @@ public interface HitFetcherSegment extends Runnable {
         /** Cache for calculating CollationKeys (if we're filtering) */
         public final Map<String, CollationKey> collationCache;
 
-        public final LongAdder hitsProduced;
-
         public State(LeafReaderContext lrc, HitQueryContext hitQueryContext, HitFilter filter, HitCollectorSegment collector,
                 AtomicLong globalHitsToProcess, AtomicLong globalHitsToCount, ResultsStatsPassive hitsStats,
-                ResultsStatsPassive docsStats, Map<String, CollationKey> collationCache, LongAdder hitsProduced) {
+                ResultsStatsPassive docsStats, Map<String, CollationKey> collationCache) {
             this.lrc = lrc;
             this.hitQueryContext = hitQueryContext;
             this.filter = filter;
@@ -62,14 +59,12 @@ public interface HitFetcherSegment extends Runnable {
             this.hitsStats = hitsStats;
             this.docsStats = docsStats;
             this.collationCache = collationCache;
-            this.hitsProduced = hitsProduced;
         }
 
         private State() {
             this(null, null, null,
                     null, null, null,
-                    null, null, null,
-                    null);
+                    null, null, null);
         }
     }
 

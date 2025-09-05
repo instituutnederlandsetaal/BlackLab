@@ -2,8 +2,6 @@ package nl.inl.blacklab.search.results.hits.fetch;
 
 import org.apache.lucene.index.LeafReaderContext;
 
-import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
-
 /**
  * Receives and collects (via HitProcessor) hits from multiple segments, keeping track of totals.
  *
@@ -15,12 +13,4 @@ public interface HitCollector {
      * Get hit processor for this segment.
      */
     HitCollectorSegment getHitProcessor(LeafReaderContext lrc);
-
-    void setDone();
-
-    ResultsStatsPassive resultsStats();
-
-    ResultsStatsPassive docsStats();
-
-    long globalHitsSoFar();
 }

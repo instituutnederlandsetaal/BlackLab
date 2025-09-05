@@ -8,12 +8,12 @@ import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
 /** ResultsStats that relies on being informed of progress by its owner. */
 public class ResultsStatsPassive extends ResultsStats {
 
-    public ResultsStatsPassive(ResultsAwaiter waitUntil) {
-        this(waitUntil, Long.MAX_VALUE, Long.MAX_VALUE);
+    public ResultsStatsPassive(ResultsAwaiter resultsAwaiter) {
+        this(resultsAwaiter, Long.MAX_VALUE, Long.MAX_VALUE);
     }
 
-    public ResultsStatsPassive(ResultsAwaiter waitUntil, long maxHitsToProcess, long maxHitsToCount) {
-        super(waitUntil);
+    public ResultsStatsPassive(ResultsAwaiter resultsAwaiter, long maxHitsToProcess, long maxHitsToCount) {
+        super(resultsAwaiter);
         this.maxHitsToProcess = maxHitsToProcess;
         this.maxHitsToCount = maxHitsToCount;
     }

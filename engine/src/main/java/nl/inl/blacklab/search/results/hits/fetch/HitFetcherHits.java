@@ -36,14 +36,13 @@ public class HitFetcherHits extends HitFetcherAbstract {
             addFetchTask(hitCollector, null, source);
         }
         if (segmentReaders.isEmpty()) {
-            allHitsFetched = true;
-            hitCollector.setDone();
+            setDone();
         }
     }
 
     private void addFetchTask(HitCollector hitCollector, LeafReaderContext lrc, Hits segmentHits) {
         // Spans reader: fetch hits from segment and feed them to the hit processor.
-        HitFetcherSegment.State state = getState(hitCollector, lrc, segmentHits,
+        HitFetcherSegment.State state = getState(hitCollector, lrc,
                 filter.forSegment(segmentHits, lrc, collationCache));
         segmentReaders.add(new HitFetcherSegmentFilterHits(segmentHits, state));
     }

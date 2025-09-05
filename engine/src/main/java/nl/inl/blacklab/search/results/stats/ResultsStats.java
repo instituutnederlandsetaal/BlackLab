@@ -41,26 +41,26 @@ public abstract class ResultsStats implements SearchResult {
         this(ThrowingResultsAwaiter.INSTANCE);
     }
 
-    protected ResultsStats(ResultsAwaiter waitUntil) {
-        this.waitUntil = waitUntil;
+    protected ResultsStats(ResultsAwaiter resultsAwaiter) {
+        this.resultsAwaiter = resultsAwaiter;
     }
 
-    protected void setResultsAwaiter(ResultsAwaiter waitUntil) {
-        this.waitUntil = waitUntil;
+    protected void setResultsAwaiter(ResultsAwaiter resultsAwaiter) {
+        this.resultsAwaiter = resultsAwaiter;
     }
 
-    private ResultsAwaiter waitUntil;
+    private ResultsAwaiter resultsAwaiter;
 
     public boolean processedAtLeast(long lowerBound) {
-        return waitUntil.processedAtLeast(lowerBound);
+        return resultsAwaiter.processedAtLeast(lowerBound);
     }
 
     public long processedTotal() {
-        return waitUntil.allProcessed();
+        return resultsAwaiter.allProcessed();
     }
 
     public long countedTotal() {
-        return waitUntil.allCounted();
+        return resultsAwaiter.allCounted();
     }
 
     public abstract long processedSoFar();

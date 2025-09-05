@@ -60,20 +60,24 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                 state.hitQueryContext.getMatchInfoDefs(), -1, true,
                 false);
         long counted = 0;
+
+        // Keep track of phase: are we still storing hits, or only counting, or done?
+        HitFetcher.Phase phase = HitFetcher.Phase.STORING_AND_COUNTING;
+
         try {
             // Try to set the spans to a valid hit.
             // Mark if it is at a valid hit.
             // Count and store the hit (if we're not at the limits yet)
 
-            // If we reach or exceed the limit when at a document boundary, we stop storing hits,
-            // but we still count them.
-            HitFetcher.Phase phase = HitFetcher.Phase.STORING_AND_COUNTING;
             EphemeralHit hit = new EphemeralHit();
 
             runPrepare();
             while (phase != HitFetcher.Phase.DONE) {
                 if (!runGetHit(hit))
                     break; // we're done
+                assert hit.doc_ >= 0;
+                assert hit.start_ >= 0;
+                assert hit.end_ >= 0;
                 boolean atDocumentBoundary = hit.doc_ != prevDoc;
 
                 // Check filter
@@ -89,28 +93,27 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                 // Check that this is a unique hit, not the exact same as the previous one.
                 ignoreHit = ignoreHit || HitFetcherSegment.isSameAsLast(results, hit);
                 if (!ignoreHit) {
-                    // Only if previous value (which is returned) was not yet at the limit (and thus we actually incremented) do we count this hit.
-                    // Otherwise, don't store it either. We're done, just return.
-                    counted++;
 
-                    if (atDocumentBoundary) {
+                    // If we're at a document boundary, pass the hits we have so far to the collector and update stats.
+                    if (atDocumentBoundary && (!results.isEmpty() || counted > 0)) {
+                        // Update stats and determine phase (fetching/counting/done)
                         state.docsStats.increment(phase == HitFetcher.Phase.STORING_AND_COUNTING);
-                        phase = state.collector.onDocumentBoundary(results, counted);
-                        state.hitsProduced.add(results.size());
+                        phase = state.hitsStats.add(results.size(), counted);
+                        state.collector.onDocumentBoundary(results);
+                        results.clear();
                         counted = 0;
                     }
 
-                    if (phase == HitFetcher.Phase.STORING_AND_COUNTING) {
-                        assert hit.start_ >= 0;
-                        assert hit.end_ >= 0;
+                    if (phase != HitFetcher.Phase.DONE)
+                        counted++;
+                    if (phase == HitFetcher.Phase.STORING_AND_COUNTING)
                         results.add(hit);
-                    }
                     prevDoc = hit.doc_;
                 }
 
                 if (atDocumentBoundary &&
-                        state.collector.globalProcessedSoFar() >= state.globalHitsToProcess.get() &&
-                        state.collector.globalCountedSoFar() >= state.globalHitsToCount.get()) {
+                        state.hitsStats.processedSoFar() >= state.globalHitsToProcess.get() &&
+                        state.hitsStats.countedSoFar() >= state.globalHitsToCount.get()) {
                     // We've reached the requested number of hits and are at a document boundary.
                     // We'll stop for now. When more hits are requested, this method will be called again.
                     return;
@@ -128,6 +131,8 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
             throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
+            state.docsStats.increment(phase == HitFetcher.Phase.STORING_AND_COUNTING);
+            state.hitsStats.add(results.size(), counted);
             state.collector.onFinished(results, counted);
         }
 

@@ -14,7 +14,7 @@ public interface HitCollectorSegment {
      * @param results the hits collected so far
      * @return whether to continue storing hits, or just count them, or stop altogether
      */
-    HitFetcher.Phase onDocumentBoundary(HitsMutable results, long counted);
+    void onDocumentBoundary(HitsMutable results);
 
     /**
      * Called when the SpansReader is done.
@@ -23,7 +23,4 @@ public interface HitCollectorSegment {
      */
     void onFinished(HitsMutable results, long counted);
 
-    long globalProcessedSoFar();
-
-    long globalCountedSoFar();
 }

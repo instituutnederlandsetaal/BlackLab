@@ -208,23 +208,25 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
     private final ResultsStatsPassive stats;
 
-    ResultsStats.ResultsAwaiter waitUntil = new ResultsStats.ResultsAwaiter() {
-        @Override
-        public boolean processedAtLeast(long lowerBound) {
-            return ensureResultsRead(lowerBound);
-        }
+    private ResultsStats.ResultsAwaiter getResultsAwaiter() {
+        return new ResultsStats.ResultsAwaiter() {
+            @Override
+            public boolean processedAtLeast(long lowerBound) {
+                return ensureResultsRead(lowerBound);
+            }
 
-        @Override
-        public long allProcessed() {
-            ensureResultsRead(-1);
-            return results.size();
-        }
+            @Override
+            public long allProcessed() {
+                ensureResultsRead(-1);
+                return results.size();
+            }
 
-        @Override
-        public long allCounted() {
-            return allProcessed();
-        }
-    };
+            @Override
+            public long allCounted() {
+                return allProcessed();
+            }
+        };
+    }
 
     /**
      * Construct an empty DocResults.
@@ -232,7 +234,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      */
     protected DocResults(QueryInfo queryInfo) {
         super(queryInfo);
-        stats = new ResultsStatsPassive(waitUntil);
+        stats = new ResultsStatsPassive(getResultsAwaiter());
         stats.setDone();
     }
 
@@ -248,7 +250,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         this.groupByDoc = (HitPropertyDoc) new HitPropertyDoc(queryInfo.index()).copyWith(PropContext.globalHits(hits));
         this.matchInfoDefs = hits.matchInfoDefs();
         this.sourceHitsIterator = hits.iterator();
-        stats = new ResultsStatsPassive(waitUntil);
+        stats = new ResultsStatsPassive(getResultsAwaiter());
         this.maxHitsToStorePerDoc = maxHitsToStorePerDoc;
         partialDocHits = null;
         ensureResultsReadLock = new ReentrantLock();

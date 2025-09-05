@@ -14,14 +14,11 @@ import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
-import nl.inl.blacklab.search.results.hitresults.ResultsAwaitable;
-import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterDocs;
-import nl.inl.blacklab.search.results.hitresults.ResultsAwaiterHits;
 import nl.inl.blacklab.search.results.hits.fetch.HitCollector;
 import nl.inl.blacklab.search.results.hits.fetch.HitCollectorSegment;
 import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
 import nl.inl.blacklab.search.results.hits.fetch.HitFilter;
-import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
+import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 /**
  * Our main hit fetching class.
@@ -29,7 +26,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
  * Fetches hits from a hit fetcher per segment in parallel and provides
  * a stable global view of the lists of segment hits.
  */
-public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, HitCollector {
+public class HitsFromFetcher extends HitsAbstract implements HitCollector {
 
     /**
      * The step with which hitToStretchMapping records mappings.
@@ -37,7 +34,7 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
      * hitToStretchMapping only has a value for every nth hit index in the
      * global view. So hitToStretchMapping.getInt(i) will return the stretch
      * for hit index i * HIT_INDEX_TO_STRETCH_STEP.
-     *
+     * <p>
      * Larger values make the global hits view a bit slower,
      * but gathering hits a bit faster.
      */
@@ -73,15 +70,15 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
     public HitFetcher hitFetcher;
 
     /** Hits that have been fetched.
-     * CAUTION: Might be larger than numHitsGlobalView because hits are added to that in batches!
+     * CAUTION: Might be a bit larger than numHitsGlobalView because hits are added to that in batches!
      * When all hits have been fetched, the numbers will be the same.
      */
-    private final ResultsStatsPassive hitsStats;
+    private final ResultsStats hitsStats;
 
     /**
      * Number of documents in the hits that have been fetched.
      */
-    private final ResultsStatsPassive docsStats;
+    private final ResultsStats docsStats;
 
     /** The hits per segment. */
     private Map<LeafReaderContext, HitsMutable> hitsPerSegment;
@@ -105,10 +102,8 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
             throw new IllegalArgumentException("filter cannot be null");
         this.field = hitFetcher.field();
         this.hitFetcher = hitFetcher;
-        hitsStats = new ResultsStatsPassive(new ResultsAwaiterHits(this),
-                hitFetcher.getMaxHitsToProcess(),
-                hitFetcher.getMaxHitsToCount());
-        docsStats = new ResultsStatsPassive(new ResultsAwaiterDocs(this));
+        hitsStats = hitFetcher.hitsStats();
+        docsStats = hitFetcher.docsStats();
 
         hitsPerSegment = new LinkedHashMap<>();
         hitFetcher.fetchHits(filter, this);
@@ -337,18 +332,12 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
         return hitFetcher.ensureResultsRead(number);
     }
 
-    @Override
-    public ResultsStatsPassive resultsStats() {
+    public ResultsStats resultsStats() {
         return hitsStats;
     }
     
-    public ResultsStatsPassive docsStats() {
+    public ResultsStats docsStats() {
         return docsStats;
-    }
-
-    public void setDone() {
-        hitsStats.setDone();
-        docsStats.setDone();
     }
 
     @Override
@@ -369,18 +358,15 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
 
             {
                 // We'll collect the segment hits here. It has to lock, because we'll be writing and reading from it.
-                this.segmentHits = HitsMutable.create(field(), matchInfoDefs(), -1, true, true);
+                segmentHits = HitsMutable.create(field(), matchInfoDefs(), -1, true, true);
                 registerSegment(lrc, segmentHits);
                 numberAddedToGlobalView = 0;
             }
 
             @Override
-            public HitFetcher.Phase onDocumentBoundary(HitsMutable results, long counted) {
+            public void onDocumentBoundary(HitsMutable results) {
                 // Add new hits to the segment results.
                 segmentHits.addAll(results);
-
-                // Update stats and determine phase (fetching/counting/done)
-                HitFetcher.Phase phase = hitsStats.add(results.size(), counted);
 
                 // Add them to the global view? We only do this on a boundary
                 // between documents, so hits from the same doc remain
@@ -393,18 +379,12 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
                 long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
                         Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
                 addStretchIfLargeEnough(addHitsToGlobalThreshold);
-                results.clear();
-
-                return phase;
             }
 
             @Override
             public void onFinished(HitsMutable results, long counted) {
                 // Add the final batch of hits to the segment results.
                 segmentHits.addAll(results);
-
-                // Update stats
-                hitsStats.add(results.size(), counted);
                 addStretchIfLargeEnough(0);
             }
 
@@ -414,16 +394,6 @@ public class HitsFromFetcher extends HitsAbstract implements ResultsAwaitable, H
                     addStretchFromSegment(lrc, segmentHits, numberAddedToGlobalView);
                     numberAddedToGlobalView = segmentHits.size();
                 }
-            }
-
-            @Override
-            public long globalProcessedSoFar() {
-                return globalHitsSoFar();
-            }
-
-            @Override
-            public long globalCountedSoFar() {
-                return resultsStats().countedSoFar();
             }
         };
     }
