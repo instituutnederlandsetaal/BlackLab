@@ -17,10 +17,10 @@ public interface HitCollectorSegment {
     void onDocumentBoundary(HitsMutable results);
 
     /**
-     * Called when the SpansReader is done.
+     * Called when the SpansReader is pausing or is done.
      *
-     * @param results the hits collected so far
+     * The HitCollector should make sure all hits collected so far are processed.
      */
-    void onFinished(HitsMutable results, long counted);
+    void flush();
 
 }

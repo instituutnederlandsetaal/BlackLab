@@ -49,7 +49,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
             initialize();
             if (hasFilter) {
                 filterHit = new HitsSingle(state.hitQueryContext.getField(), state.hitQueryContext.getMatchInfoDefs());
-                state.filter = state.filter.forSegment(filterHit, state.lrc, state.collationCache);
+                state.filter = state.filter.forSegment(filterHit, state.lrc, state.globalFetcher.collationCache);
             }
             isInitialized = true;
         }
@@ -73,34 +73,35 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
 
             runPrepare();
             while (phase != HitFetcher.Phase.DONE) {
-                if (!runGetHit(hit))
+                if (!runGetHit(hit)) {
+                    produceHits(results, counted, phase);
                     break; // we're done
+                }
                 assert hit.doc_ >= 0;
                 assert hit.start_ >= 0;
                 assert hit.end_ >= 0;
-                boolean atDocumentBoundary = hit.doc_ != prevDoc;
 
                 // Check filter
-                boolean ignoreHit = false;
+                boolean acceptedHit = true;
                 if (hasFilter) {
+                    // TODO: Icky... change HitProperty so get is called with Hits and index?
+                    // (but then we cannot use it as a comparator...?)
                     filterHit.set(hit);
                     state.filter.disposeContext(); // get rid of context for previous hit
-                    if (!state.filter.accept(0)) {
-                        ignoreHit = true;
-                    }
+                    acceptedHit = state.filter.accept(0);
                 }
 
                 // Check that this is a unique hit, not the exact same as the previous one.
-                ignoreHit = ignoreHit || HitFetcherSegment.isSameAsLast(results, hit);
-                if (!ignoreHit) {
+                boolean uniqueHit = acceptedHit && !HitFetcherSegment.isSameAsLast(results, hit);
+
+                boolean atDocumentBoundary = hit.doc_ != prevDoc;
+
+                if (uniqueHit) {
 
                     // If we're at a document boundary, pass the hits we have so far to the collector and update stats.
                     if (atDocumentBoundary && (!results.isEmpty() || counted > 0)) {
                         // Update stats and determine phase (fetching/counting/done)
-                        state.docsStats.increment(phase == HitFetcher.Phase.STORING_AND_COUNTING);
-                        phase = state.hitsStats.add(results.size(), counted);
-                        state.collector.onDocumentBoundary(results);
-                        results.clear();
+                        phase = produceHits(results, counted, phase);
                         counted = 0;
                     }
 
@@ -111,9 +112,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                     prevDoc = hit.doc_;
                 }
 
-                if (atDocumentBoundary &&
-                        state.hitsStats.processedSoFar() >= state.globalHitsToProcess.get() &&
-                        state.hitsStats.countedSoFar() >= state.globalHitsToCount.get()) {
+                if (atDocumentBoundary && state.globalFetcher.shouldPauseFetching()) {
                     // We've reached the requested number of hits and are at a document boundary.
                     // We'll stop for now. When more hits are requested, this method will be called again.
                     return;
@@ -130,18 +129,25 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
             e.printStackTrace();
             throw BlackLabException.wrapRuntime(e);
         } finally {
-            // write out leftover hits in last document/aborted document
-            state.docsStats.increment(phase == HitFetcher.Phase.STORING_AND_COUNTING);
-            state.hitsStats.add(results.size(), counted);
-            state.collector.onFinished(results, counted);
+            state.collector.flush();
         }
 
         // If we're here, the loop reached its natural end - we're done.
+
         // Free some objects to avoid holding on to memory
         this.isDone = true;
         state = null;
         runCleanup();
         // (don't null out leafReaderContext because we use it to make equal groups of SpansReaders)
+    }
+
+    private HitFetcher.Phase produceHits(HitsMutable results, long counted, HitFetcher.Phase phase) {
+        // Update stats and determine phase (fetching/counting/done)
+        phase = state.globalFetcher.updateStats(results.size(), counted,
+                prevDoc >= 0, phase == HitFetcher.Phase.STORING_AND_COUNTING);
+        state.collector.onDocumentBoundary(results);
+        results.clear();
+        return phase;
     }
 
     /** Prepare for fetching hits in run() (e.g. make sure first hit is prefetched). */

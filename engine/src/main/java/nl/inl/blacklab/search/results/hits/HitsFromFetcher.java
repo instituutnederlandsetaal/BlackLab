@@ -345,7 +345,7 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
         return Collections.unmodifiableMap(hitsPerSegment);
     }
 
-    public HitCollectorSegment getHitProcessor(LeafReaderContext lrc) {
+    public HitCollectorSegment getSegmentCollector(LeafReaderContext lrc) {
         return new HitCollectorSegment() {
             /** The list of hits in this segment to add new hits to */
             private final HitsMutable segmentHits;
@@ -382,9 +382,8 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
             }
 
             @Override
-            public void onFinished(HitsMutable results, long counted) {
+            public void flush() {
                 // Add the final batch of hits to the segment results.
-                segmentHits.addAll(results);
                 addStretchIfLargeEnough(0);
             }
 

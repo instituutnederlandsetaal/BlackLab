@@ -82,9 +82,9 @@ public abstract class HitFetcherAbstract implements HitFetcher {
      */
     final AtomicLong requestedHitsToCount = new AtomicLong();
 
-    private final ResultsStatsPassive hitsStats;
+    final ResultsStatsPassive hitsStats;
 
-    private final ResultsStatsPassive docsStats;
+    final ResultsStatsPassive docsStats;
 
     HitFilter filter;
 
@@ -217,14 +217,20 @@ public abstract class HitFetcherAbstract implements HitFetcher {
     HitFetcherSegment.State getState(HitCollector hitCollector, LeafReaderContext lrc, HitFilter filter) {
         return new HitFetcherSegment.State(
                 lrc,
-                hitQueryContext,
                 filter,
-                hitCollector.getHitProcessor(lrc),
-                requestedHitsToProcess,
-                requestedHitsToCount,
-                hitsStats,
-                docsStats,
-                collationCache);
+                hitCollector.getSegmentCollector(lrc),
+                this);
+    }
+
+    public boolean shouldPauseFetching() {
+        return hitsStats.processedSoFar() >= requestedHitsToProcess.get() &&
+                hitsStats.countedSoFar() >= requestedHitsToCount.get();
+    }
+
+    public Phase updateStats(long hitsProcessed, long hitsCounted, boolean incrementDoc, boolean docWasProcessed) {
+        if (incrementDoc)
+            docsStats.add(docWasProcessed ? 1 : 0, 1);
+        return hitsStats.add(hitsProcessed, hitsCounted);
     }
 
     public class WaitForHits implements ResultsStats.ResultsAwaiter {
