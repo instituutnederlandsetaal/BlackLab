@@ -373,7 +373,7 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
             }
 
             @Override
-            public void onDocumentBoundary(HitsMutable results) {
+            public void collect(Hits results) {
                 // Add new hits to the segment results.
                 segmentHits.addAll(results);
 

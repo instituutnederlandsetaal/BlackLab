@@ -89,10 +89,10 @@ public class Parallel<I, O> {
         return futures;
     }
 
-    public List<Future<List<O>>> forEach(List<I> spansReaders,
+    public List<Future<List<O>>> forEach(List<I> items,
             Function<I, Long> sizeGetter,
             Consumer<List<I>> task) {
-        List<List<I>> threadInputs = makeEqualGroups(spansReaders, sizeGetter, numThreads);
+        List<List<I>> threadInputs = makeEqualGroups(items, sizeGetter, numThreads);
         return threadInputs.stream()
                 .map(threadItems -> {
                     Future<List<O>> f = executorCompletionService.submit(() -> {

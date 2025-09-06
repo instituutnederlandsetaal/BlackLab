@@ -45,5 +45,4 @@ public class HitFetcherHits extends HitFetcherAbstract {
         HitFilter segmentFilter = filter.forSegment(segmentHits, lrc, collationCache);
         segmentReaders.add(new HitFetcherSegmentImpl(getState(hitCollector, lrc, segmentFilter), segmentHits));
     }
-
 }

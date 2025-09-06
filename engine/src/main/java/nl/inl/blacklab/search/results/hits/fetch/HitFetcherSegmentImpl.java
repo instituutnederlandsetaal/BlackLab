@@ -39,12 +39,6 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
     /** Current hit index */
     long hitIndex = -1;
 
-//    /** How many hits have we produced? */
-//    private long processed;
-//
-//    /** How many hits have we counted? */
-//    private long counted;
-
     HitFetcherSegmentImpl(State state, Hits source) {
         this.state = state;
         this.source = source;
@@ -53,7 +47,7 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
     /**
      * Collect hits from our source.
      * Updates the global counters, shared with the other HitFetcherSegment objects operating on the same result set.
-     * {@link HitCollectorSegment#onDocumentBoundary} is called when we encounter a document boundary.
+     * {@link HitCollectorSegment#collect} is called when we encounter a document boundary.
      * <p>
      * Updating the maximums while this is running is allowed.
      */
@@ -172,9 +166,7 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
         // Update stats and determine phase (fetching/counting/done)
         phase = state.globalFetcher.updateStats(results.size(), counted,
                 prevDoc >= 0, phase == HitFetcher.Phase.STORING_AND_COUNTING);
-        state.collector.onDocumentBoundary(results);
-//        processed += results.size();
-//        this.counted += counted;
+        state.collector.collect(results);
         results.clear();
         return phase;
     }

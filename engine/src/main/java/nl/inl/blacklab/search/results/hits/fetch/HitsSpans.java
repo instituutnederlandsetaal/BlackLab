@@ -82,9 +82,6 @@ public class HitsSpans extends HitsAbstract {
 
     long maxToCount = Long.MAX_VALUE;
 
-    /** Did we hit max hits to process? */
-    private boolean doneProcessing = false;
-
     /** Lazy Hits interface to a single Spans object. */
     HitsSpans(BLSpanWeight weight, LeafReaderContext lrc, HitQueryContext sourceHitQueryContext) {
         this.weight = weight;
@@ -233,8 +230,6 @@ public class HitsSpans extends HitsAbstract {
                     if (processed < maxToProcess) {
                         // "collect" this hit
                         processed++;
-                    } else {
-                        doneProcessing = true;
                     }
                     counted++;
                 }
