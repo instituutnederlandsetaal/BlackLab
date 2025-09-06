@@ -81,7 +81,7 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
     private final ResultsStats docsStats;
 
     /** The hits per segment. */
-    private Map<LeafReaderContext, HitsMutable> hitsPerSegment;
+    private Map<LeafReaderContext, Hits> hitsPerSegment = new LinkedHashMap<>();
 
     /** Number of hits in the global view. Might lag behind hitsStats because hits are added to
      * the view in batches. */
@@ -104,8 +104,6 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
         this.hitFetcher = hitFetcher;
         hitsStats = hitFetcher.hitsStats();
         docsStats = hitFetcher.docsStats();
-
-        hitsPerSegment = new LinkedHashMap<>();
         hitFetcher.fetchHits(filter, this);
     }
 
@@ -294,9 +292,7 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
         };
     }
 
-    private synchronized void registerSegment(LeafReaderContext lrc, HitsMutable segmentHits) {
-        if (hitsPerSegment == null)
-            hitsPerSegment = new LinkedHashMap<>();
+    private synchronized void registerSegment(LeafReaderContext lrc, Hits segmentHits) {
         hitsPerSegment.put(lrc, segmentHits); // only called from constructor, so no need to synchronize
     }
 
@@ -342,11 +338,19 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
 
     @Override
     public Map<LeafReaderContext, Hits> hitsPerSegment() {
-        return Collections.unmodifiableMap(hitsPerSegment);
+        if (resultsStats().done()) {
+            // All hits have been fetched, so hitsPerSegment is complete.
+            return Collections.unmodifiableMap(hitsPerSegment);
+        } else {
+            // @@@ TODO we're still fetching, so we need to return "lazy" implementations that will block
+            //  until enough hits are available
+            return Collections.unmodifiableMap(hitsPerSegment);
+        }
     }
 
     public HitCollectorSegment getSegmentCollector(LeafReaderContext lrc) {
         return new HitCollectorSegment() {
+
             /** The list of hits in this segment to add new hits to */
             private final HitsMutable segmentHits;
 

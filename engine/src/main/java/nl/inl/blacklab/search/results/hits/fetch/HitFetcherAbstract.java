@@ -39,14 +39,14 @@ public abstract class HitFetcherAbstract implements HitFetcher {
     /**
      * If another thread is busy fetching hits and we're monitoring it, how often should we check?
      */
-    private static final int HIT_POLLING_TIME_MS = 50;
+    static final int HIT_POLLING_TIME_MS = 50;
 
     /**
      * Minimum number of hits to fetch in an ensureHitsRead() block.
      * <p>
      * This prevents locking again and again for a single hit when iterating.
      */
-    private static final int FETCH_HITS_MIN = 20;
+    static final int FETCH_HITS_MIN = 20;
 
     protected final Map<String, CollationKey> collationCache;
 
@@ -214,8 +214,8 @@ public abstract class HitFetcherAbstract implements HitFetcher {
         return hitQueryContext.getField();
     }
 
-    HitFetcherSegment.State getState(HitCollector hitCollector, LeafReaderContext lrc, HitFilter filter) {
-        return new HitFetcherSegment.State(
+    HitFetcherSegmentAbstract.State getState(HitCollector hitCollector, LeafReaderContext lrc, HitFilter filter) {
+        return new HitFetcherSegmentAbstract.State(
                 lrc,
                 filter,
                 hitCollector.getSegmentCollector(lrc),

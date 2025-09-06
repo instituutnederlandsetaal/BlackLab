@@ -6,12 +6,12 @@ import nl.inl.blacklab.search.results.hits.Hits;
 /**
  * Fetches hits from a single segment's Hits object, reporting them to a HitProcessor.
  */
-class HitFetcherSegmentFilterHits extends HitFetcherSegmentAbstract {
+class HitFetcherSegmentHits extends HitFetcherSegmentAbstract {
     Hits hits;
 
     long hitIndex = -1;
 
-    public HitFetcherSegmentFilterHits(
+    public HitFetcherSegmentHits(
             Hits hits,
             State state) {
         super(state);
