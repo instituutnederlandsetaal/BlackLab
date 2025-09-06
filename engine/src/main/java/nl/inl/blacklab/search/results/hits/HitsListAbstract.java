@@ -91,6 +91,11 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     }
 
     @Override
+    public boolean sizeAtLeast(long minSize) {
+        return size() >= minSize;
+    }
+
+    @Override
     public long sizeSoFar() {
         return size();
     }

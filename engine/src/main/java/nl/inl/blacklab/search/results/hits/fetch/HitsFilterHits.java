@@ -80,6 +80,12 @@ public class HitsFilterHits extends HitsAbstract {
     }
 
     @Override
+    public boolean sizeAtLeast(long number) {
+        ensureSeen(number);
+        return hits.size() >= number;
+    }
+
+    @Override
     public void getEphemeral(long index, EphemeralHit hit) {
         ensureSeen(index + 1);
         hits.getEphemeral(index, hit);

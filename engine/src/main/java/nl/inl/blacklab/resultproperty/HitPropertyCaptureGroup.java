@@ -110,7 +110,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
                 ends[indexInArrays] = 0;
                 return;
             }
-            MatchInfo group = hit.matchInfos(groupIndex);
+            MatchInfo group = hit.matchInfo(groupIndex);
             
             if (relNameInList != null && group instanceof RelationListInfo relList) {
                 if (relNameIsFullRelType) {

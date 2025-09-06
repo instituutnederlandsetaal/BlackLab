@@ -34,7 +34,7 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
     int prevDoc = -1;
 
     /** Lazy segment hits we're fetching from */
-    Hits hits;
+    Hits source;
 
     /** Current hit index */
     long hitIndex = -1;
@@ -45,9 +45,9 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
 //    /** How many hits have we counted? */
 //    private long counted;
 
-    HitFetcherSegmentImpl(State state, Hits hits) {
+    HitFetcherSegmentImpl(State state, Hits source) {
         this.state = state;
-        this.hits = hits;
+        this.source = source;
     }
 
     /**
@@ -62,19 +62,19 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
         boolean hasFilter = state.filter != HitFilter.ACCEPT_ALL;
         if (!isInitialized) {
             if (hasFilter) {
-                state.filter = state.filter.forSegment(hits, state.lrc, state.globalFetcher.collationCache);
+                state.filter = state.filter.forSegment(source, state.lrc, state.globalFetcher.collationCache);
             }
             isInitialized = true;
         }
         if (isDone) // NOTE: initialize() may instantly set isDone to true, so order is important here.
             return;
 
-        final HitsMutable hits = HitsMutable.create(
+        final HitsMutable runHits = HitsMutable.create(
                 state.hitQueryContext.getField(), state.hitQueryContext.getMatchInfoDefs(),
                 -1, true, false);
         long counted = 0;
 
-        // Keep track of phase: are we still storing hits, or only counting, or done?
+        // Keep track of phase: are we still storing runHits, or only counting, or done?
         HitFetcher.Phase phase = HitFetcher.Phase.STORING_AND_COUNTING;
 
         EphemeralHit hit = new EphemeralHit();
@@ -86,9 +86,9 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
             prevDoc = -1; // (we already know we're at a document boundary here)
             while (phase != HitFetcher.Phase.MAX_HITS_REACHED) {
                 hitIndex++;
-                if (!this.hits.sizeAtLeast(hitIndex + 1)) {
-                    // No more hits, we're done
-                    produceHits(hits, counted, phase);
+                if (!this.source.sizeAtLeast(hitIndex + 1)) {
+                    // No more runHits, we're done
+                    produceHits(runHits, counted, phase);
                     break; // we're done
                 }
 
@@ -101,17 +101,17 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
                 // Check that this is a unique hit, not the exact same as the previous one.
                 boolean processHit;
                 if (acceptedHit) {
-                    this.hits.getEphemeral(hitIndex, hit);
+                    this.source.getEphemeral(hitIndex, hit);
                     assert hit.doc_ >= 0;
                     assert hit.start_ >= 0;
                     assert hit.end_ >= 0;
 
-                    long prevHitIndex = hits.size() - 1;
+                    long prevHitIndex = runHits.size() - 1;
                     boolean sameAsLast = prevHitIndex >= 0 &&
-                            hit.doc_ == hits.doc(prevHitIndex) &&
-                            hit.start_ == hits.start(prevHitIndex) &&
-                            hit.end_ == hits.end(prevHitIndex) &&
-                            MatchInfo.areEqual(hit.matchInfos_, hits.matchInfos(prevHitIndex));
+                            hit.doc_ == runHits.doc(prevHitIndex) &&
+                            hit.start_ == runHits.start(prevHitIndex) &&
+                            hit.end_ == runHits.end(prevHitIndex) &&
+                            MatchInfo.areEqual(hit.matchInfos_, runHits.matchInfos(prevHitIndex));
                     processHit = !sameAsLast;
                 } else {
                     processHit = false;
@@ -119,25 +119,25 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
 
                 boolean atDocumentBoundary = false;
                 if (processHit) {
-                    // If we're at a document boundary, pass the hits we have so far to the collector and update stats.
+                    // If we're at a document boundary, pass the runHits we have so far to the collector and update stats.
                     atDocumentBoundary = hit.doc_ != prevDoc;
-                    if (atDocumentBoundary && (!hits.isEmpty() || counted > 0)) {
+                    if (atDocumentBoundary && (!runHits.isEmpty() || counted > 0)) {
                         // Update stats and determine phase (fetching/counting/done)
-                        phase = produceHits(hits, counted, phase);
+                        phase = produceHits(runHits, counted, phase);
                         counted = 0;
                     }
 
                     if (phase != HitFetcher.Phase.MAX_HITS_REACHED)
                         counted++;
                     if (phase == HitFetcher.Phase.STORING_AND_COUNTING) {
-                        hits.add(hit);
+                        runHits.add(hit);
                     }
                     prevDoc = hit.doc_;
                 }
 
-                if (atDocumentBoundary && state.globalFetcher.shouldPauseFetching()) {
-                    // We've reached the requested number of hits and are at a document boundary.
-                    // We'll stop for now. When more hits are requested, this method will be called again.
+                if (atDocumentBoundary && shouldPauseFetching()) {
+                    // We've reached the requested number of runHits and are at a document boundary.
+                    // We'll stop for now. When more runHits are requested, this method will be called again.
                     return;
                 }
 
@@ -164,73 +164,9 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
         // (don't null out leafReaderContext because we use it to make equal groups of SpansReaders)
     }
 
-//    /**
-//     * Used to make sure that only 1 thread can be fetching hits at a time.
-//     */
-//    private final Lock ensureHitsReadLock = new ReentrantLock();
-//
-//    @Override
-//    public boolean ensureResultsRead(long number) {
-//        number = number < 0 ? Long.MAX_VALUE : number + HitFetcherAbstract.FETCH_HITS_MIN;
-//
-//        boolean hasLock = false;
-//        try {
-//            while (!ensureHitsReadLock.tryLock(HitFetcherAbstract.HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
-//                /*
-//                 * Another thread is already working on hits, we don't want to straight up block until it's done,
-//                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
-//                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
-//                 */
-//                synchronized (this) { // when we see isDone == true, we need hitsStats to also be up to date
-//                    if (isDone || processed >= number) {
-//                        return processed >= number;
-//                    }
-//                }
-//            }
-//            hasLock = true;
-//
-//            // This is the blocking portion, start worker threads, then wait for them to finish.
-//
-//            // Distribute the SpansReaders over the threads.
-//            // Make sure the number of documents per segment is roughly equal for each thread.
-//            Function<HitFetcherSegment, Long> sizeGetter = spansReader ->
-//                    spansReader.getLeafReaderContext() == null ? 0 : (long) spansReader.getLeafReaderContext().reader().maxDoc();
-//            List<Future<List<Void>>> pendingResults = parallel.forEach(segmentReaders, sizeGetter,
-//                    l -> l.forEach(HitFetcherSegment::run));
-//
-//            // Wait for workers to complete.
-//            // This will throw InterrupedException if this (HitsFromQuery) thread is interruped while waiting.
-//            // NOTE: the worker will not automatically abort, so we should also interrupt our workers should that happen.
-//            // The workers themselves won't ever throw InterruptedException, it would be wrapped in ExecutionException.
-//            // (Besides, we're the only thread that can call interrupt() on our worker anyway, and we don't ever do that.
-//            //  Technically, it could happen if the Executor were to shut down, but it would still result in an ExecutionException anyway.)
-//            //
-//            // If we're interrupted while waiting for workers to finish, and we were the thread that created the workers,
-//            // cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
-//            // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new
-//            // Runnables/Futures of them.
-//            parallel.waitForAll(pendingResults);
-//        } catch (ExecutionException e) {
-//            if (e.getCause() instanceof RuntimeException rte)
-//                throw rte;
-//            else
-//                throw new IllegalStateException(e.getCause());
-//        } catch (Exception e) {
-//            // something unforseen happened in our thread
-//            // Should generally never happen unless there's a bug or something catastrophic happened.
-//            throw new IllegalStateException(e);
-//        } finally {
-//            // Don't do this unless we're the thread that's actually using the SpansReaders.
-//            if (hasLock) {
-//                // Remove all SpansReaders that have finished.
-//                segmentReaders.removeIf(HitFetcherSegment::isDone);
-//                if (segmentReaders.isEmpty())
-//                    setDone(); // all spans have been read, so we're done
-//                ensureHitsReadLock.unlock();
-//            }
-//        }
-//        return hitsStats.processedSoFar() >= number;
-//    }
+    private boolean shouldPauseFetching() {
+        return state.globalFetcher.shouldPauseFetching();
+    }
 
     private HitFetcher.Phase produceHits(HitsMutable results, long counted, HitFetcher.Phase phase) {
         // Update stats and determine phase (fetching/counting/done)
@@ -247,7 +183,7 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
     }
 
     protected void runCleanup() {
-        this.hits = null;
+        this.source = null;
     }
 
     @Override

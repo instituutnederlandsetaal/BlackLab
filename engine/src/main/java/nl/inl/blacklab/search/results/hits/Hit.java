@@ -75,16 +75,16 @@ public interface Hit extends Comparable<Hit> {
      */
     MatchInfo[] matchInfos();
 
-    default MatchInfo matchInfos(int groupIndex) {
-        if (groupIndex < 0)
-            throw new IndexOutOfBoundsException("Group index must be non-negative: " + groupIndex);
+    default MatchInfo matchInfo(int matchInfoIndex) {
+        if (matchInfoIndex < 0)
+            throw new IndexOutOfBoundsException("Group index must be non-negative: " + matchInfoIndex);
         MatchInfo[] matchInfo = matchInfos();
-        if (matchInfo == null || groupIndex >= matchInfo.length) {
+        if (matchInfo == null || matchInfoIndex >= matchInfo.length) {
             // matchInfo[] can be shorted for some hits than others, in rare cases where the first BLSpans
             // captures fewer match infos than subsequent ones (e.g. because certain terms don't occur in that
             // index segment, so an entire subclause was optimized away).
             return null;
         }
-        return matchInfo[groupIndex];
+        return matchInfo[matchInfoIndex];
     }
 }

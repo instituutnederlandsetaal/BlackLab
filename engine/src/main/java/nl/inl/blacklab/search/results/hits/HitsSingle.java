@@ -42,7 +42,12 @@ public class HitsSingle extends HitsAbstract {
 
     @Override
     public long sizeSoFar() {
-        return size();
+        return 1;
+    }
+
+    @Override
+    public boolean sizeAtLeast(long number) {
+        return number <= 1;
     }
 
     @Override

@@ -20,11 +20,14 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsAbstract;
-import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.util.ThreadAborter;
 
 /** 
  * Lazy Hits interface to a single Spans object.
+ * <p>
+ * CAUTION: only the LATEST hit can be fetched! So after calling
+ * sizeAtLeast(n), you can only get the hit at index n - 1. Attempting to
+ * get any other hit will throw an exception.
  * <p>
  * Not thread-safe.
  */
@@ -64,13 +67,23 @@ public class HitsSpans extends HitsAbstract {
     /** What doc was the previous hit in? */
     int prevDoc = -1;
 
-    private HitsMutable hits;
+    /** The current hit (at hitIndex) */
+    private EphemeralHit currentHit = new EphemeralHit();
+
+    /** Previous hit, to check that current one is unique */
+    private EphemeralHit prevHit = new EphemeralHit();
+
+    /** Our current size. Actually only the hit at size-1 can be retrieved. */
+    private long processed = 0;
+
+    long counted = 0;
 
     long maxToProcess = Long.MAX_VALUE;
 
     long maxToCount = Long.MAX_VALUE;
 
-    long counted = 0;
+    /** Did we hit max hits to process? */
+    private boolean doneProcessing = false;
 
     /** Lazy Hits interface to a single Spans object. */
     HitsSpans(BLSpanWeight weight, LeafReaderContext lrc, HitQueryContext sourceHitQueryContext) {
@@ -101,8 +114,6 @@ public class HitsSpans extends HitsAbstract {
             BLSpans spansForWeight = this.weight.getSpans(lrc, SpanWeight.Postings.OFFSETS);
             this.weight = null;
             if (spansForWeight == null) { // This is normal, sometimes a section of the index does not contain hits.
-                hits = HitsMutable.create(sourceHitQueryContext.getField(), sourceHitQueryContext.getMatchInfoDefs(),
-                        0, false, false);
                 this.isDone = true;
                 return;
             }
@@ -122,9 +133,6 @@ public class HitsSpans extends HitsAbstract {
             this.spans.setHitQueryContext(hitQueryContext);
             this.numMatchInfos = hitQueryContext.numberOfMatchInfos();
 
-            hits = HitsMutable.create(
-                    hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(),
-                    -1, true, false);
             this.liveDocs = lrc.reader().getLiveDocs();
             if (!hasPrefetchedHit) {
                 prevDoc = spans.docID();
@@ -176,54 +184,63 @@ public class HitsSpans extends HitsAbstract {
         }
     }
 
-    private boolean ensureSeen(long number) {
-        if (number == 0)
+    private boolean ensureSeen(long requestedNumberOfHits) {
+        if (requestedNumberOfHits == 0)
             return true;
         if (!isInitialized)
             initialize();
-        if (number < 0)
-            number = Long.MAX_VALUE;
-        if (number > maxToCount)
-            number = maxToCount;
-        EphemeralHit hit = new EphemeralHit();
-        while (!isDone && hits.size() < number) {
+        if (requestedNumberOfHits < 0)
+            requestedNumberOfHits = Long.MAX_VALUE;
+        if (requestedNumberOfHits > maxToCount)
+            requestedNumberOfHits = maxToCount;
+        while (!isDone && processed < requestedNumberOfHits) {
             try {
-                // Get next hit
+                // Are we done?
                 if (!hasPrefetchedHit) {
                     isDone = true;
-                    break; // no more hits
+                    break;
                 }
+
+                // Switch current and prev hit (to avoid reallocations)
+                EphemeralHit temp = prevHit;
+                prevHit = currentHit;
+                currentHit = temp;
+
+                // Get hit
                 assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
                 assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
                 assert spans.endPosition() != Spans.NO_MORE_POSITIONS;
-                hit.doc_ = spans.docID();
-                hit.start_ = spans.startPosition();
-                hit.end_ = spans.endPosition();
-                assert hit.doc_ >= 0;
-                assert hit.start_ >= 0;
-                assert hit.end_ >= 0;
+                currentHit.doc_ = spans.docID();
+                currentHit.start_ = spans.startPosition();
+                currentHit.end_ = spans.endPosition();
+                assert currentHit.doc_ >= 0;
+                assert currentHit.start_ >= 0;
+                assert currentHit.end_ >= 0;
                 if (numMatchInfos > 0) {
-                    hit.matchInfos_ = new MatchInfo[numMatchInfos];
-                    hitQueryContext.getMatchInfo(hit.matchInfos_);
+                    currentHit.matchInfos_ = new MatchInfo[numMatchInfos];
+                    hitQueryContext.getMatchInfo(currentHit.matchInfos_);
                 } else {
-                    hit.matchInfos_ = null;
-                }// Position spans for the next hit after this
-                hasPrefetchedHit = advanceSpansToNextHit();
+                    currentHit.matchInfos_ = null;
+                }
 
                 // Check that this is a unique hit, not the exact same as the previous one.
-                long prevHitIndex = hits.size() - 1;
-                boolean sameAsLast = prevHitIndex >= 0 &&
-                        hit.doc_ == hits.doc(prevHitIndex) &&
-                        hit.start_ == hits.start(prevHitIndex) &&
-                        hit.end_ == hits.end(prevHitIndex) &&
-                        MatchInfo.areEqual(hit.matchInfos_, hits.matchInfos(prevHitIndex));
-
+                boolean sameAsLast = prevHit != null &&
+                        currentHit.doc_ == prevHit.doc_ &&
+                        currentHit.start_ == prevHit.start_ &&
+                        currentHit.end_ == prevHit.end_ &&
+                        MatchInfo.areEqual(currentHit.matchInfos_, prevHit.matchInfos_);
                 if (!sameAsLast) {
-                    counted++;
-                    if (hits.size() < maxToProcess) {
-                        hits.add(hit);
+                    if (processed < maxToProcess) {
+                        // "collect" this hit
+                        processed++;
+                    } else {
+                        doneProcessing = true;
                     }
+                    counted++;
                 }
+
+                // Position spans for the next hit after this
+                hasPrefetchedHit = advanceSpansToNextHit();
 
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states
                 ThreadAborter.checkAbort();
@@ -235,28 +252,34 @@ public class HitsSpans extends HitsAbstract {
                 throw new InterruptedSearch(e);
             }
         }
-        return hits.size() >= number;
+        // Did we find the requested hit? (with index requestedNumberOfHits - 1)
+        return processed >= requestedNumberOfHits;
     }
 
     @Override
     public AnnotatedField field() {
-        return hits.field();
+        return hitQueryContext.getField();
     }
 
     @Override
     public MatchInfoDefs matchInfoDefs() {
-        return hits.matchInfoDefs();
+        return hitQueryContext.getMatchInfoDefs();
     }
 
     @Override
     public long size() {
         ensureSeen(maxToProcess);
-        return hits.size();
+        return processed;
     }
 
     @Override
     public long sizeSoFar() {
-        return hits.size();
+        return processed;
+    }
+
+    @Override
+    public boolean sizeAtLeast(long number) {
+        return ensureSeen(number);
     }
 
     public long counted() {
@@ -267,42 +290,56 @@ public class HitsSpans extends HitsAbstract {
     @Override
     public void getEphemeral(long index, EphemeralHit hit) {
         ensureSeen(index + 1);
-        hits.getEphemeral(index, hit);
+        if (index != processed - 1)
+            throw new IndexOutOfBoundsException("Can only get the latest hit (index " + (processed - 1) + "), requested index: " + index);
+        hit.doc_ = currentHit.doc_;
+        hit.start_ = currentHit.start_;
+        hit.end_ = currentHit.end_;
+        hit.matchInfos_ = currentHit.matchInfos_;
     }
 
     @Override
     public int doc(long index) {
         ensureSeen(index + 1);
-        return hits.doc(index);
+        if (index != processed - 1)
+            throw new IndexOutOfBoundsException("Can only get the latest hit (index " + (processed - 1) + "), requested index: " + index);
+        return currentHit.doc_;
     }
 
     @Override
     public int start(long index) {
         ensureSeen(index + 1);
-        return hits.start(index);
+        if (index != processed - 1)
+            throw new IndexOutOfBoundsException("Can only get the latest hit (index " + (processed - 1) + "), requested index: " + index);
+        return currentHit.start_;
     }
 
     @Override
     public int end(long index) {
         ensureSeen(index + 1);
-        return hits.end(index);
+        if (index != processed - 1)
+            throw new IndexOutOfBoundsException("Can only get the latest hit (index " + (processed - 1) + "), requested index: " + index);
+        return currentHit.end_;
     }
 
     @Override
     public MatchInfo[] matchInfos(long hitIndex) {
         ensureSeen(hitIndex + 1);
-        return hits.matchInfos(hitIndex);
+        if (hitIndex != processed - 1)
+            throw new IndexOutOfBoundsException("Can only get the latest hit (index " + (processed - 1) + "), requested index: " + hitIndex);
+        return currentHit.matchInfos_;
     }
 
     @Override
     public MatchInfo matchInfo(long hitIndex, int matchInfoIndex) {
         ensureSeen(hitIndex + 1);
-        return hits.matchInfo(hitIndex, matchInfoIndex);
+        if (hitIndex != processed - 1)
+            throw new IndexOutOfBoundsException("Can only get the latest hit (index " + (processed - 1) + "), requested index: " + hitIndex);
+        return currentHit.matchInfo(matchInfoIndex);
     }
 
     @Override
     public Hits getStatic() {
-        ensureSeen(-1);
-        return hits.getStatic();
+        throw new UnsupportedOperationException();
     }
 }

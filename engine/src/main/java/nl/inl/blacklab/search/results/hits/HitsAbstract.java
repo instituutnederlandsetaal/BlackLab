@@ -39,11 +39,6 @@ public abstract class HitsAbstract implements Hits {
     }
 
     @Override
-    public boolean sizeAtLeast(long minSize) {
-        return size() >= minSize;
-    }
-
-    @Override
     public Hit get(long index) {
         EphemeralHit hit = new EphemeralHit();
         getEphemeral(index, hit);

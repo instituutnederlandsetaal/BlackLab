@@ -83,8 +83,7 @@ public class HitFetcherQuery extends HitFetcherAbstract {
 
             // Spans reader: fetch hits from segment and feed them to the hit processor.
             HitFetcherSegmentImpl.State state = getState(hitCollector, lrc, filter);
-            HitsSpans hits = new HitsSpans(weight, state.lrc, state.hitQueryContext);
-            segmentReaders.add(new HitFetcherSegmentImpl(state, hits));
+            segmentReaders.add(HitFetcherSegmentImpl.get(state, weight));
         }
         if (segmentReaders.isEmpty()) {
             setDone();
