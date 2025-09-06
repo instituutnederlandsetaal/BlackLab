@@ -10,7 +10,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
-import nl.inl.blacklab.search.results.hits.HitsSingle;
 import nl.inl.util.ThreadAborter;
 
 /** 
@@ -33,11 +32,12 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
 
     /** What doc was the previous hit in? */
     int prevDoc = -1;
-    Hits hits;
-    long hitIndex = -1;
 
-    /** Used to filter because HitProperty needs a Hits instance... */
-    private HitsSingle filterHit;
+    /** Lazy segment hits we're fetching from */
+    Hits hits;
+
+    /** Current hit index */
+    long hitIndex = -1;
 
 //    /** How many hits have we produced? */
 //    private long processed;
@@ -62,8 +62,7 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
         boolean hasFilter = state.filter != HitFilter.ACCEPT_ALL;
         if (!isInitialized) {
             if (hasFilter) {
-                filterHit = new HitsSingle(state.hitQueryContext.getField(), state.hitQueryContext.getMatchInfoDefs());
-                state.filter = state.filter.forSegment(filterHit, state.lrc, state.globalFetcher.collationCache);
+                state.filter = state.filter.forSegment(hits, state.lrc, state.globalFetcher.collationCache);
             }
             isInitialized = true;
         }
@@ -86,27 +85,27 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
             runPrepare();
             prevDoc = -1; // (we already know we're at a document boundary here)
             while (phase != HitFetcher.Phase.MAX_HITS_REACHED) {
-                if (!runGetHit(hit)) {
+                hitIndex++;
+                if (!this.hits.sizeAtLeast(hitIndex + 1)) {
+                    // No more hits, we're done
                     produceHits(hits, counted, phase);
                     break; // we're done
                 }
-                assert hit.doc_ >= 0;
-                assert hit.start_ >= 0;
-                assert hit.end_ >= 0;
 
                 // Check filter
                 boolean acceptedHit = true;
                 if (hasFilter) {
-                    // TODO: Icky... change HitProperty so get is called with Hits and index?
-                    // (but then we cannot use it as a comparator...?)
-                    filterHit.set(hit);
-                    state.filter.disposeContext(); // get rid of context for previous hit
-                    acceptedHit = state.filter.accept(0);
+                    acceptedHit = state.filter.accept(hitIndex);
                 }
 
                 // Check that this is a unique hit, not the exact same as the previous one.
                 boolean processHit;
                 if (acceptedHit) {
+                    this.hits.getEphemeral(hitIndex, hit);
+                    assert hit.doc_ >= 0;
+                    assert hit.start_ >= 0;
+                    assert hit.end_ >= 0;
+
                     long prevHitIndex = hits.size() - 1;
                     boolean sameAsLast = prevHitIndex >= 0 &&
                             hit.doc_ == hits.doc(prevHitIndex) &&
@@ -118,11 +117,10 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
                     processHit = false;
                 }
 
-                boolean atDocumentBoundary = hit.doc_ != prevDoc;
-
+                boolean atDocumentBoundary = false;
                 if (processHit) {
-
                     // If we're at a document boundary, pass the hits we have so far to the collector and update stats.
+                    atDocumentBoundary = hit.doc_ != prevDoc;
                     if (atDocumentBoundary && (!hits.isEmpty() || counted > 0)) {
                         // Update stats and determine phase (fetching/counting/done)
                         phase = produceHits(hits, counted, phase);
@@ -246,16 +244,6 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
     }
 
     protected void runPrepare() {
-    }
-
-    protected boolean runGetHit(EphemeralHit hit) {
-        hitIndex++;
-        if (hits.sizeAtLeast(hitIndex + 1)) {
-            hits.getEphemeral(hitIndex, hit);
-            return true;
-        }
-        // No more hits, we're done
-        return false;
     }
 
     protected void runCleanup() {
