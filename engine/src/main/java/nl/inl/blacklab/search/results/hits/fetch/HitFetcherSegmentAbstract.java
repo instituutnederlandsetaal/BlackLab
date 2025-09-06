@@ -78,8 +78,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
             // Mark if it is at a valid hit.
             // Count and store the hit (if we're not at the limits yet)
             runPrepare();
-            int prevHitIndex = -1;
-            while (phase != HitFetcher.Phase.DONE) {
+            while (phase != HitFetcher.Phase.MAX_HITS_REACHED) {
                 if (!runGetHit(hit)) {
                     produceHits(hits, counted, phase);
                     break; // we're done
@@ -101,6 +100,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                 // Check that this is a unique hit, not the exact same as the previous one.
                 boolean processHit;
                 if (acceptedHit) {
+                    long prevHitIndex = hits.size() - 1;
                     boolean sameAsLast = prevHitIndex >= 0 &&
                             hit.doc_ == hits.doc(prevHitIndex) &&
                             hit.start_ == hits.start(prevHitIndex) &&
@@ -122,11 +122,10 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
                         counted = 0;
                     }
 
-                    if (phase != HitFetcher.Phase.DONE)
+                    if (phase != HitFetcher.Phase.MAX_HITS_REACHED)
                         counted++;
                     if (phase == HitFetcher.Phase.STORING_AND_COUNTING) {
                         hits.add(hit);
-                        prevHitIndex++;
                     }
                     prevDoc = hit.doc_;
                 }

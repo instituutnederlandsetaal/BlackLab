@@ -81,6 +81,11 @@ public abstract class HitResultsWithHitsInternal extends HitResultsAbstract {
         }
 
         @Override
+        public long sizeSoFar() {
+            return hitsInternal.size();
+        }
+
+        @Override
         public boolean sizeAtLeast(long minSize) {
             return ensureResultsRead(minSize);
         }

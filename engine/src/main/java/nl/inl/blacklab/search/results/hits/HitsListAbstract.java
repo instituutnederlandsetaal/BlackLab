@@ -91,6 +91,11 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     }
 
     @Override
+    public long sizeSoFar() {
+        return size();
+    }
+
+    @Override
     public long size() {
         if (lock != null) {
             lock.readLock().lock();

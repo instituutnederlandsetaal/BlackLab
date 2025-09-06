@@ -41,6 +41,11 @@ public class HitsSingle extends HitsAbstract {
     }
 
     @Override
+    public long sizeSoFar() {
+        return size();
+    }
+
+    @Override
     public void getEphemeral(long index, EphemeralHit hit) {
         if (index != 0)
             throw new IndexOutOfBoundsException("Index: " + index);

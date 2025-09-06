@@ -124,6 +124,11 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
     }
 
     @Override
+    public long sizeSoFar() {
+        return numHitsGlobalView;
+    }
+
+    @Override
     public boolean sizeAtLeast(long minSize) {
         return ensureResultsRead(minSize);
     }

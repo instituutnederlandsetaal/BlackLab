@@ -369,6 +369,11 @@ public interface Hits extends Iterable<EphemeralHit> {
         return null;
     }
 
+    /** For lazy Hits implementations, returns the current size.
+     * For non-lazy implementations, just returns size().
+     */
+    long sizeSoFar();
+
     /** For grouping */
     class Group {
 

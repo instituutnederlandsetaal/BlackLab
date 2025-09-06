@@ -12,7 +12,7 @@ public interface HitFetcher {
     enum Phase {
         STORING_AND_COUNTING,
         COUNTING_ONLY,
-        DONE
+        MAX_HITS_REACHED
     }
 
     /** Block until this many results are available or there are no more results.

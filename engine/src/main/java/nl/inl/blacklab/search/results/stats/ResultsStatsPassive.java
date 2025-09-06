@@ -86,7 +86,7 @@ public class ResultsStatsPassive extends ResultsStats {
         this.processed.add(processed);
         this.counted.add(counted);
         if (this.counted.sum() >= maxHitsToCount)
-            return HitFetcher.Phase.DONE;
+            return HitFetcher.Phase.MAX_HITS_REACHED;
         else if (this.processed.sum() >= maxHitsToProcess)
             return HitFetcher.Phase.COUNTING_ONLY;
         else
