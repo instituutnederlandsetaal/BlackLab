@@ -80,12 +80,29 @@ public class HitsSpans extends HitsAbstract {
         this.spans = null;
     }
 
+    /**
+     * Will retrieve its own Spans object on when it's ran.
+     * <p>
+     * This will self-initialize (meaning its Spans object and HitQueryContext are set). This is done
+     * because HitFetcherQuerySegments can hold a lot of memory and time to set up and only a few are active at a time.
+     * <p>
+     * All HitFetcherQuerySegments share an instance of MatchInfoDefs (via the hit query context, of which each
+     * HitFetcherQuerySegment gets a personalized copy, but with the same shared MatchInfoDefs instance).
+     * <p>
+     * HitFetcherQuerySegments will register their match infos with the MatchInfoDefs instance. Often the first
+     * HitFetcherQuerySegment will register all match infos, but sometimes the first HitFetcherQuerySegment only
+     * matches some match infos, and subsequent HitFetcherQuerySegments will register additional match infos. This is
+     * dealt with later (when merging two matchInfo[] arrays of different length).
+     * <p>
+     */
     public void initialize() {
         isInitialized = true;
         try {
             BLSpans spansForWeight = this.weight.getSpans(lrc, SpanWeight.Postings.OFFSETS);
             this.weight = null;
             if (spansForWeight == null) { // This is normal, sometimes a section of the index does not contain hits.
+                hits = HitsMutable.create(sourceHitQueryContext.getField(), sourceHitQueryContext.getMatchInfoDefs(),
+                        0, false, false);
                 this.isDone = true;
                 return;
             }
@@ -169,11 +186,13 @@ public class HitsSpans extends HitsAbstract {
         if (number > maxToCount)
             number = maxToCount;
         EphemeralHit hit = new EphemeralHit();
-        while (hits.size() < number) {
+        while (!isDone && hits.size() < number) {
             try {
                 // Get next hit
-                if (!hasPrefetchedHit)
+                if (!hasPrefetchedHit) {
+                    isDone = true;
                     break; // no more hits
+                }
                 assert spans.docID() != DocIdSetIterator.NO_MORE_DOCS;
                 assert spans.startPosition() != Spans.NO_MORE_POSITIONS;
                 assert spans.endPosition() != Spans.NO_MORE_POSITIONS;
@@ -221,12 +240,12 @@ public class HitsSpans extends HitsAbstract {
 
     @Override
     public AnnotatedField field() {
-        return hitQueryContext.getField();
+        return hits.field();
     }
 
     @Override
     public MatchInfoDefs matchInfoDefs() {
-        return hitQueryContext.getMatchInfoDefs();
+        return hits.matchInfoDefs();
     }
 
     @Override

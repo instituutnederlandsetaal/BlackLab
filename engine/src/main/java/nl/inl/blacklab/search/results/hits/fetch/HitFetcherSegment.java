@@ -4,8 +4,6 @@ import org.apache.lucene.index.LeafReaderContext;
 
 public interface HitFetcherSegment extends Runnable {
 
-    void initialize();
-
     @Override
     void run();
 

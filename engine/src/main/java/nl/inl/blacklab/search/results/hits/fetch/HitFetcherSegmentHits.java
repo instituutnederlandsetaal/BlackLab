@@ -18,11 +18,6 @@ class HitFetcherSegmentHits extends HitFetcherSegmentAbstract {
         this.hits = hits;
     }
 
-    @Override
-    public void initialize() {
-        // nothing to do
-    }
-
     protected void runPrepare() {
         // (we already know we're at a document boundary here)
         prevDoc = -1;

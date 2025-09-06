@@ -54,7 +54,6 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
     public void run() {
         boolean hasFilter = state.filter != HitFilter.ACCEPT_ALL;
         if (!isInitialized) {
-            initialize();
             if (hasFilter) {
                 filterHit = new HitsSingle(state.hitQueryContext.getField(), state.hitQueryContext.getMatchInfoDefs());
                 state.filter = state.filter.forSegment(filterHit, state.lrc, state.globalFetcher.collationCache);
