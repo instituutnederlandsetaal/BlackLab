@@ -10,15 +10,18 @@ import nl.inl.blacklab.search.results.hits.Hits;
 public interface HitCollectorSegment {
     /**
      * Called when there are hits for the collector to collect.
-     *
      * These results should never contain "partial documents"; that is,
      * we're at a document boundary whenever this is called. (This assumes
      * that the source hits didn't have document hits mixed up)
      *
-     * @param results the hits collected so far
+     * The collector should start at the indicated startIndex, and
+     * collect all available hits (up to sizeSoFar()).
+     *
+     * @param results    where to collect from
+     * @param startIndex first hit to collect in results
      * @return whether to continue storing hits, or just count them, or stop altogether
      */
-    void collect(Hits results);
+    void collect(Hits results, long startIndex);
 
     /**
      * Called when the SpansReader is pausing or is done.
@@ -26,5 +29,4 @@ public interface HitCollectorSegment {
      * The HitCollector should make sure all hits collected so far are processed.
      */
     void flush();
-
 }

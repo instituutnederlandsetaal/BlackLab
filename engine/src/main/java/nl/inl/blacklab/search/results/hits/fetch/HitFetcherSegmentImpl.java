@@ -166,7 +166,7 @@ public class HitFetcherSegmentImpl implements HitFetcherSegment {
         // Update stats and determine phase (fetching/counting/done)
         phase = state.globalFetcher.updateStats(results.size(), counted,
                 prevDoc >= 0, phase == HitFetcher.Phase.STORING_AND_COUNTING);
-        state.collector.collect(results);
+        state.collector.collect(results, 0);
         results.clear();
         return phase;
     }

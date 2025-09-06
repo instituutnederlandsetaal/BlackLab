@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results.hits;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -353,8 +354,11 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
         }
     }
 
+    /** Our segment collectors. Key null is the global collector. */
+    Map<LeafReaderContext, HitCollectorSegment> segmentCollectors = new HashMap<>();
+
     public HitCollectorSegment getSegmentCollector(LeafReaderContext lrc) {
-        return new HitCollectorSegment() {
+        return segmentCollectors.computeIfAbsent(lrc, __ -> new HitCollectorSegment() {
 
             /** The list of hits in this segment to add new hits to */
             private final HitsMutable segmentHits;
@@ -373,9 +377,17 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
             }
 
             @Override
-            public void collect(Hits results) {
+            public void collect(Hits results, long startIndex) {
                 // Add new hits to the segment results.
-                segmentHits.addAll(results);
+                if (startIndex == 0)
+                    segmentHits.addAll(results);
+                else {
+                    for (long i = startIndex; i < results.sizeSoFar(); i++) {
+                        EphemeralHit h = new EphemeralHit();
+                        results.getEphemeral(i, h);
+                        segmentHits.add(h);
+                    }
+                }
 
                 // Add them to the global view? We only do this on a boundary
                 // between documents, so hits from the same doc remain
@@ -403,7 +415,7 @@ public class HitsFromFetcher extends HitsAbstract implements HitCollector {
                     numberAddedToGlobalView = segmentHits.size();
                 }
             }
-        };
+        });
     }
 
     /** A stretch of hits from a segment.

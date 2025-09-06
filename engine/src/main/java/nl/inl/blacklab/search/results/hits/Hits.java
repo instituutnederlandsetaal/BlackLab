@@ -25,6 +25,7 @@ import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hitresults.Kwics;
+import nl.inl.blacklab.search.results.hits.fetch.HitCollector;
 
 /**
  * A list of simple hits.
@@ -97,6 +98,11 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @return true if there are at least minSize hits, false otherwise
      */
     boolean sizeAtLeast(long minSize);
+
+    /** For lazy Hits implementations, returns the current size.
+     * For non-lazy implementations, just returns size().
+     */
+    long sizeSoFar();
 
     /**
      * Check if this hits object is empty.
@@ -369,46 +375,11 @@ public interface Hits extends Iterable<EphemeralHit> {
         return null;
     }
 
-    /** For lazy Hits implementations, returns the current size.
-     * For non-lazy implementations, just returns size().
-     */
-    long sizeSoFar();
-
-    /** For grouping */
-    class Group {
-
-        HitsMutable storedHits;
-
-        long totalNumberOfHits;
-
-        public Group(HitsMutable storedHits, int totalNumberOfHits) {
-            this.storedHits = storedHits;
-            this.totalNumberOfHits = totalNumberOfHits;
-        }
-
-        public HitsMutable getStoredHits() {
-            return storedHits;
-        }
-
-        public long getTotalNumberOfHits() {
-            return totalNumberOfHits;
-        }
-
-        public Group merge(Group segmentGroup, long maxValuesToStorePerGroup) {
-            if (maxValuesToStorePerGroup >= 0 && storedHits.size() + segmentGroup.storedHits.size() > maxValuesToStorePerGroup) {
-                // Can we hold any more hits?
-                if (storedHits.size() < maxValuesToStorePerGroup) {
-                    // We can add a limited number of hits, so we need to trim the segment group
-                    Hits hitsToAdd = segmentGroup.storedHits
-                            .sublist(0, maxValuesToStorePerGroup - storedHits.size());
-                    storedHits.addAll(hitsToAdd);
-                }
-            } else {
-                // Just add all the hits
-                storedHits.addAll(segmentGroup.getStoredHits());
-            }
-            totalNumberOfHits += segmentGroup.totalNumberOfHits;
-            return this;
-        }
+    /** Collector would like to receive our hits. */
+    default void subscribe(HitCollector collector) {
+        // Naive "sequential" implementation: just ensure we have all the global hits and pass them all at once.
+        size(); // ensure all hits are fetched if lazy
+        collector.getSegmentCollector(null).collect(this, 0);
     }
+
 }

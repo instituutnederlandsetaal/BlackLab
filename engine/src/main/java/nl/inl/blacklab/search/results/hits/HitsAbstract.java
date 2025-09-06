@@ -114,8 +114,8 @@ public abstract class HitsAbstract implements Hits {
         return hitsInDoc;
     }
 
-    static Map<PropertyValue, Group> groupHits(Hits hits, HitProperty groupBy,
-            long maxResultsToStorePerGroup, Map<PropertyValue, Group> groups, LeafReaderContext lrc) {
+    static Map<PropertyValue, HitsUtils.Group> groupHits(Hits hits, HitProperty groupBy,
+            long maxResultsToStorePerGroup, Map<PropertyValue, HitsUtils.Group> groups, LeafReaderContext lrc) {
         // temporary copy used in grouping (don't keep reference to hits)
         // NOTE: we pass toGlobal = true because segment hits must be grouped by global identity (so we can merge them)
         hits = hits.getStatic(); // get most efficient (non-locking list) version of hits if possible
@@ -128,7 +128,7 @@ public abstract class HitsAbstract implements Hits {
                 // This is a segment hit. Convert doc id to global.
                 hit.convertDocIdToGlobal(lrc.docBase);
             }
-            Group group = groups.get(identity);
+            HitsUtils.Group group = groups.get(identity);
             if (group == null) {
                 if (groups.size() >= HitGroups.MAX_NUMBER_OF_GROUPS)
                     throw new UnsupportedOperationException(
@@ -136,7 +136,7 @@ public abstract class HitsAbstract implements Hits {
                 HitsMutable hitsInGroup = HitsMutable.create(hits.field(), hits.matchInfoDefs(),
                         -1,
                         hits.size(), false);
-                group = new Group(hitsInGroup, 0);
+                group = new HitsUtils.Group(hitsInGroup, 0);
                 groups.put(identity, group);
             }
             if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {

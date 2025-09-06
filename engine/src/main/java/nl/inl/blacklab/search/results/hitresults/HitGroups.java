@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsUtils;
 import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
@@ -92,11 +92,11 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
 
     private long resultObjects;
 
-    public static List<HitGroup> fromBasicGroup(QueryInfo queryInfo, Map<PropertyValue, Hits.Group> groupings) {
+    public static List<HitGroup> fromBasicGroup(QueryInfo queryInfo, Map<PropertyValue, HitsUtils.Group> groupings) {
         List<HitGroup> groups = new ArrayList<>(groupings.size());
-        for (Map.Entry<PropertyValue, Hits.Group> e : groupings.entrySet()) {
+        for (Map.Entry<PropertyValue, HitsUtils.Group> e : groupings.entrySet()) {
             PropertyValue groupId = e.getKey();
-            Hits.Group grouped = e.getValue();
+            HitsUtils.Group grouped = e.getValue();
             HitGroup group = HitGroup.fromList(queryInfo, groupId, grouped.getStoredHits(), grouped.getTotalNumberOfHits());
             groups.add(group);
         }

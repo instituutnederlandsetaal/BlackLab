@@ -150,7 +150,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
             throw new IllegalArgumentException("Must have criteria to group on");
         Hits hits = getHits().getStatic(); // ensure all read
 
-        Map<PropertyValue, Hits.Group> groupedHits = HitsUtils.group(hits, groupBy,
+        Map<PropertyValue, HitsUtils.Group> groupedHits = HitsUtils.group(hits, groupBy,
                 maxResultsToStorePerGroup);
 
         // (We make a copy of the stats so we don't keep any references to the source hits)

@@ -32,7 +32,7 @@ public class HitsUtils {
         THRESHOLD_SINGLE_THREADED = n;
     }
 
-    public static Map<PropertyValue, Hits.Group> group(Hits hits, HitProperty groupBy, long maxValuesToStorePerGroup) {
+    public static Map<PropertyValue, Group> group(Hits hits, HitProperty groupBy, long maxValuesToStorePerGroup) {
         logger.debug("GROUP: fetch all hits");
         // Fetch all the hits first and get an efficient, nonlocking implementation
         hits = hits.getStatic();
@@ -52,7 +52,7 @@ public class HitsUtils {
         if (numThreads == 1 || n < THRESHOLD_SINGLE_THREADED) {
             logger.debug("GROUP: single thread");
 
-            Map<PropertyValue, Hits.Group> groups = new HashMap<>();
+            Map<PropertyValue, Group> groups = new HashMap<>();
             for (Map.Entry<LeafReaderContext, Hits> entry: hitsPerSegment.entrySet()) {
                 HitsAbstract.groupHits(entry.getValue(), groupBy.copyWith(PropContext.globalHits(entry.getValue(), new HashMap<>())), maxValuesToStorePerGroup, groups, entry.getKey());
             }
@@ -63,7 +63,7 @@ public class HitsUtils {
         logger.debug("GROUP: launch threads");
 
         // Group in parallel and merge the results.
-        Parallel<Map.Entry<LeafReaderContext, Hits>, Map<PropertyValue, Hits.Group>> parallel = new Parallel<>(hits.index(), numThreads);
+        Parallel<Map.Entry<LeafReaderContext, Hits>, Map<PropertyValue, Group>> parallel = new Parallel<>(hits.index(), numThreads);
         HitProperty groupByWithCache = groupBy.copyWith(PropContext.globalHits(null, new ConcurrentHashMap<>()));
         return parallel.mapReduce(hits.hitsPerSegment().entrySet(),
                 entry -> entry.getValue().size(),
@@ -71,7 +71,7 @@ public class HitsUtils {
                     int threadNum = threadItems.hashCode() % 1000;
                     logger.debug("GROUP:    a thread started: " + threadNum);
                     // Group items in these segments into a single map.
-                    Map<PropertyValue, Hits.Group> groups = new HashMap<>();
+                    Map<PropertyValue, Group> groups = new HashMap<>();
                     for (Map.Entry<LeafReaderContext, Hits> entry: threadItems) {
                         // For each segment, group the hits using the specified property.
                         logger.debug("GROUP:      thread " + threadNum + ", hits size " + entry.getValue().size());
@@ -82,15 +82,53 @@ public class HitsUtils {
                 },
                 (acc, results) -> {
                     logger.debug("GROUP:    merging results from a thread");
-                    for (Map.Entry<PropertyValue, Hits.Group> entry: results.entrySet()) {
+                    for (Map.Entry<PropertyValue, Group> entry: results.entrySet()) {
                         PropertyValue groupId = entry.getKey();
-                        Hits.Group segmentGroup = entry.getValue();
-                        acc.compute(groupId, (PropertyValue k, Hits.Group v) ->
+                        Group segmentGroup = entry.getValue();
+                        acc.compute(groupId, (PropertyValue k, Group v) ->
                                 v == null ? segmentGroup : v.merge(segmentGroup, maxValuesToStorePerGroup));
                     }
                     logger.debug("GROUP:    merging results from a thread finished");
                 },
                 HashMap::new
         );
+    }
+
+    /** For grouping */
+    public static class Group {
+
+        HitsMutable storedHits;
+
+        long totalNumberOfHits;
+
+        public Group(HitsMutable storedHits, int totalNumberOfHits) {
+            this.storedHits = storedHits;
+            this.totalNumberOfHits = totalNumberOfHits;
+        }
+
+        public HitsMutable getStoredHits() {
+            return storedHits;
+        }
+
+        public long getTotalNumberOfHits() {
+            return totalNumberOfHits;
+        }
+
+        public Group merge(Group segmentGroup, long maxValuesToStorePerGroup) {
+            if (maxValuesToStorePerGroup >= 0 && storedHits.size() + segmentGroup.storedHits.size() > maxValuesToStorePerGroup) {
+                // Can we hold any more hits?
+                if (storedHits.size() < maxValuesToStorePerGroup) {
+                    // We can add a limited number of hits, so we need to trim the segment group
+                    Hits hitsToAdd = segmentGroup.storedHits
+                            .sublist(0, maxValuesToStorePerGroup - storedHits.size());
+                    storedHits.addAll(hitsToAdd);
+                }
+            } else {
+                // Just add all the hits
+                storedHits.addAll(segmentGroup.getStoredHits());
+            }
+            totalNumberOfHits += segmentGroup.totalNumberOfHits;
+            return this;
+        }
     }
 }
