@@ -1,14 +1,14 @@
 package nl.inl.blacklab.search.results.hits.fetch;
 
-import java.io.IOException;
-
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
+import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
 import nl.inl.blacklab.search.results.hits.HitsSingle;
 import nl.inl.util.ThreadAborter;
@@ -16,7 +16,11 @@ import nl.inl.util.ThreadAborter;
 /** 
  * Abstract base class for HitFetcherSegment implementations.
  */
-public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
+public class HitFetcherSegmentImpl implements HitFetcherSegment {
+
+    public static HitFetcherSegment get(State state, BLSpanWeight weight) {
+        return new HitFetcherSegmentImpl(state, new HitsSpans(weight, state.lrc, state.hitQueryContext));
+    }
 
     /** Our state: segment, hit processor, counts, etc. */
     State state;
@@ -29,6 +33,8 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
 
     /** What doc was the previous hit in? */
     int prevDoc = -1;
+    Hits hits;
+    long hitIndex = -1;
 
     /** Used to filter because HitProperty needs a Hits instance... */
     private HitsSingle filterHit;
@@ -39,8 +45,9 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
 //    /** How many hits have we counted? */
 //    private long counted;
 
-    HitFetcherSegmentAbstract(State state) {
+    HitFetcherSegmentImpl(State state, Hits hits) {
         this.state = state;
+        this.hits = hits;
     }
 
     /**
@@ -77,6 +84,7 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
             // Mark if it is at a valid hit.
             // Count and store the hit (if we're not at the limits yet)
             runPrepare();
+            prevDoc = -1; // (we already know we're at a document boundary here)
             while (phase != HitFetcher.Phase.MAX_HITS_REACHED) {
                 if (!runGetHit(hit)) {
                     produceHits(hits, counted, phase);
@@ -237,14 +245,22 @@ public abstract class HitFetcherSegmentAbstract implements HitFetcherSegment {
         return phase;
     }
 
-    /** Prepare for fetching hits in run() (e.g. make sure first hit is prefetched). */
-    protected abstract void runPrepare() throws IOException;
+    protected void runPrepare() {
+    }
 
-    /** Fetch the next hit in run(). */
-    protected abstract boolean runGetHit(EphemeralHit hit) throws IOException;
+    protected boolean runGetHit(EphemeralHit hit) {
+        hitIndex++;
+        if (hits.sizeAtLeast(hitIndex + 1)) {
+            hits.getEphemeral(hitIndex, hit);
+            return true;
+        }
+        // No more hits, we're done
+        return false;
+    }
 
-    /** Clean up when run() finishes. */
-    protected abstract void runCleanup();
+    protected void runCleanup() {
+        this.hits = null;
+    }
 
     @Override
     public LeafReaderContext getLeafReaderContext() {

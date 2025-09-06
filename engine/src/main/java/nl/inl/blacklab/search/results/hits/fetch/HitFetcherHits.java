@@ -43,7 +43,7 @@ public class HitFetcherHits extends HitFetcherAbstract {
     private void addFetchTask(HitCollector hitCollector, LeafReaderContext lrc, Hits segmentHits) {
         // Fetch hits from segment and feed them to the hit collector.
         HitFilter segmentFilter = filter.forSegment(segmentHits, lrc, collationCache);
-        segmentReaders.add(new HitFetcherSegmentHits(segmentHits, getState(hitCollector, lrc, segmentFilter)));
+        segmentReaders.add(new HitFetcherSegmentImpl(getState(hitCollector, lrc, segmentFilter), segmentHits));
     }
 
 }

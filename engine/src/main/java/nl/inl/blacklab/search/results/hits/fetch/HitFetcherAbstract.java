@@ -214,8 +214,8 @@ public abstract class HitFetcherAbstract implements HitFetcher {
         return hitQueryContext.getField();
     }
 
-    HitFetcherSegmentAbstract.State getState(HitCollector hitCollector, LeafReaderContext lrc, HitFilter filter) {
-        return new HitFetcherSegmentAbstract.State(
+    HitFetcherSegmentImpl.State getState(HitCollector hitCollector, LeafReaderContext lrc, HitFilter filter) {
+        return new HitFetcherSegmentImpl.State(
                 lrc,
                 filter,
                 hitCollector.getSegmentCollector(lrc),

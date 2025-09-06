@@ -41,7 +41,9 @@ public class TestHitsFromFetcher {
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         HitFetcherQuery hitFetcherQuery = (HitFetcherQuery) h.hitFetcher;
         hitFetcherQuery.segmentReaders.clear();
-        hitFetcherQuery.segmentReaders.add(new HitFetcherSegmentQuery(null, HitFetcherSegmentAbstract.State.DUMMY) {
+        HitsSpans hits = new HitsSpans(null, null, null);
+        HitFetcherSegmentImpl.State state = HitFetcherSegmentImpl.State.DUMMY;
+        hitFetcherQuery.segmentReaders.add(new HitFetcherSegmentImpl(state, hits) {
             @Override
             public synchronized void run() {
                 try {
@@ -97,7 +99,9 @@ public class TestHitsFromFetcher {
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
         HitFetcherQuery hitFetcherQuery = (HitFetcherQuery) h.hitFetcher;
         hitFetcherQuery.segmentReaders.clear();
-        hitFetcherQuery.segmentReaders.add(new HitFetcherSegmentQuery(null, HitFetcherSegmentAbstract.State.DUMMY) {
+        HitsSpans hits = new HitsSpans(null, null, null);
+        HitFetcherSegmentImpl.State state = HitFetcherSegmentImpl.State.DUMMY;
+        hitFetcherQuery.segmentReaders.add(new HitFetcherSegmentImpl(state, hits) {
             @Override
             public synchronized void run() { throw exceptionToThrow; }
         });
