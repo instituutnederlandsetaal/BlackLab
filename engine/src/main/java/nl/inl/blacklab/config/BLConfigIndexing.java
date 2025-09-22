@@ -120,6 +120,8 @@ public class BLConfigIndexing {
 
     @SuppressWarnings("unused")
     public void setMaxNumberOfIndicesPerUser(int maxNumberOfIndicesPerUser) {
+        if (maxNumberOfIndicesPerUser < 0)
+            maxNumberOfIndicesPerUser = Integer.MAX_VALUE;
         this.maxNumberOfIndicesPerUser = maxNumberOfIndicesPerUser;
     }
 

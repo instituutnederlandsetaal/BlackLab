@@ -7,6 +7,8 @@ import org.apache.lucene.store.IndexOutput;
 
 public interface TokensCodec {
 
+    boolean ENABLE_RUN_LENGTH_ENCODING = true;
+
     static TokensCodec fromHeader(IndexInput tokensIndex) throws IOException {
         TokensCodecType codec = TokensCodecType.fromCode(tokensIndex.readByte());
         byte parameter = tokensIndex.readByte();
@@ -43,11 +45,15 @@ public interface TokensCodec {
         //   (RLE can be slower, so we want a significant gain)
         //   (also, we encode in blocks, so the gain will be less than calculated here)
         // - otherwise, value per token
-        TokensCodecType codec = (sizeWithRunLengthEncoding < tokensInDoc.length / 2 ?
-                TokensCodecType.RUN_LENGTH_ENCODING :
-                TokensCodecType.VALUE_PER_TOKEN);
-        //TokensCodecType codec = TokensCodecType.RUN_LENGTH_ENCODING; //TEST
-        //TokensCodecType codec = allTheSame ? TokensCodecType.ALL_TOKENS_THE_SAME : TokensCodecType.VALUE_PER_TOKEN;
+        TokensCodecType codec;
+        if (ENABLE_RUN_LENGTH_ENCODING) {
+            codec = (sizeWithRunLengthEncoding < tokensInDoc.length / 2 ?
+                    TokensCodecType.RUN_LENGTH_ENCODING :
+                    TokensCodecType.VALUE_PER_TOKEN);
+            //TokensCodecType codec = TokensCodecType.RUN_LENGTH_ENCODING; //TEST
+        } else {
+            codec = allTheSame ? TokensCodecType.ALL_TOKENS_THE_SAME : TokensCodecType.VALUE_PER_TOKEN;
+        }
 
         // determine parameter byte for codec.
         byte codecParameter = 0;

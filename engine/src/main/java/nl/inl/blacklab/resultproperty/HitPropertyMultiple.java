@@ -112,13 +112,6 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
     }
 
     @Override
-    public void disposeContext() {
-        for (HitProperty prop: properties) {
-            prop.disposeContext();
-        }
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();

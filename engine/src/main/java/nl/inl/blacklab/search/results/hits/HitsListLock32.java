@@ -5,30 +5,30 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.objects.ObjectList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
- * A HitsInternal implementation that locks and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
- * <p>
- * Maximum size is roughly (but not exactly) 2^31 hits.
+ * A thread-safe Hits implementation that can handle around 2^31 hits.
  * <p>
  * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about
  * 19% faster than {@link HitsListLock}. Iteration is about 10x faster.
  * <p>
  * Those percentages are not representative of real-world usage of course, but on
  * huge resultsets this will likely save a few seconds.
+ * <p>
+ * Actual maximum size is {@link Constants#JAVA_MAX_ARRAY_SIZE}, a safe maximum Java array size.
+ * Use one of the HitsMutable.create() factory methods to create the appropriate implementation.
  */
 class HitsListLock32 extends HitsListNoLock32 {
 
-    HitsListLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, int initialCapacity) {
-        super(field, matchInfoDefs, initialCapacity);
+    HitsListLock32(Hits.HitsContext context, int initialCapacity) {
+        super(context, initialCapacity);
         lock = new ReentrantReadWriteLock();
     }
 
-    HitsListLock32(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
-        super(field, matchInfoDefs, docs, starts, ends, matchInfos);
+    HitsListLock32(Hits.HitsContext context,
+            IntList docs, IntList starts, IntList ends, ObjectList<MatchInfo[]> matchInfos) {
+        super(context, docs, starts, ends, matchInfos);
         lock = new ReentrantReadWriteLock();
     }
 
@@ -60,23 +60,6 @@ class HitsListLock32 extends HitsListNoLock32 {
             ends.add(hit.end_);
             if (hit.matchInfos_ != null)
                 matchInfos.add(hit.matchInfos_);
-        } finally {
-            this.lock.writeLock().unlock();
-        }
-    }
-
-    /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-    @Override
-    public void add(Hit hit) {
-        assert HitsListAbstract.debugCheckReasonableHit(hit);
-        this.lock.writeLock().lock();
-        try {
-            // Don't call super method, this is faster (hot code)
-            docs.add(hit.doc());
-            starts.add(hit.start());
-            ends.add(hit.end());
-            if (hit.matchInfos() != null)
-                matchInfos.add(hit.matchInfos());
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -157,6 +140,6 @@ class HitsListLock32 extends HitsListNoLock32 {
 
     @Override
     public Hits nonlocking() {
-        return new HitsListNoLock32(field(), matchInfoDefs(), docs, starts, ends, matchInfos);
+        return new HitsListNoLock32(context(), docs, starts, ends, matchInfos);
     }
 }

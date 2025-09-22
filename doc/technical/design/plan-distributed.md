@@ -53,14 +53,14 @@ We really just want a global _view_ of the unsorted hits. This view should grow 
 
 ### Improvements to be made
 
+- do we unique twice in HitPublisherSpans? (query usually includes a unique step at the end as well)
+
+
 STARTUP TIME
 - BLTerms.close() is never called...
 - MetadataFieldValuesFromIndex takes quite a while.
   Can we speed it up?
   Can we run it in a separate thread, and only block when we actually need the values?
-- Caching collator that keeps a Map<String, CollationKey> internally, so we don't calculate the same collationkeys
-  for e.g. word/lemma, for each segment, etc.
-- 
 
 OTHER ISSUES
 - Look at QueryInfo / SearchSettings

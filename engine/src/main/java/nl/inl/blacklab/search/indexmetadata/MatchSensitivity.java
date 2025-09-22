@@ -28,7 +28,7 @@ public enum MatchSensitivity {
     }
 
     public static MatchSensitivity fromLuceneFieldSuffix(String code) {
-        return switch (code) {
+        return switch (code.toLowerCase()) {
             case "s" -> SENSITIVE;
             case "i" -> INSENSITIVE;
             case "ci" -> CASE_INSENSITIVE;

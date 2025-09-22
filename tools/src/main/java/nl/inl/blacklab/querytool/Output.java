@@ -41,7 +41,6 @@ import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.util.LuceneUtil;
@@ -518,11 +517,14 @@ public class Output {
 
                 Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
                 if (fkwics != null) {
+                    EphemeralHit fhit = new EphemeralHit();
                     for (Map.Entry<AnnotatedField, Kwic> e: fkwics.entrySet()) {
                         AnnotatedField annotatedField = e.getKey();
                         Kwic kwic = e.getValue();
-                        Hit fhit = Hit.create(hit.doc(), kwic.fragmentStartInDoc(), kwic.fragmentEndInDoc(),
-                                hit.matchInfos());
+                        int doc = hit.doc();
+                        int start = kwic.fragmentStartInDoc();
+                        int end = kwic.fragmentEndInDoc();
+                        fhit.set(doc, start, end, hit.matchInfos());
                         hitToShow.addForeign(annotatedField,
                                 showHitFromForwardIndex(fhit, kwic, matchInfo, annotatedField));
                     }
@@ -595,7 +597,7 @@ public class Output {
         line(msg);
     }
 
-    private HitToShow showHitFromForwardIndex(Hit hit, Kwic kwic, Map<String, MatchInfo> matchInfo, AnnotatedField annotatedField) {
+    private HitToShow showHitFromForwardIndex(EphemeralHit hit, Kwic kwic, Map<String, MatchInfo> matchInfo, AnnotatedField annotatedField) {
         // NOTE: if annotatedField == null, it means this hit is in the main field searched;
         //       it would only ever be non-null for parallel corpora where some match info can be captured in another
         //       field than the main search field.

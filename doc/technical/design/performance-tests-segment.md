@@ -1,10 +1,28 @@
 # Performancetests
 
-http://localhost:8080/blacklab-server/search-test/index.html
+## General conclusions from testing
 
-- fetching hits is probably best done in 4 threads; more is not useful, and fetching is a only a short operation so shouldn't hog the system too much.
-- sorting hits per segment and then merging is slower than collecting all hits together and using parallel quick sort on that list. We always do that now.
-- grouping hits seems to be best done in 3 threads on average.
+- 2 threads seems to offer the best bang-for-buck for fetch and group operations (on regular pc; TEST SERVER!)
+- sorting is best done by fetching all hits first, then doing a parallel quick sort
+
+
+## 15-09-2025
+
+QueryTool parlamint
+showconc no && total on && maxretrieve -1 && verbose
+(50M hits)
+
+### new code
+
+[]      2.4s
+
+### dev
+
+[]      
+
+
+
+
 
 ## chn-i fetch/group
 
@@ -124,16 +142,16 @@ showconc no && total on && maxretrieve -1 && verbose
 
 THUIS
 
-threads 1 && [] && group hit:word:i     18.5s
-threads 2 && [] && group hit:word:i     13.5s
-threads 4 && [] && group hit:word:i     17.0s
+threads 1 && [] && group hit:word:i     # 18.5s
+threads 2 && [] && group hit:word:i     # 13.5s
+threads 4 && [] && group hit:word:i     # 17.0s
 
 WERK 26-08
 
-threads 1 && [] && group hit:word:i     10.5s
-threads 2 && [] && group hit:word:i      8.2s <-- best for grouping by context
-threads 3 && [] && group hit:word:i      9.5s
-threads 4 && [] && group hit:word:i     14.6s
+threads 1 && [] && group hit:word:i     # 10.5s
+threads 2 && [] && group hit:word:i     # 8.2s <-- best for grouping by context
+threads 3 && [] && group hit:word:i     # 9.5s
+threads 4 && [] && group hit:word:i     # 14.6s
 
 SVOTMC10 26-08
 [] && group hit:word:i    11.3s

@@ -3,8 +3,8 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.lucene.index.LeafReaderContext;
@@ -23,7 +23,6 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.ThreadAborter;
 
@@ -73,10 +72,10 @@ public abstract class HitPropertyContextBase extends HitProperty {
      * the source or the target, or both, might be in this field)
      *
      * @param hit our hit
-     * @param fieldName foreign field we're interested in
+     * @param field foreign field we're interested in
      * @return array of length 2, containing start and end positions for the hit in this field
      */
-    protected int[] getForeignHitStartEnd(Hit hit, AnnotatedField field) {
+    protected int[] getForeignHitStartEnd(EphemeralHit hit, AnnotatedField field) {
         assert hit != null : "Need a hit";
         MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos == null)
@@ -105,7 +104,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     /** Used by fetchContext() to get required context part boundaries for a hit */
     @FunctionalInterface
     public interface StartEndSetter {
-        void setStartEnd(int[] starts, int[] ends, int indexInArrays, Hit hit);
+        void setStartEnd(int[] starts, int[] ends, int indexInArrays, EphemeralHit hit);
     }
 
     /** Information deserialized from extra parameters.
@@ -176,8 +175,8 @@ public abstract class HitPropertyContextBase extends HitProperty {
         this.name = prop.name;
         this.serializeName = prop.serializeName;
         this.compareInReverse = prop.compareInReverse;
-        if (prop.context.hits() == context.hits()) {
-            // Same hits object; reuse context arrays
+        if (prop.context.equals(context)) {
+            // Same context; reuse context arrays
             copyContext(prop);
         } else {
             initForwardIndex();
@@ -269,13 +268,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    @Override
-    public synchronized void disposeContext() {
-        //forwardIndex = null; // no, we sometimes reuse HitProperty after disposing (e.g. with HitsSingle to filter)
-        contextTermId = null;
-        contextSortOrder = null;
-    }
-
     private synchronized void fetchContextForDoc(StartEndSetter setStartEnd, int docId, long fromIndex, long toIndexExclusive) {
         assert fromIndex >= 0 && toIndexExclusive > 0;
         assert fromIndex < toIndexExclusive;
@@ -322,7 +314,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    private Map<LeafReaderContext, AnnotationForwardIndex> fieldForwardIndexes = new ConcurrentHashMap<>();
+    private ConcurrentMap<LeafReaderContext, AnnotationForwardIndex> fieldForwardIndexes = new ConcurrentHashMap<>();
 
     private AnnotationForwardIndex getFieldForwardIndex(LeafReaderContext lrc) {
         return fieldForwardIndexes.computeIfAbsent(lrc,

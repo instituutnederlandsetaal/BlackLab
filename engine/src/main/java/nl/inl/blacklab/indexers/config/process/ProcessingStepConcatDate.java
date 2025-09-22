@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.time.YearMonth;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -64,7 +65,10 @@ public class ProcessingStepConcatDate extends ProcessingStep {
 
     private Integer getIntFieldValue(DocIndexer docIndexer, String fieldName) {
         try {
-            return Integer.parseInt(docIndexer.getMetadataField(fieldName).get(0));
+            List<String> metadataField = docIndexer.getMetadataField(fieldName);
+            if (metadataField == null)
+                return null;
+            return Integer.parseInt(metadataField.get(0));
         } catch (Exception e) {
             return null;
         }

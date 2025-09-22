@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
-import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 
 /**
@@ -102,7 +102,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
             // when the second index segment is processed, for example.
             groupIndex = groupName.isEmpty() ? 0 : context.hits().matchInfoDefs().indexOf(groupName);
         }
-        fetchContext((int[] starts, int[] ends, int indexInArrays, Hit hit) -> {
+        fetchContext((int[] starts, int[] ends, int indexInArrays, EphemeralHit hit) -> {
             if (groupIndex < 0) {
                 // Match info not registered (yet). Return empty value.
                 // Might be registered later in the matching process.
@@ -110,7 +110,7 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
                 ends[indexInArrays] = 0;
                 return;
             }
-            MatchInfo group = hit.matchInfos(groupIndex);
+            MatchInfo group = hit.matchInfo(groupIndex);
             
             if (relNameInList != null && group instanceof RelationListInfo relList) {
                 if (relNameIsFullRelType) {

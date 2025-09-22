@@ -24,19 +24,15 @@ import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.results.hits.Group;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
-import nl.inl.blacklab.search.results.hits.HitsUtils;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 
 public abstract class HitResultsAbstract extends ResultsAbstract implements HitResults {
 
-    protected static final Logger logger = LogManager.getLogger(HitResultsWithHitsInternal.class);
-
-    public HitResultsAbstract(QueryInfo queryInfo) {
-        super(queryInfo);
-    }
+    protected static final Logger logger = LogManager.getLogger(HitResultsAbstract.class);
 
     public static Hits sampleHits(Hits hitsList, SampleParameters sampleParameters) {
         // Fetch all hits and get most efficient implementation (nonlocking)
@@ -68,14 +64,18 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         }
 
         // Add the chosen hits indexes to the sample.
-        HitsMutable sample = HitsMutable.create(hitsList.field(), hitsList.matchInfoDefs(), numberOfHitsToSelect,
-                numberOfHitsToSelect, false);
+        HitsMutable sample = HitsMutable.create(
+                hitsList.context(), numberOfHitsToSelect, numberOfHitsToSelect, false);
         EphemeralHit hit = new EphemeralHit();
         for (Long hitIndex: chosenHitIndices) {
             hitsList.getEphemeral(hitIndex, hit);
             sample.add(hit);
         }
         return sample;
+    }
+
+    public HitResultsAbstract(QueryInfo queryInfo) {
+        super(queryInfo);
     }
 
     /**
@@ -128,14 +128,6 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         return new HitResultsList(queryInfo(), sample, null, sampleParameters, hitsStats, docsStats);
     }
 
-    /**
-     * Return a new Hits object with these hits sorted by the given property.
-     * This keeps the existing sort (or lack of one) intact and allows you to cache
-     * different sorts of the same result set.
-     *
-     * @param sortBy the hit property to sort on
-     * @return a new Hits object with the same hits, sorted in the specified way
-     */
     @Override
     public HitResults sorted(HitProperty sortBy) {
         Hits hits = getHits().getStatic(); // ensure all read
@@ -148,9 +140,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     public HitGroups group(HitProperty groupBy, long maxResultsToStorePerGroup) {
         if (groupBy == null)
             throw new IllegalArgumentException("Must have criteria to group on");
-        Hits hits = getHits().getStatic(); // ensure all read
 
-        Map<PropertyValue, Hits.Group> groupedHits = HitsUtils.group(hits, groupBy,
+        Map<PropertyValue, Group> groupedHits = getHits().grouped(groupBy,
                 maxResultsToStorePerGroup);
 
         // (We make a copy of the stats so we don't keep any references to the source hits)

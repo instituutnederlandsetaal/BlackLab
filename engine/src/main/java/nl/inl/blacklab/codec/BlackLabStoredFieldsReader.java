@@ -238,7 +238,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
     /**
      * Create a content store reader for this segment.
      *
-     * The returned reader is not threadsafe and shouldn't be stored.
+     * The returned reader is not thread-safe and shouldn't be stored.
      * A single thread may use it for reading from this segment. It
      * can then be discarded.
      *

@@ -1,37 +1,48 @@
 package nl.inl.blacklab.search.results.hitresults;
 
+import java.util.List;
+
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.hits.HitsFromFetcher;
-import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
-import nl.inl.blacklab.search.results.hits.fetch.HitFetcherFilterHits;
+import nl.inl.blacklab.search.results.hits.HitsFromPublishers;
 import nl.inl.blacklab.search.results.hits.fetch.HitFilter;
 import nl.inl.blacklab.search.results.hits.fetch.HitFilterPropertyValue;
+import nl.inl.blacklab.search.results.hits.fetch.HitPublisher;
+import nl.inl.blacklab.search.results.hits.fetch.HitPublisherFilter;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 
 public class HitResultsFiltered extends HitResultsAbstract {
 
     /** Global view on our segment hits */
-    private final HitsFromFetcher hits;
+    private final HitsFromPublishers hits;
 
-    protected HitResultsFiltered(QueryInfo queryInfo, Hits toFilter,
+    protected HitResultsFiltered(QueryInfo queryInfo, Hits source,
             HitProperty filterProp, PropertyValue filterValue) {
         super(queryInfo);
-        HitFetcher fetcher = new HitFetcherFilterHits(toFilter);
         HitFilter filter = new HitFilterPropertyValue(filterProp, filterValue);
-        hits = new HitsFromFetcher(queryInfo.timings(), fetcher, filter);
+        List<HitPublisher> hitPublishers = source.publishersPerSegment();
+        if (hitPublishers != null) {
+            List<HitPublisherFilter> publishers = hitPublishers.stream()
+                    .map(hits -> new HitPublisherFilter(hits, filter))
+                    .toList();
+            hits = new HitsFromPublishers(publishers, SearchSettings.UNLIMITED);
+        } else {
+            hits = new HitsFromPublishers(List.of(new HitPublisherFilter(source.publisher(), filter)),
+                    SearchSettings.UNLIMITED);
+        }
     }
 
     @Override
     public long numberOfResultObjects() {
-        return hits.globalHitsSoFar();
+        return hits.sizeSoFar();
     }
 
     @Override
-    public HitsFromFetcher getHits() {
+    public Hits getHits() {
         return hits;
     }
 

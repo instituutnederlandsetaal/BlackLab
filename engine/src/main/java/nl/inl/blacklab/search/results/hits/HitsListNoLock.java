@@ -14,14 +14,12 @@ import it.unimi.dsi.fastutil.objects.ObjectBigList;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
- * A HitsInternal implementation that does no locking and can handle huge result sets.
+ * A non-locking Hits implementation that can handle huge result sets.
  * <p>
- * This means it is safe to fill this object in one thread, then
+ * Non-locking means it is safe to fill this object in one thread, then
  * use it from many threads as long as it is not modified anymore.
  * <p>
  * A test calling {@link #add(int, int, int, MatchInfo[])} millions of times came out to be about 11% faster than
@@ -30,6 +28,8 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
  * <p>
  * These tests are not representative of real-world usage, but on huge result sets this will
  * likely save a few seconds.
+ * <p>
+ * Use one of the HitsMutable.create() factory methods to create the appropriate implementation.
  */
 class HitsListNoLock extends HitsListAbstract {
 
@@ -38,8 +38,8 @@ class HitsListNoLock extends HitsListAbstract {
     protected final IntBigList ends;
     protected final ObjectBigList<MatchInfo[]> matchInfos;
 
-    HitsListNoLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
-        super(field, matchInfoDefs);
+    HitsListNoLock(Hits.HitsContext context, long initialCapacity) {
+        super(context);
         if (initialCapacity < 0) {
             // Use default initial capacities
             docs = new IntBigArrayBigList();
@@ -66,8 +66,8 @@ class HitsListNoLock extends HitsListAbstract {
      * @param ends          hit end positions
      * @param matchInfos    match info for each hit, or empty if no match info
      */
-    HitsListNoLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, IntBigList docs, IntBigList starts, IntBigList ends, ObjectBigList<MatchInfo[]> matchInfos) {
-        super(field, matchInfoDefs);
+    HitsListNoLock(Hits.HitsContext context, IntBigList docs, IntBigList starts, IntBigList ends, ObjectBigList<MatchInfo[]> matchInfos) {
+        super(context);
         if (docs == null || starts == null || ends == null)
             throw new NullPointerException();
         if (docs.size64() != starts.size64() || docs.size64() != ends.size64() || ((matchInfos != null && !matchInfos.isEmpty()) && matchInfos.size64() != docs.size64()))
@@ -101,21 +101,6 @@ class HitsListNoLock extends HitsListAbstract {
         ends.add(hit.end_);
         if (hit.matchInfos_ != null) {
             matchInfos.add(hit.matchInfos_);
-        } else {
-            // Either all hits have matchInfo, or none do.
-            assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
-        }
-    }
-
-    /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-    @Override
-    public void add(Hit hit) {
-        assert HitsListAbstract.debugCheckReasonableHit(hit);
-        docs.add(hit.doc());
-        starts.add(hit.start());
-        ends.add(hit.end());
-        if (hit.matchInfos() != null) {
-            matchInfos.add(hit.matchInfos());
         } else {
             // Either all hits have matchInfo, or none do.
             assert matchInfos.isEmpty() : "Cannot have some hits with matchInfo and some without";
@@ -229,8 +214,8 @@ class HitsListNoLock extends HitsListAbstract {
     }
 
     @Override
-    long countDocsNoLock() {
-        return docs.stream().distinct().count();
+    int countDocsNoLock(long startIndex, long endIndex) {
+        return (int)docs.subList(startIndex, endIndex).stream().distinct().count();
     }
 
     /** Note: iterating does not lock the arrays, to do that, it should be performed in a {@link #withReadLock} callback. */
@@ -287,7 +272,8 @@ class HitsListNoLock extends HitsListAbstract {
         }
 
         // Now use the sorted indices to fill a new HitsInternal with the actual hits
-        HitsMutable r = HitsMutable.create(field, matchInfoDefs, size(), true, false);
+        HitsMutable r = HitsMutable.create(context(),
+                size(), true, false);
         for (final long[] segment: indices) {
             if (matchInfos.isEmpty()) {
                 for (long l: segment) {
@@ -303,30 +289,31 @@ class HitsListNoLock extends HitsListAbstract {
     }
 
     @Override
-    public void addAllConvertDocBaseNoLock(Hits hits, int docBase) {
+    public void addAllConvertDocBaseNoLock(Hits hits) {
         if (hits instanceof HitsListLock hil) {
             // We have to lock this.
             hil.withReadLock(hil2 -> {
-                addAllConvertDocBaseNoLockSource(hil, docBase);
+                addAllConvertDocBaseNoLockSource(hil);
             });
         } else if (hits instanceof HitsListLock32 hil32) {
             // We have to lock this.
             hil32.withReadLock(hil32_2 -> {
-                addAllConvertDocBaseNoLock32(hil32, docBase);
+                addAllConvertDocBaseNoLock32(hil32);
             });
         } else if (hits instanceof HitsListNoLock hinl) {
             // No need to lock
-            addAllConvertDocBaseNoLockSource(hinl, docBase);
+            addAllConvertDocBaseNoLockSource(hinl);
         } else if (hits instanceof HitsListNoLock32 hinl32) {
             // No need to lock
-            addAllConvertDocBaseNoLock32(hinl32, docBase);
+            addAllConvertDocBaseNoLock32(hinl32);
         } else {
             super.addAllNoLock(hits);
         }
     }
 
-    private void addAllConvertDocBaseNoLockSource(HitsListNoLock hil, int docBase) {
+    private void addAllConvertDocBaseNoLockSource(HitsListNoLock hil) {
         assert HitsListAbstract.debugCheckAllReasonable(hil);
+        int docBase = hil.context().leafReaderContext().docBase;
         for (int i = 0; i < hil.docs.size64(); i++) {
             docs.add(hil.docs.getInt(i) + docBase);
         }
@@ -336,8 +323,9 @@ class HitsListNoLock extends HitsListAbstract {
         assert matchInfos.isEmpty() || matchInfos.size64() == docs.size64() : "Wrong number of matchInfos";
     }
 
-    private void addAllConvertDocBaseNoLock32(HitsListNoLock32 hil, int docBase) {
+    private void addAllConvertDocBaseNoLock32(HitsListNoLock32 hil) {
         assert HitsListAbstract.debugCheckAllReasonable(hil);
+        int docBase = hil.context().leafReaderContext().docBase;
         for (int i = 0; i < hil.docs.size(); i++) {
             docs.add(hil.docs.getInt(i) + docBase);
         }
@@ -345,5 +333,12 @@ class HitsListNoLock extends HitsListAbstract {
         ends.addAll(hil.ends);
         matchInfos.addAll(hil.matchInfos);
         assert matchInfos.isEmpty() || matchInfos.size64() == docs.size64() : "Wrong number of matchInfos";
+    }
+
+    protected void fillWindow(HitsMutable window, long start, long end) {
+        for (long i = start; i < end; ++i) {;
+            window.add(docs.getInt(i), starts.getInt(i), ends.getInt(i),
+                    matchInfos.isEmpty() ? null : matchInfos.get(i));
+        }
     }
 }

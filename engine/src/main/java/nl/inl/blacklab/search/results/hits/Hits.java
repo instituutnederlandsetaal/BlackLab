@@ -3,28 +3,28 @@ package nl.inl.blacklab.search.results.hits;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.LeafReaderContext;
 
-import com.ibm.icu.text.CollationKey;
-
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hitresults.Kwics;
+import nl.inl.blacklab.search.results.hits.fetch.HitPublisher;
+import nl.inl.blacklab.search.results.hits.fetch.HitSubscriber;
 
 /**
  * A list of simple hits.
@@ -39,9 +39,39 @@ public interface Hits extends Iterable<EphemeralHit> {
 
     Logger logger = LogManager.getLogger(Hits.class);
 
+    /** Context for our hit: field, match info definitions and segment they came from (or null if global) */
+    record HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+        public HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs, LeafReaderContext leafReaderContext) {
+            this.field = field;
+            this.matchInfoDefs = matchInfoDefs != null ? matchInfoDefs : MatchInfoDefs.EMPTY;
+            this.leafReaderContext = leafReaderContext;
+        }
+
+        public HitsContext(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
+            this(field, matchInfoDefs, null);
+        }
+
+        public HitsContext(AnnotatedField field) {
+            this(field, MatchInfoDefs.EMPTY, null);
+        }
+
+        public static HitsContext fromHitQueryContext(HitQueryContext hitQueryContext,
+                LeafReaderContext leafReaderContext) {
+            return new HitsContext(hitQueryContext.getField(), hitQueryContext.getMatchInfoDefs(), leafReaderContext);
+        }
+
+        public BlackLabIndex index() {
+            return field.index();
+        }
+
+        public HitsContext withoutLeafReaderContext() {
+            return new HitsContext(field, matchInfoDefs, null);
+        }
+    }
+
     /** An empty list of hits. */
-    static Hits empty(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        return new HitsListNoLock32(field, matchInfoDefs, -1);
+    static Hits empty(Hits.HitsContext context) {
+        return new HitsListNoLock32(context, -1);
     }
 
     static Hits fromLists(AnnotatedField field,
@@ -49,25 +79,29 @@ public interface Hits extends Iterable<EphemeralHit> {
         IntList lDocs = new IntArrayList(docs);
         IntList lStarts = new IntArrayList(starts);
         IntList lEnds = new IntArrayList(ends);
-        return new HitsListNoLock32(field, null, lDocs, lStarts, lEnds, null);
+        return new HitsListNoLock32(new HitsContext(field), lDocs, lStarts, lEnds, null);
     }
 
-    static Hits single(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
+    static Hits single(HitsContext context, int doc, int matchStart, int matchEnd) {
         if (doc < 0 || matchStart < 0 || matchEnd < 0 || matchStart > matchEnd) {
             throw new IllegalArgumentException("Invalid hit: doc=" + doc + ", start=" + matchStart + ", end=" + matchEnd);
         }
-        return new HitsSingle(field, matchInfoDefs, doc, matchStart, matchEnd);
+        return new HitsSingle(context, doc, matchStart, matchEnd);
     }
 
+    HitsContext context();
+
     /**
-     * Get the field these hits are from.
+     * Type of each of our match infos.
      *
-     * @return field
+     * @return list of match info definitions
      */
-    AnnotatedField field();
+    default AnnotatedField field() {
+        return context().field();
+    }
 
     default BlackLabIndex index() {
-        return field().index();
+        return context().index();
     }
 
     /**
@@ -75,7 +109,9 @@ public interface Hits extends Iterable<EphemeralHit> {
      *
      * @return list of match info definitions
      */
-    MatchInfoDefs matchInfoDefs();
+    default MatchInfoDefs matchInfoDefs() {
+        return context().matchInfoDefs();
+    }
 
     /**
      * Get the number of hits.
@@ -98,6 +134,11 @@ public interface Hits extends Iterable<EphemeralHit> {
      */
     boolean sizeAtLeast(long minSize);
 
+    /** For lazy Hits implementations, returns the current size.
+     * For non-lazy implementations, just returns size().
+     */
+    long sizeSoFar();
+
     /**
      * Check if this hits object is empty.
      *
@@ -115,7 +156,7 @@ public interface Hits extends Iterable<EphemeralHit> {
      * @param index index of the desired hit
      * @return the hit, or null if it's beyond the last hit
      */
-    Hit get(long index);
+    PermanentHit get(long index);
 
     /**
      * Copy hit information into a temporary object.
@@ -244,102 +285,43 @@ public interface Hits extends Iterable<EphemeralHit> {
     }
 
     /**
-     * Return a new hits object with these hits sorted by the given property.
+     * Sort these hits on the specified property.
      *
      * @param sortBy the hit property to sort on
-     * @return a new hits object with the same hits, sorted in the specified way
+     * @return a sorted copy of these hits
      */
-    default Hits sorted(HitProperty sortBy) {
-        // Fetch all the hits and determine size.
-        long n = size();
-        HitsListAbstract mergedHits = HitsMutable.create(field(), matchInfoDefs(),
-                n, n, false);
-        Map<LeafReaderContext, Hits> perSegment = hitsPerSegment();
-        if (perSegment != null) {
-            // Use per-segment hits directly rather than through a global view
-            for (Map.Entry<LeafReaderContext, Hits> segmentHits: perSegment.entrySet()) {
-                Hits hits = segmentHits.getValue().getStatic();
-                mergedHits.addAllConvertDocBase(hits, segmentHits.getKey().docBase);
-            }
-        } else {
-            // Just copy all hits and sort them.
-            // (subclass will usually override this method to do it more efficiently)
-            mergedHits.addAllConvertDocBase(getStatic(), 0);
-        }
-        HitProperty sortByWithContext = sortBy.copyWith(PropContext.globalHits(mergedHits,
-                new ConcurrentHashMap<>()));
-        // NOTE: We're calling HitsListAbstract.sorted(), not recursing endlessly.
-        return mergedHits.sorted(sortByWithContext);
+    Hits sorted(HitProperty sortBy);
+
+    /**
+     * Group hits by the specified property.
+     * @param groupBy the hit property to group on
+     * @param maxResultsToStorePerGroup maximum number of hits to store per group
+     * @return grouped hits
+     */
+    Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxResultsToStorePerGroup);
+
+    /**
+     * Count the number of distinct documents in the specified range of hits.
+     *
+     * @param startIndex start index, inclusive
+     * @param endIndex end index, exclusive
+     * @return number of distinct documents in the specified range of hits
+     */
+    int countDocs(long startIndex, long endIndex);
+
+    /**
+     * Count the number of distinct documents.
+     * @return number of distinct documents
+     */
+    default int countDocs() {
+        return countDocs(0, size());
     }
 
     /**
-     * Filter hits using the given function.
+     * Do we have match info available?
      *
-     * PROBLEM: we want to filter lazily, using a similar approach to HitsFromQuery.
-     *
-     * @param property property to filter on
-     * @param value value to filter with
-     * @param mustMaintainOrder if true, the returned hits must be in the same order as the original hits
-     * @return filtered hits
+     * @return true if we have match info, false if not
      */
-    default Hits filtered(HitProperty property, PropertyValue value, boolean mustMaintainOrder) {
-        // Fetch all the hits and determine size.
-        long totalSourceHits = size();
-        Map<LeafReaderContext, Hits> perSegment = hitsPerSegment();
-        if (perSegment != null && !mustMaintainOrder) {
-            // Use per-segment hits directly rather than through a global view
-            int numThreads = Math.min(
-                    Math.max(index().blackLab().maxThreadsPerSearch(), 1),
-                    HitsUtils.IDEAL_NUM_THREADS_GROUPING);
-            Parallel<Map.Entry<LeafReaderContext, Hits>, HitsMutable> parallel = new Parallel<>(index(), numThreads);
-            Map<String, CollationKey> collationCache = new ConcurrentHashMap<>();
-            return parallel.mapReduce(perSegment.entrySet(),
-                    entry -> entry.getValue().size(),
-                    threadItems -> {
-                        // Group items in these segments into a single map.
-                        long numHits = threadItems.stream().map(e -> e.getValue().size()).reduce(0L, Long::sum);
-                        HitsMutable filteredHits = HitsMutable.create(field(), matchInfoDefs(),
-                                numHits, numHits, false);
-                        for (Map.Entry<LeafReaderContext, Hits> entry: threadItems) {
-                            Hits hits = entry.getValue().getStatic();
-                            LeafReaderContext lrc = entry.getKey();
-                            HitProperty segProperty = property.copyWith(PropContext.segmentHits(hits, lrc, collationCache));
-                            for (long i = 0; i < hits.size(); i++) {
-                                if (segProperty.get(i).equals(value)) {
-                                    // This hit matches the filter, add it to the results
-                                    EphemeralHit hit = new EphemeralHit();
-                                    hits.getEphemeral(i, hit);
-                                    hit.convertDocIdToGlobal(lrc.docBase);
-                                    filteredHits.add(hit);
-                                }
-                            }
-                        }
-                        return List.of(filteredHits);
-                    },
-                    HitsMutable::addAll,
-                    () -> HitsMutable.create(field(), matchInfoDefs(), -1,
-                            totalSourceHits, false)
-            );
-        } else {
-            // Just filter the hits sequentially.
-            // (subclass could override this method to do it more efficiently)
-            HitProperty globalProperty = property.copyWith(PropContext.globalHits(this, new ConcurrentHashMap<>()));
-            HitsListAbstract allFilteredHits = HitsMutable.create(field(), matchInfoDefs(),
-                    totalSourceHits, totalSourceHits, false);
-            for (long i = 0; i < totalSourceHits; i++) {
-                if (globalProperty.get(i).equals(value)) {
-                    // This hit matches the filter, add it to the results
-                    EphemeralHit hit = new EphemeralHit();
-                    getEphemeral(i, hit);
-                    allFilteredHits.add(hit);
-                }
-            }
-            return allFilteredHits;
-        }
-    }
-
-    long countDocs();
-
     boolean hasMatchInfo();
 
     /**
@@ -361,49 +343,90 @@ public interface Hits extends Iterable<EphemeralHit> {
      */
     Concordances concordances(ContextSize contextSize, ConcordanceType type);
 
+    /**
+     * Create KWICs (keywords in context).
+     * @param contextSize desired context size around the hits
+     * @return KWICs
+     */
     Kwics kwics(ContextSize contextSize);
 
+    /**
+     * Return a new hits object with only the hits in the specified document.
+     * @param docId document id
+     * @return new hits object with only hits in the specified document
+     */
     Hits filteredByDocId(int docId);
 
-    default Map<LeafReaderContext, Hits> hitsPerSegment() {
+    /** Return publishers per segment (if available).
+     *
+     * Operations can subscribe to the publishers to process hits
+     * per segment in parallel.
+     *
+     * @return list of hit publishers, one per segment, or null if not available
+     */
+    default List<HitPublisher> publishersPerSegment() {
         return null;
     }
 
-    /** For grouping */
-    class Group {
-
-        HitsMutable storedHits;
-
-        long totalNumberOfHits;
-
-        public Group(HitsMutable storedHits, int totalNumberOfHits) {
-            this.storedHits = storedHits;
-            this.totalNumberOfHits = totalNumberOfHits;
-        }
-
-        public HitsMutable getStoredHits() {
-            return storedHits;
-        }
-
-        public long getTotalNumberOfHits() {
-            return totalNumberOfHits;
-        }
-
-        public Group merge(Group segmentGroup, long maxValuesToStorePerGroup) {
-            if (maxValuesToStorePerGroup >= 0 && storedHits.size() + segmentGroup.storedHits.size() > maxValuesToStorePerGroup) {
-                // Can we hold any more hits?
-                if (storedHits.size() < maxValuesToStorePerGroup) {
-                    // We can add a limited number of hits, so we need to trim the segment group
-                    Hits hitsToAdd = segmentGroup.storedHits
-                            .sublist(0, maxValuesToStorePerGroup - storedHits.size());
-                    storedHits.addAll(hitsToAdd);
-                }
-            } else {
-                // Just add all the hits
-                storedHits.addAll(segmentGroup.getStoredHits());
-            }
-            totalNumberOfHits += segmentGroup.totalNumberOfHits;
-            return this;
-        }
+    /** Fetch all hits and return Hits per segment (if available).
+     *
+     * This is a convenience method that uses publishersPerSegment().
+     *
+     * @return list of Hits, one per segment, or null if not available
+     */
+    default List<Hits> hitsPerSegment() {
+        List<HitPublisher> hitPublishers = publishersPerSegment();
+        if (hitPublishers == null)
+            return null;
+        return hitPublishers.stream().map(HitPublisher::getStatic).toList();
     }
+
+    /**
+     * Return a publisher for these hits.
+     *
+     * The default implementation fetches all hits immediately,
+     * then publishes all of them in one batch.
+     *
+     * @return hit publisher
+     */
+    default HitPublisher publisher() {
+        return new HitPublisher() {
+            @Override
+            public HitsContext context() {
+                return Hits.this.context();
+            }
+
+            @Override
+            public Hits getStatic() {
+                return Hits.this.getStatic();
+            }
+
+            @Override
+            public void subscribe(HitSubscriber subscriber) {
+                size(); // fetch all hits
+                LeafReaderContext lrc = context().leafReaderContext();
+                subscriber.start(lrc, Hits.this);
+                if (size() > 0)
+                    subscriber.hits(lrc, Hits.this.getStatic(), 0, size(),
+                            countDocs(), 0);
+                subscriber.flush(lrc, Hits.this);
+                subscriber.done(lrc);
+            }
+
+            @Override
+            public void activate() {
+                // Default subscribe() implementation already fetched all hits, so nothing to do here.
+            }
+        };
+    }
+
+    /**
+     * Perform an operation per-segment if possible, using HitSubscribers.
+     * If we don't have per-segment publishers, we will just use a the "global"
+     * publisher() for the whole hits object.
+     *
+     * @param subscriberSupplier supplier of HitSubscribers to use for each segment
+     * @param prefetchAll
+     */
+    void performPerSegment(Supplier<HitSubscriber> subscriberSupplier, boolean prefetchAll);
 }

@@ -7,7 +7,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import com.ibm.icu.text.CollationKey;
 
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.PropContext;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.hits.Hits;
 
@@ -27,14 +26,8 @@ public class HitFilterPropertyValue implements HitFilter {
     }
 
     @Override
-    public void disposeContext() {
-        // sometimes necessary, e.g. if we have to re-use HitsSingle to filter
-        filterProp.disposeContext();
-    }
-
-    @Override
     public HitFilter forSegment(Hits hits, LeafReaderContext lrc, Map<String, CollationKey> collationCache) {
-        HitProperty prop = filterProp.copyWith(PropContext.segmentHits(hits, lrc, collationCache));
+        HitProperty prop = filterProp.copyWith(filterProp.getContext().adjustedWith(hits, lrc, collationCache));
         return new HitFilterPropertyValue(prop, filterValue);
     }
 }

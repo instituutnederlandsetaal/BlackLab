@@ -64,6 +64,17 @@ public record PropContext(Hits hits, LeafReaderContext lrc, boolean toGlobal, Ma
         return hits.doc(index) + (lrc != null ? lrc.docBase : 0);
     }
 
+    public PropContext adjustedWith(Hits hits, LeafReaderContext lrc, Map<String, CollationKey> collationCache) {
+        if ((hits == null || hits == this.hits) &&
+                (lrc == null || lrc == this.lrc) &&
+                (collationCache == null || collationCache == this.collationCache))
+            return this;
+        return new PropContext(hits == null ? this.hits : hits,
+                lrc == null ? this.lrc : lrc,
+                lrc != null && (this.toGlobal || (lrc != this.lrc)),
+                collationCache == null ? this.collationCache : collationCache);
+    }
+
     public PropContext adjustedWith(PropContext contextChanges) {
         if (contextChanges == null || contextChanges == PropContext.NO_CHANGE)
             return this;

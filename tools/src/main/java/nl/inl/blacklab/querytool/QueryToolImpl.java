@@ -59,8 +59,10 @@ import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.HitsAbstract;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
@@ -330,6 +332,7 @@ public class QueryToolImpl {
         case "next", "n" -> cmdNextPage();
         case "page" -> cmdShowPage(arguments);
         case "pagesize" -> cmdPageSize(arguments);
+        case "parallel" -> cmdParallel(arguments);
         case "prev", "p" -> cmdPrevPage();
         case "sensitive" -> cmdSensitive(arguments);
         case "sleep" -> cmdSleep(arguments);
@@ -523,6 +526,13 @@ public class QueryToolImpl {
         showResultsPage();
     }
 
+    /** Group while fetching (on) or after fetching (off)? (performance testing) */
+    private void cmdParallel(String arguments) {
+        boolean b = parseBoolean(arguments);
+        HitsAbstract.setGroupAfterFetching(!b);
+        System.out.println("Parallel grouping: " + (b ? "ON" : "OFF"));
+    }
+
     /**
      * Show the previous page of results.
      */
@@ -632,6 +642,7 @@ public class QueryToolImpl {
             if (n < 1)
                 n = 1;
             index.blackLab().setMaxThreadsPerSearch(n);
+            HitResultsFromQuery.setNumberOfThreads(n);
         }
         output.line("Number of threads for searching: " + index.blackLab().maxThreadsPerSearch());
     }
@@ -705,6 +716,7 @@ public class QueryToolImpl {
      * @param query the query
      */
     private void parseAndExecuteQuery(String query) {
+        timings.start();
         try {
 
             // See if we want to choose any random words
@@ -766,6 +778,8 @@ public class QueryToolImpl {
             e.printStackTrace(); // DEBUG createWeight bug
             output.error("Cannot execute query; " + e.getMessage());
             output.error("(Type 'help' for examples or see https://blacklab.ivdnt.org/development/query-tool.html)");
+        } finally {
+            timings.record("fetch");
         }
     }
 
@@ -881,7 +895,7 @@ public class QueryToolImpl {
 
         // Group results
         HitProperty crit = getCrit(groupBy, annotationName, 1);
-        groups = hitResults.group(crit, -1);
+        groups = hitResults.group(crit, Results.NO_LIMIT);
         showSetting = ShowSetting.GROUPS;
         sortGroups(HitGroupPropertySize.ID);
         timings.record("group");

@@ -1,15 +1,15 @@
 package org.ivdnt.blacklab.proxy;
 
-import jakarta.inject.Singleton;
-import jakarta.ws.rs.client.Client;
-import jakarta.ws.rs.client.ClientBuilder;
-
 import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.ivdnt.blacklab.proxy.resources.CorpusResource;
 import org.ivdnt.blacklab.proxy.resources.RootResource;
+
+import jakarta.inject.Singleton;
+import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.client.ClientBuilder;
 
 /**
  * Add any classes that Jersey needs to be aware of here (or add packages in which to use auto-discovering)
@@ -59,7 +59,7 @@ public class AppConfig extends ResourceConfig {
 			@Override
 			protected void configure() {
 				// "when @Inject'ing a Client, use this factory and a singleton instance."
-				// (Client is a heavy object and Jersey clients should be threadsafe)
+				// (Client is a heavy object and Jersey clients should be thread-safe)
 				bindFactory(ClientFactory.class).to(Client.class).in(Singleton.class);
 			}
 		});

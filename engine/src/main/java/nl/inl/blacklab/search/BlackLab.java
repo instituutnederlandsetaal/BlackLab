@@ -50,13 +50,6 @@ import nl.inl.util.ZipHandleManager;
 public final class BlackLab {
     private static final Logger logger = LogManager.getLogger(BlackLab.class);
 
-    /** If no explicit BlackLab instance is created, how many threads per search should we use?
-     *
-     * Note that each operation will use an "optimal" number of threads, but none will ever use
-     * more than specified here.
-     */
-    private static final int DEFAULT_MAX_THREADS_PER_SEARCH = 4;
-
     /**
      * If client doesn't explicitly create a BlackLab instance, one will be instantiated
      * automatically.

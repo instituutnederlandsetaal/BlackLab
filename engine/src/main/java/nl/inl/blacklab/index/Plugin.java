@@ -6,7 +6,7 @@ import nl.inl.blacklab.exceptions.PluginException;
 
 /**
  * Interface of converting a plugin (including using external services) Only a
- * single instance of a plugin is constructed, so plugins must be threadsafe.
+ * single instance of a plugin is constructed, so plugins must be thread-safe.
  *
  * A plugin must define a no-argument constructor.
  */

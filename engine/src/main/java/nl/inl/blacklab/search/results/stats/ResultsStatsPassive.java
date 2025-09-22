@@ -3,17 +3,23 @@ package nl.inl.blacklab.search.results.stats;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.LongAdder;
 
-import nl.inl.blacklab.search.results.hits.fetch.HitFetcher;
-
 /** ResultsStats that relies on being informed of progress by its owner. */
 public class ResultsStatsPassive extends ResultsStats {
 
-    public ResultsStatsPassive(ResultsAwaiter waitUntil) {
-        this(waitUntil, Long.MAX_VALUE, Long.MAX_VALUE);
+    public ResultsStatsPassive() {
+        this(ResultsAwaiter.THROWING, Long.MAX_VALUE, Long.MAX_VALUE);
     }
 
-    public ResultsStatsPassive(ResultsAwaiter waitUntil, long maxHitsToProcess, long maxHitsToCount) {
-        super(waitUntil);
+    public ResultsStatsPassive(long maxHitsToProcess, long maxHitsToCount) {
+        this(ResultsAwaiter.THROWING, maxHitsToProcess, maxHitsToCount);
+    }
+
+    public ResultsStatsPassive(ResultsAwaiter resultsAwaiter) {
+        this(resultsAwaiter, Long.MAX_VALUE, Long.MAX_VALUE);
+    }
+
+    public ResultsStatsPassive(ResultsAwaiter resultsAwaiter, long maxHitsToProcess, long maxHitsToCount) {
+        super(resultsAwaiter);
         this.maxHitsToProcess = maxHitsToProcess;
         this.maxHitsToCount = maxHitsToCount;
     }
@@ -24,17 +30,15 @@ public class ResultsStatsPassive extends ResultsStats {
 
     private final AtomicBoolean done = new AtomicBoolean(false);
 
-    private MaxStats maxStats = new MaxStats() {
-        @Override
-        public boolean isTooManyToProcess() {
-            return processed.sum() >= maxHitsToProcess;
-        }
+    private MaxStats maxStats = MaxStats.NOT_EXCEEDED;
 
-        @Override
-        public boolean isTooManyToCount() {
-            return counted.sum() >= maxHitsToCount;
-        }
-    };
+    public long getMaxHitsToProcess() {
+        return maxHitsToProcess;
+    }
+
+    public long getMaxHitsToCount() {
+        return maxHitsToCount;
+    }
 
     private final long maxHitsToProcess;
 
@@ -48,8 +52,8 @@ public class ResultsStatsPassive extends ResultsStats {
         return counted.sum();
     }
 
-    public synchronized boolean done() {
-        return done.get() || (maxStats.isTooManyToProcess() && maxStats.isTooManyToCount());
+    public boolean done() {
+        return done.get();
     }
 
     public synchronized MaxStats maxStats() {
@@ -61,35 +65,20 @@ public class ResultsStatsPassive extends ResultsStats {
         return "ResultsStatsPassive [processed=" + processedSoFar() + ", counted=" + countedSoFar() + ", maxStats=" + maxStats + ", done=" + done + "]";
     }
 
-    public synchronized void setDone() {
+    public void setDone() {
         this.done.set(true);
     }
 
     public void increment(boolean storeThisHit) {
-        this.counted.add(1);
-        if (storeThisHit)
-            this.processed.add(1);
+        add(1, storeThisHit ? 1 : 0);
     }
 
-    public void setDone(boolean b) {
-        this.done.set(b);
-    }
-
-    public synchronized void setDone(MaxStats maxStats) {
-        if (maxStats == null)
-            throw new IllegalArgumentException("maxStats cannot be null");
-        this.maxStats = maxStats;
-        setDone(true);
-    }
-
-    public synchronized HitFetcher.Phase add(long processed, long counted) {
+    public synchronized void add(long processed, long counted) {
         this.processed.add(processed);
+        if (this.processed.sum() >= maxHitsToProcess)
+            maxStats = maxStats.maxToProcessReached();
         this.counted.add(counted);
         if (this.counted.sum() >= maxHitsToCount)
-            return HitFetcher.Phase.DONE;
-        else if (this.processed.sum() >= maxHitsToProcess)
-            return HitFetcher.Phase.COUNTING_ONLY;
-        else
-            return HitFetcher.Phase.STORING_AND_COUNTING;
+            maxStats = maxStats.maxToCountReached();
     }
 }

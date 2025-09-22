@@ -16,7 +16,7 @@ import net.jcip.annotations.NotThreadSafe;
 /**
  * Performs highlighting of the contents of XML elements that we found hits in.
  *
- * NOTE: this class is not threadsafe. Use a separate instance per thread.
+ * NOTE: this class is not thread-safe. Use a separate instance per thread.
  */
 @NotThreadSafe
 public class XmlHighlighter {
@@ -151,7 +151,7 @@ public class XmlHighlighter {
 
     /**
      * Where the highlighted content is built - therefore, this class is not
-     * threadsafe!
+     * thread-safe!
      */
     StringBuilder b;
 

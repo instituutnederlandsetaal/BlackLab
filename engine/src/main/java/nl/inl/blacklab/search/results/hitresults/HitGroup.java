@@ -23,7 +23,8 @@ public class HitGroup extends Group {
     public static HitGroup withoutResults(QueryInfo queryInfo, PropertyValue groupIdentity,
             long totalHits, int totalDocuments, MaxStats maxStats) {
         return new HitGroup(groupIdentity,
-                new HitResultsList(queryInfo, Hits.empty(queryInfo.field(), null),
+                new HitResultsList(queryInfo,
+                        Hits.empty(new Hits.HitsContext(queryInfo.field())), 0,
                         totalHits, totalDocuments, maxStats), totalHits);
     }
 

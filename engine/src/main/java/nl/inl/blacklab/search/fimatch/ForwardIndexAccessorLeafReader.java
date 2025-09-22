@@ -7,7 +7,7 @@ import nl.inl.blacklab.forwardindex.Terms;
  * Allows the forward index matching subsystem to access the forward indices
  * in a single index segment (LeafReader).
  *
- * Not intended to be threadsafe, but to be used from e.g. Spans in a single thread.
+ * Not intended to be thread-safe, but to be used from e.g. Spans in a single thread.
  */
 @NotThreadSafe
 public interface ForwardIndexAccessorLeafReader {

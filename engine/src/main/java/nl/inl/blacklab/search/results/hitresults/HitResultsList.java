@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 /**
  * An immutable list of hits.
  */
-public class HitResultsList extends HitResultsWithHitsInternal {
+public class HitResultsList extends HitResultsAbstract {
 
     private final ResultsStats hitsStats;
 
@@ -23,6 +23,9 @@ public class HitResultsList extends HitResultsWithHitsInternal {
     /** Our sample parameters, if any. null if not a sample of a larger result set */
     private SampleParameters sampleParameters;
 
+    /** Our internal list of hits. */
+    protected final Hits hitsList;
+
     /**
      * Make a wrapper Hits object for a list of Hit objects.
      *
@@ -32,7 +35,7 @@ public class HitResultsList extends HitResultsWithHitsInternal {
      * @param hits the list of hits to wrap
      */
     protected HitResultsList(QueryInfo queryInfo, Hits hits) {
-        this(queryInfo, hits, -1, -1, MaxStats.NOT_EXCEEDED);
+        this(queryInfo, hits, -1, -1, -1, MaxStats.NOT_EXCEEDED);
     }
 
     /**
@@ -45,10 +48,15 @@ public class HitResultsList extends HitResultsWithHitsInternal {
      * @param hitsCounted number of hits counted so far, or -1 if same as number processed
      * @param docsCounted number of documents counted so far, or -1 if same as number processed
      */
-    protected HitResultsList(QueryInfo queryInfo, Hits hits, long hitsCounted, long docsCounted, MaxStats maxStats) {
-        super(queryInfo, hits);
+    protected HitResultsList(QueryInfo queryInfo, Hits hits, int numberOfDocs, long hitsCounted, long docsCounted, MaxStats maxStats) {
+        super(queryInfo);
+
+        if (hits == null)
+            throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
+        this.hitsList = hits;
+
         long hitsProcessed = hits.size();
-        long docsProcessed = hits.countDocs();
+        long docsProcessed = numberOfDocs < 0 ? hits.countDocs() : numberOfDocs;
         if (hitsCounted < 0)
             hitsCounted = hitsProcessed;
         if (docsCounted < 0)
@@ -69,10 +77,15 @@ public class HitResultsList extends HitResultsWithHitsInternal {
             SampleParameters sampleParameters,
             ResultsStats hitsStats,
             ResultsStats docsStats) {
-        super(queryInfo, hits);
+        super(queryInfo);
+
+        if (hits == null)
+            throw new IllegalArgumentException("HitsAbstract must be constructed with valid hits object (got null)");
+        this.hitsList = hits;
+
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
-        assert hitsStats.processedSoFar() == hits.size();
+        assert hits.size() == hitsStats.processedSoFar();
         this.hitsStats = hitsStats.save();
         this.docsStats = docsStats.save();
     }
@@ -92,11 +105,6 @@ public class HitResultsList extends HitResultsWithHitsInternal {
         return "HitResultsList";
     }
 
-    @Override
-    public final boolean ensureResultsRead(long number) {
-        return size() >= number; // all results have been read
-    }
-
     public SampleParameters sampleParameters() {
         return sampleParameters;
     }
@@ -109,4 +117,15 @@ public class HitResultsList extends HitResultsWithHitsInternal {
     public MaxStats maxStats() {
         return MaxStats.NOT_EXCEEDED;
     }
+
+    @Override
+    public long numberOfResultObjects() {
+        return this.hitsList.size();
+    }
+
+    @Override
+    public Hits getHits() {
+        return hitsList;
+    }
+
 }

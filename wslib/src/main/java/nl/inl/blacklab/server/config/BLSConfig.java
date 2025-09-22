@@ -120,7 +120,8 @@ public class BLSConfig {
 
     @SuppressWarnings("unused")
     public void setPerformance(BLSConfigPerformance performance) {
-        this.performance = performance;
+        if (performance != null)
+            this.performance = performance;
     }
 
     public BLConfigLog getLog() {

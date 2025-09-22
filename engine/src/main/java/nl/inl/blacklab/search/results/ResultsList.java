@@ -70,7 +70,7 @@ public abstract class ResultsList<T> extends ResultsAbstract {
         if (!results.resultsStats().processedAtLeast(first + actualSize))
             actualSize = results.size() - first;
 
-        // Make sublist (copy results from List.subList() to avoid lingering references large lists)
+        // Make sublist (copy results from List.subList() to avoid lingering references to large lists)
         return new ArrayList<>(results.resultsSubList(first, first + actualSize));
     }
 

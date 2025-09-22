@@ -1,43 +1,43 @@
 package nl.inl.blacklab.search.results.hits;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /** A single hit. Used because HitProperty requires a Hits instance. */
 public class HitsSingle extends HitsAbstract {
 
-    private final AnnotatedField field;
-
-    private final MatchInfoDefs matchInfoDefs;
+    private final HitsContext context;
 
     EphemeralHit hit = new EphemeralHit();
 
-    public HitsSingle(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        this.field = field;
-        this.matchInfoDefs = matchInfoDefs;
+    public HitsSingle(HitsContext context) {
+        this.context = context;
     }
 
-    public HitsSingle(AnnotatedField field, MatchInfoDefs matchInfoDefs, int doc, int matchStart, int matchEnd) {
-        this(field, matchInfoDefs);
+    public HitsSingle(HitsContext context, int doc, int matchStart, int matchEnd) {
+        this(context);
         hit.doc_ = doc;
         hit.start_ = matchStart;
         hit.end_ = matchEnd;
     }
 
     @Override
-    public AnnotatedField field() {
-        return field;
-    }
-
-    @Override
-    public MatchInfoDefs matchInfoDefs() {
-        return matchInfoDefs;
+    public HitsContext context() {
+        return context;
     }
 
     @Override
     public long size() {
         return 1;
+    }
+
+    @Override
+    public long sizeSoFar() {
+        return 1;
+    }
+
+    @Override
+    public boolean sizeAtLeast(long number) {
+        return number <= 1;
     }
 
     @Override

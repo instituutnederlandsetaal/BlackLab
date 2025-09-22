@@ -1,8 +1,8 @@
 package nl.inl.blacklab.forwardindex;
 
 import java.util.Comparator;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.function.ToDoubleFunction;
 import java.util.function.ToIntFunction;
@@ -23,7 +23,7 @@ public class CachingCollator extends Collator {
 
     private final Collator baseCollator;
 
-    private final Map<String, CollationKey> cache = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, CollationKey> cache = new ConcurrentHashMap<>();
 
     public CachingCollator(Collator baseCollator) {
         this.baseCollator = baseCollator;

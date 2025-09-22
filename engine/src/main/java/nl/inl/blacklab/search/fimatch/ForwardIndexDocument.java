@@ -5,9 +5,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /** Source of tokens for the forward index matching process.
  *
- * Not threadsafe. Used from Spans. An instance is created
+ * Not thread-safe. Used from Spans. An instance is created
  * per document, and a document only occurs in one index segment
- * (so only one Spans), so this doesn't need threadsafety.
+ * (so only one Spans), so this doesn't need thread-safety.
  */
 @NotThreadSafe
 public interface ForwardIndexDocument {

@@ -7,7 +7,7 @@ import nl.inl.blacklab.codec.ForwardIndexField;
 
 /** A forward index interface for a single field in a segment.
  *
- * Implementations are not intended to be threadsafe, but to be used by a single
+ * Implementations are not intended to be thread-safe, but to be used by a single
  * thread.
  */
 public class FieldForwardIndex implements AnnotationForwardIndex {

@@ -2,17 +2,17 @@ package nl.inl.blacklab.search.results.hits;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
 /**
- * A HitsInternal implementation that locks and can handle huge result sets.
+ * A thread-safe Hits implementation that can handle huge result sets.
+ * <p>
+ * Use one of the HitsMutable.create() factory methods to create the appropriate implementation.
  */
 class HitsListLock extends HitsListNoLock {
 
-    HitsListLock(AnnotatedField field, MatchInfoDefs matchInfoDefs, long initialCapacity) {
-        super(field, matchInfoDefs, initialCapacity);
+    HitsListLock(Hits.HitsContext context, long initialCapacity) {
+        super(context, initialCapacity);
         lock = new ReentrantReadWriteLock();
     }
 
@@ -44,23 +44,6 @@ class HitsListLock extends HitsListNoLock {
             ends.add(hit.end_);
             if (hit.matchInfos_ != null)
                 matchInfos.add(hit.matchInfos_);
-        } finally {
-            this.lock.writeLock().unlock();
-        }
-    }
-
-    /** Add the hit to the end of this list, copying the values. The hit object itself is not retained. */
-    @Override
-    public void add(Hit hit) {
-        assert HitsListAbstract.debugCheckReasonableHit(hit);
-        this.lock.writeLock().lock();
-        try {
-            // Don't call super method, this is faster (hot code)
-            docs.add(hit.doc());
-            starts.add(hit.start());
-            ends.add(hit.end());
-            if (hit.matchInfos() != null)
-                matchInfos.add(hit.matchInfos());
         } finally {
             this.lock.writeLock().unlock();
         }
@@ -141,6 +124,6 @@ class HitsListLock extends HitsListNoLock {
 
     @Override
     public Hits nonlocking() {
-        return new HitsListNoLock(field(), matchInfoDefs(), docs, starts, ends, matchInfos);
+        return new HitsListNoLock(context(), docs, starts, ends, matchInfos);
     }
 }

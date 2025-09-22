@@ -24,8 +24,8 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.PermanentHit;
 import nl.inl.util.ThreadAborter;
 
 /**
@@ -69,7 +69,7 @@ public class Contexts {
             List<Annotation> annotations,
             List<AnnotationForwardIndex> forwardIndexes,
             ContextSize contextSize,
-            BiConsumer<Hit, Kwic> kwicConsumer
+            BiConsumer<PermanentHit, Kwic> kwicConsumer
     ) {
         if (hits.isEmpty())
             return;
@@ -84,7 +84,6 @@ public class Contexts {
                 .toList();
         int hitIndex = 0;
         for (EphemeralHit hit: hits) {
-            Hit h = hit.toHit();
             int[] hitContext = contexts[hitIndex];
             int contextLength = hitContext[Contexts.LENGTH_INDEX];
             List<String> tokens = new ArrayList<>(contextLength * numberOfAnnotations);
@@ -97,8 +96,8 @@ public class Contexts {
                     annotIndex += contextLength; // jmup to next annotation in context array
                 }
             }
-            int fragmentStartInDoc = h.start() - hitContext[Contexts.HIT_START_INDEX];
-            kwicConsumer.accept(h, new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
+            int fragmentStartInDoc = hit.start() - hitContext[Contexts.HIT_START_INDEX];
+            kwicConsumer.accept(hit.solidify(), new Kwic(annotations, tokens, hitContext[Contexts.HIT_START_INDEX],
                     hitContext[Contexts.AFTER_START_INDEX], fragmentStartInDoc));
             hitIndex++;
         }

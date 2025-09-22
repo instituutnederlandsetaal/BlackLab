@@ -13,13 +13,15 @@ public abstract class ResultsStats implements SearchResult {
 
     /** Object to help us wait for various things, such as all results having been processed. */
     public interface ResultsAwaiter {
+
+        ResultsAwaiter THROWING = new ThrowingResultsAwaiter();
+
         boolean processedAtLeast(long lowerBound);
         long allProcessed();
         long allCounted();
     }
 
     public static class ThrowingResultsAwaiter implements ResultsAwaiter {
-        public static final ThrowingResultsAwaiter INSTANCE = new ThrowingResultsAwaiter();
 
         @Override
         public boolean processedAtLeast(long lowerBound) {
@@ -38,29 +40,29 @@ public abstract class ResultsStats implements SearchResult {
     }
 
     protected ResultsStats() {
-        this(ThrowingResultsAwaiter.INSTANCE);
+        this(ResultsAwaiter.THROWING);
     }
 
-    protected ResultsStats(ResultsAwaiter waitUntil) {
-        this.waitUntil = waitUntil;
+    protected ResultsStats(ResultsAwaiter resultsAwaiter) {
+        this.resultsAwaiter = resultsAwaiter;
     }
 
-    protected void setResultsAwaiter(ResultsAwaiter waitUntil) {
-        this.waitUntil = waitUntil;
+    protected void setResultsAwaiter(ResultsAwaiter resultsAwaiter) {
+        this.resultsAwaiter = resultsAwaiter;
     }
 
-    private ResultsAwaiter waitUntil;
+    private ResultsAwaiter resultsAwaiter;
 
     public boolean processedAtLeast(long lowerBound) {
-        return waitUntil.processedAtLeast(lowerBound);
+        return resultsAwaiter.processedAtLeast(lowerBound);
     }
 
     public long processedTotal() {
-        return waitUntil.allProcessed();
+        return resultsAwaiter.allProcessed();
     }
 
     public long countedTotal() {
-        return waitUntil.allCounted();
+        return resultsAwaiter.allCounted();
     }
 
     public abstract long processedSoFar();

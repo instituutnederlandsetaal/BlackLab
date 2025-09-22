@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -82,7 +83,7 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
      *  Should eventually be eliminated when we can enforce all metadatafields to be declared.
      */
     @XmlTransient
-    private final Map<String, MetadataFieldImpl> implicitFields = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, MetadataFieldImpl> implicitFields = new ConcurrentHashMap<>();
 
     @Override
     public MetadataFieldImpl addFromConfig(ConfigMetadataField f) {

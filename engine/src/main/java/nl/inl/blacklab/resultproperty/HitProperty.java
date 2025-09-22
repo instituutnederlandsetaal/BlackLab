@@ -192,6 +192,11 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     public abstract PropertyValue get(long hitIndex);
 
+    /**
+     * Get the string representation of the value of this property for the specified hit.
+     * @param hitIndex the hit to get the property value for
+     * @return string representation of the value of this property for the specified hit (never null)
+     */
     public String getString(long hitIndex) {
         return get(hitIndex).value().toString();
     }

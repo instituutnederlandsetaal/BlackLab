@@ -20,14 +20,14 @@ performance:
     # (set this to take advantage of the cores/threads available to the machine;
     # probably don't set it any larger, as this won't help and might hurt)
     # (-1 to autodetect)
-    maxConcurrentSearches: 6
+    maxConcurrentSearches: -1
 
     # How many threads may a single search task use at most?
     # (lower values will allow more simultaneous searches to run;
     # higher values improve search performance, but will crowd out other searches.
     # e.g. if you set this to the same number as maxConcurrentSearches, a single 
     # search may queue all other searches until it's done)
-    maxThreadsPerSearch: 2
+    maxThreadsPerSearch: -1
 
 
 # Settings for diagnosing problems

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.FieldType;
@@ -131,7 +132,7 @@ public class BLFieldTypeLucene implements BLFieldType {
         this.type = type;
     }
 
-    static Map<String, Collators> collators = new ConcurrentHashMap<>();
+    static ConcurrentMap<String, Collators> collators = new ConcurrentHashMap<>();
 
     /**
      * Set the collator to use for this field.

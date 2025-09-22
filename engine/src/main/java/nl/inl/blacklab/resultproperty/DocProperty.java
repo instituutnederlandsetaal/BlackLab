@@ -17,7 +17,7 @@ import nl.inl.blacklab.util.PropertySerializeUtil;
  * a stored field in the Lucene document, ...)
  *
  * This class is thread-safe.
- * Some DocProperty instances use synchronization for threadsafety, e.g. DocPropertyStoredField,
+ * Some DocProperty instances use synchronization for thread-safety, e.g. DocPropertyStoredField,
  * because they store DocValues instances, which may only be used from one thread at a time.
  */
 public abstract class DocProperty implements ResultProperty, Comparator<DocResult> {
@@ -179,6 +179,8 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
     }
 
     public DocProperty copyWith(PropContext context) {
+        if (context.equals(this.context))
+            return this;
         return copyWith(context, false);
     }
 

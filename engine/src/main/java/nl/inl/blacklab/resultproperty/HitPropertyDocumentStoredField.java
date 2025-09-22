@@ -51,6 +51,8 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     @Override
     public String getString(long hitIndex) {
         String[] v = docPropStoredField.get(context.hits().doc(hitIndex));
+        if (v == null || v.length == 0)
+            return PropertyValueString.NO_VALUE_STR;
         if (v.length == 1)
             return v[0];
         return PropertyValueString.joinValues(v);

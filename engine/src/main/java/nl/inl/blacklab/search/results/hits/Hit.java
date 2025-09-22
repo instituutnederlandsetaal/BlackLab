@@ -10,20 +10,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * caching or sorting hits, or just for convenience in client code.
  */
 public interface Hit extends Comparable<Hit> {
-    
-    /**
-     * Create a hit.
-     * 
-     * @param doc Lucene document id
-     * @param start position of first word of the hit
-     * @param end first word position after the hit
-     * @param matchInfo extra information such as capture groups / relations
-     * @return the hit
-     */
-    static Hit create(int doc, int start, int end, MatchInfo[] matchInfo) {
-        return new HitImpl(doc, start, end, matchInfo);
-    }
-    
+
     @Override
     default int compareTo(Hit o) {
         if (this == o)
@@ -75,16 +62,16 @@ public interface Hit extends Comparable<Hit> {
      */
     MatchInfo[] matchInfos();
 
-    default MatchInfo matchInfos(int groupIndex) {
-        if (groupIndex < 0)
-            throw new IndexOutOfBoundsException("Group index must be non-negative: " + groupIndex);
+    default MatchInfo matchInfo(int matchInfoIndex) {
+        if (matchInfoIndex < 0)
+            throw new IndexOutOfBoundsException("Group index must be non-negative: " + matchInfoIndex);
         MatchInfo[] matchInfo = matchInfos();
-        if (matchInfo == null || groupIndex >= matchInfo.length) {
+        if (matchInfo == null || matchInfoIndex >= matchInfo.length) {
             // matchInfo[] can be shorted for some hits than others, in rare cases where the first BLSpans
             // captures fewer match infos than subsequent ones (e.g. because certain terms don't occur in that
             // index segment, so an entire subclause was optimized away).
             return null;
         }
-        return matchInfo[groupIndex];
+        return matchInfo[matchInfoIndex];
     }
 }

@@ -15,8 +15,9 @@ public class EphemeralHit implements Hit {
     public int end_ = -1;
     public MatchInfo[] matchInfos_ = null;
 
-    public HitImpl toHit() {
-        return new HitImpl(doc_, start_, end_, matchInfos_);
+    /** Create a permanent copy of this hit that can be stored. */
+    public PermanentHit solidify() {
+        return new PermanentHit(doc_, start_, end_, matchInfos_);
     }
 
     @Override
@@ -46,9 +47,9 @@ public class EphemeralHit implements Hit {
         if (o instanceof EphemeralHit that) {
             return doc_ == that.doc_ && start_ == that.start_ && end_ == that.end_ && Arrays.equals(matchInfos_,
                     that.matchInfos_);
-        } else if (o instanceof HitImpl hitImpl) {
-            return doc_ == hitImpl.doc && start_ == hitImpl.start && end_ == hitImpl.end && Arrays.equals(matchInfos_,
-                    hitImpl.matchInfo);
+        } else if (o instanceof PermanentHit permanentHit) {
+            return doc_ == permanentHit.doc && start_ == permanentHit.start && end_ == permanentHit.end && Arrays.equals(matchInfos_,
+                    permanentHit.matchInfo);
         } else if (o instanceof Hit hit) {
             return doc_ == hit.doc() && start_ == hit.start() && end_ == hit.end() && Arrays.equals(matchInfos_,
                     hit.matchInfos());
@@ -74,5 +75,12 @@ public class EphemeralHit implements Hit {
     public void convertDocIdToGlobal(int docBase) {
         if (doc_ != -1)
             doc_ += docBase;
+    }
+
+    public void set(int doc, int start, int end, MatchInfo[] matchInfos) {
+        this.doc_ = doc;
+        this.start_ = start;
+        this.end_ = end;
+        this.matchInfos_ = matchInfos;
     }
 }

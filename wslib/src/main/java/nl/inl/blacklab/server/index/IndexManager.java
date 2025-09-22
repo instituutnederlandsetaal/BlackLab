@@ -305,11 +305,6 @@ public class IndexManager {
             return false;
 
         int maxNumberOfIndices = searchMan.config().getIndexing().getMaxNumberOfIndicesPerUser();
-
-        // No limit on the number of indices
-        if (maxNumberOfIndices ==  -1) {
-            return true;
-        }
         return userCollectionsDir != null &&
             (getAvailablePrivateCorporaOwnedBy(user).size() <= maxNumberOfIndices || user.isSuperuser());
     }

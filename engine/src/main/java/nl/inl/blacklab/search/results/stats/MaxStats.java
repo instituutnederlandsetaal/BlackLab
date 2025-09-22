@@ -36,4 +36,16 @@ public interface MaxStats {
     boolean isTooManyToProcess();
 
     boolean isTooManyToCount();
+
+    default MaxStats maxToProcessReached() {
+        if (isTooManyToProcess())
+            return this;
+        return get(true, isTooManyToCount());
+    }
+
+    default MaxStats maxToCountReached() {
+        if (isTooManyToCount())
+            return this;
+        return get(isTooManyToProcess(), true);
+    }
 }

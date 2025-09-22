@@ -14,6 +14,47 @@ For a comparison between the different API versions currently available, see [AP
 For some older ideas for example requests and responses, see [here](API.md).
 
 
+## Fewer optional response keys
+
+The BLS API has quite a few response keys that are only included if certain conditions apply. This can make working with 
+the API trickier. Some of these keys should probably always be included (and be empty if not applicable). This is an (incomplete) list of such keys.
+
+Regular API optional keys:
+
+- user.id alleen als user.loggedIn == true  (anders ""?)
+- summary.indexStatus alleen als status != AVAILABLE (altijd?)
+- summary.matchInfos alleen als er matchInfos zijn (anders leeg object?)
+- summary.matchInfos[..].fieldName alleen als het anders is dan summary.fieldName (altijd?)
+- summary.sample* alleen als er gesampled is (ok? but should be grouped)
+  either summary.samplePercentage/sampleSize (better to have .type: percentage / .number: 30 ?)
+- summary.window* als window != null (maar komt ws nooit voor..?)
+- summary.numberOfGroups / largestGroupSize alleen als gegroepeer (ok? but should be grouped?)
+- summary.resultsStats.stoppedBecauseTooMany: alleen als dat zo is (altijd!)
+- summary.resultsStats.countOnly: alleen als stoppedBecauseTooMany (altijd!)
+- summary.subcorpusSize.tokens: alleen als beschikaar (wanneer niet beschikbaar...?)
+- summary.subcorpusSize.annotatedFields: alleen als er meerdere annotated fields zijn (altijd?)
+- hit/snippet docPid/start/end: alleen als docPid niet leeg is (zou nooit mogen gebeuren; velden altijd includen?)
+- hit/snippet matchInfos: alleen als niet leeg (anders leeg object?)
+- matchInfo attributes: alleen als aanwezig (anders leeg object?)
+- indexProgress: alleen als status == INDEXING (ok?)
+- annotatedField/metadataField.indexName: alleen voor /fields/... request? (weg?)
+- annotation.parentAnnotation: alleen als subannotation (ok? kijken of subannotation weg kunnen)
+
+Parallel corpora are a relatively uncommon use case, so it makes sense not to "pollute" the regular API with parallel-only fields. We still might want to always include these fields for parallel corpora, though.
+
+Parallel corpora optional response keys:
+
+- summary.pattern.otherFields alleen als er otherFields zijn (anders leeg array, als parallel?)
+- summary.matchInfos[..].targetField alleen als het bestaat en anders is dan summary.fieldName (altijd als parallel?)
+- summary.subcorpusSize.docVersions alleen als er meer docVersions dan documents zijn (altijd als parallel?)
+- hit/snippet otherFields: alleen als die er zijn (altijd als parallel?)
+- matchInfo relation targetField: alleen als anders dan source field (altijd?)
+- matchInfo relation sourceStart/sourceEnd: alleen als geen root relation (ok?)
+
+
+
+
+
 ## API evolution TODO
 
 General guidelines:

@@ -9,7 +9,6 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
-import nl.inl.blacklab.search.results.hits.Hit;
 
 /**
  * Represents the size of the context around a hit.
@@ -215,7 +214,7 @@ public class ContextSize {
         endArr[endIndex] = end;
     }
 
-    private static MatchInfo findTag(Hit hit, String matchInfoName, MatchInfoDefs matchInfoDefs) {
+    private static MatchInfo findTag(EphemeralHit hit, String matchInfoName, MatchInfoDefs matchInfoDefs) {
         MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos != null) {
             // Return the match info group with the specified name

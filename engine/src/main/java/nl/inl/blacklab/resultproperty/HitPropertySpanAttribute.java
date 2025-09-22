@@ -116,7 +116,7 @@ public class HitPropertySpanAttribute extends HitProperty {
                 return PropertyValueString.NO_VALUE_STR;
             }
         }
-        MatchInfo matchInfo = context.hits().get(hitIndex).matchInfos(groupIndex);
+        MatchInfo matchInfo = context.hits().get(hitIndex).matchInfo(groupIndex);
         if (matchInfo == null)
             return PropertyValueString.NO_VALUE_STR;
 

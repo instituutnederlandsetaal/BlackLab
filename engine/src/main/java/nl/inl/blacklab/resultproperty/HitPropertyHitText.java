@@ -6,7 +6,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
 
 /**
  * A hit property for grouping on the text actually matched.
@@ -49,14 +49,14 @@ public class HitPropertyHitText extends HitPropertyContextBase {
     public void fetchContext() {
         if (annotation.field() == context.hits().field()) {
             // Regular hit; use start and end offsets from the hit itself
-            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+            fetchContext((int[] starts, int[] ends, int hitIndex, EphemeralHit hit) -> {
                 starts[hitIndex] = hit.start();
                 ends[hitIndex] = hit.end();
             });
         } else {
             // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
             // Determine start and end using matchInfo instead.
-            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+            fetchContext((int[] starts, int[] ends, int hitIndex, EphemeralHit hit) -> {
                 int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                 starts[hitIndex] = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
                 ends[hitIndex] = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];

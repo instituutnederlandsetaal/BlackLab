@@ -16,6 +16,7 @@ import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsMutable;
+import nl.inl.blacklab.search.results.hits.PermanentHit;
 import nl.inl.util.XmlHighlighter;
 
 /** Concordances for a list of hits.
@@ -31,7 +32,7 @@ public class Concordances {
      * null, because Kwics will be used internally. This is only used when making
      * concordances from the content store (the old default).
      */
-    private Map<Hit, Concordance> concordances = null;
+    private Map<PermanentHit, Concordance> concordances = null;
     
     Kwics kwics = null;
 
@@ -76,7 +77,7 @@ public class Concordances {
      * @param hl highlighter
      */
     private static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
-            Map<Hit, Concordance> conc,
+            Map<PermanentHit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.isEmpty())
             return;
@@ -94,7 +95,8 @@ public class Concordances {
             int hitStart = hit.start();
             int hitEnd = hit.end() - 1; // last word (inclusive)
 
-            contextSize.getSnippetStartEnd(hit, hits.matchInfoDefs(), true, startsOfWords, startEndArrayIndex,
+            contextSize.getSnippetStartEnd(hit, hits.matchInfoDefs(), true,
+                    startsOfWords, startEndArrayIndex,
                     endsOfWords, startEndArrayIndex + 1);
             startsOfWords[startEndArrayIndex + 1] = hitStart;
             endsOfWords[startEndArrayIndex] = hitEnd;
@@ -111,7 +113,7 @@ public class Concordances {
         List<Concordance> newConcs = DocUtil.makeConcordancesFromContentStore(hits.index(), docId, field, startsOfWords, endsOfWords, hl);
         int i = 0;
         for (EphemeralHit hit: hits) {
-            conc.put(hit.toHit(), newConcs.get(i));
+            conc.put(hit.solidify(), newConcs.get(i));
             ++i;
         }
     }
@@ -123,7 +125,7 @@ public class Concordances {
      * @param contextSize how many words around the hit to retrieve
      * @return the concordances
      */
-    private static Map<Hit, Concordance> retrieveConcordancesFromContentStore(Hits hits, ContextSize contextSize) {
+    private static Map<PermanentHit, Concordance> retrieveConcordancesFromContentStore(Hits hits, ContextSize contextSize) {
         XmlHighlighter hl = new XmlHighlighter(); // used to make fragments well-formed
         hl.setUnbalancedTagsStrategy(hits.index().defaultUnbalancedTagsStrategy());
         // Group hits per document
@@ -132,20 +134,17 @@ public class Concordances {
         for (EphemeralHit key: hits) {
             HitsMutable hitsInDoc = hitsPerDocument.get(key.doc());
             if (hitsInDoc == null) {
-                hitsInDoc = HitsMutable.create(hits.field(), hits.matchInfoDefs(), -1, totalHits, false);
+                hitsInDoc = HitsMutable.create(hits.context(),
+                        -1, totalHits, false);
                 hitsPerDocument.put(key.doc(), hitsInDoc);
             }
             hitsInDoc.add(key);
         }
-        Map<Hit, Concordance> conc = new HashMap<>();
+        Map<PermanentHit, Concordance> conc = new HashMap<>();
         for (Hits l: hitsPerDocument.values()) {
             Concordances.makeConcordancesSingleDocContentStore(l, contextSize, conc, hl);
         }
         return conc;
-    }
-
-    public ConcordanceType getConcordanceType() {
-        return kwics == null ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
     }
 
     public Kwics getKwics() {

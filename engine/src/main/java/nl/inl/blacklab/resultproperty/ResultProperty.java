@@ -99,13 +99,11 @@ public interface ResultProperty extends PropertySerializeUtil.SerializableProper
     /** Prepare this property to be used for sorting/grouping. Can e.g. batch-load required context for given hits.
      *
      * This is called automatically when the context is needed. To avoid holding on to memory, code that uses the
-     * property (e.g. to sort, group or filter) should call disposeContext() when it's done with the property.
-     * The regular BlackLab methods should do this automatically.
+     * property (e.g. to sort, group or filter) uses copyWith() to create a copy of the property with the correct
+     * hits object / leafreadercontext. The copy should go out of scope after the operation, so the context can be
+     * garbage collected.
      */
     default void fetchContext() {}
-
-    /** Dispose of previously fetched context (to free up memory) */
-    default void disposeContext() {}
 
     /** The type of value this property produces.
      *

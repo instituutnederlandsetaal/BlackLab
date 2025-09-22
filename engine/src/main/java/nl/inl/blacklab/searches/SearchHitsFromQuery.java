@@ -7,6 +7,7 @@ import org.apache.lucene.search.Query;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 
@@ -33,7 +34,12 @@ public class SearchHitsFromQuery extends SearchHits {
      */
     @Override
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
-        return queryInfo().index().find(queryInfo(), spanQuery, searchSettings);
+        QueryTimings timings = queryInfo().timings().start();
+        try {
+            return queryInfo().index().find(queryInfo(), spanQuery, searchSettings);
+        } finally {
+            timings.record("fetch");
+        }
     }
 
     @Override

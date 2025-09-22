@@ -11,9 +11,8 @@ import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 
+/** Abstract base class for the HitsList* classes. Takes care of (some) optional locking. */
 public abstract class HitsListAbstract extends HitsAbstract implements HitsMutable {
 
     static boolean debugCheckAllReasonable(Hits hits) {
@@ -38,18 +37,13 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
         return true;
     }
 
-    /** Field these hits came from */
-    final AnnotatedField field;
-
-    /** Match info definitions for these hits */
-    MatchInfoDefs matchInfoDefs;
+    final HitsContext context;
 
     /** Lock (for the classes that do locking; otherwise null) */
     ReadWriteLock lock;
 
-    HitsListAbstract(AnnotatedField field, MatchInfoDefs matchInfoDefs) {
-        this.field = field;
-        this.matchInfoDefs = matchInfoDefs == null ? MatchInfoDefs.EMPTY : matchInfoDefs;
+    HitsListAbstract(Hits.HitsContext context) {
+        this.context = context;
     }
 
     @Override
@@ -91,6 +85,16 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     }
 
     @Override
+    public boolean sizeAtLeast(long minSize) {
+        return size() >= minSize;
+    }
+
+    @Override
+    public long sizeSoFar() {
+        return size();
+    }
+
+    @Override
     public long size() {
         if (lock != null) {
             lock.readLock().lock();
@@ -107,20 +111,20 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     abstract long sizeNoLock();
 
     @Override
-    public long countDocs() {
+    public int countDocs(long startIndex, long endIndex) {
         if (lock != null) {
             lock.readLock().lock();
             try {
-                return countDocsNoLock();
+                return countDocsNoLock(startIndex, endIndex);
             } finally {
                 lock.readLock().unlock();
             }
         } else {
-            return countDocsNoLock();
+            return countDocsNoLock(startIndex, endIndex);
         }
     }
 
-    abstract long countDocsNoLock();
+    abstract int countDocsNoLock(long startIndex, long endIndex);
 
     @Override
     public Hits sorted(HitProperty sortBy) {
@@ -143,14 +147,31 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
         if (lock != null) {
             lock.readLock().lock();
             try {
-                return super.sublist(first, length);
+                return sublistNoLock(first, length);
             } finally {
                 lock.readLock().unlock();
             }
         } else {
-            return super.sublist(first, length);
+            return sublistNoLock(first, length);
         }
     }
+
+    private Hits sublistNoLock(long start, long length) {
+        if (start < 0)
+            throw new IndexOutOfBoundsException("Window start must be non-negative, but was " + start);
+        if (length < 0)
+            throw new IllegalArgumentException("Window size must be non-negative, but was " + length);
+        if (start > size() || length == 0)
+            return Hits.empty(context());
+        long end = start + length;
+        if (end > size())
+            end = size();
+        HitsMutable window = HitsMutable.create(context(), end - start, end - start, false);
+        fillWindow(window, start, end);
+        return window;
+    }
+
+    protected abstract void fillWindow(HitsMutable window, long start, long end);
 
     /** Sort a list of hits less than 2 billion long. */
     HitsMutable sort32(HitProperty sortBy) {
@@ -175,7 +196,8 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
             IntArrays.parallelQuickSort(indices, sortBy::compare);
         }
 
-        HitsMutable r = HitsMutable.create(field(), matchInfoDefs(), size, false, false);
+        HitsMutable r = HitsMutable.create(context(),
+                size, false, false);
         for (int index: indices) {
             EphemeralHit hit = new EphemeralHit();
             getEphemeral(index, hit);
@@ -185,18 +207,8 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     }
 
     @Override
-    public AnnotatedField field() {
-        return field;
-    }
-
-    @Override
-    public MatchInfoDefs matchInfoDefs() {
-        return matchInfoDefs;
-    }
-
-    @Override
-    public void setMatchInfoDefs(MatchInfoDefs matchInfoDefs) {
-        this.matchInfoDefs = matchInfoDefs;
+    public HitsContext context() {
+        return context;
     }
 
     public void withReadLock(Consumer<Hits> cons) {
@@ -229,18 +241,19 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
     }
 
     @Override
-    public void addAllConvertDocBase(Hits segmentHits, int docBase) {
+    public void addAllConvertDocBase(Hits segmentHits) {
         if (this.lock != null) {
             this.lock.writeLock().lock();
             try {
-                addAllConvertDocBaseNoLock(segmentHits, docBase);
+                addAllConvertDocBaseNoLock(segmentHits);
             } finally {
                 this.lock.writeLock().unlock();
             }
         } else {
-            addAllConvertDocBaseNoLock(segmentHits, docBase);
+            addAllConvertDocBaseNoLock(segmentHits);
         }
     }
 
-    public abstract void addAllConvertDocBaseNoLock(Hits segmentHits, int docBase);
+    public abstract void addAllConvertDocBaseNoLock(Hits segmentHits);
+
 }

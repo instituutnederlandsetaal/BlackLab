@@ -14,6 +14,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
 import nl.inl.blacklab.resultproperty.PropertyValueDecade;
 import nl.inl.blacklab.resultproperty.PropertyValueMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -24,13 +25,14 @@ public class TestHitPropertySerialize {
 
     private static final MockTerms terms = new MockTerms("aap", "noot", "mies");
 
-    private static final Hits hits = Hits.empty(mockIndex.mainAnnotatedField(), null);
+    private static final Hits hits = Hits.empty(new Hits.HitsContext(mockIndex.mainAnnotatedField()));
 
     private static Annotation lemmaAnnotation;
 
     @BeforeClass
     public static void setUp() {
-        lemmaAnnotation = mockIndex.mainAnnotatedField().annotation("lemma");
+        AnnotatedField annotatedField = mockIndex.mainAnnotatedField();
+        lemmaAnnotation = annotatedField.annotation("lemma");
         mockIndex.setForwardIndex(lemmaAnnotation, new MockForwardIndex(new MockTerms("aap", "noot", "mies")));
     }
 

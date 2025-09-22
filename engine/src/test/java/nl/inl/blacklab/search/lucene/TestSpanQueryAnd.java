@@ -10,11 +10,16 @@ import nl.inl.blacklab.search.results.QueryInfo;
 
 public class TestSpanQueryAnd {
 
+    private QueryInfo queryInfo;
+
     @SuppressWarnings("unused")
     @Test(expected = RuntimeException.class)
     public void testFieldMismatch() {
-        BLSpanTermQuery first = new BLSpanTermQuery(null, new Term("author", "bla"));
-        BLSpanTermQuery second = new BLSpanTermQuery(null, new Term("contents", "bla"));
+        MockBlackLabIndex index = new MockBlackLabIndex();
+        QueryInfo queryInfo = QueryInfo.create(index, index.annotatedField("contents2"));
+        BLSpanTermQuery first = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field().name(), "bla"));
+        queryInfo = QueryInfo.create(index, index.annotatedField("contents"));
+        BLSpanTermQuery second = new BLSpanTermQuery(queryInfo, new Term(queryInfo.field().name(), "bla"));
 
         // Different fields; will throw exception
         new SpanQueryAnd(first, second);

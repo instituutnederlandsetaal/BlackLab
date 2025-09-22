@@ -472,7 +472,7 @@ class IndexerImpl implements DocWriter, Indexer {
         InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
         if (!inputFormat.isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
-                    "configuration-based (older DocIndexers may not be threadsafe, so this is a precaution)" );
+                    "configuration-based (older DocIndexers may not be thread-safe, so this is a precaution)" );
             this.numberOfThreadsToUse = 1;
         }
     }

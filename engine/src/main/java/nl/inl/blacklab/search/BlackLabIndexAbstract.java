@@ -194,7 +194,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         this.blackLab = blackLab;
         this.indexLocation = indexDir; // may be null for already-opened IndexReader (Solr)
         this.name = name;
-        searchSettings = SearchSettings.defaults();
+        searchSettings = SearchSettings.DEFAULT;
         boolean solrMode = false;
         try {
             this.indexMode = indexMode;

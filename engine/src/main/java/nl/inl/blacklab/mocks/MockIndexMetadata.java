@@ -26,7 +26,9 @@ public class MockIndexMetadata implements IndexMetadata {
     public MockIndexMetadata(BlackLabIndex index) {
         List<Annotation> annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
         MockAnnotatedField contents = new MockAnnotatedField(index, "contents", annot);
-        fields = List.of(contents);
+        annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));
+        MockAnnotatedField contents2 = new MockAnnotatedField(index, "contents2", annot);
+        fields = List.of(contents, contents2);
     }
 
     @Override

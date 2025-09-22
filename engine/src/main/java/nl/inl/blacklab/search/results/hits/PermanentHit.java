@@ -6,11 +6,12 @@ import java.util.Objects;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 /**
- * Class for a hit. Normally, hits are iterated over in a Lucene Spans object,
- * but in some places, it makes sense to place hits in separate objects: when
- * caching or sorting hits, or just for convenience in client code.
+ * A hit that may be stored permanently (e.g. as a key in a map).
+ *
+ * We mostly use EphemeralHit, which is mutable and avoids object creation,
+ * but in some cases we do need a permanent hit object.
  */
-public final class HitImpl implements Hit {
+public final class PermanentHit implements Hit {
 
     /** The Lucene doc this hits occurs in */
     final int doc;
@@ -36,7 +37,7 @@ public final class HitImpl implements Hit {
      * @param start start of the hit (word positions)
      * @param end end of the hit (word positions)
      */
-    HitImpl(int doc, int start, int end, MatchInfo[] matchInfo) {
+    public PermanentHit(int doc, int start, int end, MatchInfo[] matchInfo) {
         this.doc = doc;
         this.start = start;
         this.end = end;
@@ -77,7 +78,7 @@ public final class HitImpl implements Hit {
         if (o instanceof EphemeralHit that) {
             return doc == that.doc_ && start == that.start_ && end == that.end_ && Arrays.equals(matchInfo,
                     that.matchInfos_);
-        } else if (o instanceof HitImpl hit) {
+        } else if (o instanceof PermanentHit hit) {
             return doc == hit.doc && start == hit.start && end == hit.end && Arrays.equals(matchInfo,
                     hit.matchInfo);
         } else if (o instanceof Hit hit) {

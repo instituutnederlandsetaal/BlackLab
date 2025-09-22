@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.results.hits.PermanentHit;
 
 /** KWICs ("key words in context") for a list of hits.
  *
@@ -31,10 +32,10 @@ import nl.inl.blacklab.search.results.hits.Hits;
 public class Kwics {
     
     /** The KWIC data. */
-    private final Map<Hit, Kwic> kwics;
+    private final Map<PermanentHit, Kwic> kwics;
 
     /** KWICs in other fields (for parallel corpora), or null if none. */
-    private Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
+    private Map<PermanentHit, Map<AnnotatedField, Kwic>> foreignKwics = null;
 
     public Kwics(Hits hits, ContextSize contextSize) {
         if (contextSize.before() < 0 || contextSize.after() < 0)
@@ -47,8 +48,8 @@ public class Kwics {
         foreignKwics = retrieveForeignKwics(hits, contextSize);
     }
 
-    private Map<Hit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
-        Map<Hit, Map<AnnotatedField, Kwic>> foreignKwics = null;
+    private Map<PermanentHit, Map<AnnotatedField, Kwic>> retrieveForeignKwics(Hits hits, ContextSize contextSize) {
+        Map<PermanentHit, Map<AnnotatedField, Kwic>> foreignKwics = null;
         AnnotatedField defaultField = hits.field();
         for (LeafReaderContext lrc: hits.index().reader().leaves()) {
             Map<AnnotatedField, List<AnnotationForwardIndex>> afisPerField = new HashMap<>();
@@ -86,8 +87,7 @@ public class Kwics {
 
                             AnnotatedField field = e.getKey();
                             List<AnnotationForwardIndex> afis = afisPerField.get(field);
-                            Hits singleHit = Hits.single(hits.field(), hits.matchInfoDefs(), hit.doc(),
-                                    matchStart, matchEnd);
+                            Hits singleHit = Hits.single(hits.context(), hit.doc(), matchStart, matchEnd);
                             ContextSize thisContext = ContextSize.get(matchStart - snippetStart, snippetEnd - matchEnd,
                                     true,
                                     contextSize.getMaxSnippetLength());
@@ -99,7 +99,7 @@ public class Kwics {
                         }
                         if (foreignKwics == null)
                             foreignKwics = new HashMap<>();
-                        foreignKwics.put(hit.toHit(), kwics);
+                        foreignKwics.put(hit.solidify(), kwics);
                     }
                 }
             }
@@ -198,7 +198,7 @@ public class Kwics {
      *
      * @return the KWICs
      */
-    private static Map<Hit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
+    private static Map<PermanentHit, Kwic> retrieveKwics(Hits hits, ContextSize contextSize, AnnotatedField field) {
         // Collect FIs, with punct being the first and the main annotation (e.g. word) being the last.
         // (this convention originates from how we write our XML structure)
 
@@ -206,7 +206,7 @@ public class Kwics {
         int curDocId = -1;
         int lastDocId = -1;
         long firstIndexWithCurrentDocId = 0;
-        Map<Hit, Kwic> kwics = new HashMap<>();
+        Map<PermanentHit, Kwic> kwics = new HashMap<>();
         int prevDocBase = -1;
         List<AnnotationForwardIndex> forwardIndexes = null;
         for (long i = 0; i < hits.size(); ++i) {

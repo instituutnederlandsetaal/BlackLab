@@ -9,7 +9,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
-import nl.inl.blacklab.search.results.hits.Hit;
+import nl.inl.blacklab.search.results.hits.EphemeralHit;
 
 /**
  * A hit property for sorting on a number of tokens before a hit.
@@ -71,14 +71,14 @@ public class HitPropertyBeforeHit extends HitPropertyContextBase {
     public void fetchContext() {
         if (annotation.field() == context.hits().field()) {
             // Regular hit; use start and end offsets from the hit itself
-            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+            fetchContext((int[] starts, int[] ends, int hitIndex, EphemeralHit hit) -> {
                 starts[hitIndex] = Math.max(0, hit.start() - numberOfTokens);
                 ends[hitIndex] = hit.start();
             });
         } else {
             // We must be searching a parallel corpus and grouping/sorting on one of the target fields.
             // Determine start and end using matchInfo instead.
-            fetchContext((int[] starts, int[] ends, int hitIndex, Hit hit) -> {
+            fetchContext((int[] starts, int[] ends, int hitIndex, EphemeralHit hit) -> {
                 int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                 int pos = startEnd[0] == Integer.MIN_VALUE ? hit.start() : startEnd[0];
                 starts[hitIndex] = Math.max(0, pos - numberOfTokens);

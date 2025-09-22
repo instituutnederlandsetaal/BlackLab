@@ -5,10 +5,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
@@ -20,6 +18,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 
 /**
@@ -54,7 +54,7 @@ public class CustomPropsMap implements CustomProps {
         }
     }
 
-    private final Map<String, Object> customFields = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Object> customFields = new ConcurrentHashMap<>();
 
     public CustomPropsMap() { }
 

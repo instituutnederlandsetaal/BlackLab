@@ -8,7 +8,7 @@ import net.jcip.annotations.NotThreadSafe;
 /**
  * Provides read access to the forward indexes in a single Lucene index segment.
  *
- * Implementations are not intended to be threadsafe, but to be used by a single
+ * Implementations are not intended to be thread-safe, but to be used by a single
  * thread.
  */
 @NotThreadSafe
