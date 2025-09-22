@@ -73,7 +73,6 @@ public class QueryExecutionContext {
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
      * @param defaultRelationClass default relation class to search (or null to use global default)
      * @param captures unique capture names assigned so far
-     * @param withSpans whether to include overlapping spans in the results
      */
     private QueryExecutionContext(BlackLabIndex index, String fieldName, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures) {

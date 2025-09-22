@@ -485,7 +485,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      * DocResults created with BlackLabIndex.queryDocuments() (and not ones created with
      * Hits.perDocResults()) to avoid the overhead of fetching hits.
      *
-     * @param numProp a numeric property to sum
+     * @param f a numeric property to sum
      * @return the sum
      */
     public long intSum(Function<DocResult, Long> f) {

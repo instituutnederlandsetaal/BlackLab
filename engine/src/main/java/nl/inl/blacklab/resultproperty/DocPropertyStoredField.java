@@ -112,7 +112,7 @@ public class DocPropertyStoredField extends DocProperty {
      *
      * @param docId1 first doc
      * @param docId2 second doc
-     * @return 0 if equal, negative if a < b, positive if a > b.
+     * @return 0 if equal, negative if a &lt; b, positive if a &gt; b.
      */
     public int compare(int docId1, int docId2) {
         PropertyValueString a = PropertyValueString.fromArray(get(docId1), context.collationCache());
@@ -125,7 +125,7 @@ public class DocPropertyStoredField extends DocProperty {
      *
      * @param a first doc
      * @param b second doc
-     * @return 0 if equal, negative if a < b, positive if a > b.
+     * @return 0 if equal, negative if a &lt; b, positive if a &gt; b.
      */
     @Override
     public int compare(DocResult a, DocResult b) {
