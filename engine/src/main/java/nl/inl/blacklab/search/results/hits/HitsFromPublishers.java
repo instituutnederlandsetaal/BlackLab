@@ -273,8 +273,10 @@ public class HitsFromPublishers extends HitsAbstract {
         maxHitsToCount = searchSettings.maxHitsToCount();
 
         // Subscribe to all the publishers
+        publishersActive.updateAndGet(c -> c + this.publishers.size());
         publishers.forEach(publisher -> {
-            publishersActive.incrementAndGet();
+            // @@@ PROBLEM: if the first publisher stops immediately, publishersActive will be 0, and setDone() will be called
+            //              before we subscribe to the other publishers!
             publisher.subscribe(new HitSubscriber() {
 
                 long nextIndexToAddToGlobal = 0;
