@@ -452,6 +452,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         try {
             return DirectoryReader.open(FSDirectory.open(indexPath));
         } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("is in the future"))
+                throw new IndexVersionMismatch("Index appears to be created with a newer version.", e);
             if (e.getMessage().contains("Codec with name"))
                 throw new IndexVersionMismatch("Error opening index, Codec not available; wrong BlackLab version?", e);
             throw e;
