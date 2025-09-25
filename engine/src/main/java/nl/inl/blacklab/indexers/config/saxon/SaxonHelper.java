@@ -42,13 +42,20 @@ public class SaxonHelper {
      *
      * @param reader document to parse
      * @param handler content handler to use
+     * @param namespaceAware whether to be namespace-aware
      * @return parsed document
      */
-    public static TreeInfo parseDocument(Reader reader, ContentHandler handler) throws ParserConfigurationException,
+    public static TreeInfo parseDocument(Reader reader, ContentHandler handler, boolean namespaceAware) throws ParserConfigurationException,
             SAXException, XPathException {
         // make sure our content handler doesn't get overwritten by saxon
         SAXParserFactory parserFactory = SAXParserFactory.newInstance();
         parserFactory.setXIncludeAware(true);
+        if (!namespaceAware) {
+            // FIXME: this doesn't seem to work; Saxon still sees the namespaces?
+            //   (we need to call XPathCompiler::setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE,
+            //    but how do we get the XPathCompiler here?)
+            parserFactory.setNamespaceAware(false);
+        }
         SAXParser parser = parserFactory.newSAXParser();
         XMLReader xmlReader = parser.getXMLReader();
         xmlReader.setContentHandler(handler);

@@ -32,7 +32,7 @@ public class FinderInputFormatClass implements FinderInputFormat {
     private static synchronized Map<String, Class<? extends DocIndexerBase>> getAllDocIndexers() {
         if (allDocIndexers == null) {
             allDocIndexers = new HashMap<>();
-            Reflections reflections = new Reflections("", new SubTypesScanner(false));
+            Reflections reflections = new Reflections("nl.inl.blacklab", new SubTypesScanner(false));
             for (Class<? extends DocIndexerBase> cl: reflections.getSubTypesOf(DocIndexerBase.class)) {
                 String qualifiedName = cl.getName();
                 allDocIndexers.put(qualifiedName, cl);

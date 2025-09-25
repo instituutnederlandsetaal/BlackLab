@@ -1,59 +1,11 @@
 package nl.inl.util;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringWriter;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
-
-import org.w3c.dom.Document;
-import org.w3c.dom.ls.DOMImplementationLS;
-import org.w3c.dom.ls.LSOutput;
-import org.w3c.dom.ls.LSSerializer;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-
-import nl.inl.blacklab.exceptions.BlackLabException;
-
 /**
  * Utilities for working with XML.
  */
 public class XmlUtil {
-    private static boolean namespaceAware = false;
 
     private XmlUtil() {
-    }
-
-    public static boolean isNamespaceAware() {
-        return namespaceAware;
-    }
-
-    public static void setNamespaceAware(boolean namespaceAware) {
-        XmlUtil.namespaceAware = namespaceAware;
-    }
-
-    /**
-     * Parse XML from reader to a DOM Document
-     *
-     * @param reader where to read the XML document from
-     * @return the DOM representation of the document
-     */
-    public static Document parseXml(Reader reader) throws SAXException {
-        try {
-            DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-            domFactory.setNamespaceAware(namespaceAware);
-            DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
-            // Avoid errors written to stderr
-            domBuilder.setErrorHandler(new SimpleErrorHandler());
-            return domBuilder.parse(new InputSource(reader));
-        } catch (ParserConfigurationException | IOException e) {
-            throw BlackLabException.wrapRuntime(e);
-        }
     }
 
     /**
@@ -65,27 +17,6 @@ public class XmlUtil {
      */
     public static String xmlToPlainText(String conc) {
         return xmlToPlainText(conc, false);
-    }
-
-    private static final class SimpleErrorHandler implements ErrorHandler {
-        public SimpleErrorHandler() {
-            // NOP
-        }
-
-        @Override
-        public void warning(SAXParseException e) {
-            //
-        }
-
-        @Override
-        public void fatalError(SAXParseException e) throws SAXException {
-            throw e;
-        }
-
-        @Override
-        public void error(SAXParseException e) throws SAXException {
-            throw e;
-        }
     }
 
     /**
@@ -216,27 +147,6 @@ public class XmlUtil {
         }
 
         return new String(src, 0, dstIndex);
-    }
-
-    public static String readXmlAndResolveReferences(BufferedReader reader) {
-        Document document;
-        try {
-            DocumentBuilderFactory domFactory = DocumentBuilderFactory.newInstance();
-            domFactory.setNamespaceAware(true);
-            DocumentBuilder domBuilder = domFactory.newDocumentBuilder();
-            domBuilder.setErrorHandler(new SimpleErrorHandler());
-            document = domBuilder.parse(new InputSource(reader));
-        } catch (ParserConfigurationException | IOException | SAXException e) {
-            throw BlackLabException.wrapRuntime(e);
-        }
-        DOMImplementationLS domImplementation = (DOMImplementationLS) document.getImplementation();
-        LSSerializer lsSerializer = domImplementation.createLSSerializer();
-        LSOutput out = domImplementation.createLSOutput();
-        StringWriter sw = new StringWriter();
-        out.setCharacterStream(sw);
-        out.setEncoding("UTF-8");
-        lsSerializer.write(document, out);
-        return sw.toString();
     }
 
 }

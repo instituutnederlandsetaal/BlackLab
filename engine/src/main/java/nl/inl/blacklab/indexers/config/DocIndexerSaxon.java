@@ -126,7 +126,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             try (Reader reader = document.getDocumentReader()) {
                 try {
                     this.charPositions = new CharPosTrackingReader(reader);
-                    contents = SaxonHelper.parseDocument(charPositions, new CharPosTrackingContentHandler(charPositions));
+                    contents = SaxonHelper.parseDocument(charPositions, new CharPosTrackingContentHandler(charPositions),
+                            config.isNamespaceAware());
                 } finally {
                     this.charPositions.close();
                 }
