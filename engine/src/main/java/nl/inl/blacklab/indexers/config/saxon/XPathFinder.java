@@ -66,7 +66,9 @@ public class XPathFinder {
      */
     private final Map<String, XPathExpression> compiledXPaths = new HashMap<>();
 
-    public XPathFinder(XPath xPath, Map<String, String> namespaces) {
+    public XPathFinder(Map<String, String> namespaces) {
+        XPath xPath = SaxonHelper.getXPathFactory().newXPath();
+
         // setup namespace aware xpath that will compile xpath expressions
         this.xPath = xPath;
         if (namespaces != null && !namespaces.isEmpty()) {

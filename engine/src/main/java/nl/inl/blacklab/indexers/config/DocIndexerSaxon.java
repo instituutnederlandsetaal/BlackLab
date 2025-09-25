@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.xpath.XPath;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -132,9 +131,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                     this.charPositions.close();
                 }
             }
-            XPath xPath = SaxonHelper.getXPathFactory().newXPath();
-            finder = new XPathFinder(xPath,
-                    config.isNamespaceAware() ? config.getNamespaces() : null);
+            finder = new XPathFinder(config.isNamespaceAware() ? config.getNamespaces() : null);
         } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
             throw BlackLabException.wrapRuntime(e);
         }

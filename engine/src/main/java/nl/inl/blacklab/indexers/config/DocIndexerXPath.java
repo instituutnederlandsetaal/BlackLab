@@ -23,10 +23,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
 
     public static final String FT_OPT_PROCESSOR = "processor";
 
-    private static final String FT_OPT_PROCESSING = "processing"; // old key
-
-    private static final String REGEX_PROCESSOR_SAXON = "saxon(ica)?";
-
     /** When referring to unresolved token ids, what prefix should we use to avoid too many similar warnings? */
     private static final int TOKEN_ID_PREFIX_LENGTH = 7;
 
