@@ -14,7 +14,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.DocValuesTermsQuery;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -220,9 +219,9 @@ public class ResultHits {
                         BlsUtils.getDocIdFromPid(index, (String) value);
                 fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
                 usedFilter = true;
-            } else if (p instanceof HitPropertyDocumentStoredField) {
-                fqb.add(new DocValuesTermsQuery(((HitPropertyDocumentStoredField) p).fieldName(),
-                        (String) vals.get(i).value()), Occur.FILTER);
+            } else if (p instanceof HitPropertyDocumentStoredField fieldProp) {
+                Query query = fieldProp.termQuery(index, vals.get(i).value().toString());
+                fqb.add(query, Occur.FILTER);
                 usedFilter = true;
             } else {
                 logger.debug("Cannot merge group specifier into query: {} with value {}", p,

@@ -1,6 +1,14 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.List;
+
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.search.DocValuesTermsQuery;
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.Hits;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
@@ -109,5 +117,20 @@ public class HitPropertyDocumentStoredField extends HitProperty {
     
     public String fieldName() {
         return fieldName;
+    }
+
+    public Query termQuery(BlackLabIndex index, String value) {
+        MetadataField metadataField = index.metadataField(fieldName);
+        if (metadataField.type() == FieldType.NUMERIC) {
+            return IntPoint.newSetQuery(fieldName, List.of(Integer.parseInt(value)));
+        } else {
+            return new DocValuesTermsQuery(fieldName, value);
+            // TermQuery doesn't work here! Why!?
+            // (tested with field authorCombined in CHN;
+            //  if that field is not indexed but does have docvalues,
+            //  that would explain it, but no field in BlackLab should
+            //  have that - all are indexed and have docvalues?)
+            //return new TermQuery(new Term(fieldName, value));
+        }
     }
 }
