@@ -12,11 +12,9 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -224,10 +222,9 @@ public class ResultHits {
                         BlsUtils.getDocIdFromPid(index, (String) value);
                 fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
                 usedFilter = true;
-            } else if (p instanceof HitPropertyDocumentStoredField) {
-                // https://github.com/apache/lucene/commit/0bc41356955cbf0144aa37203c6269256cf62555#diff-8d710e550a9661ad8a40b284a1f2ddc26a3b58477bf55d52eeed3f2f0576385cL169
-                fqb.add(SortedDocValuesField.newSlowSetQuery(((HitPropertyDocumentStoredField) p).fieldName(),new BytesRef((String) vals.get(i).value())),
-                        Occur.FILTER);
+            } else if (p instanceof HitPropertyDocumentStoredField fieldProp) {
+                Query query = fieldProp.termQuery(index, vals.get(i).value().toString());
+                fqb.add(query, Occur.FILTER);
                 usedFilter = true;
             } else {
                 logger.debug("Cannot merge group specifier into query: {} with value {}", p,
