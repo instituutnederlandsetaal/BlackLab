@@ -1,4 +1,4 @@
-package nl.inl.util;
+package nl.inl.util.fileprocessor;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;

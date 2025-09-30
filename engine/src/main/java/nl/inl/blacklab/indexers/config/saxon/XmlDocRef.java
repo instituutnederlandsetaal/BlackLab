@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.Reader;
 
 import nl.inl.util.TextContent;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 public interface XmlDocRef {
 

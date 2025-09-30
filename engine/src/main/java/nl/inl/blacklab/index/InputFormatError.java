@@ -2,7 +2,7 @@ package nl.inl.blacklab.index;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format that is configuration-based.

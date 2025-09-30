@@ -1,4 +1,4 @@
-package nl.inl.util;
+package nl.inl.util.fileprocessor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -11,6 +11,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
+import nl.inl.util.TextContent;
+import nl.inl.util.UnicodeStream;
 
 /** Represents a file to be indexed.
  *
@@ -64,6 +66,25 @@ public interface FileReference {
         return new FileReferenceChars(path, charArray, assocFile);
     }
 
+    static FileReference optimal(boolean isMultiThreaded, String path, InputStream is, File assocFile) {
+        if (isMultiThreaded) {
+            // We have to convert the InputStream to a byte[], because we will
+            // pass it to the handler asynchronously, and we can't guarantee that
+            // the InputStream will still be valid when the handler is called.
+            // (we can't use char[], even though that would be better for XML files,
+            //  because file may be binary)
+            try {
+                return FileReference.fromBytes(path, IOUtils.toByteArray(is), assocFile);
+            } catch (IOException e) {
+                throw new IllegalStateException("Error reading file: " + path, e);
+            }
+        } else {
+            // We're only processing files synchronously, on this thread.
+            // No need to convert to a byte[], just use the InputStream directly.
+            return FileReference.fromInputStream(path, is, assocFile);
+        }
+    }
+
     /**
      * Path to the file (containing archive may be included).
      */
@@ -112,6 +133,12 @@ public interface FileReference {
         return createReader(null);
     }
 
+    /**
+     * Get a reader to the file contents.
+     * May be called multiple times.
+     * @param overrideEncoding if not null, use this encoding instead of the detected/configured one
+     * @return reader
+     */
     default BufferedReader createReader(Charset overrideEncoding) {
         throw new UnsupportedOperationException("Cannot create reader; call withCreateReader() first");
     }

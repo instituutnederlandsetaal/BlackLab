@@ -1,7 +1,7 @@
 package nl.inl.blacklab.index;
 
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format

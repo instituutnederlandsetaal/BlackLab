@@ -1,4 +1,4 @@
-package nl.inl.util;
+package nl.inl.util.fileprocessor;
 
 import java.io.BufferedReader;
 import java.io.CharArrayReader;
@@ -8,6 +8,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.input.ReaderInputStream;
+
+import nl.inl.util.TextContent;
 
 public class FileReferenceChars implements FileReference {
 

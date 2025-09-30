@@ -65,10 +65,6 @@ public abstract class IndexSource {
         this.uri = uri;
     }
 
-    public String getUri() {
-        return uri;
-    }
-
     /**
      * Get directory associated with this IndexSource; we will search it for format files.
      */

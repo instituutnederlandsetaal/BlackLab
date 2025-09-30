@@ -12,7 +12,8 @@ import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.util.FileProcessor;
+import nl.inl.util.fileprocessor.FileHandler;
+import nl.inl.util.fileprocessor.FileProcessor;
 
 public interface Indexer extends DocWriter {
 
@@ -210,7 +211,7 @@ public interface Indexer extends DocWriter {
 
     void setNumberOfThreadsToUse(int numberOfThreadsToUse);
 
-    FileProcessor createFileProcessor();
+    FileProcessor createFileProcessor(FileHandler handler, String fileNameGlob);
 
     String getFormatIdentifier();
 }

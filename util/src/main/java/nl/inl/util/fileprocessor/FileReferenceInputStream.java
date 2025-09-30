@@ -1,10 +1,12 @@
-package nl.inl.util;
+package nl.inl.util.fileprocessor;
 
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import org.apache.commons.io.input.BOMInputStream;
+
+import nl.inl.util.UnicodeStream;
 
 public class FileReferenceInputStream implements FileReference {
 

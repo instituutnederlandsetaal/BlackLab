@@ -20,7 +20,7 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Wrapper class for a regular DocIndexer. It's activated when a format has the

@@ -21,10 +21,12 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
-import nl.inl.util.FileProcessor;
-import nl.inl.util.FileReference;
 import nl.inl.util.FileUtil;
 import nl.inl.util.TextContent;
+import nl.inl.util.fileprocessor.FileHandler;
+import nl.inl.util.fileprocessor.FileIterator;
+import nl.inl.util.fileprocessor.FileProcessor;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Tool for indexing. Reports its progress to an IndexListener.
@@ -308,36 +310,30 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public FileProcessor createFileProcessor() {
-        FileProcessor proc = new FileProcessor(numberOfThreadsToUse, defaultRecurseSubdirs, processArchivesAsDirectories);
-        proc.setErrorHandler(listener());
-        return proc;
+    public FileProcessor createFileProcessor(FileHandler handler, String fileNameGlob) {
+        FileIterator.FileIteratorSettings settings = new FileIterator.FileIteratorSettings(defaultRecurseSubdirs,
+                processArchivesAsDirectories, fileNameGlob);
+        return new FileProcessor(handler, listener(), numberOfThreadsToUse, settings);
     }
 
     @Override
     public void index(String fileName, InputStream input, String fileNameGlob) {
-        try (FileProcessor proc = createFileProcessor()) {
-            proc.setFileHandler(new FileHandlerDocIndexer(this));
-            proc.setFileNameGlob(fileNameGlob);
+        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), fileNameGlob)) {
             proc.processFile(FileReference.fromInputStream(fileName, input, null));
         }
     }
 
     @Override
     public void index(File file, String fileNameGlob) {
-        try (FileProcessor proc = createFileProcessor()) {
-            proc.setFileHandler(new FileHandlerDocIndexer(this));
-            proc.setFileNameGlob(fileNameGlob == null ? "*" : fileNameGlob);
+        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), fileNameGlob)) {
             proc.processFileOrDirectory(file);
         }
     }
     
     @Override
     public void index(String fileName, byte[] contents, String fileNameGlob) {
-        try (FileProcessor proc = createFileProcessor()) {
-            proc.setFileHandler(new FileHandlerDocIndexer(this));
-            proc.setFileNameGlob(fileNameGlob == null ? "*" : fileNameGlob);
-            proc.processFile(FileReference.fromBytes(fileName, contents, (File)null));
+        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), fileNameGlob)) {
+            proc.processFile(FileReference.fromBytes(fileName, contents, null));
         }
     }
     

@@ -2,7 +2,7 @@ package nl.inl.blacklab.index;
 
 import java.io.File;
 
-import nl.inl.util.FileProcessor.ErrorHandler;
+import nl.inl.util.fileprocessor.ErrorHandler;
 
 /**
  * Used to report progress while indexing, so we can give feedback to the user.

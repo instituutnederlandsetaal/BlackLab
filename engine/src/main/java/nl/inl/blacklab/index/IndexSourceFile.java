@@ -3,7 +3,7 @@ package nl.inl.blacklab.index;
 import java.io.File;
 import java.util.Optional;
 
-import nl.inl.util.FileProcessor;
+import nl.inl.util.fileprocessor.FileProcessor;
 
 /** A file, directory or glob to index. */
 public class IndexSourceFile extends IndexSource {
@@ -31,9 +31,7 @@ public class IndexSourceFile extends IndexSource {
     public void index(Indexer indexer) {
         if (glob.contains("*") || glob.contains("?")) {
             // Real wildcard glob
-            try (FileProcessor proc = indexer.createFileProcessor()) {
-                proc.setFileHandler(new FileHandlerDocIndexer(indexer));
-                proc.setFileNameGlob(glob);
+            try (FileProcessor proc = indexer.createFileProcessor(new FileHandlerDocIndexer(indexer), glob)) {
                 proc.processFileOrDirectory(inputDir);
             }
         } else {

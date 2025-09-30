@@ -7,7 +7,7 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format that is configuration-based.

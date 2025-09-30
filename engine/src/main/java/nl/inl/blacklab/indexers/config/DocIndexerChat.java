@@ -30,8 +30,8 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.CollectionsUtil;
-import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Class to read files in (CHILDES) CHAT format.

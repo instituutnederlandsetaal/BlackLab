@@ -31,7 +31,7 @@ import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * An indexer capable of XPath version supported by the provided saxon library.

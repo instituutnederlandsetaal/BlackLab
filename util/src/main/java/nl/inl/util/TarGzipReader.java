@@ -10,6 +10,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.FilenameUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Class for handling .tar.gz input streams. It will call the supplied handler

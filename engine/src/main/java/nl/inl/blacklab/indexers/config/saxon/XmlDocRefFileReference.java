@@ -3,8 +3,8 @@ package nl.inl.blacklab.indexers.config.saxon;
 import java.util.function.Supplier;
 
 import nl.inl.util.CountingReader;
-import nl.inl.util.FileReference;
 import nl.inl.util.TextContent;
+import nl.inl.util.fileprocessor.FileReference;
 
 /** A way to access the contents of an XML document via a FileReference.
  *

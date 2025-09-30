@@ -16,6 +16,12 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import nl.inl.util.fileprocessor.ErrorHandler;
+import nl.inl.util.fileprocessor.FileHandler;
+import nl.inl.util.fileprocessor.FileIterator;
+import nl.inl.util.fileprocessor.FileProcessor;
+import nl.inl.util.fileprocessor.FileReference;
+
 @RunWith(Parameterized.class)
 public class TestFileProcessor {
 
@@ -193,7 +199,7 @@ public class TestFileProcessor {
     // Implementation is synchronized so expected file/directory count is deterministic when throwing exceptions in multithreaded tests
     // If we didn't synchronize then multiple file() or directory() calls may run simultaneously.
     // (also, ArrayList is not threadsafe)
-    private static class LoggingFileHandler implements FileProcessor.FileHandler {
+    private static class LoggingFileHandler implements FileHandler {
         private final boolean triggerException;
 
         public final List<String> filesReceived = new ArrayList<>();
@@ -210,7 +216,7 @@ public class TestFileProcessor {
         }
     }
 
-    private static class LoggingErrorHandler implements FileProcessor.ErrorHandler {
+    private static class LoggingErrorHandler implements ErrorHandler {
         public Throwable caughtException = null;
 
         @Override
@@ -225,9 +231,10 @@ public class TestFileProcessor {
         LoggingFileHandler fileHandler = new LoggingFileHandler(shouldTriggerException);
         LoggingErrorHandler errorHandler = new LoggingErrorHandler();
 
-        try (FileProcessor proc = new FileProcessor(useThreads ? 2 : 1, recurseSubdirs, processArchives)) {
-            proc.setFileHandler(fileHandler);
-            proc.setErrorHandler(errorHandler);
+        FileIterator.FileIteratorSettings settings = new FileIterator.FileIteratorSettings(recurseSubdirs,
+                processArchives, "*");
+        int nThreads = useThreads ? 2 : 1;
+        try (FileProcessor proc = new FileProcessor(fileHandler, errorHandler, nThreads, settings)) {
             proc.processFileOrDirectory(this.inputFile);
         }
 

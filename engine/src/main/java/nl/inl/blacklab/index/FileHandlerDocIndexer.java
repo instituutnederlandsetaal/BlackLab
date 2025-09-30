@@ -3,14 +3,14 @@ package nl.inl.blacklab.index;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.util.FileProcessor;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileHandler;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * FileProcessor FileHandler that creates a DocIndexer for every file and
  * performs some reporting.
  */
-class FileHandlerDocIndexer implements FileProcessor.FileHandler {
+class FileHandlerDocIndexer implements FileHandler {
 
     private final Indexer indexer;
 

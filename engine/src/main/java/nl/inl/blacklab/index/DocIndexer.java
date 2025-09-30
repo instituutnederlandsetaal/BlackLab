@@ -8,7 +8,7 @@ import java.util.List;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 public interface DocIndexer extends AutoCloseable {
 

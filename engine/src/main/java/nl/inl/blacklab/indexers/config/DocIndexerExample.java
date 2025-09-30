@@ -22,8 +22,8 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * An educational DocIndexer to learn how to implement your own.

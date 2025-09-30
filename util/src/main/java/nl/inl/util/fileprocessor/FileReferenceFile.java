@@ -1,4 +1,4 @@
-package nl.inl.util;
+package nl.inl.util.fileprocessor;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,6 +12,7 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
+import nl.inl.util.UnicodeStream;
 
 public class FileReferenceFile implements FileReference {
 

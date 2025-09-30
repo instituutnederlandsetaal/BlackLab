@@ -3,6 +3,8 @@ package nl.inl.util;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.util.fileprocessor.FileReference;
+
 public class TestFileReference {
 
     @Test

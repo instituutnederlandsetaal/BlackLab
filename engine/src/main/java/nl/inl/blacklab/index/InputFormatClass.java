@@ -8,7 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.indexers.config.DocIndexerBase;
-import nl.inl.util.FileReference;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format that is not configuration-based.

@@ -17,8 +17,8 @@ import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Indexer for the CoNLL-U format.

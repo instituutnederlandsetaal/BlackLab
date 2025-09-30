@@ -27,10 +27,10 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.util.DownloadCache;
-import nl.inl.util.FileProcessor;
-import nl.inl.util.FileReference;
 import nl.inl.util.StringUtil;
 import nl.inl.util.TextContent;
+import nl.inl.util.fileprocessor.FileProcessor;
+import nl.inl.util.fileprocessor.FileReference;
 
 public abstract class DocIndexerBase extends DocIndexerAbstract {
 
