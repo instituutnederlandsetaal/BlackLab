@@ -7,7 +7,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import javax.xml.transform.Source;
 import javax.xml.transform.sax.SAXSource;
-import javax.xml.xpath.XPathFactory;
 
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
@@ -16,26 +15,29 @@ import org.xml.sax.XMLReader;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.TreeInfo;
+import net.sf.saxon.s9api.Processor;
+import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.trans.XPathException;
-import net.sf.saxon.xpath.XPathFactoryImpl;
 
 /**
  * A helper for indexing using Saxon.
  */
 public class SaxonHelper {
 
+    static Processor saxonProcessor = new Processor(false);
+
     private SaxonHelper() {}
 
     /** Maintain one XPath factory per thread. */
-    public static final ThreadLocal<XPathFactory> XPATH_FACTORY = new InheritableThreadLocal<>() {
+    public static final ThreadLocal<XPathCompiler> XPATH_FACTORY = new InheritableThreadLocal<>() {
         @Override
-        protected XPathFactory initialValue() {
-            return new XPathFactoryImpl();
+        protected XPathCompiler initialValue() {
+            return saxonProcessor.newXPathCompiler();
         }
     };
 
-    public static XPathFactory getXPathFactory() {
-        return XPATH_FACTORY.get();
+    public static XPathCompiler newXPathFactory() {
+        return saxonProcessor.newXPathCompiler();
     }
 
     /** Parse the document, using the given content handler.
@@ -63,8 +65,13 @@ public class SaxonHelper {
         // regular parsing with line numbering enabled
         InputSource inputSrc = new InputSource(reader);
         Source source = new SAXSource(trackingReader, inputSrc);
-        Configuration config = ((XPathFactoryImpl) XPATH_FACTORY.get()).getConfiguration();
+
+        Configuration config = newXPathFactory().getUnderlyingStaticContext().getConfiguration();
         config.setLineNumbering(true);
         return config.buildDocumentTree(source);
+    }
+
+    public static Processor getProcessor() {
+        return saxonProcessor;
     }
 }
