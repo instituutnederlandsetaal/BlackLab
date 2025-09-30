@@ -23,6 +23,31 @@ Saxon supports XPath 3.1, which is very powerful and can help when writing compl
 
 Certain complex indexing features can be avoided when using Saxon; many things can be done in XPath directly. See [XPath examples](xpath-examples.md) to get an idea of the wide range of possibilities.
 
+(BlackLab up to version 4 defaulted to the VTD-XML processor and had Saxon as an option (`processor: saxon` in `.blf.yaml`). On the development branch (future BlackLab 5), Saxon is now the only supported XML processor)
+
+
+## Namespaces
+
+If your XML documents use namespaces, you must declare these in the `namespaces` section of your format config file
+so your XPath expressions work correctly. Note that the `xml` namespace is implicit and does not need to be declared (since `dev`/future `v5`).
+
+Example:
+
+```yaml
+namespaces:
+    tei: http://www.tei-c.org/ns/1.0
+
+## What element starts a new document?
+documentPath: //tei:TEI
+```
+
+You can also declare a default namespace (i.e. for elements without a prefix) by using an empty string as the prefix. So the following is equivalent to the above:
+
+```yaml
+namespaces:
+    '': http://www.tei-c.org/ns/1.0
+documentPath: //TEI
+```
 
 ## Unicode normalization
 

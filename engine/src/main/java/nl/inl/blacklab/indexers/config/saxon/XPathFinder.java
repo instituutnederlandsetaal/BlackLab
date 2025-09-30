@@ -1,12 +1,8 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-
-import javax.xml.namespace.NamespaceContext;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -29,38 +25,11 @@ public class XPathFinder {
 
     private static final Logger logger = LogManager.getLogger(XPathFinder.class);
 
-    public String currentNodeToString(NodeInfo node) {
-        return node.getStringValue();
-    }
+    /** Prefix for the implicitly declared xml namespace */
+    public static final String NAMESPACE_XML_PREFIX = "xml";
 
-    private static class MyNamespaceContext implements NamespaceContext {
-        private final Map<String, String> ns = new HashMap<>(3);
-
-        void add(String prefix, String uri) {
-            if (uri.equals(ns.get(prefix)))
-                return;
-            ns.put(prefix, uri);
-        }
-
-        @Override
-        public String getNamespaceURI(String prefix) {
-            return ns.get(prefix);
-        }
-
-        @Override
-        public String getPrefix(String namespaceURI) {
-            return ns.entrySet().stream()
-                    .filter(e -> e.getValue().equals(namespaceURI))
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse(null);
-        }
-
-        @Override
-        public Iterator<String> getPrefixes(String namespaceURI) {
-            return ns.keySet().iterator();
-        }
-    }
+    /** URI for the implicitly declared xml namespace */
+    public static final String NAMESPACE_XML_URI = "http://www.w3.org/XML/1998/namespace";
 
     private final XPathCompiler xPath;
 
@@ -72,14 +41,27 @@ public class XPathFinder {
         // Set up namespace aware xpath that will compile xpath expressions
         this.xPath = xPath;
         this.xPath.setCaching(true); // cache xpaths
+
+        // xml namespace is implicit
+        xPath.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
+
+        boolean hasNamespaces = false;
         if (namespaces != null && !namespaces.isEmpty()) {
-            xPath.declareNamespace("xml", "http://www.w3.org/XML/1998/namespace");
             for (Map.Entry<String, String> e: namespaces.entrySet()) {
+                if (e.getKey().equals(NAMESPACE_XML_PREFIX)) {
+                    if (!e.getValue().equals(NAMESPACE_XML_URI))
+                        logger.warn("Tried to redefine implicit 'xml' namespace prefix to '" + e.getValue() + "'); ignoring");
+                    continue;
+                }
+                hasNamespaces = true;
                 xPath.declareNamespace(e.getKey(), e.getValue());
             }
-        } else {
+        }
+        if (!hasNamespaces) {
             // No namespaces declared in the indexer config.
             // Set Saxon to ignore namespace on elements without a prefix.
+            // This makes sure that we can index documents with or without namespaces, which
+            // unfortunately sometimes happens in large corpora.
             xPath.setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE);
         }
 

@@ -28,14 +28,6 @@ public class SaxonHelper {
 
     private SaxonHelper() {}
 
-    /** Maintain one XPath factory per thread. */
-    public static final ThreadLocal<XPathCompiler> XPATH_FACTORY = new InheritableThreadLocal<>() {
-        @Override
-        protected XPathCompiler initialValue() {
-            return saxonProcessor.newXPathCompiler();
-        }
-    };
-
     public static XPathCompiler newXPathFactory() {
         return saxonProcessor.newXPathCompiler();
     }

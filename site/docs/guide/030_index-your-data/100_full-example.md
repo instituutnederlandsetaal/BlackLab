@@ -26,7 +26,7 @@ type: content
 ##  glueTags: false   # are there glue tags in the file like in the Sketch Engine WPL format?
 
 ## What namespaces do we use in our XPaths?
-## (if omitted: ignore namespaces)
+## (if omitted: ignore namespaces on elements without a prefix)
 namespaces:
   '': http://ilk.uvt.nl/folia    # ('' -> default namespace)
 
