@@ -1,10 +1,9 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * Optionally replace an empty result with a constant value, or the value of a metadata field.
@@ -39,11 +38,11 @@ public class ProcessingStepIfEmpty extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         if (value.isEmpty()) {
             String defaultValue;
             if (field != null)
-                defaultValue = StringUtils.join(docIndexer.getMetadataField(field), separator);
+                defaultValue = StringUtils.join(metadata.get(field), separator);
             else
                 defaultValue = fixedValue;
             if (defaultValue != null)

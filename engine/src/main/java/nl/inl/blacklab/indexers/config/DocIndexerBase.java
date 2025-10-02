@@ -5,12 +5,17 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.util.BytesRef;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -19,29 +24,271 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
+import nl.inl.blacklab.index.BLFieldType;
+import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerAbstract;
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.MetadataFieldImpl;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.StringUtil;
 import nl.inl.util.TextContent;
 import nl.inl.util.fileprocessor.FileProcessor;
 import nl.inl.util.fileprocessor.FileReference;
 
-public abstract class DocIndexerBase extends DocIndexerAbstract {
+public abstract class DocIndexerBase implements DocIndexer {
 
-    private static final boolean TRACE = false;
+    protected static final Logger logger = LogManager.getLogger(DocIndexerBase.class);
+
+    private final DocWriter docWriter;
+
+    private final RelationsStrategy relationsStrategy;
 
     /**
-     * Position of start tags and their index in the annotation arrays, so we can add
-     * payload when we find the end tags
+     * File we're currently parsing. This can be useful for storing the original
+     * filename in the index.
      */
-    private record OpenTagInfo(String name, int index, int position, int relationId,
-                               Map<String, List<String>> attributes) {}
+    protected String documentName;
+
+    /**
+     * The Lucene Document we're currently constructing (corresponds to the document
+     * we're indexing)
+     */
+    protected BLInputDocument currentDoc;
+
+    /**
+     * If true, we're indexing into an existing Lucene document. Don't overwrite it
+     * with a new one.
+     */
+    private boolean indexingIntoExistingDoc = false;
+
+    /**
+     * Store documents? Can be set to false in ConfigInputFormat to if no content
+     * store is desired, or via indexSpecificDocument to prevent storing linked
+     * documents.
+     */
+    private boolean storeDocuments = true;
+
+    public DocIndexerBase(DocWriter docWriter) {
+        this.docWriter = docWriter;
+        /*test*/
+        this.relationsStrategy = docWriter == null/*test*/ ? RelationsStrategy.forNewIndex() : docWriter.getRelationsStrategy();
+    }
+
+    /**
+     * Returns our DocWriter object
+     *
+     * @return the DocWriter object
+     */
+    protected DocWriter getDocWriter() {
+        return docWriter;
+    }
+
+    protected void setDocument(FileReference file) {
+        if (documentName == null)
+            documentName = file.getPath();
+        if (file.getAssociatedFile() != null)
+            setDocumentDirectory(file.getAssociatedFile().getParentFile()); // for XInclude resolution
+    }
+
+    /** Set the current document's directory.
+     * This may e.g. be used to resolve XIncludes, e.g. by DocIndexerSaxon.
+     */
+    protected void setDocumentDirectory(File dir) {}
+
+    protected BLInputDocument createNewDocument() {
+        return getDocWriter().indexObjectFactory().createInputDocument();
+    }
+
+    /** Get the strategy to use for indexing relations. */
+    public RelationsStrategy getRelationsStrategy() {
+        return relationsStrategy;
+    }
+
+    public RelationsStrategy.PayloadCodec getPayloadCodec() {
+        return relationsStrategy.getPayloadCodec();
+    }
+
+    public IndexerStats index(FileReference file) throws ErrorIndexingFile {
+        resetStats();
+        setDocument(file);
+        return index();
+    }
+
+    /**
+     * Index documents contained in a file.
+     *
+     * @throws ErrorIndexingFile if there was an error indexing the file
+     */
+    public abstract IndexerStats index() throws ErrorIndexingFile;
+
+    public Map<String, List<String>> getMetadata() {
+        return metadataFieldValues;
+    }
+
+    // ------------------------------- Metadata ----------------------------------
+
+    /**
+     * Document metadata. Added at the end to deal with unknown values, multiple occurrences
+     * (only the first is actually indexed, because of DocValues, among others), etc.
+     */
+    protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
+
+    /**
+     * Translate a field name before adding it.
+     *
+     * By default, simply returns the input. May be overridden to change the name of
+     * a metadata field as it is indexed.
+     *
+     * @param from original metadata field name
+     * @return new name
+     */
+    protected String optTranslateMetadataFieldName(String from) {
+        return from;
+    }
+
+    public List<String> getMetadataField(String name) {
+        return metadataFieldValues.get(name);
+    }
+
+    public void addMetadataField(String name, String value) {
+        name = optTranslateMetadataFieldName(name);
+
+        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
+            logger.warn("Field name '" + name
+                    + "' is discouraged (field/annotation names should be valid XML element names)");
+
+        if (name == null || value == null) {
+            warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");
+            return;
+        }
+
+        value = StringUtil.trimWhitespace(value);
+        if (!value.isEmpty()) {
+            metadataFieldValues.computeIfAbsent(name, __ -> new ArrayList<>()).add(value);
+            IndexMetadataWriter indexMetadata = getDocWriter().metadata();
+            indexMetadata.registerMetadataField(name);
+        }
+    }
+
+    /**
+     * When all metadata values have been set, call this to add the to the Lucene document.
+     *
+     * We do it this way because we don't want to add multiple values for a field (DocValues and
+     * Document.get() only deal with the first value added), and we want to set an "unknown value"
+     * in certain conditions, depending on the configuration.
+     */
+    private void addMetadataToDocument() {
+        // See what metadatafields are missing or empty and add unknown value if desired.
+        IndexMetadataWriter indexMetadata = getDocWriter().metadata();
+        Map<String, String> unknownValuesToUse = new HashMap<>();
+        List<String> fields = indexMetadata.metadataFields().names();
+        for (String field: fields) {
+            MetadataField fd = indexMetadata.metadataField(field);
+            if (fd.type() == FieldType.NUMERIC)
+                continue;
+            boolean missing = false, empty = false;
+            List<String> currentValue = getMetadataField(fd.name());
+            if (currentValue == null)
+                missing = true;
+            else if (currentValue.isEmpty() || currentValue.stream().allMatch(String::isEmpty))
+                empty = true;
+            UnknownCondition cond = UnknownCondition.fromStringValue(fd.custom().get("unknownCondition", "never"));
+            boolean useUnknownValue = false;
+            switch (cond) {
+            case EMPTY:
+                useUnknownValue = empty;
+                break;
+            case MISSING:
+                useUnknownValue = missing;
+                break;
+            case MISSING_OR_EMPTY:
+                useUnknownValue = missing || empty;
+                break;
+            case NEVER:
+                // (useUnknownValue is already false)
+                break;
+            }
+            if (useUnknownValue) {
+                if (empty) {
+                    // Don't count this as a value, count the unknown value
+                    for (String value: currentValue) {
+                        ((MetadataFieldImpl) indexMetadata.metadataFields().get(fd.name())).removeValue(value);
+                    }
+                }
+                unknownValuesToUse.put(fd.name(), fd.custom().get("unknownValue", "unknown"));
+            }
+        }
+        for (Map.Entry<String, String> e: unknownValuesToUse.entrySet()) {
+            metadataFieldValues.put(e.getKey(), List.of(e.getValue()));
+        }
+        // Index the metadata fields in order of increasing size, so that the largest
+        // field is last.
+        // (see https://lucene.apache.org/core/9_0_0/changes/Changes.html
+        // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied
+        // StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.)
+        List<Map.Entry<String, List<String>>> entries = metadataFieldValues.entrySet().stream()
+                .sorted(Comparator.comparingInt(e -> e.getValue().stream().map(String::length).reduce(0, Integer::sum)))
+                .toList();
+        for (Map.Entry<String, List<String>> e: entries) {
+            addMetadataFieldToDocument(e.getKey(), e.getValue());
+        }
+        metadataFieldValues.clear();
+    }
+
+    private void addMetadataFieldToDocument(String name, List<String> values) {
+        IndexMetadataWriter indexMetadata = getDocWriter().metadata();
+        //indexMetadata.registerMetadataField(name);
+
+        MetadataFieldImpl desc = (MetadataFieldImpl) indexMetadata.metadataFields().get(name);
+
+        FieldType type = desc.type();
+        if (type != FieldType.NUMERIC) {
+            for (String value: values) {
+                BLFieldType blFieldType = switch (type) {
+                    case NUMERIC ->
+                            throw new IllegalArgumentException("Numeric types should be indexed using IntField, etc.");
+                    case TOKENIZED -> getDocWriter().metadataFieldType(true);
+                    case UNTOKENIZED -> getDocWriter().metadataFieldType(false);
+                };
+                currentDoc.addTextualMetadataField(name, value, blFieldType);
+            }
+        }
+        if (type == FieldType.NUMERIC) {
+            boolean firstValue = true;
+            for (String value: values) {
+                // Index these fields as numeric too, for faster range queries
+                // (we do both because fields sometimes aren't exclusively numeric)
+                int n;
+                try {
+                    n = Integer.parseInt(value);
+                } catch (NumberFormatException e) {
+                    // This just happens sometimes, e.g. given multiple years, or
+                    // descriptive text like "around 1900". OK to ignore.
+                    n = 0;
+                }
+                currentDoc.addStoredNumericField(name, n, firstValue);
+                if (!firstValue) {
+                    warn(documentName + " contains multiple values for single-valued numeric field " + name
+                            + "(values: " + StringUtils.join(values, "; ") + ")");
+                }
+                firstValue = false;
+            }
+        }
+    }
+
+    // ------------------------------- Annotated fields ----------------------------------
 
     /** Annotated fields we're indexing. */
     private final Map<String, AnnotatedFieldWriter> annotatedFields = new LinkedHashMap<>();
@@ -81,50 +328,14 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     private StringBuilder punctuation = new StringBuilder();
 
     /**
-     * If true, we're indexing into an existing Lucene document. Don't overwrite it
-     * with a new one.
+     * Position of start tags and their index in the annotation arrays, so we can add
+     * payload when we find the end tags
      */
-    private boolean indexingIntoExistingDoc = false;
+    private record OpenTagInfo(String name, int index, int position, int relationId,
+                               Map<String, List<String>> attributes) {}
 
     /** Currently opened inline tags we still need to add length payload to */
     private final List<OpenTagInfo> openInlineTags = new ArrayList<>();
-
-    /**
-     * Store documents? Can be set to false in ConfigInputFormat to if no content
-     * store is desired, or via indexSpecificDocument to prevent storing linked
-     * documents.
-     */
-    private boolean storeDocuments = true;
-
-    /**
-     * The content store we should store this document in. Also stored the content
-     * store id in the field with this name with "Cid" appended, e.g. "metadataCid"
-     * if useContentStore equals "metadata". This is used for storing linked
-     * document, if desired. Normally null, meaning document should be stored in the
-     * default field and content store (usually "contents", with the id in field
-     * "contents#cid").
-     */
-    private String linkedDocumentContentStoreName = null;
-
-    /**
-     * Total words processed by this indexer. Used for reporting progress, do not
-     * reset except when finished with file.
-     */
-    protected int wordsDone = 0;
-    private int wordsDoneAtLastReport = 0;
-    private int charsDoneAtLastReport = 0;
-
-    /**
-     * What annotations where skipped because they were not declared?
-     */
-    final Set<String> skippedAnnotations = new HashSet<>();
-
-    /** Indexer that linked to us (linkedDocument), or null if not applicable. */
-    protected DocIndexerBase linkingIndexer;
-
-    protected String getLinkedDocumentContentStoreName() {
-        return linkedDocumentContentStoreName;
-    }
 
     protected void addAnnotatedField(AnnotatedFieldWriter field) {
         annotatedFields.put(field.name(), field);
@@ -179,6 +390,21 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         return annotMain.lastValuePosition() + 1;
     }
 
+    /**
+     * Character position within the current document.
+     */
+    protected abstract int getCharacterPosition();
+
+    /** For parallel corpora where a document has multiple versions,
+     * this is the character position within the version. For other
+     * corpora, this is the same as {@link #getCharacterPosition()}.
+     *
+     * Only supported by DocIndexerSaxon at the moment.
+     */
+    protected int getCharacterPositionWithinVersion() {
+        return getCharacterPosition();
+    }
+
     protected AnnotationWriter tagsAnnotation() {
         return annotRelation;
     }
@@ -187,8 +413,96 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         return annotPunct;
     }
 
+    protected void setAddDefaultPunctuation(boolean addDefaultPunctuation) {
+        this.addDefaultPunctuation = addDefaultPunctuation;
+    }
+
     protected void setPreventNextDefaultPunctuation() {
         preventNextDefaultPunctuation = true;
+    }
+
+    /**
+     * What annotations where skipped because they were not declared?
+     */
+    final Set<String> skippedAnnotations = new HashSet<>();
+
+    // ---- Storing documents ----
+
+    protected void setStoreDocuments(boolean storeDocuments) {
+        this.storeDocuments = storeDocuments;
+    }
+
+    protected boolean isStoreDocuments() {
+        return storeDocuments;
+    }
+
+    protected void storeContent(ConfigAnnotatedField field, TextContent content) {
+        getDocWriter().storeInContentStore(currentDoc, content, field.getName());
+    }
+
+    /**
+     * Store the entire document at once.
+     *
+     * Subclasses that simply capture the entire document can use this in their
+     * storeDocument implementation.
+     *
+     * @param document document to store
+     */
+    protected void storeWholeDocument(String document) {
+        storeWholeDocument(TextContent.from(document));
+    }
+
+    /**
+     * Store the entire document at once.
+     *
+     * Subclasses that simply capture the entire document can use this in their
+     * storeDocument implementation.
+     *
+     * @param document document to store
+     */
+    protected void storeWholeDocument(TextContent document) {
+        // Finish storing the document in the content store.
+        // (Note that we do this after adding the "extra closing token", so the character
+        // positions for the closing token still make (some) sense)
+        String contentStoreName = getLinkedDocumentContentStoreName();
+        if (contentStoreName == null) {
+            AnnotatedFieldWriter main = getMainAnnotatedField();
+            if (main != null) {
+                // Regular case. Store content for the main annotated field.
+                contentStoreName = main.name();
+            } else {
+                throw new InvalidIndex("No main annotated field defined, can't store document");
+            }
+        }
+        getDocWriter().storeInContentStore(currentDoc, document, contentStoreName);
+    }
+
+    /**
+     * Store (or finish storing) the document in the content store.
+     *
+     * Also set the content id field so we know how to retrieve it later.
+     */
+    public abstract void storeDocument();
+
+
+
+    // ------------------------------- Linked documents ----------------------------------
+
+    /**
+     * The content store we should store this document in. Also stored the content
+     * store id in the field with this name with "Cid" appended, e.g. "metadataCid"
+     * if useContentStore equals "metadata". This is used for storing linked
+     * document, if desired. Normally null, meaning document should be stored in the
+     * default field and content store (usually "contents", with the id in field
+     * "contents#cid").
+     */
+    private String linkedDocumentContentStoreName = null;
+
+    /** Indexer that linked to us (linkedDocument), or null if not applicable. */
+    protected DocIndexerBase linkingIndexer;
+
+    protected String getLinkedDocumentContentStoreName() {
+        return linkedDocumentContentStoreName;
     }
 
     /**
@@ -224,7 +538,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         // Index the data
         InputFormat inputFormat = DocumentFormats.getFormat(inputFormatIdentifier).orElseThrow();
-        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter(), data)) {
+        try (DocIndexer docIndexer = inputFormat.createDocIndexer(getDocWriter())) {
             if (docIndexer instanceof DocIndexerBase ldi) {
                 ldi.indexingIntoExistingDoc = true;
                 ldi.currentDoc = currentDoc;
@@ -234,7 +548,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
                     // If specified, store in this content store and under this name instead of the default
                     ldi.linkedDocumentContentStoreName = storeWithName;
                 }
-                ldi.indexSpecificDocument(documentPath);
+                ldi.indexSpecificDocument(data, documentPath);
             } else {
                 if (docIndexer == null)
                     throw new ErrorIndexingFile("Could not instantiate linked DocIndexer, format not found? (" + inputFormatIdentifier + ")");
@@ -253,7 +567,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param documentExpr Expression (e.g. XPath) used to find the document to
      *            index in the file
      */
-    public abstract void indexSpecificDocument(String documentExpr);
+    public abstract void indexSpecificDocument(FileReference file, String documentExpr);
 
     /**
      * Given a URL or file reference, either download to a temp file or find file
@@ -262,7 +576,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
      * @param inputFile URL or (relative) file reference
      * @return the file
      */
-    protected File resolveFileReference(String inputFile) throws IOException {
+    private File resolveFileReference(String inputFile) throws IOException {
         if (inputFile.startsWith("http://") || inputFile.startsWith("https://")) {
             return DownloadCache.downloadFile(inputFile);
         }
@@ -276,27 +590,11 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         return f;
     }
 
-    protected void trace(String msg) {
-        if (TRACE)
-            System.out.print(msg);
-    }
 
-    protected void traceln(String msg) {
-        if (TRACE)
-            System.out.println(msg);
-    }
+    // ------------------------------- Indexing process ----------------------------------
 
-    protected void setStoreDocuments(boolean storeDocuments) {
-        this.storeDocuments = storeDocuments;
-    }
-
-    protected boolean isStoreDocuments() {
-        return storeDocuments;
-    }
 
     protected void startDocument() {
-
-        traceln("START DOCUMENT");
         if (!indexingIntoExistingDoc) {
             currentDoc = createNewDocument();
             addMetadataField("fromInputFile", documentName);
@@ -306,8 +604,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     protected void endDocument() {
-        traceln("END DOCUMENT");
-
         for (AnnotatedFieldWriter field : getAnnotatedFields().values()) {
             AnnotationWriter propMain = field.mainAnnotation();
 
@@ -368,8 +664,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
 
         // Report progress
         if (getDocWriter() != null) {
-            reportCharsProcessed();
-            reportTokensProcessed();
+            reportTokensAndCharsProcessed();
         }
         if (getDocWriter() != null && !indexingIntoExistingDoc)
             documentDone(documentName);
@@ -383,59 +678,10 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         }
     }
 
-    protected void storeContent(ConfigAnnotatedField field, TextContent content) {
-        getDocWriter().storeInContentStore(currentDoc, content, field.getName());
-    }
-
-    /**
-     * Store the entire document at once.
-     *
-     * Subclasses that simply capture the entire document can use this in their
-     * storeDocument implementation.
-     *
-     * @param document document to store
-     */
-    protected void storeWholeDocument(String document) {
-        storeWholeDocument(TextContent.from(document));
-    }
-
-    /**
-     * Store the entire document at once.
-     *
-     * Subclasses that simply capture the entire document can use this in their
-     * storeDocument implementation.
-     *
-     * @param document document to store
-     */
-    protected void storeWholeDocument(TextContent document) {
-        // Finish storing the document in the content store.
-        // (Note that we do this after adding the "extra closing token", so the character
-        // positions for the closing token still make (some) sense)
-        String contentStoreName = getLinkedDocumentContentStoreName();
-        if (contentStoreName == null) {
-            AnnotatedFieldWriter main = getMainAnnotatedField();
-            if (main != null) {
-                // Regular case. Store content for the main annotated field.
-                contentStoreName = main.name();
-            } else {
-                throw new InvalidIndex("No main annotated field defined, can't store document");
-            }
-        }
-        getDocWriter().storeInContentStore(currentDoc, document, contentStoreName);
-    }
-
-    /**
-     * Store (or finish storing) the document in the content store.
-     *
-     * Also set the content id field so we know how to retrieve it later.
-     */
-    protected abstract void storeDocument();
-
     protected void inlineTag(String tagName, boolean isOpenTag, Map<String, List<String>> attributes) {
         int currentPos = getCurrentTokenPosition();
         AnnotationWriter relationsAnnot = tagsAnnotation();
         if (isOpenTag) {
-            trace("<" + tagName + ">");
             int tagIndex = relationsAnnot.indexInlineTag(tagName, currentPos, -1, attributes);
             // We'll remember the relationId assigned above, even though the payload will updated later, when we encounter
             // the closing tag. We have to use the same relationId in the updated payload, or it won't match the relationId
@@ -444,8 +690,6 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
             int relationId = relationsAnnot.getRelationIdAtIndex(tagIndex < 0 ? -tagIndex : tagIndex);
             openInlineTags.add(new OpenTagInfo(tagName, tagIndex, currentPos, relationId, attributes));
         } else {
-            traceln("</" + tagName + ">");
-
             // Add payload to start tag annotation indicating end position
             if (openInlineTags.isEmpty())
                 throw new MalformedInputFile("Close tag " + tagName + " found, but that tag is not open");
@@ -469,12 +713,7 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
     }
 
     protected void punctuation(String punct) {
-        trace(punct);
         punctuation.append(punct);
-    }
-
-    protected void setAddDefaultPunctuation(boolean addDefaultPunctuation) {
-        this.addDefaultPunctuation = addDefaultPunctuation;
     }
 
     /**
@@ -498,10 +737,9 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         // Normalize once more in case we hit more than one adjacent punctuation
         punctAnnotation().addValue(StringUtil.normalizeWhitespace(punct));
         addEndChar(getCharacterPositionWithinVersion());
-        wordsDone++;
-        if (wordsDone > 0 && wordsDone % 5000 == 0) {
-            reportCharsProcessed();
-            reportTokensProcessed();
+        wordsDoneNotYetReported++;
+        if (wordsDoneNotYetReported >= 5000) {
+            reportTokensAndCharsProcessed();
         }
         if (punctuation.length() > 10_000)
             punctuation = new StringBuilder(); // let's not hold on to this much memory
@@ -593,37 +831,64 @@ public abstract class DocIndexerBase extends DocIndexerAbstract {
         }
     }
 
-    @Override
-    public final void reportCharsProcessed() {
-        final int charsDone = getCharacterPosition();
-        final int charsDoneSinceLastReport;
-        if (charsDoneAtLastReport > charsDone)
-            charsDoneSinceLastReport = charsDone;
-        else
-            charsDoneSinceLastReport = charsDone - charsDoneAtLastReport;
+    // --------------- Progress tracking -----------------
 
+    /** How many documents have been processed for the current file */
+    private int numberOfDocsDone = 0;
+
+    /** How many tokens have been processed for the current file */
+    private int numberOfTokensDone = 0;
+
+    /**
+     * Total words processed by this indexer. Used for reporting progress, do not
+     * reset except when finished with file.
+     */
+    private int wordsDoneNotYetReported = 0;
+    private int charsDoneAtLastReport = 0;
+
+    protected final void reportTokensAndCharsProcessed() {
+        // Chars
+        final int charsDone = getCharacterPosition();
+        final int charsDoneSinceLastReport = charsDone - charsDoneAtLastReport;
         getDocWriter().listener().charsDone(charsDoneSinceLastReport);
         charsDoneAtLastReport = charsDone;
+
+        // Tokens
+        tokensDone(wordsDoneNotYetReported);
+        wordsDoneNotYetReported = 0;
     }
 
     /**
-     * Report the change in wordsDone since the last report
+     * Keep track of how many tokens have been processed.
      */
-    @Override
-    public final void reportTokensProcessed() {
-        final int wordsDoneSinceLastReport;
-        if (wordsDoneAtLastReport > wordsDone) // wordsDone reset by child class? report everything then
-            wordsDoneSinceLastReport = wordsDone;
-        else
-            wordsDoneSinceLastReport = wordsDone - wordsDoneAtLastReport;
+    public void documentDone(String documentName) {
+        numberOfDocsDone++;
+        getDocWriter().listener().documentDone(documentName);
 
-        tokensDone(wordsDoneSinceLastReport);
-        wordsDoneAtLastReport = wordsDone;
+        // Force a merge after each document? (debug feature)
+        if (Boolean.parseBoolean(BlackLab.featureFlag(BlackLab.FEATURE_DEBUG_FORCE_MERGE)))
+            docWriter.debugForceMerge();
     }
 
-    @Override
-    public void setDocument(FileReference file) {
-        if (documentName == null)
-            documentName = file.getPath();
+    /**
+     * Keep track of how many tokens have been processed.
+     */
+    public void tokensDone(int n) {
+        numberOfTokensDone += n;
+        getDocWriter().listener().tokensDone(n);
     }
+
+    protected void warn(String msg) {
+        getDocWriter().listener().warning(msg);
+    }
+
+    protected IndexerStats getStats() {
+        return new IndexerStats(numberOfDocsDone, numberOfTokensDone);
+    }
+
+    protected void resetStats() {
+        numberOfDocsDone = 0;
+        numberOfTokensDone = 0;
+    }
+
 }

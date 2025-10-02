@@ -5,8 +5,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.index.DocIndexer;
-
 /**
  * Appends a constant value, or the value of a metadata field to the result string.
  *
@@ -55,11 +53,11 @@ public class ProcessingStepAppend extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         String appendValue;
         if (field != null) {
             // Append value of field
-            List<String> metadataField = docIndexer.getMetadataField(field);
+            List<String> metadataField = metadata.get(field);
             appendValue = metadataField == null ? "" : StringUtils.join(metadataField, separator);
         } else {
             // Append fixed value

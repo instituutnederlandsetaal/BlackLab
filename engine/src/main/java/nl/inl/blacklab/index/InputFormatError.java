@@ -2,8 +2,6 @@ package nl.inl.blacklab.index;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.util.fileprocessor.FileReference;
-
 /**
  * Description of a supported input format that is configuration-based.
  */
@@ -46,7 +44,7 @@ public class InputFormatError implements InputFormat {
     }
 
     @Override
-    public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
+    public DocIndexer createDocIndexer(DocWriter indexer) {
         throw new UnsupportedOperationException(getDescription());
     }
 

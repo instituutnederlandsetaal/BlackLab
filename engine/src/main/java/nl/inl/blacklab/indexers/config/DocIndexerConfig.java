@@ -1,6 +1,5 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -14,8 +13,8 @@ import java.util.stream.Stream;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -25,11 +24,20 @@ import nl.inl.blacklab.indexers.preprocess.DocIndexerConvertAndTag;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * A DocIndexer configured using a ConfigInputFormat structure.
  */
 public abstract class DocIndexerConfig extends DocIndexerBase {
+
+    public DocIndexerConfig(DocWriter docWriter) {
+        super(docWriter);
+    }
+
+    private static List<String> collectionToList(Collection<String> c) {
+        return c == null ? null : c instanceof List ? (List<String>)c : new ArrayList<>(c);
+    }
 
     protected static String replaceDollarRefs(String pattern, List<String> replacements) {
         if (pattern != null) {
@@ -42,28 +50,34 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         return pattern;
     }
 
-    public static DocIndexerConfig fromConfig(ConfigInputFormat config) {
+    public static DocIndexerConfig fromConfig(ConfigInputFormat config, DocWriter docWriter) {
         DocIndexerConfig docIndexer;
-        Map<String, String> options = config.getFileTypeOptions();
-        String docIndexerClass = options.get("docIndexerClass");
+        Map<String, String> fileTypeOptions = config.getFileTypeOptions();
+        String docIndexerClass = fileTypeOptions.get("docIndexerClass");
         if (docIndexerClass != null) {
             // A custom DocIndexer class was specified in the fileTypeOptions;
             // instantiate that using reflection.
             try {
                 Class<? extends DocIndexerConfig> clz = (Class<? extends DocIndexerConfig>)Class.forName(docIndexerClass);
-                docIndexer = getWithCustomDocIndexerClass(clz, options);
+                DocIndexerConfig result;
+                try {
+                    // Instantiate our DocIndexer class
+                    Constructor<? extends DocIndexerConfig> docIndexerConstructor = clz.getConstructor();
+                    result = docIndexerConstructor.newInstance();
+                } catch (ReflectiveOperationException e) {
+                    throw new InvalidInputFormatConfig(e);
+                }
+                docIndexer = result;
             } catch (ClassNotFoundException e) {
                 throw new InvalidInputFormatConfig("Custom docIndexerClass not found: " + docIndexerClass, e);
             }
         } else {
             docIndexer = switch (config.getFileType()) {
-                case XML -> DocIndexerXPath.create();
-                case TABULAR -> new DocIndexerTabular();
-                case TEXT -> new DocIndexerPlainText();
-                case CHAT -> new DocIndexerChat();
-                case CONLL_U -> new DocIndexerCoNLLU();
-                default -> throw new InvalidInputFormatConfig(
-                        "Unknown file type: " + config.getFileType() + " (use xml, tabular, text or chat)");
+                case XML -> DocIndexerXPath.create(docWriter);
+                case TABULAR -> new DocIndexerTabular(docWriter);
+                case TEXT -> new DocIndexerPlainText(docWriter);
+                case CHAT -> new DocIndexerChat(docWriter);
+                case CONLL_U -> new DocIndexerCoNLLU(docWriter);
             };
         }
 
@@ -71,27 +85,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
         if (config.getConvertPluginId() != null || config.getTagPluginId() != null) {
             try {
-                return new DocIndexerConvertAndTag(docIndexer, config);
+                return new DocIndexerConvertAndTag(docWriter, docIndexer, config);
             } catch (Exception e) {
                 throw BlackLabException.wrapRuntime(e);
             }
         } else {
             return docIndexer;
-        }
-    }
-
-    public static DocIndexerConfig getWithCustomDocIndexerClass(Class<? extends DocIndexerConfig> clz, Map<String, String> fileTypeOptions) {
-        try {
-            try {
-                // Try the constructor that takes fileTypeOptions
-                Constructor<? extends DocIndexerConfig> constructor = clz.getConstructor(Map.class);
-                return constructor.newInstance(fileTypeOptions);
-            } catch (NoSuchMethodException e) {
-                // Try the no-arg constructor instead
-                return clz.getConstructor().newInstance();
-            }
-        } catch (ReflectiveOperationException e) {
-            throw new InvalidInputFormatConfig(e);
         }
     }
 
@@ -104,14 +103,6 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
 
     public void setConfigInputFormat(ConfigInputFormat config) {
         this.config = config;
-    }
-
-    @Override
-    protected String optTranslateFieldName(String from) {
-        if (config == null) // test
-            return from;
-        String to = config.getIndexFieldAs().get(from);
-        return to == null ? from : to;
     }
 
     protected void ensureInitialized() {
@@ -161,8 +152,9 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     @Override
-    public void index() throws IOException, MalformedInputFile, PluginException {
+    public IndexerStats index() throws ErrorIndexingFile {
         ensureInitialized();
+        return getStats();
     }
 
     protected void linkPathMissing(ConfigLinkedDocument ld, String path) {
@@ -206,7 +198,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             String rawValue = values.iterator().next();
             rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
             results = new ArrayList<>();
-            results.add(processing.performSingle(rawValue, this));
+            results.add(processing.performSingle(rawValue, metadataFieldValues));
         }
         return results;
     }
@@ -224,7 +216,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     }
 
     @Override
-    public void indexSpecificDocument(String documentExpr) {
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
         ensureInitialized();
     }
 
@@ -293,7 +285,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         // If there's no processing to be done (the most common case), skip the list allocation.
         return process instanceof ProcessingStepIdentity ?
                 List.of(input) :
-                process.perform(Stream.of(input), this).toList();
+                process.perform(Stream.of(input), metadataFieldValues).toList();
     }
 
     /**
@@ -310,7 +302,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
     protected String processMetadataValue(String name, String value) {
         ConfigMetadataField f = config.getMetadataField(name);
         if (f != null)
-            value = f.getProcess().performSingle(value, this);
+            value = f.getProcess().performSingle(value, metadataFieldValues);
         return value;
     }
 
@@ -332,7 +324,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             warn("Tried to add metadata value but field name is empty, ignoring (value: " + value + ")");
             return;
         }
-        final String indexAsName = optTranslateFieldName(name);
+        final String indexAsName = optTranslateMetadataFieldName(name);
         this.sortedMetadataValues.computeIfAbsent(indexAsName, __ -> {
             ConfigMetadataField conf = this.config.getMetadataField(indexAsName);
             if (conf != null && conf.getSortValues()) {
@@ -343,8 +335,12 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         }).add(value);
     }
 
-    private static List<String> collectionToList(Collection<String> c) {
-        return c == null ? null : c instanceof List ? (List<String>)c : new ArrayList<>(c);
+    @Override
+    protected String optTranslateMetadataFieldName(String from) {
+        if (config == null) // test
+            return from;
+        String to = config.getIndexFieldAs().get(from);
+        return to == null ? from : to;
     }
 
     /**

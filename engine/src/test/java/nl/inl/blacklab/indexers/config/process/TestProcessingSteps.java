@@ -1,6 +1,5 @@
 package nl.inl.blacklab.indexers.config.process;
 
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -10,12 +9,6 @@ import java.util.stream.Stream;
 
 import org.junit.Assert;
 import org.junit.Test;
-
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.DocIndexer;
-import nl.inl.blacklab.index.DocIndexerAbstract;
-import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Test our most-used processing steps.
@@ -129,65 +122,30 @@ public class TestProcessingSteps {
     }
 
     public void test(String input, ProcessingStep step, String expected) {
-        Assert.assertEquals(expected, step.performSingle(input, docIndexer));
-        Assert.assertEquals(List.of(expected), step.perform(Stream.of(input), docIndexer).collect(
+        Assert.assertEquals(expected, step.performSingle(input, metadata));
+        Assert.assertEquals(List.of(expected), step.perform(Stream.of(input), metadata).collect(
                 Collectors.toList()));
     }
 
     public void test(String input, ProcessingStep step, List<String> expected) {
-        Assert.assertEquals(expected.get(0), step.performSingle(input, docIndexer));
-        Assert.assertEquals(expected, step.perform(Stream.of(input), docIndexer).collect(
+        Assert.assertEquals(expected.get(0), step.performSingle(input, metadata));
+        Assert.assertEquals(expected, step.perform(Stream.of(input), metadata).collect(
                 Collectors.toList()));
     }
 
     public void test(List<String> input, ProcessingStep step, List<String> expected) {
-        Assert.assertEquals(expected, step.perform(input.stream(), docIndexer).collect(
+        Assert.assertEquals(expected, step.perform(input.stream(), metadata).collect(
                 Collectors.toList()));
     }
 
-    DocIndexer docIndexer = new DocIndexerAbstract() {
-
-        @Override
-        public List<String> getMetadataField(String name) {
-            return switch (name) {
-                case "test" -> List.of("testValue");
-                case "testMulti" -> List.of("testValue1", "testValue2");
-                case "year" -> List.of("2025");
-                case "month" -> List.of("11");
-                case "day" -> null;
-                default -> null;
-            };
-        }
-
-        @Override
-        public void close() {
-
-        }
-
-        @Override
-        public void setDocument(FileReference file) {
-
-        }
-
-        @Override
-        public void index() throws IOException, MalformedInputFile, PluginException {
-
-        }
-
-        @Override
-        public void reportCharsProcessed() {
-
-        }
-
-        @Override
-        public void reportTokensProcessed() {
-
-        }
-
-        @Override
-        protected int getCharacterPosition() {
-            return 0;
-        }
-    };
+    private static final Map<String, List<String>> metadata = new HashMap<>();
+    
+    static {
+        metadata.put("test", List.of("testValue"));
+        metadata.put("testMulti", List.of("testValue1", "testValue2"));
+        metadata.put("year", List.of("2025"));
+        metadata.put("month", List.of("11"));
+        metadata.put("day", null);
+    }
     
 }

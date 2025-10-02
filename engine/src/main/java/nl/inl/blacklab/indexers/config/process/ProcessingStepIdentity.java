@@ -1,8 +1,8 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * Strip certain characters from the start and end of the value(s)
@@ -15,12 +15,12 @@ public class ProcessingStepIdentity extends ProcessingStep {
     }
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         return values;
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         return value;
     }
 

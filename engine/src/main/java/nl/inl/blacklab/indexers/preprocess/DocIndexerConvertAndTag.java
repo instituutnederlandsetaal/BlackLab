@@ -13,10 +13,10 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FilenameUtils;
 
-import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
@@ -43,7 +43,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
 
     private final DocIndexerConfig outputIndexer;
 
-    public DocIndexerConvertAndTag(DocIndexerConfig actualIndexer, ConfigInputFormat config) {
+    public DocIndexerConvertAndTag(DocWriter docWriter, DocIndexerConfig actualIndexer, ConfigInputFormat config) {
+        super(docWriter);
         this.outputIndexer = actualIndexer;
         this.config = config;
     }
@@ -65,7 +66,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void index() throws PluginException, MalformedInputFile, IOException {
+    public IndexerStats index() throws ErrorIndexingFile {
         if (this.input == null)
             throw new IllegalStateException("A document must be set before calling index()");
 
@@ -76,40 +77,38 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         //
         // ByteArrayOutputStream can conveniently be read and reused even after close()
         ByteArrayOutputStream output = new ByteArrayOutputStream();
-        if (config.getConvertPluginId() != null) {
-            ConvertPlugin converter = PluginManager.getConverter(config.getConvertPluginId())
-                    .orElseThrow(
-                            () -> new RuntimeException("Unknown conversion plugin: " + config.getConvertPluginId()));
+        try {
+            if (config.getConvertPluginId() != null) {
+                ConvertPlugin converter = PluginManager.get(config.getConvertPluginId(), ConvertPlugin.class);
 
-            // convertplugin always outputs in the input charset if provided, utf8 otherwise
-            if (converter.canConvert(input, charset, FilenameUtils.getExtension(this.documentName).toLowerCase())) {
-                converter.perform(input, charset, FilenameUtils.getExtension(this.documentName).toLowerCase(), output);
-                input = new PushbackInputStream(new ByteArrayInputStream(output.toByteArray()), 1);
-                output.reset();
-            }
-        }
-
-        if (config.getTagPluginId() != null) {
-            TagPlugin tagger = PluginManager.getTagger(config.getTagPluginId())
-                    .orElseThrow(() -> new RuntimeException("Unknown tagging plugin: " + config.getTagPluginId()));
-
-            // read in the original charset (if provided)
-            Reader taggerInput = new InputStreamReader(input, charset);
-
-            // always output in utf8 for ease of mind
-            charset = StandardCharsets.UTF_8;
-            try (OutputStreamWriter w = new OutputStreamWriter(output, charset)) {
-                tagger.perform(taggerInput, w);
+                // convertplugin always outputs in the input charset if provided, utf8 otherwise
+                String fileExt = FilenameUtils.getExtension(this.documentName).toLowerCase();
+                if (converter.canConvert(input, charset, fileExt)) {
+                    converter.perform(input, charset, fileExt, output);
+                    input = new PushbackInputStream(new ByteArrayInputStream(output.toByteArray()), 1);
+                    output.reset();
+                }
             }
 
-            this.documentName = tagger.getOutputFileName(this.documentName);
+            if (config.getTagPluginId() != null) {
+                TagPlugin tagger = PluginManager.get(config.getTagPluginId(), TagPlugin.class);
+
+                // read in the original charset (if provided)
+                Reader taggerInput = new InputStreamReader(input, charset);
+
+                // always output in utf8 for ease of mind
+                charset = StandardCharsets.UTF_8;
+                try (OutputStreamWriter w = new OutputStreamWriter(output, charset)) {
+                    tagger.perform(taggerInput, w);
+                }
+            }
+        } catch (PluginException | IOException e) {
+            throw new ErrorIndexingFile(e);
         }
 
-        this.outputIndexer.setDocumentName(this.documentName);
         this.outputIndexer.setConfigInputFormat(config);
 
-        this.outputIndexer.setDocument(FileReference.fromBytesOverrideCharset(documentName, output.toByteArray(), charset));
-        this.outputIndexer.index();
+        return this.outputIndexer.index(FileReference.fromBytesOverrideCharset(documentName, output.toByteArray(), charset));
     }
 
     @Override
@@ -118,13 +117,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    protected void storeDocument() {
-        // FIXME shouldn't we call outputIndexer.storeDocument() here?
-    }
-
-    @Override
-    public void setDocWriter(DocWriter indexer) {
-        outputIndexer.setDocWriter(indexer);
+    public void storeDocument() {
+        outputIndexer.storeDocument();
     }
 
     @Override
@@ -133,18 +127,8 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public BLInputDocument getCurrentDoc() {
-        return outputIndexer.getCurrentDoc();
-    }
-
-    @Override
-    public DocWriter getDocWriter() {
-        return outputIndexer.getDocWriter();
-    }
-
-    @Override
-    public void indexSpecificDocument(String documentExpr) {
-        outputIndexer.indexSpecificDocument(documentExpr);
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
+        outputIndexer.indexSpecificDocument(file, documentExpr);
     }
 
     @Override
@@ -152,5 +136,4 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
         outputIndexer.setConfigInputFormat(config);
     }
 
-    // do not override setDocumentName
 }

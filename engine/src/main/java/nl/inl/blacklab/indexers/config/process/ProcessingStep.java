@@ -7,7 +7,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.indexers.config.ConfigProcessStep;
 
 /** An operation on one or more values during the indexing process.
@@ -83,8 +82,8 @@ public abstract class ProcessingStep {
         }
     }
 
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
-        return values.map(v -> performSingle(v, docIndexer));
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
+        return values.map(v -> performSingle(v, metadata));
     }
 
     public static String par(Map<String, Object> param, String key) {
@@ -96,7 +95,7 @@ public abstract class ProcessingStep {
         return param.getOrDefault(key, defaultValue).toString();
     }
 
-    public abstract String performSingle(String value, DocIndexer docIndexer);
+    public abstract String performSingle(String value, Map<String, List<String>> metadata);
 
     /** Can this produce multiple values from a single value?
      *

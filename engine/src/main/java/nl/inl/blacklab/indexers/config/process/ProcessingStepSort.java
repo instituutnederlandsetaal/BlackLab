@@ -1,8 +1,9 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.blacklab.search.BlackLab;
 
 /**
@@ -11,12 +12,12 @@ import nl.inl.blacklab.search.BlackLab;
 public class ProcessingStepSort extends ProcessingStep {
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         return values.sorted(BlackLab.defaultCollator());
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         return value;
     }
 

@@ -52,14 +52,5 @@ public interface Plugin {
      * @param config the config settings for this plugin
      */
     void init(Map<String, String> config) throws PluginException;
-    
-    /**
-     * Does this plugin require configuration parameters?
-     * 
-     * If not, the plugin will always be initialized. If so, it will only
-     * be initialized if configuration parameters were specified. 
-     * 
-     * @return true if parameters are required, false if not
-     */
-    boolean needsConfig();
+
 }

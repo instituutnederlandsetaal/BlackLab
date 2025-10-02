@@ -12,9 +12,10 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.util.StringUtil;
@@ -49,8 +50,8 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
 
     private int lineNumber;
 
-    public DocIndexerCoNLLU() {
-        super("\\|");
+    public DocIndexerCoNLLU(DocWriter docWriter) {
+        super(docWriter, "\\|");
     }
 
     @Override
@@ -107,7 +108,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
     }
 
     @Override
-    public void index() throws MalformedInputFile, PluginException, IOException {
+    public IndexerStats index() throws ErrorIndexingFile {
         super.index();
 
         csvData = new StringBuilder();
@@ -127,7 +128,12 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         while (true) {
 
             // Read and trim next line
-            String origLine = inputReader.readLine();
+            String origLine = null;
+            try {
+                origLine = inputReader.readLine();
+            } catch (IOException e) {
+                throw new ErrorIndexingFile(e);
+            }
             if (origLine == null)
                 break; // end of file
             lineNumber++;
@@ -237,6 +243,7 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
         }
 
         endDocument();
+        return getStats();
     }
 
     private Span idSpan(String id, int currentSentenceStart) {
@@ -253,17 +260,17 @@ public class DocIndexerCoNLLU extends DocIndexerTabularBase {
     }
 
     @Override
-    public void indexSpecificDocument(String documentExpr) {
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
         // documentExpr is ignored because tabular format files always contain 1 document
         try {
-            index();
+            index(file);
         } catch (Exception e) {
             throw BlackLabException.wrapRuntime(e);
         }
     }
 
     @Override
-    protected void storeDocument() {
+    public void storeDocument() {
         storeWholeDocument(csvData.toString());
     }
 

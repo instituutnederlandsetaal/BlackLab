@@ -7,9 +7,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.util.fileprocessor.FileReference;
 
 /**
@@ -21,6 +22,10 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     private BufferedReader reader;
 
     private StringBuilder fullText;
+
+    public DocIndexerPlainText(DocWriter docWriter) {
+        super(docWriter);
+    }
 
     @Override
     public void close() throws RuntimeException {
@@ -51,7 +56,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     static final Pattern REGEX_WORD = Pattern.compile("\\b\\p{L}+\\b");
 
     @Override
-    public void index() throws MalformedInputFile, PluginException, IOException {
+    public IndexerStats index() throws ErrorIndexingFile {
         super.index();
 
         startDocument();
@@ -67,7 +72,12 @@ public class DocIndexerPlainText extends DocIndexerConfig {
             // For each line
             StringBuilder punct = new StringBuilder();
             while (true) {
-                String line = reader.readLine();
+                String line;
+                try {
+                    line = reader.readLine();
+                } catch (IOException e) {
+                    throw new ErrorIndexingFile(e);
+                }
                 if (line == null)
                     break;
                 if (isStoreDocuments()) {
@@ -85,7 +95,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
                     punct.append(line, i, m.start());
                     i = m.end();
                     for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
-                        String processedWord = annotation.getProcess().performSingle(word, this);
+                        String processedWord = annotation.getProcess().performSingle(word, metadataFieldValues);
                         if (annotation.getValuePath().equals(".")) {
                             annotationValueAppend(annotation.getName(), processedWord, 1);
                         } else {
@@ -106,20 +116,21 @@ public class DocIndexerPlainText extends DocIndexerConfig {
         }
 
         endDocument();
+        return getStats();
     }
 
     @Override
-    public void indexSpecificDocument(String documentExpr) {
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
         // documentExpr is ignored because plain text files always contain 1 document
         try {
-            index();
+            index(file);
         } catch (Exception e) {
             throw BlackLabException.wrapRuntime(e);
         }
     }
 
     @Override
-    protected void storeDocument() {
+    public void storeDocument() {
         storeWholeDocument(fullText.toString());
     }
 

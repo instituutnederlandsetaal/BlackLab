@@ -1,7 +1,6 @@
 package nl.inl.blacklab.index;
 
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format
@@ -15,7 +14,7 @@ public interface InputFormat {
      * @param file file to index
      * @return the DocIndexer
      */
-    DocIndexer createDocIndexer(DocWriter indexer, FileReference file);
+    DocIndexer createDocIndexer(DocWriter indexer);
 
     String getIdentifier();
 

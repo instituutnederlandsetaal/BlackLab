@@ -15,9 +15,11 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.util.StringUtil;
 import nl.inl.util.fileprocessor.FileReference;
 
@@ -70,8 +72,8 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
 
     private BufferedReader inputReader;
 
-    public DocIndexerTabular() {
-        super(";");
+    public DocIndexerTabular(DocWriter docWriter) {
+        super(docWriter, ";");
     }
 
     @Override
@@ -151,7 +153,7 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
     private static final String GLUE_TAG_NAME = "g";
 
     @Override
-    public void index() throws MalformedInputFile, PluginException, IOException {
+    public IndexerStats index() throws ErrorIndexingFile {
         super.index();
 
         // If a documentPath was specified, look for that as the document tag
@@ -256,10 +258,13 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
                     endWord();
                 }
             }
+        } catch (IOException e) {
+            throw new ErrorIndexingFile(e);
         }
 
         if (!lookForDocumentTags)
             endDocument();
+        return getStats();
     }
 
     /** Single- or double-quoted attribute in a tag */
@@ -286,17 +291,17 @@ public class DocIndexerTabular extends DocIndexerTabularBase {
     }
 
     @Override
-    public void indexSpecificDocument(String documentExpr) {
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
         // documentExpr is ignored because tabular format files always contain 1 document
         try {
-            index();
+            index(file);
         } catch (Exception e) {
             throw BlackLabException.wrapRuntime(e);
         }
     }
 
     @Override
-    protected void storeDocument() {
+    public void storeDocument() {
         storeWholeDocument(csvData.toString());
     }
 

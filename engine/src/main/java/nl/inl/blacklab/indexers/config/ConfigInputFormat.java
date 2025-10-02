@@ -91,7 +91,7 @@ public class ConfigInputFormat {
     private final Map<String, String> fileTypeOptions = new HashMap<>();
 
     /** Configuration that will be added to indexmetadata when creating a corpus */
-    private ConfigCorpus corpusConfig = new ConfigCorpus();
+    private final ConfigCorpus corpusConfig = new ConfigCorpus();
 
     /** XML namespace declarations */
     final Map<String, String> namespaces = new LinkedHashMap<>();

@@ -32,7 +32,7 @@ public interface DocWriter {
      * Should we continue indexing or stop?
      *
      * We stop if we've reached the maximum that was set (if any),
-     * or if a fatal error has occurred (indicated by terminateIndexing).
+     * or if a fatal error has occurred.
      *
      * @return true if we should continue, false if not
      */

@@ -341,7 +341,7 @@ class IndexerImpl implements DocWriter, Indexer {
      * Should we continue indexing or stop?
      *
      * We stop if we've reached the maximum that was set (if any), or if a fatal
-     * error has occurred (indicated by terminateIndexing).
+     * error has occurred.
      *
      * @return true if we should continue, false if not
      */

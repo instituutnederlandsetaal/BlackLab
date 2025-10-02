@@ -12,7 +12,6 @@ import java.net.URLClassLoader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,11 +40,6 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
 
     /** SimpleInputOutputProcess::handleStream() */
     private Method methodSimpleInputOutputProcessHandleStream;
-    
-    @Override
-    public boolean needsConfig() {
-        return true;
-    }
 
     @Override
     public void init(Map<String, String> config) throws PluginException {
@@ -129,12 +123,6 @@ public class ConvertPluginOpenConvert implements ConvertPlugin {
     private static final Set<String> inputFormats = new HashSet<>(
             Arrays.asList("doc", "docx", "txt", "epub", "html", "alto", "rtf", "odt")); // TODO (not supported in openconvert yet): pdf
 
-    @Override
-    public Set<String> getInputFormats() {
-        return Collections.unmodifiableSet(inputFormats);
-    }
-
-    @Override
     public String getOutputFormat() {
         return "tei";
     }

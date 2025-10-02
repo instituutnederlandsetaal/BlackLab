@@ -1,10 +1,9 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * A regular expression replace operation.
@@ -40,16 +39,16 @@ public class ProcessingStepReplace extends ProcessingStep {
     }
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         if (keepOriginal) {
-            return values.flatMap(v -> Stream.of(v, performSingle(v, docIndexer)));
+            return values.flatMap(v -> Stream.of(v, performSingle(v, metadata)));
         } else {
-            return values.map(v -> performSingle(v, docIndexer));
+            return values.map(v -> performSingle(v, metadata));
         }
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         return pattern.matcher(value).replaceAll(replacement);
     }
 

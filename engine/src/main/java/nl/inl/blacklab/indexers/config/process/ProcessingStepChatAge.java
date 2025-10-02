@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config.process;
 
-import nl.inl.blacklab.index.DocIndexer;
+import java.util.List;
+import java.util.Map;
 
 /** Undocumented operation chatFormatAgeToMonths, specific to the CHAT format...
  *
@@ -14,7 +15,7 @@ public class ProcessingStepChatAge extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         String[] parts = value.split("[;.]", 3);
         int years = 0;
         int months = 0;

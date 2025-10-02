@@ -13,10 +13,10 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.exceptions.MalformedInputFile;
-import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
@@ -101,14 +101,8 @@ public class DocIndexerExample extends DocIndexerBase {
 
     private StringBuilder wholeDocument = new StringBuilder();
 
-    public DocIndexerExample() {
-        // Empty constructor, required for plugin discovery.
-    }
-
-    @Override
-    public void setDocWriter(DocWriter docWriter) {
-        super.setDocWriter(docWriter);
-        init();
+    public DocIndexerExample(DocWriter docWriter) {
+        super(docWriter);
     }
 
     public void init() {
@@ -155,14 +149,13 @@ public class DocIndexerExample extends DocIndexerBase {
         createAnnotatedFieldWriter(field);
     }
 
-    private static ConfigAnnotation addAnnotationToFieldConfig(ConfigAnnotatedField config, String name,
+    private static void addAnnotationToFieldConfig(ConfigAnnotatedField config, String name,
             AnnotationSensitivities sensitivities, boolean forwardIndex) {
         ConfigAnnotation annot = new ConfigAnnotation();
         annot.setName(name);
         annot.setSensitivity(sensitivities);
         annot.setForwardIndex(forwardIndex);
         config.addAnnotation(annot);
-        return annot;
     }
 
     private void createAnnotatedFieldWriter(ConfigAnnotatedField fieldContents) {
@@ -185,12 +178,11 @@ public class DocIndexerExample extends DocIndexerBase {
         addAnnotatedField(contents);
     }
 
-    private ConfigMetadataField createMetadataField(String name, FieldType type) {
+    private void createMetadataField(String name, FieldType type) {
         ConfigMetadataField metaPidConfig = new ConfigMetadataField();
         metaPidConfig.setName(name);
         metaPidConfig.setType(type);
         getDocWriter().metadata().metadataFields().addFromConfig(metaPidConfig);
-        return metaPidConfig;
     }
 
     @Override
@@ -199,10 +191,16 @@ public class DocIndexerExample extends DocIndexerBase {
     }
 
     @Override
-    public void index() throws IOException, MalformedInputFile, PluginException {
+    public IndexerStats index() throws ErrorIndexingFile {
+        init();
         // Execute the commands one line at a time.
         while (true) {
-            String line = reader.readLine();
+            String line = null;
+            try {
+                line = reader.readLine();
+            } catch (IOException e) {
+                throw new ErrorIndexingFile(e);
+            }
             if (line == null)
                 break;
 
@@ -217,6 +215,7 @@ public class DocIndexerExample extends DocIndexerBase {
             // Execute the command on this line, if any.
             processLine(line);
         }
+        return getStats();
     }
 
     private void processLine(String line) {
@@ -376,7 +375,7 @@ public class DocIndexerExample extends DocIndexerBase {
     }
 
     @Override
-    public void indexSpecificDocument(String documentExpr) {
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
         // Used with linked documents to index part of a linked document.
         // For example, if you're indexing a document A that links to a document B that contains metadata
         // for many documents, you only want to index the metadata for document A in document B. The
@@ -387,7 +386,7 @@ public class DocIndexerExample extends DocIndexerBase {
     }
 
     @Override
-    protected void storeDocument() {
+    public void storeDocument() {
         // If you want to store your input documents in the BlackLab index for easy retrieval and highlighting
         // later, you should uncomment the next line.
         storeWholeDocument(wholeDocument.toString());

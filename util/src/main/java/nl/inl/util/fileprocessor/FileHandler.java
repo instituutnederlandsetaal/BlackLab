@@ -2,8 +2,11 @@ package nl.inl.util.fileprocessor;
 
 import java.io.File;
 
-@FunctionalInterface
 public interface FileHandler {
+    default boolean continueIndexing() {
+        return true;
+    }
+
     /**
      * Handle a file.
      * <p>

@@ -215,7 +215,7 @@ public class InputFormatReader extends YamlJsonReader {
         // Default to Saxon if no processor specified
         if (cfg.getFileType() == FileType.XML &&
                 cfg.getFileTypeOptions().get(DocIndexerXPath.FT_OPT_PROCESSOR) == null) {
-            cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, DocIndexerSaxon.PROCESSOR_NAME);
+            cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, DocIndexerXPath.PROCESSOR_NAME);
         }
     }
 

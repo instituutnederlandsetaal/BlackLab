@@ -1,10 +1,9 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * Map values according to a mapping table.
@@ -25,12 +24,12 @@ public class ProcessingStepMapValues extends ProcessingStep {
     }
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         return values.map(v -> mapping.getOrDefault(v, v));
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         return mapping.getOrDefault(value, value);
     }
 

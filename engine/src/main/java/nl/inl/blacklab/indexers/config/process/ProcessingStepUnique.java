@@ -1,8 +1,8 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * Eliminate any duplicate values.
@@ -10,12 +10,12 @@ import nl.inl.blacklab.index.DocIndexer;
 public class ProcessingStepUnique extends ProcessingStep {
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         return values.distinct();
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         return value;
     }
 

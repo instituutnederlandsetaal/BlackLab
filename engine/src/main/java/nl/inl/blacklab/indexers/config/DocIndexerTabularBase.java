@@ -2,6 +2,7 @@ package nl.inl.blacklab.indexers.config;
 
 import java.util.List;
 
+import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.indexers.config.process.ProcessingStepIdentity;
 import nl.inl.blacklab.indexers.config.process.ProcessingStepSplit;
@@ -11,8 +12,8 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
 
     protected String multipleValuesSeparatorRegex;
 
-    protected DocIndexerTabularBase(String multipleValuesSeparatorRegex) {
-        super();
+    protected DocIndexerTabularBase(DocWriter docWriter, String multipleValuesSeparatorRegex) {
+        super(docWriter);
         this.multipleValuesSeparatorRegex = multipleValuesSeparatorRegex;
     }
 
@@ -35,7 +36,7 @@ public abstract class DocIndexerTabularBase extends DocIndexerConfig {
             }
         } else {
             // Single value.
-            value = process.performSingle(value, this);
+            value = process.performSingle(value, metadataFieldValues);
             annotationValueAppend(annotation.getName(), value, 1);
         }
     }

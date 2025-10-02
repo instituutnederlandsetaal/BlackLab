@@ -7,7 +7,6 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.DocIndexerConfig;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
-import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format that is configuration-based.
@@ -87,12 +86,8 @@ public class InputFormatWithConfig implements InputFormat {
     }
 
     @Override
-    public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
-        DocIndexerConfig d = DocIndexerConfig.fromConfig(getConfig());
-        d.setDocWriter(indexer);
-        d.setDocumentName(file.getPath());
-        d.setDocument(file);
-        return d;
+    public DocIndexer createDocIndexer(DocWriter docWriter) {
+        return DocIndexerConfig.fromConfig(getConfig(), docWriter);
     }
 
     @Override

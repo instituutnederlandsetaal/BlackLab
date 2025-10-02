@@ -10,11 +10,6 @@ import org.apache.commons.io.IOUtils;
 import nl.inl.blacklab.exceptions.PluginException;
 
 public class TagPluginNoop implements TagPlugin {
-    
-    @Override
-    public boolean needsConfig() {
-        return false;
-    }
 
     @Override
     public String getId() {
@@ -34,21 +29,6 @@ public class TagPluginNoop implements TagPlugin {
     @Override
     public void init(Map<String, String> config) {
         // NO OP
-    }
-
-    @Override
-    public String getInputFormat() {
-        return "";
-    }
-
-    @Override
-    public String getOutputFormatIdentifier() {
-        return "";
-    }
-
-    @Override
-    public String getOutputFileName(String inputFileName) {
-        return inputFileName;
     }
 
     @Override

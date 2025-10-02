@@ -1,8 +1,10 @@
 package nl.inl.blacklab.exceptions;
 
 /**
- * Thrown when the file you're indexing is malformed in some way (i.e. not
- * well-formed XML)
+ * Thrown when there was an error indexing a file.
+ *
+ * For example, if the file is malformed in some way (i.e. not
+ * well-formed XML).
  */
 public class ErrorIndexingFile extends RuntimeException {
 

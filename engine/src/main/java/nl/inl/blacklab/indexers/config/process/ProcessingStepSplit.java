@@ -1,11 +1,10 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * A regular expression replace operation.
@@ -56,7 +55,7 @@ public class ProcessingStepSplit extends ProcessingStep {
     }
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         return values.flatMap(value -> {
             String[] parts = pattern.split(value, -1);
             if (!keepAllParts()) {
@@ -73,7 +72,7 @@ public class ProcessingStepSplit extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         String[] parts = pattern.split(value, -1);
         if (keepOriginal) {
             // dumb, but logical (return the first value we would return for multiple)

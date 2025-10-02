@@ -1,10 +1,10 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.index.DocIndexer;
 import nl.inl.util.StringUtil;
 
 /**
@@ -33,7 +33,7 @@ public class ProcessingStepParsePos extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         // Trim character/string from beginning and end
         value = StringUtil.trimWhitespace(value);
         if (featureName.equals("_")) {

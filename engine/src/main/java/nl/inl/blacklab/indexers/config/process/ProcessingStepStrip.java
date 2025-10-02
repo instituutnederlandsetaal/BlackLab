@@ -1,10 +1,9 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * Strip certain characters from the start and end of the value(s)
@@ -24,7 +23,7 @@ public class ProcessingStepStrip extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         return StringUtils.strip(value, stripChars);
     }
 

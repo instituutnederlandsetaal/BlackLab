@@ -20,7 +20,6 @@ import java.util.Properties;
 import java.util.jar.Manifest;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -44,11 +43,6 @@ public class TagPluginDutchTagger implements TagPlugin {
     private Object converter = null;
 
     private Method handleFile;
-    
-    @Override
-    public boolean needsConfig() {
-        return true;
-    }
 
     @Override
     public void init(Map<String, String> config) throws PluginException {
@@ -131,21 +125,6 @@ public class TagPluginDutchTagger implements TagPlugin {
             if (tmpOutput != null)
                 FileUtils.deleteQuietly(tmpOutput.toFile());
         }
-    }
-
-    @Override
-    public String getInputFormat() {
-        return "tei";
-    }
-
-    @Override
-    public String getOutputFormatIdentifier() {
-        return "tei";
-    }
-
-    @Override
-    public String getOutputFileName(String inputFileName) {
-        return FilenameUtils.removeExtension(inputFileName).concat(".xml");
     }
 
     @Override

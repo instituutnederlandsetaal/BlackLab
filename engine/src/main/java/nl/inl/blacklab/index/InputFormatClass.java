@@ -1,14 +1,11 @@
 package nl.inl.blacklab.index;
 
-import java.io.Reader;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.indexers.config.DocIndexerBase;
-import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * Description of a supported input format that is not configuration-based.
@@ -51,25 +48,15 @@ public class InputFormatClass implements InputFormat {
     }
 
     @Override
-    public DocIndexer createDocIndexer(DocWriter indexer, FileReference file) {
+    public DocIndexer createDocIndexer(DocWriter indexer) {
         try {
             // Instantiate our DocIndexer class
-            Constructor<? extends DocIndexer> constructor;
-            DocIndexer docIndexer;
-            try {
-                constructor = docIndexerClass.getConstructor();
-                docIndexer = constructor.newInstance();
-                docIndexer.setDocWriter(indexer);
-                docIndexer.setDocumentName(file.getPath());
-                docIndexer.setDocument(file);
-            } catch (NoSuchMethodException e) {
-                // No, this is an older DocIndexer that takes document name and reader directly.
-                constructor = docIndexerClass.getConstructor(DocWriter.class, String.class, Reader.class);
-                docIndexer = constructor.newInstance(indexer, file.getPath(), file.getSinglePassReader());
-            }
-            return docIndexer;
-        } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
-                 | InvocationTargetException | NoSuchMethodException e) {
+            Constructor<? extends DocIndexer> docIndexerConstructor;
+            docIndexerConstructor = docIndexerClass.getConstructor(DocWriter.class);
+            return docIndexerConstructor.newInstance(indexer);
+        } catch (NoSuchMethodException e) {
+            throw new IllegalArgumentException("Constructor taking a DocWriter not found for: " + docIndexerClass.getName(), e);
+        } catch (ReflectiveOperationException e) {
             throw BlackLabException.wrapRuntime(e);
         }
     }

@@ -224,7 +224,7 @@ public class FileProcessor implements AutoCloseable {
             }
             // Handle files until there are no more
             try {
-                while (!aborted) {
+                while (!aborted && fileHandler.continueIndexing()) {
                     FileReference file = nextFile();
                     if (file == null)
                         break;

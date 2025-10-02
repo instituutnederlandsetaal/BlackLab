@@ -6,8 +6,6 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.index.DocIndexer;
-
 /**
  * Concatenate 3 separate date fields into one.
  * E.g.
@@ -45,7 +43,7 @@ public class ProcessingStepConcatDate extends ProcessingStep {
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> docIndexer) {
         Integer y, m, d;
         y = getIntFieldValue(docIndexer, yearField);
         if (y == null)
@@ -63,9 +61,9 @@ public class ProcessingStepConcatDate extends ProcessingStep {
                 StringUtils.leftPad(d.toString(), 2, '0');
     }
 
-    private Integer getIntFieldValue(DocIndexer docIndexer, String fieldName) {
+    private Integer getIntFieldValue(Map<String, List<String>> metadata, String fieldName) {
         try {
-            List<String> metadataField = docIndexer.getMetadataField(fieldName);
+            List<String> metadataField = metadata.get(fieldName);
             if (metadataField == null)
                 return null;
             return Integer.parseInt(metadataField.get(0));

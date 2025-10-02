@@ -1,37 +1,99 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.lucene.util.BytesRef;
+import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.lucene.util.BytesRef;
+import org.xml.sax.SAXException;
+
+import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.om.TreeInfo;
+import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.trans.XPathException;
+import net.sf.saxon.tree.iter.AxisIterator;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingContentHandler;
+import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
+import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
+import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
+import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.util.StringUtil;
+import nl.inl.util.fileprocessor.FileReference;
 
-public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
+public class DocIndexerXPath extends DocIndexerConfig {
 
     public static final String FT_OPT_PROCESSOR = "processor";
+    public static final String PROCESSOR_NAME = "saxon";
+    public static final int INITIAL_LIST_SIZE_INLINE_TAGS = 500;
+    public static final int INITIAL_CAPACITY_PER_WORD_COLLECTIONS = 3;
 
     /** When referring to unresolved token ids, what prefix should we use to avoid too many similar warnings? */
     private static final int TOKEN_ID_PREFIX_LENGTH = 7;
+
+    /** Start and end character offsets in the document for each annotated field */
+    Map<ConfigAnnotatedField, Pair<Long, Long>> docStartEndOffsetsPerField = new HashMap<>();
+
+    /** Our document (in memory or on disk). */
+    private XmlDocRef document;
+
+    /** The parsed document. */
+    private TreeInfo contents;
+
+    /** Can calculate character position for a given line/column position. */
+    private CharPosTrackingReader charPositions;
+
+    /** Current character position in the current document */
+    private long charPos = 0;
+
+    /** Start character position of the current document (within the input file).
+     *  Only really relevant if input file contains multiple documents to be indexed.
+     */
+    private long docStartPos = 0;
+
+    /** End character position of the current document (within the input file).
+     *  Only relevant if input file contains multiple documents to be indexed.
+     */
+    private long docEndPos = -1;
+
+    /** Start position of the current doc version we're indexing,
+     *  relative to docStartPos. */
+    private long docVersionStartPos = 0;
+
+    /** XPath util functions and caching of XPathExpressions */
+    private XPathFinder finder;
+
+    /** Directory from which to resolve relative XIncludes. */
+    private File currentXIncludeDir = new File(".");
 
     /** Create a new XPath-based indexer.
      *
      * @return indexer
      */
-    public static DocIndexerSaxon create() {
-        return new DocIndexerSaxon();
+    public static DocIndexerSaxon create(DocWriter docWriter) {
+        return new DocIndexerSaxon(docWriter);
     }
 
     /**
@@ -51,6 +113,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 subannotation.isCaptureXml() == parentAnnotation.isCaptureXml();
     }
 
+    public DocIndexerXPath(DocWriter docWriter) {
+        super(docWriter);
+    }
+
     protected String optSanitizeFieldName(String origFieldName) {
         String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
         if (!origFieldName.equals(fieldName)) {
@@ -59,8 +125,78 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         return fieldName;
     }
 
-    public interface NodeHandler<T> {
-        void handle(T node);
+    /**
+     * Process an annotation at the current position.
+     * <p>
+     * If this is a span annotation (spanEndPos >= 0), and the span looks like this:
+     * <code>&lt;named-entity type="person"&gt;Santa Claus&lt;/named-entity&gt;</code>,
+     * then spanName should be "named-entity" and annotation name should be "type" (and
+     * its XPath expression should evaluate to "person", obviously).
+     *
+     * @param annotation   annotation to process.
+     * @param positionSpanEndOrSource     position to index at
+     * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
+     * @param handler      call handler for each value found, including that of subannotations
+     */
+    protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word,
+            Span positionSpanEndOrSource, Span spanEndOrRelTarget,
+            AnnotationHandler handler) {
+        if (StringUtils.isEmpty(annotation.getValuePath()))
+            return; // assume this will be captured using forEach
+
+        if (annotation.getBasePath() != null) {
+            for (NodeInfo baseNode: finder.findNodes(annotation.getBasePath(), word)) {
+                processAnnotationWithinBasePath(annotation, baseNode, positionSpanEndOrSource, spanEndOrRelTarget, handler);
+            }
+        } else {
+            processAnnotationWithinBasePath(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler);
+        }
+    }
+
+    @Override
+    public void storeDocument() {
+        if (docStartEndOffsetsPerField.isEmpty()) {
+            // Regular, non-parallel corpus. Store whole document.
+            storeWholeDocument(document.getTextContent(docStartPos, docEndPos));
+        } else {
+            // Parallel corpus. Store each version of the document with its field.
+            docStartEndOffsetsPerField.entrySet().stream()
+                    .sorted(Comparator.comparing(a -> a.getValue().getLeft()))
+                    .forEach(entry -> {
+                        Long startOffset = entry.getValue().getLeft() + docStartPos;
+                        Long endOffset = entry.getValue().getRight() + docStartPos;
+                        storeContent(entry.getKey(), document.getTextContent(startOffset, endOffset));
+                    });
+        }
+    }
+
+    private void cleanupPreviousInputFile() {
+        if (document != null) {
+            document.clean();
+            document = null;
+        }
+        // make sure we don't hold on to memory needlessly
+        charPositions = null;
+        contents = null;
+    }
+
+    @Override
+    public void close() {
+        cleanupPreviousInputFile();
+    }
+
+    @Override
+    protected int getCharacterPosition() {
+        return (int)charPos;
+    }
+
+    @Override
+    protected int getCharacterPositionWithinVersion() {
+        return (int)(charPos - docVersionStartPos);
+    }
+
+    public interface NodeHandler {
+        void handle(NodeInfo node);
     }
 
     public interface StringValueHandler {
@@ -68,19 +204,55 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     }
 
     @Override
-    public void close() {
-        // NOP, we already closed our input after we read it
+    public void setDocumentDirectory(File dir) {
+        this.currentXIncludeDir = dir.getAbsoluteFile();
     }
 
-    protected abstract String currentNodeXml(T node);
+    @Override
+    public void setDocument(FileReference file) {
+        cleanupPreviousInputFile();
+        super.setDocument(file);
+        document = XmlDocRef.fromFileReference(file);
+    }
 
-    protected abstract void xpathForEach(String xPath, T context, NodeHandler<T> handler);
+    private void readDocument() {
+        try {
+            // Should we enable (primitive) XInclude processing?
+            // Note that our support is not standards compliant; we just
+            // recognize xi:include elements using regex and substitute the
+            // referenced file, all before XML parsing happens.
+            // XInclude processing incurs an overhead, so it's best to only enable it when needed.
+            if (config.getFileTypeOptions().getOrDefault("enableXInclude", "").equalsIgnoreCase("true"))
+                document.setXIncludeDirectory(currentXIncludeDir);
 
-    protected abstract void xpathForEachStringValue(String xPath, T context, StringValueHandler handler);
+            // Now parse the document
+            // (our special reader will capture the character positions for each tag while parsing)
+            try (Reader reader = document.getDocumentReader()) {
+                try {
+                    this.charPositions = new CharPosTrackingReader(reader);
+                    contents = SaxonHelper.parseDocument(charPositions, new CharPosTrackingContentHandler(charPositions),
+                            config.isNamespaceAware());
+                } finally {
+                    this.charPositions.close();
+                }
+            }
+            finder = new XPathFinder(config.isNamespaceAware() ? config.getNamespaces() : null);
+        } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
+            throw BlackLabException.wrapRuntime(e);
+        }
+    }
 
-    protected abstract String xpathValue(String xpath, T context);
+    protected void xpathForEach(String xPath, NodeInfo context, NodeHandler handler) {
+        finder.xpathForEach(xPath, context, handler);
+    }
 
-    protected abstract String xpathXml(String xpath, T context);
+    protected void xpathForEachStringValue(String xPath, NodeInfo context, StringValueHandler handler) {
+        finder.xpathForEachStringValue(xPath, context, handler);
+    }
+
+    protected String xpathValue(String xpath, NodeInfo context) {
+        return finder.xpathValue(xpath, context);
+    }
 
     /**
      * Process an annotation at the current position.
@@ -89,13 +261,205 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
      * @param word         current node in the document
      * @param positionSpanStartOrRelSource     position to index at
      */
-    protected void processAnnotation(ConfigAnnotation annotation, T word, Span positionSpanStartOrRelSource) {
+    protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word, Span positionSpanStartOrRelSource) {
         processAnnotation(annotation, word, positionSpanStartOrRelSource, null, this::indexAnnotationValues);
     }
 
-    protected abstract void processAnnotation(ConfigAnnotation annotation, T word,
-            Span positionSpanStartOrRelSource, Span spanEndOrRelTarget,
-            AnnotationHandler handler);
+    protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
+            Map<String, Span> tokenPositionsMap) {
+
+        // Is this a parallel corpus annotated field?
+        docVersionStartPos = 0;
+        if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
+            // Yes; determine boundaries of this annotated field container so we can later store
+            // this version of the document in the field's content store.
+            // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
+            CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(container);
+            docVersionStartPos = nodeStartEnd.getStartPos() - docStartPos;
+            long docVersionEndPos = nodeStartEnd.getEndPos() - docStartPos;
+            docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
+        }
+
+        // Collect information outside word tags:
+
+        // - Punctuation may occur between word tags, which we want to capture
+        Iterator<NodeInfo> punctIt = collectPunctuation(container, annotatedField).iterator();
+        NodeInfo currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+
+        // - "inline tags" (e.g. b, i, named-entity) can occur between words
+        Iterator<InlineInfo> inlineIt = collectInlineTags(container, annotatedField).iterator();
+        InlineInfo currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
+
+        // Keep track of where we need to close inline tags we've opened.
+        Map<Span, List<NodeInfo>> inlinesToClose = new HashMap<>();
+
+        // For each word...
+        Span tokenPosition = Span.token(0);
+        List<NodeInfo> words = finder.findNodes(annotatedField.getWordsPath(), container);
+        words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
+        for (NodeInfo word: words) {
+            // Index any punctuation occurring before this word
+            while (currentPunct != null) {
+                if (currentPunct.compareOrder(word) != -1)
+                    break; // follows word, we'll index it later
+                handlePunct(currentPunct);
+                currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+            }
+
+            // Index any inline open tags occurring before this word
+            while (currentInline != null) {
+                if (currentInline.compareOrder(word) != -1)
+                    break; // follows word, we'll index it later
+                handleInlineOpenTag(annotatedField, inlinesToClose, currentInline, tokenPosition, word, tokenPositionsMap);
+                currentInline = inlineIt.hasNext() ? inlineIt.next() : null;
+            }
+
+            // Index our word
+            CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(word);
+            charPos = nodeStartEnd.getStartPos() - docStartPos;
+            beginWord();
+
+            // For each configured annotation...
+            for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
+                processAnnotation(annotation, word, tokenPosition);
+            }
+
+            charPos = nodeStartEnd.getEndPos() - docStartPos;
+            endWord();
+
+            // Make sure we close inline tags at the correct position
+            List<NodeInfo> closeHere = inlinesToClose.getOrDefault(tokenPosition, Collections.emptyList());
+            for (int i = closeHere.size() - 1; i >= 0; i--) {
+                NodeInfo inlineTag = closeHere.get(i);
+                inlineTag(inlineTag.getDisplayName(), false, null);
+            }
+            inlinesToClose.remove(tokenPosition);
+
+            // Capture token id if needed (for standoff annotations)
+            if (annotatedField.getTokenIdPath() != null) {
+                String tokenId = xpathValue(annotatedField.getTokenIdPath(), word);
+                if (tokenId != null)
+                    tokenPositionsMap.put(tokenId, tokenPosition.copy());
+            }
+
+            tokenPosition.increment();
+        }
+        if (!inlinesToClose.isEmpty()) {
+            throw new IllegalStateException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
+        }
+        // Index any punctuation occurring after last word
+        while (currentPunct != null) {
+            handlePunct(currentPunct);
+            currentPunct = punctIt.hasNext() ? punctIt.next() : null;
+        }
+    }
+
+    private List<NodeInfo> collectPunctuation(NodeInfo container, ConfigAnnotatedField annotatedField) {
+        setAddDefaultPunctuation(true);
+        if (annotatedField.getPunctPath() != null) {
+            // We have punctuation occurring between word tags (as opposed to
+            // punctuation that is tagged as a word itself). Collect this punctuation.
+            setAddDefaultPunctuation(false);
+            List<NodeInfo> puncts = finder.findNodes(annotatedField.getPunctPath(), container);
+            puncts.sort(NodeInfo::compareOrder);
+            return puncts;
+        }
+        return Collections.emptyList();
+    }
+
+    private List<InlineInfo> collectInlineTags(NodeInfo container, ConfigAnnotatedField annotatedField) {
+        List<InlineInfo> inlines = new ArrayList<>(INITIAL_LIST_SIZE_INLINE_TAGS);
+        for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
+            String tokenIdXPath = inlineTag.getTokenIdPath();
+            xpathForEach(inlineTag.getPath(), container, (tag) -> {
+                String tokenId = tokenIdXPath == null ? null : xpathValue(tokenIdXPath, tag);
+                inlines.add(new InlineInfo(tag, tokenId, inlineTag));
+            });
+        }
+        Collections.sort(inlines);
+        return inlines;
+    }
+
+    private void handlePunct(NodeInfo currentPunct) {
+        // Punct precedes word
+        String punct = currentPunct.getStringValue();
+        punctuation(punct == null ? " " : punct);
+    }
+
+    private void handleInlineOpenTag(ConfigAnnotatedField annotatedField, Map<Span, List<NodeInfo>> inlinesToClose,
+            InlineInfo currentInline, Span position, NodeInfo word, Map<String, Span> tokenPositionsMap) {
+        /*
+        - index open tag
+        - remember after which word the close tag occurs
+        - index word(s)
+        - index closing tags(s) at the right position
+         */
+
+        // Check if this word is within the inline, if so this word will always be the first word in
+        // the inline because we only process each inline once.
+        NodeInfo nodeInfo = currentInline.nodeInfo();
+        boolean isDescendant = false;
+        NodeInfo next;
+        try (AxisIterator descendants = nodeInfo.iterateAxis(Axis.DESCENDANT.getAxisNumber())) {
+            while ((next = descendants.next()) != null) {
+                if (next.equals(word)) {
+                    isDescendant = true;
+                    break;
+                }
+            }
+        }
+        int firstWordOutsideInline;
+        if (isDescendant) {
+            // Yes, word is a descendant.   (i.e. not a self-closing inline tag?)
+            // Find the attributes and index the tag.
+            Map<String, List<String>> atts = new HashMap<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS);
+            try (AxisIterator attributes = nodeInfo.iterateAxis(Axis.ATTRIBUTE.getAxisNumber())) {
+                while ((next = attributes.next()) != null) {
+                    if (currentInline.indexAttribute(next.getDisplayName())) {
+                        atts.put(next.getLocalPart(), List.of(next.getStringValue()));
+                    }
+                }
+            }
+            // Index any extra attributes using the provided XPath expressions.
+            for (ConfigAttribute attribute: currentInline.config.getAttributes().values()) {
+                if (attribute.isExclude())
+                    continue;
+                String value;
+                if (atts.containsKey(attribute.getName())) {
+                    // Actual attribute on tag. Apply any processing steps now.
+                    value = atts.get(attribute.getName()).get(0);
+                } else {
+                    // Extra attribute, not on tag. Evaluate XPath expression.
+                    value = xpathValue(attribute.getValuePath(), nodeInfo);
+                }
+                List<String> values = processStringMultipleValues(value, attribute.getProcess());
+                if (!values.isEmpty()) {
+                    atts.put(attribute.getName(), values);
+                } else {
+                    // Remove attribute if it was already present but now has no values.
+                    atts.remove(attribute.getName());
+                }
+            }
+            inlineTag(nodeInfo.getDisplayName(), true, atts);
+
+            // Add tag to the list of tags to close at the correct position.
+            // (calculate word position by determining the number of word tags inside this element)
+            String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordsPath() + ")";
+            int numberOfWordsInsideTag = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
+            // close inline after the last word that's contained in it (position + numberOfWordsInsideTag - 1)
+            inlinesToClose.computeIfAbsent(position.plus(numberOfWordsInsideTag - 1),
+                            k -> new ArrayList<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS))
+                    .add(nodeInfo);
+            firstWordOutsideInline = position.start() + numberOfWordsInsideTag;
+        } else {
+            // Word is not a descendant, so this inline must be self-closing.
+            // In other words, the length of the inline is 0.
+            firstWordOutsideInline = position.start();
+        }
+
+        if (currentInline.tokenId() != null)
+            tokenPositionsMap.put(currentInline.tokenId(), Span.between(position.start(), firstWordOutsideInline));
+    }
 
     /**
      * Process a standoff annotation at the current position.
@@ -109,7 +473,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
      * @param standoffAnnotations any annotations to index as attributes of the span or relation
      * @param spanOrRelType the type name of the span or relation (e.g. "named-entity", "nsubj", etc.)
      */
-    protected void processStandoffSpan(T standoffNode, AnnotationType type,
+    protected void processStandoffSpan(NodeInfo standoffNode, AnnotationType type,
             Span sourceSpan, Span targetSpan, Collection<ConfigAnnotation> standoffAnnotations,
             String spanOrRelType) {
         String name = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
@@ -143,10 +507,13 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                         annotationValue(name, valueToIndex, indexAtPosition, payloadThisToken));
     }
 
-    protected abstract void processAnnotatedFieldContainer(T nav, ConfigAnnotatedField annotatedField,
-            Map<String, Span> tokenPositionsMap);
+    @Override
+    protected void startDocument() {
+        super.startDocument();
+        docStartEndOffsetsPerField.clear();
+    }
 
-    protected void processAnnotatedFieldContainerStandoff(T container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+    protected void processAnnotatedFieldContainerStandoff(NodeInfo container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
 
         // (separate method because we only run these once all token positions for all fields have been collected,
         //  so parallel corpora can refer to token positions in other fields)
@@ -157,7 +524,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         }
     }
 
-    protected void processStandoffAnnotation(ConfigStandoffAnnotations standoff, T container, Map<String, Span> tokenPositionsMap) {
+    protected void processStandoffAnnotation(ConfigStandoffAnnotations standoff, NodeInfo container, Map<String, Span> tokenPositionsMap) {
         // For each instance of this standoff annotation..
         AnnotationType type = standoff.getType();
         xpathForEach(standoff.getPath(), container, (standoffNode) -> {
@@ -254,7 +621,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         warnOnce().warn(baseMessage + ": '" + tokenIdPrefix, tokenIdRest + "'");
     }
 
-    protected void processSubannotations(ConfigAnnotation parentAnnot, T context,
+    protected void processSubannotations(ConfigAnnotation parentAnnot, NodeInfo context,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler, List<String> parentAnnotValues) {
         // For each configured subannotation...
@@ -307,7 +674,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         }
     }
 
-    protected void findAndIndexSubannotation(ConfigAnnotation toIndex, T context, ConfigAnnotation indexAs,
+    protected void findAndIndexSubannotation(ConfigAnnotation toIndex, NodeInfo context, ConfigAnnotation indexAs,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler,
             ConfigAnnotation parent, List<String> parentValues) {
         List<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
@@ -317,7 +684,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         handler.values(indexAs, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
     }
 
-    protected List<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, T context) {
+    protected List<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, NodeInfo context) {
         // Not the same values as the parent annotation; we have to find our own.
         List<String> values = new ArrayList<>();
         // Multiple matches will be indexed at the same position.
@@ -332,7 +699,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         return values;
     }
 
-    protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, T word,
+    protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, NodeInfo word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler) {
         String valuePath = annotation.getValuePath();
         if (valuePath != null) {
@@ -349,7 +716,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     /**
      * Index document from the current node.
      */
-    protected void indexDocument(T doc) {
+    protected void indexDocument(NodeInfo doc) {
+        CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(doc);
+        docStartPos = nodeStartEnd.getStartPos();
+        docEndPos = nodeStartEnd.getEndPos();
         startDocument();
 
         // This is where we'll capture token ("word") ids and remember the position associated with each id.
@@ -388,8 +758,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     }
 
     @Override
-    public void indexSpecificDocument(String documentXPath) {
-        super.indexSpecificDocument(documentXPath);
+    public void indexSpecificDocument(FileReference file, String documentXPath) {
+        super.indexSpecificDocument(file, documentXPath);
+        resetStats();
+        setDocument(file);
 
         final AtomicBoolean docDone = new AtomicBoolean(false);
         try {
@@ -415,7 +787,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             throw new ErrorIndexingFile("Linked document not found in " + documentName);
     }
 
-    protected void processMetadataBlock(T doc, ConfigMetadataBlock metaBlock) {
+    protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock) {
         // For each instance of this metadata block...
         xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
             // For each configured metadata field...
@@ -444,7 +816,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         });
     }
 
-    protected void processMetaForEach(ConfigMetadataBlock metaBlock, T block, ConfigMetadataField forEach) {
+    protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach) {
         xpathForEach(forEach.getForEachPath(), block, (match) -> {
             // Find the fieldName and value for this forEach match
             String origFieldName = xpathValue(forEach.getName(), match);
@@ -462,11 +834,11 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         });
     }
 
-    protected void processMetadataValue(T header, ConfigMetadataField field) {
+    protected void processMetadataValue(NodeInfo header, ConfigMetadataField field) {
         indexMetadataFieldMatches(header, field, field.getName(), null);
     }
 
-    protected void indexMetadataFieldMatches(T forEach, ConfigMetadataField forEachField, String indexAsFieldName,
+    protected void indexMetadataFieldMatches(NodeInfo forEach, ConfigMetadataField forEachField, String indexAsFieldName,
             ConfigMetadataField indexAsFieldConfig) {
         xpathForEachStringValue(forEachField.getValuePath(), forEach, (unprocessedValue) -> {
             unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
@@ -484,7 +856,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         });
     }
 
-    protected void processAnnotatedField(T document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+    protected void processAnnotatedField(NodeInfo document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
         // Determine some useful stuff about the field we're processing
         // and store in instance variables so our methods can access them
         setCurrentAnnotatedFieldName(annotatedField.getName());
@@ -494,7 +866,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 (container) -> processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap));
     }
 
-    protected void processAnnotatedFieldStandoff(T document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
+    protected void processAnnotatedFieldStandoff(NodeInfo document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
 
         // (separate method because we only run these once all token positions for all fields have been collected,
         //  so parallel corpora can refer to token positions in other fields)
@@ -508,7 +880,15 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 (container) -> processAnnotatedFieldContainerStandoff(container, annotatedField, tokenPositionsMap));
     }
 
+    @Override
+    public IndexerStats index() throws ErrorIndexingFile {
+        super.index();
+        indexParsedFile(config.getDocumentPath(), false);
+        return getStats();
+    }
+
     protected boolean indexParsedFile(String docXPath, boolean mustBeSingleDocument) {
+        readDocument();
         try {
             AtomicBoolean docDone = new AtomicBoolean(false); // any doc(s) processed?
             xpathForEach(docXPath, contextNodeWholeDocument(),(doc) -> {
@@ -525,9 +905,38 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         }
     }
 
-    protected abstract T contextNodeWholeDocument();
+    protected String currentNodeXml(NodeInfo node) {
+        return finder.currentNodeXml(node);
+    }
+
+    protected NodeInfo contextNodeWholeDocument() {
+        return contents.getRootNode();
+    }
 
     protected interface AnnotationHandler {
         void values(ConfigAnnotation annotation, Span positionSpanEndOrSource, Span spanEndOrRelTarget, List<String> values);
+    }
+
+    /**
+     * How we collect inline tags and (optionally) their token ids (for standoff annotations)
+     */
+    private record InlineInfo(NodeInfo nodeInfo, String tokenId, ConfigInlineTag config)
+        implements Comparable<InlineInfo> {
+
+        @Override
+        public int compareTo(InlineInfo o) {
+            return nodeInfo.compareOrder(o.nodeInfo);
+        }
+
+        public int compareOrder(NodeInfo word) {
+            return nodeInfo.compareOrder(word);
+        }
+
+        public boolean indexAttribute(String name) {
+            ConfigAttribute attr = config.getAttributes().get(name);
+            if (attr != null)
+                return !attr.isExclude();
+            return config.isDefaultIndexAttributes();
+        }
     }
 }

@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -27,8 +26,10 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
-import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.index.DocWriter;
+import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.util.CollectionsUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.fileprocessor.FileReference;
@@ -67,18 +68,22 @@ public class DocIndexerChat extends DocIndexerConfig {
 
     private ConfigAnnotatedField currentAnnotatedFieldConfig;
 
+    public DocIndexerChat(DocWriter docWriter) {
+        super(docWriter);
+    }
+
     @Override
-    public void indexSpecificDocument(String documentExpr) {
+    public void indexSpecificDocument(FileReference file, String documentExpr) {
         // documentExpr is ignored because CHAT files always contain 1 document
         try {
-            index();
+            index(file);
         } catch (Exception e) {
             throw BlackLabException.wrapRuntime(e);
         }
     }
 
     @Override
-    protected void storeDocument() {
+    public void storeDocument() {
         storeWholeDocument(fullText.toString());
     }
 
@@ -109,12 +114,7 @@ public class DocIndexerChat extends DocIndexerConfig {
             log("No character encoding encountered in " + file.getPath() + "; using utf-8");
             charEncoding = file.getCharSet();
         }
-        setDocumentName(file.getPath());
-        setDocument(file.createReader(charEncoding));
-    }
-
-    public void setDocument(Reader reader) {
-        this.reader = reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
+        this.reader = file.createReader(charEncoding);
     }
 
     @Override
@@ -128,7 +128,7 @@ public class DocIndexerChat extends DocIndexerConfig {
     }
 
     @Override
-    public void index() throws IOException, PluginException {
+    public IndexerStats index() throws ErrorIndexingFile {
         super.index();
 
         startDocument();
@@ -153,7 +153,12 @@ public class DocIndexerChat extends DocIndexerConfig {
             boolean headerModified = false;
             String lineToProcess = "";
             while (true) {
-                String line = reader.readLine();
+                String line = null;
+                try {
+                    line = reader.readLine();
+                } catch (IOException e) {
+                    throw new ErrorIndexingFile(e);
+                }
                 if (line == null)
                     break;
                 if (isStoreDocuments()) {
@@ -184,7 +189,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         }
 
         endDocument();
-
+        return getStats();
     }
 
     private void log(String msg) {
@@ -468,7 +473,7 @@ public class DocIndexerChat extends DocIndexerConfig {
         for (String word : words) {
             beginWord();
             for (ConfigAnnotation annot : currentAnnotatedFieldConfig.getAnnotationsFlattened().values()) {
-                String processed = annot.getProcess().performSingle(word, this);
+                String processed = annot.getProcess().performSingle(word, metadataFieldValues);
                 annotationValueAppend(annot.getName(), processed, 1);
             }
             endWord();

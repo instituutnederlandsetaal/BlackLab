@@ -107,7 +107,7 @@ public class XPathFinder {
         }
     }
 
-    public void xpathForEach(String xPath, NodeInfo context, DocIndexerXPath.NodeHandler<NodeInfo> handler) {
+    public void xpathForEach(String xPath, NodeInfo context, DocIndexerXPath.NodeHandler handler) {
         for (XdmItem item: find(xPath, context)) {
             if (item.isNode()) {
                 handler.handle(((XdmNode) item).getUnderlyingNode());
@@ -132,41 +132,6 @@ public class XPathFinder {
             return serializer.serializeNodeToString(new XdmNode(value));
         } catch (SaxonApiException e) {
             throw new ErrorIndexingFile(e);
-        }
-    }
-
-    /**
-     * Capture the XML code for the given node.
-     *
-     * @param xPath   the xpath to capture
-     * @param context context to capture it from
-     * @return the XML code for the node
-     */
-    public String xpathXml(String xPath, NodeInfo context) {
-        XdmValue list = find(xPath, context);
-        if (list.size() == 1) {
-            XdmItem o = list.itemAt(0);
-            if (o.isNode()) {
-                try {
-                    return serializer.serializeNodeToString((XdmNode)o);
-                } catch (SaxonApiException e) {
-                    throw new ErrorIndexingFile(e);
-                }
-            } else {
-                throw new ErrorIndexingFile("XPath matched non-NodeInfo; cannot convert to XML: " + xPath);
-            }
-        } else {
-            if (list.isEmpty())
-                return "";
-            else
-                throw new InvalidConfiguration(
-                        String.format(
-                                "list %s contains multiple values, change your xpath %s to return one result",
-                                list.stream()
-                                        .map(o -> o instanceof NodeInfo ?
-                                                ((NodeInfo) o).toShortString() :
-                                                String.valueOf(o))
-                                        .toList(), xPath));
         }
     }
 

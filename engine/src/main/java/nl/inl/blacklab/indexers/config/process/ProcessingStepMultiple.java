@@ -1,10 +1,9 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import nl.inl.blacklab.index.DocIndexer;
 
 /**
  * Multiple processing steps (a script).
@@ -27,17 +26,17 @@ public class ProcessingStepMultiple extends ProcessingStep {
     }
 
     @Override
-    public Stream<String> perform(Stream<String> values, DocIndexer docIndexer) {
+    public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
         for (ProcessingStep step : steps) {
-            values = step.perform(values, docIndexer);
+            values = step.perform(values, metadata);
         }
         return values;
     }
 
     @Override
-    public String performSingle(String value, DocIndexer docIndexer) {
+    public String performSingle(String value, Map<String, List<String>> metadata) {
         for (ProcessingStep step : steps) {
-            value = step.performSingle(value, docIndexer);
+            value = step.performSingle(value, metadata);
         }
         return value;
     }
