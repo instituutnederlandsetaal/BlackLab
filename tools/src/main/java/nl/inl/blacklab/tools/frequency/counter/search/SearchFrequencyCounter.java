@@ -2,7 +2,6 @@ package nl.inl.blacklab.tools.frequency.counter.search;
 
 import java.util.ArrayList;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
 import nl.inl.blacklab.resultproperty.HitProperty;
@@ -42,7 +41,7 @@ public final class SearchFrequencyCounter extends FrequencyCounter {
             // write output file
             tsvWriter.write(result);
         } catch (final InvalidQuery e) {
-            throw new BlackLabRuntimeException("Error creating frequency list: " + cfg.name(), e);
+            throw new RuntimeException("Error creating frequency list: " + cfg.name(), e);
         }
     }
 

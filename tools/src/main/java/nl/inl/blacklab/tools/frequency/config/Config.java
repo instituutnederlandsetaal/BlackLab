@@ -8,7 +8,7 @@ import java.util.List;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 
@@ -34,7 +34,7 @@ public record Config(
             final ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             return mapper.readValue(file, Config.class);
         } catch (final IOException e) {
-            throw new BlackLabRuntimeException("Error reading config file " + file, e);
+            throw new InvalidConfiguration("Error reading config file " + file, e);
         }
     }
 

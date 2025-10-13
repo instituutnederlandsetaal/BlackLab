@@ -9,11 +9,10 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
-import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.search.Query;
+import nl.inl.blacklab.exceptions.BlackLabException;
+
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMapUnsafe;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
@@ -21,7 +20,6 @@ import nl.inl.blacklab.tools.frequency.data.GroupId;
 import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 import nl.inl.blacklab.tools.frequency.writers.ChunkWriter;
 import nl.inl.blacklab.tools.frequency.writers.ChunkedTsvWriter;
-import nl.inl.util.LuceneUtil;
 import nl.inl.util.Timer;
 
 /**
@@ -144,7 +142,6 @@ public final class IndexFrequencyCounter extends FrequencyCounter {
      *
      * @param occurrences grouping to add to
      */
-    @SuppressWarnings("DuplicatedCode")
     private void processDocsParallel(
             final List<Integer> docIds,
             final Map<GroupId, Integer> occurrences
@@ -154,7 +151,7 @@ public final class IndexFrequencyCounter extends FrequencyCounter {
                 final var doc = new DocumentFrequencyCounter(docId, index, cfg, helper);
                 doc.process(occurrences);
             } catch (final IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         });
     }

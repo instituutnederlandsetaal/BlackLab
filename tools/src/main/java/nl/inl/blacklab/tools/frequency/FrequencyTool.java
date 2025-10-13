@@ -29,7 +29,7 @@ public class FrequencyTool {
         System.out.println("Config: " + json);
 
         try (final var index = BlackLab.open(parsedArgs.indexDir())) {
-            config.verify(index); // verify config
+            config.verify(index);
             // Generate the frequency lists
             final var t = new Timer();
             makeFrequencyLists(index, config);
