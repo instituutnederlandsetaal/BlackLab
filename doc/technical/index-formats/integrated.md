@@ -45,9 +45,7 @@ Spans are indexed as special relations with class `__tag`, with the start of the
 
 Relations are always indexed at the start of the source of the relation. Therefore, spans are always indexed at the first token in the span.
 
-A relation is indexed once or twice: relations without attributes are indexed only once, but relations with attributes are indexed once with those attributes and once without. This makes searching without attribute filters faster in the case that there are many different attribute values (e.g. `<s/>` tags where each tag has a unique `id` attribute).
-
-A relation is indexed as a term containing the relation class and type (which together we call the _full relation type_) and (optionally) attributes, with a payload containing the source and target information.
+A relation is indexed with multiple terms, one for the relation class and type (which together we call the _full relation type_) and one for each attribute. The payload contains a unique relation id, which can be used to relate the relation type to its attributes. Only the relation type term comes with the full payload (including the relation target, etc.); the attribute terms only store the relation id.
 
 ### Terms indexed
 
@@ -71,6 +69,8 @@ Three special characters delineate the separate parts of a term:
 
 - `\u0001` ("name separator") separates the type name from the attribute name.
 - `\u0002` ("value separator") separates the attribute name from the value.
+- `\u0003` ("attribute value separator") separates multiple values for an attribute, if applicable.
+- `\u0004` ("relation info term prefix") marks a term that is only used to be able to write the separate relation index. This is a term that includes the full relation type and attributes, which will be parsed and stored in the relation index while indexing. It only includes the relation id in the payload.
 
 These delineation characters make sure we can generate a regular expressions that avoid any unwanted matches (e.g. prefix or suffix matches).
 

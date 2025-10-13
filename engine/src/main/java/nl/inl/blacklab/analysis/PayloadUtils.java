@@ -17,6 +17,9 @@ import org.apache.lucene.util.BytesRef;
  */
 public class PayloadUtils {
 
+    /** Utility class, don't instantiate */
+    private PayloadUtils() {}
+
     // Annotations to be stored in a forward index sometimes start with a byte indicating whether a value is primary
     // or secondary. Primary is the default if there is no indicator or no payload.
 

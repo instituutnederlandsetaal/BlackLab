@@ -21,8 +21,9 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitGroupPropertyIdentity;
@@ -187,7 +188,7 @@ public class QueryToolImpl {
             QueryToolImpl c = new QueryToolImpl(config.getIndexDir(), in, output);
             c.run();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -205,7 +206,7 @@ public class QueryToolImpl {
         try {
             output.line("Opening index " + indexDir.getCanonicalPath() + "...");
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         // Create the BlackLab index object
@@ -280,7 +281,7 @@ public class QueryToolImpl {
         }
     }
 
-    public void processCommand(String cmd) {
+    public void processCommand(String cmd) throws IOException {
         cmd = cmd.trim();
 
         // Strips comments
@@ -351,7 +352,7 @@ public class QueryToolImpl {
             nextPage();
             break;
         case "page":
-            showPage(parseInt(arguments, 1) - 1);
+            showPage((long)parseInt(arguments, 1) - 1);
             break;
         case "pagesize":
             resultsPerPage = parseInt(arguments, 1);
@@ -485,6 +486,7 @@ public class QueryToolImpl {
                 output.error("Sleep takes a float, the number of seconds to sleep");
             } catch (InterruptedException e) {
                 // OK
+                Thread.currentThread().interrupt(); // preserve interrupted status
             }
             break;
         case "wordlist":
@@ -645,7 +647,7 @@ public class QueryToolImpl {
             try {
                 output.verbose("Rewritten: " + spanQuery.rewrite(index.reader()).toString(contentsField.name()));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
             AnnotatedField field = index.annotatedField(spanQuery.getField()); // query may override field, e.g. rfield(...)
             SearchHits search = index.search(field).find(spanQuery);
@@ -810,9 +812,9 @@ public class QueryToolImpl {
     private void sortGroups(String sortBy) {
         HitGroupProperty crit = null;
         if (sortBy.equals(HitGroupPropertyIdentity.ID) || sortBy.equals("id"))
-            crit = HitGroupProperty.identity();
+            crit = HitGroupPropertyIdentity.get();
         else if (sortBy.startsWith(HitGroupPropertySize.ID))
-            crit = HitGroupProperty.size();
+            crit = HitGroupPropertySize.get();
         if (crit == null) {
             output.error("Invalid group sort criterium: " + sortBy
                     + " (valid are: id(entity), size)");

@@ -3,13 +3,13 @@ package nl.inl.blacklab.server.lib.results;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultListInputFormats {
 
@@ -17,7 +17,7 @@ public class ResultListInputFormats {
 
     private final List<InputFormat> inputFormats;
 
-    private boolean debugMode;
+    private final boolean debugMode;
 
     ResultListInputFormats(WebserviceParams params, boolean debugMode) {
         userInfo = WebserviceOperations.userInfo(params);

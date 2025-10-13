@@ -62,23 +62,20 @@ public abstract class PropertyValue implements Comparable<Object> {
         List<String> parts = PropertySerializeUtil.splitPartsList(serialized);
         String type = parts.get(0).toLowerCase();
         List<String> infos = parts.subList(1, parts.size());
-        switch (type) {
-        case "cwo": // DEPRECATED, to be removed
-            return PropertyValueContextWords.deserializeSingleWord(index, field, infos);
-        case "cws": // cws  (context words)
-        case "cwsr": // cwsr (context words, reverse order. e.g. left context)
-            return PropertyValueContextWords.deserialize(index, field, infos, type.equals("cwsr"));
-        case "dec":
-            return PropertyValueDecade.deserialize(infos.isEmpty() ? "unknown" : infos.get(0));
-        case "int":
-            return PropertyValueInt.deserialize(infos.isEmpty() ? "-1" : infos.get(0));
-        case "str":
-            return new PropertyValueString(infos.isEmpty() ? "" : infos.get(0));
-        case "doc":
-            return PropertyValueDoc.deserialize(index, infos.isEmpty() ? "NO_DOC_ID_SPECIFIED" : infos.get(0));
-        }
-        logger.debug("Unknown HitPropValue '" + type + "'");
-        return null;
+        return switch (type) {
+            case "cwo" -> // DEPRECATED, to be removed
+                    PropertyValueContextWords.deserializeSingleWord(index, field, infos); // cws  (context words)
+            case "cws", "cwsr" -> // cwsr (context words, reverse order. e.g. left context)
+                    PropertyValueContextWords.deserialize(index, field, infos, type.equals("cwsr"));
+            case "dec" -> PropertyValueDecade.deserialize(infos.isEmpty() ? "unknown" : infos.get(0));
+            case "int" -> PropertyValueInt.deserialize(infos.isEmpty() ? "-1" : infos.get(0));
+            case "str" -> new PropertyValueString(infos.isEmpty() ? "" : infos.get(0));
+            case "doc" -> PropertyValueDoc.deserialize(index, infos.isEmpty() ? "NO_DOC_ID_SPECIFIED" : infos.get(0));
+            default -> {
+                logger.debug("Unknown HitPropValue '" + type + "'");
+                yield null;
+            }
+        };
     }
     
     @Override

@@ -129,7 +129,7 @@ public class DataStreamJson extends DataStreamAbstract {
         try {
             return print(Json.getJaxbWriter().writeValueAsString(pattern));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

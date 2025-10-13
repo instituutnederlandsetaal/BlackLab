@@ -13,7 +13,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.ThreadContext;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.searches.Search;
@@ -35,12 +35,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return System.currentTimeMillis();
     }
 
-    public static long getNextEntryId() {
-        Long n;
-        synchronized(nextEntryId) {
-            n = nextEntryId;
-            nextEntryId++;
-        }
+    public static synchronized long getNextEntryId() {
+        Long n = nextEntryId;
+        nextEntryId++;
         return n;
     }
 
@@ -115,7 +112,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     @Override
     public void start() {
         if (future != null)
-            throw new RuntimeException("Search already started");
+            throw new IllegalStateException("Search already started");
         started = true;
         final String requestId = ThreadContext.get("requestId");
         peekValue = search.peekObject(this);
@@ -135,20 +132,13 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         timer().start();
         try {
             result = search.executeInternal(this);
-        } catch (Throwable e) {
-
-            if (e instanceof InterruptedSearch) {
+        } catch (Exception e) {
+            if (e instanceof InterruptedSearch eis) {
                 // Inject ourselves into the exception object, so
                 // the code that eventually catches it can access us,
                 // e.g. to find out the exact reason a search was cancelled
-                ((InterruptedSearch)e).setCacheEntry(this);
+                eis.setCacheEntry(this);
             }
-
-            // NOTE: we catch Throwable here (while it's normally good practice to
-            //  catch only Exception and derived classes) because we need to know if
-            //  our thread crashed or not. The Throwable will be re-thrown by the
-            //  main thread, so any non-Exception Throwables will then go uncaught
-            //  as they "should".
             exceptionThrown = e;
         } finally {
 
@@ -242,6 +232,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      *
      * @return user wait time (ms)
      */
+    @Override
     public long timeUserWaitedMs() {
         if (isDone())
             return doneTime - createTime;
@@ -253,7 +244,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         try {
             return get(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -354,6 +345,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return result;
     }
 
+    @Override
     public boolean threwException() {
         return exceptionThrown != null;
     }
@@ -416,24 +408,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         return Collections.unmodifiableMap(info);
     }
 
-    public String futureStatus() {
-        if (cancelled || future.isCancelled())
-            return "cancelled";
-        if (future == null)
-            return "future==null";
-        if (future.isDone()) {
-            try {
-                future.get();
-            } catch (InterruptedException e) {
-                return "interruptedEx" + e.getMessage();
-            } catch (ExecutionException e) {
-                return "executionEx: " + e.getMessage();
-            }
-            return "done";
-        }
-        return "running";
-    }
-
     @Override
     public String toString() {
         return "BlsCacheEntry(" + search + ", " + status() + ")";
@@ -470,6 +444,7 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
      *
      * @return the result so far, or null if not supported for this operation
      */
+    @Override
     public T peek() {
         if (isCancelled())
             throw InterruptedSearch.cancelled();

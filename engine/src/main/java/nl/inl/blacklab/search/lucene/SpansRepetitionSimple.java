@@ -60,6 +60,7 @@ class SpansRepetitionSimple extends BLFilterDocsSpans<SpansInBuckets> {
         return super.nextDoc();
     }
 
+    @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         atFirstInCurrentDoc = false;
         assert positionedInDoc();

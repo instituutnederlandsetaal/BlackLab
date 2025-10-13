@@ -13,7 +13,6 @@ import java.nio.charset.StandardCharsets;
 
 import org.apache.commons.io.FilenameUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.BLInputDocument;
@@ -50,7 +49,7 @@ public class DocIndexerConvertAndTag extends DocIndexerConfig {
     }
 
     @Override
-    public void close() throws BlackLabRuntimeException {
+    public void close() throws RuntimeException {
         outputIndexer.close();
     }
 

@@ -25,6 +25,9 @@ import nl.inl.util.LuceneUtil;
  */
 public class TokensPerMetaValue {
 
+    private TokensPerMetaValue() {
+    }
+
     public static void main(String[] args) throws ParseException, ErrorOpeningIndex {
 
         String indexDir = "/home/jan/blacklab/gysseling/index";

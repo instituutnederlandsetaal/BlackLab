@@ -9,6 +9,7 @@ import org.apache.lucene.util.Bits;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.util.DocValuesUtil;
 
@@ -29,13 +30,14 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
             this.index = index;
         }
 
+        @Override
         public MetadataFieldValues create(String fieldName, FieldType fieldType, long limitValues) {
             return new MetadataFieldValuesFromIndex(index.reader(), fieldName, fieldType == FieldType.NUMERIC,
                     limitValues);
         }
     }
 
-    private TruncatableFreqList values;
+    private final TruncatableFreqList values;
 
     private final boolean isNumeric;
 
@@ -78,7 +80,7 @@ class MetadataFieldValuesFromIndex implements MetadataFieldValues {
             try {
                 getDocValues(rc.reader(), isNumeric, values);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         });
     }

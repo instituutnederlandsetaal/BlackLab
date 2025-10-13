@@ -13,6 +13,7 @@ import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
 
 import org.ivdnt.blacklab.proxy.ProxyConfig;
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.representation.EntityWithSummary;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
@@ -114,7 +115,7 @@ public class Requests {
                     } else {
                         // Couldn't map to any of the supplied classes. Throw the final exception.
                         String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
-                        throw new RuntimeException("Couldn't interpret the response as the given entity class(es): " + classes, e);
+                        throw new ErrorReadingResponse("Couldn't interpret the response as the given entity class(es): " + classes, e);
                     }
                 }
             }
@@ -174,7 +175,7 @@ public class Requests {
                     } catch (JsonProcessingException e2) {
                         // Error didn't work either. Fail.
                         String classes = entityTypes.stream().map(c -> c.getName()).collect(Collectors.joining(" / "));
-                        throw new RuntimeException(
+                        throw new ErrorReadingResponse(
                                 "Couldn't interpret the response as the given entity class(es): " + classes, e);
                     }
                 }
@@ -197,13 +198,13 @@ public class Requests {
             MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes,
             boolean isXml) {
         Object entity = request(client, ParamsUtil.get(parameters, corpusName, op), method, resultTypes);
-        if (isXml && entity instanceof EntityWithSummary) {
+        if (isXml && entity instanceof EntityWithSummary ews) {
             // Don't try to serialize the pattern to XML, this induces headaches.
-            ((EntityWithSummary) entity).getSummary().pattern = null;
+            ews.getSummary().pattern = null;
         }
-        if (entity instanceof JsonCsvResponse) {
+        if (entity instanceof JsonCsvResponse jcr) {
             // Return actual CSV contents instead of JSON
-            String csv = ((JsonCsvResponse) entity).csv;
+            String csv = jcr.csv;
             return Response.ok().type(ParamsUtil.MIME_TYPE_CSV).entity(csv).build();
         } else {
             return ProxyResponse.success(entity);

@@ -29,6 +29,7 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.util.FileUtil;
 
 /**
  * Implementation of FinderInputFormat that is able to load user's config
@@ -180,7 +181,8 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
 
             File userFormatDir = getUserFormatDir(this.userFormatParentDir, userIdFromFormatIdentifier);
             File formatFile = new File(userFormatDir, fileName);
-
+            if (!FileUtil.isFileInDirectory(formatFile, userFormatDir))
+                throw new BadRequest("CANNOT_CREATE_INDEX", "Incorrect format file name. Use only regular file name characters.");
             FileUtils.writeByteArrayToFile(formatFile, content, false);
             config.setReadFromFile(formatFile);
             DocumentFormats.add(config);

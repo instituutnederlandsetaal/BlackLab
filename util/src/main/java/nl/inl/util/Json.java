@@ -24,11 +24,11 @@ import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
  */
 public class Json {
 
-    static private ObjectMapper jsonObjectMapper;
+    private static ObjectMapper jsonObjectMapper;
 
-    static private ObjectMapper jsonWithJaxbAnnotation;
+    private static ObjectMapper jsonWithJaxbAnnotation;
 
-    static private ObjectMapper yamlObjectMapper;
+    private static ObjectMapper yamlObjectMapper;
 
     private static ObjectReader jaxbReader;
 
@@ -38,6 +38,9 @@ public class Json {
 
     static {
         initObjectMappers();
+    }
+
+    private Json() {
     }
 
     private static void initObjectMappers() {

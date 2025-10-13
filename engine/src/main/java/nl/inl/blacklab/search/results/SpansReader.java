@@ -11,7 +11,7 @@ import org.apache.lucene.search.spans.SpanWeight.Postings;
 import org.apache.lucene.search.spans.Spans;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.lucene.BLSpanWeight;
 import nl.inl.blacklab.search.lucene.BLSpans;
@@ -168,7 +168,7 @@ class SpansReader implements Runnable {
     public boolean isSameAsLast(HitsInternal hits, int doc, int start, int end, MatchInfo[] matchInfo) {
         long prev = hits.size() - 1;
         return hits.size() > 0 && doc == hits.doc(prev) && start == hits.start(prev) && end == hits.end(prev) &&
-                MatchInfo.equal(matchInfo, hits.matchInfo(prev));
+                MatchInfo.areEqual(matchInfo, hits.matchInfo(prev));
     }
 
     void initialize() {
@@ -195,7 +195,7 @@ class SpansReader implements Runnable {
             this.spans.setHitQueryContext(this.hitQueryContext);
             this.sourceHitQueryContext = null;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -340,10 +340,11 @@ class SpansReader implements Runnable {
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         } catch (Exception e) {
             e.printStackTrace();
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         } finally {
             // write out leftover hits in last document/aborted document
             if (results.size() > 0) {

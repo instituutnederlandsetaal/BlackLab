@@ -130,7 +130,7 @@ public abstract class IndexMetadataAbstract implements IndexMetadataWriter {
     /** Is this instance frozen, that is, are all mutations disallowed? */
     protected FreezeStatus frozen = new FreezeStatus();
 
-    public IndexMetadataAbstract(BlackLabIndex index) {
+    protected IndexMetadataAbstract(BlackLabIndex index) {
         this.index = index;
         metadataFields = new MetadataFieldsImpl(createMetadataFieldValuesFactory());
         metadataFields.setTopLevelCustom(custom); // for metadata groups

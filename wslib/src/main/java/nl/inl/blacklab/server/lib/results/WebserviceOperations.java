@@ -15,6 +15,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
@@ -26,15 +27,13 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.resultproperty.DocGroupProperty;
+import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLab;
@@ -274,7 +273,7 @@ public class WebserviceOperations {
         for (Map.Entry<DocProperty, DocGroups> e : counts.entrySet()) {
             DocProperty facetBy = e.getKey();
             DocGroups facetCounts = e.getValue();
-            facetCounts = facetCounts.sort(DocGroupProperty.size());
+            facetCounts = facetCounts.sort(DocGroupPropertySize.get());
             String facetName = facetBy.name();
             List<Pair<String,  Long>> facetItems = new ArrayList<>();
             int n = 0, maxFacetValues = 10;
@@ -455,22 +454,28 @@ public class WebserviceOperations {
     public static BlsException translateSearchException(Exception e) {
         if (e instanceof InterruptedException) {
             throw new InterruptedSearch(e);
-        } else {
-            try {
-                throw e.getCause();
-            } catch (MatchInfoNotFound e1) {
+        } else if (e instanceof InvalidQuery e1) {
+            if (e instanceof MatchInfoNotFound e2) {
                 return new BadRequest("UNKNOWN_MATCH_INFO",
-                        "Reference to unknown match info (i.e. capture group) '" + e1.getMatchInfoName() + "'",
-                        Map.of("name", e1.getMatchInfoName()));
-            } catch (BlackLabRuntimeException | BlackLabException e1) {
-                e.printStackTrace();
-                return new BadRequest("INVALID_QUERY", "Invalid query: " + e1.getMessage(), e1);
-            } catch (BlsException e1) {
-                return e1;
-            } catch (Throwable e1) {
-                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e1);
+                        "Reference to unknown match info (i.e. capture group) '" + e2.getMatchInfoName() + "'",
+                        Map.of("name", e2.getMatchInfoName()));
+            }
+        } else if (e instanceof ExecutionException e1) {
+            // See if we recognize the cause of this exception
+            if (e.getCause() instanceof BlsException e2) {
+                return e2;
+            } else if (e.getCause() instanceof MatchInfoNotFound e2) {
+                return new BadRequest("UNKNOWN_MATCH_INFO",
+                        "Reference to unknown match info (i.e. capture group) '" + e2.getMatchInfoName() + "'",
+                        Map.of("name", e2.getMatchInfoName()));
+            } else if (e.getCause() instanceof InvalidQuery e2) {
+                return new BadRequest("INVALID_QUERY", "Invalid query: " + e2.getMessage(), e2);
+            } else if (e.getCause() instanceof Exception e2) {
+                logger.error(e2);
+                return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e2);
             }
         }
+        return new InternalServerError("Internal error while searching", "INTERR_WHILE_SEARCHING", e);
     }
 
     /**
@@ -596,7 +601,7 @@ public class WebserviceOperations {
         if (!index.userMayRead(user))
             throw new NotAuthorized("You (" + user.getId() + ") are not authorized to share " + indexName + "; you are not the owner.");
         // Update the list of users to share with
-        List<String> shareWithUsers = Arrays.stream(users).map(String::trim).collect(Collectors.toList());
+        List<String> shareWithUsers = Arrays.stream(users).map(String::trim).toList();
         index.setShareWithUsers(shareWithUsers);
     }
 
@@ -626,9 +631,9 @@ public class WebserviceOperations {
     }
 
     public static class UploadedFile {
-        private String name;
+        private final String name;
 
-        private byte[] data;
+        private final byte[] data;
 
         public UploadedFile(String name, byte[] data) {
             this.name = name;
@@ -662,7 +667,7 @@ public class WebserviceOperations {
         final String[] indexErr = { null }; // array because we set it from closure
         indexer.setListener(new IndexListenerReportConsole() {
             @Override
-            public boolean errorOccurred(Throwable e, String path, File f) {
+            public synchronized boolean errorOccurred(Throwable e, String path, File f) {
                 super.errorOccurred(e, path, f);
                 indexErr[0] = e.getMessage() + " in " + path;
                 return false; // Don't continue indexing
@@ -736,19 +741,17 @@ public class WebserviceOperations {
     }
 
     public static ResultIndexStatus resultIndexStatus(Index index, User user) {
-        synchronized (index) {
-            IndexListener indexerListener = index.getIndexerListener();
-            long files = 0;
-            long docs = 0;
-            long tokens = 0;
-            if (indexerListener != null) {
-                files = indexerListener.getFilesProcessed();
-                docs = indexerListener.getDocsDone();
-                tokens = indexerListener.getTokensProcessed();
-            }
-            boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
-            return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
+        IndexListener indexerListener = index.getIndexerListener();
+        long files = 0;
+        long docs = 0;
+        long tokens = 0;
+        if (indexerListener != null) {
+            files = indexerListener.getFilesProcessed();
+            docs = indexerListener.getDocsDone();
+            tokens = indexerListener.getTokensProcessed();
         }
+        boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
+        return new ResultIndexStatus(index, files, docs, tokens, ownedBySomeoneElse);
     }
 
     public static ResultDocSnippet docSnippet(WebserviceParams params) {

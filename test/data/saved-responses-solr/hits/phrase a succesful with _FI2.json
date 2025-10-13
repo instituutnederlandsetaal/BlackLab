@@ -1,0 +1,131 @@
+{
+  "docInfos": {
+    "PRint602": {
+      "fromInputFile": [
+        "PRint602.xml"
+      ],
+      "lengthInTokens": 268,
+      "mayView": true,
+      "pid": [
+        "PRint602"
+      ],
+      "title": [
+        "interview about conference experience and impressions of city"
+      ],
+      "tokenCounts": [
+        {
+          "fieldName": "contents",
+          "tokenCount": 268
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "docPid": "PRint602",
+      "end": 152,
+      "left": {
+        "lemma": [
+          "be"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "'s"
+        ]
+      },
+      "match": {
+        "lemma": [
+          "a",
+          "successful"
+        ],
+        "pos": [
+          "",
+          ""
+        ],
+        "punct": [
+          " ",
+          " "
+        ],
+        "word": [
+          "a",
+          "successful"
+        ]
+      },
+      "right": {
+        "lemma": [
+          "meet/meeting"
+        ],
+        "pos": [
+          ""
+        ],
+        "punct": [
+          " "
+        ],
+        "word": [
+          "meeting"
+        ]
+      },
+      "start": 150
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 1,
+    "countTime": "VALUE_REMOVED",
+    "docFields": {
+      "pidField": "pid",
+      "titleField": "title"
+    },
+    "metadataFieldDisplayNames": {
+      "fromInputFile": "From input file",
+      "pid": "Pid",
+      "title": "Title"
+    },
+    "numberOfDocs": 1,
+    "numberOfDocsRetrieved": 1,
+    "numberOfHits": 1,
+    "numberOfHitsRetrieved": 1,
+    "pattern": {
+      "bcql": "_FI2(\"a\", [lemma=\"successful\"])",
+      "fieldName": "contents",
+      "json": {
+        "args": [
+          {
+            "bcqlFragment": "\"a\"",
+            "type": "regex",
+            "value": "a"
+          },
+          {
+            "annotation": "lemma",
+            "bcqlFragment": "[lemma=\"successful\"]",
+            "type": "regex",
+            "value": "successful"
+          }
+        ],
+        "bcqlFragment": "_FI2(\"a\", [lemma=\"successful\"])",
+        "name": "_FI2",
+        "type": "callfunc"
+      }
+    },
+    "requestedWindowSize": 50,
+    "searchParam": {
+      "indexname": "test",
+      "op": "hits",
+      "patt": "_FI2(\"a\", [lemma=\"successful\"])",
+      "sort": "field:pid,hitposition",
+      "waitfortotal": "true",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
+}

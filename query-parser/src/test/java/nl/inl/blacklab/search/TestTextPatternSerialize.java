@@ -6,7 +6,6 @@ import java.io.StringWriter;
 import org.junit.Assert;
 import org.junit.Test;
 
-import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
@@ -42,11 +41,7 @@ public class TestTextPatternSerialize {
     private static void assertRoundtrip(String cqlQuery, boolean checkSerializeToCql) throws IOException {
         CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
         TextPattern pattern;
-        try {
-            pattern = parser.parseQuery(cqlQuery);
-        } catch (InvalidQuery e) {
-            throw new RuntimeException(e);
-        }
+        pattern = parser.parseQuery(cqlQuery);
         assertRoundtrip(pattern);
         if (checkSerializeToCql)
             Assert.assertEquals(cqlQuery, TextPatternSerializerCql.serialize(pattern));

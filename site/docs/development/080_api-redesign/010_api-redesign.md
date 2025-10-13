@@ -2,14 +2,14 @@
 
 ::: warning OLDER CONTENT
 This page contains ideas that are partially obsolete.
-See [API versions](../../server/rest-api/api-versions.md) for the current state of the API.
+See [API versions](/server/rest-api/miscellaneous/api-versions.md) for the current state of the API.
 :::
 
 The BLS API has quite a few quirks that can make it confusing and annoying to work with.
 
 We intend to evolve the API over time, with new versions that gradually move away from the bad parts of the old API. This can be done using the `api` parameter to switch between versions, or by adding endpoints or response keys, while supporting the old ones for a allow time to transition.
 
-For a comparison between the different API versions currently available, see [API versions](../../server/rest-api/api-versions.md).
+For a comparison between the different API versions currently available, see [API versions](/server/rest-api/miscellaneous/api-versions.md).
 
 For some older ideas for example requests and responses, see [here](API.md).
 

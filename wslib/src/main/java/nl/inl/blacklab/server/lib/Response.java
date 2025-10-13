@@ -16,6 +16,9 @@ import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 public class Response {
     static final Logger logger = LogManager.getLogger(Response.class);
 
+    private Response() {
+    }
+
     /**
      * Stream a simple status response.
      *

@@ -9,7 +9,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.IndexReader;
@@ -18,6 +17,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import it.unimi.dsi.fastutil.ints.IntArrays;
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.BlockTimer;
 
 /** Keeps a list of unique terms and their sort positions.
@@ -112,7 +112,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
                             // all the equal terms into one entry.
                             return invertSortedTermsArray(terms, sorted, cmp);
                         })
-                        .collect(Collectors.toList());
+                        .toList();
             }
             int[] termId2SensitivePosition = sortedInverted.get(0);
             int[] termId2InsensitivePosition = sortedInverted.get(1);
@@ -164,7 +164,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         try {
             segmentTerms = (BLTerms) lrc.reader().terms(luceneField);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
         if (segmentTerms == null) {
             // can happen if segment only contains index metadata doc
@@ -247,6 +247,7 @@ public class TermsIntegrated extends TermsReaderAbstract {
         return converted;
     }
 
+    @Override
     public int segmentIdToGlobalId(int ord, int id) {
         int[] mapping = segmentToGlobalTermIds.get(ord);
         return id < 0 ? id : mapping[id];

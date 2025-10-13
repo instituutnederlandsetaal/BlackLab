@@ -19,8 +19,8 @@ public abstract class GroupProperty<T, G extends Group<T>> implements ResultProp
     GroupProperty(GroupProperty<T, G> prop, boolean invert) {
         this.reverse = invert ? !prop.reverse : prop.reverse;
     }
-    
-    public GroupProperty() {
+
+    protected GroupProperty() {
         this.reverse = sortDescendingByDefault();
     }
 

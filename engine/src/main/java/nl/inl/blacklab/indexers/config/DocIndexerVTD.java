@@ -23,7 +23,8 @@ import com.ximpleware.VTDException;
 import com.ximpleware.VTDGen;
 import com.ximpleware.VTDNav;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -153,10 +154,11 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
 
     // process annotated field
 
+    @Override
     protected void processAnnotatedFieldContainer(VTDNav container, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
 
         if (AnnotatedFieldNameUtil.isParallelField(annotatedField.getName())) {
-            warnOnce("Parallel corpora not supported with VTD indexer! Results will be undefined. Use 'processor: saxon' in your config file.");
+            warnOnce().warn("Parallel corpora not supported with VTD indexer! Results will be undefined. Use 'processor: saxon' in your config file.");
         }
 
         // First we find all inline elements (stuff like s, p, b, etc.) and store
@@ -213,7 +215,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
                     wordFragment = nav.getElementFragment();
                 }
             } catch (NavException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new ErrorIndexingFile(e);
             }
             int wordOffset = (int) wordFragment;
             // Handle punct and inline objects before this word
@@ -329,7 +331,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             contentFragment = nav.getContentFragment();
             elementName = nav.toString(nav.getCurrentIndex()).intern();
         } catch (NavException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
         int startTagOffset = (int) elementFragment; // 32 least significant bits are the start offset
         int endTagOffset;
@@ -384,6 +386,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
      * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
+    @Override
     protected void processAnnotation(ConfigAnnotation annotation, VTDNav word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {
@@ -409,7 +412,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
                 }
             }
         } catch (VTDException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
@@ -430,7 +433,7 @@ public class DocIndexerVTD extends DocIndexerXPath<VTDNav> {
             documentByteOffset = (int) fragment;
             documentLengthBytes = (int) (fragment >> 32);
         } catch (NavException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         lastCharPosition = 0;

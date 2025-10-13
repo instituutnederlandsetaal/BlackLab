@@ -7,7 +7,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.searches.SearchCache;
@@ -138,7 +138,7 @@ public class SearchManager {
             String message = String.format("Can not create cache with class: %s. Did you check your implementation " +
                 "matches the expected arguments", fqClassName);
             logger.error(message, ex);
-            throw BlackLabRuntimeException.wrap(new ConfigurationException(message));
+            throw BlackLabException.wrapRuntime(new ConfigurationException(message));
         }
     }
 

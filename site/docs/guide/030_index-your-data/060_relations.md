@@ -1,7 +1,7 @@
 # Relations
 
 ::: tip Supported from v4.0
-Indexing and searching relations will be supported from BlackLab 4.0 (and current development snapshots).
+Indexing and searching relations is supported from BlackLab 4.0.
 :::
 
 BlackLab can index relations (such as dependency relations), allowing for a whole new class of queries on your corpus.

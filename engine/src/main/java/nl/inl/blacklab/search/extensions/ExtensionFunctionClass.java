@@ -42,7 +42,9 @@ public interface ExtensionFunctionClass {
     List<QueryExtensions.ArgType> ARGS_QQS = List.of(QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.STRING);
     /** Three queries as an argument */
     List<QueryExtensions.ArgType> ARGS_QQQ = List.of(QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.QUERY);
-    /** A string, a query, and two strings */
+    /** Two queries, two strings */
+    List<QueryExtensions.ArgType> ARGS_QQSS = List.of(QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.STRING, QueryExtensions.ArgType.STRING);
+    /** A string, a query, and three strings */
     List<QueryExtensions.ArgType> ARGS_SQSS = List.of(QueryExtensions.ArgType.STRING, QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.STRING, QueryExtensions.ArgType.STRING);
     /** A string, a query, and three strings */
     List<QueryExtensions.ArgType> ARGS_SQSSS = List.of(QueryExtensions.ArgType.STRING, QueryExtensions.ArgType.QUERY, QueryExtensions.ArgType.STRING, QueryExtensions.ArgType.STRING, QueryExtensions.ArgType.STRING);

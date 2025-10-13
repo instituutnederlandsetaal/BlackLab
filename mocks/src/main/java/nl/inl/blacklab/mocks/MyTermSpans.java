@@ -86,7 +86,8 @@ public class MyTermSpans extends Spans {
     public int nextStartPosition() throws IOException {
         if (count == freq) {
             assert position != NO_MORE_POSITIONS;
-            return position = NO_MORE_POSITIONS;
+            position = NO_MORE_POSITIONS;
+            return position;
         }
         //int prevPosition = position;
         position = postings.nextPosition();

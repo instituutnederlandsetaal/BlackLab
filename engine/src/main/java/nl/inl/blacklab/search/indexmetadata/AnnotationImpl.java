@@ -69,7 +69,7 @@ public class AnnotationImpl implements Annotation, Freezable {
     private MatchSensitivity offsetsMatchSensitivity;
 
     @XmlTransient
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
     
     /** Names of our subannotations, if we have any */
     private final Set<String> subannotations = new HashSet<>();
@@ -339,6 +339,7 @@ public class AnnotationImpl implements Annotation, Freezable {
         subannotations.addAll(names);
     }
 
+    @Override
     public CustomPropsMap custom() {
         return custom;
     }
@@ -354,10 +355,12 @@ public class AnnotationImpl implements Annotation, Freezable {
             freeze();
     }
 
+    @Override
     public boolean isSubannotation() {
         return mainAnnotation != null;
     }
 
+    @Override
     public Annotation parentAnnotation() {
         return mainAnnotation;
     }

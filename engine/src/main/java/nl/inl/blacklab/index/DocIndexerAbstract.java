@@ -1,6 +1,7 @@
 package nl.inl.blacklab.index;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -210,7 +211,15 @@ public abstract class DocIndexerAbstract implements DocIndexer {
         for (Entry<String, String> e: unknownValuesToUse.entrySet()) {
             metadataFieldValues.put(e.getKey(), List.of(e.getValue()));
         }
-        for (Entry<String, List<String>> e: metadataFieldValues.entrySet()) {
+        // Index the metadata fields in order of increasing size, so that the largest
+        // field is last.
+        // (see https://lucene.apache.org/core/9_0_0/changes/Changes.html
+        // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied
+        // StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.)
+        List<Entry<String, List<String>>> entries = metadataFieldValues.entrySet().stream()
+                .sorted(Comparator.comparingInt(e -> e.getValue().stream().map(String::length).reduce(0, Integer::sum)))
+                .toList();
+        for (Entry<String, List<String>> e: entries) {
             addMetadataFieldToDocument(e.getKey(), e.getValue());
         }
         metadataFieldValues.clear();

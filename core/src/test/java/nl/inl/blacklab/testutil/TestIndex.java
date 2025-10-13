@@ -11,7 +11,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -51,7 +51,7 @@ public class TestIndex {
         return new TestIndex(false, indexType);
     }
 
-    private synchronized static TestIndex getPreindexed(IndexType indexType) {
+    private static synchronized TestIndex getPreindexed(IndexType indexType) {
         if (indexType == IndexType.INTEGRATED)
             throw new UnsupportedOperationException("Integrated index still in development, no preindexed version!");
         if (testIndexExternalPre == null) {
@@ -60,13 +60,13 @@ public class TestIndex {
                 File indexDir = new File(TestIndex.class.getResource("/test-index-" + strType).toURI());
                 testIndexExternalPre = new TestIndex(indexDir);
             } catch (URISyntaxException e) {
-                throw new RuntimeException(e);
+                throw new IllegalArgumentException(e);
             }
         }
         return testIndexExternalPre;
     }
 
-    public synchronized static TestIndex getReusable(IndexType indexType) {
+    public static synchronized TestIndex getReusable(IndexType indexType) {
         if (testIndexExternal == null) {
             // Instantiate reusable testindexes
             testIndexExternal = new TestIndex(false, IndexType.EXTERNAL_FILES);
@@ -98,7 +98,6 @@ public class TestIndex {
         @Override
         public boolean errorOccurred(Throwable e, String path, File f) {
             // FileProcessor doesn't like when we re-throw the exception.
-            //throw new BlackLabRuntimeException("Error in indexer, path=" + path + ", file=" + f, e);
             System.err.println("Error while indexing. path=" + path + ", file=" + f);
             e.printStackTrace();
             return false; // don't continue
@@ -163,7 +162,7 @@ public class TestIndex {
 
     public static final int[] DOC_LENGTHS_TOKENS = { 9, 12, 6, 10 };
 
-    final static String TEST_FORMAT_NAME = "testformat";
+    static final String TEST_FORMAT_NAME = "testformat";
 
     /**
      * The BlackLab index object.
@@ -180,12 +179,8 @@ public class TestIndex {
     private TestIndex(File indexDir) {
         this.indexDir = indexDir;
         this.dir = null;
-        try {
-            index = BlackLab.open(indexDir);
-            word = index.mainAnnotatedField().annotation("word");
-        } catch (ErrorOpeningIndex e) {
-            throw new RuntimeException(e);
-        }
+        index = BlackLab.open(indexDir);
+        word = index.mainAnnotatedField().annotation("word");
     }
 
     /** Create a temporary index, delete the directory when finished */
@@ -222,7 +217,7 @@ public class TestIndex {
             index = BlackLab.open(indexDir);
             word = index.mainAnnotatedField().annotation("word");
         } catch (DocumentFormatNotFound | ErrorOpeningIndex e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -314,7 +309,7 @@ public class TestIndex {
             return index.find(CorpusQueryLanguageParser.parse(pattern).toQuery(QueryInfo.create(index),
                     filter, false, false), null);
         } catch (InvalidQuery e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

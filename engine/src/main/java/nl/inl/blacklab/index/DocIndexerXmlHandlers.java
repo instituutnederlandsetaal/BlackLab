@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -21,7 +22,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.HookableSaxHandler.ContentCapturingHandler;
@@ -45,6 +46,9 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
      */
     private static final int MAX_CHARACTER_CONTENT_CAPTURE_LENGTH = 4000;
 
+    /** Whitespace and/or punctuation at start or end */
+    protected static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("(^[\\p{Punct}\\p{javaSpaceChar}]+)|([\\p{Punct}\\p{javaSpaceChar}]+$)");
+
     private final HookableSaxHandler hookableHandler = new HookableSaxHandler();
 
     private final SaxParseHandler saxParseHandler = new SaxParseHandler();
@@ -54,7 +58,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
      * tag yet? (used to make sure the stored XML contains all the required
      * mappings)
      */
-    final private static Map<String, String> outputPrefixMapping = new HashMap<>();
+    private static final Map<String, String> outputPrefixMapping = new HashMap<>();
 
     /**
      * Handle Document element. Starts a new Lucene document and adds the attributes
@@ -145,7 +149,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                 // Add Lucene doc to indexer
                 getDocWriter().add(currentDoc);
             } catch (Exception e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
 
             // Report progress
@@ -394,7 +398,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
         return contentsField.addAnnotation(propName, sensitivity, false);
     }
 
-    public DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
+    protected DocIndexerXmlHandlers(DocWriter docWriter, String fileName, Reader reader) {
         super(docWriter, fileName, reader);
 
         // Define the properties that make up our annotated field
@@ -520,7 +524,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
                             DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException e) {
-                    throw new BlackLabRuntimeException(e);
+                    throw new IllegalArgumentException("Could not instantiate metadata fetcher class", e);
                 }
             }
         }
@@ -589,7 +593,7 @@ public abstract class DocIndexerXmlHandlers extends DocIndexerLegacy {
             parser = factory.newSAXParser();
         } catch (SAXException | ParserConfigurationException e1) {
             // Unrecoverable error, throw runtime exception
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
         try {
             InputSource is = new InputSource(reader);

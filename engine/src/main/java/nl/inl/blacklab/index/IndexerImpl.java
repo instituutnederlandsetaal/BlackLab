@@ -17,8 +17,9 @@ import org.apache.lucene.index.Term;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -26,6 +27,7 @@ import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexExternal;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -74,8 +76,8 @@ class IndexerImpl implements DocWriter, Indexer {
                     long tokensDoneBefore = docIndexer.numberOfTokensDone();
                     try {
                         docIndexer.index();
-                    } catch (Throwable e) {
-                        throw new RuntimeException("Error while indexing input file: " + file.getPath(), e);
+                    } catch (Exception e) {
+                        throw new ErrorIndexingFile("Error while indexing input file: " + file.getPath(), e);
                     }
                     listener().fileDone(file.getPath());
 
@@ -165,6 +167,9 @@ class IndexerImpl implements DocWriter, Indexer {
     /** Was this Indexer closed? */
     private boolean closed = false;
 
+    /** To ensure certain warnings are only issued once */
+    WarnOnce warnOnce = new WarnOnce(logger);
+
     /**
      * Construct Indexer
      *
@@ -210,7 +215,7 @@ class IndexerImpl implements DocWriter, Indexer {
 
     private void init(BlackLabIndexWriter indexWriter, String formatIdentifier) throws DocumentFormatNotFound {
         if (indexWriter == null) {
-            throw new BlackLabRuntimeException("indexWriter == null");
+            throw new IllegalStateException("indexWriter == null");
         }
 
         this.indexWriter = indexWriter;
@@ -590,6 +595,7 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     /** Get the strategy to use for indexing relations. */
+    @Override
     public RelationsStrategy getRelationsStrategy() {
         return indexWriter.getRelationsStrategy();
     }
@@ -599,7 +605,12 @@ class IndexerImpl implements DocWriter, Indexer {
         try {
             ((BLIndexWriterProxyLucene) indexWriter().writer()).getWriter().forceMerge(1);
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
+    }
+
+    @Override
+    public WarnOnce warnOnce() {
+        return warnOnce;
     }
 }

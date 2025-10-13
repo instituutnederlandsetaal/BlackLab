@@ -50,6 +50,7 @@ public interface WebserviceParams extends QueryParams {
      */
     Optional<TextPattern> patternWithinContextTag() throws BlsException;
 
+    @Override
     String getDocPid();
 
     Query filterQuery() throws BlsException;
@@ -114,5 +115,6 @@ public interface WebserviceParams extends QueryParams {
 
     SearchFacets facets() throws BlsException;
 
+    @Override
     Optional<String> getInputFormat();
 }

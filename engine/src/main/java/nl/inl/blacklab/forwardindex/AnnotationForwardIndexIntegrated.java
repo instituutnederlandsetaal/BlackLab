@@ -81,6 +81,7 @@ public class AnnotationForwardIndexIntegrated implements AnnotationForwardIndex 
             this.terms = new TermsIntegrated(collators, indexReader, luceneField);
             this.initialized = true;
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch("Intialization of Forward Index was interrupted", e);
         }
     }

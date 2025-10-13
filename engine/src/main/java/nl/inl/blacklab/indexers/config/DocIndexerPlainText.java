@@ -6,7 +6,7 @@ import java.io.Reader;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -23,11 +23,11 @@ public class DocIndexerPlainText extends DocIndexerConfig {
     private StringBuilder fullText;
 
     @Override
-    public void close() throws BlackLabRuntimeException {
+    public void close() throws RuntimeException {
         try {
             reader.close();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -114,7 +114,7 @@ public class DocIndexerPlainText extends DocIndexerConfig {
         try {
             index();
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

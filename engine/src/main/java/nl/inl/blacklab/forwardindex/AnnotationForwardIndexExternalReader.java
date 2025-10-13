@@ -18,7 +18,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 
 /**
@@ -126,7 +127,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
                 mappedBytes = startOfNextMappingBytes + sizeBytes;
             }
         } catch (IOException e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
         initialized = true;
     }
@@ -145,10 +146,10 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             deleted = new byte[n];
             LongBuffer lb = buf.asLongBuffer();
             lb.get(offset);
-            ((Buffer)buf).position(buf.position() + Long.BYTES * n);
+            buf.position(buf.position() + Long.BYTES * n);
             IntBuffer ib = buf.asIntBuffer();
             ib.get(length);
-            ((Buffer)buf).position(buf.position() + Integer.BYTES * n);
+            buf.position(buf.position() + Integer.BYTES * n);
             buf.get(deleted);
             deletedTocEntries = new ArrayList<>();
             for (int i = 0; i < n; i++) {
@@ -161,7 +162,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             }
             sortDeletedTocEntries();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -217,7 +218,7 @@ class AnnotationForwardIndexExternalReader extends AnnotationForwardIndexExterna
             }
 
             if (whichChunk == null) {
-                throw new BlackLabRuntimeException("Tokens file chunk containing document not found. fiid = " + fiid);
+                throw new InvalidIndex("Tokens file chunk containing document not found. fiid = " + fiid);
             }
             int snippetLength = end - start;
             int[] snippet = new int[snippetLength];

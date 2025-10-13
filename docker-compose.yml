@@ -6,7 +6,7 @@ version: '3.9'
 services:
 
   server:
-    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-latest}
+    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-dev}
     build:
         context: .
         dockerfile: docker/Dockerfile
@@ -22,7 +22,7 @@ services:
 
   # Creates new index
   indexer:
-    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-latest}
+    image: instituutnederlandsetaal/${DOCKER_IMAGE:-blacklab}:${VERSION:-dev}
     profiles: [ "tools" ]
     build:
         context: .
@@ -41,6 +41,9 @@ services:
   solr:
     profiles: [ "tools" ]
     image: instituutnederlandsetaal/blacklab-solr:${VERSION:-latest}
+    environment:
+      # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
+      - "SOLR_SECURITY_MANAGER_ENABLED=false"
     build:
       context: .
       dockerfile: solr/Dockerfile

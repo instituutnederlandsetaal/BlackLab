@@ -4,10 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.GroupProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -41,7 +39,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     private final Map<PropertyValue, DocGroup> groups = new HashMap<>();
 
     /** Maximum number of groups (limited by number of entries allowed in a HashMap) */
-    public final static int MAX_NUMBER_OF_GROUPS = Constants.JAVA_MAX_HASHMAP_SIZE;
+    public static final int MAX_NUMBER_OF_GROUPS = Constants.JAVA_MAX_HASHMAP_SIZE;
 
     private long largestGroupSize = 0;
 
@@ -59,7 +57,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
         super(queryInfo);
 
         if (groups.size() > MAX_NUMBER_OF_GROUPS)
-            throw new BlackLabRuntimeException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
+            throw new UnsupportedOperationException("Cannot handle more than " + MAX_NUMBER_OF_GROUPS + " groups");
 
         this.groupBy = groupBy;
         this.windowStats = windowStats;
@@ -112,7 +110,7 @@ public class DocGroups extends ResultsList<DocGroup, GroupProperty<DocResult, Do
     public DocGroups filter(GroupProperty<DocResult, DocGroup> property, PropertyValue value) {
         return new DocGroups(
             this.queryInfo(), 
-            this.results.stream().filter(group -> property.get(group).equals(value)).collect(Collectors.toList()), 
+            this.results.stream().filter(group -> property.get(group).equals(value)).toList(),
             this.groupBy, 
             null,
             null

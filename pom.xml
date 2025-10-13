@@ -1,21 +1,18 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             https://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>nl.inl.blacklab</groupId>
     <artifactId>blacklab-all</artifactId>
     <packaging>pom</packaging>
-    <version>4.0.0-SNAPSHOT</version>
+    <version>4.0.1-SNAPSHOT</version>
     <name>BlackLab Corpus Search</name>
     <description>The parent project for BlackLab Core and BlackLab Server.</description>
     <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
 
     <modules>
 
-        <!-- Contains config for checkstyle, PMD and findbugs. -->
-        <module>build-tools</module>
+        <!-- Contains config for checkstyle, PMD and findbugs.
+        <module>build-tools</module> -->
 
         <!-- Smaller modules used by Java lib and webservice -->
         <module>util</module>
@@ -39,8 +36,8 @@
         <!-- Solr integration (experimental) -->
         <module>solr</module>
 
-        <!-- BlackLab Proxy (experimental)
-        <module>proxy</module> -->
+        <!-- BlackLab Proxy (experimental) -->
+        <module>proxy</module>
 
         <!-- Older DocIndexers -->
         <module>contrib/legacy-docindexers</module>
@@ -71,7 +68,7 @@
         <checkstyle.version>3.1.2</checkstyle.version>
         <pmd.version>3.16.0</pmd.version>
         <findbugs.version>3.0.5</findbugs.version>
-        <javadoc.version>3.5.0</javadoc.version>
+        <javadoc.version>3.6.2</javadoc.version>
 
 
     </properties>
@@ -94,12 +91,26 @@
         <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
         <connection>scm:git:git://github.com/instituutnederlandsetaal/BlackLab.git</connection>
         <developerConnection>scm:git:git@github.com:INL/BlackLab.git</developerConnection>
-    </scm>
+      <tag>HEAD</tag>
+  </scm>
 
     <issueManagement>
         <url>https://github.com/instituutnederlandsetaal/BlackLab/issues</url>
         <system>GitHub Issues</system>
     </issueManagement>
+
+    <!-- Where releases are deployed (OSSRH, for publishing to Maven Central) -->
+    <distributionManagement>
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://central.sonatype.com/api/v1/publisher/upload</url>
+        </repository>
+        <snapshotRepository>
+            <id>central-snap</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <developers>
         <developer>
@@ -191,7 +202,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.6.0</version>
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
@@ -233,7 +244,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>3.3.2</version>
+                <version>3.4.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -251,8 +262,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <!--<version>3.0.0-M1</version>-->
-                <version>3.0.0-M7</version>
+                <version>3.2.2</version>
             </plugin>
 
             <!-- Generates a "build number" (just a timestamp in our case)
@@ -260,7 +270,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.2.0</version>
                 <configuration>
                     <doCheck>false</doCheck>
                     <doUpdate>false</doUpdate>
@@ -309,7 +319,7 @@
                 <version>3.3.0</version>
             </plugin>
 
-            <!-- Report on (possible) bugs -->
+            <!-- Report on (possible) bugs
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -321,9 +331,9 @@
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on possible bugs/style problems -->
+            <!-- Report on possible bugs/style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
@@ -335,9 +345,9 @@
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on style problems -->
+            <!-- Report on style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -349,7 +359,7 @@
                         <version>${project.version}</version>
                     </dependency>
                 </dependencies>
-            </plugin>
+            </plugin> -->
 
             <!-- Javadoc -->
             <plugin>
@@ -365,27 +375,29 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-report-plugin</artifactId>
-                <version>3.0.0-M7</version>
+                <version>3.1.2</version>
             </plugin>
 
             <!-- Creates a release version -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>3.0.0-M6</version>
+                <version>3.0.1</version>
                 <configuration>
                     <tagNameFormat>v@{project.version}</tagNameFormat>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
                     <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
+                    <localCheckout>true</localCheckout>
+                    <pushChanges>false</pushChanges>
                 </configuration>
             </plugin>
 
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.7.0</version>
+                <version>0.8.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
@@ -399,17 +411,17 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-clean-plugin</artifactId>
-                <version>3.2.0</version>
+                <version>3.3.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-deploy-plugin</artifactId>
-                <version>3.0.0</version>
+                <version>3.1.1</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-install-plugin</artifactId>
-                <version>3.0.1</version>
+                <version>3.1.1</version>
             </plugin>
 
         </plugins>
@@ -425,7 +437,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
+                        <version>3.3.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -461,7 +473,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.0.1</version>
+                        <version>3.1.0</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -537,7 +549,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.17.0</version>
+            <version>3.18.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -591,32 +603,30 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <version>3.3.0</version>
+                <version>3.3.1</version>
             </plugin>
 
-            <!-- Project info section of the project site -->
+            <!-- Project info section of the project site
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>3.2.2</version>
+                <version>3.4.5</version>
                 <reportSets>
                     <reportSet>
                         <reports>
                             <report>dependencies</report>
                             <report>dependency-info</report>
-                            <!-- <report>index</report> -->
                             <report>issue-management</report>
                             <report>licenses</report>
                             <report>plugin-management</report>
                             <report>plugins</report>
                             <report>team</report>
-                            <!-- <report>mailing-list</report> <report>cim</report> -->
                             <report>scm</report>
                             <report>summary</report>
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
+            </plugin> -->
 
             <!-- Javadoc -->
             <plugin>
@@ -636,7 +646,7 @@
                 </reportSets>
             </plugin>
 
-            <!-- Report on (possible) bugs -->
+            <!-- Report on (possible) bugs
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -644,9 +654,9 @@
                 <configuration>
                     <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on possible bugs/style problems -->
+            <!-- Report on possible bugs/style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
@@ -657,14 +667,14 @@
                     </rulesets>
                     <sourceEncoding>utf-8</sourceEncoding>
                     <minimumTokens>100</minimumTokens>
-                    <targetJdk>1.8</targetJdk>
+                    <targetJdk>1.17</targetJdk>
                     <excludes>
                         <exclude>**/queryParser/**/*</exclude>
                     </excludes>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on style problems -->
+            <!-- Report on style problems
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
@@ -680,9 +690,9 @@
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on tags like TODO, etc. -->
+            <!-- Report on tags like TODO, etc.
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>taglist-maven-plugin</artifactId>
@@ -728,23 +738,22 @@
                         </tagClasses>
                     </tagListOptions>
                 </configuration>
-            </plugin>
+            </plugin> -->
 
-            <!-- Report on dependency versions -->
+            <!-- Report on dependency versions
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>versions-maven-plugin</artifactId>
-                <version>2.12.0</version>
+                <version>2.16.0</version>
                 <reportSets>
                     <reportSet>
                         <reports>
                             <report>dependency-updates-report</report>
                             <report>plugin-updates-report</report>
-                            <!-- <report>property-updates-report</report> -->
                         </reports>
                     </reportSet>
                 </reportSets>
-            </plugin>
+            </plugin> -->
 
         </plugins>
 

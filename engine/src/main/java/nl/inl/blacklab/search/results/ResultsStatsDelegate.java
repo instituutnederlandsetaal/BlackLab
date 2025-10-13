@@ -45,7 +45,10 @@ public class ResultsStatsDelegate extends ResultsStats {
         try {
             if (future.isDone())
                 return future.get();
-        } catch (InterruptedException|ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
             throw new InterruptedSearch(e);
         }
         // Either return 0, or the running count object if we have it available
@@ -77,7 +80,10 @@ public class ResultsStatsDelegate extends ResultsStats {
                     return realStats;
                 }
             }
-        } catch (InterruptedException|ExecutionException e) {
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw new InterruptedSearch(e);
+        } catch (ExecutionException e) {
             throw new InterruptedSearch(e);
         }
     }

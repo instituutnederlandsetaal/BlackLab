@@ -15,10 +15,12 @@ public class ProcessingStepSort extends ProcessingStep {
         return values.sorted(BlackLab.defaultCollator());
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         return value;
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

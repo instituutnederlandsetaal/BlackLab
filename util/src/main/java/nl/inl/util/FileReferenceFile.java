@@ -13,12 +13,12 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 
 public class FileReferenceFile implements FileReference {
 
     /** The file */
-    private File file;
+    private final File file;
 
     /** The encoding, or null if BOM not yet detected */
     private Charset charSet;
@@ -32,7 +32,7 @@ public class FileReferenceFile implements FileReference {
         try {
             return file.getCanonicalPath();
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
@@ -43,7 +43,7 @@ public class FileReferenceFile implements FileReference {
         try {
             return FileUtils.readFileToByteArray(file);
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
@@ -58,27 +58,29 @@ public class FileReferenceFile implements FileReference {
             try {
                 return FileReference.readIntoMemoryFromTextualInputStream(getPath(), new FileInputStream(file), file);
             } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new ErrorIndexingFile(e);
             }
         }
         return this;
     }
 
+    @Override
     public InputStream getSinglePassInputStream() {
         try {
             return new FileInputStream(file);
         } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
+    @Override
     public BufferedReader createReader(Charset overrideEncoding) {
         if (overrideEncoding == null)
             overrideEncoding = getCharSet();
         try {
             return new BufferedReader(new InputStreamReader(new FileInputStream(file), overrideEncoding));
         } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
@@ -99,7 +101,7 @@ public class FileReferenceFile implements FileReference {
             try (BOMInputStream is = UnicodeStream.wrap(new FileInputStream(file))) {
                 charSet = UnicodeStream.getCharset(is);
             } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new ErrorIndexingFile(e);
             }
         }
         return charSet;

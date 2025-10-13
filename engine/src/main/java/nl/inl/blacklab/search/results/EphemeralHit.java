@@ -10,28 +10,28 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * instances used while e.g. iterating through a list of hits.
  */
 public class EphemeralHit implements Hit {
-    public int doc = -1;
-    public int start = -1;
-    public int end = -1;
-    public MatchInfo[] matchInfo = null;
+    int doc_ = -1;
+    int start_ = -1;
+    int end_ = -1;
+    MatchInfo[] matchInfo = null;
 
     Hit toHit() {
-        return new HitImpl(doc, start, end, matchInfo);
+        return new HitImpl(doc_, start_, end_, matchInfo);
     }
 
     @Override
     public int doc() {
-        return doc;
+        return doc_;
     }
 
     @Override
     public int start() {
-        return start;
+        return start_;
     }
 
     @Override
     public int end() {
-        return end;
+        return end_;
     }
 
     @Override
@@ -44,13 +44,13 @@ public class EphemeralHit implements Hit {
         if (o == null || getClass() != o.getClass())
             return false;
         EphemeralHit that = (EphemeralHit) o;
-        return doc == that.doc && start == that.start && end == that.end && Arrays.equals(matchInfo,
+        return doc_ == that.doc_ && start_ == that.start_ && end_ == that.end_ && Arrays.equals(matchInfo,
                 that.matchInfo);
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(doc, start, end);
+        int result = Objects.hash(doc_, start_, end_);
         result = 31 * result + Arrays.hashCode(matchInfo);
         return result;
     }

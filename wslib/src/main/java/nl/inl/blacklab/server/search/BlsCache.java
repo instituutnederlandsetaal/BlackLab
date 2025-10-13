@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -73,6 +72,7 @@ public class BlsCache implements SearchCache {
                     Thread.sleep(CLEAN_UP_CACHE_INTERVAL_MS);
                 } catch (InterruptedException e) {
                     logger.info("CleanupSearchesThread interrupted");
+                    Thread.currentThread().interrupt(); // preserve interrupted status
                     return;
                 }
 
@@ -264,7 +264,8 @@ public class BlsCache implements SearchCache {
         if (trace) {
             String msg = getCacheStats();
             if (!msg.equals(previousCacheStatsMessage)) {
-                double freeGigs = (double)(getFreeMemory() * 10 / ONE_GB_BYTES) / 10;
+                long freeGigsTimesTen = getFreeMemory() * 10 / ONE_GB_BYTES;
+                double freeGigs = (double)freeGigsTimesTen / 10;
                 traceInfo("{}: {}, {}G free heap", "CACHE AFTER UPDATE", msg, freeGigs);
             }
             previousCacheStatsMessage = msg;
@@ -273,7 +274,7 @@ public class BlsCache implements SearchCache {
 
     @Override
     @SuppressWarnings("unchecked")
-    synchronized public <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
+    public synchronized <R extends SearchResult> BlsCacheEntry<R> remove(Search<R> search) {
         BlsCacheEntry<R> future = (BlsCacheEntry<R>) searches.remove(search);
         if (future != null)
             traceInfo("-- REMOVED:  {} ({} searches left)", search, searches.size());
@@ -491,7 +492,7 @@ public class BlsCache implements SearchCache {
 
     @Override
     public List<Map<String, Object>> getContents(boolean includeDebugInfo) {
-        return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).collect(Collectors.toList());
+        return searches.values().stream().map(e -> e.getInfo(includeDebugInfo)).toList();
     }
 
 }

@@ -9,6 +9,15 @@ import java.util.Set;
  */
 public class NfaStateMatch extends NfaState {
 
+    /** Singleton instance of the match final state */
+    private static final NfaStateMatch instance = new NfaStateMatch();
+
+    public static NfaStateMatch get() {
+        return instance;
+    }
+
+    private NfaStateMatch() {}
+
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         if (matchEnds != null)

@@ -6,13 +6,13 @@ package nl.inl.util;
 public class TextContentChars implements TextContent {
 
     /** chars buffer for text content (use offset and length as well). */
-    private char[] chars;
+    private final char[] chars;
 
     /** start offset of text content */
-    private int offset;
+    private final int offset;
 
     /** length of text content (in chars) */
-    private int length;
+    private final int length;
 
     TextContentChars(char[] chars) {
         if (chars == null)
@@ -34,6 +34,7 @@ public class TextContentChars implements TextContent {
         this.length = length;
     }
 
+    @Override
     public boolean isEmpty() {
         return length == 0;
     }
@@ -42,6 +43,7 @@ public class TextContentChars implements TextContent {
      * Append this text content to a string builder.
      * @param builder where to add our content
      */
+    @Override
     public void appendToStringBuilder(StringBuilder builder) {
         builder.append(chars, offset, length);
     }

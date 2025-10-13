@@ -2,7 +2,6 @@ package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +12,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -34,7 +34,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"summary", "hits", "docInfos", "hitGroups", "facets" })
-public class HitsResults implements Cloneable, EntityWithSummary {
+public class HitsResults implements EntityWithSummary {
 
     @Override
     public SearchSummary getSummary() {
@@ -61,7 +61,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_ARRAY)
-                throw new RuntimeException("Expected START_ARRAY, found " + token);
+                throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
 
             BigList<Hit> hits = new ObjectBigArrayBigList<>();
             while (true) {
@@ -88,19 +88,8 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                 String pid = el.pid;
                 if (pid == null)
                     pid = "UNKNOWN";
-                jgen.writeObjectFieldStart(pid);
-                for (Map.Entry<String, MetadataValues> v: el.metadata.entrySet()) {
-                    jgen.writeArrayFieldStart(v.getKey());
-                    for (String x: v.getValue().getValue()) {
-                        jgen.writeString(x);
-                    }
-                    jgen.writeEndArray();
-                }
-                if (el.lengthInTokens != null)
-                    jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
-                if (el.mayView != null)
-                    jgen.writeBooleanField("mayView", el.mayView);
-                jgen.writeEndObject();
+                jgen.writeFieldName(pid);
+                provider.defaultSerializeValue(el, jgen);
             }
             jgen.writeEndObject();
         }
@@ -112,7 +101,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<DocInfo> docInfos = new ArrayList<>();
             while (true) {
@@ -121,7 +110,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 String pid = parser.getCurrentName();
                 if (pid.equals("metadataFieldGroups")) {
                     // Skip this part, which doesn't really belong but ended up here unfortunately.
@@ -132,38 +121,11 @@ public class HitsResults implements Cloneable, EntityWithSummary {
                     }
                     continue;
                 }
-                DocInfo docInfo = new DocInfo();
+
+                if (parser.nextToken() != JsonToken.START_OBJECT)
+                    throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
+                DocInfo docInfo = deserializationContext.readValue(parser, DocInfo.class);
                 docInfo.pid = parser.getCurrentName();
-                docInfo.metadata = new LinkedHashMap<>();
-
-                token = parser.nextToken();
-                if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected START_OBJECT, found " + token);
-                while (true) {
-                    token = parser.nextToken();
-                    if (token == JsonToken.END_OBJECT)
-                        break;
-
-                    if (token != JsonToken.FIELD_NAME)
-                        throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
-                    String fieldName = parser.getCurrentName();
-                    token = parser.nextToken();
-                    if (token == JsonToken.VALUE_NUMBER_INT) {
-                        // Special lengthInTokens setting?
-                        if (!fieldName.equals("lengthInTokens"))
-                            throw new RuntimeException("Unexpected int in metadata");
-                        docInfo.lengthInTokens = parser.getValueAsInt();
-                    } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
-                        // Special mayView setting?
-                        if (!fieldName.equals("mayView"))
-                            throw new RuntimeException("Unexpected boolean in metadata");
-                        docInfo.mayView = parser.getValueAsBoolean();
-                    } else if (token == JsonToken.START_ARRAY) {
-                        // A list of metadata values
-                        List<String> values = SerializationUtil.readStringList(parser);
-                        docInfo.metadata.put(fieldName, new MetadataValues(values));
-                    }
-                }
                 docInfos.add(docInfo);
             }
 
@@ -181,7 +143,7 @@ public class HitsResults implements Cloneable, EntityWithSummary {
     @JsonInclude(Include.NON_NULL)
     public BigList<Hit> hits;
 
-    @XmlElementWrapper(name="docInfos")
+    @XmlElementWrapper(name="   docInfos")
     @XmlElement(name = "docInfo")
     @JsonProperty("docInfos")
     @JsonSerialize(using = DocInfosSerializer.class)
@@ -218,11 +180,6 @@ public class HitsResults implements Cloneable, EntityWithSummary {
         this.hits = null;
         this.docInfos = null;
         this.hitGroups = groups;
-    }
-
-    @Override
-    public HitsResults clone() throws CloneNotSupportedException {
-        return (HitsResults)super.clone();
     }
 
     @Override

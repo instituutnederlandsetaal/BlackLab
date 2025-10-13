@@ -5,10 +5,10 @@ import nl.inl.blacklab.search.results.DocResults;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultSummaryNumDocs {
-    private boolean isViewDocGroup;
-    private DocResults docResults;
-    private SearchTimings timings;
-    private CorpusSize subcorpusSize;
+    private final boolean isViewDocGroup;
+    private final DocResults docResults;
+    private final SearchTimings timings;
+    private final CorpusSize subcorpusSize;
 
     ResultSummaryNumDocs(boolean isViewDocGroup, DocResults docResults, SearchTimings timings,
             CorpusSize subcorpusSize) {

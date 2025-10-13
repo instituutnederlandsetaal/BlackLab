@@ -165,6 +165,7 @@ public class ContentStoreBlockCodecZlib implements ContentStoreBlockCodec {
         };
     }
 
+    @Override
     public byte getCode() {
         return 1;
     }

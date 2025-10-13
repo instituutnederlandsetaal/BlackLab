@@ -6,12 +6,12 @@ import nl.inl.blacklab.server.index.Index;
 public class ResultIndexStatus {
     private final Index index;
     private final IndexMetadata metadata;
-    private long files;
-    private long docs;
-    private long tokens;
-    private String documentFormat;
-    private Index.IndexStatus indexStatus;
-    private boolean ownedBySomeoneElse;
+    private final long files;
+    private final long docs;
+    private final long tokens;
+    private final String documentFormat;
+    private final Index.IndexStatus indexStatus;
+    private final boolean ownedBySomeoneElse;
 
     ResultIndexStatus(Index index, long files, long docs, long tokens, boolean ownedBySomeoneElse) {
         this.index = index;

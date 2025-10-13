@@ -30,7 +30,7 @@ public class RemoveAllAccentsFilter extends TokenFilter {
     }
 
     @Override
-    final public boolean incrementToken() throws IOException {
+    public final boolean incrementToken() throws IOException {
         if (input.incrementToken()) {
             String t = new String(termAtt.buffer(), 0, termAtt.length());
             t = StringUtil.stripAccents(t);

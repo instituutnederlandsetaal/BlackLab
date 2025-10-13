@@ -1,7 +1,7 @@
 # Relations querying
 
 ::: tip Supported from v4.0
-Indexing and searching relations will be supported from BlackLab 4.0 (and current development snapshots).
+Indexing and searching relations is supported from BlackLab 4.0.
 :::
 
 Relations show how (groups of) words are related to one another. One of the most common types of relations is the dependency relation, which shows grammatical dependency between words.

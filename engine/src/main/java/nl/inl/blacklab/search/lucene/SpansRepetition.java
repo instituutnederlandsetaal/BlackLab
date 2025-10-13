@@ -88,6 +88,7 @@ class SpansRepetition extends BLFilterDocsSpans<SpansInBucketsPerDocumentWithSta
         return super.advance(target);
     }
 
+    @Override
     protected boolean twoPhaseCurrentDocMatches() throws IOException {
         assert positionedInDoc();
         // Does this document have any clause matches?

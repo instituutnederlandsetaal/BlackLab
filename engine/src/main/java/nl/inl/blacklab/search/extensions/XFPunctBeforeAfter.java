@@ -21,6 +21,7 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
     public static final String OPT_WS = "[ \t\r\n]*";
 
     /** Register the punctBefore and punctAfter functions to simplify finding punctuation. */
+    @Override
     public void register() {
         QueryExtensions.registerPseudoAnnotation("punctBefore", ARGS_S, List.of(ANY_NON_WS),
             (queryInfo, context, args) -> getPunctQuery(context, OPT_WS + args.get(0) + OPT_WS)

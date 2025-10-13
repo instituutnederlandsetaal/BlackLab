@@ -34,6 +34,7 @@ import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -91,6 +92,7 @@ public class TestIndexComponent {
 
         NamedList<Object> response = SolrTestServer.client().request(r);
         System.err.println("Add file response\n" + response.toString());
+        Assert.assertTrue("Response should contain 'status' field", response.get("status") != null);
     }
 
     /** A test of a weird case that somehow sometime broke the code during development */

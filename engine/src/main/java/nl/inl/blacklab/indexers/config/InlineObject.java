@@ -6,8 +6,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
-
 /**
  * Information about an inline object while parsing.
  *
@@ -32,7 +30,7 @@ class InlineObject implements Comparable<InlineObject> {
 
     /** An open tag's token id, for if we want to capture e.g. tei:anchor positions to refer to later
      *  from standoff annotations. If null, don't capture token ids. */
-    private String tokenId;
+    private final String tokenId;
 
     public InlineObject(String text, int offset, InlineObjectType type, Map<String, List<String>> attributes) {
         this(text, offset, type, attributes, null);
@@ -43,7 +41,7 @@ class InlineObject implements Comparable<InlineObject> {
         this.text = text;
         this.offset = offset;
         if (offset < 0)
-            throw new BlackLabRuntimeException("Inline object with offset < 0");
+            throw new IllegalArgumentException("Inline object with offset < 0");
         this.type = type;
         this.attributes = Collections.emptyMap();
         if (attributes != null)

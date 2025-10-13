@@ -18,7 +18,7 @@ public class JsonAsString extends XmlAdapter<Object, Object> {
             try {
                 Json.getJaxbWriter().writeValue(sw, o);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new ErrorWritingResponse(e);
             }
         }
         return sw.toString();

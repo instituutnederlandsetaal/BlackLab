@@ -23,14 +23,14 @@ import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.iter.AxisIterator;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
+import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.FileReference;
 
@@ -136,7 +136,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             finder = new XPathFinder(xPath,
                     config.isNamespaceAware() ? config.getNamespaces() : null);
         } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -200,6 +200,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         docStartEndOffsetsPerField.clear();
     }
 
+    @Override
     protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
             Map<String, Span> tokenPositionsMap) {
 
@@ -280,7 +281,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             tokenPosition.increment();
         }
         if (!inlinesToClose.isEmpty()) {
-            throw new BlackLabRuntimeException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
+            throw new IllegalStateException(String.format("unclosed inlines left: %s ", inlinesToClose.values()));
         }
         // Index any punctuation occurring after last word
         while (currentPunct != null) {
@@ -412,6 +413,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
      * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
      * @param handler      call handler for each value found, including that of subannotations
      */
+    @Override
     protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {

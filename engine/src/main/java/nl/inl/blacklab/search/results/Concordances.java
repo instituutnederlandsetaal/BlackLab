@@ -9,7 +9,6 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.Concordance;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.DocUtil;
@@ -73,7 +72,7 @@ public class Concordances {
      * @param conc where to add the concordances
      * @param hl highlighter
      */
-    private synchronized static void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
+    private static synchronized void makeConcordancesSingleDocContentStore(Hits hits, ContextSize contextSize,
             Map<Hit, Concordance> conc,
             XmlHighlighter hl) {
         if (hits.size() == 0)
@@ -82,7 +81,7 @@ public class Concordances {
         int docId = hits.get(0).doc();
         long arrayLength = hits.size() * 2;
         if (arrayLength > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE / 2 + " hits in a single doc");
         int[] startsOfWords = new int[(int)arrayLength];
         int[] endsOfWords = new int[(int)arrayLength];
 

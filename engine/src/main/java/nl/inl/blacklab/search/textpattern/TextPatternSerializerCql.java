@@ -30,6 +30,9 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternSerializerCql {
 
+    private TextPatternSerializerCql() {
+    }
+
     public static String serialize(TextPatternStruct pattern) {
         StringBuilder b = new StringBuilder();
         serialize(pattern, b, false, false);
@@ -304,7 +307,7 @@ public class TextPatternSerializerCql {
         // MatchFilter funccall
         cqlSerializers.put(MatchFilterFunctionCall.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
             MatchFilterFunctionCall tp = (MatchFilterFunctionCall) pattern;
-            b.append(tp.getName()).append("(" + tp.getCapture() + ")");
+            b.append(tp.getName() + "(" + tp.getCapture() + ")");
         });
 
         // MatchFilter implication
@@ -372,7 +375,7 @@ public class TextPatternSerializerCql {
         TextPatternPositionFilter tp = (TextPatternPositionFilter) pattern;
         boolean supportedOp = tp.getOperation() == SpanQueryPositionFilter.Operation.WITHIN ||
                 tp.getOperation() == SpanQueryPositionFilter.Operation.CONTAINING;
-        if (tp.getAdjustLeading() != 0 || tp.getAdjustTrailing() != 0 || tp.isInvert() | !supportedOp)
+        if (tp.getAdjustLeading() != 0 || tp.getAdjustTrailing() != 0 || tp.isInvert() || !supportedOp)
             throw new IllegalArgumentException(
                     "Cannot serialize to CorpusQL: posfilter with adjustLeading " + tp.getAdjustLeading() +
                             ", adjustTrailing " + tp.getAdjustTrailing() + ", invert " + tp.isInvert() +
@@ -456,7 +459,7 @@ public class TextPatternSerializerCql {
     }
 
     /** Use double quotes for CQL */
-    private final static String USE_QUOTE = "\"";
+    private static final String USE_QUOTE = "\"";
 
     private static StringBuilder serializeToQuotedString(StringBuilder b, String value) {
         return b.append(USE_QUOTE).append(StringUtil.escapeQuote(value, USE_QUOTE)).append(USE_QUOTE);

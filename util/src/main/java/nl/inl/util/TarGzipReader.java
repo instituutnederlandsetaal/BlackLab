@@ -9,13 +9,16 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.io.FilenameUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Class for handling .tar.gz input streams. It will call the supplied handler
  * for each "normal" file in the .tar.gz file.
  */
 public class TarGzipReader {
+    private TarGzipReader() {
+    }
+
     /**
      * Handles a file inside the .tar.gz archive.
      */
@@ -42,7 +45,7 @@ public class TarGzipReader {
                 InputStream unzipped = new GzipCompressorInputStream(tgzStream)) {
             processTar(fileRef.getPath(), unzipped, fileHandler);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -59,7 +62,7 @@ public class TarGzipReader {
         try (InputStream unzipped = new GzipCompressorInputStream(tarGzipStream)) {
             processTar(fileName, unzipped, fileHandler);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -75,7 +78,7 @@ public class TarGzipReader {
             fileHandler.handle(fileRef.getPath().replaceAll("\\.gz$", ""), unzipped);
             // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -92,7 +95,7 @@ public class TarGzipReader {
             fileHandler.handle(fileName.replaceAll("\\.gz$", ""), unzipped);
             // TODO make filename handling uniform across all archives types?
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -116,7 +119,7 @@ public class TarGzipReader {
                     return;
             }
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -142,7 +145,7 @@ public class TarGzipReader {
                     return;
             }
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -169,7 +172,7 @@ public class TarGzipReader {
                     return;
             }
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 }

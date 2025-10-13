@@ -27,7 +27,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -38,6 +37,9 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  * This is used for both the BLS and Solr webservices.
  */
 public class WebserviceRequestHandler {
+
+    private WebserviceRequestHandler() {
+    }
 
     /**
      * Show information about a field in a corpus.
@@ -301,7 +303,7 @@ public class WebserviceRequestHandler {
         rs.formatXsltResponse(result);
     }
 
-    public static void opParsePattern(WebserviceParamsImpl params, ResponseStreamer rs) {
+    public static void opParsePattern(WebserviceParams params, ResponseStreamer rs) {
         if (!rs.getDataStream().getType().equals("json"))
             throw new UnsupportedOperationException("/parse-pattern only supports JSON output");
         // Write response
@@ -319,11 +321,11 @@ public class WebserviceRequestHandler {
                 try {
                     TextPattern tp = params.pattern().orElse(null);
                     try {
-                        ds.entry("bcql", TextPatternSerializerCql.serialize(tp));
+                        ds.entry(ResponseStreamer.KEY_BCQL, TextPatternSerializerCql.serialize(tp));
                     } catch (Exception e) {
                         ds.entry("corpusql-error", e.getMessage());
                     }
-                    ds.entry("json", tp);
+                    ds.entry(ResponseStreamer.KEY_JSON, tp);
                 } catch (Exception e) {
                     ds.entry("error", e.getMessage());
                 }
@@ -333,7 +335,7 @@ public class WebserviceRequestHandler {
         ds.endMap();
     }
 
-    public static void opRelations(WebserviceParamsImpl params, ResponseStreamer rs) {
+    public static void opRelations(WebserviceParams params, ResponseStreamer rs) {
         BlackLabIndex index = params.blIndex();
         AnnotatedField field = params.getAnnotatedField();
         RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
@@ -386,23 +388,23 @@ public class WebserviceRequestHandler {
                 RelationsStats.TypeStats typeStats = relTypeEntry.getValue();
                 ds.startDynEntry(typeName).startMap();
                 {
-                    ds.entry("count", typeStats.getCount());
+                    ds.entry(ResponseStreamer.KEY_COUNT, typeStats.getCount());
                     Map<String, TruncatableFreqList> attributes = typeStats.getAttributes();
                     if (!attributes.isEmpty()) {
-                        ds.startEntry("attributes").startMap();
+                        ds.startEntry(ResponseStreamer.KEY_ATTRIBUTES).startMap();
                         {
                             for (Map.Entry<String, TruncatableFreqList> attrEntry: attributes.entrySet()) {
                                 ds.startDynEntry(attrEntry.getKey()).startMap();
                                 {
                                     TruncatableFreqList values = attrEntry.getValue();
-                                    ds.startEntry("values").startMap();
+                                    ds.startEntry(ResponseStreamer.KEY_VALUES).startMap();
                                     {
                                         for (Map.Entry<String, Long> valueEntry: values.getValues().entrySet()) {
                                             ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
                                         }
                                     }
                                     ds.endMap().endEntry();
-                                    ds.entry("valueListComplete", !values.isTruncated());
+                                    ds.entry(ResponseStreamer.KEY_VALUE_LIST_COMPLETE, !values.isTruncated());
                                 }
                                 ds.endMap().endDynEntry();
                             }

@@ -13,16 +13,16 @@ import java.nio.charset.CharsetDecoder;
 public class TextContentBytes implements TextContent {
 
     /** If not null: bytes buffer for text content (use offset and length as well). str and chars will be null. */
-    private byte[] bytes;
+    private final byte[] bytes;
 
     /** start offset of text content */
-    private int offset;
+    private final int offset;
 
     /** length of text content (in bytes) */
-    private int length;
+    private final int length;
 
     /** charset to use */
-    private Charset bytesCharset;
+    private final Charset bytesCharset;
 
     TextContentBytes(byte[] bytes, int offset, int length, Charset charset) {
         if (bytes == null)
@@ -61,7 +61,7 @@ public class TextContentBytes implements TextContent {
         while (in.hasRemaining()) {
             cd.decode(in, out, true);
             builder.append(out.array(), 0, out.position());
-            ((Buffer)out).position(0);
+            out.position(0);
         }
     }
 

@@ -5,7 +5,7 @@ import java.text.Collator;
 
 import org.apache.lucene.index.IndexReader;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.Collators.CollatorVersion;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.util.VersionFile;
@@ -82,7 +82,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
                 throw new IllegalArgumentException(
                         "Annotation should have forward index but directory is missing: " + annotation);
             if (!dir.mkdir())
-                throw new BlackLabRuntimeException("Could not create dir: " + dir);
+                throw new InvalidIndex("Could not create dir: " + dir);
         }
 
         // Version check
@@ -104,14 +104,16 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
         }
 
         AnnotationForwardIndexExternalAbstract fi;
-        CollatorVersion collVersion = CollatorVersion.V2;
+        CollatorVersion collVersion;
         switch (version) {
         case "4":
             // Large terms file, old collators
             collVersion = CollatorVersion.V1;
             break;
         case "5":
+        default:
             // Large terms file, new collators
+            collVersion = CollatorVersion.V2;
             break;
         }
         Collators collators = new Collators(collator, collVersion);
@@ -160,7 +162,7 @@ public abstract class AnnotationForwardIndexExternalAbstract implements Annotati
      */
     private final FiidLookup fiidLookup;
 
-    public AnnotationForwardIndexExternalAbstract(IndexReader reader, Annotation annotation, File dir, Collators collators) {
+    protected AnnotationForwardIndexExternalAbstract(IndexReader reader, Annotation annotation, File dir, Collators collators) {
         this.annotation = annotation;
         this.collators = collators;
         canDoNfaMatching = collators != null && collators.version() != CollatorVersion.V1;

@@ -21,7 +21,8 @@ import org.apache.logging.log4j.Logger;
 import org.eclipse.collections.api.set.primitive.MutableIntSet;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 /**
@@ -126,7 +127,7 @@ class TermsWriter implements Terms {
                 }
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -171,7 +172,7 @@ class TermsWriter implements Terms {
                         // Calculate byte offsets for all the terms and fill data array
                         int currentOffset = 0;
                         byte[] termStrings = new byte[blockSize];
-                        long blockSizeBytes = 2 * Integer.BYTES;
+                        long blockSizeBytes = (long)2 * Integer.BYTES;
                         while (currentTerm < n) {
                             termStringOffsets[currentTerm] = currentOffset;
                             byte[] termBytes = terms[currentTerm].getBytes(TERMS_CHARSET);
@@ -205,10 +206,8 @@ class TermsWriter implements Terms {
                         ib.put(currentOffset); // include the offset after the last term at position termStringOffsets[n]
                                                // (doubles as the size of the data block to follow) //@4
                         int newPosition = buf.position() + Integer.BYTES * (2 + numTermsThisBlock);
-                        ((Buffer)buf).position(newPosition); // advance past offsets array
+                        buf.position(newPosition); // advance past offsets array
                         if (fileMapLength - buf.position() < blockSize) {
-                            //throw new RuntimeException("Not enough space in file mapping to write term strings!");
-
                             // Re-map a new part of the file before we write the term strings
                             fileMapStart += buf.position();
                             buf = fc.map(MapMode.READ_WRITE, fileMapStart, fileMapLength);
@@ -273,7 +272,7 @@ class TermsWriter implements Terms {
                 }
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -304,7 +303,7 @@ class TermsWriter implements Terms {
 
     public void setMaxBlockSize(int maxBlockSize) {
         if ((long) maxBlockSize > ((long) TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE))
-            throw new BlackLabRuntimeException("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE);
+            throw new InvalidIndex("Max. block size too large, max. " + TermsExternalUtil.DEFAULT_MAX_FILE_MAP_SIZE);
         this.maxBlockSize = maxBlockSize;
     }
 

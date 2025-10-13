@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.zip.ZipFile;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Manages opened zip files.
@@ -33,6 +33,9 @@ public class ZipHandleManager {
 
     /** Zip files opened by DocIndexerBase indexers. Should be closed eventually. */
     private static final Map<File, ZipHandle> openZips = new LinkedHashMap<>();
+
+    private ZipHandleManager() {
+    }
 
     static class ZipHandle implements Comparable<ZipHandle> {
 
@@ -78,7 +81,7 @@ public class ZipHandleManager {
             try {
                 zipFile.close();
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         }
 
@@ -97,7 +100,7 @@ public class ZipHandleManager {
         }
     }
 
-    private synchronized static void removeEntriesIfRequired() {
+    private static synchronized void removeEntriesIfRequired() {
 
         // Remove any entries that haven't been used for a long time
         List<ZipHandle> zl = new ArrayList<>(openZips.values());

@@ -27,7 +27,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocumentFormats;
@@ -74,8 +75,6 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      */
     public static final String IFL_INDEX_RELATIONS_TWICE = "index_relations_twice";
 
-    //private static final Logger logger = LogManager.getLogger(IndexMetadataIntegrated.class);
-
     public static IndexMetadataIntegrated deserializeFromJsonJaxb(BlackLabIndex index) {
         try {
             Integer docId = MetadataDocument.getMetadataDocId(index.reader());
@@ -92,7 +91,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             }
             return metadata;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -138,7 +137,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             if (docIds.isEmpty())
                 return null;
             if (docIds.size() > 1)
-                throw new RuntimeException("Multiple index metadata found!");
+                throw new InvalidIndex("Multiple index metadata found!");
             return docIds.get(0);
         }
 
@@ -160,7 +159,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
                 updateMetadataDoc(indexWriter, metadataJson);
             } catch (IOException e) {
-                throw new RuntimeException("Error saving index metadata", e);
+                throw new InvalidIndex("Error saving index metadata", e);
             }
         }
 
@@ -168,7 +167,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             try {
                 updateMetadataDoc(indexWriter, metadataJson);
             } catch (IOException e) {
-                throw new RuntimeException("Error saving index metadata", e);
+                throw new InvalidIndex("Error saving index metadata", e);
             }
         }
 
@@ -185,7 +184,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             try {
                 return Json.getJaxbWriter().writeValueAsString(metadata);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -303,7 +302,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
 
     /** Is this instance frozen, that is, are all mutations disallowed? */
     @XmlTransient
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
 
     /** Free-form flags that indicate how indexing was done.
      *
@@ -314,7 +313,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
      * Use sparingly, and flags should generally be temporary, to be removed
      * when it is no longer needed.
      */
-    private Map<String, String> indexFlags = new HashMap<>();
+    private final Map<String, String> indexFlags = new HashMap<>();
 
     // For JAXB deserialization
     @SuppressWarnings("unused")
@@ -802,7 +801,7 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                         if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
                             // Positive docLength means that this document has a value for this annotated field
                             // (e.g. the index metadata document does not and returns 0)
-                            fieldCount.add(1, docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                            fieldCount.add(1, (long)docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
                             documentVersionCount++;
                         }
                     });
@@ -817,9 +816,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
     @Override
     public void save() {
         if (!index.indexMode())
-            throw new RuntimeException("Cannot save indexmetadata in search mode!");
+            throw new UnsupportedOperationException("Cannot save indexmetadata in search mode!");
         if (indexWriter == null)
-            throw new RuntimeException("Cannot save indexmetadata, indexWriter == null");
+            throw new IllegalStateException("Cannot save indexmetadata, indexWriter == null");
 
         if (!isFrozen())
             ensureMainAnnotatedFieldSet();
@@ -878,17 +877,18 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         try {
             return MetadataDocument.getMetadataJson(index.reader(), metadataDocId());
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
     @Override
     public void setIndexMetadataFromString(String metadata) {
         if (!index.indexMode())
-            throw new RuntimeException("Cannot save indexmetadata in search mode!");
+            throw new UnsupportedOperationException("Cannot save indexmetadata in search mode!");
         metadataDocument.saveToIndex(indexWriter, metadata);
     }
 
+    @Override
     public BlackLabIndex.IndexType getIndexType() {
         return BlackLabIndex.IndexType.INTEGRATED;
     }

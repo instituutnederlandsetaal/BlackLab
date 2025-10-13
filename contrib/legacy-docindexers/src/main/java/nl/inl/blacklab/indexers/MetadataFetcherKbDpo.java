@@ -27,7 +27,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.xml.sax.SAXException;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.DocIndexerLegacy;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.MetadataFetcher;
@@ -121,7 +122,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 xpathAuthor = xpath.compile("//dc:creator");
                 xpathDate = xpath.compile("//dc:date");
             } catch (XPathExpressionException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
 
             try {
@@ -149,7 +150,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 defaultHttpClient = clsDefaultHttpClient.getConstructor().newInstance();
 
             } catch (Exception e) {
-                throw new BlackLabRuntimeException("Error finding (some of the) Apache HTTP libraries."
+                throw new InvalidConfiguration("Error finding (some of the) Apache HTTP libraries."
                         + "Make sure Apache commons-codec, commons-logging, httpclient, httpcore (4.1.2 or higher) are on the classpath.",
                         e);
             }
@@ -283,7 +284,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
                 return metadata;
 
             } catch (XPathExpressionException | DOMException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         }
 
@@ -294,7 +295,7 @@ public class MetadataFetcherKbDpo extends MetadataFetcher {
     }
 
     /** Pattern for getting DPO number from image file name */
-    private final static Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
+    private static final Pattern PATT_DPO = Pattern.compile("^dpo_(\\d+)_");
 
     public MetadataFetcherKbDpo(DocIndexerLegacy docIndexer) {
         super(docIndexer);

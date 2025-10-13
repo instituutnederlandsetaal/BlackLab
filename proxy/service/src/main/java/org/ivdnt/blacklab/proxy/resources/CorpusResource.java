@@ -1,5 +1,7 @@
 package org.ivdnt.blacklab.proxy.resources;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Map;
 
 import javax.inject.Inject;
@@ -56,20 +58,18 @@ public class CorpusResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response corpusInfo(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        switch (corpusName) {
-        case "cache-info":
-            return ProxyResponse.notImplemented("/cache-info");
-
-        case "help":
-            return ProxyResponse.notImplemented("/help");
-
-        case "cache-clear":
-            return ProxyResponse.error(Response.Status.BAD_REQUEST, "WRONG_METHOD", "/cache-clear works only with POST");
-        }
-
-        Map<WebserviceParameter, String> params = ParamsUtil.get(uriInfo.getQueryParameters(), corpusName,
-                WebserviceOperation.CORPUS_INFO);
-        return ProxyResponse.success(Requests.get(client, params, Corpus.class));
+        return switch (corpusName) {
+            case "cache-info" -> ProxyResponse.notImplemented("/cache-info");
+            case "help" -> ProxyResponse.notImplemented("/help");
+            case "cache-clear" -> ProxyResponse.error(Response.Status.BAD_REQUEST, "WRONG_METHOD",
+                    "/cache-clear works only with POST");
+            default -> {
+                // Actually a corpus name (we assume), so get the corpus info.
+                Map<WebserviceParameter, String> params = ParamsUtil.get(uriInfo.getQueryParameters(), corpusName,
+                        WebserviceOperation.CORPUS_INFO);
+                yield ProxyResponse.success(Requests.get(client, params, Corpus.class));
+            }
+        };
     }
 
     @Path("/parse-pattern")
@@ -235,7 +235,18 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             @Context UriInfo uriInfo) {
-        return ProxyRequest.field(client, corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        try {
+            return ProxyRequest.field(client, corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        } catch (Exception e) {
+            // If the field is not found, we return a 404 Not Found error.
+            // This is consistent with how the BlackLab web service behaves.
+            StringWriter s = new StringWriter();
+            PrintWriter pw = new PrintWriter(s);
+            e.printStackTrace(pw);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
+                    .entity(s.toString())
+                    .type(MediaType.TEXT_PLAIN).build();
+        }
     }
 
     @Path("/fields/{fieldName}")

@@ -7,11 +7,11 @@ public class MaxStats {
 
     /** If true, we've stopped retrieving hits because there are more than the
      * maximum we've set. */
-    private boolean maxHitsProcessed;
+    private final boolean maxHitsProcessed;
 
     /** If true, we've stopped counting hits because there are more than the maximum
      * we've set. */
-    private boolean maxHitsCounted;
+    private final boolean maxHitsCounted;
 
     public MaxStats(boolean maxHitsProcessed, boolean maxHitsCounted) {
         super();

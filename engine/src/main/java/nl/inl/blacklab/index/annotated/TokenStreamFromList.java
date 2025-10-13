@@ -56,7 +56,7 @@ public class TokenStreamFromList extends TokenStream {
     }
 
     @Override
-    final public boolean incrementToken() {
+    public final boolean incrementToken() {
         // Capture token contents
         if (iterator.hasNext()) {
             String word = iterator.next();

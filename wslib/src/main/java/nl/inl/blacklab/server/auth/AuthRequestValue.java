@@ -52,6 +52,7 @@ public class AuthRequestValue implements AuthMethod {
         this.type = type;
     }
 
+    @Override
     public User determineCurrentUser(UserRequest request) {
         String sessionId = request.getSessionId();
         if (valueKey == null) {

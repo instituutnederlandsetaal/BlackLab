@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.NotImplementedException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.ContentStream;
@@ -22,6 +21,7 @@ import org.apache.solr.schema.SchemaField;
 import org.apache.solr.update.AddUpdateCommand;
 import org.apache.solr.update.processor.UpdateRequestProcessor;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactorySolr;
 import nl.inl.blacklab.index.BLIndexWriterProxySolr;
 import nl.inl.blacklab.index.BLInputDocumentSolr;
@@ -138,7 +138,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
                 else if (mf.type().equals(FieldType.NUMERIC))
                     fieldType = "metadata_numeric";
                 else
-                    throw new NotImplementedException("Unknown FieldType");
+                    throw new UnsupportedOperationException("Unknown FieldType");
                 SchemaField newField = oldSchema.newField(mf.name(), fieldType, Collections.emptyMap());
                 newFields.add(newField);
             });
@@ -186,7 +186,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
 
             IndexSchema newSchema = oldSchema.addFields(newFields, Collections.emptyMap(), true);
             if (newSchema == null) {
-                throw new RuntimeException("Error adding new fields to SOLR schema");
+                throw new InvalidIndex("Error adding new fields to SOLR schema");
             }
             req.getCore().setLatestSchema(newSchema);
             req.updateSchemaToLatest();

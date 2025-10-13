@@ -10,11 +10,13 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
+import nl.inl.blacklab.resultproperty.HitGroupPropertySize;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -107,7 +109,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         try {
             return getSearchManager().getIndexManager().getIndex(getCorpusName()).blIndex();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -291,7 +293,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         }
         if (sortProp == null) {
             // By default, show largest group first
-            sortProp = HitGroupProperty.size();
+            sortProp = HitGroupPropertySize.get();
         }
         return new HitGroupSortSettings(sortProp);
     }
@@ -691,6 +693,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return params.getNumberOfResultsToShow();
     }
 
+    @Override
     public ContextSize getContext() {
         return params.getContext();
     }
@@ -855,6 +858,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public ApiVersion apiCompatibility() { return params.apiCompatibility(); }
 
+    @Override
     public Optional<String> getInputFormat() {
         if (inputFormat != null)
             return Optional.of(inputFormat);

@@ -18,7 +18,7 @@ public class ContentStoreIntegrated implements ContentStore {
     }
 
     /** Quickly look up the segment a document is stored in */
-    private LeafReaderLookup leafReaderLookup;
+    private final LeafReaderLookup leafReaderLookup;
 
     /** Field we're accessing */
     private final String luceneField;

@@ -27,7 +27,7 @@ describe('info/Server info page', () => {
 });
 
 // Server info
-expectUrlUnchanged('info', 'server', '/?api=exp&custom=true');
+expectUrlUnchanged('info', 'server', '/'); // ?api=exp&custom=true
 expectUrlUnchanged('info', 'input formats', '/input-formats');
 
 // Corpus info

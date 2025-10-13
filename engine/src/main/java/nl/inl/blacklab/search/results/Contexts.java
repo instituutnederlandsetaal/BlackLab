@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 
 import org.eclipse.collections.api.map.primitive.MutableIntIntMap;
 import org.eclipse.collections.api.tuple.primitive.IntIntPair;
@@ -15,7 +14,6 @@ import org.eclipse.collections.impl.factory.primitive.IntIntMaps;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -32,21 +30,24 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 public class Contexts {
 
     /** In context arrays, how many bookkeeping ints are stored at the start? */
-    private final static int NUMBER_OF_BOOKKEEPING_INTS = 3;
+    private static final int NUMBER_OF_BOOKKEEPING_INTS = 3;
 
     /**
      * In context arrays, what index after the bookkeeping units indicates the hit
      * start?
      */
-    private final static int HIT_START_INDEX = 0;
+    private static final int HIT_START_INDEX = 0;
 
     /**
      * In context arrays, what index indicates the hit end (start of right part)?
      */
-    private final static int RIGHT_START_INDEX = 1;
+    private static final int RIGHT_START_INDEX = 1;
 
     /** In context arrays, what index indicates the length of the context? */
-    private final static int LENGTH_INDEX = 2;
+    private static final int LENGTH_INDEX = 2;
+
+    private Contexts() {
+    }
 
     /**
      * Retrieves the KWIC information (KeyWord In Context: left, hit and right
@@ -75,10 +76,10 @@ public class Contexts {
         int numberOfAnnotations = forwardIndexes.size();
         List<Annotation> annotations = forwardIndexes.stream()
                 .map(AnnotationForwardIndex::annotation)
-                .collect(Collectors.toList());
+                .toList();
         List<Terms> annotationTerms = forwardIndexes.stream()
                 .map(AnnotationForwardIndex::terms)
-                .collect(Collectors.toList());
+                .toList();
         int hitIndex = 0;
         for (Hit h: hits) {
             int[] hitContext = contexts[hitIndex];
@@ -114,7 +115,7 @@ public class Contexts {
     private static int[][] getContextWordsSingleDocument(HitsInternal hits, long start, long end,
             ContextSize contextSize, List<AnnotationForwardIndex> contextSources, MatchInfoDefs matchInfoDefs) {
         if (end - start > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         final int n = (int)(end - start);
         if (n == 0)
             return new int[0][];
@@ -138,7 +139,7 @@ public class Contexts {
                 // We have a forward index for this field. Use it.
                 words = forwardIndex.retrievePartsInt(doc, startsOfSnippets, endsOfSnippets);
             } else {
-                throw new BlackLabRuntimeException("Cannot get context without a forward index");
+                throw new UnsupportedOperationException("Cannot get context without a forward index");
             }
 
             // Build the actual concordances
@@ -155,8 +156,8 @@ public class Contexts {
                     contexts[i] = new int[NUMBER_OF_BOOKKEEPING_INTS
                             + theseWords.length * contextSources.size()];
                     // Math.min() so we don't go beyond actually retrieved snippet (which may have been limited because of config)!
-                    contexts[i][HIT_START_INDEX] = Math.min(theseWords.length, hit.start - firstWordIndex);
-                    contexts[i][RIGHT_START_INDEX] = Math.min(theseWords.length, hit.end - firstWordIndex);
+                    contexts[i][HIT_START_INDEX] = Math.min(theseWords.length, hit.start() - firstWordIndex);
+                    contexts[i][RIGHT_START_INDEX] = Math.min(theseWords.length, hit.end() - firstWordIndex);
                     contexts[i][LENGTH_INDEX] = theseWords.length;
                 }
                 // Copy the context we just retrieved into the context array
@@ -215,7 +216,7 @@ public class Contexts {
             for (int i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
                 final int curDoc = ha.doc(i);
                 if (curDoc != prevDoc) {
-                    try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
+                    try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
                     int[][] docContextArray = getContextWordsSingleDocument(ha, firstHitInCurrentDoc, i, contextSize, fis, matchInfoDefs);
                     Collections.addAll(contexts, docContextArray);
@@ -242,7 +243,7 @@ public class Contexts {
      *
      * @return the frequency of each occurring token
      */
-    public synchronized static TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
+    public static synchronized TermFrequencyList collocations(Hits hits, Annotation annotation, ContextSize contextSize, MatchSensitivity sensitivity, boolean sort) {
         BlackLabIndex index = hits.index();
         if (annotation == null)
             annotation = index.mainAnnotatedField().mainAnnotation();

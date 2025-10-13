@@ -168,7 +168,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
             if (in instanceof BLSpans)
                 ((BLSpans) in).getMatchInfo(matchInfo);
             else if (in instanceof SpansInBuckets)
-                throw new RuntimeException("Subclass must handle this case");
+                throw new IllegalStateException("Subclass must handle this case");
         }
     }
 
@@ -188,7 +188,7 @@ public abstract class BLFilterDocsSpans<T extends DocIdSetIterator> extends BLSp
             if (in instanceof BLSpans)
                 return ((BLSpans) in).getRelationInfo();
             else if (in instanceof SpansInBuckets)
-                throw new RuntimeException("Subclass must handle this case");
+                throw new IllegalStateException("Subclass must handle this case");
         }
         return null;
     }

@@ -23,9 +23,10 @@ import org.apache.lucene.queryparser.classic.ParseException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
@@ -47,6 +48,9 @@ import nl.inl.util.LuceneUtil;
 public class IndexTool {
 
     static final Map<String, String> indexerParam = new TreeMap<>();
+
+    private IndexTool() {
+    }
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
@@ -246,6 +250,12 @@ public class IndexTool {
         case "create":
             forceCreateNew = true;
             break;
+        case "add":
+            break;
+        default:
+            System.err.println("Unknown command: " + command + ". (--help for details)");
+            usage();
+            return;
         }
 
         // We're adding files. Do we have an input dir/file and file format name?
@@ -388,7 +398,7 @@ public class IndexTool {
             System.out.println("Writing " + indexInfoFile);
             FileUtils.write(indexInfoFile, indexInfo, StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -403,12 +413,12 @@ public class IndexTool {
                 // (this will throw an exception if it's not valid JSON)
                 new ObjectMapper().readTree(indexmetadata);
             } catch (Exception e) {
-                throw new RuntimeException("Invalid JSON in " + indexMetadataFile + ": " + e.getMessage(), e);
+                throw new InvalidIndex("Invalid JSON in " + indexMetadataFile + ": " + e.getMessage(), e);
             }
 
             index.metadata().setIndexMetadataFromString(indexmetadata);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -479,7 +489,7 @@ public class IndexTool {
                 return properties;
             }
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 }

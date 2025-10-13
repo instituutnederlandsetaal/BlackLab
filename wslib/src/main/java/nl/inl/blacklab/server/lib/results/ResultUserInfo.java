@@ -1,9 +1,9 @@
 package nl.inl.blacklab.server.lib.results;
 
 public class ResultUserInfo {
-    private boolean loggedIn;
-    private String userId;
-    private boolean canCreateIndex;
+    private final boolean loggedIn;
+    private final String userId;
+    private final boolean canCreateIndex;
 
     ResultUserInfo(boolean loggedIn, String userId, boolean canCreateIndex) {
         this.loggedIn = loggedIn;

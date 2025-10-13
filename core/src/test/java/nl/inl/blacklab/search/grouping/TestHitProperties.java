@@ -33,7 +33,7 @@ import nl.inl.blacklab.testutil.TestIndex;
 @RunWith(Parameterized.class)
 public class TestHitProperties {
 
-    private final static int NO_TERM = Terms.NO_TERM;
+    private static final int NO_TERM = Terms.NO_TERM;
 
     @Parameterized.Parameters(name = "index type {0}")
     public static Collection<TestIndex> typeToUse() {

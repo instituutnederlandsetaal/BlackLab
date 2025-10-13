@@ -10,7 +10,7 @@ import nl.inl.blacklab.searches.SearchCacheEntry;
  * E.g. BlackLab Search aborts searches that run for too long, causing this exception
  * to be thrown.
  */
-public class InterruptedSearch extends BlackLabRuntimeException {
+public class InterruptedSearch extends RuntimeException {
 
     private static final String DEFAULT_MESSAGE = "Search was interrupted";
 

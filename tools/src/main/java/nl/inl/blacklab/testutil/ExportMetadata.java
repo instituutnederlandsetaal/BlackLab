@@ -20,6 +20,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocTask;
@@ -60,7 +61,7 @@ public class ExportMetadata implements AutoCloseable {
             System.out.println("Done exporting metadata.");
             System.out.flush();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 

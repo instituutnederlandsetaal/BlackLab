@@ -26,8 +26,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -75,7 +76,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
             if (metadataFile != null) {
                 // Don't leave the old metadata file if we're creating a new index
                 if (metadataFile.exists() && !metadataFile.delete())
-                    throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
+                    throw new InvalidIndex("Could not delete file: " + metadataFile);
             }
 
             // Always write a .yaml file for new index
@@ -114,7 +115,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
         if (metadataFile != null && createNewIndex) {
             // Don't leave the old metadata file if we're creating a new index
             if (!metadataFile.delete())
-                throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
+                throw new InvalidIndex("Could not delete file: " + metadataFile);
         }
 
         // If none found, or creating new index: metadata file should be same format as template.
@@ -131,7 +132,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
                 if (existingIsJson != templateIsJson) {
                     // Delete the existing, different-format file to avoid confusion.
                     if (!metadataFile.delete())
-                        throw new BlackLabRuntimeException("Could not delete file: " + metadataFile);
+                        throw new InvalidIndex("Could not delete file: " + metadataFile);
                 }
             }
             metadataFile = new File(this.indexDir, IndexMetadataExternal.METADATA_FILE_NAME + "." + templateExt);
@@ -144,7 +145,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
                 String fileContents = FileUtils.readFileToString(indexTemplateFile, INDEX_STRUCT_FILE_ENCODING);
                 FileUtils.write(metadataFile, fileContents, INDEX_STRUCT_FILE_ENCODING);
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
             usedTemplate = true;
         }
@@ -187,7 +188,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
             ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
             jsonRoot = (ObjectNode) mapper.readTree(metadataFile);
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         return jsonRoot;
     }
@@ -201,7 +202,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
             ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
             mapper.writeValue(metadataFile, encodeToJson());
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -635,7 +636,7 @@ public class IndexMetadataExternal extends IndexMetadataAbstract {
                 } else {
                     // Part of annotated field.
                     if (metadataFields.exists(parts[0])) {
-                        throw new BlackLabRuntimeException(
+                        throw new InvalidIndex(
                                 "Annotated field and metadata field with same name, error! ("
                                         + parts[0] + ")");
                     }

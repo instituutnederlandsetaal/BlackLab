@@ -3,7 +3,7 @@ package nl.inl.util;
 import java.util.ArrayList;
 import java.util.List;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * Keeps a simple pool of free resource objects.
@@ -36,7 +36,7 @@ public abstract class SimpleResourcePool<T> {
      *
      * @param maxFreePoolSize size of the resource pool. If 0, disables pooling.
      */
-    public SimpleResourcePool(int maxFreePoolSize) {
+    protected SimpleResourcePool(int maxFreePoolSize) {
         this.maxFreePoolSize = maxFreePoolSize;
         freePool = new ArrayList<>();
         neverPool = (maxFreePoolSize == 0);
@@ -97,7 +97,7 @@ public abstract class SimpleResourcePool<T> {
             }
             return freePool.remove(0);
         } catch (Exception e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

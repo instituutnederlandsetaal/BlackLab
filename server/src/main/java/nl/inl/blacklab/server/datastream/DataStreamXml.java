@@ -56,6 +56,7 @@ public class DataStreamXml extends DataStreamAbstract {
         escapeXmlFragment = api.getMajor() >= 5;
     }
 
+    @Override
     public DataStream startOpenEl(String name) {
         tagStack.add(name);
         return indent().print("<").print(name);
@@ -65,6 +66,7 @@ public class DataStreamXml extends DataStreamAbstract {
         return print(" ").print(key).print("=\"").print(StringEscapeUtils.escapeXml10(value)).print("\"");
     }
 
+    @Override
     public DataStream endOpenEl() {
         return print(">").upindent().newline();
     }
@@ -79,6 +81,7 @@ public class DataStreamXml extends DataStreamAbstract {
         return this;
     }
 
+    @Override
     public DataStreamXml closeEl() {
         String name = tagStack.remove(tagStack.size() - 1);
         downindent().indent().print("</").print(name).print(">").newline();
@@ -495,6 +498,7 @@ public class DataStreamXml extends DataStreamAbstract {
      * @param fragment
      * @return data stream
      */
+    @Override
     public DataStream xmlFragment(String fragment) {
         if (escapeXmlFragment) {
             // In API v5+, we output the fragment as a CDATA section (unquoted or -escaped)

@@ -8,7 +8,6 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
@@ -116,7 +115,7 @@ class SpansNot extends BLSpans {
                 currentDocIsDeletedDoc = liveDocs != null && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
-                throw new BlackLabRuntimeException("currentDoc > maxDoc!!");
+                throw new IllegalStateException("currentDoc > maxDoc!!");
             if (currentDoc == maxDoc) {
                 currentDoc = NO_MORE_DOCS;
                 currentStart = currentEnd = clauseStart = NO_MORE_POSITIONS;
@@ -127,7 +126,7 @@ class SpansNot extends BLSpans {
                 clauseDoc = clause.advance(currentDoc);
             clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
             // Prepare to produce tokens for this doc
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            currentDocLength = (long)lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (nextStartPosition() == NO_MORE_POSITIONS);
         atFirstInCurrentDoc = true;

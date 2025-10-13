@@ -13,6 +13,7 @@ import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.RelationInfoSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
@@ -43,9 +44,9 @@ public class SegmentRelationInfo implements AutoCloseable {
     private IndexInput _attrValuesFile;
 
     /** Attribute names */
-    private List<String> attributeNames = new ArrayList<>();
+    private final List<String> attributeNames = new ArrayList<>();
 
-    public static SegmentRelationInfo openIfPresent(BlackLab40PostingsReader postingsReader) throws IOException {
+    public static SegmentRelationInfo openIfPresent(BlackLabPostingsReader postingsReader) throws IOException {
         try (IndexInput fieldsFile = postingsReader.openIndexFile(BlackLabPostingsFormat.RI_FIELDS_EXT)) {
             return new SegmentRelationInfo(postingsReader, fieldsFile);
         } catch (NoSuchFileException | FileNotFoundException e) {
@@ -105,7 +106,7 @@ public class SegmentRelationInfo implements AutoCloseable {
             _attrValuesFile.clone();
             _docsFile = _relationsFile = _attrSetsFile = _attrValuesFile = null;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -166,6 +167,7 @@ public class SegmentRelationInfo implements AutoCloseable {
          * @param relationId relation id
          * @return attributes
          */
+        @Override
         public Map<String, List<String>> getAttributes(String luceneField, int docId, int relationId) {
             assert relationId >= 0 : "negative relation id";
             RelationInfoField f = fieldsByName.get(luceneField);
@@ -173,11 +175,11 @@ public class SegmentRelationInfo implements AutoCloseable {
             try {
                 // Determine where the relations for this doc start
                 assert docsOffset >= 0 : "negative offset in docs file";
-                docs().seek(docsOffset + docId * Long.BYTES);
+                docs().seek(docsOffset + (long) docId * Long.BYTES);
                 long relationsOffset = _docs.readLong();
                 assert relationsOffset >= 0 : "negative offset in relations file";
                 // Find the attribute set offset for this relation
-                relations().seek(relationsOffset + relationId * Long.BYTES);
+                relations().seek(relationsOffset + (long) relationId * Long.BYTES);
                 long attrSetOffset = _relations.readLong();
                 // Find the attribute set
                 assert attrSetOffset >= 0 : "negative offset in attrSet file";
@@ -202,7 +204,7 @@ public class SegmentRelationInfo implements AutoCloseable {
                 }
                 return attrMap;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 

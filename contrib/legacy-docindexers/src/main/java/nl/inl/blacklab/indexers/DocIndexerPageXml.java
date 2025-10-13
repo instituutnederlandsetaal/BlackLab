@@ -1,7 +1,6 @@
 package nl.inl.blacklab.indexers;
 
 import java.io.Reader;
-import java.util.regex.Pattern;
 
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
@@ -19,9 +18,6 @@ public class DocIndexerPageXml extends DocIndexerXmlHandlers {
     public static String getDescription() {
         return "";
     }
-
-    /** Whitespace and/or punctuation at start or end */
-    private static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("^[\\p{Punct}\\p{javaSpaceChar}]+|[\\p{Punct}\\p{javaSpaceChar}]+$");
 
     /**
      * Remove any punctuation and whitespace at the start and end of input.

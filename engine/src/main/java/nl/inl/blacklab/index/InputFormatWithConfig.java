@@ -40,36 +40,40 @@ public class InputFormatWithConfig implements InputFormat {
         return errorMessage;
     }
 
+    @Override
     public String getIdentifier() {
         return formatIdentifier;
     }
 
+    @Override
     public String getDisplayName() {
         return getConfig().getDisplayName();
     }
 
+    @Override
     public String getDescription() {
         return getConfig().getDescription();
     }
 
+    @Override
     public String getHelpUrl() {
         return getConfig().getHelpUrl();
     }
 
+    @Override
     public boolean isVisible() {
         return getConfig().isVisible();
     }
 
+    @Override
     public synchronized ConfigInputFormat getConfig() {
         if (config == null) {
-            assert formatFile != null;
-
             try {
                 config = new ConfigInputFormat(formatIdentifier);
+                assert formatFile != null;
                 config.setReadFromFile(formatFile);
                 InputFormatReader.read(formatFile, config);
                 config.validate();
-                return config;
             } catch (InvalidInputFormatConfig e) {
                 errorMessage = e.getMessage();
                 throw e;
@@ -78,6 +82,7 @@ public class InputFormatWithConfig implements InputFormat {
                 throw new InvalidInputFormatConfig(errorMessage, e);
             }
         }
+        assert config != null; // should never trigger, but SonarQube seems to believe it can
         return config;
     }
 

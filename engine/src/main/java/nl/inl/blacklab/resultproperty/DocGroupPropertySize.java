@@ -6,6 +6,12 @@ public class DocGroupPropertySize extends DocGroupProperty {
 
     public static final String ID = HitGroupPropertySize.ID;
 
+    private static final DocGroupPropertySize instance = new DocGroupPropertySize();
+
+    public static DocGroupPropertySize get() {
+        return instance;
+    }
+
     DocGroupPropertySize(DocGroupPropertySize prop, boolean invert) {
         super(prop, invert);
     }
@@ -31,8 +37,9 @@ public class DocGroupPropertySize extends DocGroupProperty {
 
     @Override
     public int compare(DocGroup a, DocGroup b) {
-        int cmpResult = Long.compare(a.size(), b.size());
-        return reverse ? -cmpResult : cmpResult;
+        return reverse ?
+                Long.compare(b.size(), a.size()) :
+                Long.compare(a.size(), b.size());
     }
 
     @Override

@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -16,8 +15,9 @@ import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.SimpleResourcePool;
 import nl.inl.util.TextContent;
 
@@ -34,7 +34,6 @@ import nl.inl.util.TextContent;
  */
 @NotThreadSafe // in index mode
 public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
-    //private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
     /** Name of the version file */
     private static final String VERSION_FILE_NAME = "version.dat";
@@ -201,7 +200,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                         int p = tocFileBuffer.position();
                         closeMappedToc();
                         mapToc(true, true);
-                        ((Buffer)tocFileBuffer).position(p);
+                        tocFileBuffer.position(p);
                     }
                     e.serialize(tocFileBuffer);
                 }
@@ -209,7 +208,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 closeMappedToc();
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         tocModified = false;
     }
@@ -275,7 +274,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
      */
     private int writeToFreeBlock(byte[] encoded) {
         int freeBlock;
-        if (freeBlocks.size() == 0) {
+        if (freeBlocks.isEmpty()) {
             // Add a new one at the end
             totalBlocks++;
             freeBlock = totalBlocks - 1;
@@ -295,7 +294,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
             fchContentsFile.write(buf);
             return freeBlock;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -372,7 +371,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 fchContentsFile = rafContentsFile.getChannel();
             }
         } catch (FileNotFoundException e) {
-            throw new BlackLabRuntimeException("Contents file not found" + CONTENTS_FILE_NAME, e);
+            throw new InvalidIndex("Contents file not found" + CONTENTS_FILE_NAME, e);
         }
     }
 
@@ -385,7 +384,7 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 rafContentsFile = null;
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -440,7 +439,6 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                     // Doesn't fit; make it a little smaller until it does fit.
                     float shrinkFactor = 1.0f + (1.05f * (encoded.length - MAX_BLOCK_SIZE_BYTES)) / BLOCK_SIZE_BYTES;
                     length = (int) (length / shrinkFactor);
-                    //System.err.println("Will try " + length + " characters as blocksize next.");
                     doMinCheck = false;
                 }
 
@@ -450,10 +448,10 @@ public class ContentStoreFixedBlockWriter extends ContentStoreFixedBlock {
                 compresser.finish();
                 int compressedDataLength = compresser.deflate(zipbuf, 0, zipbuf.length, Deflater.FULL_FLUSH);
                 if (compressedDataLength <= 0) {
-                    throw new BlackLabRuntimeException("Error, deflate returned " + compressedDataLength);
+                    throw new InvalidIndex("Error, deflate returned " + compressedDataLength);
                 }
                 if (compressedDataLength == zipbuf.length) {
-                    throw new BlackLabRuntimeException(
+                    throw new InvalidIndex(
                             "Error, deflate returned size of zipbuf, this indicates insufficient space");
                 }
 

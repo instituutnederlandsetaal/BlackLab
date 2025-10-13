@@ -12,6 +12,8 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -26,11 +28,11 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion",
+@XmlType(propOrder={"apiVersion", "blacklabBuildTime", "blacklabVersion", "blacklabScmRevision",
         //"blackLabBuildTime", "blackLabVersion", // <-- (v3 inconsistent names)
         "corpora", "indices", "user", "cacheStatus" })
 //@JsonIgnoreProperties(ignoreUnknown = true)
-public class Server implements Cloneable {
+public class Server {
 
     /** Use this to serialize indices to JSON.
      *
@@ -64,7 +66,7 @@ public class Server implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             List<CorpusSummary> result = new ArrayList<>();
             while (true) {
@@ -73,13 +75,13 @@ public class Server implements Cloneable {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 //CorpusSummary corpus = new CorpusSummary();
                 String corpusName = parser.getCurrentName();
 
                 token = parser.nextToken();
                 if (token != JsonToken.START_OBJECT)
-                    throw new RuntimeException("Expected END_OBJECT or START_OBJECT, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or START_OBJECT, found " + token);
 
                 CorpusSummary corpus = deserializationContext.readValue(parser, CorpusSummary.class);
                 corpus.name = corpusName;
@@ -97,6 +99,9 @@ public class Server implements Cloneable {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String blacklabScmRevision;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Map<String, CorpusSummary> corpora;
@@ -137,10 +142,5 @@ public class Server implements Cloneable {
                 ", indices=" + indices +
                 ", user=" + user +
                 '}';
-    }
-
-    @Override
-    public Server clone() throws CloneNotSupportedException {
-        return (Server)super.clone();
     }
 }

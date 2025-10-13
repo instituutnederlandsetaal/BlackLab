@@ -27,7 +27,6 @@ import com.fasterxml.jackson.core.JacksonException;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -72,12 +71,12 @@ public class BlackLabServer extends HttpServlet {
     public static final String PARAM_ESCAPE_XML_FRAGMENT = "escapexmlfragment";
 
     /** Manages all our searches */
-    private SearchManager searchManager;
+    private static SearchManager searchManager;
 
-    private RequestInstrumentationProvider requestInstrumentationProvider = null;
+    private static RequestInstrumentationProvider requestInstrumentationProvider = null;
 
     /** Default output type to use if none given. */
-    private DataFormat defaultOutputType;
+    private static DataFormat defaultOutputType;
 
     @Override
     public void init() throws ServletException {
@@ -159,7 +158,7 @@ public class BlackLabServer extends HttpServlet {
 
     public synchronized RequestInstrumentationProvider getInstrumentationProvider() {
         if (requestInstrumentationProvider == null) {
-            BLSConfig config = searchManager.config();
+            BLSConfig config = getSearchManager().config();
             requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
         }
         return requestInstrumentationProvider;
@@ -204,13 +203,37 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    protected void doOptions(HttpServletRequest request, HttpServletResponse responseObject)
-            throws ServletException, IOException {
-        super.doOptions(request, responseObject);
-        String allowOrigin = optAddAllowOriginHeader(responseObject);
+    protected void doOptions(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+        try {
+            super.doOptions(request, response);
+        } catch (ServletException|IOException e) {
+            DataFormat outputType = ServletUtil.getOutputType(request);
+            if (outputType == null)
+                outputType = defaultOutputType;
+            ApiVersion api = ApiVersion.CURRENT;
+            DataStream es = DataStreamAbstract.create(outputType, true, api);
+            es.outputProlog();
+            ResponseStreamer errorWriter = ResponseStreamer.get(es, api);
+            int httpCode = Response.error(errorWriter, "INTERNAL_ERROR",
+                    e.getMessage(), null, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e);
+            response.setStatus(httpCode);
+            response.setCharacterEncoding(OUTPUT_ENCODING.name().toLowerCase());
+            response.setContentType(outputType.getContentType());
+            optAddAllowOriginHeader(response);
+            try {
+                Writer out = new OutputStreamWriter(response.getOutputStream(), OUTPUT_ENCODING);
+                out.write(es.getOutput());
+                out.flush();
+            } catch (IOException ex) {
+                logger.error("Error writing response for OPTIONS request", ex);
+            }
+            return;
+        }
+        String allowOrigin = optAddAllowOriginHeader(response);
         if (allowOrigin != null) {
-            responseObject.addHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
-        	responseObject.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
+            response.addHeader("Access-Control-Allow-Headers", request.getHeader("Access-Control-Request-Headers"));
+        	response.addHeader("Access-Control-Allow-Methods", "GET, HEAD, POST, PUT, DELETE, TRACE, OPTIONS");
         }
     }
 
@@ -231,7 +254,7 @@ public class BlackLabServer extends HttpServlet {
 
         try {
             ensureSearchManagerAvailable();
-        } catch (BlackLabRuntimeException | BlsException e) {
+        } catch (RuntimeException e) {
             boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, true);
             String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
                     ApiVersion.CURRENT.toString());
@@ -377,12 +400,12 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    public void destroy() {
-
+    public synchronized void destroy() {
         // Stops the load management thread
-        if (searchManager != null)
+        if (searchManager != null) {
             searchManager.cleanup();
-
+            searchManager = null;
+        }
         super.destroy();
     }
 
@@ -400,7 +423,7 @@ public class BlackLabServer extends HttpServlet {
                 + "Licensed under the Apache License v2.\n";
     }
 
-    public SearchManager getSearchManager() {
+    public synchronized SearchManager getSearchManager() {
         return searchManager;
     }
 }

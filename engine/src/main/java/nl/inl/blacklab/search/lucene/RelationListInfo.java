@@ -29,10 +29,12 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
         spanEnd = relations.stream().map(RelationInfo::getSpanEnd).max(Integer::compare).orElse(-1);
     }
 
+    @Override
     public int getSpanStart() {
         return spanStart;
     }
 
+    @Override
     public int getSpanEnd() {
         return spanEnd;
     }
@@ -49,22 +51,19 @@ public class RelationListInfo extends MatchInfo implements RelationLikeInfo {
 
     @Override
     public int compareTo(MatchInfo o) {
-        if (o instanceof RelationListInfo)
-            return compareTo((RelationListInfo) o);
-        return super.compareTo(o);
-    }
-
-    public int compareTo(RelationListInfo o) {
-        // compare the items in the list of relations
-        int n = Integer.compare(relations.size(), o.relations.size());
-        if (n != 0)
-            return n;
-        for (int i = 0; i < relations.size(); i++) {
-            n = relations.get(i).compareTo(o.relations.get(i));
+        if (o instanceof RelationListInfo rli) {
+            // compare the items in the list of relations
+            int n = Integer.compare(relations.size(), rli.relations.size());
             if (n != 0)
                 return n;
+            for (int i = 0; i < relations.size(); i++) {
+                n = relations.get(i).compareTo(rli.relations.get(i));
+                if (n != 0)
+                    return n;
+            }
+            return 0;
         }
-        return 0;
+        return super.compareTo(o);
     }
 
     @Override

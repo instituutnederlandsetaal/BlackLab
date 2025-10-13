@@ -26,8 +26,8 @@ import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.contentstore.ContentStoreSegmentReader;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexIntegrated;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
@@ -40,8 +40,8 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataIntegrated;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
-import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
@@ -177,7 +177,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     }
 
     /** A list of stored fields that doesn't include content store fields. */
-    private Set<String> allExceptContentStoreFields;
+    private final Set<String> allExceptContentStoreFields;
 
     /** Relation index/search strategy for this index.
      * ("all encoded into one term" / "type and attributes in separate terms" / ...)
@@ -185,6 +185,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
     public RelationsStrategy relationsStrategy = RelationsStrategy.ifNotRecorded();
 
     /** Get the strategy to use for indexing/searching relations. */
+    @Override
     public RelationsStrategy getRelationsStrategy() {
         return relationsStrategy;
     }
@@ -234,12 +235,14 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
             relationsStrategy = RelationsStrategy.forNewIndex();
     }
 
+    @Override
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, ConfigInputFormat config) {
         if (!createNewIndex)
             return IndexMetadataIntegrated.deserializeFromJsonJaxb(this);
         return IndexMetadataIntegrated.create(this, config);
     }
 
+    @Override
     protected IndexMetadataWriter getIndexMetadata(boolean createNewIndex, File indexTemplateFile) {
         if (indexTemplateFile != null)
             throw new IllegalArgumentException("Template file not supported for integrated index format! Please see the IndexTool documentation for how use the classic index format.");
@@ -253,6 +256,7 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
         registerContentStore(field, cs);
     }
 
+    @Override
     public ForwardIndex createForwardIndex(AnnotatedField field) {
         return new ForwardIndexIntegrated(this, field);
     }
@@ -328,19 +332,19 @@ public class BlackLabIndexIntegrated extends BlackLabIndexAbstract {
                 return reader().document(docId, allExceptContentStoreFields);
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
     @Override
     public void delete(Query q) {
         if (!indexMode())
-            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
+            throw new UnsupportedOperationException("Cannot delete documents, not in index mode");
         try {
             logger.debug("Delete query: " + q);
             indexWriter.deleteDocuments(q);
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw new InvalidIndex(e);
         }
     }
 

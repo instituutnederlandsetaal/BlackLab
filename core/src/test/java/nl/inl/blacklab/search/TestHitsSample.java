@@ -10,9 +10,9 @@ import nl.inl.blacklab.search.results.SampleParameters;
 
 public class TestHitsSample {
 
-    private final static int[] A_DOC = { 1, 1, 2, 3, 3, 3 };
-    private final static int[] A_START = { 1, 4, 2, 1, 3, 5 };
-    private final static int[] A_END = { 2, 5, 3, 2, 4, 7 };
+    private static final int[] A_DOC = { 1, 1, 2, 3, 3, 3 };
+    private static final int[] A_START = { 1, 4, 2, 1, 3, 5 };
+    private static final int[] A_END = { 2, 5, 3, 2, 4, 7 };
 
     private static void assertSample(int[] expected, SampleParameters param) {
         try (MockBlackLabIndex index = new MockBlackLabIndex()) {

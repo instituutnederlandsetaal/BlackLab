@@ -16,7 +16,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.ScoreMode;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -148,7 +148,7 @@ public class HitsFromQuery extends HitsMutable {
             if (spansReaders.isEmpty())
                 allSourceSpansFullyRead = true;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -209,22 +209,21 @@ public class HitsFromQuery extends HitsMutable {
             // We were interrupted while waiting for workers to finish.
             // If we were the thread that created the workers, cancel them. (this isn't always the case, we may have been interrupted during self-polling phase)
             // For the TermsReaders that aren't done yet, the next time this function is called we'll just create new Runnables/Futures of them.
+            Thread.currentThread().interrupt(); // preserve interrupted status
             if (pendingResults != null) {
                 for (Future<?> p : pendingResults) 
                     p.cancel(true);
             }
             throw new InterruptedSearch(e);
-        } catch (ExecutionException e) { 
-            // ExecutionException always wraps another exception, 
-            // but that may just be a RuntimeException wrapping some kind of checked exception (ioexception, interruptedexception, etc.)
-            // we're only interested in the actual deepest cause.
-            Throwable cause = e;
-            while (cause.getCause() != null) cause = cause.getCause(); 
-            throw new BlackLabRuntimeException(cause);
+        } catch (ExecutionException e) {
+            if (e.getCause() instanceof RuntimeException rte)
+                throw rte;
+            else
+                throw new IllegalStateException(e.getCause());
         } catch (Exception e) {
             // something unforseen happened in our thread
             // Should generally never happen unless there's a bug or something catastrophic happened.
-            throw new BlackLabRuntimeException(e);
+            throw new IllegalStateException(e);
         } finally {
             // Don't do this unless we're the thread that's actually using the SpansReaders.
             if (hasLock) {

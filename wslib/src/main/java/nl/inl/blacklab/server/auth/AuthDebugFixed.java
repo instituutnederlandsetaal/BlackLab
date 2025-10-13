@@ -30,6 +30,7 @@ public class AuthDebugFixed implements AuthMethod {
         this.userId = u != null ? u.toString() : "DEBUG-USER";
     }
 
+    @Override
     public User determineCurrentUser(UserRequest request) {
         return User.fromIdAndSessionId(userId, request.getSessionId());
     }

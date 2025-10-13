@@ -6,7 +6,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import org.apache.commons.lang3.StringUtils;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.FileReference;
 
 /**
@@ -18,22 +18,27 @@ public class InputFormatClass implements InputFormat {
 
     private final Class<? extends DocIndexerLegacy> docIndexerClass;
 
+    @Override
     public String getIdentifier() {
         return formatIdentifier;
     }
 
+    @Override
     public String getDisplayName() {
         return DocIndexerLegacy.getDisplayName(docIndexerClass);
     }
 
+    @Override
     public String getDescription() {
         return DocIndexerLegacy.getDescription(docIndexerClass);
     }
 
+    @Override
     public String getHelpUrl() {
         return "";
     }
 
+    @Override
     public boolean isVisible() {
         return DocIndexerLegacy.isVisible(docIndexerClass);
     }
@@ -68,7 +73,7 @@ public class InputFormatClass implements InputFormat {
             return docIndexer;
         } catch (SecurityException | InstantiationException | IllegalAccessException | IllegalArgumentException
                  | InvocationTargetException | NoSuchMethodException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

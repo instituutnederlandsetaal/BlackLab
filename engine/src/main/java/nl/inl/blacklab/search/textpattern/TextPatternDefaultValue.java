@@ -4,7 +4,6 @@ import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
@@ -75,6 +74,7 @@ public class TextPatternDefaultValue extends TextPattern {
                 List.of(new TextPatternAnyToken(1, BLSpanQuery.MAX_UNLIMITED)));
     }
 
+    @Override
     protected TextPattern applyRspanAll() {
         // Special case: this is almost certainly a parallel query target with no restrictions,
         // (i.e. "return the matching spans in this other version of the document").

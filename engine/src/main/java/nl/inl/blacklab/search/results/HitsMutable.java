@@ -16,7 +16,7 @@ public abstract class HitsMutable extends HitsAbstract {
      *
      * @param queryInfo query info for corresponding query
      */
-    public HitsMutable(QueryInfo queryInfo) {
+    protected HitsMutable(QueryInfo queryInfo) {
         this(queryInfo, HitsInternal.create(-1, true, true), null);
     }
 
@@ -29,7 +29,7 @@ public abstract class HitsMutable extends HitsAbstract {
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      * @param matchInfoDefs names of match info to store
      */
-    public HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits, MatchInfoDefs matchInfoDefs) {
+    protected HitsMutable(QueryInfo queryInfo, HitsInternalMutable hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo, hits, matchInfoDefs);
         hitsInternalMutable = hits == null ? HitsInternal.create(-1, true, true) : hits;
     }

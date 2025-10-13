@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.xml.namespace.NamespaceContext;
 import javax.xml.xpath.XPath;
@@ -19,7 +18,7 @@ import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.xpath.XPathEvaluator;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.indexers.config.DocIndexerXPath;
 
@@ -65,7 +64,7 @@ public class XPathFinder {
     /**
      * Compiled XPaths for use in one thread.
      */
-    private Map<String, XPathExpression> compiledXPaths = new HashMap<>();
+    private final Map<String, XPathExpression> compiledXPaths = new HashMap<>();
 
     public XPathFinder(XPath xPath, Map<String, String> namespaces) {
         // setup namespace aware xpath that will compile xpath expressions
@@ -155,7 +154,7 @@ public class XPathFinder {
         try {
             return serializer.serializeNodeToString(new XdmNode(value));
         } catch (SaxonApiException e) {
-            throw new RuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 
@@ -174,10 +173,10 @@ public class XPathFinder {
                 try {
                     return serializer.serializeNodeToString(new XdmNode((NodeInfo)o));
                 } catch (SaxonApiException e) {
-                    throw new RuntimeException(e);
+                    throw new ErrorIndexingFile(e);
                 }
             } else {
-                throw new BlackLabRuntimeException("XPath matched non-NodeInfo; cannot convert to XML: " + xPath);
+                throw new ErrorIndexingFile("XPath matched non-NodeInfo; cannot convert to XML: " + xPath);
             }
         } else {
             if (list.isEmpty())
@@ -190,7 +189,7 @@ public class XPathFinder {
                                         .map(o -> o instanceof NodeInfo ?
                                                 ((NodeInfo) o).toShortString() :
                                                 String.valueOf(o))
-                                        .collect(Collectors.toList()), xPath));
+                                        .toList(), xPath));
         }
     }
 
@@ -220,7 +219,7 @@ public class XPathFinder {
                                         .map(o -> o instanceof NodeInfo ?
                                                 ((NodeInfo) o).toShortString() :
                                                 String.valueOf(o))
-                                        .collect(Collectors.toList()), xPath));
+                                        .toList(), xPath));
         }
     }
 }

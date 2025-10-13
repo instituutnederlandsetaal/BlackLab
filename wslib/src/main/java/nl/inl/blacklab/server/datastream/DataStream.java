@@ -270,7 +270,7 @@ public interface DataStream {
             // By default, write it as a string (only JSON "properly" incorporates it into the response).
             return value(Json.getJaxbWriter().writeValueAsString(pattern));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

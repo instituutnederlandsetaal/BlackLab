@@ -14,7 +14,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
 
 public class TestHookableSaxParser {
@@ -42,7 +42,7 @@ public class TestHookableSaxParser {
         try {
             parser = factory.newSAXParser();
         } catch (ParserConfigurationException | SAXException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         hookHandler = new StringConcatenateHandler();

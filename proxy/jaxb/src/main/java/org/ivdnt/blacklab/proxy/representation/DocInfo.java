@@ -1,6 +1,7 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,8 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.ivdnt.blacklab.proxy.helper.DocInfoAdapter;
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+import org.ivdnt.blacklab.proxy.helper.ErrorWritingResponse;
 import org.ivdnt.blacklab.proxy.helper.MapAdapterMetadataValues;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
@@ -39,7 +42,6 @@ public class DocInfo {
         @Override
         public void serialize(Object elObj, JsonGenerator jgen, SerializerProvider provider)
                 throws IOException {
-
             if (elObj == null)
                 return;
             if (elObj instanceof DocInfo) {
@@ -56,17 +58,24 @@ public class DocInfo {
                     jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
                 if (el.mayView != null)
                     jgen.writeBooleanField("mayView", el.mayView);
+                if (el.tokenCounts != null) {
+                    jgen.writeFieldName("tokenCounts");
+                    provider.defaultSerializeValue(el.tokenCounts, jgen);
+                }
                 jgen.writeEndObject();
             } else if (elObj instanceof DocInfoAdapter.DocInfoWrapper) {
                 DocInfoAdapter.DocInfoWrapper el = ((DocInfoAdapter.DocInfoWrapper) elObj);
                 jgen.writeStartObject();
-                Integer lengthInTokens = null;
+                Long lengthInTokens = null;
                 Boolean mayView = null;
+                List<FieldTokenCount> tokenCounts = null;
                 for (JAXBElement jaxbe: el.elements) {
                     String name = jaxbe.getName().getLocalPart();
-                    if (name.equals("lengthInTokens") || name.equals("mayView")) {
+                    if (name.equals("lengthInTokens") || name.equals("mayView") || name.equals("tokenCounts")) {
                         if (name.equals("lengthInTokens"))
-                            lengthInTokens = (Integer) jaxbe.getValue();
+                            lengthInTokens = (Long) jaxbe.getValue();
+                        else if (name.equals("tokenCounts"))
+                            tokenCounts = (List<FieldTokenCount>) jaxbe.getValue();
                         else
                             mayView = (Boolean) jaxbe.getValue();
                         continue;
@@ -82,9 +91,13 @@ public class DocInfo {
                     jgen.writeNumberField("lengthInTokens", lengthInTokens);
                 if (mayView != null)
                     jgen.writeBooleanField("mayView", mayView);
+                if (tokenCounts != null) {
+                    jgen.writeFieldName("tokenCounts");
+                    provider.defaultSerializeValue(tokenCounts, jgen);
+                }
                 jgen.writeEndObject();
             } else
-                throw new RuntimeException("Unexpected type " + elObj.getClass().getName());
+                throw new ErrorWritingResponse("Unexpected type " + elObj.getClass().getName());
         }
     }
 
@@ -94,7 +107,7 @@ public class DocInfo {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
 
             DocInfo docInfo = new DocInfo();
             docInfo.metadata = new LinkedHashMap<>();
@@ -105,23 +118,28 @@ public class DocInfo {
                     break;
 
                 if (token != JsonToken.FIELD_NAME)
-                    throw new RuntimeException("Expected END_OBJECT or FIELD_NAME, found " + token);
+                    throw new ErrorReadingResponse("Expected END_OBJECT or FIELD_NAME, found " + token);
                 String fieldName = parser.getCurrentName();
                 token = parser.nextToken();
                 if (token == JsonToken.VALUE_NUMBER_INT) {
                     // Special lengthInTokens setting?
                     if (!fieldName.equals("lengthInTokens"))
-                        throw new RuntimeException("Unexpected int in metadata");
-                    docInfo.lengthInTokens = parser.getValueAsInt();
+                        throw new ErrorReadingResponse("Unexpected int in metadata");
+                    docInfo.lengthInTokens = parser.getValueAsLong();
                 } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
                     // Special mayView setting?
                     if (!fieldName.equals("mayView"))
-                        throw new RuntimeException("Unexpected boolean in metadata");
+                        throw new ErrorReadingResponse("Unexpected boolean in metadata");
                     docInfo.mayView = parser.getValueAsBoolean();
                 } else if (token == JsonToken.START_ARRAY) {
-                    // A list of metadata values
-                    List<String> values = SerializationUtil.readStringList(parser);
-                    docInfo.metadata.put(fieldName, new MetadataValues(values));
+                    if (fieldName.equals("tokenCounts")) {
+                        // Token count per field
+                        docInfo.tokenCounts = (List<FieldTokenCount>)deserializationContext.readValue(parser, ArrayList.class);
+                    } else {
+                        // A list of metadata values
+                        List<String> values = SerializationUtil.readStringList(parser);
+                        docInfo.metadata.put(fieldName, new MetadataValues(values));
+                    }
                 }
             }
             return docInfo;
@@ -135,10 +153,13 @@ public class DocInfo {
     public Map<String, MetadataValues> metadata;
 
     @JsonInclude(Include.NON_NULL)
-    public Integer lengthInTokens;
+    public Long lengthInTokens;
 
     @JsonInclude(Include.NON_NULL)
     public Boolean mayView;
+
+    @JsonInclude(Include.NON_NULL)
+    public List<FieldTokenCount> tokenCounts;
 
     public DocInfo() {}
 
@@ -156,6 +177,9 @@ public class DocInfo {
         return "DocInfo{" +
                 "pid='" + pid + '\'' +
                 ", metadata=" + metadata +
+                ", lengthInTokens=" + lengthInTokens +
+                ", mayView=" + mayView +
+                ", tokenCounts=" + tokenCounts +
                 '}';
     }
 

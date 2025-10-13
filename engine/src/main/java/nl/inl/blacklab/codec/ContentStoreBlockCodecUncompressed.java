@@ -67,6 +67,7 @@ public class ContentStoreBlockCodecUncompressed implements ContentStoreBlockCode
         return ENCODER;
     }
 
+    @Override
     public byte getCode() {
         return 0;
     }

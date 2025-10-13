@@ -30,17 +30,17 @@ public class TestSearchBehavior {
         // Replace SpansReader workers in HitsFromQueryParallel with a mock that awaits an interrupt and then lets main thread know when it received it.
         h.spansReaders.clear();
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null) {
+            @Override
             public synchronized void run() {
                 try {
                     // signal main thread we have started, so it can send the interrupt()
                     waitForSpansReaderToStart.countDown();
                     Thread.sleep(100_000); // wait for the interrupt() to arrive
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // preserve interrupted status
                     waitForSpansReaderToBeInterrupted.countDown(); // we got it! signal main thread again.
                 }
             }
-
-            void initialize() {}
         });
 
         // Set up the interrupt.
@@ -52,6 +52,7 @@ public class TestSearchBehavior {
             } catch (InterruptedException e) {
                 // never happens unless thread is interrupted during await(),
                 // which only happens when test is aborted/shut down prematurely.
+                Thread.currentThread().interrupt(); // preserve interrupted status
             }
         });
 
@@ -68,6 +69,7 @@ public class TestSearchBehavior {
                     waitForSpansReaderToBeInterrupted.await(1_000, TimeUnit.MILLISECONDS));
         } catch (InterruptedException e) {
             // await was interrupted, test suite probably shutting down.
+            Thread.currentThread().interrupt(); // preserve interrupted status
         }
     }
 
@@ -81,9 +83,8 @@ public class TestSearchBehavior {
         RuntimeException exceptionToThrow = new RuntimeException("TEST_SPANSREADER_CRASHED");
         h.spansReaders.clear();
         h.spansReaders.add(new SpansReader(null, null, null, null, null, null, null, null, null, null) {
+            @Override
             public synchronized void run() { throw exceptionToThrow; }
-
-            void initialize() {}
         });
 
         Throwable thrownException = null;

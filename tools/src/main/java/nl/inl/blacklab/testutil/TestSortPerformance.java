@@ -24,6 +24,9 @@ import it.unimi.dsi.fastutil.ints.IntComparator;
  */
 public class TestSortPerformance {
 
+    private TestSortPerformance() {
+    }
+
     @FunctionalInterface
     interface Sorter {
         void sort(int[] arr, IntComparator comp);

@@ -38,6 +38,7 @@ public class ProcessingStepIfEmpty extends ProcessingStep {
         return new ProcessingStepIfEmpty(separator, field, fixedValue);
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         if (value.isEmpty()) {
             String defaultValue;
@@ -51,6 +52,7 @@ public class ProcessingStepIfEmpty extends ProcessingStep {
         return value;
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

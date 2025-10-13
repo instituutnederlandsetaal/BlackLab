@@ -15,7 +15,7 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.Weight;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 
 /**
  * A Filter that only matches a single Lucene document id.
@@ -89,7 +89,7 @@ public class SingleDocIdFilter extends Query {
                         try {
                             return DocIdSet.EMPTY.iterator();
                         } catch (IOException e) {
-                            throw BlackLabRuntimeException.wrap(e);
+                            throw BlackLabException.wrapRuntime(e);
                         }
                     }
 

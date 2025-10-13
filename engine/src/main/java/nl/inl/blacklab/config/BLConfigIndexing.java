@@ -30,6 +30,12 @@ public class BLConfigIndexing {
      */
     boolean relationsSensitive = false;
 
+    /** Maximum length of a token value (i.e. a word), or 0 for no limit.
+     * Note that Lucene has a hard limit of 32766 characters for a term;
+     * values longer than that will cause an error.
+     */
+    int maxValueLength = 0;
+
     public DownloadCache.Config downloadCacheConfig() {
         return new DownloadCache.Config() {
             @Override
@@ -139,5 +145,17 @@ public class BLConfigIndexing {
     @SuppressWarnings("unused")
     public void setRelationsSensitive(boolean relationsSensitive) {
         this.relationsSensitive = relationsSensitive;
+    }
+
+    public int getMaxValueLength() {
+        return maxValueLength;
+    }
+
+    @SuppressWarnings("unused")
+    public void setMaxValueLength(int maxValueLength) {
+        if (maxValueLength < 0) {
+            throw new IllegalArgumentException("maxValueLength must be >= 0");
+        }
+        this.maxValueLength = maxValueLength;
     }
 }

@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchForResults<Hits> {
 
-    public SearchHits(QueryInfo queryInfo) {
+    protected SearchHits(QueryInfo queryInfo) {
         super(queryInfo);
     }
     

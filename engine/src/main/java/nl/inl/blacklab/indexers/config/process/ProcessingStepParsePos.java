@@ -32,6 +32,7 @@ public class ProcessingStepParsePos extends ProcessingStep {
         return new ProcessingStepParsePos(featureName);
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         // Trim character/string from beginning and end
         value = StringUtil.trimWhitespace(value);
@@ -50,6 +51,7 @@ public class ProcessingStepParsePos extends ProcessingStep {
         }
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

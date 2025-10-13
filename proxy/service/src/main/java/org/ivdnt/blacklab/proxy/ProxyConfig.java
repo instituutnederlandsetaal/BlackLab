@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -50,7 +51,7 @@ public class ProxyConfig {
         try {
             return mapper.readValue(configFile, ProxyConfig.class);
         } catch (IOException e) {
-            throw new RuntimeException("Error reading proxy config " + configFile, e);
+            throw new ErrorReadingConfig("Error reading proxy config " + configFile, e);
         }
     }
 
@@ -62,7 +63,7 @@ public class ProxyConfig {
             if (!configFile.exists())
                 configFile = new File("/etc/blacklab/proxy.yaml");
             if (!configFile.exists())
-                throw new RuntimeException("No config file found in $BLACKLAB_PROXY_CONFIG_FILE, ~/.blacklab/proxy.yaml, or /etc/blacklab/proxy.yaml");
+                throw new ErrorReadingConfig("No config file found in $BLACKLAB_PROXY_CONFIG_FILE, ~/.blacklab/proxy.yaml, or /etc/blacklab/proxy.yaml");
         } else
             configFile = new File(path);
         return configFile;

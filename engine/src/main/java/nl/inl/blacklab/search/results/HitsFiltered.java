@@ -93,7 +93,7 @@ public class HitsFiltered extends HitsMutable {
 
                     // Advance to next hit
                     indexInSource++;
-                    if (source.hitsStats().processedAtLeast(indexInSource + 1)) {
+                    if (source.hitsStats().processedAtLeast((long)indexInSource + 1)) {
                         source.getEphemeral(indexInSource, hit);
                         if (filterProperty.get(indexInSource).equals(filterValue)) {
                             // Yes, keep this hit
@@ -115,6 +115,7 @@ public class HitsFiltered extends HitsMutable {
                 ensureHitsReadLock.unlock();
             }
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // preserve interrupted status
             throw new InterruptedSearch(e);
         }
     }

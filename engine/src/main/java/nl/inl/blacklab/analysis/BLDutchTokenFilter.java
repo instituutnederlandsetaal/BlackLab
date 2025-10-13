@@ -16,9 +16,9 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
  * token are removed (e.g. multiple words in single quotes)
  */
 public class BLDutchTokenFilter extends TokenFilter {
-    final static Pattern REMOVE_PATTERN = Pattern.compile("[.()\\[\\]]|^'|'$");
+    static final Pattern REMOVE_PATTERN = Pattern.compile("[.()\\[\\]]|^'|'$");
 
-    final static Pattern ANY_LETTER_PATTERN = Pattern.compile("[\\p{L}\\d]");
+    static final Pattern ANY_LETTER_PATTERN = Pattern.compile("[\\p{L}\\d]");
 
     /**
      * Perform filtering on the input string
@@ -42,7 +42,7 @@ public class BLDutchTokenFilter extends TokenFilter {
     }
 
     @Override
-    final public boolean incrementToken() throws IOException {
+    public final boolean incrementToken() throws IOException {
         while (input.incrementToken()) {
             String t = new String(termAtt.buffer(), 0, termAtt.length());
 

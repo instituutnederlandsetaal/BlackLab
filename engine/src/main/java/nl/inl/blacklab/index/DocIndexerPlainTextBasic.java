@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
@@ -76,7 +76,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
                             DocIndexer.class);
                     metadataFetcher = ctor.newInstance(this);
                 } catch (ReflectiveOperationException | IllegalArgumentException e) {
-                    throw BlackLabRuntimeException.wrap(e);
+                    throw BlackLabException.wrapRuntime(e);
                 }
             }
         }
@@ -218,7 +218,7 @@ public class DocIndexerPlainTextBasic extends DocIndexerLegacy {
                 // Add Lucene doc to indexer
                 getDocWriter().add(currentDoc);
             } catch (Exception e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
 
             // Report progress

@@ -26,6 +26,7 @@ final class TermSpansWrapper extends BLFilterSpans<Spans> {
      * Returns YES if the candidate should be an accepted match, NO if it should not, and
      * NO_MORE_IN_CURRENT_DOC if iteration should move on to the next document.
      */
+    @Override
     protected FilterSpans.AcceptStatus accept(Spans candidate) throws IOException {
         return FilterSpans.AcceptStatus.YES;
     }

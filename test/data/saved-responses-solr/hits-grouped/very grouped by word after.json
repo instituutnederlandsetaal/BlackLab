@@ -1,0 +1,117 @@
+{
+  "hitGroups": [
+    {
+      "identity": "cws:contents%word:i:much",
+      "identityDisplay": "much",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "after:contents%word:i:1",
+          "value": "much"
+        }
+      ],
+      "size": 2
+    },
+    {
+      "identity": "cws:contents%word:i:a",
+      "identityDisplay": "a",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "after:contents%word:i:1",
+          "value": "a"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:briefly",
+      "identityDisplay": "briefly",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "after:contents%word:i:1",
+          "value": "briefly"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:famous",
+      "identityDisplay": "famous",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "after:contents%word:i:1",
+          "value": "famous"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:fresh",
+      "identityDisplay": "fresh",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "after:contents%word:i:1",
+          "value": "fresh"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:good",
+      "identityDisplay": "good",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "after:contents%word:i:1",
+          "value": "good"
+        }
+      ],
+      "size": 1
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 6,
+    "countTime": "VALUE_REMOVED",
+    "largestGroupSize": 2,
+    "numberOfDocs": 2,
+    "numberOfDocsRetrieved": 2,
+    "numberOfGroups": 6,
+    "numberOfHits": 7,
+    "numberOfHitsRetrieved": 7,
+    "pattern": {
+      "bcql": "\"very\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"very\"",
+        "type": "regex",
+        "value": "very"
+      }
+    },
+    "requestedWindowSize": 30,
+    "searchParam": {
+      "group": "after:word:i:1",
+      "indexname": "test",
+      "number": "30",
+      "op": "hits-grouped",
+      "patt": "\"very\"",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    },
+    "tokensInMatchingDocuments": 766,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
+}

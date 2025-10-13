@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class CorpusStatus implements Cloneable {
+public class CorpusStatus {
 
     public String indexName = "";
 
@@ -26,7 +26,20 @@ public class CorpusStatus implements Cloneable {
     @JsonInclude(Include.NON_NULL)
     public String timeModified;
 
+    /** How many tokens are in the corpus?
+     * If there are multiple annotated fields (such as in a parallel corpus),
+     * this is the total across all fields.
+     */
     public long tokenCount = 0;
+
+    /** How many documents are in the corpus?
+     * (NOTE: a document with several parallel versions counts as 1; see docVersions) */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long documentCount;
+
+    /** (Parallel) how many total document versions are in the corpus? */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long docVersions;
 
     // required for Jersey
     CorpusStatus() {}
@@ -35,11 +48,6 @@ public class CorpusStatus implements Cloneable {
         this.indexName = name;
         this.displayName = displayName;
         this.documentFormat = documentFormat;
-    }
-
-    @Override
-    public CorpusStatus clone() throws CloneNotSupportedException {
-        return (CorpusStatus)super.clone();
     }
 
     @Override

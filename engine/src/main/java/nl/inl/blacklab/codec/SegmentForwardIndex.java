@@ -7,13 +7,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
 
 import net.jcip.annotations.NotThreadSafe;
 import net.jcip.annotations.ThreadSafe;
 import nl.inl.blacklab.codec.TokensCodec.VALUE_PER_TOKEN_PARAMETER;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
 import nl.inl.blacklab.forwardindex.ForwardIndexSegmentReader;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
@@ -30,7 +30,7 @@ public class SegmentForwardIndex implements AutoCloseable {
      * - tokens codec scheme (byte),
      * - tokens codec parameter (byte)
      */
-    private static final long TOKENS_INDEX_RECORD_SIZE = Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
+    private static final long TOKENS_INDEX_RECORD_SIZE = (long)Long.BYTES + Integer.BYTES + Byte.BYTES + Byte.BYTES;
 
     /** Our fields producer */
     private final BlackLabPostingsReader fieldsProducer;
@@ -78,7 +78,7 @@ public class SegmentForwardIndex implements AutoCloseable {
             _tokensIndexFile.close();
             _tokensIndexFile = _tokensFile = null;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -199,7 +199,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                                 snippet[j] = _tokens.readByte();
                             }
                             break;
-                        default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
+                        default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter
                                 + " not implemented.");
                     }
                     break;
@@ -214,7 +214,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                 }
                 return snippet;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -228,7 +228,7 @@ public class SegmentForwardIndex implements AutoCloseable {
                 tokensCodec = TokensCodec.fromCode(_tokensIndex.readByte());
                 tokensCodecParameter = _tokensIndex.readByte();
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -251,7 +251,7 @@ public class SegmentForwardIndex implements AutoCloseable {
             try {
                 return fieldsProducer.terms(luceneField);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
     }

@@ -66,7 +66,7 @@ public class ConfigAttribute {
         return processSteps;
     }
 
-    public void setProcess(List<ConfigProcessStep> process) {
+    public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
     }

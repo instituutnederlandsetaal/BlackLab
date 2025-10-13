@@ -14,8 +14,8 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
      * The results.
      */
     protected List<T> results;
-    
-    public ResultsList(QueryInfo queryInfo) {
+
+    protected ResultsList(QueryInfo queryInfo) {
         super(queryInfo);
         results = new ArrayList<>();
     }
@@ -38,7 +38,7 @@ public abstract class ResultsList<T, P extends ResultProperty<T>> extends Result
             @Override
             public boolean hasNext() {
                 // Do we still have hits in the hits list?
-                ensureResultsRead(index + 2);
+                ensureResultsRead((long)index + 2);
                 return results.size() >= index + 2;
             }
 

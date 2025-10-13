@@ -21,8 +21,8 @@ function capitalizeFirstLetterAndRemoveUndercores(str: string | undefined): stri
 
   // replace dash with space for display
   // e.g. "index-your-data" -> "Index your data"
-  // Exceptions: e.g. "token-based" and "Non-XML" won't be affected
-  str = str?.replace(/-(?!based|XML)/g, ' ');
+  // Exceptions: e.g. "token-based", "Non-XML", "User-managed" won't be affected
+  str = str?.replace(/-(?!based|XML|managed)/g, ' ');
 
   return str && (str.charAt(0).toUpperCase() + str.slice(1));
 }

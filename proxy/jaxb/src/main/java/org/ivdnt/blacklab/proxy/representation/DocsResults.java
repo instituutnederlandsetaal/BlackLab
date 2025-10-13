@@ -12,6 +12,7 @@ import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -33,7 +34,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(propOrder={"summary", "docs", "docGroups", "facets" })
-public class DocsResults implements Cloneable, EntityWithSummary {
+public class DocsResults implements EntityWithSummary {
 
     private static class DocListSerializer extends JsonSerializer<BigList<Doc>> {
         @Override
@@ -55,7 +56,7 @@ public class DocsResults implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_ARRAY)
-                throw new RuntimeException("Expected START_ARRAY, found " + token);
+                throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
 
             BigList<Doc> hits = new ObjectBigArrayBigList<>();
             while (true) {
@@ -98,11 +99,6 @@ public class DocsResults implements Cloneable, EntityWithSummary {
     // required for Jersey
     @SuppressWarnings("unused")
     public DocsResults() {}
-
-    @Override
-    public DocsResults clone() throws CloneNotSupportedException {
-        return (DocsResults)super.clone();
-    }
 
     @Override
     public String toString() {

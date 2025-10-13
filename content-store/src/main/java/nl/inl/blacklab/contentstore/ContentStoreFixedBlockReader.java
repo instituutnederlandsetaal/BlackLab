@@ -11,8 +11,9 @@ import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
 
 import net.jcip.annotations.NotThreadSafe;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.SimpleResourcePool;
 import nl.inl.util.TextContent;
 
@@ -29,7 +30,6 @@ import nl.inl.util.TextContent;
  */
 @NotThreadSafe // in index mode
 public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
-    //private static final Logger logger = LogManager.getLogger(ContentStoreDirFixedBlock.class);
 
     SimpleResourcePool<Inflater> decompresserPool;
 
@@ -90,8 +90,10 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
         try {
             // Find the correct TOC entry
             TocEntry e = toc.get(contentId);
-            if (e == null || e.deleted)
-                return null;
+            if (e == null)
+                throw new IllegalArgumentException("contentId not found: " + contentId);
+            if (e.deleted)
+                throw new IllegalArgumentException("contentId points to a deleted entry: " + contentId);
 
             // Sanity-check parameters
             int n = start.length;
@@ -129,7 +131,8 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
                         }
 
                         // 1 - determine what blocks to read
-                        int firstBlock = -1, lastBlock = -1;
+                        int firstBlock = -1;
+                        int lastBlock = -1;
                         int bl = 0;
                         int charOffset = -1;
                         for (int offs : e.blockCharOffsets) {
@@ -156,7 +159,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
                             int bytesRead = fileChannel.read(buffer, readStartOffset);
                             if (bytesRead < bytesToRead) {
                                 // Apparently, something went wrong.
-                                throw new BlackLabRuntimeException("Not enough bytes read, " + bytesRead
+                                throw new InvalidIndex("Not enough bytes read, " + bytesRead
                                         + " < " + bytesToRead);
                             }
                             String decodedBlock = decodeBlock(buffer.array(), 0, bytesRead);
@@ -171,7 +174,7 @@ public class ContentStoreFixedBlockReader extends ContentStoreFixedBlock {
             }
             return result;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

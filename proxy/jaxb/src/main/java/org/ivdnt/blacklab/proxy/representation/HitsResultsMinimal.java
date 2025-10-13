@@ -11,6 +11,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,7 +32,7 @@ import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 /** /hits results with aggregator=true (minimal hit info) */
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class HitsResultsMinimal implements Cloneable, EntityWithSummary {
+public class HitsResultsMinimal implements EntityWithSummary {
 
     private static class BigListSerializer extends JsonSerializer<BigList<List<Object>>> {
         @Override
@@ -52,7 +54,7 @@ public class HitsResultsMinimal implements Cloneable, EntityWithSummary {
                 throws IOException {
             JsonToken token = parser.getCurrentToken();
             if (token != JsonToken.START_ARRAY)
-                throw new RuntimeException("Expected START_ARRAY, found " + token);
+                throw new ErrorReadingResponse("Expected START_ARRAY, found " + token);
 
             BigList<List<Object>> hits = new ObjectBigArrayBigList<>();
             while (true) {
@@ -94,11 +96,6 @@ public class HitsResultsMinimal implements Cloneable, EntityWithSummary {
             Collections.addAll(l, h.sortValues);
             this.hits.add(l);
         }
-    }
-
-    @Override
-    public HitsResultsMinimal clone() throws CloneNotSupportedException {
-        return (HitsResultsMinimal)super.clone();
     }
 
     @Override

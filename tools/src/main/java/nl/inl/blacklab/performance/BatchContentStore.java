@@ -1,13 +1,14 @@
 package nl.inl.blacklab.performance;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.FileUtil;
 import nl.inl.util.StringUtil;
 import nl.inl.util.Timer;
@@ -19,7 +20,10 @@ public class BatchContentStore {
 
     private static final int SNIPPET_LENGTH_CHARS = 100;
 
-    public static void main(String[] args) throws ErrorOpeningIndex {
+    private BatchContentStore() {
+    }
+
+    public static void main(String[] args) throws ErrorOpeningIndex, IOException {
 
         int fileArgNumber = 0;
         File indexDir = null;
@@ -128,7 +132,7 @@ public class BatchContentStore {
                 int id, length;
             do {
                 if (docPos >= docIds.size())
-                    throw new BlackLabRuntimeException("Performance test went beyond end of content store ("
+                    throw new InvalidIndex("Performance test went beyond end of content store ("
                             + docIds.size() + " docs)");
                 id = docIds.get(docPos);
 

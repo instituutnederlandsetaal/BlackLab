@@ -158,7 +158,7 @@ This would, for example, match the well-known palindrome _a man, a plan, a canal
 ### Lookahead/lookbehind
 
 ::: tip Supported from v4.0
-This feature will be supported from BlackLab 4.0 (and current development snapshots).
+This feature is supported from BlackLab 4.0.
 :::
 
 Just like most regular expressions engines, BlackLab supports lookahead and lookbehind assertions. These match a position in the text but do not consume any tokens. They are useful for matching a token only if it is followed or preceded by other token(s).
@@ -201,7 +201,8 @@ Because of where it is indexed, it can be tricky to find specific punctuation _a
 
 Because spaces are also indexed with the `punct` annotation, you need to include them in the regex as well.
 
-BlackLab supports _pseudo-annotations_ that can help with this. You can pretend that every corpus has a `punctBefore` and `punctAfter` annotation. So you can write the above query as:
+Starting with BlackLab 4.0.0, there are _pseudo-annotations_ that can help with this. You can pretend that 
+every corpus has a `punctBefore` and `punctAfter` annotation. So you can write the above query as:
 
 ```
 [word="dog" & punctAfter=","]

@@ -183,9 +183,9 @@ public class Kwics {
 
         // Iterate over hits and fetch KWICs per document
         int lastDocId = -1;
-        int firstIndexWithCurrentDocId = 0;
+        long firstIndexWithCurrentDocId = 0;
         Map<Hit, Kwic> kwics = new HashMap<>();
-        for (int i = 0; i < hits.size(); ++i) {
+        for (long i = 0; i < hits.size(); ++i) {
             int curDocId = hits.doc(i);
             if (lastDocId != -1 && curDocId != lastDocId) {
                 // We've reached a new document, so process the previous one

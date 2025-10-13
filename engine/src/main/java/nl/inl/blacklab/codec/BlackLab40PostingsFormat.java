@@ -46,13 +46,18 @@ public class BlackLab40PostingsFormat extends BlackLabPostingsFormat {
     @SuppressWarnings("unused")
     public BlackLab40PostingsFormat() {
         super(NAME);
-        BlackLab40PostingsFormat pf = ((BlackLab40Codec)Codec.forName(BlackLab40Codec.NAME)).postingsFormat();
-        delegatePostingsFormat = pf.delegatePostingsFormat;
+        BlackLabPostingsFormat pf = (BlackLabPostingsFormat)(Codec.forName(BlackLab40Codec.NAME)).postingsFormat();
+        delegatePostingsFormat = pf.getDelegatePostingsFormat();
     }
 
     public BlackLab40PostingsFormat(PostingsFormat delegate) {
         super(NAME);
         delegatePostingsFormat = delegate;
+    }
+
+    @Override
+    public PostingsFormat getDelegatePostingsFormat() {
+        return delegatePostingsFormat;
     }
 
     @Override

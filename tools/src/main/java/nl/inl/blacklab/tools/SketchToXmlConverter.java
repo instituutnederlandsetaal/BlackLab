@@ -14,6 +14,7 @@ import java.io.Reader;
 import java.io.Writer;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 import org.apache.commons.text.StringEscapeUtils;
 
@@ -169,7 +170,8 @@ public class SketchToXmlConverter {
                     // Spaties normaliseren
                     line = line.replaceAll("\\s\\s+", " ");
 
-                    if (!line.matches("<doc(\\s+\\w+\\s*=\\s*\"[^<>\"]*\")*\\s*>\\s*")) {
+                    Pattern pattDocTag = Pattern.compile("<doc(\\s+\\w+\\s*=\\s*\"[^<>\"]*\")*+\\s*>\\s*");
+                    if (!pattDocTag.matcher(line).matches()) {
                         System.err.println("--- Illegal doc line: " + line);
 
                         // Fix subcorpus="Pluscorpus" id="68795"
@@ -195,7 +197,7 @@ public class SketchToXmlConverter {
                         line = line.replaceAll("</TEKST>", "\"");
 
                         // Check that that fixed it
-                        if (!line.matches("<doc(\\s+\\w+\\s*=\\s*\"[^<>\"]*\")*\\s*>\\s*")) {
+                        if (!pattDocTag.matcher(line).matches()) {
                             System.err.println("!!! Failed: " + line);
                         } else {
                             System.err.println("    Fixed: " + line);

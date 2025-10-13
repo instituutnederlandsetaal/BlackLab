@@ -37,7 +37,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     /** If set: capture as type TAG, with this tag name.
      *  Note that this only exists to support the legacy external index format.
      *  For the integrated format, tag capturing is handled by SpansRelations directly. */
-    private String tagName;
+    private final String tagName;
 
     /**
      * Construct SpanQueryCaptureGroup object.

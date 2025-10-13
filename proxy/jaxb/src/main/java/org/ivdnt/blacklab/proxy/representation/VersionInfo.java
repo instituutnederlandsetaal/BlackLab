@@ -15,6 +15,9 @@ public class VersionInfo {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String blacklabVersion;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String blacklabScmRevision;
+
     // v3 inconsistent naming
     @XmlElement
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -34,8 +37,11 @@ public class VersionInfo {
     @Override
     public String toString() {
         return "VersionInfo{" +
-                "blackLabBuildTime='" + blacklabBuildTime + '\'' +
-                ", blackLabVersion='" + blacklabVersion + '\'' +
+                "blacklabBuildTime='" + blacklabBuildTime + '\'' +
+                ", blacklabVersion='" + blacklabVersion + '\'' +
+                ", blacklabScmRevision='" + blacklabScmRevision + '\'' +
+                ", blackLabBuildTime='" + blackLabBuildTime + '\'' +
+                ", blackLabVersion='" + blackLabVersion + '\'' +
                 ", indexFormat='" + indexFormat + '\'' +
                 ", timeCreated='" + timeCreated + '\'' +
                 ", timeModified='" + timeModified + '\'' +

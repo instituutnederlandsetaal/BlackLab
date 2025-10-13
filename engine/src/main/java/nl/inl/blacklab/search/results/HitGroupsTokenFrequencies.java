@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -22,7 +21,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -53,6 +52,9 @@ public class HitGroupsTokenFrequencies {
     public static final boolean DEBUG_DUPLICATE_GROUPS = false;
 
     private static final Logger logger = LogManager.getLogger(HitGroupsTokenFrequencies.class);
+
+    private HitGroupsTokenFrequencies() {
+    }
 
     /** Precalculated hashcode for group id, to save time while grouping and sorting. */
     private static class GroupIdHash {
@@ -202,7 +204,7 @@ public class HitGroupsTokenFrequencies {
                     final DocProperty asDocPropIfApplicable = p.docPropsOnly();
                     if (asDocPropIfApplicable != null) { // property can be converted to docProperty (applies to the document instead of the token/hit)
                         if (asDocPropIfApplicable.isCompound()) {
-                            throw new RuntimeException("Nested PropertyMultiples detected, should never happen");
+                            throw new IllegalStateException("Nested PropertyMultiples detected, should never happen");
                         }
                         final int positionInUnpackedList = docProperties.size();
                         docProperties.add(asDocPropIfApplicable);
@@ -421,7 +423,7 @@ public class HitGroupsTokenFrequencies {
 
                             }
                         } catch (IOException e) {
-                            throw BlackLabRuntimeException.wrap(e);
+                            throw BlackLabException.wrapRuntime(e);
                         }
                         return true;
                     }).count();
@@ -464,13 +466,13 @@ public class HitGroupsTokenFrequencies {
                     if (DEBUG_DUPLICATE_GROUPS) {
                         synchronized (duplicateGroupsDebug) {
                             if (!duplicateGroupsDebug.add(groupId)) {
-                                throw new RuntimeException("Identical groups - should never happen");
+                                throw new IllegalStateException("Identical groups - should never happen");
                             }
                         }
                     }
 
                     return new HitGroupWithoutResults(queryInfo, groupId, groupSizeHits, groupSizeDocs, false, false);
-                }).collect(Collectors.toList());
+                }).map(g -> (HitGroup)g).toList();
             }
             logger.debug("fast path used for grouping");
 
@@ -478,7 +480,7 @@ public class HitGroupsTokenFrequencies {
             ResultsStats docsStats = new ResultsStatsStatic((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, new MaxStats(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
             return HitGroups.fromList(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats);
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 }

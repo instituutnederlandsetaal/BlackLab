@@ -39,6 +39,7 @@ public interface ResultProperty<T> extends Serializable, PropertySerializeUtil.S
      * 
      * @return the String representation of this HitProperty
      */
+    @Override
     String serialize();
 
     /**

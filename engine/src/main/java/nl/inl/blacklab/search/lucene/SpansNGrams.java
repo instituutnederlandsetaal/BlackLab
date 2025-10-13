@@ -8,7 +8,6 @@ import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.spans.SpanCollector;
 import org.apache.lucene.util.Bits;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 
 /**
@@ -108,14 +107,14 @@ class SpansNGrams extends BLSpans {
                 currentDocIsDeletedDoc = currentDoc < maxDoc && liveDocs != null && !liveDocs.get(currentDoc);
             } while (currentDoc < maxDoc && currentDocIsDeletedDoc);
             if (currentDoc > maxDoc)
-                throw new BlackLabRuntimeException("currentDoc > maxDoc!!");
+                throw new IllegalStateException("currentDoc > maxDoc!!");
             if (currentDoc == maxDoc) {
                 currentDoc = NO_MORE_DOCS;
                 currentStart = currentEnd = NO_MORE_POSITIONS;
                 return NO_MORE_DOCS; // no more docs; we're done
             }
             // Get document length and reset currentStart/currentEnd so we can check if there's actually hits
-            currentDocLength = lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+            currentDocLength = (long)lengthGetter.getFieldLength(currentDoc) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
             currentStart = currentEnd = -1;
         } while (currentDocLength < min || nextStartPosition() == NO_MORE_POSITIONS);
         atFirstInCurrentDoc = true;

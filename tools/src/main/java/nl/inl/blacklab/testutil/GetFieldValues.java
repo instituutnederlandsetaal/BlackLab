@@ -19,6 +19,9 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 
 public class GetFieldValues {
+    private GetFieldValues() {
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex, IOException {
 
         if (args.length < 2) {

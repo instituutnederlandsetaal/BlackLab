@@ -1,6 +1,13 @@
 # Change Log
 
-## Improvements in dev
+## Changes in dev
+
+### New
+
+- BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
+
+
+## v4.0.0
 
 ### New
 
@@ -23,7 +30,7 @@
   - version 2 of the .blf.yaml format, changing the default processor to Saxon and removing various quirks. See [here](../guide/index-your-data/miscellaneous.md#differences-between-version-1-and-2).
   - support for indexing extra attributes with inline tags using XPath; only indexing certain attributes; or excluding all except certain attributes.
 - BlackLab Server:
-  - Evolving the BLS API. See [API versions](../server/rest-api/api-versions.md).
+  - Evolving the BLS API. See [API versions](/server/rest-api/miscellaneous/api-versions.md).
   - you can pass `context=s` to get a whole sentence as context around a hit.
   - group by capture, e.g. `capture:word:s:A` to group on the words from the group captured as `A` in your query.
   - group on a tag in a list of overlapping tags, e.g. `capture:word:s:with-spans[named-entity]` to group on the whole named entity (if the match overlap with one) if you passed `withspans=true` as a parameter.
@@ -40,6 +47,7 @@
     - new DocIndexerExample gives a better example of low-level custom indexing
     - you can now use a custom DocIndexerConfig subclass by specifying `fileTypeOptions.docIndexerClass` in your .blf.yaml file.
     - standoff annotations can now be used to index spans and relations as well
+    - New `blacklab.yaml` option `indexing.maxValueLength` controls truncating of annotation values. Default is no truncation (causing a Lucene error if a token is longer than 32K).
 - Misc:
     - support for Docker
     - ability to run BlackLab as a Solr plugin (work in progress), and a proxy so Solr with plugin behaves the same as BLS.
@@ -51,10 +59,13 @@
 ### Changed
 
 - minimum Java version is now 17.
-- annotation setting allowDuplicateValues defaults to false, which is usually what you want.
+- annotation config settings `allowDuplicateValues` and `multipleValues` were removed (any annotation can have multiple values if needed, and any duplicate values are always removed).
 - various performance improvements, e.g. when opening huge indexes. Also Lucene's two-phase iterators are used where possible.
-- BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
-- BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
+- BLS boolean parameter `includetokencount` was renamed to `subcorpussize` (it will determine the number of tokens and documents in the subcorpus matching your filter query).
+- BCQL:
+  - we've settled on BlackLab "normalizing" BCQL to use double quotes instead of single quotes, for maximum compatibility with other corpus tools. Users can still choose to use either single or double quotes in their queries.
+  - BlackLab Corpus Query Language (BCQL) queries now allow dashes in names. Integrated index type allows dash in forEach names.
+  - BCQL now allows the not-operator (`!`) to be used at the top level, and "global" constraints (`::`) to be used within parentheses as well.
 - Unicode normalization is applied to documents while indexing.
 - If a corpus directory is named `index`, we used to look at the parent directory for the "real" corpus name, but this quirk has been removed.
 - There is no longer an arbitrary term length limit.
@@ -77,7 +88,7 @@
 - Added BARKs ((BlackLab Archives of Relevant Knowledge)
 - Documented CQL operator precedence, query rewriting, etc.
 
-## Improvements in 3.0.1
+## v3.0.1
 
 ### Changed
 
@@ -85,7 +96,7 @@
   caused problems with some application servers (because Jetty was being pulled in).
 
 
-## 3.0.0
+## v3.0.0
 
 ### Changed
 
@@ -154,7 +165,7 @@
 - Some deprecated settings. A warning will be shown if the setting is still found.
 - Deprecated methods from `Indexer`, among others.
 
-## 2.3.1
+## v2.3.1
 
 ### Fixed
 
@@ -171,7 +182,7 @@
 - IndexTooOld/IndexTooNew replaced with IndexVersionMismatch. See exception message for details.
 
 
-## 2.3.0
+## v2.3.0
 
 ### Changed
 
@@ -220,7 +231,7 @@
 - `checkAgainMs` (from BLS response).
 - several long-deprecated methods.
 
-## 2.2.0
+## v2.2.0
 
 ### Changed
 
@@ -276,13 +287,13 @@
 * Support for `useOldElementnames` (old BLS element names, using "properties" instead of "annotations")
 
 
-## 2.1.1
+## v2.1.1
 
 ### Fixed
 
 * Upgrade to log4j-2.16.0 (fixes CVE-2021-45046).
 
-## 2.1.0
+## v2.1.0
 
 ### Changed
 
@@ -299,7 +310,7 @@
 * Fix crash during indexing if terms file got very large.
 * BLS: Fix incorrect check who user-owned formats.
 
-## 2.0.0
+## v2.0.0
 
 ### API changes
 
@@ -329,7 +340,7 @@
 * It is now possible to configure global unknown condition and value (use metadataDefaultUnknownCondition 
   and metadataDefaultUnknownValue at the top-level of your indexing config)
 * You can now set isInternal to true on annotations to prevent searching and grouping on it in BlackLab Frontend
-* Added annotation option allowDuplicateValues (defaults to true). If multipleValues is true and allowDuplicateValues 
+* Added annotation option `allowDuplicateValues` (defaults to true). If `multipleValues` is true and `allowDuplicateValues` 
   is false, duplicates encountered will not be indexed twice, preventing double hits.
 * Add support for retrieving occurrences of a list of terms, /blacklab-server/INDEX_NAME/termfreq
 
@@ -390,7 +401,7 @@
   the response is available. Only the "total results" count will be 
   reported asynchronously unless the "waitfortotal" parameters is true.
 
-## 1.7.2
+## v1.7.2
 
 ### New
 * Issue warning if unrecognized params passed to Auth* class.
@@ -406,7 +417,7 @@
 * Jackson and commons-compress libraries were updated because of patch 
   security vulnerabilities. 
 
-## 1.7.1
+## v1.7.1
 
 ### Changed
 * Default maximum file upload size is now 1GB. 
@@ -415,7 +426,7 @@
 * Don't block until all hits have been counted.
 * Fixed bug when maxHitsToRetrieve and maxHitsToCount are the same value
 
-## 1.7.0
+## v1.7.0
 
 ### New
 * Much user-friendlier indexing using .json/.yaml config files.
@@ -465,7 +476,7 @@
   when searching, causing problems. Now they are treated the same.
 * Numerous other bugfixes.
 
-## 1.6.0
+## v1.6.0
 
 ### New
 * Added Searcher.getBlackLabVersion(). Also added blacklabVersion to index.
@@ -544,7 +555,7 @@
 * Added error message when 'viewgroup' is used without 'group'.
 * Don't add whitespace into leaf XML elements.
 
-## 1.5.0
+## v1.5.0
 
 ### Fixed
 * Two rare, subtle matching bugs in SpansExpansion and SpansPositionFilter.
@@ -584,7 +595,7 @@
   because it took too long.
 
 
-## 1.4.1
+## v1.4.1
 
 ### Fixed
 * Potential overflow bug in ContentStoreFixedBlock when retrieving content.
@@ -599,7 +610,7 @@
 ### BlackLab Server
 * Made sure missing options in blacklab-server.json don't cause problems.
 
-## 1.4.0
+## v1.4.0
 
 ### New
 * Added experimental support for "subproperties": properties that are indexed in the same Lucene 
@@ -626,12 +637,12 @@
 * Moved some basic Lucene functionality unrelated to the rest of BlackLab from Searcher to 
   LuceneUtil.
 
-## 1.3.7
+## v1.3.7
 
 ### Fixed
 * Opening a large "fixed-block" content store took a really long time. 
 
-## 1.3.6
+## v1.3.6
 
 ### Fixed
 * Content store growing larger than 2 GB caused an integer overflow.
@@ -639,7 +650,7 @@
 * Storing document in ContentStoreDirFixedBlock would very rarely crash due to a
   block resizing bug.
 
-## 1.3.5
+## v1.3.5
 
 ### New
 * Added default unknown condition and value to indextemplate.json, so you can specify what to do if a metadata field value is missing without specifying it for each field separately.
@@ -651,18 +662,18 @@
 ### Changed
 * Switched to JavaCC 6.x.
 
-## 1.3.4
+## v1.3.4
 
 ### Fixed
 * Lone carriage return characters in JSON output were not escaped;
   Windows line endings were escaped as a single \\n.
 
-## 1.3.3
+## v1.3.3
 
 ### Fixed
 * Indices with old terms file format (pre-1.3) produced empty concordances.
 
-## 1.3.2
+## v1.3.2
 
 ### Fixed
 * Query rewrite bug when combining identical clauses with different repetitions,
@@ -674,7 +685,7 @@
 * Added -javadoc and -sources JARs to Maven build, in preparation for publishing to Maven Central.
 * Added distributionManagement section for deploying to OSSRH staging area. 
 
-## 1.3.1
+## v1.3.1
 
 ### New
 * Added new default content store format "fixedblock", that improves space re-use when updating documents. 
@@ -685,7 +696,7 @@
 ### Changed
 * Special OSX and Windows files are skipped, even if they occur inside archives.
 
-## 1.3
+## v1.3
 
 ### Added
 * Searcher now implements Closeable, so it can be used with the try-with-resources statement.
@@ -696,12 +707,12 @@
 
 ### Changed
 
-## 1.2.1
+## v1.2.1
 
 ### Fixed
 * Queries containing only a document filter (metadata filter) would return incorrect results.
 
-## 1.2.0
+## v1.2.0
 
 ### Changed
 * Switched build from Ant to Maven, and added generating a project site with javadocs, reports, etc.
@@ -726,7 +737,7 @@
 * Opening an index by passing a symbolic link throws an exception.
 * Miscellaneous small fixes.
 
-## 1.1.0
+## v1.1.0
 * Upgraded from Lucene 3.6 to Lucene 4.2. This should speed up regular expression searching, among other things. The required Lucene 4 modules are: core, highlighter, queries, queryparser, analyzers-common. Thanks to Marc Kemps-Sneijders from the Meertens Institute for the code submission!
 * The awkwardly-named classes RandomAccessGroup(s) were renamed to HitGroup(s). Also, DocGrouper was renamed to DocGroups to match this naming scheme. The old versions are still around but have been deprecated.
 * HitPropValue classes now need a Hits object to properly serialize/deserialize their values in a way that doesn't break after re-indexing.
@@ -740,7 +751,7 @@
 * Some other methods have been renamed, are no longer needed, etc. and have been deprecated. Deprecated methods state the preferred alternative in the @deprecated Javadoc directive.
 
 
-## 1.0
+## v1.0
 
 ### Features
 * Sorting/grouping on multiple properties now works correctly. Use HitPropertyMultiple.

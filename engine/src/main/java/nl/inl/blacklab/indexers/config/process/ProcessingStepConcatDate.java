@@ -43,6 +43,7 @@ public class ProcessingStepConcatDate extends ProcessingStep {
             par(param,"autofill", "end"));
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         Integer y, m, d;
         y = getIntFieldValue(docIndexer, yearField);
@@ -69,6 +70,7 @@ public class ProcessingStepConcatDate extends ProcessingStep {
         }
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

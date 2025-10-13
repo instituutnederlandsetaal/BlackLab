@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 import org.xml.sax.Attributes;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.DocIndexerXmlHandlers;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.HookableSaxHandler.ElementHandler;
@@ -31,9 +31,6 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
     public static String getDescription() {
         return "An XML format for the description of text OCR and layout information of pages for digitized material.";
     }
-
-    /** Whitespace and/or punctuation at start or end */
-    private static final Pattern PATT_WS_PUNCT_AT_START_OR_END = Pattern.compile("^[\\p{Punct}\\p{javaSpaceChar}]+|[\\p{Punct}\\p{javaSpaceChar}]+$");
 
     /**
      * Remove any punctuation and whitespace at the start and end of input.
@@ -158,26 +155,25 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         titles = new HashMap<>();
         dates = new HashMap<>();
         authors = new HashMap<>();
-        // File metadataFile = new File("c:\\temp\\dpo_metadata.txt");
         try (BufferedReader r = FileUtil.openForReading(metadataFile)) {
             String l;
             while (true) {
                 try {
                     l = r.readLine();
+                    if (l == null)
+                        break;
                 } catch (IOException e) {
-                    throw BlackLabRuntimeException.wrap(e);
+                    throw BlackLabException.wrapRuntime(e);
                 }
-                if (l == null)
-                    break;
-                if (l.length() == 0)
-                    continue;
-                String[] fields = l.split("\t", -1);
-                titles.put(fields[0].trim(), fields[1].trim());
-                dates.put(fields[0].trim(), fields[3].trim());
-                authors.put(fields[0].trim(), fields[4].trim());
+                if (!l.isEmpty()) {
+                    String[] fields = l.split("\t", -1);
+                    titles.put(fields[0].trim(), fields[1].trim());
+                    dates.put(fields[0].trim(), fields[3].trim());
+                    authors.put(fields[0].trim(), fields[4].trim());
+                }
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
         externalMetadataAvailable = true;
     }
@@ -186,7 +182,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
      * Pattern for getting DPO number and page number from image file name (OLD.
      * Will be removed soon)
      */
-    private final static Pattern PATT_DPO_AND_PAGE = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
+    private static final Pattern PATT_DPO_AND_PAGE = Pattern.compile("^dpo_(\\d+)_(\\d+)_");
 
     /**
      * Whether or not the external metadata is available (OLD. Will be removed soon)
@@ -209,7 +205,7 @@ public class DocIndexerAlto extends DocIndexerXmlHandlers {
         } else {
             dpo = "?";
             page = "?";
-            System.err.println("No DPO/page found: " + imageFileName);
+            logger.error("No DPO/page found: {}", imageFileName);
         }
         return new String[] {
                 titles.getOrDefault(dpo, "?"),

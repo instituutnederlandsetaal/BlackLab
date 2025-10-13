@@ -20,6 +20,7 @@ import org.apache.lucene.store.OutputStreamDataOutput;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.RegExp;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
@@ -126,7 +127,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             String attr = parts[i];
             int p = attr.indexOf(KEY_VALUE_SEPARATOR);
             if (p < 0)
-                throw new RuntimeException("Malformed attribute in relation info term: " + riTerm);
+                throw new InvalidIndex("Malformed attribute in relation info term: " + riTerm);
             String key = attr.substring(0, p);
             String[] values = attr.substring(p + 1).split(ATTR_SEPARATOR, -1);
             attrHandler.accept(key, Arrays.asList(values));
@@ -147,7 +148,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 String attr = parts[j];
                 int p = attr.indexOf(KEY_VALUE_SEPARATOR);
                 if (p < 0)
-                    throw new RuntimeException("Malformed attribute in relation info term: " + indexedTerm);
+                    throw new InvalidIndex("Malformed attribute in relation info term: " + indexedTerm);
                 String name = attr.substring(0, p);
                 String[] values = attr.substring(p + 1).split(ATTR_VALUE_SEPARATOR, -1);
                 for (String value: values)
@@ -163,7 +164,6 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
             if (j < 0) {
                 // This is not an attribute term.
                 return Stream.empty();
-                //throw new RuntimeException("Malformed attribute term, no value sep: " + indexedTerm);
             }
             String name = indexedTerm.substring(i + 1, j);
             String value = indexedTerm.substring(j + 1);
@@ -217,6 +217,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @param indexedTerm the term indexed in Lucene
      * @return the full relation type
      */
+    @Override
     public String fullTypeFromIndexedTerm(String indexedTerm) {
         int sep = indexedTerm.indexOf(ATTR_SEPARATOR);
         if (sep < 0)
@@ -250,6 +251,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
      * @param attributes            any attribute criteria for this relation (regexes)
      * @return regexes to find this relation (first is the type, rest are attributes)
      */
+    @Override
     public List<String> searchRegexes(BlackLabIndex index, String fullRelationTypeRegex,
             Map<String, String> attributes) {
         String typeRegex = RelationUtil.optParRegex(fullRelationTypeRegex);
@@ -315,6 +317,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
 
     public static final PayloadCodec CODEC = new Codec();
 
+    @Override
     public PayloadCodec getPayloadCodec() { return CODEC; }
 
     static class Codec implements PayloadCodec {
@@ -396,7 +399,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 if (writeOtherLength)
                     dataOutput.writeVInt(targetLength);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -410,6 +413,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          * @param dataInput payload
          * @return relation id
          */
+        @Override
         public int readRelationId(ByteArrayDataInput dataInput) {
             return dataInput.readVInt();
         }
@@ -424,6 +428,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          * @param currentTokenPosition the position we're currently at
          * @param dataInput data to deserialize
          */
+        @Override
         public void deserialize(int currentTokenPosition, ByteArrayDataInput dataInput,
                 RelationInfo target) {
             try {
@@ -454,7 +459,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 assert sourceStart >= 0 && sourceEnd >= 0 && targetStart >= 0 && targetEnd >= 0;
                 target.fill(relationId, onlyHasTarget, sourceStart, sourceEnd, targetStart, targetEnd, maybeExtraInfo);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -463,6 +468,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          *
          * @return the serialized data
          */
+        @Override
         public BytesRef serialize(RelationInfo relInfo) {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             DataOutput dataOutput = new OutputStreamDataOutput(os);
@@ -488,6 +494,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
          * @param relationId     unique id for this relation, to look up attributes later
          * @return payload to store
          */
+        @Override
         public BytesRef inlineTagPayload(int startPosition, int endPosition, BlackLabIndex.IndexType indexType, int relationId, boolean maybeExtraInfo) {
             if (indexType == BlackLabIndex.IndexType.EXTERNAL_FILES)
                 return new BytesRef(ByteBuffer.allocate(4).putInt(endPosition).array());
@@ -498,10 +505,11 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 serializeInlineTag(startPosition, endPosition, relationId, maybeExtraInfo, new OutputStreamDataOutput(os));
                 return new BytesRef(os.toByteArray());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
+        @Override
         public BytesRef relationPayload(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart,
                 int targetEnd, int relationId, boolean maybeExtraInfo) {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -517,7 +525,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 OutputStreamDataOutput outputStreamDataOutput = new OutputStreamDataOutput(os);
                 writeRelationId(relationId, outputStreamDataOutput);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
             return new BytesRef(os.toByteArray());
         }

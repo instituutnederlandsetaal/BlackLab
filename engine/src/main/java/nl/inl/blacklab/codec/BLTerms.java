@@ -9,6 +9,7 @@ import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.automaton.CompiledAutomaton;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.TermsSegmentReader;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -44,7 +45,7 @@ public class BLTerms extends Terms implements TermsSegmentReader {
                 if (terms != null)
                     return terms;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
         throw new IllegalStateException("No suitable field found for codec access!");

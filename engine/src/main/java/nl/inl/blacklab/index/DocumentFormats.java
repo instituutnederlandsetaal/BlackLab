@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
@@ -109,10 +109,8 @@ public class DocumentFormats {
      */
     public static synchronized Collection<InputFormat> getFormats() {
         // TODO maybe we should have a well-defined order? alphabetical, or configs before classes?
-        List<InputFormat> result = inputFormats.values().stream()
-                .filter(f -> !f.isError())
-                .collect(Collectors.toList());
-        List<InputFormat> reversed = new ArrayList<>(result);
+        List<InputFormat> reversed = inputFormats.values().stream()
+                .filter(f -> !f.isError()).collect(Collectors.toList());
         Collections.reverse(reversed);
         return reversed;
     }
@@ -168,7 +166,7 @@ public class DocumentFormats {
             // OK, JAR not on classpath
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException |
                  InvocationTargetException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException("Unable to register legacy doc indexers", e);
         }
     }
 
@@ -199,15 +197,26 @@ public class DocumentFormats {
                 //formatErrors.put(formatIdentifier, e.getMessage());
                 InputFormat inputFormat = new InputFormatError(formatIdentifier, e.getMessage());
                 add(inputFormat);
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         }
     }
 
     private static void addConfigFormatsInDefaultDirectories() {
         List<File> dirs = BlackLab.defaultConfigDirs().stream()
+                .filter(f -> {
+                    boolean canAccess;
+                    try {
+                        canAccess = f.canRead();
+                    } catch (SecurityException e) {
+                        canAccess = false;
+                    }
+                    if (!canAccess)
+                        logger.warn("Config directory is not readable, skipping: {}", f);
+                    return canAccess;
+                })
                 .map(dir -> new File(dir, "formats"))
-                .collect(Collectors.toList());
+                .toList();
         addConfigFormatsInDirectories(dirs);
     }
 
@@ -245,7 +254,11 @@ public class DocumentFormats {
         // Run the configLocator on the directory - not recursive
         for (File dir : dirs) {
             if (Files.isReadable(dir.toPath()) && Files.isDirectory(dir.toPath())) {
-                FileUtil.processTree(dir, "*", false, configLocator);
+                try {
+                    FileUtil.processTree(dir, "*", false, configLocator);
+                } catch (IOException e) {
+                    throw new InvalidInputFormatConfig(e);
+                }
             }
         }
     }

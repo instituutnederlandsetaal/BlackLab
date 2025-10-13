@@ -48,10 +48,12 @@ public class FileReferenceBytes implements FileReference {
         return this;
     }
 
+    @Override
     public InputStream getSinglePassInputStream() {
         return new ByteArrayInputStream(contents);
     }
 
+    @Override
     public BufferedReader createReader(Charset overrideEncoding) {
         if (overrideEncoding == null)
             overrideEncoding = getCharSet();

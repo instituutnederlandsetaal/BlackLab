@@ -56,6 +56,9 @@ public class WriteCsv {
 
     public static final String CSV_VALUE_UNKNOWN = "[unknown]";
 
+    private WriteCsv() {
+    }
+
     public static String hitsGroupsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
         HitGroups groups = resultHitsCsv.getGroups();
         Hits inputHitsForGroups = resultHitsCsv.getHits();
@@ -247,7 +250,7 @@ public class WriteCsv {
         try {
             printer.printRecord(writeRowTemp);
         } catch (IOException e) {
-            throw new RuntimeException("Cannot write response");
+            throw new IllegalStateException("Cannot write response");
         }
         writeRowTemp.clear();
     }

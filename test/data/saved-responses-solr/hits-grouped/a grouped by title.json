@@ -1,0 +1,93 @@
+{
+  "hitGroups": [
+    {
+      "identity": "str:interview about conference experience and impressions of city",
+      "identityDisplay": "interview about conference experience and impressions of city",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "interview about conference experience and impressions of city"
+        }
+      ],
+      "size": 8,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 268
+      }
+    },
+    {
+      "identity": "str:service encounter about visa application for family members",
+      "identityDisplay": "service encounter about visa application for family members",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about visa application for family members"
+        }
+      ],
+      "size": 5,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 334
+      }
+    },
+    {
+      "identity": "str:service encounter about getting an address printed out",
+      "identityDisplay": "service encounter about getting an address printed out",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about getting an address printed out"
+        }
+      ],
+      "size": 4,
+      "subcorpusSize": {
+        "documents": 1,
+        "tokens": 164
+      }
+    }
+  ],
+  "summary": {
+    "actualWindowSize": 3,
+    "countTime": "VALUE_REMOVED",
+    "largestGroupSize": 8,
+    "numberOfDocs": 3,
+    "numberOfDocsRetrieved": 3,
+    "numberOfGroups": 3,
+    "numberOfHits": 17,
+    "numberOfHitsRetrieved": 17,
+    "pattern": {
+      "bcql": "\"a\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"a\"",
+        "type": "regex",
+        "value": "a"
+      }
+    },
+    "requestedWindowSize": 30,
+    "searchParam": {
+      "group": "field:title",
+      "indexname": "test",
+      "number": "30",
+      "op": "hits-grouped",
+      "patt": "\"a\"",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
+    "searchTime": "VALUE_REMOVED",
+    "stillCounting": false,
+    "stoppedCountingHits": false,
+    "stoppedRetrievingHits": false,
+    "subcorpusSize": {
+      "documents": 3,
+      "tokens": 766
+    },
+    "tokensInMatchingDocuments": 766,
+    "windowFirstResult": 0,
+    "windowHasNext": false,
+    "windowHasPrevious": false
+  }
+}

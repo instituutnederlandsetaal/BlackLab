@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 /**
  * Definitions of match information (captured groups) for a query.
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 public class MatchInfoDefs {
     public static final MatchInfoDefs EMPTY = new MatchInfoDefs() {
         @Override
-        MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
+        synchronized MatchInfo.Def addNew(String name, MatchInfo.Type type, String field, String targetField) {
             throw new UnsupportedOperationException("Cannot add to DUMMY MatchInfoDefs");
         }
     };
@@ -63,7 +62,7 @@ public class MatchInfoDefs {
     public synchronized List<MatchInfo.Def> currentListFiltered(Predicate<MatchInfo.Def> filter) {
         return defs.stream()
                 .filter(filter)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**

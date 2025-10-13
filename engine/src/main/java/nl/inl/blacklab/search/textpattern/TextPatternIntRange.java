@@ -13,11 +13,9 @@ import nl.inl.util.RangeRegex;
  */
 public class TextPatternIntRange extends TextPatternTerm {
 
-    private int min;
+    private final int min;
 
-    private int max;
-
-    private String annotation;
+    private final int max;
 
     public TextPatternIntRange(int min, int max) {
         this(min, max, null);
@@ -27,7 +25,6 @@ public class TextPatternIntRange extends TextPatternTerm {
         super(getRegex(min, max), annotation, null);
         this.min = min;
         this.max = max;
-        this.annotation = annotation;
     }
 
     public int getMin() {

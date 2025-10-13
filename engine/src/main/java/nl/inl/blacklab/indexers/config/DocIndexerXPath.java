@@ -3,15 +3,14 @@ package nl.inl.blacklab.indexers.config;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.search.BlackLab;
@@ -23,8 +22,6 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
 import nl.inl.util.StringUtil;
 
 public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
-
-    private static final Set<String> reportedWarnings = new HashSet<>();
 
     public static final String FT_OPT_PROCESSOR = "processor";
 
@@ -54,20 +51,6 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         return new DocIndexerVTD(); // VTD was the original default (v2 will automatically set Saxon as default)
     }
 
-    /** Don't issue warnings again if they starts with the same prefix. */
-    synchronized static void warnOnce(String message, String prefix) {
-        if (!reportedWarnings.contains(prefix)) {
-            logger.warn(message);
-            logger.warn("  (above warning is only issued once)");
-            reportedWarnings.add(prefix);
-        }
-    }
-
-    /** Don't issue warning again if the message is the same */
-    synchronized static void warnOnce(String message) {
-        warnOnce(message, message);
-    }
-
     /**
      * Can this subannotation reuse values from its parent?
      * This is often the case with part of speech annotations, where the parent might
@@ -88,7 +71,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
     protected String optSanitizeFieldName(String origFieldName) {
         String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName, disallowDashInname());
         if (!origFieldName.equals(fieldName)) {
-            warnOnce("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
+            warnOnce().warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
         }
         return fieldName;
     }
@@ -293,14 +276,16 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
         });
     }
 
-    private static void warnUnresolvedTokenId(String tokenId, String baseMessage) {
+    WarnOnce warnOnce() {
+        return getDocWriter().warnOnce();
+    }
+
+    private void warnUnresolvedTokenId(String tokenId, String baseMessage) {
         // Warn about unresolved reference, but only once per token id prefix.
         // (so e.g. missing document isn't reported a million times)
         String tokenIdPrefix = tokenId.length() > TOKEN_ID_PREFIX_LENGTH ? tokenId.substring(0, TOKEN_ID_PREFIX_LENGTH) : tokenId;
         String tokenIdRest = tokenId.length() > TOKEN_ID_PREFIX_LENGTH ? tokenId.substring(TOKEN_ID_PREFIX_LENGTH) : "";
-        String prefix = baseMessage + ": '" + tokenIdPrefix;
-        String message = prefix + tokenIdRest + "'";
-        warnOnce(message, prefix);
+        warnOnce().warn(baseMessage + ": '" + tokenIdPrefix, tokenIdRest + "'");
     }
 
     protected void processSubannotations(ConfigAnnotation parentAnnot, T context,
@@ -474,7 +459,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 // Find our specific document in the file
                 xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
                     if (docDone.get())
-                        throw new BlackLabRuntimeException(
+                        throw new ErrorIndexingFile(
                                 "Document link " + documentXPath + " matched multiple documents in "
                                         + documentName);
                     indexDocument(doc);
@@ -485,10 +470,10 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
                 docDone.set(indexParsedFile(config.getDocumentPath(), true));
             }
         } catch (Exception e1) {
-            throw BlackLabRuntimeException.wrap(e1);
+            throw BlackLabException.wrapRuntime(e1);
         }
         if (!docDone.get())
-            throw new BlackLabRuntimeException("Linked document not found in " + documentName);
+            throw new ErrorIndexingFile("Linked document not found in " + documentName);
     }
 
     protected void processMetadataBlock(T doc, ConfigMetadataBlock metaBlock) {
@@ -589,7 +574,7 @@ public abstract class DocIndexerXPath<T> extends DocIndexerConfig {
             AtomicBoolean docDone = new AtomicBoolean(false); // any doc(s) processed?
             xpathForEach(docXPath, contextNodeWholeDocument(),(doc) -> {
                 if (mustBeSingleDocument && docDone.get())
-                    throw new BlackLabRuntimeException(
+                    throw new ErrorIndexingFile(
                             "Linked file contains multiple documents (and no document path given) in "
                                     + documentName);
                 indexDocument(doc);

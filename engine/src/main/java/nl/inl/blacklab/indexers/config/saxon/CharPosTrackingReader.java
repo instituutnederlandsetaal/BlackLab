@@ -13,7 +13,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongIterator;
 import it.unimi.dsi.fastutil.longs.LongList;
 import net.sf.saxon.om.NodeInfo;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 
 /** Tracks characters positions for each tag in an XML document while reading through it. */
 public class CharPosTrackingReader extends Reader {
@@ -22,7 +22,7 @@ public class CharPosTrackingReader extends Reader {
     private static final int AVERAGE_CHARS_PER_TAG_ESTIMATE = 20;
 
     /** Document we're reading */
-    private Reader reader;
+    private final Reader reader;
 
     /** How many characters have been read from our reader. */
     private long charsRead;
@@ -36,13 +36,13 @@ public class CharPosTrackingReader extends Reader {
      * End-of-line characters are included in the count.
      * Used to translate line/column into character position.
      */
-    private LongList lineNumberToCharPos;
+    private final LongList lineNumberToCharPos;
 
     /**
      * The positions of all open brackets &lt; in the document.
      * We use these to find the starting character position of a tag.
      */
-    private LongList openBracketPositions;
+    private final LongList openBracketPositions;
 
     /**
      * We need to be able to find the start char. position of a tag, but we only know the end position.
@@ -59,7 +59,7 @@ public class CharPosTrackingReader extends Reader {
      * Connects recorded SAX positions (just after start and end tags) to the calculated
      * characters positions of those tags.
      */
-    private Map<Long, StartEndPos> startEndPosMap;
+    private final Map<Long, StartEndPos> startEndPosMap;
 
     /** Our element stack while parsing, for filling in the end tag character position when we encounter it. */
     private final Deque<StartEndPos> elStack = new ArrayDeque<>();
@@ -130,7 +130,7 @@ public class CharPosTrackingReader extends Reader {
 
         // NOTE more testing needed for self closing tags
         if (begin == end) {
-            throw new BlackLabRuntimeException(String.format("No '<' found for %s at line %d, col %d, charpos %d",
+            throw new ErrorIndexingFile(String.format("No '<' found for %s at line %d, col %d, charpos %d",
                     qName, locator.getLineNumber(), locator.getColumnNumber(), end));
         }
         StartEndPos startEndPos = new StartEndPos(begin);
@@ -149,6 +149,7 @@ public class CharPosTrackingReader extends Reader {
         elStack.pop().setEndPos(charPosForLineAndCol(locator.getLineNumber(), locator.getColumnNumber()));
     }
 
+    @Override
     public int read() throws IOException {
         int currentChar;
         if (readAheadChar != 0) {

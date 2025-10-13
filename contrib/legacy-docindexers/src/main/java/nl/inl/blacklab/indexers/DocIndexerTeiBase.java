@@ -40,7 +40,7 @@ public abstract class DocIndexerTeiBase extends DocIndexerXmlHandlers {
     final String contentElement;
 
     @SuppressWarnings("deprecation")
-    public DocIndexerTeiBase(DocWriter indexer, String fileName, Reader reader, String contentElement,
+    protected DocIndexerTeiBase(DocWriter indexer, String fileName, Reader reader, String contentElement,
             boolean defaultToPosInTypeAttribute) {
         super(indexer, fileName, reader);
 

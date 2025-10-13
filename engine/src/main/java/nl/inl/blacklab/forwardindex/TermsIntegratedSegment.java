@@ -2,6 +2,7 @@ package nl.inl.blacklab.forwardindex;
 
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.store.IndexInput;
@@ -10,7 +11,7 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.codec.BlackLabPostingsFormat;
 import nl.inl.blacklab.codec.BlackLabPostingsReader;
 import nl.inl.blacklab.codec.ForwardIndexField;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 
 /**
  * Presents an iterator over ONE field/annotation in ONE segment of the Index.
@@ -53,17 +54,17 @@ public class TermsIntegratedSegment implements AutoCloseable {
                 }
                 // we checked all fields but did not find it.
                 if (this.field == null)
-                    throw new BlackLabRuntimeException("Trying to read forward index for field "+luceneField+ ", but it does not exist.");
+                    throw new InvalidIndex("Trying to read forward index for field "+luceneField+ ", but it does not exist.");
             }
         } catch (IOException e) {
-            throw new BlackLabRuntimeException("Error reading forward index/terms for segment");
+            throw new InvalidIndex("Error reading forward index/terms for segment");
         }
     }
 
     public synchronized Iterator<TermInSegment> iterator() {
         // NOTE: method is synchronized because TermInSegmentIterator constructor uses IndexInput.clone(), which is
         // not thread-safe.
-        if (this.isClosed) throw new BlackLabRuntimeException("Segment is closed");
+        if (this.isClosed) throw new IllegalStateException("Segment is closed");
         return new TermInSegmentIterator(this);
     }
 
@@ -77,7 +78,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
             _termIndexFile = _termsFile = _termOrderFile = null;
             segmentReader = null;
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -158,7 +159,7 @@ public class TermsIntegratedSegment implements AutoCloseable {
 
                 this.termStringFile.seek(firstStringOffset);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 
@@ -171,12 +172,12 @@ public class TermsIntegratedSegment implements AutoCloseable {
         public TermInSegment next() {
             try {
                 if (i >= n)
-                    return null;
+                    throw new NoSuchElementException();
                 this.t.term = termStringFile.readString();
                 this.t.id = i++;
                 return this.t;
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
 

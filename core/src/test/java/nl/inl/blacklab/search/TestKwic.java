@@ -2,7 +2,6 @@ package nl.inl.blacklab.search;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -15,7 +14,7 @@ public class TestKwic {
 
     static final List<String> PROPS = Arrays.asList(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME, "lemma", "pos", "word");
     
-    static final List<Annotation> ANNOTS = PROPS.stream().map(MockAnnotation::new).collect(Collectors.toList());
+    static final List<Annotation> ANNOTS = PROPS.stream().map(name -> (Annotation)new MockAnnotation(name)).toList();
 
     static final List<String> TOKENS = Arrays.asList(
             " ", "de", "lw", "De",

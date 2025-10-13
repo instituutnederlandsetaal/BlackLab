@@ -62,7 +62,7 @@ public abstract class TermsExternalUtil {
 
             // Read term strings data
             int dataBlockSize = termStringOffsets[currentTerm + numTermsThisBlock] = ib.get();
-            ((Buffer)buf).position(buf.position() + Integer.BYTES * (numTermsThisBlock + 2));
+            buf.position(buf.position() + Integer.BYTES * (numTermsThisBlock + 2));
             byte[] termStringsThisBlock = new byte[dataBlockSize];
             buf.get(termStringsThisBlock);
 

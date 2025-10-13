@@ -7,11 +7,11 @@ public abstract class SpanGuaranteesAdapter implements SpanGuarantees {
 
     private final SpanGuarantees wrapped;
 
-    public SpanGuaranteesAdapter() {
+    protected SpanGuaranteesAdapter() {
         this(NONE);
     }
 
-    public SpanGuaranteesAdapter(SpanGuarantees wrapped) {
+    protected SpanGuaranteesAdapter(SpanGuarantees wrapped) {
         this.wrapped = wrapped;
     }
 

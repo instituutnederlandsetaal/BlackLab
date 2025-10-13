@@ -3,7 +3,6 @@ package nl.inl.blacklab.contentstore;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.nio.channels.FileChannel;
@@ -13,7 +12,7 @@ import org.eclipse.collections.api.map.primitive.MutableIntObjectMap;
 import org.eclipse.collections.impl.factory.primitive.IntObjectMaps;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.util.CollUtil;
 import nl.inl.util.SimpleResourcePool;
 
@@ -123,7 +122,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             IntBuffer ib = buf.asIntBuffer();
             ib.put(blockIndices);
             ib.put(blockCharOffsets);
-            ((Buffer)buf).position(buf.position() + blockIndices.length * Integer.BYTES * 2);
+            buf.position(buf.position() + blockIndices.length * Integer.BYTES * 2);
         }
 
         /**
@@ -143,7 +142,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             IntBuffer ib = buf.asIntBuffer();
             ib.get(blockIndices);
             ib.get(blockCharOffsets);
-            ((Buffer)buf).position(buf.position() + blockIndices.length * Integer.BYTES * 2);
+            buf.position(buf.position() + blockIndices.length * Integer.BYTES * 2);
             return new TocEntry(id, length, charLength, deleted, blockIndices, blockCharOffsets);
         }
 
@@ -222,7 +221,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
     }
 
     @Override
-    public synchronized final void initialize() {
+    public final synchronized void initialize() {
         if (initialized)
             return;
         performInitialization();
@@ -251,7 +250,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             tocFileBuffer = null;
 
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -265,7 +264,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
         try {
             mapToc(false, false);
             try {
-                ((Buffer)tocFileBuffer).position(0);
+                tocFileBuffer.position(0);
                 int n = tocFileBuffer.getInt();
                 totalBlocks = 0;
                 for (int i = 0; i < n; i++) {
@@ -304,7 +303,7 @@ public abstract class ContentStoreFixedBlock extends ContentStoreDirAbstract {
             }
 
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

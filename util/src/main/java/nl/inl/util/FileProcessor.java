@@ -15,8 +15,10 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.index.ZipHandleManager;
 
 /**
@@ -25,6 +27,8 @@ import nl.inl.blacklab.index.ZipHandleManager;
  * configuration is changed during processing.
  */
 public class FileProcessor implements AutoCloseable {
+
+    private static final Logger logger = LogManager.getLogger(FileProcessor.class);
 
     public interface FileHandler {
         /**
@@ -86,6 +90,8 @@ public class FileProcessor implements AutoCloseable {
      * Simple error handler that reports errors and can abort or continue.
      */
     public static class SimpleErrorHandler implements ErrorHandler {
+        private static final Logger logger = LogManager.getLogger(SimpleErrorHandler.class);
+
         private final boolean continueOnError;
 
         public SimpleErrorHandler(boolean continueOnError) {
@@ -94,8 +100,8 @@ public class FileProcessor implements AutoCloseable {
 
         @Override
         public synchronized boolean errorOccurred(Throwable e, String path, File f) {
-            System.err.println("Error processing file " + (f != null ? f.toString() : path));
-            e.printStackTrace(System.err);
+            logger.error("Error processing file " + (f != null ? f.toString() : path));
+            logger.error(e);
             return continueOnError;
         }
     }
@@ -139,13 +145,13 @@ public class FileProcessor implements AutoCloseable {
                 ZipFile z = ZipHandleManager.openZip(f);
                 ZipEntry e = z.getEntry(pathInsideArchive);
                 if (e == null) {
-                    throw new BlackLabRuntimeException("Linked document " + pathInsideArchive + " not found in archive " + f);
+                    throw new ErrorIndexingFile("Linked document " + pathInsideArchive + " not found in archive " + f);
                 }
                 try (InputStream is = z.getInputStream(e)) {
                     return FileReference.fromBytes(f.getCanonicalPath() + "/" + pathInsideArchive, IOUtils.toByteArray(is), f);
                 }
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw new ErrorIndexingFile(e);
             }
         } else {
             throw new UnsupportedOperationException("Unsupported archive type: " + f.getName());
@@ -186,7 +192,7 @@ public class FileProcessor implements AutoCloseable {
     private ExecutorService executor = null;
 
     /** Are we processing multiple files in separte threads? If not, we can optimize. */
-    private boolean isMultiThreaded;
+    private final boolean isMultiThreaded;
 
     /**
      * FileProcessor operates in two distinct stages: - The traversal of
@@ -243,6 +249,7 @@ public class FileProcessor implements AutoCloseable {
                             try {
                                 return offer(r, Integer.MAX_VALUE, TimeUnit.DAYS);
                             } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt(); // preserve interrupted status
                                 return false;
                             }
                         }
@@ -406,7 +413,7 @@ public class FileProcessor implements AutoCloseable {
                 }
                 processFile(fr);
             } catch (IOException e) {
-                throw new BlackLabRuntimeException(e);
+                throw new ErrorIndexingFile(e);
             }
             return !closed; // quit processing the archive if we've received an error in the meantime
         };
@@ -439,8 +446,8 @@ public class FileProcessor implements AutoCloseable {
         // Only report the first fatal exception
         if (!aborted) {
             if (errorHandler == null) {
-                System.err.println("WARNING: No errorHandler set for FileProcessor!");
-                e.printStackTrace(System.err);
+                logger.warn("WARNING: No errorHandler set for FileProcessor!");
+                logger.warn(e);
             }
             if (errorHandler == null || !errorHandler.errorOccurred(e, path, f)) {
                 abort();
@@ -492,7 +499,8 @@ public class FileProcessor implements AutoCloseable {
             // This is used by tasks that threw a fatal exception
             executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
         } catch (InterruptedException e) {
-            throw new BlackLabRuntimeException("Interrupted while waiting for processing threads to finish", e);
+            Thread.currentThread().interrupt(); // preserve interrupted status
+            throw new IllegalStateException("Interrupted while waiting for processing threads to finish", e);
         }
     }
 

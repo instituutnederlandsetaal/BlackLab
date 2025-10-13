@@ -23,7 +23,6 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
                 case RELATION -> "relation";
                 case LIST_OF_RELATIONS -> "list";
                 case INLINE_TAG -> "tag";
-                default -> throw new RuntimeException("Unknown match info type: " + this);
             };
         }
     }
@@ -37,7 +36,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
      * @param b the second MatchInfo
      * @return true iff both are null, or if they are equal
      */
-    public static boolean equal(MatchInfo[] a, MatchInfo[] b) {
+    public static boolean areEqual(MatchInfo[] a, MatchInfo[] b) {
         if ((a == null) != (b == null)) {
             // One is null, the other is not.
             return false;

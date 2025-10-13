@@ -11,6 +11,7 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,7 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonIgnoreProperties(value = { "name" })
-public class AnnotatedField implements Cloneable {
+public class AnnotatedField {
 
     /** Use this to serialize annotatedFields to JSON.
      *
@@ -62,7 +63,7 @@ public class AnnotatedField implements Cloneable {
 
             JsonToken token = parser.currentToken();
             if (token != JsonToken.START_OBJECT)
-                throw new RuntimeException("Expected START_OBJECT, found " + token);
+                throw new ErrorReadingResponse("Expected START_OBJECT, found " + token);
             return SerializationUtil.readAnnotations(parser, deserializationContext);
         }
     }
@@ -76,6 +77,12 @@ public class AnnotatedField implements Cloneable {
     public String fieldName;
 
     public boolean isAnnotatedField = true;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long tokenCount;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Long documentCount;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName = "";
@@ -109,6 +116,8 @@ public class AnnotatedField implements Cloneable {
                 ", indexName='" + indexName + '\'' +
                 ", fieldName='" + fieldName + '\'' +
                 ", isAnnotatedField=" + isAnnotatedField +
+                ", tokenCount=" + tokenCount +
+                ", documentCount=" + documentCount +
                 ", displayName='" + displayName + '\'' +
                 ", description='" + description + '\'' +
                 ", hasContentStore=" + hasContentStore +
@@ -120,15 +129,6 @@ public class AnnotatedField implements Cloneable {
     }
 
     private AnnotatedField() {}
-
-    @Override
-    public AnnotatedField clone() {
-        try {
-            return (AnnotatedField)super.clone();
-        } catch (CloneNotSupportedException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     public AnnotatedField(String name) {
         this.name = this.fieldName = name;

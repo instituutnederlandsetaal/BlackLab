@@ -6,11 +6,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -20,8 +22,6 @@ import java.util.regex.Pattern;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 
 /**
  * Utilities for working with files
@@ -39,11 +39,14 @@ public class FileUtil {
      * Sorts File objects alphabetically, case-insensitively, subdirectories first.
      * Used by listFilesSorted().
      */
-    final public static Comparator<File> LIST_FILES_COMPARATOR = (a, b) -> {
+    public static final Comparator<File> LIST_FILES_COMPARATOR = (a, b) -> {
         int ad = a.isDirectory() ? 0 : 1;
         int bd = b.isDirectory() ? 0 : 1;
         return ad != bd ? (ad - bd) : a.getName().compareToIgnoreCase(b.getName());
     };
+
+    private FileUtil() {
+    }
 
     /**
      * Opens a file for writing in the default encoding.
@@ -103,7 +106,7 @@ public class FileUtil {
      * @param inputFile the file to read
      * @return list of lines
      */
-    public static List<String> readLines(File inputFile) {
+    public static List<String> readLines(File inputFile) throws IOException {
         return readLines(inputFile, DEFAULT_ENCODING);
     }
 
@@ -114,19 +117,15 @@ public class FileUtil {
      * @param encoding the encoding to use, e.g. "utf-8"
      * @return list of lines
      */
-    public static List<String> readLines(File inputFile, Charset encoding) {
-        try {
-            List<String> result = new ArrayList<>();
-            try (BufferedReader in = openForReading(inputFile, encoding)) {
-                String line;
-                while ((line = in.readLine()) != null) {
-                    result.add(StringUtil.trimWhitespace(line));
-                }
+    public static List<String> readLines(File inputFile, Charset encoding) throws IOException {
+        List<String> result = new ArrayList<>();
+        try (BufferedReader in = openForReading(inputFile, encoding)) {
+            String line;
+            while ((line = in.readLine()) != null) {
+                result.add(StringUtil.trimWhitespace(line));
             }
-            return result;
-        } catch (Exception e) {
-            throw new BlackLabRuntimeException(e);
         }
+        return result;
     }
 
     /**
@@ -134,7 +133,7 @@ public class FileUtil {
      *
      * @param dir directory tree to delete.
      */
-    public static void deleteTree(File dir) {
+    public static void deleteTree(File dir) throws IOException {
         deleteTree(dir, false);
     }
 
@@ -144,33 +143,63 @@ public class FileUtil {
      * @param dir directory tree to delete.
      * @param throwOnError if true, throw an exception if a file could not be deleted.
      */
-    public static void deleteTree(File dir, boolean throwOnError) {
+    public static void deleteTree(File dir, boolean throwOnError) throws IOException {
         // Recursively delete this temp dir
         processTree(dir, new FileTask() {
             @Override
-            public void process(File f) {
+            public void process(File f) throws IOException {
                 if (!f.delete() && throwOnError) {
                     if (f.isDirectory())
-                        throw new RuntimeException("Could not delete directory: " + f);
+                        throw new IOException("Could not delete directory: " + f);
                     else
-                        throw new RuntimeException("Could not delete file: " + f);
+                        throw new IOException("Could not delete file: " + f);
                 }
             }
         });
         if (!dir.delete() && throwOnError)
-            throw new RuntimeException("Could not delete directory: " + dir);
+            throw new IOException("Could not delete directory: " + dir);
+    }
+
+    /** Check if a file is in a given directory or one of its subdirectories.
+     *
+     * @param file the file to check
+     * @param directory the directory to check against
+     * @return true if the file is in the directory or one of its subdirectories, false otherwise
+     */
+    public static boolean isFileInDirectory(File file, File directory) {
+        return file.toPath().normalize().startsWith(directory.toPath().normalize());
+    }
+
+    /**
+     * Create a temporary file in the java.io.tmpdir and ensure it is
+     * actually in that directory.
+     *
+     * @param fileName (part of) name of temp file
+     * @return the temporary file
+     * @throws IOException if an error occurs while creating the file
+     */
+    public static File createTempFileSafe(String fileName) throws IOException {
+        File tempDir = new File(System.getProperty("java.io.tmpdir"));
+        SecureRandom random = new SecureRandom();
+        File file = new File(tempDir, random.nextInt(Integer.MAX_VALUE) + "_" + fileName);
+        boolean ok = isFileInDirectory(file, tempDir);
+        if (!ok)
+            throw new IllegalStateException("Uploaded file not in temp dir: " + file.getName());
+        if (!file.createNewFile())
+            throw new IOException("Could not create temp file: " + file.getName());
+        return file;
     }
 
     /**
      * A task to execute on a file. Used by processTree().
      */
-    public static abstract class FileTask {
+    public abstract static class FileTask {
         /**
          * Execute the task on this file.
          *
          * @param f the file to process
          */
-        public abstract void process(File f);
+        public abstract void process(File f) throws IOException;
     }
 
     /**
@@ -182,7 +211,7 @@ public class FileUtil {
      * @param root the directory to start in (all subdirs are processed)
      * @param task the task to execute for every file
      */
-    public static void processTree(File root, FileTask task) {
+    public static void processTree(File root, FileTask task) throws IOException {
         if (!root.isDirectory())
             throw new IllegalArgumentException("FileUtil.processTree: must be called with a directory! "
                     + root);
@@ -207,7 +236,7 @@ public class FileUtil {
      * @param recurseSubdirs whether or not to process subdirectories
      * @param task the task to execute for every file
      */
-    public static void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) {
+    public static void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) throws IOException {
         Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
         for (File file : listFilesSorted(dir)) {
             if (file.isDirectory()) {
@@ -309,7 +338,7 @@ public class FileUtil {
     public static File[] listFilesSorted(File dir) {
         File[] files = dir.listFiles();
         if (files == null)
-            throw new BlackLabRuntimeException("Error listing in directory: " + dir);
+            throw new IllegalArgumentException("Error listing in directory: " + dir);
         Arrays.sort(files, LIST_FILES_COMPARATOR);
         return files;
     }

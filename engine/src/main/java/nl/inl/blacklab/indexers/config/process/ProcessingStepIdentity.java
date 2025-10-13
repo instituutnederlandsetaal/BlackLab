@@ -19,10 +19,12 @@ public class ProcessingStepIdentity extends ProcessingStep {
         return values;
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         return value;
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

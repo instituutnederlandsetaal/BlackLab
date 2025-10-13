@@ -9,7 +9,6 @@ import org.apache.commons.lang3.ArrayUtils;
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.Terms;
@@ -179,7 +178,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
     protected final BlackLabIndex index;
 
     /** Copy constructor, used to create a copy with e.g. a different Hits object. */
-    public HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
+    protected HitPropertyContextBase(HitPropertyContextBase prop, Hits hits, boolean invert, String overrideField) {
         super(prop, hits, invert);
         this.index = hits == null ? prop.index : hits.index();
         this.annotation = annotationOverrideField(prop.index, prop.annotation, overrideField);
@@ -201,7 +200,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         }
     }
 
-    public HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
+    protected HitPropertyContextBase(String name, String serializeName, BlackLabIndex index, Annotation annotation,
             MatchSensitivity sensitivity, boolean compareInReverse) {
         super();
         this.name = name;
@@ -261,7 +260,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
             for (long i = 1; i < size; ++i) { // start at 1: variables already have correct values for primed for hit 0
                 final int curDoc = ha.doc(i);
                 if (curDoc != prevDoc) {
-                    try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { throw new InterruptedSearch(e); }
+                    try { hits.threadAborter().checkAbort(); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new InterruptedSearch(e); }
                     // Process hits in preceding document:
                     fetchContextForDoc(setStartEnd, prevDoc, firstHitInCurrentDoc, i);
                     // start a new document
@@ -283,7 +282,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
         assert fromIndex >= 0 && toIndexExclusive > 0;
         assert fromIndex < toIndexExclusive;
         if (toIndexExclusive - fromIndex > Constants.JAVA_MAX_ARRAY_SIZE)
-            throw new BlackLabRuntimeException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
+            throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits in a single doc");
         int n = (int)(toIndexExclusive - fromIndex);
 
         // Determine which bits of context to get
@@ -328,8 +327,9 @@ public abstract class HitPropertyContextBase extends HitProperty {
             fetchContext();
         int[] ca = contextSortOrder.get(indexA);
         int[] cb = contextSortOrder.get(indexB);
-        int cmp = Arrays.compare(ca, cb);
-        return reverse ? -cmp : cmp;
+        return reverse ?
+                Arrays.compare(cb, ca) :
+                Arrays.compare(ca, cb);
     }
 
     @Override

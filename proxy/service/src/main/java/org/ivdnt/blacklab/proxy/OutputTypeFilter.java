@@ -24,9 +24,9 @@ public class OutputTypeFilter implements ContainerRequestFilter {
         UriInfo uriInfo = ctx.getUriInfo();
         MultivaluedMap<String, String> param = uriInfo.getQueryParameters();
         List<String> parOutput = param.get("outputformat");
-        if (parOutput != null && parOutput.size() > 0) {
+        if (parOutput != null && !parOutput.isEmpty()) {
             String outputType = parOutput.get(0);
-            switch(outputType) {
+            switch (outputType) {
             case "xml":
                 ctx.getHeaders().replace("Accept", Arrays.asList("application/xml"));
                 break;
@@ -35,6 +35,9 @@ public class OutputTypeFilter implements ContainerRequestFilter {
                 break;
             case "html":
                 ctx.getHeaders().replace("Accept", Arrays.asList("text/html"));
+                break;
+            default:
+                // Ignore unknown output types
                 break;
             }
         }

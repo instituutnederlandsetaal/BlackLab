@@ -85,7 +85,7 @@ public abstract class BLSpans extends Spans implements SpanGuaranteeGiver {
      *  comes from a different anntotated field, e.g. contents__nl. */
     private String overriddenField = null;
 
-    public BLSpans(SpanGuarantees guarantees) {
+    protected BLSpans(SpanGuarantees guarantees) {
         this.guarantees = guarantees == null ? SpanGuarantees.NONE : guarantees;
     }
 

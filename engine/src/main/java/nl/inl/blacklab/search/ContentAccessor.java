@@ -11,9 +11,9 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 public class ContentAccessor {
     protected Field field;
 
-    private ContentStore contentStore;
+    private final ContentStore contentStore;
 
-    private String contentIdField;
+    private final String contentIdField;
 
     public ContentAccessor(Field field, ContentStore contentStore) {
         this.field = field;

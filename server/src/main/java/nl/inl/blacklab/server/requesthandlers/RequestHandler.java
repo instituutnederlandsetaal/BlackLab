@@ -21,6 +21,7 @@ import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.IndexNotFound;
 import nl.inl.blacklab.server.index.Index;
@@ -35,6 +36,7 @@ import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.blacklab.webservice.BlsPath;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -49,28 +51,28 @@ public abstract class RequestHandler {
 
     public static final int HTTP_OK = HttpServletResponse.SC_OK;
 
-    public static final String ENDPOINT_AUTOCOMPLETE     = "autocomplete";
-    public static final String ENDPOINT_CACHE_CLEAR      = "cache-clear";
-    public static final String ENDPOINT_CACHE_INFO       = "cache-info";
-    public static final String ENDPOINT_DOCS             = "docs";
-    public static final String ENDPOINT_DOCS_CSV         = "docs-csv";
-    public static final String ENDPOINT_DOCS_GROUPED     = "docs-grouped";
-    public static final String ENDPOINT_DOCS_GROUPED_CSV = "docs-grouped-csv";
+    public static final String ENDPOINT_AUTOCOMPLETE     = BlsPath.AUTOCOMPLETE.path();
+    public static final String ENDPOINT_CACHE_CLEAR      = BlsPath.CACHE_CLEAR.path();
+    public static final String ENDPOINT_CACHE_INFO       = BlsPath.CACHE_INFO.path();
+    public static final String ENDPOINT_DOCS             = BlsPath.DOCS.path();
+    public static final String ENDPOINT_DOCS_CSV         = BlsPath.DOCS.path() + "-csv";
+    public static final String ENDPOINT_DOCS_GROUPED     = BlsPath.DOCS.path() + "-grouped";
+    public static final String ENDPOINT_DOCS_GROUPED_CSV = BlsPath.DOCS.path() + "-grouped-csv";
     public static final String ENDPOINT_DOC_CONTENTS     = "doc-contents";
     public static final String ENDPOINT_DOC_INFO         = "doc-info";
     public static final String ENDPOINT_DOC_SNIPPET      = "doc-snippet";
-    public static final String ENDPOINT_FIELDS           = "fields";
-    public static final String ENDPOINT_HITS             = "hits";
-    public static final String ENDPOINT_HITS_CSV         = "hits-csv";
-    public static final String ENDPOINT_HITS_GROUPED     = "hits-grouped";
-    public static final String ENDPOINT_HITS_GROUPED_CSV = "hits-grouped-csv";
-    public static final String ENDPOINT_INPUT_FORMATS    = "input-formats";
-    public static final String ENDPOINT_PARSE_PATTERN    = "parse-pattern";
-    public static final String ENDPOINT_RELATIONS        = "relations";
-    public static final String ENDPOINT_SHARED_WITH_ME   = "shared-with-me";
-    public static final String ENDPOINT_SHARING          = "sharing";
-    public static final String ENDPOINT_STATUS           = "status";
-    public static final String ENDPOINT_TERMFREQ         = "termfreq";
+    public static final String ENDPOINT_FIELDS           = BlsPath.FIELDS.path();
+    public static final String ENDPOINT_HITS             = BlsPath.HITS.path();
+    public static final String ENDPOINT_HITS_CSV         = BlsPath.HITS.path() + "-csv";
+    public static final String ENDPOINT_HITS_GROUPED     = BlsPath.HITS.path() + "-grouped";
+    public static final String ENDPOINT_HITS_GROUPED_CSV = BlsPath.HITS.path() + "-grouped-csv";
+    public static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
+    public static final String ENDPOINT_PARSE_PATTERN    = BlsPath.PARSE_PATTERN.path();
+    public static final String ENDPOINT_RELATIONS        = BlsPath.RELATIONS.path();
+    public static final String ENDPOINT_SHARED_WITH_ME   = BlsPath.SHARED_WITH_ME.path();
+    public static final String ENDPOINT_SHARING          = BlsPath.SHARING.path();
+    public static final String ENDPOINT_STATUS           = BlsPath.STATUS.path();
+    public static final String ENDPOINT_TERMFREQ         = BlsPath.TERMFREQ.path();
 
     public static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
             WebserviceOperation.CACHE_CLEAR.path(),
@@ -165,13 +167,24 @@ public abstract class RequestHandler {
         String method = request.getMethod();
         boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
-            // Index given and nothing else?
             if (isInputFormatsRequest) {
+                // Delete input format
                 if (!urlPathInfo.isEmpty())
                     return errorObj.methodNotAllowed("DELETE", null);
                 requestHandler = new RequestHandlerDeleteFormat(userRequest);
+            } if (!indexName.isEmpty() && urlResource.equals(ENDPOINT_DOCS) && !urlPathInfo.isEmpty()) {
+                // DELETE /docs/<pid>: delete a document from a private index
+                String pid = urlPathInfo;
+                if (pid.endsWith("/"))
+                    pid = pid.substring(0, urlPathInfo.length() - 1);
+                if (!pid.contains("/")) {
+                    if (privateIndex == null || !privateIndex.userMayDelete(user))
+                        return errorObj.forbidden("You can only delete documents from your own private indices.");
+                    requestHandler = new RequestHandlerDeleteDocument(userRequest);
+                }
             } else {
-                if (indexName.length() == 0 || resourceOrPathGiven) {
+                // Delete index
+                if (indexName.isEmpty() || resourceOrPathGiven) {
                     return errorObj.methodNotAllowed("DELETE", null);
                 }
                 if (privateIndex == null || !privateIndex.userMayDelete(user))
@@ -183,7 +196,7 @@ public abstract class RequestHandler {
         } else {
             boolean postAsGet = false;
             if (method.equals("POST")) {
-                if (indexName.length() == 0 && !resourceOrPathGiven) {
+                if (indexName.isEmpty() && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
                     requestHandler = new RequestHandlerCreateIndex(userRequest);
                 } else if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
@@ -240,7 +253,7 @@ public abstract class RequestHandler {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");
                     requestHandler = new RequestHandlerSharedWithMe(userRequest);
-                } else if (indexName.length() == 0) {
+                } else if (indexName.isEmpty()) {
                     // No index or operation given; server info
                     requestHandler = new RequestHandlerServerInfo(userRequest);
                 } else {
@@ -249,7 +262,7 @@ public abstract class RequestHandler {
                         String handlerName = urlResource;
 
                         IndexStatus status = indexManager.getIndex(indexName).getStatus();
-                        if (status != IndexStatus.AVAILABLE && handlerName.length() > 0 && !handlerName.equals("debug")
+                        if (status != IndexStatus.AVAILABLE && !handlerName.isEmpty() && !handlerName.equals("debug")
                                 && !handlerName.equals(ENDPOINT_FIELDS) && !handlerName.equals(
                                 ENDPOINT_STATUS)
                                 && !handlerName.equals(ENDPOINT_SHARING)) {
@@ -268,7 +281,7 @@ public abstract class RequestHandler {
                         // HACK to avoid having a different url resource for
                         // the lists of (hit|doc) groups: instantiate a different
                         // request handler class in this case.
-                        else if (handlerName.equals(ENDPOINT_DOCS) && urlPathInfo.length() > 0) {
+                        else if (handlerName.equals(ENDPOINT_DOCS) && !urlPathInfo.isEmpty()) {
                             handlerName = ENDPOINT_DOC_INFO;
                             String p = urlPathInfo;
                             if (p.endsWith("/"))
@@ -318,11 +331,11 @@ public abstract class RequestHandler {
             }
         }
 
-        requestHandler.setInstrumentationProvider(userRequest.getInstrumentationProvider());
         if (requestHandler == null) {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
+        requestHandler.setInstrumentationProvider(userRequest.getInstrumentationProvider());
         requestHandler.setIsNewEndpoint(isNewEndpoint);
         return requestHandler;
     }
@@ -359,6 +372,7 @@ public abstract class RequestHandler {
                     Thread.sleep(sleepMs);
                     logger.debug("Ahh, that was a nice snooze!");
                 } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt(); // preserve interrupted status
                     return false;
                 }
             }
@@ -366,7 +380,7 @@ public abstract class RequestHandler {
         return true;
     }
 
-    private UserRequestBls userRequest;
+    private final UserRequestBls userRequest;
 
     protected boolean debugMode;
 
@@ -495,6 +509,16 @@ public abstract class RequestHandler {
         return false;
     }
 
+    /** Extract the doc pid from path info like "doc0001/contents" */
+    void determineDocPidFromPathInfo() {
+        // Find the document pid
+        int i = urlPathInfo.indexOf('/');
+        String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
+        if (docPid.isEmpty())
+            throw new BadRequest("NO_DOC_ID", "Specify document pid.");
+        params.setDocPid(docPid);
+    }
+
     protected boolean isDocsOperation() {
         return false;
     }
@@ -537,5 +561,16 @@ public abstract class RequestHandler {
 
     public WebserviceParams getParams() {
         return params;
+    }
+
+    /** Get a parameter value without newlines or carriage returns.
+     *
+     * This is to prevent issues when logging the parameter value.
+     *
+     * @return the parameter value, or null if not set
+     */
+    protected String getParameterNoLineEndings(String name) {
+        String value = request.getParameter(name);
+        return value == null ? null : value.replaceAll("[\n\r]", "_");
     }
 }

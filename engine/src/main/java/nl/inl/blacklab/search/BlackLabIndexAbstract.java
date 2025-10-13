@@ -32,10 +32,11 @@ import org.apache.lucene.util.Bits;
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoresManager;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
@@ -198,7 +199,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             }
 
             if (!indexMode && createNewIndex)
-                throw new BlackLabRuntimeException("Cannot create new index, not in index mode");
+                throw new IllegalArgumentException("Cannot create new index, not in index mode");
 
             if (reader != null) {
                 // Only create analyzer if not in solr mode.
@@ -265,6 +266,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         shouldCloseIndex = true; // we're opening the IndexReader, so we're responsible for closing it.
     }
 
+    @Override
     public BLIndexObjectFactory indexObjectFactory() {
         return blackLab.indexObjectFactory();
     }
@@ -338,7 +340,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true));
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -353,7 +355,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                         boolean createNewContentStore = isEmptyIndex;
                         openContentStore(field, createNewContentStore, indexLocation);
                     } catch (ErrorOpeningIndex e) {
-                        throw BlackLabRuntimeException.wrap(e);
+                        throw BlackLabException.wrapRuntime(e);
                     }
                     ca = contentStores.contentAccessor(field);
                 } else if (field instanceof AnnotatedField && field != mainAnnotatedField()) {
@@ -450,6 +452,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         try {
             return DirectoryReader.open(FSDirectory.open(indexPath));
         } catch (IllegalArgumentException e) {
+            if (e.getMessage().contains("is in the future"))
+                throw new IndexVersionMismatch("Index appears to be created with a newer version.", e);
             if (e.getMessage().contains("Codec with name"))
                 throw new IndexVersionMismatch("Error opening index, Codec not available; wrong BlackLab version?", e);
             throw e;
@@ -471,7 +475,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
         if (indexMode) {
             if (!solrMode) {
-                if (indexWriter == null) throw new RuntimeException("When not in solr mode, there must always be an indexWriter when in indexMode.");
+                if (indexWriter == null)
+                    throw new IllegalStateException("When not in solr mode, there must always be an indexWriter when in indexMode.");
                 // Re-open the IndexWriter with the analyzer we've created above (see comment above)
                 if (traceIndexOpening())
                     logger.debug("  Re-opening IndexWriter with newly created analyzers...");
@@ -502,7 +507,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new BlackLabRuntimeException("Main contents field unknown");
+                        throw new InvalidIndex("Main contents field unknown");
                 }
             }
 
@@ -588,7 +593,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             }
             contentStores.close();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -633,7 +638,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected IndexWriter openIndexWriter(File indexDir, boolean create, Analyzer useAnalyzer) throws IOException {
         if (!indexDir.exists() && create) {
             if (!indexDir.mkdir())
-                throw new BlackLabRuntimeException("Could not create dir: " + indexDir);
+                throw new InvalidIndex("Could not create dir: " + indexDir);
         }
         Path indexPath = indexDir.toPath();
         while (Files.isSymbolicLink(indexPath)) {
@@ -671,7 +676,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             indexWriter.rollback();
             indexWriter = null;
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 
@@ -755,6 +760,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return contentAccessor(field).getContentStore();
     }
 
+    @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
         return field.getRelationsStats(this, limitValues);
     }

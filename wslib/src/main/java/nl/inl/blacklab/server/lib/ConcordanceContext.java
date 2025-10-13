@@ -31,9 +31,9 @@ public class ConcordanceContext {
         return concordanceContext;
     }
 
-    private Concordances concordances;
+    private final Concordances concordances;
 
-    private Kwics kwics;
+    private final Kwics kwics;
 
     private ConcordanceContext(Kwics kwics, Concordances concordances) {
         this.kwics = kwics;

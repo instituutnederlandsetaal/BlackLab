@@ -6,6 +6,12 @@ public class DocGroupPropertyIdentity extends DocGroupProperty {
 
     public static final String ID = HitGroupPropertyIdentity.ID;
 
+    private static final DocGroupPropertyIdentity instance = new DocGroupPropertyIdentity();
+
+    public static DocGroupPropertyIdentity get() {
+        return instance;
+    }
+
     DocGroupPropertyIdentity(DocGroupPropertyIdentity prop, boolean invert) {
         super(prop, invert);
     }

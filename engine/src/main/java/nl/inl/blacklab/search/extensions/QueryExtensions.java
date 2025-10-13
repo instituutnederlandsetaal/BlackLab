@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -88,6 +88,9 @@ public class QueryExtensions {
     /** A query and three strings */
     public static final List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
 
+    private QueryExtensions() {
+    }
+
     public static boolean isRelationsFunction(String name) {
         FuncInfo funcInfo = functions.get(name);
         if (funcInfo == null)
@@ -111,15 +114,15 @@ public class QueryExtensions {
     }
 
     private static class FuncInfo {
-        private ExtensionFunction func;
+        private final ExtensionFunction func;
 
-        private List<ArgType> argTypes;
+        private final List<ArgType> argTypes;
 
-        private List<Object> defaultValues;
+        private final List<Object> defaultValues;
 
-        private boolean isVarArg;
+        private final boolean isVarArg;
 
-        private boolean relationsFunction;
+        private final boolean relationsFunction;
 
         public FuncInfo(ExtensionFunction func, List<ArgType> argTypes, List<Object> defaultValues) {
             this(func, argTypes, defaultValues, false);
@@ -158,7 +161,7 @@ public class QueryExtensions {
     }
 
     /** Registry of extension functions by name */
-    private static Map<String, FuncInfo> functions = new HashMap<>();
+    private static final Map<String, FuncInfo> functions = new HashMap<>();
 
     static {
         register(XFDebug.class);      // Debug functions such as _ident(), _FI1(), _FI2()
@@ -171,7 +174,7 @@ public class QueryExtensions {
         try {
             extClass.getConstructor().newInstance().register();
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 
@@ -300,7 +303,7 @@ public class QueryExtensions {
             }
             if (newArgs.get(i) == null) {
                 // Still null, so no default value available
-                throw new BlackLabRuntimeException("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
+                throw new InvalidQuery("Missing argument " + (i + 1) + " for function " + name + " (no default value available)");
             }
 
             // Check argument type
@@ -311,12 +314,12 @@ public class QueryExtensions {
                 default -> true;
             };
             if (wrongType)
-                throw new BlackLabRuntimeException("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
+                throw new InvalidQuery("Argument " + (i + 1) + " for function " + name + " has the wrong type: expected " + expectedType
                         + ", got " + ArgType.typeOf(newArgs.get(i)));
         }
 
         if (!funcInfo.isVarArg && newArgs.size() != funcInfo.argTypes.size())
-            throw new BlackLabRuntimeException("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
+            throw new InvalidQuery("Wrong number of arguments for query function " + name + ": expected " + funcInfo.argTypes.size() + ", got " + newArgs.size());
         return funcInfo.func.apply(context.queryInfo(), context, newArgs);
     }
 

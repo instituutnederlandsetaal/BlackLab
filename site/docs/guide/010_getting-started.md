@@ -49,7 +49,7 @@ sudo chown $USER:$GROUP /etc/blacklab/blacklab-server.yaml
 sudo chmod -R a+rX /etc/blacklab
 ```
 
-(NOTE: if you cannot create a directory under `/etc/`, see the TIP under [configuration file](../server/#configuration-file) for alternatives)
+(NOTE: if you cannot create a directory under `/etc/`, see the TIP under [configuration file](/server/#configuration-file) for alternatives)
 
 Now, edit the file `/etc/blacklab/blacklab-server.yaml` using a text editor:
 
@@ -67,7 +67,7 @@ On the [GitHub releases page](https://github.com/instituutnederlandsetaal/BlackL
 
 Now go to [https://localhost:8080/blacklab-server/](https://localhost:8080/blacklab-server/) (or substitute the hostname of the server you've installed it on if not running locally) and you should see an XML response from BlackLab.
 
-*([learn more about BlackLab Server](../server/))*
+*([learn more about BlackLab Server](/server/))*
 
 
 ## Prepare your data
@@ -187,4 +187,4 @@ def search(cqlQuery):
 search('[pos="a.*"] "fox"')
 ```
 
-More examples can be found [here](../server/from-different-languages.md).
+More examples can be found [here](/server/from-different-languages.md).

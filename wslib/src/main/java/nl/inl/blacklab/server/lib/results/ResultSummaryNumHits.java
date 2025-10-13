@@ -6,11 +6,11 @@ import nl.inl.blacklab.search.results.ResultsStatsStatic;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
 public class ResultSummaryNumHits {
-    private ResultsStats hitsStats;
-    private ResultsStats docsStats;
-    private boolean waitForTotal;
-    private SearchTimings timings;
-    private CorpusSize subcorpusSize;
+    private final ResultsStats hitsStats;
+    private final ResultsStats docsStats;
+    private final boolean waitForTotal;
+    private final SearchTimings timings;
+    private final CorpusSize subcorpusSize;
 
     ResultSummaryNumHits(ResultsStats hitsStats, ResultsStats docsStats,
             boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize) {

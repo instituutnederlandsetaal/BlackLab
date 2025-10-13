@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.indexers.config.process.ProcessingStepReplace;
@@ -17,6 +16,9 @@ import nl.inl.util.Timer;
  * probably similar.
  */
 public class TestProcessingStep {
+    private TestProcessingStep() {
+    }
+
     public static void main(String[] args) {
         ProcessingStep script = getTestSteps();
         List<String> words = randomWords(10_000_000);
@@ -31,8 +33,7 @@ public class TestProcessingStep {
 
         // Process using the new method
         t.reset();
-        List<String> resultNew = new ArrayList<>();
-        resultNew.addAll(script.perform(words.stream(), null).collect(Collectors.toList()));
+        List<String> resultNew = new ArrayList<>(script.perform(words.stream(), null).toList());
         System.out.println("Processed " + words.size() + " words using new method in " + t.elapsedDescription());
 
         // Compare results
@@ -48,9 +49,9 @@ public class TestProcessingStep {
         }
     }
 
-    private static Pattern find = Pattern.compile("a");
+    private static final Pattern find = Pattern.compile("a");
 
-    private static Pattern separator = Pattern.compile("-");
+    private static final Pattern separator = Pattern.compile("-");
 
     private static List<String> processStringMultipleValues(String input) {
         List<String> result = new ArrayList<>();

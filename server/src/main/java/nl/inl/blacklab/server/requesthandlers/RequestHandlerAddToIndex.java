@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -22,6 +21,7 @@ import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.util.FileUtil;
 
 /**
  * Add document(s) to a user index.
@@ -50,13 +50,15 @@ public class RequestHandlerAddToIndex extends RequestHandler {
                 case "linkeddata":
                 case "linkeddata[]":
                     String fileNameOnly = FilenameUtils.getName(f.getName());
-                    File temp = Files.createTempFile("", fileNameOnly).toFile();
-                    temp.deleteOnExit();
-
-                    try (OutputStream tempOut = new FileOutputStream(temp)) {
+                    File tempFile = FileUtil.createTempFileSafe(fileNameOnly); // Check that the temp file is actually in the temp dir.
+                    tempFile.deleteOnExit();
+                    try (OutputStream tempOut = new FileOutputStream(tempFile)) {
                         IOUtils.copy(f.getInputStream(), tempOut);
                     }
-                    linkedFiles.put(fileNameOnly.toLowerCase(), temp);
+                    linkedFiles.put(fileNameOnly.toLowerCase(), tempFile);
+                    break;
+                default:
+                    // ignore any other file uploads
                     break;
                 }
             }
@@ -67,7 +69,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
         // Convert dataFiles to a generic data structure
         final Iterator<WebserviceOperations.UploadedFile> dataFilesIt = new Iterator<>() {
-            Iterator<FileItem> it = dataFiles.iterator();
+            final Iterator<FileItem> it = dataFiles.iterator();
 
             @Override
             public boolean hasNext() {

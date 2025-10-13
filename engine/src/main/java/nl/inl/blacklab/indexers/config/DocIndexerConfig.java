@@ -9,12 +9,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.apache.lucene.util.BytesRef;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -57,7 +57,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 Class<? extends DocIndexerConfig> clz = (Class<? extends DocIndexerConfig>)Class.forName(docIndexerClass);
                 docIndexer = getWithCustomDocIndexerClass(clz, options);
             } catch (ClassNotFoundException e) {
-                throw new RuntimeException("Custom docIndexerClass not found: " + docIndexerClass, e);
+                throw new InvalidInputFormatConfig("Custom docIndexerClass not found: " + docIndexerClass, e);
             }
         } else {
             docIndexer = switch (config.getFileType()) {
@@ -77,7 +77,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             try {
                 return new DocIndexerConvertAndTag(docIndexer, config);
             } catch (Exception e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         } else {
             return docIndexer;
@@ -95,7 +95,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 return clz.getConstructor().newInstance();
             }
         } catch (ReflectiveOperationException e) {
-            throw new RuntimeException(e);
+            throw new InvalidInputFormatConfig(e);
         }
     }
 
@@ -178,7 +178,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                         .warning("Link path " + path + " not found in document " + documentName);
                 break;
             case FAIL:
-                throw new BlackLabRuntimeException("Link path " + path + " not found in document " + documentName);
+                throw new ErrorIndexingFile("Link path " + path + " not found in document " + documentName);
         }
     }
 
@@ -190,7 +190,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         // Do we have anything to do?
         if (!hasProcessing || values.isEmpty()) {
             // No processing or deduplication to do; just return the values as-is (but sanitized/normalized)
-            return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).collect(Collectors.toList());
+            return values.stream().map(StringUtil::sanitizeAndNormalizeUnicode).toList();
         }
 
         // Apply processing steps
@@ -206,12 +206,11 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
             }
         } else {
             // Single value (the collection should only contain one entry)
+            // (if multiple were matched, we only index the first one)
+            String rawValue = values.iterator().next();
+            rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
             results = new ArrayList<>();
-            for (String rawValue: values) {
-                rawValue = StringUtil.sanitizeAndNormalizeUnicode(rawValue);
-                results.add(processing.performSingle(rawValue, this));
-                break; // if multiple were matched, only index the first one
-            }
+            results.add(processing.performSingle(rawValue, this));
         }
         return results;
     }
@@ -280,7 +279,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                 // Fetch value from Lucene doc
                 List<String> metadataField = getMetadataField(valueField);
                 if (metadataField == null) {
-                    throw new BlackLabRuntimeException("Link value field " + valueField + " has no values (null)!");
+                    throw new ErrorIndexingFile("Link value field " + valueField + " has no values (null)!");
                 }
                 results.addAll(metadataField);
             }
@@ -315,7 +314,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
                             + ": " + e.getMessage());
                     break;
                 case FAIL:
-                    throw new BlackLabRuntimeException("Could not find or parse linked document for " + documentName + moreInfo, e);
+                    throw new ErrorIndexingFile("Could not find or parse linked document for " + documentName + moreInfo, e);
             }
         }
     }
@@ -324,7 +323,7 @@ public abstract class DocIndexerConfig extends DocIndexerBase {
         // If there's no processing to be done (the most common case), skip the list allocation.
         return process instanceof ProcessingStepIdentity ?
                 List.of(input) :
-                process.perform(Stream.of(input), this).collect(Collectors.toList());
+                process.perform(Stream.of(input), this).toList();
     }
 
     /**

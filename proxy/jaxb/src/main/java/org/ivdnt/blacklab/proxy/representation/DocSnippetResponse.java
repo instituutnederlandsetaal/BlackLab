@@ -8,7 +8,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DocSnippetResponse implements Cloneable {
+public class DocSnippetResponse {
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String docPid;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long start;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public long end;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords snippet;
@@ -23,11 +32,6 @@ public class DocSnippetResponse implements Cloneable {
     public ContextWords right;
 
     public DocSnippetResponse() {}
-
-    @Override
-    protected DocSnippetResponse clone() throws CloneNotSupportedException {
-        return (DocSnippetResponse)super.clone();
-    }
 
     @Override
     public String toString() {

@@ -9,10 +9,10 @@ import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultListOfHits {
-    private WebserviceParams params;
-    private Hits hits;
-    private ConcordanceContext concordanceContext;
-    private Map<Integer, String> docIdToPid;
+    private final WebserviceParams params;
+    private final Hits hits;
+    private final ConcordanceContext concordanceContext;
+    private final Map<Integer, String> docIdToPid;
 
     ResultListOfHits(WebserviceParams params, Hits hits, ConcordanceContext concordanceContext,
             Map<Integer, String> docIdToPid) {

@@ -120,6 +120,8 @@ public class BLSConfig {
 
     @SuppressWarnings("unused")
     public void setPerformance(BLSConfigPerformance performance) {
+        if (performance == null)
+            performance = new BLSConfigPerformance();
         this.performance = performance;
     }
 
@@ -136,6 +138,8 @@ public class BLSConfig {
     }
 
     public void setDebug(BLSConfigDebug debug) {
+        if (debug == null)
+            debug = new BLSConfigDebug();
         this.debug = debug;
     }
 
@@ -145,6 +149,8 @@ public class BLSConfig {
 
     @SuppressWarnings("unused")
     public void setAuthentication(BLSConfigAuth authentication) {
+        if (authentication == null)
+            authentication = new BLSConfigAuth();
         this.authentication = authentication;
     }
 
@@ -162,6 +168,8 @@ public class BLSConfig {
     }
 
     public void setSearch(BLConfigSearch search) {
+        if (search == null)
+            search = new BLConfigSearch();
         this.search = search;
     }
 
@@ -171,6 +179,8 @@ public class BLSConfig {
 
     @SuppressWarnings("unused")
     public void setIndexing(BLConfigIndexing indexing) {
+        if (indexing == null)
+            indexing = new BLConfigIndexing();
         this.indexing = indexing;
     }
 
@@ -180,6 +190,8 @@ public class BLSConfig {
 
     @SuppressWarnings("unused")
     public void setPlugins(BLConfigPlugins plugins) {
+        if (plugins == null)
+            plugins = new BLConfigPlugins();
         this.plugins = plugins;
     }
     

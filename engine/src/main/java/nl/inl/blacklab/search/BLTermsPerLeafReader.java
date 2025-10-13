@@ -14,7 +14,7 @@ class BLTermsPerLeafReader {
     /**
      * A cache of terms objects per segment ord.
      */
-    private Map<Integer, BLTerms> termsPerSegment = new ConcurrentHashMap<>();
+    private final Map<Integer, BLTerms> termsPerSegment = new ConcurrentHashMap<>();
 
     /**
      * Given a leafreadercontext (index segment), return the terms object.

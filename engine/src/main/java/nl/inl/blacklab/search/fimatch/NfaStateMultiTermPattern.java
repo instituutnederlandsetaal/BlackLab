@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
@@ -31,7 +30,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     /** Match case-/diacritics-sensitively? */
     private final MatchSensitivity sensitivity;
 
-    public NfaStateMultiTermPattern(String luceneField, String pattern, NfaState nextState) {
+    protected NfaStateMultiTermPattern(String luceneField, String pattern, NfaState nextState) {
         this.luceneField = luceneField;
         this.sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
         this.pattern = pattern;
@@ -88,7 +87,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     public void setNextState(int i, NfaState state) {
         if (i != 0)
-            throw new BlackLabRuntimeException("Token state only has one next state");
+            throw new IllegalArgumentException("Token state only has one next state");
         nextState = state;
     }
 

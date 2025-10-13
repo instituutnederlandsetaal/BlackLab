@@ -32,7 +32,7 @@ public class ResultDocInfo {
 
     private Integer lengthInTokens;
 
-    private Map<String, Integer> lengthInTokensPerField = new LinkedHashMap<>();
+    private final Map<String, Integer> lengthInTokensPerField = new LinkedHashMap<>();
 
     private boolean mayView;
 

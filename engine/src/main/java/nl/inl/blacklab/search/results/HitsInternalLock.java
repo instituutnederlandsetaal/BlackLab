@@ -18,6 +18,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         super(initialCapacity);
     }
 
+    @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         assert HitsInternal.debugCheckReasonableHit(doc, start, end);
         this.lock.writeLock().lock();
@@ -36,14 +37,15 @@ class HitsInternalLock extends HitsInternalNoLock {
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
+    @Override
     public void add(EphemeralHit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
         try {
             // Don't call super method, this is faster (hot code)
-            docs.add(hit.doc);
-            starts.add(hit.start);
-            ends.add(hit.end);
+            docs.add(hit.doc_);
+            starts.add(hit.start_);
+            ends.add(hit.end_);
             matchInfos.add(hit.matchInfo);
         } finally {
             this.lock.writeLock().unlock();
@@ -53,6 +55,7 @@ class HitsInternalLock extends HitsInternalNoLock {
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
+    @Override
     public void add(Hit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         this.lock.writeLock().lock();
@@ -81,6 +84,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public void addAll(HitsInternal hits) {
         this.lock.writeLock().lock();
         try {
@@ -93,6 +97,7 @@ class HitsInternalLock extends HitsInternalNoLock {
     /**
      * Clear the arrays.
      */
+    @Override
     public void clear() {
         lock.writeLock().lock();
         try {
@@ -102,6 +107,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public void withReadLock(Consumer<HitsInternal> cons) {
         lock.readLock().lock();
         try {
@@ -111,6 +117,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public Hit get(long index) {
         lock.readLock().lock();
         try {
@@ -139,12 +146,13 @@ class HitsInternalLock extends HitsInternalNoLock {
      * }
      * </pre>
      */
+    @Override
     public void getEphemeral(long index, EphemeralHit h) {
         lock.readLock().lock();
         try {
-            h.doc = docs.getInt(index);
-            h.start = starts.getInt(index);
-            h.end = ends.getInt(index);
+            h.doc_ = docs.getInt(index);
+            h.start_ = starts.getInt(index);
+            h.end_ = ends.getInt(index);
             h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get((int) index);
             assert HitsInternal.debugCheckReasonableHit(h);
         } finally {
@@ -152,6 +160,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public int doc(long index) {
         lock.readLock().lock();
         try {
@@ -162,6 +171,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public int start(long index) {
         lock.readLock().lock();
         try {
@@ -172,6 +182,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public int end(long index) {
         lock.readLock().lock();
         try {
@@ -182,6 +193,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public long size() {
         lock.readLock().lock();
         try {
@@ -191,6 +203,7 @@ class HitsInternalLock extends HitsInternalNoLock {
         }
     }
 
+    @Override
     public HitsInternal sort(HitProperty p) {
         this.lock.readLock().lock();
         try {

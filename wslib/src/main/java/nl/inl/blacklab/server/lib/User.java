@@ -110,7 +110,7 @@ public class User {
             String zeroes = "0".repeat(Math.max(0, 32 - hashHex.length()));
             return stripped + "_" + zeroes + hashHex;
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new IllegalStateException(e);
         }
     }
 

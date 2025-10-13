@@ -17,12 +17,17 @@ import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
+
 public class SolrTestServer {
     private static final String SOLR_DIR_NAME = "blacklab-test-solr";
 
     private static EmbeddedSolrServer server;
 
     private static Path solrPath;
+
+    private SolrTestServer() {
+    }
 
     private static void copy(Path sourcePath, Path targetPath, String fileName) {
         copy(sourcePath, targetPath, fileName, fileName);
@@ -43,7 +48,7 @@ public class SolrTestServer {
             File srcDir = srcFilePath.toFile();
             File targetDir = targetFilePath.toFile();
             if (!targetDir.mkdir())
-                throw new RuntimeException("Cannot create dir: " + targetFilePath);
+                throw new InvalidIndex("Cannot create dir: " + targetFilePath);
             File[] files = srcDir.listFiles();
             if (files != null) {
                 for (File f: files) {
@@ -55,7 +60,7 @@ public class SolrTestServer {
                 // Regular file; copy it
                 Files.copy(srcFilePath, targetFilePath);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new InvalidIndex(e);
             }
         }
     }
@@ -84,7 +89,7 @@ public class SolrTestServer {
 
             server = new EmbeddedSolrServer(container, defaultCoreName);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -119,7 +124,7 @@ public class SolrTestServer {
             NamedList<Object> response = server.request(reqAddSearchComponent);
             //System.err.println("Add search component response\n" + response.toString());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -151,7 +156,7 @@ public class SolrTestServer {
             System.setProperty("solr.allow.unsafe.resourceloading", "true"); // allow loading files from outside dirs
             server.request(request);
         } catch (Exception e) {
-            throw new RuntimeException("Error creating core " + coreName, e);
+            throw new InvalidIndex("Error creating core " + coreName, e);
         }
 
         // Copy XSLT file used by our SearchComponent.
@@ -169,7 +174,7 @@ public class SolrTestServer {
                 SolrTestServer.deleteDirectoryTree(f);
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 

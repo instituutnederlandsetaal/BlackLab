@@ -76,7 +76,7 @@ class TokenStreamWithOffsets extends TokenStream {
     }
 
     @Override
-    final public boolean incrementToken() {
+    public final boolean incrementToken() {
         // Capture token contents
         if (iterator.hasNext()) {
             // Set the term and position increment

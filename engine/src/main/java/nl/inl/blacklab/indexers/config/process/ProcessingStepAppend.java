@@ -54,6 +54,7 @@ public class ProcessingStepAppend extends ProcessingStep {
         return new ProcessingStepAppend(separator, prefix, field, fixedValue);
     }
 
+    @Override
     public String performSingle(String value, DocIndexer docIndexer) {
         String appendValue;
         if (field != null) {
@@ -72,6 +73,7 @@ public class ProcessingStepAppend extends ProcessingStep {
         return value;
     }
 
+    @Override
     public boolean canProduceMultipleValues() {
         return false;
     }

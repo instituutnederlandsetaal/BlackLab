@@ -7,6 +7,8 @@ import org.apache.lucene.document.Field;
 import org.apache.solr.common.SolrInputDocument;
 import org.ivdnt.blacklab.solr.BLSolrPreAnalyzedFieldParser;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
+
 /**
  * Class for a BlackLab document being indexed into Solr.
  * NOTE: BLFieldType parameters are ignored in this implementation!
@@ -23,6 +25,7 @@ public class BLInputDocumentSolr implements BLInputDocument {
         document = new SolrInputDocument();
     }
 
+    @Override
     public void addField(String name, String value, BLFieldType fieldType) {
         document.addField(name, value);
     }
@@ -40,14 +43,16 @@ public class BLInputDocumentSolr implements BLInputDocument {
             String v = new BLSolrPreAnalyzedFieldParser().toFormattedString(new Field(name, tokenStream, fieldType.luceneType()));
             document.addField(name, v);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
+    @Override
     public void addStoredNumericField(String name, int value, boolean addDocValue) {
         document.addField(name, value);
     }
 
+    @Override
     public void addStoredField(String name, String value) {
         document.addField(name, value);
     }

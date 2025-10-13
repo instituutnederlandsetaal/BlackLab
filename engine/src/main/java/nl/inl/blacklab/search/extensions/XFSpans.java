@@ -36,6 +36,7 @@ public class XFSpans implements ExtensionFunctionClass {
         return new SpanQueryCaptureOverlappingSpans(query, spans, captureAs);
     }
 
+    @Override
     public void register() {
         QueryExtensions.register(FUNC_WITH_SPANS, QueryExtensions.ARGS_QQS,
                 Arrays.asList(null, QueryExtensions.VALUE_ANY_SPAN, "with-spans"),

@@ -21,10 +21,12 @@ public class SpanInfo extends MatchInfo {
         this.end = end;
     }
 
+    @Override
     public int getSpanStart() {
         return start;
     }
 
+    @Override
     public int getSpanEnd() {
         return end;
     }
@@ -41,18 +43,15 @@ public class SpanInfo extends MatchInfo {
 
     @Override
     public int compareTo(MatchInfo o) {
-        if (o instanceof SpanInfo)
-            return compareTo((SpanInfo) o);
-        return super.compareTo(o);
-    }
-
-    public int compareTo(SpanInfo o) {
-        int n;
-        n = Integer.compare(start, o.start);
-        if (n != 0)
+        if (o instanceof SpanInfo si) {
+            int n;
+            n = Integer.compare(start, si.start);
+            if (n != 0)
+                return n;
+            n = Integer.compare(end, si.end);
             return n;
-        n = Integer.compare(end, o.end);
-        return n;
+        }
+        return super.compareTo(o);
     }
 
     @Override

@@ -8,7 +8,7 @@ public abstract class MetadataFetcher implements AutoCloseable {
 
     public final DocIndexer docIndexer;
 
-    public MetadataFetcher(DocIndexerLegacy docIndexer) {
+    protected MetadataFetcher(DocIndexerLegacy docIndexer) {
         this.docIndexer = docIndexer;
     }
 

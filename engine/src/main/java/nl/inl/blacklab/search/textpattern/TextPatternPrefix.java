@@ -55,6 +55,7 @@ public class TextPatternPrefix extends TextPatternTerm {
         return super.hashCode();
     }
 
+    @Override
     public TextPatternPrefix withAnnotationAndSensitivity(String annotation, MatchSensitivity sensitivity) {
         if (annotation == null)
             annotation = this.annotation;

@@ -3,7 +3,6 @@ package nl.inl.blacklab.codec;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Quickly look up a segment an id occurs in.
@@ -21,7 +20,7 @@ public class SegmentLookup<T> {
     private final List<T> segments;
 
     /** Base id for each segment  */
-    private List<Integer> ids;
+    private final List<Integer> ids;
 
     @FunctionalInterface
     interface SegmentBaseLookup<T> {
@@ -30,7 +29,7 @@ public class SegmentLookup<T> {
 
     public SegmentLookup(Collection<T> segments, SegmentBaseLookup<T> lookup) {
         this.segments = new ArrayList<>(segments);
-        ids = segments.stream().map(lookup::base).collect(Collectors.toList());
+        ids = segments.stream().map(lookup::base).toList();
     }
 
     /**

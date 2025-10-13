@@ -10,6 +10,9 @@ public class RangeRegex {
     /** A regex that can never match anything; can be used for invalid ranges. */
     public static final String REGEX_WITHOUT_MATCHES = "[^.].*";
 
+    private RangeRegex() {
+    }
+
     /** Return a regex string that will match an integer number within the specified range (inclusive).
      *
      * Leading zeroes are taken into account. If you need additional check ssuch as start- or end-of-
@@ -80,7 +83,7 @@ public class RangeRegex {
     private static int smallestOfLength(int l) {
         if (l == 1)
             return 0; // zero is a special case
-        return (int)Math.pow(10, l - 1);
+        return (int)Math.pow(10, (double)l - 1);
     }
 
     /** Largest number of length l; i.e. 9 for l == 1; 99 for l == 2; 999 for l == 3; etc. */

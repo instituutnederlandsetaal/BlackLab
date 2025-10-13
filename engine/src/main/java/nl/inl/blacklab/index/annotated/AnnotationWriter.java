@@ -10,6 +10,8 @@ import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.store.ByteArrayDataInput;
 import org.apache.lucene.util.BytesRef;
@@ -17,10 +19,13 @@ import org.eclipse.collections.api.list.primitive.IntList;
 import org.eclipse.collections.api.list.primitive.MutableIntList;
 import org.eclipse.collections.impl.list.mutable.primitive.IntArrayList;
 
+import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.analysis.AddIsPrimaryValueToPayloadFilter;
 import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLInputDocument;
+import nl.inl.blacklab.indexers.config.WarnOnce;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -39,6 +44,9 @@ import nl.inl.util.CollUtil;
  * An annotation in an annotated field (while indexing). See AnnotatedFieldWriter for details.
  */
 public class AnnotationWriter {
+
+    /** Maximum length a value is allowed to be (0 = no limit). */
+    private int maximumValueLength;
 
     private final AnnotatedFieldWriter fieldWriter;
 
@@ -160,6 +168,8 @@ public class AnnotationWriter {
             includePayloads = true;
         if (includePayloads)
             payloads = new ArrayList<>();
+
+        maximumValueLength = BlackLab.config().getIndexing().getMaxValueLength();
     }
 
     public Collection<String> sensitivitySuffixes() {
@@ -167,8 +177,7 @@ public class AnnotationWriter {
     }
 
     TokenStream tokenStream(String sensitivityName, IntList startChars, IntList endChars) {
-        boolean debugMode = false;
-        assert (debugMode = true);
+        boolean debugMode = AnnotationWriter.class.desiredAssertionStatus();
         if (relationsStrategy instanceof RelationsStrategySeparateTerms && annotationName.equals("_relation")) {
             if (debugMode) {
                 // In debug mode, ensure that we've seen each relationId.
@@ -261,7 +270,7 @@ public class AnnotationWriter {
      * @param value value to add
      * @return position of the token added
      */
-    final public int addValue(String value) {
+    public final int addValue(String value) {
         return addValue(value, 1, null);
     }
 
@@ -312,10 +321,22 @@ public class AnnotationWriter {
             // This is the _relation annotation in the integrated index format, but not the right sort of value
             // is being indexed. This is likely an old DocIndexer that wasn't updated to use indexInlineTag.
             // Warn the user.
-            System.err.println("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
-                    "inline tags. To work properly with the new integrated index format, update it to use " +
+            warnOnce("===== WARNING: your DocIndexer seems to be using AnnotationWriter.addValuePosition() to index " +
+                    "inline tags.", " To work properly with the new integrated index format, update it to use " +
                     "AnnotationWriter.indexInlineTag() instead. Until you do this, inline tags will not work.");
+        }
 
+        if (maximumValueLength > 0) {
+            if (value.length() > maximumValueLength) {
+                // Truncate value to the configured maximum length.
+                value = value.substring(0, maximumValueLength);
+            }
+        } else if (value.length() > Constants.MAX_LUCENE_VALUE_LENGTH) {
+            // Lucene limits the length of a term to 32766 characters, so we truncate it.
+            // This is a hard limit, so we can't just warn and continue.
+            warnOnce("Annotation value for annotation '" + annotationName + "' is too long",
+                    " (" + value.length() + " characters), truncating to 32766 characters.");
+            value = value.substring(0, Constants.MAX_LUCENE_VALUE_LENGTH);
         }
 
         // Make sure we don't keep duplicates of strings in memory, but re-use earlier instances.
@@ -368,6 +389,10 @@ public class AnnotationWriter {
         return lastValuePosition;
     }
 
+    private void warnOnce(String uniquePart, String restOfMessage) {
+        fieldWriter.getDocWriter().warnOnce().warn(uniquePart, restOfMessage);
+    }
+
     /**
      * Add a value at a specific token position.
      *
@@ -379,7 +404,7 @@ public class AnnotationWriter {
     private void insertValueAtIndex(int index, String value, int positionIncrement, BytesRef payload) {
         values.add(index, value);
         if (positionIncrement < 0)
-            throw new RuntimeException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Negative position increment!");
+            throw new IllegalArgumentException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Negative position increment!");
         increments.addAtIndex(index, positionIncrement);
         if (hasPayload())
             payloads.add(index, payload);
@@ -390,7 +415,7 @@ public class AnnotationWriter {
             // correct it.
             int newPosIncr = increments.get(index + 1) - positionIncrement;
             if (newPosIncr < 0)
-                throw new RuntimeException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Next token got a negative posIncrement: " + newPosIncr);
+                throw new IllegalArgumentException("ERROR insertValueAtPosition(" + index + ", " + value + ", " + positionIncrement + ", payload): Next token got a negative posIncrement: " + newPosIncr);
             increments.set(index + 1, newPosIncr);
         }
     }

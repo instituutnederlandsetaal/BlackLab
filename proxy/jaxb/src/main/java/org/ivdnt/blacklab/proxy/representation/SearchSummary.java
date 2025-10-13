@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-public class SearchSummary implements Cloneable {
+public class SearchSummary {
 
     @JsonInclude(Include.NON_NULL)
     @XmlJavaTypeAdapter(MapAdapter.class)
@@ -80,11 +80,6 @@ public class SearchSummary implements Cloneable {
     @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> metadataFieldDisplayNames;
-
-    @Override
-    public SearchSummary clone() throws CloneNotSupportedException {
-        return (SearchSummary)super.clone();
-    }
 
     @Override
     public String toString() {

@@ -18,7 +18,7 @@ import org.apache.lucene.search.spans.FilterSpans;
  */
 class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
 
-    private String targetField;
+    private final String targetField;
 
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.results;
 
 import java.text.CollationKey;
+import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.BigArrays;
@@ -51,13 +52,17 @@ class HitsInternalNoLock implements HitsInternalMutable {
 
         @Override
         public EphemeralHit next() {
-            hit.doc = HitsInternalNoLock.this.docs.getInt(pos);
-            hit.start = HitsInternalNoLock.this.starts.getInt(pos);
-            hit.end = HitsInternalNoLock.this.ends.getInt(pos);
-            hit.matchInfo = HitsInternalNoLock.this.matchInfos.isEmpty() ? null :
-                    HitsInternalNoLock.this.matchInfos.get(pos);
-            ++this.pos;
-            return hit;
+            try {
+                hit.doc_ = HitsInternalNoLock.this.docs.getInt(pos);
+                hit.start_ = HitsInternalNoLock.this.starts.getInt(pos);
+                hit.end_ = HitsInternalNoLock.this.ends.getInt(pos);
+                hit.matchInfo = HitsInternalNoLock.this.matchInfos.isEmpty() ? null :
+                        HitsInternalNoLock.this.matchInfos.get(pos);
+                ++this.pos;
+                return hit;
+            } catch (IndexOutOfBoundsException e) {
+                throw new NoSuchElementException();
+            }
         }
     }
 
@@ -81,6 +86,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         }
     }
 
+    @Override
     public void add(int doc, int start, int end, MatchInfo[] matchInfo) {
         assert HitsInternal.debugCheckReasonableHit(doc, start, end);
         docs.add(doc);
@@ -97,11 +103,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
+    @Override
     public void add(EphemeralHit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
-        docs.add(hit.doc);
-        starts.add(hit.start);
-        ends.add(hit.end);
+        docs.add(hit.doc_);
+        starts.add(hit.start_);
+        ends.add(hit.end_);
         if (hit.matchInfo != null) {
             matchInfos.add(hit.matchInfo);
         } else {
@@ -113,6 +120,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     /**
      * Add the hit to the end of this list, copying the values. The hit object itself is not retained.
      */
+    @Override
     public void add(Hit hit) {
         assert HitsInternal.debugCheckReasonableHit(hit);
         docs.add(hit.doc());
@@ -134,13 +142,14 @@ class HitsInternalNoLock implements HitsInternalMutable {
         matchInfos.addAll(hits.matchInfos);
     }
 
+    @Override
     public void addAll(HitsInternal hits) {
         hits.withReadLock(hr -> {
             for (EphemeralHit h : hits) {
                 assert HitsInternal.debugCheckReasonableHit(h);
-                docs.add(h.doc);
-                starts.add(h.start);
-                ends.add(h.end);
+                docs.add(h.doc_);
+                starts.add(h.start_);
+                ends.add(h.end_);
                 if (h.matchInfo != null) {
                     matchInfos.add(h.matchInfo);
                 } else {
@@ -154,6 +163,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     /**
      * Clear the arrays.
      */
+    @Override
     public void clear() {
         docs.clear();
         starts.clear();
@@ -161,10 +171,12 @@ class HitsInternalNoLock implements HitsInternalMutable {
         matchInfos.clear();
     }
 
+    @Override
     public void withReadLock(Consumer<HitsInternal> cons) {
         cons.accept(this);
     }
 
+    @Override
     public Hit get(long index) {
         MatchInfo[] matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
         return new HitImpl(docs.getInt((int) index), starts.getInt((int) index), ends.getInt((int) index), matchInfo);
@@ -184,22 +196,26 @@ class HitsInternalNoLock implements HitsInternalMutable {
      * }
      * </pre>
      */
+    @Override
     public void getEphemeral(long index, EphemeralHit h) {
-        h.doc = docs.getInt(index);
-        h.start = starts.getInt(index);
-        h.end = ends.getInt(index);
+        h.doc_ = docs.getInt(index);
+        h.start_ = starts.getInt(index);
+        h.end_ = ends.getInt(index);
         h.matchInfo = matchInfos.isEmpty() ? null : matchInfos.get(index);
         assert HitsInternal.debugCheckReasonableHit(h);
     }
 
+    @Override
     public int doc(long index) {
         return this.docs.getInt(index);
     }
 
+    @Override
     public int start(long index) {
         return this.starts.getInt(index);
     }
 
+    @Override
     public int end(long index) {
         return this.ends.getInt(index);
     }
@@ -207,6 +223,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
     @Override
     public MatchInfo[] matchInfo(long index) { return this.matchInfos.isEmpty() ? null : this.matchInfos.get(index); }
 
+    @Override
     public long size() {
         return docs.size64();
     }
@@ -220,6 +237,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
      *
      * @return list of document ids
      */
+    @Override
     public IntIterator docsIterator() {
         return docs.intIterator();
     }
@@ -232,6 +250,7 @@ class HitsInternalNoLock implements HitsInternalMutable {
         return new HitIterator();
     }
 
+    @Override
     public HitsInternal sort(HitProperty p) {
         HitsInternalMutable r;
         long size = docs.size64();

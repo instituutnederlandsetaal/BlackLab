@@ -162,7 +162,10 @@ public class RelationsStats {
             if (relationsStrategy instanceof RelationsStrategyNaiveSeparateTerms) {
                 // Old external index. Convert term to new style so we can process it the same way.
                 relationClass = RelationUtil.CLASS_INLINE_TAG;
-                term = RelationsStrategyNaiveSeparateTerms.indexedTermNoAttributes(RelationUtil.fullType(relationClass, term));
+                // NOTE: we DON'T prepend term with the relation class; that will be done by
+                // RelationsStrategyNaiveSeparateTerms.relationsStrategy.fullTypeFromIndexedTerm(),
+                // called from ClassStats.add().
+                term = RelationsStrategyNaiveSeparateTerms.indexedTermNoAttributes(term);
             } else {
                 // New integrated index with spans indexed as relations as well.
                 relationClass = RelationUtil.classFromFullType(relationsStrategy.fullTypeFromIndexedTerm(term));

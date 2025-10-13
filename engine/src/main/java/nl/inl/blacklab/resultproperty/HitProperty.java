@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongComparator;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.ContextSize;
@@ -114,10 +114,10 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
             break;
             
         case DocPropertyAnnotatedFieldLength.ID:
-            throw new BlackLabRuntimeException("Grouping hit results by " + type + " is not yet supported");
+            throw new UnsupportedOperationException("Grouping hit results by " + type + " is not yet supported");
             
         case DocPropertyNumberOfHits.ID:
-            throw new BlackLabRuntimeException("Cannot group hit results by " + type);
+            throw new InvalidQuery("Cannot group hit results by " + type);
             
         default:
             logger.debug("Unknown HitProperty '" + type + "'");
@@ -174,7 +174,7 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
      */
     IntList contextIndices;
 
-    public HitProperty() {
+    protected HitProperty() {
         this.hits = null;
         this.reverse = sortDescendingByDefault();
     }
@@ -211,7 +211,9 @@ public abstract class HitProperty implements ResultProperty<Hit>, LongComparator
     public int compare(long indexA, long indexB) {
         PropertyValue hitPropValueA = get(indexA);
         PropertyValue hitPropValueB = get(indexB);
-        return reverse ? -hitPropValueA.compareTo(hitPropValueB) : hitPropValueA.compareTo(hitPropValueB);
+        return reverse ?
+                hitPropValueB.compareTo(hitPropValueA) :
+                hitPropValueA.compareTo(hitPropValueB);
     }
 
     @Override

@@ -11,13 +11,14 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.util.CountingReader;
 
 /** Resolve xi:includes using a composite Reader. */
 class XIncludeResolver implements Supplier<CountingReader> {
 
     /** How we detect xi:include tags */
-    private final static Pattern PATT_XINCLUDE_TAG = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
+    private static final Pattern PATT_XINCLUDE_TAG = Pattern.compile("<xi:include\\s+href=\"([^\"]+)\"\\s*/>");
 
     private final File baseDir;
 
@@ -44,7 +45,7 @@ class XIncludeResolver implements Supplier<CountingReader> {
             private Reader includedDocReader;
 
             /** Buffered chars from base doc. Buffer wraps around. */
-            private char[] buffer = new char[BUFFER_LENGTH];
+            private final char[] buffer = new char[BUFFER_LENGTH];
 
             /** Index of first buffered char */
             private int start = 0;
@@ -54,7 +55,7 @@ class XIncludeResolver implements Supplier<CountingReader> {
 
             private boolean done = false;
 
-            private List<File> includeFilesRead = new ArrayList<>();
+            private final List<File> includeFilesRead = new ArrayList<>();
 
             private boolean isBufferEmpty() {
                 return start == end;
@@ -118,12 +119,12 @@ class XIncludeResolver implements Supplier<CountingReader> {
                         File f = new File(baseDir, href);
                         // Make sure we're not trying to break out of the base directory
                         if (!f.getCanonicalPath().startsWith(baseDir.getParentFile().getCanonicalPath())) {
-                            throw new RuntimeException("XInclude file " + f + " is not within the directory " + baseDir.getParentFile());
+                            throw new ErrorIndexingFile("XInclude file " + f + " is not within the directory " + baseDir.getParentFile());
                         }
                         includedDocReader = new FileReader(f, StandardCharsets.UTF_8);
                         includeFilesRead.add(f);
                     } catch (IOException e) {
-                        throw new RuntimeException(e);
+                        throw new ErrorIndexingFile(e);
                     }
                     // Remove the XInclude tag from the buffer
                     deleteFromBuffer(end - tagStart + (end < tagStart ? buffer.length : 0));

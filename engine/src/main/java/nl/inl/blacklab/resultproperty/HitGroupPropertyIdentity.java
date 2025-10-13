@@ -6,6 +6,12 @@ public class HitGroupPropertyIdentity extends HitGroupProperty {
 
     public static final String ID = "identity";
 
+    private static final HitGroupPropertyIdentity instance = new HitGroupPropertyIdentity();
+
+    public static HitGroupPropertyIdentity get() {
+        return instance;
+    }
+
     HitGroupPropertyIdentity(HitGroupPropertyIdentity prop, boolean invert) {
         super(prop, invert);
     }

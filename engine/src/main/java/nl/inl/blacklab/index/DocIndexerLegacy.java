@@ -5,7 +5,7 @@ import java.io.Reader;
 import java.lang.reflect.Method;
 import java.util.Map;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.CountingReader;
@@ -105,7 +105,7 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
         return charsContentAlreadyStored + content.length();
     }
 
-    public DocIndexerLegacy(DocWriter indexer, String fileName, Reader reader) {
+    protected DocIndexerLegacy(DocWriter indexer, String fileName, Reader reader) {
         setDocWriter(indexer);
         setDocumentName(fileName);
         setDocument(reader);
@@ -128,11 +128,11 @@ public abstract class DocIndexerLegacy extends DocIndexerAbstract {
     }
 
     @Override
-    public void close() throws BlackLabRuntimeException {
+    public void close() throws RuntimeException {
         try {
             reader.close();
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

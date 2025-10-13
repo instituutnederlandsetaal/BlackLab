@@ -11,6 +11,9 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
  */
 public class GetDocFromContentStore {
 
+    private GetDocFromContentStore() {
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex {
 
         if (args.length != 2) {

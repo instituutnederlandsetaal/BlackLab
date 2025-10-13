@@ -10,7 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -115,7 +114,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param readOnly if true, returns an immutable Hits object; otherwise, a mutable one
      */
-    public HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
+    protected HitsAbstract(QueryInfo queryInfo, boolean readOnly) {
         this(queryInfo, readOnly ? HitsInternal.EMPTY_SINGLETON : HitsInternal.create(-1, true, true), null);
     }
 
@@ -128,7 +127,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
      * @param queryInfo query info for corresponding query
      * @param hits hits array to use for this object. The array is used as-is, not copied.
      */
-    public HitsAbstract(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
+    protected HitsAbstract(QueryInfo queryInfo, HitsInternal hits, MatchInfoDefs matchInfoDefs) {
         super(queryInfo);
         this.hitsInternal = hits == null ? HitsInternal.create(-1, true, true) : hits;
         this.matchInfoDefs = matchInfoDefs;
@@ -186,7 +185,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
                 h.getEphemeral(i, hit);
                 // OPT: copy context as well..?
 
-                int doc = hit.doc;
+                int doc = hit.doc();
                 if (doc != prevDoc) {
                     docsRetrieved.add(1);
                     prevDoc = doc;
@@ -217,7 +216,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             //       of huge result sets without having to look at every hit.
             //       Ideally, old seeds would keep working as well (although that may not be practical,
             //       and not likely to be a huge issue)
-            throw new BlackLabRuntimeException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
+            throw new UnsupportedOperationException("Cannot sample from more than " + Constants.JAVA_MAX_ARRAY_SIZE + " hits");
         }
 
         // We can later provide an optimized version that uses a HitsSampleCopy or some such
@@ -250,9 +249,9 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
             EphemeralHit hit = new EphemeralHit();
             for (Long hitIndex : chosenHitIndices) {
                 hr.getEphemeral(hitIndex, hit);
-                if (hit.doc != previousDoc) { // this works because indexes are sorted (TreeSet)
+                if (hit.doc() != previousDoc) { // this works because indexes are sorted (TreeSet)
                     docsInSample.add(1);
-                    previousDoc = hit.doc;
+                    previousDoc = hit.doc();
                 }
 
                 sample.add(hit);
@@ -384,6 +383,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         return this.hitsInternal.get(i);
     }
 
+    @Override
     public void getEphemeral(long i, EphemeralHit hit) {
         ensureResultsRead(i + 1);
         this.hitsInternal.getEphemeral(i, hit);
@@ -468,7 +468,7 @@ public abstract class HitsAbstract extends ResultsAbstract<Hit, HitProperty> imp
         HitsInternalMutable hitsInDoc = HitsInternal.create(-1, size(), false);
         // all hits read, no lock needed.
         for (EphemeralHit h : this.hitsInternal) {
-            if (h.doc == docId)
+            if (h.doc() == docId)
                 hitsInDoc.add(h);
         }
         return new HitsList(queryInfo(), hitsInDoc, matchInfoDefs);

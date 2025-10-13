@@ -48,7 +48,7 @@ public final class UtilsForTesting {
     public static final String MARKER_FILE_NAME = "REMOVE_TEST_DIR";
 
     /** How old must marker file be to be automatically removed? (10h) */
-    public static final long REMOVE_TEST_DIRS_OLDER_THAN_MS = 10 * 3600 * 1000;
+    public static final long REMOVE_TEST_DIRS_OLDER_THAN_MS = 10L * 3600 * 1000;
 
 
     /*
@@ -97,10 +97,10 @@ public final class UtilsForTesting {
      *            debugging)
      * @return the newly created temp dir.
      */
-    public synchronized static TestDir createBlackLabTestDir(String name) {
+    public static synchronized TestDir createBlackLabTestDir(String name) {
         File testDir = new File(tempDir, TEST_DIR_PREFIX + name + "_" + UUID.randomUUID());
         if (!testDir.mkdir())
-            throw new RuntimeException("Unable to create test dir: " + testDir);
+            throw new IllegalStateException("Unable to create test dir: " + testDir);
 
         createMarkerFile(testDir);
 
@@ -111,9 +111,9 @@ public final class UtilsForTesting {
         File markerFile = new File(directory, MARKER_FILE_NAME);
         try {
             if (!markerFile.createNewFile())
-                throw new RuntimeException("Unable to create marker file: " + markerFile);
+                throw new IllegalStateException("Unable to create marker file: " + markerFile);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to create marker file: " + markerFile, e);
+            throw new IllegalStateException("Unable to create marker file: " + markerFile, e);
         }
     }
 }

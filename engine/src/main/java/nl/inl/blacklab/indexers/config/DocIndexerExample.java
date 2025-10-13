@@ -13,6 +13,7 @@ import java.util.Map;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.DocWriter;
@@ -83,7 +84,7 @@ public class DocIndexerExample extends DocIndexerBase {
     private boolean inDoc = false;
 
     /** Name of annotated field we're processing or null if not in annotated field part */
-    private String currentAnnotatedField = null;
+    private String currentAnnotatedFieldName = null;
 
     /** Are we in an annotated field block and have we called beginWord()? Then make sure to call endWord(). */
     private boolean inWord = false;
@@ -233,7 +234,7 @@ public class DocIndexerExample extends DocIndexerBase {
     }
 
     private void executeCommand(String command, String[] parameters) {
-        if (currentAnnotatedField != null) {
+        if (currentAnnotatedFieldName != null) {
             // We're inside an annotated field value block (nested inside a document block).
             executeValueCommand(command, parameters);
         } else if (inDoc) {
@@ -245,7 +246,7 @@ public class DocIndexerExample extends DocIndexerBase {
                 startDocument();
                 inDoc = true;
             } else {
-                throw new RuntimeException("Command " + command + " cannot appear at top level");
+                throw new InvalidInputFormatConfig("Command " + command + " cannot appear at top level");
             }
         }
     }
@@ -311,11 +312,11 @@ public class DocIndexerExample extends DocIndexerBase {
                 endWord();
                 inWord = false;
             }
-            currentAnnotatedField = null;
+            currentAnnotatedFieldName = null;
             break;
 
         default:
-            throw new RuntimeException("Command " + command + " cannot appear inside annotated field block");
+            throw new InvalidInputFormatConfig("Command " + command + " cannot appear inside annotated field block");
         }
     }
 
@@ -325,7 +326,7 @@ public class DocIndexerExample extends DocIndexerBase {
 
         // Make sure that all annotations are at the same token position.
         // (we don't want annotations to run out of synch)
-        for (AnnotationWriter aw: getAnnotatedField(currentAnnotatedField).annotationWriters()) {
+        for (AnnotationWriter aw: getAnnotatedField(currentAnnotatedFieldName).annotationWriters()) {
             while (aw.lastValuePosition() < currentTokenPosition) {
                 aw.addValue("");
             }
@@ -349,10 +350,10 @@ public class DocIndexerExample extends DocIndexerBase {
 
         case "FIELD_START":
             // Starts an annotated field block.
-            currentAnnotatedField = parameters[0];
+            currentAnnotatedFieldName = parameters[0];
             //posIncr = 1; // initialize at default value
             currentTokenPosition = 0;
-            setCurrentAnnotatedFieldName(currentAnnotatedField);
+            setCurrentAnnotatedFieldName(currentAnnotatedFieldName);
             break;
 
         case "DOC_END":
@@ -362,7 +363,7 @@ public class DocIndexerExample extends DocIndexerBase {
             break;
 
         default:
-            throw new RuntimeException("Command " + command + " cannot appear inside document");
+            throw new InvalidInputFormatConfig("Command " + command + " cannot appear inside document");
         }
     }
 

@@ -8,7 +8,7 @@ import java.nio.charset.Charset;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BOMInputStream;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 
 public class FileReferenceInputStream implements FileReference {
 
@@ -35,7 +35,7 @@ public class FileReferenceInputStream implements FileReference {
         try {
             return IOUtils.toByteArray(is);
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new ErrorIndexingFile(e);
         }
     }
 

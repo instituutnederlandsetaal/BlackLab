@@ -148,7 +148,7 @@ abstract class SpansInBucketsAbstract extends SpansInBuckets {
      *
      * @param source (startpoint-sorted) source spans
      */
-    public SpansInBucketsAbstract(BLSpans source) {
+    protected SpansInBucketsAbstract(BLSpans source) {
         super(source);
     }
 

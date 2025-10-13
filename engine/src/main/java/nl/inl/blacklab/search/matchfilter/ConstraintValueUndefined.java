@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.matchfilter;
 
 public class ConstraintValueUndefined extends ConstraintValue {
 
+    static final ConstraintValue INSTANCE = new ConstraintValueUndefined();
+
     ConstraintValueUndefined() {
         // NOP
     }

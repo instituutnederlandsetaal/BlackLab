@@ -14,6 +14,9 @@ public class CompareHitsInternalImpls {
 
     public static final long ITERATIONS = 100_000_000;
 
+    private CompareHitsInternalImpls() {
+    }
+
     static void time(String message, Runnable r) {
         Timer t = new Timer();
         r.run();
@@ -37,7 +40,7 @@ public class CompareHitsInternalImpls {
 
     static void testIterateGet(HitsInternal hits) {
         long n = -1;
-        for (int i = 0; i < hits.size(); i++) {
+        for (long i = 0; i < hits.size(); i++) {
             int d = hits.doc(i);
             if (d > n)
                 n = d;

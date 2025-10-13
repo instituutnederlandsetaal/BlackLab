@@ -16,6 +16,8 @@ import java.util.Objects;
 
 import org.apache.commons.io.FileUtils;
 
+import nl.inl.blacklab.exceptions.InvalidConfiguration;
+
 /**
  * Manages downloaded files.
  *
@@ -24,6 +26,9 @@ import org.apache.commons.io.FileUtils;
  * eventually delete them to free up resources as well.
  */
 public class DownloadCache {
+
+    private DownloadCache() {
+    }
 
     /**
      * How this class can be configured.
@@ -41,10 +46,10 @@ public class DownloadCache {
     private static Config config;
 
     /** Maximum age of downloaded file in sec */
-    private static final int maxDownloadAgeSec = 24 * 3600;
+    private static final int MAX_DOWNLOAD_AGE_SEC = 24 * 3600;
 
     /** Maximum size of all files downloaded combined */
-    private static long maxDownloadFolderSize = 100_000_000;
+    private static final long MAX_DOWNLOAD_FOLDER_SIZE = 100_000_000;
 
     /** Where to download files (or null to use the system temp dir) */
     private static File downloadTempDir;
@@ -96,7 +101,7 @@ public class DownloadCache {
 
         public void delete() {
             if (file.exists() && !file.delete())
-                throw new RuntimeException("Unable to delete downloaded file: " + file);
+                throw new IllegalStateException("Unable to delete downloaded file: " + file);
         }
 
         public long size() {
@@ -130,14 +135,14 @@ public class DownloadCache {
         }
     }
 
-    private synchronized static void removeEntriesIfRequired() {
+    private static synchronized void removeEntriesIfRequired() {
 
         // Remove any entries that haven't been used for a long time
         List<Download> dl = new ArrayList<>(downloadedFiles.values());
         Iterator<Download> it = dl.iterator();
         while (it.hasNext()) {
             Download download = it.next();
-            if (download.timeSinceLastUsed() > maxDownloadAgeSec) {
+            if (download.timeSinceLastUsed() > MAX_DOWNLOAD_AGE_SEC) {
                 downloadedFiles.remove(download.key);
                 downloadFolderSize -= download.size();
                 download.delete();
@@ -146,10 +151,10 @@ public class DownloadCache {
         }
 
         // If the cache is too big, remove entries that haven't been used the longest
-        if (downloadFolderSize > maxDownloadFolderSize) {
+        if (downloadFolderSize > MAX_DOWNLOAD_FOLDER_SIZE) {
             dl.sort(Comparator.naturalOrder());
             it = downloadedFiles.values().iterator();
-            while (downloadFolderSize > maxDownloadFolderSize && it.hasNext()) {
+            while (downloadFolderSize > MAX_DOWNLOAD_FOLDER_SIZE && it.hasNext()) {
                 Download download = it.next();
                 downloadFolderSize -= download.size();
                 download.delete(); // delete the file
@@ -164,7 +169,7 @@ public class DownloadCache {
      * @param inputFile URL of the file
      * @return temp file
      */
-    public synchronized static File downloadFile(String inputFile) throws IOException, MalformedURLException {
+    public static synchronized File downloadFile(String inputFile) throws IOException, MalformedURLException {
         if (!isFileDownloadAllowed())
             throw new AccessDeniedException(inputFile, null, "Http downloads have been disabled");
         Download download = downloadedFiles.get(inputFile);
@@ -194,10 +199,10 @@ public class DownloadCache {
     }
 
     private static long getMaxDownloadedFileSize() {
-        return Math.min(maxDownloadFolderSize, config.getMaxFileSize());
+        return Math.min(MAX_DOWNLOAD_FOLDER_SIZE, config.getMaxFileSize());
     }
 
-    public synchronized static File getDownloadTempDir() {
+    public static synchronized File getDownloadTempDir() {
         if (downloadTempDir == null) {
             if (config.getDir() != null) {
                 downloadTempDir = new File(config.getDir());
@@ -207,7 +212,7 @@ public class DownloadCache {
         }
         if (!downloadTempDir.exists()) {
             if (!downloadTempDir.mkdir())
-                throw new RuntimeException("Could not create dir: " + downloadTempDir);
+                throw new InvalidConfiguration("Could not create dir: " + downloadTempDir);
             downloadTempDir.deleteOnExit();
         }
         return downloadTempDir;

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.index;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -26,7 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormat;
@@ -111,7 +109,7 @@ public class IndexManager {
                 try {
                     index = new Index(indexDir.getName(), indexDir, searchMan);
                     indices.put(indexDir.getName(), index);
-                } catch (FileNotFoundException | IllegalIndexName e) {
+                } catch (IOException | IllegalIndexName e) {
                     logger.error("Error opening index '" + indexDir + "'; " + e.getMessage());
                 }
             } else {
@@ -145,7 +143,7 @@ public class IndexManager {
         try {
             startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
         } catch (Exception ex) {
-            throw BlackLabRuntimeException.wrap(ex);
+            throw BlackLabException.wrapRuntime(ex);
         }
     }
 
@@ -189,7 +187,7 @@ public class IndexManager {
                 FileUtils.writeStringToFile(userIdFile, user.getId(), StandardCharsets.UTF_8);
             }
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
 
         return dir;
@@ -289,7 +287,7 @@ public class IndexManager {
         try {
             logger.debug("Created index: " + indexName + " (" + indexDir + ")");
             indices.put(indexId, new Index(indexId, indexDir, this.searchMan));
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new ErrorOpeningIndex("Could not open index: " + indexDir, e);
         }
     }
@@ -297,7 +295,7 @@ public class IndexManager {
     public void registerIndex(String indexId, BlackLabIndex index) {
         try {
             indices.put(indexId, new Index(indexId, index, this.searchMan));
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             throw new IllegalArgumentException(e);
         }
     }
@@ -361,7 +359,7 @@ public class IndexManager {
                 @Override
                 public void process(File f) {
                     if (!f.canWrite())
-                        throw new RuntimeException("Cannot delete " + f);
+                        throw new IllegalStateException("Cannot delete " + f);
                 }
             });
         } catch (Exception e) {
@@ -460,7 +458,7 @@ public class IndexManager {
     }
 
     private List<Index> getPrivateCorporaSharedWith(User user) {
-        return getAllLoadedCorpora().stream().filter(i -> i.sharedWith(user)).collect(Collectors.toList());
+        return getAllLoadedCorpora().stream().filter(i -> i.sharedWith(user)).toList();
     }
 
     /**
@@ -534,7 +532,7 @@ public class IndexManager {
                     return true;
                 return !pathName.getCanonicalPath().equals(userCollectionsDir.getCanonicalPath());
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new IllegalStateException(e);
             }
         }
 
@@ -552,7 +550,7 @@ public class IndexManager {
                 Path indexPath = pathName.toPath().toRealPath();
                 return Files.isDirectory(indexPath);
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
         }
 
@@ -569,7 +567,7 @@ public class IndexManager {
             try {
                 indexPath = subDir.toPath().toRealPath();
             } catch (IOException e) {
-                throw BlackLabRuntimeException.wrap(e);
+                throw BlackLabException.wrapRuntime(e);
             }
             if (!Files.isReadable(indexPath) || !BlackLabIndex.isIndex(indexPath)) {
                 // Not readable or not an index.
@@ -637,7 +635,7 @@ public class IndexManager {
                     String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
                     loadUserCorporaInDir(User.fromId(userId), userDir);
                 } catch (IOException e) {
-                    throw new BlackLabRuntimeException(e);
+                    throw new IllegalStateException(e);
                 }
             }
         }
@@ -690,7 +688,7 @@ public class IndexManager {
         FileAlterationMonitor monitor = new FileAlterationMonitor(pollingIntervalInMs);
         List<FileAlterationObserver> observers = directories.stream()
             .map(FileAlterationObserver::new)
-            .collect(Collectors.toList());
+            .toList();
         FileAlterationListenerAdaptor listener = new FileAlterationListenerAdaptor() {
             @Override
             public void onDirectoryDelete(File directory) {
@@ -717,9 +715,10 @@ public class IndexManager {
     private static void markForDeletion(File directory) {
         try {
             File deletionMarker = new File(directory, PENDING_DELETION_FILE_MARKER);
-            deletionMarker.createNewFile();
+            if (!deletionMarker.createNewFile())
+                logger.error("Cannot mark directory for future deletion (createNewFile failed): {}, ", deletionMarker);
         } catch (IOException e) {
-            logger.error("Cannot mark directory for future deletion: " + e.getMessage());
+            logger.error("Cannot mark directory for future deletion: {}", e.getMessage());
         }
     }
 

@@ -5,11 +5,11 @@ import java.util.Map;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 
 public class ResultMetadataField {
-    private String indexName;
-    private MetadataField fieldDesc;
-    private boolean listValues;
-    private Map<String, Long> fieldValues;
-    private boolean valueListComplete;
+    private final String indexName;
+    private final MetadataField fieldDesc;
+    private final boolean listValues;
+    private final Map<String, Long> fieldValues;
+    private final boolean valueListComplete;
 
     ResultMetadataField(String indexName, MetadataField fieldDesc, boolean listValues,
             Map<String, Long> fieldValues, boolean valueListComplete) {

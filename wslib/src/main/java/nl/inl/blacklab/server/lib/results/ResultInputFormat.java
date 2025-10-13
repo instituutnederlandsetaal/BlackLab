@@ -5,13 +5,14 @@ import java.io.IOException;
 
 import org.apache.commons.io.IOUtils;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.exceptions.NotFound;
 
 public class ResultInputFormat {
-    private ConfigInputFormat config;
+    private final ConfigInputFormat config;
 
     ResultInputFormat(String formatName) {
         InputFormat inputFormat = DocumentFormats.getFormat(formatName).orElseThrow(
@@ -35,7 +36,7 @@ public class ResultInputFormat {
         try (BufferedReader reader = config.getFormatFile()) {
             return IOUtils.toString(reader);
         } catch (IOException e1) {
-            throw new RuntimeException(e1);
+            throw new InvalidInputFormatConfig(e1);
         }
     }
 }

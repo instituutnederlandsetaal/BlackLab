@@ -21,7 +21,7 @@ public class MockIndexMetadata implements IndexMetadata {
     
     private final List<AnnotatedField> fields;
     
-    private FreezeStatus frozen = new FreezeStatus();
+    private final FreezeStatus frozen = new FreezeStatus();
 
     public MockIndexMetadata() {
         List<Annotation> annot = Arrays.asList(new MockAnnotation("word"), new MockAnnotation("lemma"), new MockAnnotation("pos"));

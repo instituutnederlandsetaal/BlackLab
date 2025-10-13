@@ -49,10 +49,9 @@ Our intention is to:
 
 ## Code style
 
-Configurations for IDE code formatters can be found in the `build-tools/` directory: 
-- **IntelliJ IDEA:** [formatter-intellij.xml](build-tools/formatter-intellij.xml)
-- **Eclipse:** [formatter-eclipse.xml](build-tools/formatter-eclipse.xml)
-
+BlackLab mostly uses the standard Java code style, with a few small tweaks.
+There is an `.editorconfig` file in the project root that may be picked up by your IDE automatically.
+If not, configurations for IDE code formatters can be found in the `doc/` directory.
 
 ## Building the site
 

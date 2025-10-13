@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.lucene.codecs.CodecUtil;
 import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.store.ByteArrayDataOutput;
@@ -46,9 +45,9 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
  */
 class PWPluginForwardIndex implements PWPlugin {
 
-    private final BlackLab40PostingsWriter postingsWriter;
+    private final BlackLabPostingsWriter postingsWriter;
 
-    private Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
+    private final Map<String, ForwardIndexFieldMutable> fiFields = new HashMap<>();
 
     private final IndexOutput outTokensIndexFile;
     private final IndexOutput outTokensFile;
@@ -107,7 +106,7 @@ class PWPluginForwardIndex implements PWPlugin {
     private int currentDocOccurrencesWritten;
 
 
-    PWPluginForwardIndex(BlackLab40PostingsWriter postingsWriter) throws IOException {
+    PWPluginForwardIndex(BlackLabPostingsWriter postingsWriter) throws IOException {
         this.postingsWriter = postingsWriter;
 
         outTokensIndexFile = postingsWriter.createOutput(BlackLabPostingsFormat.TOKENS_INDEX_EXT);
@@ -228,7 +227,7 @@ class PWPluginForwardIndex implements PWPlugin {
                 else tokensCodecParameter = TokensCodec.VALUE_PER_TOKEN_PARAMETER.INT.code;
                 break;
             }
-            default: throw new NotImplementedException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
+            default: throw new UnsupportedOperationException("Parameter byte determination for tokens codec " + tokensCodec + " not implemented.");
         }
 
         // Write offset in the tokens file, doc length in tokens and tokens codec used
@@ -265,7 +264,7 @@ class PWPluginForwardIndex implements PWPlugin {
                         outTokensFile.writeInt((int) token);
                     }
                     break;
-                    default: throw new NotImplementedException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
+                    default: throw new UnsupportedOperationException("Handling for tokens codec " + tokensCodec + " with parameter " + tokensCodecParameter + " not implemented.");
                 }
                 break;
         case ALL_TOKENS_THE_SAME:
@@ -287,6 +286,7 @@ class PWPluginForwardIndex implements PWPlugin {
         outTokensIndexFile.close();
     }
 
+    @Override
     public boolean startField(FieldInfo fieldInfo) {
 
         // Should this field get a forward index?
@@ -326,6 +326,7 @@ class PWPluginForwardIndex implements PWPlugin {
         return true;
     }
 
+    @Override
     public void endField() throws IOException {
         // begin writing term IDs and sort orders
         Collators collators = Collators.getDefault();
@@ -352,6 +353,7 @@ class PWPluginForwardIndex implements PWPlugin {
             termsOrderFile.writeInt(i);
     }
 
+    @Override
     public void startTerm(BytesRef term) throws IOException {
         // Write the term to the terms file
         String termString = term.utf8ToString();
@@ -360,10 +362,12 @@ class PWPluginForwardIndex implements PWPlugin {
         termsList.add(termString);
     }
 
+    @Override
     public void endTerm() {
         currentTermId++;
     }
 
+    @Override
     public void startDocument(int docId, int nOccurrences) {
         // Keep track of term positions offsets in term vector file
         this.currentDocId = docId;
@@ -373,6 +377,7 @@ class PWPluginForwardIndex implements PWPlugin {
         currentDocOccurrencesWritten = 0;
     }
 
+    @Override
     public void endDocument() throws IOException {
         if (currentDocLength > -1)
             lengthsAndOffsetsPerDocument.updateFieldLength(currentDocId, currentDocLength);
@@ -389,6 +394,7 @@ class PWPluginForwardIndex implements PWPlugin {
 
     }
 
+    @Override
     public void termOccurrence(int position, BytesRef payload) throws IOException {
         // Go through each occurrence of term in this doc,
         // gathering the positions where this term occurs as a "primary value"
@@ -408,6 +414,7 @@ class PWPluginForwardIndex implements PWPlugin {
         }
     }
 
+    @Override
     public void finish() throws IOException {
         if (outTempTermVectorFile != null) {
             CodecUtil.writeFooter(outTempTermVectorFile);

@@ -205,7 +205,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
 
     @Override
     public DocProperty docPropsOnly() {
-        List<DocProperty> crit = properties.stream().map(HitProperty::docPropsOnly).filter(Objects::nonNull).collect(Collectors.toList());
+        List<DocProperty> crit = properties.stream().map(HitProperty::docPropsOnly).filter(Objects::nonNull).toList();
         if (crit.isEmpty())
             return null;
         if (crit.size() == 1) {

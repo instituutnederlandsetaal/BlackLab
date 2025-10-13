@@ -6,12 +6,12 @@ public abstract class ResultsStats implements SearchResult {
     public static final ResultsStats SEARCH_NOT_STARTED_YET = new ResultsStats() {
         @Override
         public boolean processedAtLeast(long lowerBound) {
-            throw new RuntimeException("cannot access results so far, search not started");
+            throw new IllegalStateException("cannot access results so far, search not started");
         }
 
         @Override
         public long processedTotal() {
-            throw new RuntimeException("cannot access total, search not started");
+            throw new IllegalStateException("cannot access total, search not started");
         }
 
         @Override
@@ -26,7 +26,7 @@ public abstract class ResultsStats implements SearchResult {
 
         @Override
         public long countedTotal() {
-            throw new RuntimeException("cannot access total, search not started");
+            throw new IllegalStateException("cannot access total, search not started");
         }
 
         @Override

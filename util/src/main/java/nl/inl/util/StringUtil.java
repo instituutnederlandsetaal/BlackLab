@@ -65,7 +65,7 @@ public final class StringUtil {
         return PATT_REGEX_CHARACTERS_JAVA.matcher(termStr).replaceAll("\\\\$1");
     }
 
-    public static final Pattern PATT_LEADING_OR_TRAILING_WHITESPACE = Pattern.compile("^\\p{javaSpaceChar}+|\\p{javaSpaceChar}+$");
+    public static final Pattern PATT_LEADING_OR_TRAILING_WHITESPACE = Pattern.compile("(^\\p{javaSpaceChar}+)|(\\p{javaSpaceChar}+$)");
 
     /** Trim any Java space characters from start and end of string.
      *

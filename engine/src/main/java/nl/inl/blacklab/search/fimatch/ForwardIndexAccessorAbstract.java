@@ -46,7 +46,7 @@ public abstract class ForwardIndexAccessorAbstract implements ForwardIndexAccess
     /** The Lucene field that contains the forward index for each annotation */
     protected final List<String> luceneFields = new ArrayList<>();
 
-    public ForwardIndexAccessorAbstract(BlackLabIndex index, AnnotatedField searchField) {
+    protected ForwardIndexAccessorAbstract(BlackLabIndex index, AnnotatedField searchField) {
         this.index = index;
         this.annotatedField = searchField;
     }

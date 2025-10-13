@@ -23,9 +23,10 @@ import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreExternal;
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndexExternalWriter;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexAbstract;
@@ -103,6 +104,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         return new IndexMetadataExternal(this, indexDirectory(), createNewIndex, indexTemplateFile);
     }
 
+    @Override
     public ForwardIndex createForwardIndex(AnnotatedField field) {
         return new ForwardIndexExternal(this, field);
     }
@@ -216,7 +218,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
         try {
             return reader().document(docId);
         } catch (IOException e) {
-            throw new BlackLabRuntimeException(e);
+            throw new InvalidIndex(e);
         }
     }
 
@@ -224,7 +226,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
     public void delete(Query q) {
         logger.debug("Delete query: " + q);
         if (!indexMode())
-            throw new BlackLabRuntimeException("Cannot delete documents, not in index mode");
+            throw new UnsupportedOperationException("Cannot delete documents, not in index mode");
         try {
             // We have to delete the document from the CS and FI separately.
 
@@ -275,7 +277,7 @@ public class BlackLabIndexExternal extends BlackLabIndexAbstract {
             indexWriter.deleteDocuments(q);
 
         } catch (IOException e) {
-            throw BlackLabRuntimeException.wrap(e);
+            throw BlackLabException.wrapRuntime(e);
         }
     }
 

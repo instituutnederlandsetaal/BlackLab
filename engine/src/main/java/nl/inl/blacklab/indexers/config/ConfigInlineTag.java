@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
@@ -117,7 +116,7 @@ public class ConfigInlineTag {
         if (ex.isPresent())
             this.defaultIndexAttributes = false;
         // Filter out the default exclude rule
-        this.attributes = attributes.stream().filter(a -> !a.isDefaultExclude()).collect(Collectors.toList());
+        this.attributes = attributes.stream().filter(a -> !a.isDefaultExclude()).toList();
         allAttributes = null;
     }
 

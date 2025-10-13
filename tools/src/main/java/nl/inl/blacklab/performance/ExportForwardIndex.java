@@ -32,6 +32,9 @@ public class ExportForwardIndex {
 
     private static final int MAX_DOCS = 30;
 
+    private ExportForwardIndex() {
+    }
+
     public static void main(String[] args) throws ErrorOpeningIndex {
 
         LogUtil.setupBasicLoggingConfig(); // suppress log4j warning

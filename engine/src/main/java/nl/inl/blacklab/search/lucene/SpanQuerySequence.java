@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -21,7 +20,6 @@ import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SegmentCacheable;
 import org.apache.lucene.search.spans.SpanWeight;
 
-import nl.inl.blacklab.exceptions.BlackLabRuntimeException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -122,7 +120,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
         List<SpanGuarantees> clauseGuarantees = clauscol.stream()
                 .map(BLSpanQuery::guarantees)
-                .collect(Collectors.toList());
+                .toList();
         this.guarantees = createGuarantees(clauseGuarantees);
     }
 
@@ -165,9 +163,9 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         for (int i = 0; i < clauses.size(); i++) {
             BLSpanQuery clause = clauses.get(i);
             if (clause instanceof SpanQueryEdge) {
-                anyRewritten = anyRewritten || matchingTagsWithEdge(clauses, i);
+                anyRewritten |= matchingTagsWithEdge(clauses, i);
             } else if (clause instanceof SpanQueryRelations) {
-                anyRewritten = anyRewritten || matchingTagsWithRelations(clauses, i);
+                anyRewritten |= matchingTagsWithRelations(clauses, i);
             }
         }
         return anyRewritten;
@@ -587,7 +585,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
     public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
-        throw new BlackLabRuntimeException("Sequence should have been rewritten!");
+        throw new IllegalStateException("Sequence should have been rewritten!");
     }
 
     @Override

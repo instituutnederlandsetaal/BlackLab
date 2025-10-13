@@ -114,10 +114,10 @@ public class QueryExecutionContext {
 
     public QueryExecutionContext withRelationAnnotation() {
         if (!field().hasXmlTags())
-            throw new RuntimeException("Field " + field().name() + " has no relation annotation!");
+            throw new UnsupportedOperationException("Field " + field().name() + " has no relation annotation!");
         String name = AnnotatedFieldNameUtil.relationAnnotationName(index.getType());
         if (field().annotation(name) == null)
-            throw new RuntimeException("Field " + field().name() + " has no relation annotation named " + name + "!");
+            throw new UnsupportedOperationException("Field " + field().name() + " has no relation annotation named " + name + "!");
         return withAnnotationAndSensitivity(field().annotation(name), null);
     }
 

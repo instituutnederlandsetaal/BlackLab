@@ -53,7 +53,7 @@ Create a file named `test.env` with your indexing configuration:
 
 ```ini
 # What version of the blacklab image to use
-IMAGE_VERSION=latest
+IMAGE_VERSION=dev
 
 # Where your .blf.yaml (input format configuration) files live.
 BLACKLAB_FORMATS_DIR=/path/to/my/formats
