@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.tools.frequency.config.ArgsParser;
 import nl.inl.blacklab.tools.frequency.config.Config;
 import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;

@@ -10,9 +10,6 @@ import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
-import nl.inl.util.LuceneUtil;
-
-import org.apache.lucene.queryparser.classic.ParseException;
 
 final public class MetadataTerms {
     private final Map<String, List<String>> terms;
@@ -32,7 +29,7 @@ final public class MetadataTerms {
         }
         // Fill with document metadata
         final var docIds = FrequencyCounter.getDocIds(index, cfg);
-        for (final int id : docIds) {
+        for (final int id: docIds) {
             final var doc = index.luceneDoc(id);
             for (int i = 0; i < numMetadata; i++) {
                 final var metadata = cfg.metadata().get(i);
@@ -45,7 +42,8 @@ final public class MetadataTerms {
         terms = new Object2ObjectArrayMap<>();
         for (int i = 0; i < numMetadata; i++) {
             final var metadata = cfg.metadata().get(i);
-            System.out.println("  " + uniqueMetadata.get(metadata.name()).size() + " unique values of " + metadata.name());
+            System.out.println(
+                    "  " + uniqueMetadata.get(metadata.name()).size() + " unique values of " + metadata.name());
             terms.put(metadata.name(), new ObjectArrayList<>(uniqueMetadata.get(metadata.name())));
         }
     }

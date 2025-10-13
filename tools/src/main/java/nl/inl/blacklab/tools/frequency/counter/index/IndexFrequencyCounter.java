@@ -9,10 +9,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;
 
-import nl.inl.blacklab.exceptions.BlackLabException;
-
 import org.eclipse.collections.impl.map.mutable.ConcurrentHashMapUnsafe;
 
+import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;

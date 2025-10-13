@@ -28,7 +28,8 @@ public record CutoffHelper(
         return new CutoffHelper(termsAboveCutoff, terms);
     }
 
-    private static Set<String> calculateCutoff(final BlackLabIndex index, final FrequencyListConfig cfg, final Annotation annotation) {
+    private static Set<String> calculateCutoff(final BlackLabIndex index, final FrequencyListConfig cfg,
+            final Annotation annotation) {
         final Set<String> termsAboveCutoff = new ObjectOpenHashSet<>();
         if (cfg.cutoff() != null) {
             final var t = new Timer();

@@ -7,8 +7,6 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
-import nl.inl.blacklab.tools.frequency.data.MetadataTerms;
-
 import org.apache.lucene.document.Document;
 
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -19,6 +17,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.data.GroupId;
+import nl.inl.blacklab.tools.frequency.data.MetadataTerms;
 import nl.inl.blacklab.tools.frequency.data.document.DocumentMetadata;
 import nl.inl.blacklab.tools.frequency.data.document.DocumentTokens;
 import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
@@ -44,7 +43,8 @@ final public class DocumentFrequencyCounter {
         this.docLength = Integer.parseInt(doc.get(docLengthField)) - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
     }
 
-    private static Document openDocument(final BlackLabIndex index, final int docId, final FrequencyListConfig cfg, final String docLengthField) throws IOException {
+    private static Document openDocument(final BlackLabIndex index, final int docId, final FrequencyListConfig cfg,
+            final String docLengthField) throws IOException {
         // Determine all the fields we want to be able to load, so we don't need to load the entire document
         final var fieldsToLoad = new HashSet<String>();
         fieldsToLoad.add(docLengthField);
@@ -60,6 +60,33 @@ final public class DocumentFrequencyCounter {
         doc.forEach((groupId, docCount) -> {
             global.merge(groupId, docCount, Integer::sum);
         });
+    }
+
+    public static int[] getMetadataTermIds(final MetadataTerms terms, final Document doc,
+            final FrequencyListConfig cfg) {
+        final int numFields = cfg.metadata().size();
+        final var metaValues = new int[numFields];
+        // for each metadata field defined in the config
+        for (int i = 0; i < numFields; i++) {
+            final MetadataConfig metaCfg = cfg.metadata().get(i);
+            // get its value
+            String fieldValue = doc.get(metaCfg.name());
+            // and if it's null
+            if (fieldValue == null || fieldValue.isEmpty()) {
+                // optionally replace it with a default value
+                if (metaCfg.nullValue() != null) {
+                    fieldValue = metaCfg.nullValue();
+                } else if (metaCfg.required()) {
+                    // if it's required but not present, discard this document
+                    return null;
+                }
+            }
+            // retrieve the id for this value
+            final int id = terms.getIdx(metaCfg.name(), fieldValue);
+            // add the processed value
+            metaValues[i] = id;
+        }
+        return metaValues;
     }
 
     public void process(final Map<GroupId, Integer> occurrences) {
@@ -105,32 +132,6 @@ final public class DocumentFrequencyCounter {
         // precompute, it's the same for all hits in document
         final int hash = Arrays.hashCode(metaTermIds);
         return new DocumentMetadata(metaTermIds, hash);
-    }
-
-    public static int[] getMetadataTermIds(final MetadataTerms terms, final Document doc, final FrequencyListConfig cfg) {
-        final int numFields = cfg.metadata().size();
-        final var metaValues = new int[numFields];
-        // for each metadata field defined in the config
-        for (int i = 0; i < numFields; i++) {
-            final MetadataConfig metaCfg = cfg.metadata().get(i);
-            // get its value
-            String fieldValue = doc.get(metaCfg.name());
-            // and if it's null
-            if (fieldValue == null || fieldValue.isEmpty()) {
-                // optionally replace it with a default value
-                if (metaCfg.nullValue() != null) {
-                    fieldValue = metaCfg.nullValue();
-                } else if (metaCfg.required()) {
-                    // if it's required but not present, discard this document
-                    return null;
-                }
-            }
-            // retrieve the id for this value
-            final int id = terms.getIdx(metaCfg.name(), fieldValue);
-            // add the processed value
-            metaValues[i] = id;
-        }
-        return metaValues;
     }
 
     private Map<GroupId, Integer> getDocumentFrequencies(final DocumentTokens doc, final DocumentMetadata meta) {

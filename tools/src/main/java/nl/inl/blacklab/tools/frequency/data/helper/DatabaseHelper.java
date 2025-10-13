@@ -5,12 +5,9 @@ import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
 import nl.inl.blacklab.tools.frequency.counter.FrequencyCounter;
 import nl.inl.blacklab.tools.frequency.counter.index.DocumentFrequencyCounter;
-import nl.inl.blacklab.tools.frequency.data.MetadataTerms;
 import nl.inl.blacklab.tools.frequency.data.IdMap;
-import nl.inl.util.LuceneUtil;
+import nl.inl.blacklab.tools.frequency.data.MetadataTerms;
 import nl.inl.util.Timer;
-
-import org.apache.lucene.queryparser.classic.ParseException;
 
 public record DatabaseHelper(
         IdMap metaToId,
@@ -30,13 +27,15 @@ public record DatabaseHelper(
                 ungroupedMetadata);
     }
 
-    /** Creates a sorted metadata-to-id map that is consistent between runs */
+    /**
+     * Creates a sorted metadata-to-id map that is consistent between runs
+     */
     private static IdMap getSortedMetaToId(final BlackLabIndex index, final FrequencyListConfig cfg,
             final MetadataTerms terms, final int[] groupedMetadata) {
         final var t = new Timer();
         final var metaToId = new IdMap();
         final var docIds = FrequencyCounter.getDocIds(index, cfg);
-        for (final int id : docIds) {
+        for (final int id: docIds) {
             final var doc = index.luceneDoc(id);
             final var metadataTermIds = DocumentFrequencyCounter.getMetadataTermIds(terms, doc, cfg);
             if (metadataTermIds == null)

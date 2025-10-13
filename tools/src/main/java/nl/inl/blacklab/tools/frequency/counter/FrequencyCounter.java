@@ -1,5 +1,9 @@
 package nl.inl.blacklab.tools.frequency.counter;
 
+import java.util.List;
+
+import org.apache.lucene.queryparser.classic.ParseException;
+
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
@@ -8,12 +12,7 @@ import nl.inl.blacklab.tools.frequency.counter.search.SearchFrequencyCounter;
 import nl.inl.blacklab.tools.frequency.data.helper.IndexHelper;
 import nl.inl.blacklab.tools.frequency.writers.TsvWriter;
 import nl.inl.util.LuceneUtil;
-
 import nl.inl.util.Timer;
-
-import org.apache.lucene.queryparser.classic.ParseException;
-
-import java.util.List;
 
 public abstract class FrequencyCounter {
     protected final BlackLabIndex index;
@@ -39,7 +38,7 @@ public abstract class FrequencyCounter {
      * Get all document IDs matching the filter.
      * If no filter is defined, return all document IDs.
      */
-    public static List<Integer> getDocIds(BlackLabIndex index, FrequencyListConfig cfg) {
+    public static List<Integer> getDocIds(final BlackLabIndex index, final FrequencyListConfig cfg) {
         final var t = new Timer();
         final var docIds = new IntArrayList();
         if (cfg.filter() != null) {

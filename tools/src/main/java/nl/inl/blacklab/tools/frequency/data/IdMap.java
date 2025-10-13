@@ -3,9 +3,7 @@ package nl.inl.blacklab.tools.frequency.data;
 import java.util.Map;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
-import it.unimi.dsi.fastutil.objects.Object2BooleanLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntLinkedOpenCustomHashMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 
 final public class IdMap {
     private final Object2IntLinkedOpenCustomHashMap<int[]> map;
