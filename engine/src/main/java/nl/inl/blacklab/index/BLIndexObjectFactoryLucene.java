@@ -60,6 +60,6 @@ public class BLIndexObjectFactoryLucene implements BLIndexObjectFactory {
 
     @Override
     public BLIndexWriterProxy indexWriterProxy(IndexWriter luceneIndexWriter, BlackLabIndexWriter indexWriter) {
-        return new BLIndexWriterProxyLucene(luceneIndexWriter);
+        return new BLIndexWriterProxyLucene(luceneIndexWriter, indexWriter);
     }
 }

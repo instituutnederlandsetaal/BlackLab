@@ -178,7 +178,7 @@ public class DocPropertyStoredField extends DocProperty {
     public Query query(BlackLabIndex index, PropertyValue value) {
         MetadataField metadataField = index.metadataField(fieldName);
         if (value.toString().isEmpty())
-            return null; // Cannot search for empty string (to avoid this problem, configure ans "Unknown value")
+            return null; // Cannot search for empty string (to avoid this problem, configure an "Unknown value")
         if (!value.toString().isEmpty() && metadataField.type() == FieldType.TOKENIZED) {
             String strValue = "\"" + value.toString().replaceAll("\"", "\\\\\"") + "\"";
             try {

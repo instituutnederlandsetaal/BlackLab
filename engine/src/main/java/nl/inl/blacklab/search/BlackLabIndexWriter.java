@@ -16,6 +16,24 @@ import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 
 public interface BlackLabIndexWriter extends AutoCloseable {
 
+    /** What to do if a document with the same persistent identifier (pidField) already exists in the index? */
+    enum IfDocumentExists {
+
+        /** Replace the existing document with the new one. */
+        UPSERT,
+
+        /** Skip the new document, leaving the existing document. */
+        SKIP,
+
+        /** Fail with an error message. */
+        FAIL,
+    }
+
+    /** What to do if a document with the same persistent identifier (pidField) already exists? */
+    default IfDocumentExists getIfDocumentExists() {
+        return IfDocumentExists.UPSERT; // TODO: make configurable (IndexTool cmdline, BLS config)
+    }
+
     /**
      * Return factory object for creating input documents, getting field types, etc.
      *

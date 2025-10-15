@@ -83,7 +83,8 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
             for (BLInputDocumentSolr doc : blSolrWriter.getPendingAddDocuments()) {
                 AddUpdateCommand cmd = new AddUpdateCommand(null);
                 cmd.solrDoc = doc.getDocument();
-                cmd.overwrite = true;
+                // TODO: support SKIP/FAIL options separately (currently SKIP probably behaves like FAIL)
+                cmd.overwrite = index.getIfDocumentExists() == BlackLabIndexWriter.IfDocumentExists.UPSERT;
                 cmd.setReq(req);
                 processor.processAdd(cmd);
                 // ends up in DirectUpdateHandler2::addDoc0
