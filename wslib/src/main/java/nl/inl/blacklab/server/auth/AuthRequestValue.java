@@ -21,7 +21,7 @@ public class AuthRequestValue implements AuthMethod {
     /** Name of the attribute/parameter/header to read */
     private String valueKey = null;
 
-    protected enum AttributeType {
+    public enum AttributeType {
         ATTRIBUTE,
         HEADER,
         PARAMETER
@@ -31,12 +31,14 @@ public class AuthRequestValue implements AuthMethod {
 
     public AuthRequestValue(Map<String, Object> parameters) {
         Object type = parameters.get("attributeType"); // deprecated, use "type"
-        if (type == null) type = parameters.get("type");
-        if (type == null) type = "attribute";
+        if (type == null)
+            type = parameters.get("type");
+        if (type == null)
+            type = "attribute";
         Object parName = parameters.get("attributeName"); // deprecated, use "name"
         if (parName == null) parName = parameters.get("name");
         if (parName == null) {
-            logger.error("AuthRequestAttribute: name parameter missing in blacklab-server.json");
+            logger.error("AuthRequestAttribute: 'name' parameter missing in blacklab-server.json");
             return;
         }
 
@@ -58,7 +60,7 @@ public class AuthRequestValue implements AuthMethod {
         if (valueKey == null) {
             // (not configured correctly)
             logger.warn(
-                    "AuthRequestAttribute: cannot determine current user; missing attributeName parameter in blacklab-server.json");
+                    "AuthRequestAttribute: cannot determine current user; missing 'name' parameter in blacklab-server.json");
             return User.anonymous(sessionId);
         }
 
