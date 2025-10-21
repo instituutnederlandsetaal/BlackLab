@@ -18,7 +18,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opDocsCsv(params, rs);
+        WebserviceRequestHandler.opDocs(params, rs, true);
         return HTTP_OK;
     }
 

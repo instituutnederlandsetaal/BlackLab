@@ -12,6 +12,8 @@ import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 
+/** Keyword in context (KWIC) hits, either reconstructed from the forward index or
+ *  fragments cut from the original input document. */
 public class ConcordanceContext {
 
     public static ConcordanceContext kwics(Kwics kwics) {

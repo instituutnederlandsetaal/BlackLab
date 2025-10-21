@@ -26,7 +26,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -106,21 +105,26 @@ public class WebserviceRequestHandler {
      * @param params parameters
      * @param rs output stream
      */
-    public static void opHits(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
+    public static void opHits(WebserviceParams params, ResponseStreamer rs, boolean isCsv) throws InvalidQuery {
         if (params.isCalculateCollocations()) {
-            // Collocations request
-            TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
-            rs.collocationsResponse(tfl);
+            if (isCsv) {
+                // CSV collocations request
+                throw new UnsupportedOperationException("CSV collocations not (yet) implemented");
+            } else {
+                // Collocations request
+                TermFrequencyList tfl = WebserviceOperations.calculateCollocations(params);
+                rs.collocationsResponse(tfl);
+            }
         } else {
             // Hits request
             if (shouldReturnListOfGroups(params)) {
                 // We're returning a list of groups
-                ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params);
-                rs.hitsGroupedResponse(hitsGrouped);
+                ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params, isCsv);
+                rs.hitsGroupedResponse(hitsGrouped, isCsv);
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
-                ResultHits result = WebserviceOperations.getResultHits(params);
-                rs.hitsResponse(result);
+                ResultHits resultHits = WebserviceOperations.hits(params, isCsv);
+                rs.hitsResponse(resultHits, isCsv);
             }
         }
     }
@@ -131,22 +135,14 @@ public class WebserviceRequestHandler {
      * @param params parameters
      * @param rs output stream
      */
-    public static void opDocs(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
+    public static void opDocs(WebserviceParams params, ResponseStreamer rs, boolean isCsv) throws InvalidQuery {
+        ResultDocs result = WebserviceOperations.docs(params, isCsv);
         if (shouldReturnListOfGroups(params)) {
             // We're returning a list of groups
-            ResultDocsGrouped docsGrouped = WebserviceOperations.docsGrouped(params);
-            rs.docsGroupedResponse(docsGrouped);
+            rs.docsGroupedResponse(result, isCsv);
         } else {
             // We're returning a list of results (ungrouped, or viewing single group)
-            ResultDocsResponse result;
-            if (params.getGroupProps().isPresent() && params.getViewGroup().isPresent()) {
-                // View a single group in a grouped docs resultset
-                result = WebserviceOperations.viewGroupDocsResponse(params);
-            } else {
-                // Regular set of docs (no grouping first)
-                result = WebserviceOperations.regularDocsResponse(params);
-            }
-            rs.docsResponse(result);
+            rs.docsResponse(result, isCsv);
         }
     }
 
@@ -266,32 +262,6 @@ public class WebserviceRequestHandler {
             params.getSearchManager().getBlackLabCache().clear(false);
             return Response.status(rs, "SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
         }
-    }
-
-    public static void opDocsCsv(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
-        ResultDocsCsv result = WebserviceOperations.docsCsv(params);
-        String csv;
-        if (result.getGroups() == null || result.isViewGroup()) {
-            // No grouping applied, or viewing a single group
-            csv = WriteCsv.docs(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults(), rs);
-        } else {
-            // Grouped results
-            csv = WriteCsv.docGroups(params, result.getDocs(), result.getGroups(),
-                    result.getSubcorpusResults(), rs);
-        }
-        rs.getDataStream().csv(csv);
-    }
-
-    public static void opHitsCsv(WebserviceParams params, ResponseStreamer rs) throws InvalidQuery {
-        ResultHitsCsv result = WebserviceOperations.hitsCsv(params);
-        String csv;
-        if (result.getGroups() != null && !result.isViewGroup()) {
-            csv = WriteCsv.hitsGroupsResponse(result, rs);
-        } else {
-            csv = WriteCsv.hitsResponse(result, rs);
-        }
-        rs.getDataStream().csv(csv);
     }
 
     public static void opInputFormatXslt(WebserviceParams params, ResponseStreamer rs) {

@@ -77,6 +77,7 @@ import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -1079,8 +1080,13 @@ public class ResponseStreamer {
         ds.endMap().endEntry().endMap();
     }
 
-    public void hitsResponse(ResultHits resultHits)
+    public void hitsResponse(ResultHits resultHits, boolean isCsv)
             throws InvalidQuery {
+        if (isCsv) {
+            String csv = WriteCsv.hitsResponse(resultHits, this);
+            getDataStream().csv(csv);
+            return;
+        }
         WebserviceParams params = resultHits.getParams();
         BlackLabIndex index = params.blIndex();
         // Search time should be time user (originally) had to wait for the response to this request.
@@ -1140,7 +1146,12 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    public void hitsGroupedResponse(ResultHitsGrouped hitsGrouped) {
+    public void hitsGroupedResponse(ResultHitsGrouped hitsGrouped, boolean isCsv) {
+        if (isCsv) {
+            String csv = WriteCsv.hitsGroupsResponse(hitsGrouped, this);
+            getDataStream().csv(csv);
+            return;
+        }
         ds.startMap();
         {
             ds.startEntry(KEY_SUMMARY).startMap();
@@ -1194,7 +1205,12 @@ public class ResponseStreamer {
         ds.endList().endEntry();
     }
 
-    public void docsGroupedResponse(ResultDocsGrouped result) {
+    public void docsGroupedResponse(ResultDocs result, boolean isCsv) {
+        if (isCsv) {
+            String csv = WriteCsv.docGroups(result, this);
+            getDataStream().csv(csv);
+            return;
+        }
         DocGroups groups = result.getGroups();
         ds.startMap();
         {
@@ -1236,7 +1252,12 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    public void docsResponse(ResultDocsResponse result) {
+    public void docsResponse(ResultDocs result, boolean isCsv) {
+        if (isCsv) {
+            String csv = WriteCsv.docs(result, this);
+            getDataStream().csv(csv);
+            return;
+        }
         ds.startMap();
         {
             // The summary

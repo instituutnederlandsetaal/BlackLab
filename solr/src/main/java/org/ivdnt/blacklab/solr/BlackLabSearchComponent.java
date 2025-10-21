@@ -32,6 +32,7 @@ import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.WebserviceUtil;
+import nl.inl.blacklab.webservice.WebserviceOperation;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -197,14 +198,14 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case FIELD_INFO -> WebserviceRequestHandler.opFieldInfo(params, dstream);
 
                 // Find hits or documents
-                case HITS_CSV -> WebserviceRequestHandler.opHitsCsv(params, dstream);
-                case HITS, HITS_GROUPED ->
+                case HITS, HITS_GROUPED, HITS_CSV ->
                     // [grouped] hits
-                        WebserviceRequestHandler.opHits(params, dstream);
-                case DOCS_CSV -> WebserviceRequestHandler.opDocsCsv(params, dstream);
+                    WebserviceRequestHandler.opHits(params, dstream,
+                            params.getOperation() == WebserviceOperation.HITS_CSV);
+                case DOCS_CSV -> WebserviceRequestHandler.opDocs(params, dstream, true);
                 case DOCS, DOCS_GROUPED ->
                     // [grouped] docs
-                        WebserviceRequestHandler.opDocs(params, dstream);
+                    WebserviceRequestHandler.opDocs(params, dstream, false);
 
                 // Information about a document
                 case DOC_CONTENTS -> WebserviceRequestHandler.opDocContents(params, dstream);

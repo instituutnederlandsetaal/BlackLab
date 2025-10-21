@@ -210,7 +210,12 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public WindowSettings windowSettings() {
-        long size = Math.min(Math.max(0, getNumberOfResultsToShow()), configParam().getPageSize().getMax());
+        return windowSettings(configParam().getPageSize().getMax());
+    }
+
+    @Override
+    public WindowSettings windowSettings(long clampMaxSize) {
+        long size = Math.min(Math.max(0, getNumberOfResultsToShow()), clampMaxSize);
         return new WindowSettings(getFirstResultToShow(), size);
     }
 

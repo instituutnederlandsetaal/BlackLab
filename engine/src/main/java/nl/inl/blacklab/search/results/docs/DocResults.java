@@ -581,7 +581,6 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
                     Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                    String queryField = field().name();
                     List<AnnotatedField> tokenLengthFields = queryInfo().index().annotatedFields().stream().toList();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         LeafReader reader = r.reader();
@@ -634,7 +633,6 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 // Slow approach: get the stored field value from each Document
                 // (note that DocPropertyAnnotatedFieldLength already excludes the dummy closing token)
                 //TODO: use DocValues as well (a bit more complex, because we can't re-run the query)
-                String queryFieldName = field().name();
                 numberOfTokens = 0;
                 for (AnnotatedField field: queryInfo().index().annotatedFields()) {
                     DocProperty propTokens = new DocPropertyAnnotatedFieldLength(queryInfo().index(), field.name());

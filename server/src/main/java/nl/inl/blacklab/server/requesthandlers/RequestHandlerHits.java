@@ -17,7 +17,7 @@ public class RequestHandlerHits extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opHits(params, rs);
+        WebserviceRequestHandler.opHits(params, rs, false);
         return HTTP_OK;
     }
 

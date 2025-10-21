@@ -41,7 +41,11 @@ import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
-import nl.inl.blacklab.server.lib.results.ResultHitsCsv;
+import nl.inl.blacklab.server.lib.results.ResultDocs;
+import nl.inl.blacklab.server.lib.results.ResultHits;
+import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
+import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
+import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -60,10 +64,8 @@ public class WriteCsv {
     private WriteCsv() {
     }
 
-    public static String hitsGroupsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
+    public static String hitsGroupsResponse(ResultHitsGrouped resultHitsCsv, ResponseStreamer rs) throws BlsException {
         HitGroups groups = resultHitsCsv.getGroups();
-        HitResults inputHitsForGroups = resultHitsCsv.getHits();
-        DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
         WebserviceParams params = resultHitsCsv.getParams();
 
         DocProperty metadataGroupProperties = groups.groupCriteria().docPropsOnly();
@@ -80,8 +82,9 @@ public class WriteCsv {
             }
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                summaryCsvHits(params, printer, row.size(), inputHitsForGroups, groups,
-                        subcorpusResults.subcorpusSize(), rs);
+                summaryCsvHits(printer, row.size(),
+                        rs,
+                        resultHitsCsv.getSummaryFields(), resultHitsCsv.getSummaryNumHits());
             }
 
             // write the groups
@@ -93,7 +96,8 @@ public class WriteCsv {
                 if (metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
-                    CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpusResults.query(), metadataGroupProperties, docPropValues);
+                    CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params,
+                            resultHitsCsv.getSubcorpusQuery(), metadataGroupProperties, docPropValues);
                     long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
@@ -116,11 +120,10 @@ public class WriteCsv {
         }
     }
 
-    public static String hitsResponse(ResultHitsCsv resultHitsCsv, ResponseStreamer rs) throws BlsException {
+    public static String hitsResponse(ResultHits resultHitsCsv, ResponseStreamer rs) throws BlsException {
         WebserviceParams params = resultHitsCsv.getParams();
         BlackLabIndex index = params.blIndex();
         HitResults hitResults = resultHitsCsv.getHits();
-        HitGroups groups = resultHitsCsv.getGroups();
         DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
         final Annotation mainTokenProperty = hitResults.field().mainAnnotation();
         try {
@@ -145,9 +148,10 @@ public class WriteCsv {
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                hitResults.resultsStats().countedTotal(); // block for a bit
-                summaryCsvHits(params, printer, row.size(), hitResults, groups, subcorpusResults.subcorpusSize(),
-                        rs);
+                long numHits = hitResults.resultsStats().countedTotal(); // block for a bit
+                long numDocs = hitResults.docsStats().countedTotal();
+                summaryCsvHits(printer, row.size(),
+                        rs, resultHitsCsv.getSummaryCommonFields(), resultHitsCsv.getSummaryNumHits());
             }
 
             Map<Integer, Document> luceneDocs = new HashMap<>();
@@ -262,22 +266,23 @@ public class WriteCsv {
     /**
      * Output most of the fields of the search summary.
      *
-     * @param numColumns number of columns to output per row, minimum 2
-     * @param printer the output printer
-     * @param searchParam original search parameters
-     * @param groups (optional) if results are grouped, the groups
-     * @param subcorpusSize global sub corpus information (i.e. inter-group)
+     * @param printer       the output printer
+     * @param numColumns    number of columns to output per row, minimum 2
+     * @param rs            response streamer
+     * @param scf           common fields for the summary
+     * @param snh           number of hits etc. information for the summary
      */
     // TODO tidy up csv handling
-    private static <T> void addSummaryCsvCommon(
+    private static void addSummaryCsvCommon(
             CSVPrinter printer,
             int numColumns,
-            WebserviceParams searchParam,
-            ResultGroups groups,
-            CorpusSize subcorpusSize,
-            ResponseStreamer rs
-    ) {
+            ResponseStreamer rs,
+            ResultSummaryCommonFields scf,
+            ResultSummaryNumHits snh) {
+        CorpusSize subcorpusSize = snh.getSubcorpusSize();
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
+        WebserviceParams searchParam = scf.getSearchParam();
+        ResultGroups groups = scf.getGroups();
         for (Map.Entry<WebserviceParameter, String> param : searchParam.getParameters().entrySet()) {
             WebserviceParameter par = param.getKey();
             if (par == WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS ||
@@ -286,9 +291,13 @@ public class WriteCsv {
             writeRow(printer, numColumns, summ + rs.KEY_PARAMS + "." + par, param.getValue());
         }
 
-        String subcorpSize = summ + ResponseStreamer.KEY_SUBCORPUS_SIZE + ".";
-        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS, subcorpusSize.getTotalCount().getDocuments());
-        writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_TOKENS, subcorpusSize.getTotalCount().getTokens());
+        if (subcorpusSize != null) {
+            String subcorpSize = summ + ResponseStreamer.KEY_SUBCORPUS_SIZE + ".";
+            writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_DOCUMENTS,
+                    subcorpusSize.getTotalCount().getDocuments());
+            writeRow(printer, numColumns, subcorpSize + rs.KEY_SUBCORPUS_SIZE_TOKENS,
+                    subcorpusSize.getTotalCount().getTokens());
+        }
 
         if (groups != null) {
             writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_GROUPS, groups.size());
@@ -310,42 +319,45 @@ public class WriteCsv {
      *
      * @param printer CSV printer
      * @param numColumns number of columns
-     * @param hitResults hits to summarize
-     * @param groups (optional) if grouped
-     * @param subcorpusSize (optional) if available
+     * @param rs response streamer
+     * @param scf common fields for the summary
+     * @param snh number of hits etc. information for the summary
      */
-    private static void summaryCsvHits(WebserviceParams params, CSVPrinter printer, int numColumns, HitResults hitResults,
-            ResultGroups groups, CorpusSize subcorpusSize, ResponseStreamer rs) {
-        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize, rs);
+    private static void summaryCsvHits(CSVPrinter printer, int numColumns,
+            ResponseStreamer rs, ResultSummaryCommonFields scf, ResultSummaryNumHits snh) {
+        addSummaryCsvCommon(printer, numColumns, rs, scf, snh);
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
-        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS, hitResults.size());
-        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, hitResults.docsStats().countedSoFar());
+        long numHits = snh.getHitsStats().countedTotal();
+        long numDocs = snh.getDocsStats().countedTotal();
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS, numHits);
+        writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, numDocs);
     }
 
     /**
      * @param printer CSV printer
      * @param numColumns number of columns
      * @param docResults all docs as the input for groups, or contents of a specific group (viewgroup)
-     * @param groups (optional) if grouped
      */
     public static void summaryCsvDocs(
-            WebserviceParams params,
             CSVPrinter printer,
             int numColumns,
             DocResults docResults,
-            DocGroups groups,
-            CorpusSize subcorpusSize,
-            ResponseStreamer rs
+            ResponseStreamer rs,
+            ResultSummaryCommonFields scf,
+            ResultSummaryNumHits snh
     ) {
-        addSummaryCsvCommon(printer, numColumns, params, groups, subcorpusSize, rs);
+        addSummaryCsvCommon(printer, numColumns, rs, scf, snh);
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
         writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_DOCS, docResults.size());
         writeRow(printer, numColumns, summ + ResponseStreamer.KEY_NUMBER_OF_HITS,
                 StreamSupport.stream(docResults.spliterator(), false).mapToLong(DocResult::size).sum());
     }
 
-    public static String docGroups(WebserviceParams params, DocResults inputDocsForGroups, DocGroups groups,
-            DocResults subcorpusResults, ResponseStreamer rs) throws BlsException {
+    public static String docGroups(ResultDocs result, ResponseStreamer rs) throws BlsException {
+        WebserviceParams params = result.getParams();
+        DocResults inputDocsForGroups = result.getDocs();
+        DocGroups groups = result.getGroups();
+        DocResults subcorpusResults = result.getSubcorpusResults();
         try {
             // Write the header
             List<String> row = new ArrayList<>(groups.groupCriteria().propNames());
@@ -359,7 +371,13 @@ public class WriteCsv {
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                summaryCsvDocs(params, printer, row.size(), inputDocsForGroups, groups, subcorpusResults.subcorpusSize(), rs);
+                ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(params,
+                        null, null, null, groups,
+                        null, null, null);
+                ResultSummaryNumHits summaryNumHits = WebserviceOperations.numResultsSummaryHits(null,
+                        inputDocsForGroups.resultsStats(), true, null, subcorpusResults.subcorpusSize());
+                summaryCsvDocs(printer, row.size(), inputDocsForGroups,
+                        rs, summaryFields, summaryNumHits);
             }
 
             // write the groups
@@ -393,9 +411,12 @@ public class WriteCsv {
         }
     }
 
-    public static String docs(WebserviceParams params, DocResults docs, DocGroups fromGroups,
-            DocResults globalSubcorpusSize, ResponseStreamer rs) throws BlsException {
+    public static String docs(ResultDocs result, ResponseStreamer rs) throws BlsException {
         try {
+            WebserviceParams params = result.getParams();
+            DocResults docs = result.getDocs();
+            DocResults globalSubcorpusSize = result.getSubcorpusResults();
+
             BlackLabIndex index = params.blIndex();
             IndexMetadata indexMetadata = index.metadata();
             MetadataField pidField = indexMetadata.metadataFields().pidField();
@@ -419,7 +440,13 @@ public class WriteCsv {
             row.addAll(metadataFieldIds); // NOTE: use the raw field IDs for headers, not the display names, CSVPrinter can't handle duplicate names
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
-            summaryCsvDocs(params, printer, row.size(), docs, fromGroups, globalSubcorpusSize.subcorpusSize(), rs);
+            ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(params,
+                    null, null, null, null,
+                    null, null, null);
+            ResultSummaryNumHits summaryNumHits = WebserviceOperations.numResultsSummaryHits(null,
+                    docs.resultsStats(), true, null, globalSubcorpusSize.subcorpusSize());
+            summaryCsvDocs(printer, row.size(), docs,
+                    rs, summaryFields, summaryNumHits);
 
             StringBuilder sb = new StringBuilder();
 

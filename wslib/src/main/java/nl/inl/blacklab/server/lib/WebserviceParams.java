@@ -62,6 +62,8 @@ public interface WebserviceParams extends QueryParams {
 
     WindowSettings windowSettings();
 
+    WindowSettings windowSettings(long clampMaxSize);
+
     HitSortSettings hitsSortSettings();
 
     SampleParameters sampleSettings();

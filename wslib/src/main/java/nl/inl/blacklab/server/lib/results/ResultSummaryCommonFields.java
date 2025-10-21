@@ -22,7 +22,7 @@ public class ResultSummaryCommonFields {
     private final AnnotatedField searchField;
     private final Collection<AnnotatedField> otherFields;
 
-    ResultSummaryCommonFields(WebserviceParams searchParam, Index.IndexStatus indexStatus,
+    public ResultSummaryCommonFields(WebserviceParams searchParam, Index.IndexStatus indexStatus,
             SearchTimings timings, MatchInfoDefs matchInfoDefs,
             ResultGroups groups, WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
         this.searchParam = searchParam;

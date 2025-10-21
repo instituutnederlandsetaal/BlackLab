@@ -185,6 +185,14 @@ public enum WebserviceParameter {
         this.synonyms = Arrays.asList(synonyms);
     }
 
+    public static String defaultString(WebserviceParameter webserviceParameter) {
+        return defaultValues.getOrDefault(webserviceParameter, "");
+    }
+
+    public static long defaultLong(WebserviceParameter webserviceParameter) {
+        return Long.parseLong(defaultValues.getOrDefault(webserviceParameter, "0"));
+    }
+
     public String value() { return name; }
 
     @Override

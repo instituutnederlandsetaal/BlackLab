@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
@@ -38,6 +39,7 @@ import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.docs.DocGroups;
+import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -74,7 +76,9 @@ public class ResultHits {
 
     private ResultsStats docsStats = null;
 
-    private final boolean viewingGroup;
+    private final DocResults subcorpusResults;
+
+    private final boolean isViewGroup;
 
     private final SearchCacheEntry<?> cacheEntry;
 
@@ -98,16 +102,24 @@ public class ResultHits {
 
     private Map<String, String> metaDisplayNames;
 
-    private Index.IndexStatus indexStatus;
+    private final List<Annotation> annotationsToWrite;
 
-    private ResultSummaryNumHits summaryNumHits;
+    private Index.IndexStatus indexStatus;
 
     private ResultSummaryCommonFields summaryCommonFields;
 
+    private ResultSummaryNumHits summaryNumHits;
+
     private ResultListOfHits listOfHits;
 
+    /**
+     * Get the hits (and the groups from which they were extracted - if applicable)
+     * for this request. Exceptions cleanly mapping to http error
+     * responses are thrown if any part of the request cannot be fulfilled. Sorting
+     * is already applied to the hits.
+     */
     @SuppressWarnings("unchecked")
-    ResultHits(WebserviceParams params, boolean includeIndexStatus) {
+    ResultHits(WebserviceParams params, boolean includeIndexStatus, long maxWindowSize) {
         this.params = params;
         indexStatus = null;
         if (includeIndexStatus) {
@@ -116,17 +128,22 @@ public class ResultHits {
         }
 
         // Do we want to view a single group after grouping?
-        String groupBy = params.getGroupProps().orElse("");
-        String viewGroup = params.getViewGroup().orElse("");
+        Optional<String> groupBy = params.getGroupProps();
+        Optional<String> viewGroup = params.getViewGroup();
 
-        viewingGroup = !groupBy.isEmpty() && !viewGroup.isEmpty();
+        isViewGroup = groupBy.isPresent() && viewGroup.isPresent();
         boolean waitForTotal = params.getWaitForTotal();
+        String sortBy = params.getSortProps().orElse(null);
+
+        subcorpusResults = params.subcorpus().execute();
+
         try {
-            if (viewingGroup) {
+            if (isViewGroup) {
                 // We're viewing a single group. Get the hits from the grouping results.
-                Pair<SearchCacheEntry<?>, HitResults> res = getHitsFromGroup(params, viewGroup);
+                Pair<SearchCacheEntry<?>, HitResults> res = getHitsFromGroup(params, viewGroup.get());
                 cacheEntry = res.getLeft();
                 hitResults = res.getRight();
+
                 // The hits are already complete - get the stats directly.
                 hitsStats = hitResults.resultsStats();
                 docsStats = hitResults.docsStats();
@@ -168,6 +185,75 @@ public class ResultHits {
             logger.debug("Searching threw an exception", e);
             throw WebserviceOperations.translateSearchException(e);
         }
+
+        //long maxWindowSize = params.getSearchManager().config().getParameters().getPageSize().getMax();
+        WindowSettings windowSettings = params.windowSettings(maxWindowSize);
+        if (!hitResults.getHits().sizeAtLeast(windowSettings.first()))
+            throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
+
+        cacheEntryWindow = null;
+        if (!isViewGroup) {
+            // Request the window of hits we're interested in.
+            // (we hold on to the cache entry so that we can differentiate between search and count time later)
+            cacheEntryWindow = params.hitsWindow().executeAsync();
+            try {
+                window = cacheEntryWindow.get(); // blocks until requested hits window is available
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // preserve interrupted status
+                throw WebserviceOperations.translateSearchException(e);
+            } catch (ExecutionException e) {
+                throw WebserviceOperations.translateSearchException(e);
+            }
+        } else {
+            // We're viewing a single group in a grouping result. Just get the hits window directly.
+            window = hitResults.window(windowSettings.first(), windowSettings.size());
+        }
+
+        totalTokens = -1;
+        CorpusSize subcorpusSize = null;
+        if (params.getIncludeSubcorpusSize()) {
+            subcorpusSize = hitResults.perDocResults(Results.NO_LIMIT)
+                    .subcorpusSize();
+            // Determine total number of tokens in result set
+            totalTokens = subcorpusSize.getTotalCount().getTokens();
+        }
+
+        // Find KWICs/concordances from forward index or original XML
+        // (note that on large indexes, this can actually take significant time)
+        long startTimeKwicsMs = System.currentTimeMillis();
+        ContextSettings contextSettings = params.contextSettings();
+        Hits windowHits = window.getHits().getStatic();
+        concordanceContext = ConcordanceContext.get(windowHits, contextSettings.concType(), contextSettings.size());
+        kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
+
+        Map<Integer, Document> luceneDocs = new HashMap<>();
+        BlackLabIndex index = params.blIndex();
+        docIdToPid = WebserviceOperations.collectDocsAndPids(index, windowHits, luceneDocs);
+        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
+        docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
+
+        docFields = WebserviceOperations.getDocFields(index);
+        metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
+
+        annotationsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
+
+        SearchTimings searchTimings = getSearchTimings();
+        summaryNumHits = WebserviceOperations.numResultsSummaryHits(
+                getHitsStats(), getDocsStats(),
+                params.getWaitForTotal(), searchTimings, subcorpusSize);
+        MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
+        Set<AnnotatedField> otherFields = new HashSet<>();
+        for (MatchInfo.Def def : matchInfoDefs.currentList()) {
+            otherFields.add(def.getField());
+            if (def.getTargetField() != null)
+                otherFields.add(def.getTargetField());
+        }
+        otherFields.remove(hitResults.field());
+        summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
+                getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
+                hitResults.field(), otherFields);
+        listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
+                getDocIdToPid());
     }
 
     /**
@@ -180,8 +266,7 @@ public class ResultHits {
     private static SearchHits getQueryForHitsInSpecificGroupOnly(WebserviceParams params, PropertyValue viewGroupVal,
             HitGroups hitsGrouped) throws BlsException, InvalidQuery {
         // see if we can enhance this query
-        if (hitsGrouped.
-                sampleParameters() != null)
+        if (hitsGrouped.sampleParameters() != null)
             return null;
 
         HitProperty groupByProp = hitsGrouped.groupCriteria();
@@ -251,9 +336,8 @@ public class ResultHits {
     }
 
     private static Pair<SearchCacheEntry<?>, HitResults> getHitsFromGroup(WebserviceParams params, String viewGroup)
-            throws InterruptedException, ExecutionException, InvalidQuery, BlsException {
-        BlackLabIndex index = params.blIndex();
-        PropertyValue viewGroupVal = PropertyValue.deserialize(index, params.getAnnotatedField(), viewGroup);
+            throws InterruptedException, ExecutionException {
+        PropertyValue viewGroupVal = PropertyValue.deserialize(params.blIndex(), params.getAnnotatedField(), viewGroup);
         if (viewGroupVal == null)
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
         SearchCacheEntry<HitGroups> jobHitGroups = params.hitsGroupedStats().executeAsync();
@@ -300,10 +384,9 @@ public class ResultHits {
         // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
         // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
-        String sortBy = params.getSortProps().orElse(null);
-        HitProperty sortProp = HitProperty.deserialize(hitResults.getHits(), sortBy, params.getContext());
-        if (sortProp != null)
-            hitResults = hitResults.sorted(sortProp);
+        HitProperty sortBy = params.hitsSortSettings() == null ? null : params.hitsSortSettings().sortBy();
+        if (sortBy != null)
+            hitResults = hitResults.sorted(sortBy);
 
         return Pair.of(jobHitGroups, hitResults);
     }
@@ -323,84 +406,16 @@ public class ResultHits {
         return new SearchTimings(searchTime, countTime);
     }
 
-    public HitResults getHits() {
-        return hitResults;
-    }
-
-    public void finishSearch() {
-        WindowSettings windowSettings = params.windowSettings();
-        if (!hitResults.getHits().sizeAtLeast(windowSettings.first()))
-            throw new BadRequest("HIT_NUMBER_OUT_OF_RANGE", "Non-existent hit number specified.");
-
-        cacheEntryWindow = null;
-        if (!viewingGroup) {
-            // Request the window of hits we're interested in.
-            // (we hold on to the cache entry so that we can differentiate between search and count time later)
-            cacheEntryWindow = params.hitsWindow().executeAsync();
-            try {
-                window = cacheEntryWindow.get(); // blocks until requested hits window is available
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt(); // preserve interrupted status
-                throw WebserviceOperations.translateSearchException(e);
-            } catch (ExecutionException e) {
-                throw WebserviceOperations.translateSearchException(e);
-            }
-        } else {
-            // We're viewing a single group in a grouping result. Just get the hits window directly.
-            window = hitResults.window(windowSettings.first(), windowSettings.size());
-        }
-
-        totalTokens = -1;
-        CorpusSize subcorpusSize = null;
-        if (params.getIncludeSubcorpusSize()) {
-            subcorpusSize = hitResults.perDocResults(Results.NO_LIMIT)
-                    .subcorpusSize();
-            // Determine total number of tokens in result set
-            totalTokens = subcorpusSize.getTotalCount().getTokens();
-        }
-
-        // Find KWICs/concordances from forward index or original XML
-        // (note that on large indexes, this can actually take significant time)
-        long startTimeKwicsMs = System.currentTimeMillis();
-        ContextSettings contextSettings = params.contextSettings();
-        Hits windowHits = window.getHits().getStatic();
-        concordanceContext = ConcordanceContext.get(windowHits, contextSettings.concType(), contextSettings.size());
-        kwicTimeMs = System.currentTimeMillis() - startTimeKwicsMs;
-
-        Map<Integer, Document> luceneDocs = new HashMap<>();
-        BlackLabIndex index = params.blIndex();
-        docIdToPid = WebserviceOperations.collectDocsAndPids(index, windowHits, luceneDocs);
-        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
-        docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataFieldsToList);
-
-        docFields = WebserviceOperations.getDocFields(index);
-        metaDisplayNames = WebserviceOperations.getMetaDisplayNames(index);
-
-        SearchTimings searchTimings = getSearchTimings();
-        summaryNumHits = WebserviceOperations.numResultsSummaryHits(
-                getHitsStats(), getDocsStats(),
-                params.getWaitForTotal(), searchTimings, subcorpusSize);
-        MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
-        Set<AnnotatedField> otherFields = new HashSet<>();
-        for (MatchInfo.Def def : matchInfoDefs.currentList()) {
-            otherFields.add(def.getField());
-            if (def.getTargetField() != null)
-                otherFields.add(def.getTargetField());
-        }
-        otherFields.remove(hitResults.field());
-        summaryCommonFields = WebserviceOperations.summaryCommonFields(params,
-                getIndexStatus(), searchTimings, matchInfoDefs, null, window.windowStats(),
-                hitResults.field(), otherFields);
-        listOfHits = WebserviceOperations.listOfHits(params, window, getConcordanceContext(),
-                getDocIdToPid());
-    }
-
     public long getSearchTime() {
         return (cacheEntryWindow == null ? cacheEntry.timer().time() : cacheEntryWindow.timer().time()) + kwicTimeMs;
     }
 
     public long getCountTime() {
         return cacheEntry.threwException() ? -1 : cacheEntry.timer().time();
+    }
+
+    public HitResults getHits() {
+        return hitResults;
     }
 
     public long getTotalTokens() {
@@ -439,6 +454,18 @@ public class ResultHits {
         return metaDisplayNames;
     }
 
+    public DocResults getSubcorpusResults() {
+        return subcorpusResults;
+    }
+
+    public boolean isViewGroup() {
+        return isViewGroup;
+    }
+
+    public List<Annotation> getAnnotationsToWrite() {
+        return annotationsToWrite;
+    }
+
     public Index.IndexStatus getIndexStatus() {
         return indexStatus;
     }
@@ -447,12 +474,12 @@ public class ResultHits {
         return params;
     }
 
-    public ResultSummaryNumHits getSummaryNumHits() {
-        return summaryNumHits;
-    }
-
     public ResultSummaryCommonFields getSummaryCommonFields() {
         return summaryCommonFields;
+    }
+
+    public ResultSummaryNumHits getSummaryNumHits() {
+        return summaryNumHits;
     }
 
     public ResultListOfHits getListOfHits() {

@@ -12,7 +12,7 @@ public class ResultSummaryNumHits {
     private final SearchTimings timings;
     private final CorpusSize subcorpusSize;
 
-    ResultSummaryNumHits(ResultsStats hitsStats, ResultsStats docsStats,
+    public ResultSummaryNumHits(ResultsStats hitsStats, ResultsStats docsStats,
             boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize) {
         this.hitsStats = hitsStats;
         this.docsStats = docsStats;

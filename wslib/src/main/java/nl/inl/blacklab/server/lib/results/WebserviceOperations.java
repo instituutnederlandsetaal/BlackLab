@@ -78,6 +78,7 @@ import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.LuceneUtil;
 
 public class WebserviceOperations {
@@ -506,18 +507,6 @@ public class WebserviceOperations {
         return params.blIndex().queryDocuments(query).subcorpusSize(true);
     }
 
-    public static TermFrequencyList calculateCollocations(WebserviceParams params) {
-        ResultHits resultHits = new ResultHits(params, false);
-        HitResults hitResults = resultHits.getHits();
-        return getCollocations(params, hitResults);
-    }
-
-    public static ResultHits getResultHits(WebserviceParams params) {
-        ResultHits resultHits = new ResultHits(params, true);
-        resultHits.finishSearch();
-        return resultHits;
-    }
-
     public static TermFrequencyList getTermFrequencies(WebserviceParams params) {
         //TODO: use background job?
 
@@ -616,17 +605,33 @@ public class WebserviceOperations {
         return new ResultDocInfo(blIndex, docPid, document, metadataToWrite);
     }
 
-    public static ResultDocsCsv docsCsv(WebserviceParams params) throws InvalidQuery {
-        return new ResultDocsCsv(params);
+    static ResultDocs docs(WebserviceParams params, boolean isCsv) throws InvalidQuery {
+        long maxWindowSize = isCsv ?
+                params.getSearchManager().config().getSearch().getMaxHitsToRetrieve() :
+                params.getSearchManager().config().getParameters().getPageSize().getMax();
+        long defaultWindowSize = isCsv ?
+                maxWindowSize :
+                WebserviceParameter.defaultLong(WebserviceParameter.NUMBER_OF_RESULTS);
+        return ResultDocs.docsResponse(params, maxWindowSize, defaultWindowSize);
     }
 
-    public static ResultHitsCsv hitsCsv(WebserviceParams params) throws InvalidQuery {
-        return new ResultHitsCsv(params);
-    }
-
-    public static ResultHitsGrouped hitsGrouped(WebserviceParams params)
+    public static ResultHitsGrouped hitsGrouped(WebserviceParams params, boolean isCsv)
             throws InvalidQuery {
-        return new ResultHitsGrouped(params);
+        long maxWindowSize = isCsv ?
+                params.getSearchManager().config().getSearch().getMaxHitsToRetrieve() :
+                params.getSearchManager().config().getParameters().getPageSize().getMax();
+        return new ResultHitsGrouped(params, maxWindowSize);
+    }
+
+    public static ResultHits hits(WebserviceParams params, boolean isCsv) throws InvalidQuery {
+        long maxWindowSize = isCsv ?
+                params.getSearchManager().config().getSearch().getMaxHitsToRetrieve() :
+                params.getSearchManager().config().getParameters().getPageSize().getMax();
+        return new ResultHits(params, true, maxWindowSize);
+    }
+
+    public static TermFrequencyList calculateCollocations(WebserviceParams params) {
+        return getCollocations(params, hits(params, false).getHits());
     }
 
     public static class UploadedFile {
@@ -792,14 +797,6 @@ public class WebserviceOperations {
         return new ResultUserInfo(user.isLoggedIn(), user.getId(), params.getIndexManager().canCreateIndex(user));
     }
 
-    public static ResultDocsResponse viewGroupDocsResponse(WebserviceParams params) throws InvalidQuery {
-        return ResultDocsResponse.viewGroupDocsResponse(params);
-    }
-
-    public static ResultDocsResponse regularDocsResponse(WebserviceParams params) throws InvalidQuery {
-        return ResultDocsResponse.regularDocsResponse(params);
-    }
-
     public static ResultIndexMetadata indexMetadata(WebserviceParams params) {
         logger.info("START indexMetadata");
         ResultIndexStatus progress = resultIndexStatus(params);
@@ -829,10 +826,6 @@ public class WebserviceOperations {
 
     public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
         return new ResultServerInfo(params, debugMode);
-    }
-
-    public static ResultDocsGrouped docsGrouped(WebserviceParams params) throws InvalidQuery {
-        return new ResultDocsGrouped(params);
     }
 
     public static ResultListInputFormats listInputFormats(WebserviceParams params, boolean debugMode) {

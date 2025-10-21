@@ -7,9 +7,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -27,9 +27,7 @@ import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
-import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
@@ -55,39 +53,30 @@ public class ResultHitsGrouped {
 
     private Map<String, ResultDocInfo> docInfos;
 
-    private final Index.IndexStatus indexStatus;
+    private final Query subcorpusQuery;
 
     private final ResultSummaryCommonFields summaryFields;
 
     private final ResultSummaryNumHits summaryNumHits;
 
-    ResultHitsGrouped(WebserviceParams params) throws InvalidQuery {
+    /**
+     * Get the groups for this request.
+     *
+     * Exceptions cleanly mapping to http error
+     * responses are thrown if any part of the request cannot be fulfilled.
+     */
+    ResultHitsGrouped(WebserviceParams params, long maxWindowSize) throws InvalidQuery {
         this.params = params;
-        IndexManager indexMan = params.getIndexManager();
-        indexStatus = indexMan.getIndex(params.getCorpusName()).getStatus();
 
-        SearchCacheEntry<HitGroups> search;
         HitResults hitResults = params.hitsSample().execute(); // we need these later to get the match info defs
-        try (BlockTimer ignored = BlockTimer.create("Searching hit groups")) {
-            // Get the window we're interested in
-            search = params.hitsGroupedStats().executeAsync();
-            // Search is done; construct the results object
-            groups = search.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt(); // preserve interrupted status
-            throw WebserviceOperations.translateSearchException(e);
-        } catch (ExecutionException e) {
-            throw WebserviceOperations.translateSearchException(e);
-        }
+        groups = params.hitsGroupedStats().execute();
 
-        WindowSettings windowSettings = params.windowSettings();
-        final long first = Math.max(windowSettings.first(), 0);
-        DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
-        final long requestedWindowSize = windowSettings.size() < 0
-                || windowSettings.size() > pageSize.getMax() ? pageSize.getDefault()
-                : windowSettings.size();
+        // apply window settings
+        WindowSettings windowSettings = params.windowSettings(maxWindowSize);
+        long first = Math.max(windowSettings.first(), 0);
+        long requestedWindowSize = windowSettings.size();
         long totalResults = groups.size();
-        final long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
+        long actualWindowSize = first + requestedWindowSize > totalResults ? totalResults - first
                 : requestedWindowSize;
         window = new WindowStats(first + requestedWindowSize < totalResults, first, requestedWindowSize,
                 actualWindowSize);
@@ -100,6 +89,7 @@ public class ResultHitsGrouped {
         // The list of groups found
         metadataGroupProperties = groups.groupCriteria().docPropsOnly();
         DocResults subcorpus = params.subcorpus().execute();
+        subcorpusQuery = subcorpus.query();
         subcorpusSize = subcorpus.subcorpusSize();
 
         /* Gather group values per property:
@@ -127,6 +117,7 @@ public class ResultHitsGrouped {
             docInfos = WebserviceOperations.getDocInfos(index, luceneDocs, metadataToWrite);
         }
 
+        SearchCacheEntry<HitGroups> search = params.hitsGroupedStats().executeAsync();
         SearchTimings timings = new SearchTimings(search.timer().time(), 0);
 
         MatchInfoDefs matchInfoDefs = hitResults.getHits().matchInfoDefs();
@@ -136,6 +127,7 @@ public class ResultHitsGrouped {
                 otherFields.add(def.getTargetField());
         }
 
+        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         summaryFields = WebserviceOperations.summaryCommonFields(params, indexStatus,
                 timings, matchInfoDefs, getGroups(), getWindow(), groups.field(),
                 otherFields);
@@ -185,5 +177,9 @@ public class ResultHitsGrouped {
 
     public ResultSummaryNumHits getSummaryNumHits() {
         return summaryNumHits;
+    }
+
+    public Query getSubcorpusQuery() {
+        return subcorpusQuery;
     }
 }
