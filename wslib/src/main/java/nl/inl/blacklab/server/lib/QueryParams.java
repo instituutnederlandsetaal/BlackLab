@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.lib;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -109,6 +110,8 @@ public interface QueryParams {
      * @return which metadata fields to list
      */
     Collection<String> getListMetadataValuesFor();
+
+    List<String> getListSpanAttributes();
 
     boolean getWaitForTotal();
 

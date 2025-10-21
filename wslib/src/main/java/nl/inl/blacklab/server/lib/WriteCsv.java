@@ -25,6 +25,10 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
+import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -91,7 +95,7 @@ public class WriteCsv {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Long.toString(group.storedResults().resultsStats().countedSoFar()));
+                row.add(Long.toString(group.storedResults().resultsStats().countedSoFar())); // count
 
                 if (metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
@@ -124,7 +128,6 @@ public class WriteCsv {
         WebserviceParams params = resultHitsCsv.getParams();
         BlackLabIndex index = params.blIndex();
         HitResults hitResults = resultHitsCsv.getHits();
-        DocResults subcorpusResults = resultHitsCsv.getSubcorpusResults();
         final Annotation mainTokenProperty = hitResults.field().mainAnnotation();
         try {
             // Build the table headers
@@ -137,6 +140,12 @@ public class WriteCsv {
             for (Annotation a: resultHitsCsv.getAnnotationsToWrite()) {
                 row.add(a.name());
             }
+
+            // Add requested span attributes
+            for (WebserviceParams.SpanAndAttributeName spanAttr : resultHitsCsv.getParams().getSpanAttributes()) {
+                row.add(escape("span " + spanAttr.spanName() + "." + spanAttr.attributeName()));
+            }
+
             // Only output metadata if explicitly passed, do not print all fields if the parameter was omitted like the
             // normal hit response does (because that can result in a MASSIVE amount of repeated data)
             boolean noMetadataRequested = params.getListMetadataValuesFor().isEmpty();
@@ -148,8 +157,6 @@ public class WriteCsv {
 
             CSVPrinter printer = createHeader(row, params.getCsvDeclareSeparator());
             if (params.getCsvIncludeSummary()) {
-                long numHits = hitResults.resultsStats().countedTotal(); // block for a bit
-                long numDocs = hitResults.docsStats().countedTotal();
                 summaryCsvHits(printer, row.size(),
                         rs, resultHitsCsv.getSummaryCommonFields(), resultHitsCsv.getSummaryNumHits());
             }
@@ -164,8 +171,10 @@ public class WriteCsv {
                     luceneDocs.put(hit.doc(), doc);
                 }
                 String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), doc);
-                writeHit(kwics.get(hit), doc, mainTokenProperty,
-                        resultHitsCsv.getAnnotationsToWrite(), docPid, metadataFieldsToWrite, printer);
+                writeHit(hit, kwics.get(hit), doc, mainTokenProperty,
+                        resultHitsCsv.getAnnotationsToWrite(), docPid,
+                        resultHitsCsv.getParams().getSpanAttributes(),
+                        metadataFieldsToWrite, printer);
             }
             printer.flush();
             return printer.getOut().toString();
@@ -181,11 +190,13 @@ public class WriteCsv {
     }
 
     private static void writeHit(
+            EphemeralHit hit,
             Kwic kwic,
             Document doc,
             Annotation mainTokenProperty,
             List<Annotation> otherTokenProperties,
             String docPid,
+            List<WebserviceParams.SpanAndAttributeName> spanAttributes,
             List<MetadataField> metadataFieldsToWrite,
             CSVPrinter printer
     ) throws IOException {
@@ -208,10 +219,34 @@ public class WriteCsv {
         for (Annotation otherProp : otherTokenProperties)
             printer.print(StringUtils.join(kwic.match(otherProp), " "));
 
+        // Add requested span attributes
+        for (WebserviceParams.SpanAndAttributeName spanAttr : spanAttributes) {
+            List<String> values = new ArrayList<>();
+            Arrays.stream(hit.matchInfos())
+                    .forEach(mi -> spanAttrValue(mi, spanAttr, values));
+            printer.print(escape(values.toArray(new String[0])));
+        }
+
         // other fields in order of appearance
         for (MetadataField field : metadataFieldsToWrite)
             printer.print(escape(doc.getValues(field.name())));
         printer.println();
+    }
+
+    private static void spanAttrValue(MatchInfo mi, WebserviceParams.SpanAndAttributeName spanAttr, List<String> result) {
+        if (mi == null)
+            return;
+        if (mi instanceof RelationInfo ri) {
+            // If this is the requested span attribute, return its value(s)
+            if (ri.getRelationClass().equals(RelationUtil.CLASS_INLINE_TAG) &&
+                    ri.getRelationType().equals(spanAttr.spanName())) {
+                List<String> values = ri.getAttributes().getOrDefault(spanAttr.attributeName(), List.of());
+                result.addAll(values);
+            }
+        } else if (mi instanceof RelationListInfo rli) {
+            // Recursively collect values from the list
+            rli.getRelations().forEach(relInfo -> spanAttrValue(relInfo, spanAttr, result));
+        }
     }
 
     private static String interleave(List<String> a, List<String> b) {
@@ -234,18 +269,24 @@ public class WriteCsv {
      * Create a single string value from (potentially) multiple input values.
      *
      * Multiple values are concatenated by a pipe symbol.
-     * Pipe symbols, newlines and carriage returns in the input values are
-     * escaped with a backslash.
+     * Pipe symbols, newlines, carriage returns and backslashes in the input
+     * values are escaped with a backslash.
      * Any other required escaping should be taken care of by Commons CSV.
      */
     static String escape(String[] strings) {
         return Arrays.stream(strings)
-                .map(value -> value
-                        .replaceAll("\\\\", "\\\\\\\\")
-                        .replaceAll("\n", "\\\\n")
-                        .replaceAll("\r", "\\\\r")
+                .map(value -> escape(value)
                         .replaceAll("\\|", "\\\\|"))
                 .collect(Collectors.joining("|"));
+    }
+
+    /*
+     * Escape symbols, newlines, carriage returns and backslashes.
+     */
+    static String escape(String value) {
+        return value.replaceAll("\\\\", "\\\\\\\\")
+                        .replaceAll("\n", "\\\\n")
+                        .replaceAll("\r", "\\\\r");
     }
 
     static synchronized void writeRow(CSVPrinter printer, int numColumns, Object... values) {
@@ -272,7 +313,6 @@ public class WriteCsv {
      * @param scf           common fields for the summary
      * @param snh           number of hits etc. information for the summary
      */
-    // TODO tidy up csv handling
     private static void addSummaryCsvCommon(
             CSVPrinter printer,
             int numColumns,

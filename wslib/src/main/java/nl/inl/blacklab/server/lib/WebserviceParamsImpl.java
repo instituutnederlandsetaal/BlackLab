@@ -737,6 +737,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
+    public List<String> getListSpanAttributes() {
+        return params.getListSpanAttributes();
+    }
+
+    @Override
     public boolean getWaitForTotal() {
         return params.getWaitForTotal();
     }
@@ -870,5 +875,10 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     public void setInputFormat(String inputFormat) {
         this.inputFormat = inputFormat;
+    }
+
+    @Override
+    public List<SpanAndAttributeName> getSpanAttributes() {
+        return params.getListSpanAttributes().stream().map(SpanAndAttributeName::fromString).toList();
     }
 }

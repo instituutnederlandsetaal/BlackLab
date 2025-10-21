@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.apache.lucene.search.Query;
@@ -110,4 +111,17 @@ public interface WebserviceParams extends QueryParams {
 
     @Override
     Optional<String> getInputFormat();
+
+    List<SpanAndAttributeName> getSpanAttributes();
+
+    record SpanAndAttributeName(String spanName, String attributeName) {
+        public static SpanAndAttributeName fromString(String sa) {
+            String[] parts = sa.split("\\.", 2);
+            if (parts.length == 2) {
+                return new SpanAndAttributeName(parts[0], parts[1]);
+            } else {
+                throw new IllegalArgumentException("Invalid span attribute format (must be \"spanName.attrName\") : " + sa);
+            }
+        }
+    }
 }

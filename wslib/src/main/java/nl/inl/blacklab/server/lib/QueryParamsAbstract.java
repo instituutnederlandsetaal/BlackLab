@@ -1,8 +1,9 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -152,10 +153,22 @@ public abstract class QueryParamsAbstract implements QueryParams {
      * @return value
      */
     protected Set<String> getSet(WebserviceParameter par) {
+        return new LinkedHashSet<>(getList(par));
+    }
+
+    /**
+     * Get parameter value as a list of strings.
+     *
+     * If not explicitly set, uses the configured default value, or an empty set if none configured.
+     *
+     * @param par parameter type
+     * @return value
+     */
+    protected List<String> getList(WebserviceParameter par) {
         String val = get(par).trim();
         return StringUtils.isEmpty(val) ?
-                Collections.emptySet() :
-                new HashSet<>(Arrays.asList(val.split("\\s*,\\s*")));
+                List.of() :
+                new ArrayList<>(Arrays.asList(val.split("\\s*,\\s*")));
     }
 
     /**
@@ -318,6 +331,15 @@ public abstract class QueryParamsAbstract implements QueryParams {
      */
     @Override
     public Set<String> getListMetadataValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS); }
+
+    /**
+     * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
+     * IDs are not validated and may not actually exist!
+     *
+     * @return which metadata fields to list
+     */
+    @Override
+    public List<String> getListSpanAttributes() { return getList(WebserviceParameter.LIST_VALUES_FOR_SPAN_ATTR); }
 
     @Override
     public boolean getWaitForTotal() { return getBool(WebserviceParameter.WAIT_FOR_TOTAL_COUNT); }

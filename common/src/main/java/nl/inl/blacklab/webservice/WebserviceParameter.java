@@ -63,6 +63,9 @@ public enum WebserviceParameter {
     //also controls which metadata fields are sent back with search hits and document search results
     LIST_VALUES_FOR_METADATA_FIELDS("listmetadatavalues"),
 
+    // include which span attributes with CSV hits?
+    LIST_VALUES_FOR_SPAN_ATTR("listspanattributes"),
+
     // How to process results
     INCLUDE_FACETS("facets"), // include facet information?
     SUBCORPUS_SIZE("subcorpussize", "includetokencount"), // include subcorpus size?
