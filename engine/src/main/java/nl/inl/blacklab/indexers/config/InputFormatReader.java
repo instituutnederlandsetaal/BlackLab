@@ -62,6 +62,7 @@ public class InputFormatReader extends YamlJsonReader {
     public static final String KEY_DISPLAY_AS = "displayAs";
     public static final String KEY_TOKEN_ID_PATH = "tokenIdPath";
     public static final String KEY_ATTRIBUTES = "attributes";
+    public static final String KEY_EXCLUDE = "exclude";
     public static final String KEY_ANNOTATIONS = "annotations";
     public static final String KEY_FIELDS = "fields";
 
@@ -621,6 +622,9 @@ public class InputFormatReader extends YamlJsonReader {
                     break;
                 case KEY_VALUE:
                     a.setValuePath(fixedStringToXpath(str(eea)));
+                    break;
+                case KEY_EXCLUDE:
+                    a.setExclude(bool(eea));
                     break;
                 case KEY_VALUE_PATH:
                     a.setValuePath(str(eea));

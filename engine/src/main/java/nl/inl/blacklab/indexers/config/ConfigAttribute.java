@@ -72,7 +72,8 @@ public class ConfigAttribute {
 
     public void validate() {
         ConfigInputFormat.req(name, "extra attribute", "name");
-        ConfigInputFormat.req(valuePath, "extra attribute", "valuePath");
+        if (!exclude)
+            ConfigInputFormat.req(valuePath, "extra attribute", "valuePath");
         for (ConfigProcessStep step: process) {
             step.validate();
         }
