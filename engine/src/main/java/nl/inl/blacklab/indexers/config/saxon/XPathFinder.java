@@ -1,108 +1,95 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.xml.namespace.NamespaceContext;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import net.sf.saxon.om.NamespaceUri;
 import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
+import net.sf.saxon.s9api.UnprefixedElementMatchingPolicy;
+import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XPathExecutable;
+import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
-import net.sf.saxon.xpath.XPathEvaluator;
+import net.sf.saxon.s9api.XdmValue;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.indexers.config.DocIndexerXPath;
 
 public class XPathFinder {
 
-    public String currentNodeToString(NodeInfo node) {
-        return node.getStringValue();
-    }
+    private static final Logger logger = LogManager.getLogger(XPathFinder.class);
 
-    private static class MyNamespaceContext implements NamespaceContext {
-        private final Map<String, String> ns = new HashMap<>(3);
+    /** Prefix for the implicitly declared xml namespace */
+    public static final String NAMESPACE_XML_PREFIX = "xml";
 
-        void add(String prefix, String uri) {
-            if (uri.equals(ns.get(prefix)))
-                return;
-            ns.put(prefix, uri);
-        }
+    /** URI for the implicitly declared xml namespace */
+    public static final String NAMESPACE_XML_URI = "http://www.w3.org/XML/1998/namespace";
 
-        @Override
-        public String getNamespaceURI(String prefix) {
-            return ns.get(prefix);
-        }
+    private final XPathCompiler xPath;
 
-        @Override
-        public String getPrefix(String namespaceURI) {
-            return ns.entrySet().stream()
-                    .filter(e -> e.getValue().equals(namespaceURI))
-                    .map(Map.Entry::getKey)
-                    .findFirst()
-                    .orElse(null);
-        }
+    private final Serializer serializer;
 
-        @Override
-        public Iterator<String> getPrefixes(String namespaceURI) {
-            return ns.keySet().iterator();
-        }
-    }
+    public XPathFinder(Map<String, String> namespaces) {
+        XPathCompiler xPath = SaxonHelper.newXPathFactory();
 
-    private final XPath xPath;
-
-    Serializer serializer;
-
-    /**
-     * Compiled XPaths for use in one thread.
-     */
-    private final Map<String, XPathExpression> compiledXPaths = new HashMap<>();
-
-    public XPathFinder(XPath xPath, Map<String, String> namespaces) {
-        // setup namespace aware xpath that will compile xpath expressions
+        // Set up namespace aware xpath that will compile xpath expressions
         this.xPath = xPath;
+        this.xPath.setCaching(true); // cache xpaths
+
+        // xml namespace is implicit
+        xPath.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
+
+        boolean hasNamespaces = false;
         if (namespaces != null && !namespaces.isEmpty()) {
-            MyNamespaceContext context = new MyNamespaceContext();
-            context.add("xml", "http://www.w3.org/XML/1998/namespace");
             for (Map.Entry<String, String> e: namespaces.entrySet()) {
-                if (e.getKey().isEmpty()) {
-                    NamespaceUri namespaceUri = NamespaceUri.of(namespaces.get(""));
-                    ((XPathEvaluator)xPath).getStaticContext().setDefaultElementNamespace(namespaceUri);
-                } else {
-                    context.add(e.getKey(), e.getValue());
+                if (e.getKey().equals(NAMESPACE_XML_PREFIX)) {
+                    if (!e.getValue().equals(NAMESPACE_XML_URI))
+                        logger.warn("Tried to redefine implicit 'xml' namespace prefix to '" + e.getValue() + "'); ignoring");
+                    continue;
                 }
+                hasNamespaces = true;
+                xPath.declareNamespace(e.getKey(), e.getValue());
             }
-            xPath.setNamespaceContext(context);
+        }
+        if (!hasNamespaces) {
+            // No namespaces declared in the indexer config.
+            // Set Saxon to ignore namespace on elements without a prefix.
+            // This makes sure that we can index documents with or without namespaces, which
+            // unfortunately sometimes happens in large corpora.
+            xPath.setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE);
         }
 
         // Set up serializer, for capturing XML code
         // (annotations can optionally capture XML instead of just a string value)
-        Processor processor = new Processor(false);
-        serializer = processor.newSerializer();
+        serializer = SaxonHelper.getProcessor().newSerializer();
         serializer.setOutputProperty(Serializer.Property.INDENT, "yes");
     }
 
     /**
-     * Create XPathExpression and cache.
+     * Compile XPath expression.
      *
      * @param xpathExpr the xpath expression
-     * @return the XPathExpression
+     * @return the compiled expression
      */
-    private XPathExpression acquireExpression(String xpathExpr) throws XPathExpressionException {
-        XPathExpression xPathExpression = compiledXPaths.get(xpathExpr);
-        if (xPathExpression == null) {
-            xPathExpression = xPath.compile(xpathExpr);
-            compiledXPaths.put(xpathExpr, xPathExpression);
+    private XPathExecutable acquireExpression(String xpathExpr) throws SaxonApiException {
+        return xPath.compile(xpathExpr);
+    }
+
+    public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
+        List<NodeInfo> results = new ArrayList<>();
+        for (XdmItem item: find(wordsPath, container)) {
+            if (item.isNode())
+                results.add(((XdmNode) item).getUnderlyingNode());
+            else
+                logger.warn("XPath {} returned non-node: {}", wordsPath, item);
         }
-        return xPathExpression;
+        return results;
     }
 
     /**
@@ -110,37 +97,27 @@ public class XPathFinder {
      * the return type(s) in advance. This works for all return types of an xPath, also the ones that
      * return for example one boolean. Often a List&lt;NodeInfo> will be returned.
      */
-    public List<?> find(String xPath, Object context) {
+    public XdmValue find(String xPath, NodeInfo context) {
         try {
-            return (List<?>) acquireExpression(xPath).evaluate(context, XPathConstants.NODESET);
-        } catch (XPathExpressionException e) {
+            XPathSelector selector = acquireExpression(xPath).load();
+            selector.setContextItem(XdmValue.wrap(context).iterator().next());
+            return selector.evaluate();
+        } catch (SaxonApiException e) {
             throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
         }
     }
 
-    /**
-     * Calls {@link #find(String, Object)} and casts the result to List&lt;NodeInfo>, NOTE that the
-     * resulting list may still contain Objects that are no NodeInfo, due to the way collections work,
-     * Collections.checkedList won't help here.
-     */
-    @SuppressWarnings("unchecked")
-    public List<NodeInfo> findNodes(String xPath, Object context) {
-        return (List<NodeInfo>) find(xPath, context);
-    }
-
     public void xpathForEach(String xPath, NodeInfo context, DocIndexerXPath.NodeHandler<NodeInfo> handler) {
-        List<NodeInfo> docs = findNodes(xPath, context);
-        for (NodeInfo doc: docs) {
-            handler.handle(doc);
+        for (XdmItem item: find(xPath, context)) {
+            if (item.isNode()) {
+                handler.handle(((XdmNode) item).getUnderlyingNode());
+            }
         }
     }
 
     public void xpathForEachStringValue(String xPath, NodeInfo context, DocIndexerXPath.StringValueHandler handler) {
-        for (Object match: find(xPath, context)) {
-            String value = match instanceof NodeInfo ?
-                    currentNodeToString((NodeInfo) match) :
-                    String.valueOf(match);
-            handler.handle(value);
+        for (XdmItem item: find(xPath, context)) {
+            handler.handle(item.getStringValue());
         }
     }
 
@@ -166,12 +143,12 @@ public class XPathFinder {
      * @return the XML code for the node
      */
     public String xpathXml(String xPath, NodeInfo context) {
-        List<?> list = find(xPath, context);
+        XdmValue list = find(xPath, context);
         if (list.size() == 1) {
-            Object o = list.get(0);
-            if (o instanceof NodeInfo) {
+            XdmItem o = list.itemAt(0);
+            if (o.isNode()) {
                 try {
-                    return serializer.serializeNodeToString(new XdmNode((NodeInfo)o));
+                    return serializer.serializeNodeToString((XdmNode)o);
                 } catch (SaxonApiException e) {
                     throw new ErrorIndexingFile(e);
                 }
@@ -199,15 +176,10 @@ public class XPathFinder {
      *
      * @throws InvalidConfiguration when the xpath returns multiple results
      */
-    public String xpathValue(String xPath, Object context) {
-        List<?> list = find(xPath, context);
+    public String xpathValue(String xPath, NodeInfo context) {
+        XdmValue list = find(xPath, context);
         if (list.size() == 1) {
-            Object o = list.get(0);
-            if (o instanceof NodeInfo) {
-                return ((NodeInfo) o).getStringValue();
-            } else {
-                return String.valueOf(o);
-            }
+            return list.itemAt(0).getStringValue();
         } else {
             if (list.isEmpty())
                 return "";
