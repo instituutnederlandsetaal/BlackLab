@@ -52,10 +52,14 @@ class DocValuesGetterSegment implements DocValuesGetter {
     public String[] get(int docId) {
         if (sortedSetDocValues != null) {
             // newer index, (possibly) multiple values.
-            return sortedSetDocValues.get(docId);
+            String[] value = sortedSetDocValues.get(docId);
+            if (value != null)
+                return value;
         } else if (numericDocValues != null) {
             // numeric field
-            return new String[] { numericDocValues.get(docId) + "" };
+            Long value = numericDocValues.get(docId);
+            if (value != null)
+                return new String[] { value + "" };
         } else if (sortedDocValues != null) {
             // old index, only one value
             String value = sortedDocValues.get(docId);

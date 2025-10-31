@@ -18,6 +18,7 @@ public class PropertyValueString extends PropertyValue {
 
     /** Convert an array of string values to a PropertyValueString. */
     public static PropertyValueString fromArray(String[] values, Map<String, CollationKey> collationCache) {
+        assert values != null;
         if (values.length == 1)
             return new PropertyValueString(values[0], collationCache);
         return new PropertyValueString(joinValues(values), collationCache);

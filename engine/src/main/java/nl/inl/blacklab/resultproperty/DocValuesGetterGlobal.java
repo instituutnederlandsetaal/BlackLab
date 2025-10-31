@@ -77,16 +77,28 @@ class DocValuesGetterGlobal implements DocValuesGetter {
         int segmentDocId = docId - lrc.docBase;
         if (sortedSetDocValues != null) {
             // newer index, (possibly) multiple values.
-            return sortedSetDocValues.get(lrc).get(segmentDocId);
+            DocValuesRandomAccess<SortedSetDocValues, String[]> dv = sortedSetDocValues.get(lrc);
+            if (dv != null) {
+                String[] value = dv.get(segmentDocId);
+                if (value != null)
+                    return value;
+            }
         } else if (numericDocValues != null) {
             // numeric field
-            long value = numericDocValues.get(lrc).get(segmentDocId);
-            return new String[] { value + "" };
+            DocValuesRandomAccess<NumericDocValues, Long> dv = numericDocValues.get(lrc);
+            if (dv != null) {
+                Long value = dv.get(segmentDocId);
+                if (value != null)
+                    return new String[] { value + "" };
+            }
         } else if (sortedDocValues != null) {
             // old index, only one value
-            String value = sortedDocValues.get(lrc).get(segmentDocId);
-            if (value != null)
-                return new String[] { value };
+            DocValuesRandomAccess<SortedDocValues, String> dv = sortedDocValues.get(lrc);
+            if (dv != null) {
+                String value = dv.get(segmentDocId);
+                if (value != null)
+                    return new String[] { value };
+            }
         }
         return new String[0];
     }

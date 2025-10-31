@@ -90,7 +90,7 @@ public class DocValuesRandomAccess<DV extends DocIdSetIterator, V> {
             if (sourceNexted && source.docID() >= docId) {
                 // We should have seen this value already.
                 // Produce it from the cache.
-                return cache.get(docId);
+                return cache.getOrDefault(docId, emptyValue);
             }
             // Advance to the requested id,
             // storing all values we encounter.
@@ -107,7 +107,6 @@ public class DocValuesRandomAccess<DV extends DocIdSetIterator, V> {
             if (source.docID() == docId)
                 return currentValue;
             // No values found; return empty value
-            cache.put(docId, emptyValue);
             return emptyValue;
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
