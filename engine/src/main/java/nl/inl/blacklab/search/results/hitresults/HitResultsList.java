@@ -85,7 +85,8 @@ public class HitResultsList extends HitResultsAbstract {
 
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
-        assert hits.size() == hitsStats.processedSoFar();
+        // No, this doesn't apply when hits is a window (hitsStats will be for the full set)
+        //assert hits.size() == hitsStats.processedSoFar();
         this.hitsStats = hitsStats.save();
         this.docsStats = docsStats.save();
     }
