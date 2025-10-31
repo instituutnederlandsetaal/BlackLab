@@ -22,6 +22,9 @@ else
     exit 1
 fi
 
+# Don't run on 8080 to avoid clashing with dev server
+export BLACKLAB_TEST_PORT=8082
+
 # Go to the test dir
 cd "$( dirname -- "$0"; )"/
 
