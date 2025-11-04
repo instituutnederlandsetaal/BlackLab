@@ -82,7 +82,11 @@ public class ConfigAnnotation {
     /** Should we allow duplicate values at one token position? (if false, performs extra checking and discards duplicates) */
     private boolean allowDuplicateValues = false;
     
-    /** Should we capture the innerXml of the node instead of the text */
+    /** Should we capture the innerXml of the node instead of the text?
+     *
+     * @deprecated use serialize(.) XPath instead
+     */
+    @Deprecated
     private boolean captureXml = false;
 
     /**
@@ -255,10 +259,12 @@ public class ConfigAnnotation {
         this.allowDuplicateValues = allowDuplicateValues;
     }
 
+    @Deprecated
     public void setCaptureXml(boolean captureXml) {
         this.captureXml = captureXml;
     }
-    
+
+    @Deprecated
     public boolean isCaptureXml() {
         return this.captureXml;
     }

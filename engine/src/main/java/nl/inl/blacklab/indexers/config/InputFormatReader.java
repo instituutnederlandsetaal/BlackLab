@@ -488,6 +488,7 @@ public class InputFormatReader extends YamlJsonReader {
             case "allowDuplicateValues":
                 throw new InvalidInputFormatConfig("allowDuplicateValues no longer allowed in .blf.yaml (remove this value; duplicates are automatically removed)");
             case "captureXml":
+                logger.warn("'captureXml' setting is deprecated, use XPath serialize(.) instead" + inFormat());
                 annot.setCaptureXml(bool(e));
                 break;
             case "isInternal":
