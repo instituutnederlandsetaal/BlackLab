@@ -21,26 +21,38 @@ import nl.inl.util.FileUtil;
  */
 public interface FileIterator extends Iterator<FileReference> {
 
-    static FileIterator from(File file, FileIteratorSettings settings) {
-        if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
-            return new FileIteratorDir(file, settings);
-        } else {
-            return fileReferenceToFileIterator(FileReference.fromFile(file), settings);
+    static FileIterator from(File dir, String glob, FileIteratorSettings settings) {
+        if (!dir.exists())
+            throw new IllegalArgumentException("File or directory does not exist: " + dir);
+        if (!dir.isDirectory()) {
+            throw new IllegalArgumentException("Not a directory: " + dir);
         }
+        return new FileIteratorDir(dir, glob, settings);
+    }
+
+    static FileIterator from(File file, FileIteratorSettings settings) {
+        if (file.isDirectory())
+            return from(file, "*", settings);
+        else
+            return fileReferenceToFileIterator(FileReference.fromFile(file), settings);
+    }
+
+    static FileIterator from(FileReference file, FileIteratorSettings settings) {
+        return fileReferenceToFileIterator(file, settings);
     }
 
     /** Settings for the file iteration process. */
-    record FileIteratorSettings(boolean recurseSubdirs, boolean processArchives, String fileNameGlob) {
+    record FileIteratorSettings(boolean recurseSubdirs, boolean processArchives, String fileNameGlobGlobal) {
 
         public static final FileIteratorSettings DUMMY = new FileIteratorSettings(true, true, "*");
 
         public FileIteratorSettings {
-            if (fileNameGlob == null || fileNameGlob.isEmpty())
-                fileNameGlob = "*";
+            if (fileNameGlobGlobal == null || fileNameGlobGlobal.isEmpty())
+                fileNameGlobGlobal = "*";
         }
 
-        Pattern pattGlob() {
-            return Pattern.compile(FileUtil.globToRegex(this.fileNameGlob));
+        Pattern pattFileNameGlobGlobal() {
+            return Pattern.compile(FileUtil.globToRegex(this.fileNameGlobGlobal));
         }
 
     }
@@ -75,20 +87,15 @@ public interface FileIterator extends Iterator<FileReference> {
     }
 
     /**
-     * Should we skip the specified file because it is a special OS file?
+     * Should we skip the specified file?
      *
      * Skips Windows Thumbs.db file and Mac OSX .DS_Store file.
+     * Also skips files not matching the global file name glob, if any.
      *
      * @param fileName name of the file
      * @return true if we should skip it, false otherwise
      */
-    default boolean includeFile(String fileName) {
-        //Skip files like Thumbs.db (Windows) and .DS_Store (OSX)
-        return !fileName.equals("Thumbs.db") && !fileName.equals(".DS_Store") &&
-                pattGlob().matcher(fileName).matches();
-    }
-
-    Pattern pattGlob();
+    boolean includeFile(String fileName);
 
     void close();
 

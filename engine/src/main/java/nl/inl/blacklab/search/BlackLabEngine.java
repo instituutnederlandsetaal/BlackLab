@@ -22,7 +22,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexObjectFactoryLucene;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
@@ -208,7 +208,7 @@ public final class BlackLabEngine implements AutoCloseable {
             // some other DocIndexer implementation)
             // this ConfigInputFormat could then still be used as a minimal template to setup the index
             // (if there's no ConfigInputFormat, that's okay too, a default index template will be used instead)
-            InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
+            InputFormatInfo inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
             ConfigInputFormat config = inputFormat == null ? null : inputFormat.getConfig();
 
             // template might still be null, in that case a default will be created

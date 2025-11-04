@@ -74,7 +74,7 @@ Too much to list, but most importantly:
     - much improved Saxon indexer
     - (limited) XInclude support
     - new DocIndexerExample gives a better example of low-level custom indexing
-    - you can now use a custom DocIndexerConfig subclass by specifying `fileTypeOptions.docIndexerClass` in your .blf.yaml file.
+    - you can now use a custom DocIndexerConfig subclass by specifying `fileTypeOptions.inputFormatTypeClass` in your .blf.yaml file.
     - standoff annotations can now be used to index spans and relations as well
     - New `blacklab.yaml` option `indexing.maxValueLength` controls truncating of annotation values. Default is no truncation (causing a Lucene error if a token is longer than 32K).
 - Misc:

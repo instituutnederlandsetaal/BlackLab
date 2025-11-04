@@ -22,8 +22,11 @@ import com.ibm.icu.text.Collator;
 import nl.inl.blacklab.codec.LeafReaderLookup;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
+import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.plugins.QueryParserProvider;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
@@ -510,4 +513,15 @@ public interface BlackLabIndex extends AutoCloseable {
     String name();
 
     RelationsStats getRelationsStats(AnnotatedField field, long limitValues);
+
+    default BLQueryParser getQueryParser(String id) {
+        if (id.equals("bcql") || id.equals("default"))
+            id = "corpusql";
+        try {
+            QueryParserProvider qpp = PluginManager.type(QueryParserProvider.class).get(id);
+            return qpp.get(this, Map.of());
+        } catch (PluginException e) {
+            throw new IllegalStateException(e);
+        }
+    }
 }

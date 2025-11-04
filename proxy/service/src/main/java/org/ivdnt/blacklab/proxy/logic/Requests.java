@@ -167,7 +167,6 @@ public class Requests {
                 } else {
                     // Couldn't map to any of the supplied classes. See if it's a BLS error.
                     try {
-                        e.printStackTrace();
                         ErrorResponse err = objectMapper.treeToValue(blacklab, ErrorResponse.class);
                         // Yes. Throw it so it will be handled by the GenericExceptionMapper.
                         throw new BlsRequestException(Response.Status.fromStatusCode(err.getError().getHttpStatusCode()), err);

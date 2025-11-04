@@ -47,6 +47,8 @@ public interface Indexer extends DocWriter {
 
     Charset DEFAULT_INPUT_ENCODING = StandardCharsets.UTF_8;
 
+    InputFormat getDocIndexer();
+
     /**
      * When we encounter a zip or tgz file, do we descend into it like it was a
      * directory?
@@ -125,9 +127,7 @@ public interface Indexer extends DocWriter {
      */
     void update(Term term, BLInputDocument document) throws IOException;
 
-    default void index(IndexSource indexSource) {
-        indexSource.index(this);
-    }
+    void index(IndexSource indexSource);
 
     /**
      * Index a document or archive from an InputStream.

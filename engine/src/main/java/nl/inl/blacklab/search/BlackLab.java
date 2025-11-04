@@ -7,6 +7,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -22,8 +23,8 @@ import nl.inl.blacklab.config.BLConfigIndexing;
 import nl.inl.blacklab.config.BlackLabConfig;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.index.PluginManager;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileUtil;
 import nl.inl.util.ZipHandleManager;
@@ -67,6 +68,12 @@ public final class BlackLab {
     /** BlackLab configuration */
     private static BlackLabConfig blackLabConfig = null;
 
+    /** Default config dir if one couldn't be determined */
+    public static final String DEFAULT_CONFIG_DIR = "/etc/blacklab";
+
+    /** The config directory (where blacklab.yaml is). Determined automatically. */
+    private static File configDir;
+
     /** Global settings are read from file and applied to the different parts of BL once. */
     private static boolean globalSettingsApplied = false;
 
@@ -81,6 +88,7 @@ public final class BlackLab {
      * @param maxThreadsPerSearch max. threads per search.
      */
     public static BlackLabEngine createEngine(int maxThreadsPerSearch) {
+        ensureGlobalConfigApplied();
         if (implicitInstance != null)
             throw new UnsupportedOperationException("BlackLab.create() called, but an implicit instance exists already! Don't mix implicit and explicit BlackLabEngine!");
         explicitlyCreated = true;
@@ -133,7 +141,7 @@ public final class BlackLab {
     }
 
     public static BlackLabIndexWriter openForWriting(String indexName, IndexReader reader) throws ErrorOpeningIndex {
-        return (BlackLabIndexWriter) implicitInstance.wrapIndexReader(indexName, reader, true);
+        return (BlackLabIndexWriter) implicitInstance().wrapIndexReader(indexName, reader, true);
     }
     
     
@@ -146,6 +154,7 @@ public final class BlackLab {
      * @return implicitly instantiated BlackLab instance
      */
     public static synchronized BlackLabEngine implicitInstance() {
+        ensureGlobalConfigApplied();
         if (explicitlyCreated)
             throw new UnsupportedOperationException("Already called create(); cannot create an implicit instance anymore! Don't mix implicit and explicit BlackLabEngine!");
         if (implicitInstance == null) {
@@ -172,6 +181,7 @@ public final class BlackLab {
      * @return BlackLab index object
      */
     public static synchronized BlackLabIndex indexFromReader(String indexName, IndexReader reader, boolean wrapIfNotFound) {
+        ensureGlobalConfigApplied();
         return BlackLabEngine.indexFromReader(indexName, reader, wrapIfNotFound, false);
     }
 
@@ -262,7 +272,7 @@ public final class BlackLab {
      *
      * @return list of directories to search in decreasing order of priority
      */
-    public static synchronized List<File> defaultConfigDirs() {
+    private static synchronized List<File> defaultConfigDirs() {
         if (configDirs == null) {
             configDirs = new ArrayList<>();
             String strConfigDir = System.getenv("BLACKLAB_CONFIG_DIR");
@@ -276,8 +286,10 @@ public final class BlackLab {
                     logger.warn("BLACKLAB_CONFIG_DIR points to a non-existent directory: " + strConfigDir);
                 }
             }
+            if (checkCurrentDirForConfig)
+                configDirs.add(new File(".")); // search current directory first
             configDirs.add(new File(System.getProperty("user.home"), ".blacklab"));
-            configDirs.add(new File("/etc/blacklab"));
+            configDirs.add(new File(DEFAULT_CONFIG_DIR));
         }
         return new ArrayList<>(configDirs);
     }
@@ -314,6 +326,36 @@ public final class BlackLab {
         return value == null ? "" : value;
     }
 
+    /** Should we check the current directory for our config directory?
+     * This can be useful for testing.
+     */
+    private static boolean checkCurrentDirForConfig = false;
+
+    public static void setCheckCurrentDirForConfig(boolean checkCurrentDirForConfig) {
+        BlackLab.checkCurrentDirForConfig = checkCurrentDirForConfig;
+    }
+
+    /**
+     * Get BlackLab's configuration directory.
+     */
+    public static synchronized File configDir() {
+        if (configDir == null) {
+            List<File> dirsToSearch = defaultConfigDirs();
+            File file = FileUtil.findFile(dirsToSearch, List.of("blacklab", "blacklab-server"),
+                    List.of("yaml", "yml", "json"));
+            if (file == null) {
+                logger.warn("None of the directories scanned (" + dirsToSearch + ") contained blacklab.yaml or " +
+                        "blacklab-server.yaml. Using default /etc/blacklab as config directory. " +
+                        "See https://blacklab.ivdnt.org/server/configuration.html");
+                configDir = new File(DEFAULT_CONFIG_DIR);
+            } else {
+                configDir = file.getParentFile();
+            }
+            logger.debug("Configuration directory: " + configDir + (file == null ? "" : " (found " + file.getName() + ")"));
+        }
+        return configDir;
+    }
+
     /**
      * Read blacklab.yaml and set the configuration from that.
      * 
@@ -323,15 +365,18 @@ public final class BlackLab {
     public static synchronized void setConfigFromFile() {
         if (globalSettingsApplied)
             throw new UnsupportedOperationException("Cannot set default configuration - another configuration has already been applied.");
-            
-        File file = FileUtil.findFile(defaultConfigDirs(), "blacklab", Arrays.asList("yaml", "yml", "json"));
+
+        List<File> dirsToSearch = Collections.singletonList(configDir());
+        File file = FileUtil.findFile(dirsToSearch, "blacklab", Arrays.asList("yaml", "yml", "json"));
         if (file != null) {
             try {
                 blackLabConfig = BlackLabConfig.readConfigFile(file);
+                configDir = file.getParentFile();
             } catch (IOException e) {
                 logger.warn("Could not load default blacklab configuration file " + file + ": " + e.getMessage());
             }
         }
+        ensureGlobalConfigApplied();
     }
     
     /**
@@ -376,15 +421,13 @@ public final class BlackLab {
      */
     private static synchronized void ensureGlobalConfigApplied() {
         if (!globalSettingsApplied) {
-
+            globalSettingsApplied = true;
             BLConfigIndexing indexing = config().getIndexing();
             DownloadCache.setConfig(indexing.downloadCacheConfig());
             ZipHandleManager.setMaxOpen(indexing.getZipFilesMaxOpen());
 
             // Plugins settings
-            PluginManager.initPlugins(config().getPlugins());
-
-            globalSettingsApplied = true;
+            PluginManager.initialize(config().getPlugins(), configDir());
         }
     }
 

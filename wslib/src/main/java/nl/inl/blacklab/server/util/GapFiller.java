@@ -13,7 +13,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
+import nl.inl.blacklab.search.BLQueryParser;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
 
@@ -49,12 +51,12 @@ public class GapFiller {
     private GapFiller() {
     }
 
-    public static TextPattern parseGapQuery(String queryTemplate, String tsvValues) throws InvalidQuery {
+    public static TextPattern parseGapQuery(BlackLabIndex index, String queryTemplate, String tsvValues) throws InvalidQuery {
         try {
             // Fill in the gaps
             Iterable<CSVRecord> values = parseTsv(new BufferedReader(new StringReader(tsvValues))
             );
-            return parseGapQuery(queryTemplate, values);
+            return parseGapQuery(index, queryTemplate, values);
         } catch (IOException e) {
             throw new InvalidQuery(e);
         }
@@ -87,7 +89,7 @@ public class GapFiller {
      * @return the filled-in template
      * @throws InvalidQuery if the resulting CQL contains an error
      */
-    private static TextPattern parseGapQuery(String template, Iterable<CSVRecord> values) throws InvalidQuery {
+    private static TextPattern parseGapQuery(BlackLabIndex index, String template, Iterable<CSVRecord> values) throws InvalidQuery {
         String[] parts = template.split(GapFiller.GAP_REGEX, -1);
 
         List<TextPattern> results = new ArrayList<>();
@@ -104,7 +106,8 @@ public class GapFiller {
                     result.append(replaced);
                 }
             }
-            TextPattern tp = CorpusQueryLanguageParser.parse(result.toString(), "word");
+            BLQueryParser parser = index.getQueryParser("bcql");
+            TextPattern tp = parser.parse(result.toString()).pattern();
             results.add(tp);
         }
         return new TextPatternOr(results.toArray(new TextPattern[0]));

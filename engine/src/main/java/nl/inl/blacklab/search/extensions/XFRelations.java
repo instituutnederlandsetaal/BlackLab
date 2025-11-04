@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -150,21 +151,6 @@ public class XFRelations implements ExtensionFunctionClass {
     }
 
     /**
-     * Perform an AND operation with the additional requirement that clauses match unique relations.
-     *
-     * @param queryInfo query info
-     * @param context query execution context
-     * @param args function arguments: clauses
-     * @return AND query with unique relations requirement
-     */
-    private static BLSpanQuery rmatch(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args) {
-        if (args.isEmpty())
-            throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
-        List<BLSpanQuery> tps = args.stream().map(o -> (BLSpanQuery)o).toList();
-        return TextPatternRelationMatch.createRelMatchQuery(context, tps);
-    }
-
-    /**
      * Capture relations inside a span.
      *
      * Will capture all relations matching the specified type regex as a list
@@ -188,10 +174,27 @@ public class XFRelations implements ExtensionFunctionClass {
     @Override
     public void register() {
         QueryExtensions.registerRelationsFunction(FUNC_REL, ARGS_SQSSS,
-                Arrays.asList(".+", QueryExtensions.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
+                Arrays.asList(".+", QueryFunction.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
                 XFRelations::rel);
-        QueryExtensions.register("rmatch", ARGS_VAR_Q,
-                List.of(QueryExtensions.VALUE_QUERY_ANY_NGRAM), XFRelations::rmatch);
+
+        QueryExtensions.register(new QueryFunction("rmatch", QueryFunction.ARGS_VAR_Q,
+                List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM), false) {
+            /**
+             * Perform an AND operation with the additional requirement that clauses match unique relations.
+             *
+             * @param context query execution context
+             * @param parameters function arguments: clauses
+             * @return AND query with unique relations requirement
+             */
+            @Override
+            protected BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
+                if (parameters.isEmpty())
+                    throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
+                List<BLSpanQuery> tps = parameters.stream().map(o -> (BLSpanQuery)o).toList();
+                return TextPatternRelationMatch.createRelMatchQuery(context, tps);
+            }
+        });
+
         QueryExtensions.register(FUNC_RSPAN, ARGS_QS, Arrays.asList(null, "full"),
                 XFRelations::rspan);
         QueryExtensions.register("rfield", ARGS_QS, NO_DEFAULT_VALUES,

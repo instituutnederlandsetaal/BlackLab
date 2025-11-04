@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.index.IndexManager;
@@ -15,7 +15,7 @@ public class ResultListInputFormats {
 
     private final ResultUserInfo userInfo;
 
-    private final List<InputFormat> inputFormats;
+    private final List<InputFormatInfo> inputFormats;
 
     private final boolean debugMode;
 
@@ -31,7 +31,7 @@ public class ResultListInputFormats {
             indexMan.getUserFormatManager().loadUserFormats(user.getId(), null);
         }
         inputFormats = new ArrayList<>();
-        for (InputFormat inputFormat: DocumentFormats.getFormats()) {
+        for (InputFormatInfo inputFormat: DocumentFormats.getFormats()) {
             try {
                 String userId = FinderInputFormatUserFormats.getUserIdFromFormatIdentifier(inputFormat.getIdentifier());
                 // Other user's formats are not explicitly enumerated (but should still be considered public)
@@ -48,7 +48,7 @@ public class ResultListInputFormats {
         return userInfo;
     }
 
-    public List<InputFormat> getFormats() {
+    public List<InputFormatInfo> getFormats() {
         return inputFormats;
     }
 

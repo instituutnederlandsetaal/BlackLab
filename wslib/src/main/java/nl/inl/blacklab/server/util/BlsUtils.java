@@ -5,6 +5,7 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +19,9 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.queryParser.contextql.ContextQLParserProvider;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -28,7 +30,6 @@ import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.util.Json;
 
 /**
  * Various utility methods for parsing filters and patterns, and other stuff
@@ -95,7 +96,7 @@ public class BlsUtils {
             }
         } else if (filterLang.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(index, filter);
+                CompleteQuery q = ContextualQueryLanguageParser.parse(index, Map.of(), filter);
                 return q.filter();
             } catch (InvalidQuery e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
@@ -109,7 +110,7 @@ public class BlsUtils {
                         + "'. Supported: luceneql, contextql.");
     }
 
-    public static TextPattern parsePatt(BlackLabIndex index, String defaultAnnotation, String pattern, String language) throws BlsException {
+    public static TextPattern parsePatt(BlackLabIndex index, String pattern, String language) throws BlsException {
         if (pattern == null || pattern.isEmpty()) {
                 throw new BadRequest("NO_PATTERN_GIVEN",
                         "Text search pattern required. Please specify 'patt' parameter.");
@@ -118,33 +119,37 @@ public class BlsUtils {
         if (language.equals("default")) {
             // Try to parse as CorpusQL. If that fails, try JSON.
             try {
-                return CorpusQueryLanguageParser.parse(pattern, defaultAnnotation);
+                BLQueryParser parser = index.getQueryParser("bcql");
+                return parser.parse(pattern).pattern();
             } catch (InvalidQuery e1) {
                 try {
-                    return Json.getJaxbReader().readValue(pattern, TextPattern.class);
-                } catch (Exception e2) {
+                    BLQueryParser parser = index.getQueryParser("json-bql");
+                    return parser.parse(pattern).pattern();
+                } catch (InvalidQuery e2) {
                     throw new BadRequest("PATT_SYNTAX_ERROR",
                             "Syntax error in CorpusQL pattern (JSON parse failed as well): " + e1.getMessage());
                 }
             }
         } else if (language.equals("json")) {
             try {
-                return Json.getJaxbReader().readValue(pattern, TextPattern.class);
-            } catch (IOException e) {
+                BLQueryParser parser = index.getQueryParser("json-bql");
+                return parser.parse(pattern).pattern();
+            } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Unable to parse JSON pattern: " + e.getMessage());
             }
         } else if (language.matches("bcql|corpusql")) {
             try {
-                return CorpusQueryLanguageParser.parse(pattern, defaultAnnotation);
+                BLQueryParser parser = index.getQueryParser("bcql");
+                return parser.parse(pattern).pattern();
             } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Syntax error in CorpusQL pattern: " + e.getMessage());
             }
         } else if (language.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(index, pattern);
-                return q.pattern();
+                BLQueryParser parser = index.getQueryParser("contextql");
+                return parser.parse(pattern).pattern();
             } catch (InvalidQuery e) {
                 throw new BadRequest("PATT_SYNTAX_ERROR",
                         "Syntax error in ContextQL pattern: " + e.getMessage());

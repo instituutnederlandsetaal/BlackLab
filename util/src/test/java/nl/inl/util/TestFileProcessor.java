@@ -198,7 +198,7 @@ public class TestFileProcessor {
 
     // Implementation is synchronized so expected file/directory count is deterministic when throwing exceptions in multithreaded tests
     // If we didn't synchronize then multiple file() or directory() calls may run simultaneously.
-    // (also, ArrayList is not threadsafe)
+    // (also, ArrayList is not thread-safe)
     private static class LoggingFileHandler implements FileHandler {
         private final boolean triggerException;
 

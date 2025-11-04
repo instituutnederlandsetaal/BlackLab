@@ -20,12 +20,13 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.HitPropertyHitPosition;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex.IndexType;
@@ -307,7 +308,8 @@ public class TestIndex {
      */
     public HitResults find(String pattern, Query filter) {
         try {
-            BLSpanQuery query = CorpusQueryLanguageParser.parse(pattern, "word")
+            BLQueryParser parser = index.getQueryParser("bcql");
+            BLSpanQuery query = parser.parse(pattern).pattern()
                     .toQuery(QueryInfo.create(index), filter, false, false);
             return index.find(query, null)
                     .sorted(new HitPropertyMultiple(new HitPropertyDoc(index), new HitPropertyHitPosition()));

@@ -5,14 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlRootElement;
-
-import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
-
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,9 +19,15 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.type.CollectionType;
 
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
 
 /** /hits results with aggregator=true (minimal hit info) */
 @XmlRootElement(name="blacklabResponse")
@@ -63,7 +61,9 @@ public class HitsResultsMinimal implements EntityWithSummary {
                 token = parser.nextToken();
                 if (token == JsonToken.END_ARRAY)
                     break;
-                List<Object> h = deserializationContext.readValue(parser, List.class);
+                CollectionType typeListOfObject = deserializationContext.getTypeFactory()
+                        .constructCollectionType(List.class, Object.class);
+                List<Object> h = deserializationContext.readValue(parser, typeListOfObject);
                 hits.add(h);
             }
             return hits;

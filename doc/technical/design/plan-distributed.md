@@ -26,35 +26,9 @@ LATER?
 
 ## Improve parallellisation
 
-Grouping and sorting is currently not done per segment, but only once we've gathered hits from each segment. When we group/sort/filter on context, we thus have to return to the segment each hit came from, which is relatively inefficient.
-
-It should be faster to perform the operations per segment, then merge the results: this is inheritently parallelizable (because segments are independent of one another), minimizes resource contention, and makes disk reads less disjointed.
-
-The merge step would use string comparisons instead of term sort order comparisons. (similar to how merging would work in a distributed search scenario).
-
-
-
-Caching in BlackLab splits search into stages, e.g. "unsorted hits" > "sorted hits" > "page X from sorted hits". The first stage should be able to give you "page X from unsorted hits" even while it's fetching more hits.
-
-`HitsFromQuery` does this by merging hits from segments into a global list as the search progresses. But it's silly to build this merged list (with locking delays) and then "unmerge" it again so that we can sort hits per segment. Better would be to keep hits separated by segment. But then how do we get "page X from unsorted hits" before all hits have been fetched?
-
-One approach is to build a global list and keep the segment lists as well, but this takes up extra memory.
-
-We really just want a global _view_ of the unsorted hits. This view should grow over time as hits are fetched, and should be backed by the hits per segment. We could keep track of where hits can be found, i.e. "hit 13 in the global list is hit 3 from segment 5". This adds a layer of indirection, but only if we're making a (small) page of unsorted hits, which shouldn't be too bad. For efficiency, we could remember "stretches" of hits, i.e. "hit 13 in the global list is part of a stretch that starts at 10 and is 5 hits long, from segment 5 starting at 0". If the next step is sorting or grouping, we'll just use the hits from segments directly, skipping the layer of indirection. Even better, we may be able to lazy-initialize the global hits view, so we might not have to make it at all, or we might only need it after all hits have been fetched.
-
-
-
-### Done so far
-
-- remove old external index
-- `Hits`, implemented by the `HitsList*` classes among others, is where we can iterate over hits. `Hits` does not implement this interface anymore; call `getHits()` to get a `Hits` object. This removes a layer of indirection and separates functionality.
-- Do more per-segment. We use the per-segment forward index and terms object everywhere now.
-
-
 ### Improvements to be made
 
 - do we unique twice in HitPublisherSpans? (query usually includes a unique step at the end as well)
-
 
 STARTUP TIME
 - BLTerms.close() is never called...
@@ -66,36 +40,10 @@ OTHER ISSUES
 - Look at QueryInfo / SearchSettings
 - try to get rid of more useless abstract base classes like `Result` (?)
 
-## BL5 major refactorings (Dutch)
-
-- type parameters weg uit Results etc. (ws. nog meer opruiming mogelijk)
-
-- HitsSimple is nu het interface om met hits te werken, te itereren, etc.
-  Hits is een compleet "zoekresultaat". Hits.getHits() retourneert een HitsSimple.
-  (namen kunnen nog aangepast worden)
-  HitsSimple wordt geimplementeerd door HitsInternal*, maar Hits heeft ook een
-  eigen implementatie die bijv. ensureHitsRead() aanroept.
-
-- Global term ids zijn verdwenen. Global Terms object ook.
-  Overal waar met termen wordt gewerkt, gaat dit per-segment met id/sortposition of
-  globally met strings.
-  Zie bijv. HitPropertyContextBase.
-  Doel is om uiteindelijk bijv. sorteren per segment te doen (met sortpositions), daarna een
-  snelle merge op stringbasis.
-  Nu wordt er nog wat te veel randomly tussen segmenten gesprongen (globalDocId > segment)
-
-- HitsFromQuery aangepast om een global view op segment hits te bieden ipv een global list op te bouwen,
-  en sort/group zo veel mogelijk per segment te doen. Global view is trager maar wordt niet zo veel gebruikt.
-  Doet ook minder locking. Houdt zich minder strikt aan de maxHitsToProcess/Counts (kan er overheen gaan, maar stopt uiteindelijk wel)
-
-- 
-
 
 ## Optimization opportunities
 
-The first implementation of the integrated index is slow, because we just want to make it work for now. There are a number of opportunities for optimizing it.
-
-Because this is a completely new index format, we are free to change its layout on disk to be more efficient.
+There are a number of opportunities for optimizing the integrated index format.
 
 - [ ] ForwardIndexDocumentImpl does a lot of work (e.g. filling chunks list with a lot of nulls), but it regularly used to only read 1-2 tokens from a document; is it worth it at all? Could we use a more efficient implementation?
 - [ ] Use more efficient data structures in the various `*Integrated` classes, e.g. those from fastutil

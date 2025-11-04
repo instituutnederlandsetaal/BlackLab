@@ -27,7 +27,7 @@ import nl.inl.blacklab.index.BLIndexWriterProxySolr;
 import nl.inl.blacklab.index.BLInputDocumentSolr;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.BlackLab;
@@ -58,7 +58,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         IndexReader reader = req.getSearcher().getIndexReader();
 
         String paramFormat = params.get("bl.format");
-        InputFormat inputFormat = DocumentFormats.getFormat(paramFormat).orElse(null);
+        InputFormatInfo inputFormat = DocumentFormats.getFormat(paramFormat).orElse(null);
         ConfigInputFormat formatConfig = inputFormat != null ? inputFormat.getConfig() : null;
         if (formatConfig == null) {
             // format isn't recongnized by name, try loading it as string (it might be the contents of the file).

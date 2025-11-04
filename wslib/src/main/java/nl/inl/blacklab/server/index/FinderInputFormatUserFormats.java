@@ -20,8 +20,8 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.FinderInputFormat;
-import nl.inl.blacklab.index.InputFormat;
-import nl.inl.blacklab.index.InputFormatWithConfig;
+import nl.inl.blacklab.index.InputFormatInfo;
+import nl.inl.blacklab.index.InputFormatInfoWithConfigLazy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -95,7 +95,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
     }
 
     @Override
-    public synchronized InputFormat find(String formatIdentifier) {
+    public synchronized InputFormatInfo find(String formatIdentifier) {
         // It might be a user format, try to load it
         try {
             String userId = getUserIdFromFormatIdentifier(formatIdentifier);
@@ -113,7 +113,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      * user's formats haven't been loaded already.
      *
      */
-    public synchronized InputFormat loadUserFormats(String userId, String formatToReturn) {
+    public synchronized InputFormatInfo loadUserFormats(String userId, String formatToReturn) {
         loadedUsers.add(userId);
         File[] formats;
         try {
@@ -124,11 +124,11 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         }
 
         assert formats != null;
-        InputFormat returnValue = null;
+        InputFormatInfo returnValue = null;
         for (File formatFile: formats) {
             try {
                 String formatIdentifier = getFormatIdentifier(userId, formatFile.getName());
-                InputFormat inputFormat = new InputFormatWithConfig(formatIdentifier, formatFile);
+                InputFormatInfo inputFormat = new InputFormatInfoWithConfigLazy(formatIdentifier, formatFile);
                 DocumentFormats.add(inputFormat);
                 if (formatIdentifier.equals(formatToReturn))
                     returnValue = inputFormat;
@@ -221,7 +221,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         }
 
         // Load the format if it's unknown
-        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier)
+        InputFormatInfo inputFormat = DocumentFormats.getFormat(formatIdentifier)
                 .orElseThrow( () -> new NotFound("FORMAT_NOT_FOUND", "Specified format was not found"));
         if (inputFormat.isError())
             throw new InternalServerError("FORMAT_ERROR", "Error with format: " + inputFormat.getErrorMessage());

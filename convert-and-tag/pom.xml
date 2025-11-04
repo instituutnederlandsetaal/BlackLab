@@ -21,7 +21,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>${project.parent.groupId}</groupId>
+            <groupId>nl.inl.blacklab</groupId>
             <artifactId>blacklab</artifactId>
             <version>${project.version}</version>
         </dependency>

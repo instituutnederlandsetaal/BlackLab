@@ -3,9 +3,13 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.search.BLQueryParser;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.RelationTarget;
@@ -14,9 +18,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.StringUtil;
 
-public class CorpusQueryLanguageParser {
-
-    private static final boolean USE_TP_RELATION = true;
+public class CorpusQueryLanguageParser implements BLQueryParser {
 
     /**
      * Parse a Contextual Query Language query.
@@ -25,18 +27,39 @@ public class CorpusQueryLanguageParser {
      * @return the parsed query
      * @throws InvalidQuery on parse error
      */
-    public static TextPattern parse(String query, String defaultAnnotation) throws InvalidQuery {
-        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
-        parser.setDefaultAnnotation(defaultAnnotation);
+    public static TextPattern parse(BlackLabIndex index, Map<String, Object> config, String query) throws InvalidQuery {
+        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(index, config);
         return parser.parseQuery(query);
     }
 
     /** Allow strings to be quoted using single quotes? */
-    private boolean allowSingleQuotes = true;
+    private final boolean allowSingleQuotes;
 
-    private String defaultAnnotation;
+    private final String defaultAnnotation;
 
-    public CorpusQueryLanguageParser() {
+    public CorpusQueryLanguageParser(BlackLabIndex index, Map<String, Object> config) {
+        defaultAnnotation = cfgString(config, "defaultAnnotation",
+                index == null ? "word" : index.mainAnnotatedField().mainAnnotation().name());
+        if (index != null && index.mainAnnotatedField().annotation(defaultAnnotation) == null)
+            throw new IllegalArgumentException("Default annotation '" + defaultAnnotation + "' not found in index");
+        allowSingleQuotes = cfgBoolean(config, "allowSingleQuotes", true);
+    }
+
+    private boolean cfgBoolean(Map<String, Object> config, String name, boolean defVal) {
+        Object allow = config.get(name);
+        if (allow == null)
+            return defVal;
+        return Boolean.parseBoolean(allow.toString());
+    }
+
+    private static String cfgString(Map<String, Object> config, String name, String defVal) {
+        String defAnnot = config.getOrDefault(name, "").toString();
+        return defAnnot.isEmpty() ? defVal : defAnnot;
+    }
+
+    public CompleteQuery parse(String query) throws InvalidQuery {
+        TextPattern tp = parseQuery(query);
+        return new CompleteQuery(tp, null);
     }
 
     public TextPattern parseQuery(String query) throws InvalidQuery {
@@ -81,25 +104,6 @@ public class CorpusQueryLanguageParser {
 
     TextPatternTerm simplePattern(MatchValue str) {
         return str.textPattern();
-    }
-
-    /** Allow strings to be quoted using single quotes? [default: yes] 
-     * @param b whether single quotes are allowed */
-    public void setAllowSingleQuotes(boolean b) {
-        allowSingleQuotes = b;
-    }
-
-    /** Allow strings to be quoted using single quotes? */
-    boolean isAllowSingleQuotes() {
-        return allowSingleQuotes;
-    }
-
-    /**
-     * Set the default annotation.
-     * @param annotation default annotation
-     */
-    public void setDefaultAnnotation(String annotation) {
-        defaultAnnotation = annotation;
     }
 
     public String getDefaultAnnotation() {

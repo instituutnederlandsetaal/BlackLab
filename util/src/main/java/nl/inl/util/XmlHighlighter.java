@@ -506,29 +506,6 @@ public class XmlHighlighter {
         return highlighted;
     }
 
-    /**
-     * Cut a string after a specified number of non-tag characters, preferably at a
-     * word boundary, keeping all tags after the cut intact. The result is still
-     * well-formed XML.
-     *
-     * You might use this to show the first few lines of an XML document on the
-     * results page.
-     *
-     * @param elementContent the string to cut
-     * @param stopAfterChars after how many non-tag characters we should stop (-1
-     *            for no limit)
-     * @return the cut string
-     */
-    public String cutAroundTags(String elementContent, int stopAfterChars) {
-        // Find all tags in the content and put their positions in a list
-        List<TagLocation> tags = makeTagList(elementContent);
-        tags.sort(Comparator.naturalOrder());
-
-        // Add all the highlight tags in the list into the content,
-        // taking care to mainting well-formedness around existing tags
-        return highlightInternal(elementContent, tags, stopAfterChars);
-    }
-
     public static void main(String[] args) {
         XmlHighlighter h = new XmlHighlighter();
         String xml = "<zin><lidwoord>The</lidwoord> <adjectief>quick</adjectief> " +
@@ -565,15 +542,6 @@ public class XmlHighlighter {
      */
     public String makeWellFormed(String xmlFragment) {
         return highlight(xmlFragment, null, 0);
-    }
-
-    /**
-     * Get how well-formedness problems are fixed
-     * 
-     * @return the strategy we're using now.
-     */
-    public UnbalancedTagsStrategy getUnbalancedTagsStrategy() {
-        return unbalancedTagsStrategy;
     }
 
     /**

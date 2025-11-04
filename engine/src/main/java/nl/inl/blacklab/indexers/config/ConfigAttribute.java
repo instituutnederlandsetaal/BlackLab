@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.plugins.ProcessingInstruction;
 
 /**
  * Configuration for attributes to index using XPath
@@ -29,7 +30,7 @@ public class ConfigAttribute {
      */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
-    ProcessingStep processSteps = ProcessingStep.identity();
+    ProcessingStep processSteps = ProcessingInstruction.identity();
 
     public ConfigAttribute() {
         // Default constructor for deserialization
@@ -67,7 +68,7 @@ public class ConfigAttribute {
     public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
-        processSteps = ProcessingStep.fromConfig(process);
+        processSteps = ProcessingInstruction.fromConfig(process);
     }
 
     public void validate() {

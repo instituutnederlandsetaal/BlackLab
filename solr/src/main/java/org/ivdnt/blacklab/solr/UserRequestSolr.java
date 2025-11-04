@@ -10,7 +10,6 @@ import org.apache.solr.search.DocSet;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
@@ -71,16 +70,6 @@ public class UserRequestSolr implements UserRequest {
     }
 
     @Override
-    public String getPersistedUserId() {
-        return null;
-    }
-
-    @Override
-    public void persistUser(User user, int durationSec) {
-
-    }
-
-    @Override
     public String getHeader(String name) {
         return null;
     }
@@ -136,11 +125,6 @@ public class UserRequestSolr implements UserRequest {
     @Override
     public boolean isDebugMode() {
         return rb.req.getHttpSolrCall() == null || searchMan.isDebugMode(getRemoteAddr());
-    }
-
-    @Override
-    public RequestInstrumentationProvider getInstrumentationProvider() {
-        return searchComponent.getInstrumentationProvider();
     }
 
     @Override

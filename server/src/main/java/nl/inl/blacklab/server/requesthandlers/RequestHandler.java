@@ -16,7 +16,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.datastream.DataFormat;
@@ -335,7 +334,6 @@ public abstract class RequestHandler {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
-        requestHandler.setInstrumentationProvider(userRequest.getInstrumentationProvider());
         requestHandler.setIsNewEndpoint(isNewEndpoint);
         return requestHandler;
     }
@@ -398,8 +396,6 @@ public abstract class RequestHandler {
     /** Interprets parameters to create searches. */
     protected WebserviceParamsImpl params;
 
-    protected RequestInstrumentationProvider instrumentationProvider;
-
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
      * "/opensonar/doc/1/content"
@@ -425,9 +421,6 @@ public abstract class RequestHandler {
     protected User user;
 
     protected IndexManager indexMan;
-
-    @SuppressWarnings("unused")
-    private RequestInstrumentationProvider requestInstrumentation;
 
     RequestHandler(UserRequestBls userRequest, WebserviceOperation operation) {
         debugMode = userRequest.isDebugMode();
@@ -463,15 +456,6 @@ public abstract class RequestHandler {
 
     public User getUser() {
         return user;
-    }
-
-    @SuppressWarnings("unused")
-    public RequestInstrumentationProvider getInstrumentationProvider() {
-        return instrumentationProvider;
-    }
-
-    public void setInstrumentationProvider(RequestInstrumentationProvider instrumentationProvider) {
-        this.instrumentationProvider = instrumentationProvider;
     }
 
     public void cleanup() {

@@ -17,8 +17,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.index.InputFormat;
-import nl.inl.blacklab.index.InputFormatWithConfig;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -1698,7 +1697,7 @@ public class ResponseStreamer {
             // List supported input formats
             // Formats from other users are hidden in the master list, but are considered public for all other purposes (if you know the name)
             ds.startEntry("supportedInputFormats").startMap();
-            for (InputFormat inputFormat: result.getFormats()) {
+            for (InputFormatInfo inputFormat: result.getFormats()) {
                 String displayName = null;
                 try {
                     displayName = inputFormat.getDisplayName();
@@ -1714,7 +1713,7 @@ public class ResponseStreamer {
                         ds.entry("displayName", displayName)
                                 .entry("description", inputFormat.getDescription())
                                 .entry("helpUrl", inputFormat.getHelpUrl())
-                                .entry("configurationBased", inputFormat instanceof InputFormatWithConfig)
+                                .entry("configurationBased", inputFormat.isConfigurationBased())
                                 .entry("isVisible", inputFormat.isVisible());
                     }
                     ds.endMap();

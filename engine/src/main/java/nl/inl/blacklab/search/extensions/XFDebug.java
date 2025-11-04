@@ -2,6 +2,8 @@ package nl.inl.blacklab.search.extensions;
 
 import java.util.Arrays;
 
+import nl.inl.blacklab.plugins.QueryFunction;
+import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -86,12 +88,14 @@ public class XFDebug implements ExtensionFunctionClass {
 
         // A fixed span in every matching doc, e.g. _fixed("0", "7") find tokens 0 (inclusive) to 7 (exclusive) in
         // every doc
-        QueryExtensions.register("_fixed", ARGS_SS, Arrays.asList(null, null),
-                (queryInfo, context, args) -> {
-                    int start = Integer.parseInt((String) args.get(0));
-                    int end = Integer.parseInt((String) args.get(1));
-                    return new SpanQueryFixedSpan(queryInfo, context.luceneField(), start, end);
-                });
+        QueryExtensions.register(new QueryFunction("_fixed", ARGS_SS, Arrays.asList(null, null), false) {
+            @Override
+            public BLSpanQuery applyFunc(QueryExecutionContext context, java.util.List<Object> parameters) {
+                int start = Integer.parseInt((String) parameters.get(0));
+                int end = Integer.parseInt((String) parameters.get(1));
+                return new SpanQueryFixedSpan(context.queryInfo(), context.luceneField(), start, end);
+            }
+        });
 
         // Return the argument unchanged
         QueryExtensions.register("_ident", ARGS_Q, NO_DEFAULT_VALUES,

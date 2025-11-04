@@ -22,14 +22,13 @@ public class FileReferenceBytes implements FileReference {
     Charset charset;
 
     FileReferenceBytes(String path, byte[] contents, File assocFile) {
+        this(path, contents, assocFile, null);
+    }
+
+    FileReferenceBytes(String path, byte[] contents, File assocFile, Charset charset) {
         this.path = path;
         this.contents = contents;
         this.assocFile = assocFile;
-    }
-
-    FileReferenceBytes(String path, byte[] contents, Charset charset) {
-        this.path = path;
-        this.contents = contents;
         this.charset = charset;
     }
 

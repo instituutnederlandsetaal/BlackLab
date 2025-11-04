@@ -2,6 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.io.StringWriter;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -39,7 +40,7 @@ public class TestTextPatternSerialize {
     }
 
     private static void assertRoundtrip(String cqlQuery, boolean checkSerializeToCql) throws IOException {
-        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser();
+        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(null, Map.of());
         TextPattern pattern;
         pattern = parser.parseQuery(cqlQuery);
         assertRoundtrip(pattern);

@@ -16,7 +16,8 @@ Let's go over these one by one.
 
 The web service, BlackLab Server, can be used from any programming language and offers a simple REST API (web service).
 
-You will need a JVM version of 17 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9. For example, on Ubuntu:
+You will need a JVM version of 17 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9 (for v4) 
+or 10 (for future v5 and current dev branch). For example, on Ubuntu:
 
 ```bash
 sudo apt install openjdk-17-jdk tomcat9

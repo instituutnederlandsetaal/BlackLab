@@ -1,0 +1,7 @@
+nl.inl.blacklab.indexers.config.InputFormatTypeXml
+nl.inl.blacklab.indexers.config.InputFormatTypeTabular
+nl.inl.blacklab.indexers.config.InputFormatTypePlainText
+nl.inl.blacklab.indexers.config.InputFormatTypeExample
+nl.inl.blacklab.indexers.config.InputFormatTypeCoNLLU
+nl.inl.blacklab.indexers.config.InputFormatTypeChat
+nl.inl.blacklab.indexers.config.InputFormatTypeWithConverters

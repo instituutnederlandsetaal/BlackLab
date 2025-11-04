@@ -12,6 +12,8 @@
     <modules>
 
         <!-- Contains config for checkstyle, PMD and findbugs.
+        Disabled because of problems publishing to Maven Central.
+        Also, we use Sonar Cloud now.
         <module>build-tools</module> -->
 
         <!-- Smaller modules used by Java lib and webservice -->
@@ -21,7 +23,7 @@
         <module>engine</module>
         <module>query-parser</module>
         <module>tools</module>
-        <module>convert-and-tag</module>
+<!--        <module>convert-and-tag</module>-->
         <module>wslib</module>
 
         <!-- Java lib and webservice -->
@@ -37,6 +39,9 @@
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
+
+        <!-- Some FileConverters used at INT -->
+        <module>convert-and-tag</module>
     </modules>
 
     <properties>

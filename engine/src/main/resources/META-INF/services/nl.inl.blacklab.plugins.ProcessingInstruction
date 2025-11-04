@@ -1,0 +1,12 @@
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionAppend
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionConcatDate
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionIdentity
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionIfEmpty
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionMapValues
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionMultiple
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionParsePos
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionReplace
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionSort
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionSplit
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionStrip
+nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique

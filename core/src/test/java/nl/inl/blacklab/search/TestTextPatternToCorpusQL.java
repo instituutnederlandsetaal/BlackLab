@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search;
 
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -11,7 +13,7 @@ import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 public class TestTextPatternToCorpusQL {
 
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
-        TextPattern p = CorpusQueryLanguageParser.parse(input, "word");
+        TextPattern p = CorpusQueryLanguageParser.parse(null, Map.of(), input);
         String cql = TextPatternSerializerCql.serialize(p);
         Assert.assertEquals(expected, cql);
     }

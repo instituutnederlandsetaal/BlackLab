@@ -1,0 +1,5 @@
+nl.inl.blacklab.server.auth.AuthClarinEppn
+nl.inl.blacklab.server.auth.AuthDebugFixed
+nl.inl.blacklab.server.auth.AuthDebugUrl
+nl.inl.blacklab.server.auth.AuthHttpBasic
+nl.inl.blacklab.server.auth.AuthRequestValue

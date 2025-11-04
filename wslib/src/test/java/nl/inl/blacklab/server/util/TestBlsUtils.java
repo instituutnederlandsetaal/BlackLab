@@ -41,23 +41,23 @@ public class TestBlsUtils {
     @Test
     public void testParsePatt() throws BlsException {
         TextPattern pattThe = new TextPatternRegex("the");
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "bcql"));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "bcql"));
     }
 
     @Test
     public void testParsePattContextQL() throws BlsException {
         TextPattern pattThe = new TextPatternWildcard("the", "word", null);
-        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "word", "\"the\"", "contextql"));
+        Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "contextql"));
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattWrongLanguage() throws BlsException {
-        BlsUtils.parsePatt(index, "word", "\"the\"", "swahili");
+        BlsUtils.parsePatt(index, "\"the\"", "swahili");
     }
 
     @Test(expected = BadRequest.class)
     public void testParsePattNoPattern() throws BlsException {
-        BlsUtils.parsePatt(index, "word", "", "bcql");
+        BlsUtils.parsePatt(index, "", "bcql");
     }
 
     @Test

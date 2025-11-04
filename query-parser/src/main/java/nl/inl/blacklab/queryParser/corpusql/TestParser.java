@@ -3,6 +3,7 @@ package nl.inl.blacklab.queryParser.corpusql;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Map;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -23,7 +24,7 @@ public class TestParser {
                 break;
             }
             try {
-                TextPattern result = CorpusQueryLanguageParser.parse(expr, "word");
+                TextPattern result = CorpusQueryLanguageParser.parse(null, Map.of(), expr);
                 System.out.println("Result: " + result + "\n");
             } catch (InvalidQuery e) {
                 e.printStackTrace(System.err);

@@ -92,7 +92,7 @@ public class FrequencyTool {
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex {
-
+        BlackLab.setCheckCurrentDirForConfig(true);
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
         // Check for options

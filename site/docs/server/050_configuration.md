@@ -13,7 +13,6 @@ Where should this file (or files) be located? BlackLab looks for them in the fol
 - the directory specified in `$BLACKLAB_CONFIG_DIR`, if this environment variable was defined
 - `$HOME/.blacklab`
 - `/etc/blacklab`
-- the Java classpath
 
 In addition, BlackLab Server will also look for `blacklab-server.yaml` in the directory where the .war file is located, e.g. `/usr/share/tomcat/webapps`.
 

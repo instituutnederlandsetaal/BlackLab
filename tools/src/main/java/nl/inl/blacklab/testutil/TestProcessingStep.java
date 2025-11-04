@@ -6,8 +6,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionReplace;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
-import nl.inl.blacklab.indexers.config.process.ProcessingStepReplace;
 import nl.inl.util.Timer;
 
 /** See if using streams for processing steps is efficient enough.
@@ -97,8 +97,8 @@ public class TestProcessingStep {
     }
 
     private static ProcessingStep getTestSteps() {
-        ProcessingStep replace = new ProcessingStepReplace("a", "e", "", "replaced");
-        return replace;
+        return new ProcessingInstructionReplace.ProcessingStepReplace(
+                "a", "e", "", "replaced");
         //ProcessingStep split = new ProcessingStepSplit("-", "", "both");
         //return new ProcessingStepMultiple(List.of(replace, split));
     }

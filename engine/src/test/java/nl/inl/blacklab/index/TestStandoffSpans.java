@@ -36,7 +36,7 @@ public class TestStandoffSpans {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
-        InputFormatWithConfig inputFormat = new InputFormatWithConfig(TEST_FORMAT_NAME,
+        InputFormatInfoWithConfig inputFormat = new InputFormatInfoWithConfig(TEST_FORMAT_NAME,
                 getFile("standoff/tei-standoff-spans.blf.yaml"));
         DocumentFormats.add(inputFormat);
     }

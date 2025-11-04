@@ -21,9 +21,8 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
-import nl.inl.blacklab.indexers.preprocess.ConvertPlugin;
-import nl.inl.blacklab.indexers.preprocess.TagPlugin;
+import nl.inl.blacklab.index.InputFormatInfo;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
 
@@ -51,7 +50,7 @@ public class ConfigInputFormat {
     }
 
     /**
-     * This format's name, final to ensure consistency within DocIndexerFactories
+     * This format's name.
      */
     private final String name;
 
@@ -68,9 +67,9 @@ public class ConfigInputFormat {
     private String helpUrl = "";
 
     /**
-     * Should this format be marked as hidden? Mirrors
-     * {@link DocIndexerLegacy#isVisible(Class)}. Used to set
-     * {@link InputFormat#isVisible()}, to indicate internal formats to client
+     * Should this format be visible in the list of formats.
+     * <p>
+     * Used to set {@link InputFormatInfo#isVisible()}, to indicate internal formats to client
      * applications, but has no other internal meaning.
      */
     private boolean visible = true;
@@ -83,7 +82,7 @@ public class ConfigInputFormat {
 
     /**
      * What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass
-     * of DocIndexerConfig to instantiate
+     * of {@link InputFormatTypeConfig} to instantiate
      */
     private FileType fileType = FileType.XML;
 
@@ -123,11 +122,14 @@ public class ConfigInputFormat {
     /** Linked document(s), e.g. containing our metadata */
     private final Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
 
-    /** id of a {@link ConvertPlugin} to run files through prior to indexing */
+    /** Ids of FileConverter plugins to be applied in order before indexing the file. */
+    private List<String> converters = new ArrayList<>();
+
+    /** id of a {@link FileConverter} to run files through prior to indexing */
     private String convertPluginId;
 
     /**
-     * id of a {@link TagPlugin} to run files through prior to indexing, this
+     * id of a {@link FileConverter} to run files through prior to indexing, this
      * happens after converting (if applicable)
      */
     private String tagPluginId;
@@ -238,8 +240,8 @@ public class ConfigInputFormat {
         return visible;
     }
 
-    public void setVisible(boolean listed) {
-        this.visible = listed;
+    public void setVisible(boolean visible) {
+        this.visible = visible;
     }
 
     public void setDocumentPath(String documentPath) {
@@ -267,20 +269,33 @@ public class ConfigInputFormat {
         this.annotatedFields.put(f.getName(), f);
     }
 
-    public void setConvertPluginId(String id) {
-        this.convertPluginId = id;
+    public void setConverters(List<String> converters) {
+        this.converters.clear();
+        this.converters.addAll(converters);
     }
 
-    public String getConvertPluginId() {
-        return convertPluginId;
+    public void setConvertPluginId(String id) {
+        this.convertPluginId = id;
     }
 
     public void setTagPluginId(String id) {
         this.tagPluginId = id;
     }
 
-    public String getTagPluginId() {
-        return tagPluginId;
+    public List<String> getConverters() {
+        List<String> converters = new ArrayList<>(this.converters);
+
+        // Older style: single convert and/or tag plugin
+        if (convertPluginId != null && !convertPluginId.isEmpty())
+            converters.add(convertPluginId);
+        if (tagPluginId != null && !tagPluginId.isEmpty())
+            converters.add(tagPluginId);
+
+        return converters;
+    }
+
+    public boolean hasFileConverters() {
+        return !converters.isEmpty() || !StringUtils.isEmpty(convertPluginId) || !StringUtils.isEmpty(tagPluginId);
     }
 
     public boolean isNamespaceAware() {

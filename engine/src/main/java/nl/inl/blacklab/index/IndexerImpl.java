@@ -15,6 +15,7 @@ import org.apache.lucene.index.Term;
 import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -72,6 +73,9 @@ class IndexerImpl implements DocWriter, Indexer {
      * correct type of DocIndexer.
      */
     private String formatIdentifier;
+
+    /** Our input format. We'll use it to index files. */
+    private InputFormat inputFormat;
 
     /** How to index metadata fields (tokenized) */
     private BLFieldType metadataFieldTypeTokenized;
@@ -170,13 +174,26 @@ class IndexerImpl implements DocWriter, Indexer {
         if (formatIdentifier == null)
             formatError = "No formatIdentifier";
         else {
-            Optional<InputFormat> inputFormat = DocumentFormats.getFormatOrError(formatIdentifier);
+            Optional<InputFormatInfo> inputFormat = DocumentFormats.getFormatOrError(formatIdentifier);
             if (!inputFormat.isPresent())
                 formatError =  "Unknown formatIdentifier '" + formatIdentifier + "'";
             else if (inputFormat.get().isError())
-                formatError = ((InputFormatError)inputFormat.get()).getErrorMessage();
+                formatError = inputFormat.get().getErrorMessage();
         }
         return formatError;
+    }
+
+    @Override
+    public synchronized InputFormat getDocIndexer() {
+        if (inputFormat == null) {
+            InputFormatInfo inputFormatInfo = DocumentFormats.getFormat(getFormatIdentifier()).orElseThrow();
+            inputFormat = inputFormatInfo.getInputFormat();
+            if (inputFormat == null) {
+                throw new InvalidInputFormatConfig(
+                        "Could not instantiate DocIndexer: " + getFormatIdentifier());
+            }
+        }
+        return inputFormat;
     }
 
     @Override
@@ -305,6 +322,13 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
+    public void index(IndexSource indexSource) {
+        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), null)) {
+            proc.process(indexSource.filesToIndex());
+        }
+    }
+
+    @Override
     public void index(String documentName, InputStream input) {
         index(documentName, input, null);
     }
@@ -410,7 +434,7 @@ class IndexerImpl implements DocWriter, Indexer {
         this.numberOfThreadsToUse = numberOfThreadsToUse;
 
         // Some of the class-based docIndexers don't support theaded indexing
-        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
+        InputFormatInfo inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow();
         if (!inputFormat.isConfigurationBased()) {
             logger.info("Threaded indexing is disabled for " + formatIdentifier + " because it is not " +
                     "configuration-based (older DocIndexers may not be thread-safe, so this is a precaution)" );

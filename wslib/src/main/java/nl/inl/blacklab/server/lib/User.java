@@ -93,6 +93,10 @@ public class User {
         return userId;
     }
 
+    public String getSessionId() {
+        return sessionId;
+    }
+
     public String getUserDirName() {
         // NOTE: we want a safe directory name, so instead of trying to
         // get rid of non-safe characters, we just strip everything that

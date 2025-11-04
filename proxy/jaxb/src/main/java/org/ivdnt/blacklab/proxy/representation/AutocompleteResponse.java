@@ -1,14 +1,7 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
-
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.ivdnt.blacklab.proxy.helper.AutocompleteAdapter;
 
@@ -20,6 +13,13 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.type.CollectionType;
+
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType()
@@ -50,7 +50,9 @@ public class AutocompleteResponse {
         public AutocompleteResponse deserialize(JsonParser parser, DeserializationContext deserializationContext)
                 throws IOException {
             AutocompleteResponse r = new AutocompleteResponse();
-            r.terms = (List<String>)deserializationContext.readValue(parser, ArrayList.class);
+            CollectionType typeListOfString = deserializationContext.getTypeFactory()
+                    .constructCollectionType(List.class, String.class);
+            r.terms = deserializationContext.readValue(parser, typeListOfString);
             return r;
         }
     }

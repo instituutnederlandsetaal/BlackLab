@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.plugins.ProcessingInstruction;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 
@@ -202,7 +203,7 @@ public class ConfigMetadataField {
         return sortValues;
     }
 
-    ProcessingStep processSteps = ProcessingStep.identity();
+    ProcessingStep processSteps = ProcessingInstruction.identity();
 
     public ProcessingStep getProcess() {
         // We don't synchronize reads, as processSteps is only set once when config is read
@@ -212,7 +213,7 @@ public class ConfigMetadataField {
     public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
-        processSteps = ProcessingStep.fromConfig(process);
+        processSteps = ProcessingInstruction.fromConfig(process);
     }
 
     public void addDisplayOrder(List<String> fields) {

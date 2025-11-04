@@ -19,8 +19,4 @@ public class SimpleMetricsProvider implements MetricsProvider {
     public MeterRegistry getRegistry() {
         return registry;
     }
-
-
-
-
 }

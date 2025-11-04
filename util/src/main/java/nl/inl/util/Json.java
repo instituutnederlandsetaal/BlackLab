@@ -1,5 +1,6 @@
 package nl.inl.util;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -176,5 +177,11 @@ public class Json {
             }
         }
         return result;
+    }
+
+    public static ObjectMapper getYamlOrJsonMapper(File configFile) {
+        return configFile.getName().toLowerCase().endsWith(".json") ?
+                getJsonObjectMapper() :
+                getYamlObjectMapper();
     }
 }

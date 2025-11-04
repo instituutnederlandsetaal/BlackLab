@@ -22,8 +22,8 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.DocIndexerBase;
 import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.FileUtil;
@@ -38,21 +38,20 @@ public class DocumentFormats {
     /** Finders for various types of input formats (class-based, user formats, ...) */
     private static final List<FinderInputFormat> finders = new ArrayList<>();
 
-    /** Class finder, so we have convenient direct access to it. */
-    private static final FinderInputFormatClass finderClass;
-
     /** All currently loaded inputFormats. Always check isError() to make sure the format loaded correctly. */
-    private static final Map<String, InputFormat> inputFormats = new LinkedHashMap<>();
+    private static final Map<String, InputFormatInfo> inputFormats = new LinkedHashMap<>();
+
+    /** Name of subdir of BlackLab config directory containing input format files. */
+    public static final String FORMATS_CONFIG_DIR_NAME = "formats";
 
     static {
         // NOTE: Last added finder has priority (to allow users to override types)
-        finderClass = new FinderInputFormatClass();
-        addFinder(finderClass);
+        addFinder(new FinderInputFormatClass());
 
         // We also add these in a specific order, so that format files in the default directories
         // may override builtin formats.
         addStandardConfigFormats(); // load formats built in to BL and from standard directories
-        addConfigFormatsInDefaultDirectories();
+        addFromFormatsConfigDir();
     }
 
     /**
@@ -65,7 +64,7 @@ public class DocumentFormats {
         finders.add(finder);
     }
 
-    public static synchronized InputFormat add(InputFormat inputFormat) {
+    public static synchronized InputFormatInfo add(InputFormatInfo inputFormat) {
         String formatIdentifier = inputFormat.getIdentifier();
         if (inputFormats.containsKey(formatIdentifier)) {
             logger.info("Loading " + inputFormat + " overrode previously loaded format with this name");
@@ -74,13 +73,13 @@ public class DocumentFormats {
         return inputFormat;
     }
 
-    public static InputFormat add(String formatIdentifier, Class<? extends DocIndexerBase> docIndexerClass) {
-        return add(new InputFormatClass(formatIdentifier, docIndexerClass));
+    public static InputFormatInfo add(String formatIdentifier, InputFormat inputFormat) {
+        return add(new InputFormatInfoClass(formatIdentifier, inputFormat));
     }
 
-    public static InputFormat add(ConfigInputFormat format) throws InvalidInputFormatConfig {
+    public static InputFormatInfo add(ConfigInputFormat format) throws InvalidInputFormatConfig {
         format.validate();
-        return add(new InputFormatWithConfig(format));
+        return add(new InputFormatInfoWithConfig(format));
     }
 
     public static synchronized void remove(String formatIdentifier) {
@@ -105,9 +104,9 @@ public class DocumentFormats {
      *
      * @return the list of input formats
      */
-    public static synchronized Collection<InputFormat> getFormats() {
+    public static synchronized Collection<InputFormatInfo> getFormats() {
         // TODO maybe we should have a well-defined order? alphabetical, or configs before classes?
-        List<InputFormat> reversed = inputFormats.values().stream()
+        List<InputFormatInfo> reversed = inputFormats.values().stream()
                 .filter(f -> !f.isError()).collect(Collectors.toList());
         Collections.reverse(reversed);
         return reversed;
@@ -122,7 +121,7 @@ public class DocumentFormats {
      *
      * @return the descriptor, or null if not found
      */
-    public static Optional<InputFormat> getFormat(String formatIdentifier) {
+    public static Optional<InputFormatInfo> getFormat(String formatIdentifier) {
         return getFormatOrError(formatIdentifier).filter(f -> !f.isError());
     }
 
@@ -135,23 +134,27 @@ public class DocumentFormats {
      *
      * @return the descriptor, or null if not found
      */
-    public static synchronized Optional<InputFormat> getFormatOrError(String formatIdentifier) {
+    public static synchronized Optional<InputFormatInfo> getFormatOrError(String formatIdentifier) {
         assert formatIdentifier != null;
-        InputFormat format = inputFormats.get(formatIdentifier);
+        InputFormatInfo format = inputFormats.get(formatIdentifier);
         if (format == null)
             format = find(formatIdentifier);
         return Optional.ofNullable(format);
     }
 
-    private static synchronized InputFormat find(String formatIdentifier) {
-        for (FinderInputFormat finder: finders) {
-            InputFormat format = finder.find(formatIdentifier);
-            if (format != null) {
-                inputFormats.put(formatIdentifier, format);
-                return format;
+    private static synchronized InputFormatInfo find(String formatIdentifier) {
+        try {
+            for (FinderInputFormat finder: finders) {
+                InputFormatInfo format = finder.find(formatIdentifier);
+                if (format != null) {
+                    inputFormats.put(formatIdentifier, format);
+                    return format;
+                }
             }
+            return null;
+        } catch (PluginException e) {
+            throw new InvalidInputFormatConfig(e);
         }
-        return null;
     }
 
     private static void addStandardConfigFormats() {
@@ -172,36 +175,23 @@ public class DocumentFormats {
 
                 try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
                     ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
-
                     format.setReadFromFile(new File("$BLACKLAB_JAR/" + fileNameRelative));
                     InputFormatReader.read(reader, false, format);
                     add(format);
                 }
             } catch (InvalidInputFormatConfig | IOException e) {
                 //formatErrors.put(formatIdentifier, e.getMessage());
-                InputFormat inputFormat = new InputFormatError(formatIdentifier, e.getMessage());
+                InputFormatInfo inputFormat = new InputFormatInfoError(formatIdentifier, e.getMessage());
                 add(inputFormat);
                 throw BlackLabException.wrapRuntime(e);
             }
         }
     }
 
-    private static void addConfigFormatsInDefaultDirectories() {
-        List<File> dirs = BlackLab.defaultConfigDirs().stream()
-                .filter(f -> {
-                    boolean canAccess;
-                    try {
-                        canAccess = f.canRead();
-                    } catch (SecurityException e) {
-                        canAccess = false;
-                    }
-                    if (!canAccess)
-                        logger.warn("Config directory is not readable, skipping: {}", f);
-                    return canAccess;
-                })
-                .map(dir -> new File(dir, "formats"))
-                .toList();
-        addConfigFormatsInDirectories(dirs);
+    private static void addFromFormatsConfigDir() {
+        File formatsDir = new File(BlackLab.configDir(), FORMATS_CONFIG_DIR_NAME);
+        if (formatsDir.exists() && formatsDir.isDirectory() && formatsDir.canRead())
+            addConfigFormatsInDirectories(List.of(formatsDir));
     }
 
     /**
@@ -230,7 +220,7 @@ public class DocumentFormats {
 
                     // Add with file reference; format will be lazy-loaded when needed
                     // (this ensures that any other referenced format will be known about when a format needs it)
-                    add(new InputFormatWithConfig(formatIdentifier, f));
+                    add(new InputFormatInfoWithConfigLazy(formatIdentifier, f));
                 }
             }
         };

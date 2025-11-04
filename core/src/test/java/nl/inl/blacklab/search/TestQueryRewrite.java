@@ -11,7 +11,7 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -42,10 +42,10 @@ public class TestQueryRewrite {
         ClauseCombinerNfa.setForwardIndexMatchingEnabled(true);
     }
 
-    static TextPattern getPatternFromCql(String cqlQuery) {
+    TextPattern getPatternFromCql(String cqlQuery) {
         try {
             cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
-            return CorpusQueryLanguageParser.parse(cqlQuery, "word");
+            return index.getQueryParser("bcql").parse(cqlQuery).pattern();
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);
         }

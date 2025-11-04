@@ -1,16 +1,12 @@
 package nl.inl.blacklab.server.lib;
 
-import java.util.List;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.SingleDocIdFilter;
-import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternQueryFunction;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.util.BlsUtils;
@@ -37,14 +33,13 @@ public class WebserviceParamsUtils {
             if (pattLang.matches("default|corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
                 // CQL query with gaps, and TSV data to put in the gaps
                 try {
-                    pattern = GapFiller.parseGapQuery(patt, pattGapData);
+                    pattern = GapFiller.parseGapQuery(index, patt, pattGapData);
                 } catch (InvalidQuery e) {
                     throw new BadRequest("PATT_SYNTAX_ERROR",
                             "Syntax error in gapped CorpusQL pattern: " + e.getMessage());
                 }
             } else {
-                String defaultAnnotation = index.mainAnnotatedField().mainAnnotation().name();
-                pattern = BlsUtils.parsePatt(index, defaultAnnotation, patt, pattLang);
+                pattern = BlsUtils.parsePatt(index, patt, pattLang);
             }
         }
         return pattern;

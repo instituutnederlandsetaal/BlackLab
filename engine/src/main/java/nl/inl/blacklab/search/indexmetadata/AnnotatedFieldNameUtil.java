@@ -310,7 +310,7 @@ public final class AnnotatedFieldNameUtil {
         if (name.isEmpty())
             return "_EMPTY_";
         // can only contain letter, digit, dash (used to be disallowed in config v1, but no more), underscore and period
-        name = name.replaceAll("[^\\p{L}\\d_.\\-]", "_");
+        name = name.replaceAll("[^\\p{L}\\p{N}_.\\-]", "_");
         if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
             name = "_" + name;
         }

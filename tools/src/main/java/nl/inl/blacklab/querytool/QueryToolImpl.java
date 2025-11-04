@@ -176,6 +176,7 @@ public class QueryToolImpl {
      * @param args program arguments
      */
     public static void queryToolMain(String[] args) throws ErrorOpeningIndex {
+        BlackLab.setCheckCurrentDirForConfig(true);
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
         LogUtil.setupBasicLoggingConfig(Level.WARN);
 
@@ -190,6 +191,8 @@ public class QueryToolImpl {
         try (BufferedReader in = config.getInput()) {
             QueryToolImpl c = new QueryToolImpl(config.getIndexDir(), in, output);
             c.run();
+        } catch (InvalidIndex e) {
+            output.error("Error: " + e.getMessage());
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }

@@ -1,7 +1,6 @@
 package org.ivdnt.blacklab.proxy.representation;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -23,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.databind.type.CollectionType;
 
 import jakarta.xml.bind.JAXBElement;
 import jakarta.xml.bind.annotation.XmlAccessorType;
@@ -110,6 +110,8 @@ public class DocInfo {
             DocInfo docInfo = new DocInfo();
             docInfo.metadata = new LinkedHashMap<>();
 
+            CollectionType typeListOfString = deserializationContext.getTypeFactory()
+                    .constructCollectionType(List.class, String.class);
             while (true) {
                 token = parser.nextToken();
                 if (token == JsonToken.END_OBJECT)
@@ -132,7 +134,7 @@ public class DocInfo {
                 } else if (token == JsonToken.START_ARRAY) {
                     if (fieldName.equals("tokenCounts")) {
                         // Token count per field
-                        docInfo.tokenCounts = (List<FieldTokenCount>)deserializationContext.readValue(parser, ArrayList.class);
+                        docInfo.tokenCounts = deserializationContext.readValue(parser, typeListOfString);
                     } else {
                         // A list of metadata values
                         List<String> values = SerializationUtil.readStringList(parser);

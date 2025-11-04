@@ -1,11 +1,10 @@
 package nl.inl.blacklab.server.search;
 
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 
 /** Represents a request from the user to the webservice.
  * Used to factor out implementation-specific classes like HttpServlet,
@@ -32,22 +31,6 @@ public interface UserRequest {
      * @return user's remote address
      */
     String getRemoteAddr();
-
-    /**
-     * Return the previously persisted user id, if any.
-     * @return persisted user id, or null if none
-     */
-    String getPersistedUserId();
-
-    /**
-     * Persist the user (if the auth method wants to do that).
-     *
-     * Only used by AuthDebugCookie.
-     *
-     * @param user current user
-     * @param durationSec how long to persist
-     */
-    void persistUser(User user, int durationSec);
 
     /**
      * Get the value of a request header.
@@ -89,15 +72,6 @@ public interface UserRequest {
      * @return true if it's a debug request
      */
     boolean isDebugMode();
-
-    /**
-     * Get the instrumentation provider for metrics.
-     *
-     * Will return a "no op" version if none is configured.
-     *
-     * @return instrumentation provider
-     */
-    RequestInstrumentationProvider getInstrumentationProvider();
 
     /**
      * Get the name of the corpus we're accessing.

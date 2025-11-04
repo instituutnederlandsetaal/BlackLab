@@ -5,6 +5,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -21,6 +22,7 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
@@ -683,11 +685,12 @@ public class TestSearches {
             "A:[]* -nmod-> B:[]* :: A.word > B.word"
         );
         for (String query: queries) {
-            TextPattern p1 = CorpusQueryLanguageParser.parse(query, "word");
-            TextPattern p2 = CorpusQueryLanguageParser.parse(query, "word");
+            BlackLabIndex index = testIndex.index();
+            BLQueryParser parser = index.getQueryParser("bcql");
+            TextPattern p1 = parser.parse(query).pattern();
+            TextPattern p2 = parser.parse(query).pattern();
             Assert.assertEquals(p1, p2);
             Assert.assertEquals(p1.hashCode(), p2.hashCode());
-            BlackLabIndex index = testIndex.index();
             QueryExecutionContext context = QueryExecutionContext.get(index,
                     index.mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE);
             BLSpanQuery q1 = p1.translate(context);
@@ -726,7 +729,7 @@ public class TestSearches {
     }
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
-        TextPattern tp = CorpusQueryLanguageParser.parse("\"" + bcqlPattern + "\"", "word");
+        TextPattern tp = CorpusQueryLanguageParser.parse(testIndex.index(), Map.of(), "\"" + bcqlPattern + "\"");
         Assert.assertTrue(tp instanceof TextPatternTerm);
         BLSpanQuery q = tp.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
@@ -748,7 +751,7 @@ public class TestSearches {
     }
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
-        TextPattern patt = CorpusQueryLanguageParser.parse(query, "word");
+        TextPattern patt = CorpusQueryLanguageParser.parse(testIndex.index(), Map.of(), query);
         BLSpanQuery blQuery = patt.translate(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));

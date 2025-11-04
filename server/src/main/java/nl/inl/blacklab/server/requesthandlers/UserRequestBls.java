@@ -5,11 +5,9 @@ import org.apache.logging.log4j.ThreadContext;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlackLabServer;
 import nl.inl.blacklab.server.auth.AuthMethod;
@@ -54,8 +52,8 @@ public class UserRequestBls implements UserRequest {
         this.response = response;
 
         // Pass requestId to instrumentationProvider
-        RequestInstrumentationProvider instrumentationProvider = getInstrumentationProvider();
-        ThreadContext.put("requestId", instrumentationProvider.getRequestID(request).orElse(""));
+        String requestId = BlackLabServer.getInstrumentationProvider().getRequestID(request).orElse("");
+        ThreadContext.put("requestId", requestId);
 
         // Parse the URL path
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
@@ -145,31 +143,6 @@ public class UserRequestBls implements UserRequest {
     }
 
     @Override
-    public String getPersistedUserId() {
-        // Is there a cookie yet?
-        String userId = null;
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            // Check if we have a session cookie
-            for (Cookie cookie : cookies) {
-                if (cookie.getName().equals("autosearch-debug-user")) {
-                    userId = cookie.getValue();
-                    break;
-                }
-            }
-        }
-        return userId;
-    }
-
-    @Override
-    public void persistUser(User user, int durationSec) {
-        Cookie cookie = new Cookie("autosearch-debug-user", user.getId());
-        cookie.setPath("/");
-        cookie.setMaxAge(durationSec);
-        response.addCookie(cookie);
-    }
-
-    @Override
     public String getHeader(String name) {
         return request.getHeader(name);
     }
@@ -205,11 +178,6 @@ public class UserRequestBls implements UserRequest {
     @Override
     public boolean isDebugMode() {
         return getSearchManager().isDebugMode(ServletUtil.getOriginatingAddress(request));
-    }
-
-    @Override
-    public RequestInstrumentationProvider getInstrumentationProvider() {
-        return servlet.getInstrumentationProvider();
     }
 
     @Override

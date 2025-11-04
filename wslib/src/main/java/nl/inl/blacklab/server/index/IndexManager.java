@@ -27,7 +27,7 @@ import org.apache.logging.log4j.Logger;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -269,7 +269,7 @@ public class IndexManager {
             BlsUtils.delTree(indexDir);
         }
         boolean contentViewable = true; // user may view his own private corpus documents
-        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
+        InputFormatInfo inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
         ConfigInputFormat config = inputFormat.isConfigurationBased() ? inputFormat.getConfig() : null;
         try (BlackLabIndexWriter indexWriter = searchMan.blackLabInstance().create(indexDir, config)) {
             IndexMetadataWriter indexMetadata = indexWriter.metadata();

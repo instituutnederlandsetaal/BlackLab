@@ -5,8 +5,8 @@ import java.util.Map;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.plugins.AuthMethodProvider;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.search.UserRequest;
 
 /**
  * Authentication system used for debugging.
@@ -14,21 +14,20 @@ import nl.inl.blacklab.server.search.UserRequest;
  * Requests from debug IPs (specified in config file) may fake logged-in user by
  * passing "userid" parameter.
  */
-public class AuthDebugUrl implements AuthMethod {
+public class AuthDebugUrl extends AuthMethodProvider {
 
     static final Logger logger = LogManager.getLogger(AuthDebugUrl.class);
 
-    public AuthDebugUrl(Map<String, Object> param) {
+    @Override
+    public AuthMethod get(Map<String, Object> param) {
         // doesn't take any parameters
         if (!param.isEmpty())
             logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
-    }
-
-    @Override
-    public User determineCurrentUser(UserRequest request) {
-        // URL parameter is already dealt with in AuthManager. If we end up here,
-        // there was no userid parameter, so just return an anonymous user.
-        return User.anonymous(request.getSessionId());
+        return request -> {
+            // URL parameter is already dealt with in AuthManager. If we end up here,
+            // there was no userid parameter, so just return an anonymous user.
+            return User.anonymous(request.getSessionId());
+        };
     }
 
 }

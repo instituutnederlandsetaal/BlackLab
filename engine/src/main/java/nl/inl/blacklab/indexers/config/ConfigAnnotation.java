@@ -12,8 +12,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
-import nl.inl.blacklab.indexers.config.process.ProcessingStepUnique;
+import nl.inl.blacklab.plugins.ProcessingInstruction;
 
 /**
  * Configuration for a single annotation (formerly "property") of an annotated field.
@@ -48,7 +49,7 @@ public class ConfigAnnotation {
     /** How to process annotation values (if at all) */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
-    ProcessingStep processSteps = ProcessingStep.identity();
+    ProcessingStep processSteps = ProcessingInstruction.identity();
 
     /**
      * What sensitivity setting to use to index this annotation (optional, default
@@ -234,11 +235,11 @@ public class ConfigAnnotation {
         this.process.addAll(process);
 
         // "Compile" the process steps
-        processSteps = ProcessingStep.fromConfig(this.process);
+        processSteps = ProcessingInstruction.fromConfig(this.process);
         if (!allowDuplicateValues) {
             // If we don't allow duplicate values (we never do, starting from v2),
             // add a unique() step to the end of the processing chain
-            processSteps = ProcessingStep.combine(processSteps, new ProcessingStepUnique());
+            processSteps = ProcessingStep.combine(processSteps, new ProcessingInstructionUnique().get());
         }
     }
 

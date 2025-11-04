@@ -19,7 +19,7 @@ import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
-import nl.inl.blacklab.indexers.config.DocIndexerXPath;
+import nl.inl.blacklab.indexers.config.InputFormatTypeXml;
 
 public class XPathFinder {
 
@@ -107,7 +107,7 @@ public class XPathFinder {
         }
     }
 
-    public void xpathForEach(String xPath, NodeInfo context, DocIndexerXPath.NodeHandler handler) {
+    public void xpathForEach(String xPath, NodeInfo context, InputFormatTypeXml.NodeHandler handler) {
         for (XdmItem item: find(xPath, context)) {
             if (item.isNode()) {
                 handler.handle(((XdmNode) item).getUnderlyingNode());
@@ -115,7 +115,7 @@ public class XPathFinder {
         }
     }
 
-    public void xpathForEachStringValue(String xPath, NodeInfo context, DocIndexerXPath.StringValueHandler handler) {
+    public void xpathForEachStringValue(String xPath, NodeInfo context, InputFormatTypeXml.StringValueHandler handler) {
         for (XdmItem item: find(xPath, context)) {
             handler.handle(item.getStringValue());
         }

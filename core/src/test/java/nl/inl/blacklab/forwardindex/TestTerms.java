@@ -26,7 +26,8 @@ public class TestTerms {
 
     @AfterClass
     public static void tearDownClass() {
-        testIndexIntegrated.close();
+        if (testIndexIntegrated != null)
+            testIndexIntegrated.close();
     }
 
     @Before

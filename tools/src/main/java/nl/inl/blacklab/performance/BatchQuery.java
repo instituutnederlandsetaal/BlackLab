@@ -4,7 +4,8 @@ import java.io.File;
 import java.io.IOException;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
+import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
@@ -87,8 +88,8 @@ public class BatchQuery {
                 try {
                     Timer t = new Timer();
                     System.out.print(strQuery + "\t");
-                    BLSpanQuery query = CorpusQueryLanguageParser.parse(strQuery,
-                            index.mainAnnotatedField().mainAnnotation().name()).toQuery(QueryInfo.create(index));
+                    BLQueryParser parser = index.getQueryParser("bcql");
+                    BLSpanQuery query = parser.parse(strQuery).pattern().toQuery(QueryInfo.create(index));
                     Hits hits = index.find(query, null).getHits();
                     System.out.print(t.elapsed());
                     if (determineTotalHits) {

@@ -7,16 +7,10 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
@@ -25,16 +19,19 @@ import org.apache.lucene.index.IndexFormatTooOldException;
 
 import com.fasterxml.jackson.core.JacksonException;
 
-import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Metrics;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.instrumentation.MetricsProvider;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
-import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigDebug;
 import nl.inl.blacklab.server.config.ConfigFileReader;
@@ -81,6 +78,10 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public void init() throws ServletException {
         logger.info("Starting BlackLab Server...");
+
+        // Before the plugin system is initialized, add our plugin type to it
+        PluginManager.addPluginType(AuthMethodProvider.class);
+
         super.init();
         logger.info("BlackLab Server ready.");
     }
@@ -97,8 +98,7 @@ public class BlackLabServer extends HttpServlet {
                 config.getParameters().setParameterDefaults();
 
                 // Configure metrics provider (e.g Prometheus)
-                setMetricsProvider(config);
-                getInstrumentationProvider(); // ensure creation
+                setMetricsProvider(config.getDebug());
 
                 checkExpectedDebugAddresses(config);
 
@@ -130,37 +130,21 @@ public class BlackLabServer extends HttpServlet {
     private BLSConfig readConfig() throws IOException, ConfigurationException {
         File servletPath = new File(getServletContext().getRealPath("."));
         logger.debug("Running from dir: " + servletPath);
-        List<File> searchDirs = new ArrayList<>();
-        searchDirs.add(servletPath.getAbsoluteFile().getParentFile().getCanonicalFile());
-        searchDirs.addAll(BlackLab.defaultConfigDirs());
-        return ConfigFileReader.getBlsConfig(searchDirs, CONFIG_FILE_NAME);
+        return ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
     }
 
-    private void setMetricsProvider(BLSConfig config) throws ConfigurationException {
-        String registryProviderClassName = config.getDebug().getMetricsProvider();
+    private void setMetricsProvider(BLSConfigDebug configDebug) throws ConfigurationException {
+        String registryProviderClassName = configDebug.getMetricsProvider();
         if (StringUtils.isBlank(registryProviderClassName)) {
-            return;
-        }
-
-        String fqClassName = registryProviderClassName.startsWith("nl.inl.blacklab.instrumentation")
-            ? registryProviderClassName
-            : String.format("nl.inl.blacklab.instrumentation.impl.%s", registryProviderClassName);
-
-        try {
-            MetricsProvider meterRegistryProvider = (MetricsProvider)
-                Class.forName(fqClassName).getDeclaredConstructor().newInstance();
-            MeterRegistry registry = meterRegistryProvider.getRegistry();
-            Metrics.addRegistry(registry);
-        } catch (Exception ex) {
-            throw new ConfigurationException("Can not create metrics provider with class" + fqClassName);
+            requestInstrumentationProvider = RequestInstrumentationProvider.noOpProvider();
+        } else {
+            // Create instrumentation provider
+            requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(registryProviderClassName,
+                    configDebug.getRequestInstrumentationProvider());
         }
     }
 
-    public synchronized RequestInstrumentationProvider getInstrumentationProvider() {
-        if (requestInstrumentationProvider == null) {
-            BLSConfig config = getSearchManager().config();
-            requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
-        }
+    public static RequestInstrumentationProvider getInstrumentationProvider() {
         return requestInstrumentationProvider;
     }
 

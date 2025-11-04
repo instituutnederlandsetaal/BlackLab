@@ -22,7 +22,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat.FileType;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument.MissingLinkPathAction;
@@ -186,6 +186,11 @@ public class InputFormatReader extends YamlJsonReader {
             case "linkedDocuments":
                 readLinkedDocuments(e, cfg);
                 break;
+            case "converters":
+                List<String> l = new ArrayList<>();
+                readStringList(e, l);
+                cfg.setConverters(l);
+                break;
             case "convertPlugin":
                 cfg.setConvertPluginId(str(e));
                 break;
@@ -215,8 +220,8 @@ public class InputFormatReader extends YamlJsonReader {
 
         // Default to Saxon if no processor specified
         if (cfg.getFileType() == FileType.XML &&
-                cfg.getFileTypeOptions().get(DocIndexerXPath.FT_OPT_PROCESSOR) == null) {
-            cfg.addFileTypeOption(DocIndexerXPath.FT_OPT_PROCESSOR, DocIndexerXPath.PROCESSOR_NAME);
+                cfg.getFileTypeOptions().get(InputFormatTypeXml.FT_OPT_PROCESSOR) == null) {
+            cfg.addFileTypeOption(InputFormatTypeXml.FT_OPT_PROCESSOR, InputFormatTypeXml.PROCESSOR_NAME);
         }
     }
 
@@ -817,7 +822,7 @@ public class InputFormatReader extends YamlJsonReader {
     private void readInputFormat(ConfigLinkedDocument ld, Entry<String, JsonNode> e) {
         // Resolve the inputFormat right now, instead of potentially failing later when the format is actually needed at some point during indexing
         String formatIdentifier = str(e);
-        InputFormat inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow(() -> new InvalidInputFormatConfig(
+        InputFormatInfo inputFormat = DocumentFormats.getFormat(formatIdentifier).orElseThrow(() -> new InvalidInputFormatConfig(
                 "Unknown input format " + formatIdentifier + " in linked document " + ld.getName()));
 
         ld.setInputFormatIdentifier(formatIdentifier);

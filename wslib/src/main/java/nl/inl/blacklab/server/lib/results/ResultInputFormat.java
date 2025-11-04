@@ -7,7 +7,7 @@ import org.apache.commons.io.IOUtils;
 
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.server.exceptions.NotFound;
 
@@ -15,7 +15,7 @@ public class ResultInputFormat {
     private final ConfigInputFormat config;
 
     ResultInputFormat(String formatName) {
-        InputFormat inputFormat = DocumentFormats.getFormat(formatName).orElseThrow(
+        InputFormatInfo inputFormat = DocumentFormats.getFormat(formatName).orElseThrow(
                 () -> new NotFound("NOT_FOUND", "Format '" + formatName + "' does not exist."));
         if (!inputFormat.isConfigurationBased())
             throw new NotFound("NOT_FOUND", "Format '" + formatName

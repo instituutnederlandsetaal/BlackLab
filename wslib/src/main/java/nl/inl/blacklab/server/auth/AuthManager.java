@@ -8,6 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.server.config.BLSConfigAuth;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.lib.User;
@@ -26,7 +28,7 @@ public class AuthManager {
     public AuthManager(BLSConfigAuth authentication) throws ConfigurationException {
         Map<String, String> system = authentication.getSystem();
         String authClass = StringUtils.defaultString(system.get("class"));
-        Map<String, String> authParam = new HashMap<>();
+        Map<String, Object> authParam = new HashMap<>();
         for (Entry<String, String> entry: system.entrySet()) {
             if (!entry.getKey().equals("class"))
                 authParam.put(entry.getKey(), entry.getValue());
@@ -34,15 +36,18 @@ public class AuthManager {
         init(authClass, authParam);
     }
 
-    private void init(String authClass, Map<String, ?> authParam) throws ConfigurationException {
+    private void init(String authClass, Map<String, Object> authParam) throws ConfigurationException {
         if (!authClass.isEmpty()) {
+            AuthMethodProvider authMethodProvider;
             try {
-                if (!authClass.contains(".")) {
-                    // Allows us to abbreviate the built-in auth classes
-                    authClass = "nl.inl.blacklab.server.auth." + authClass;
-                }
-                Class<? extends AuthMethod> cl = (Class<? extends AuthMethod>)Class.forName(authClass);
-                authObj = cl.getConstructor(Map.class).newInstance(authParam);
+                authMethodProvider = PluginManager.type(AuthMethodProvider.class).get(authClass);
+                authObj = authMethodProvider.get(authParam);
+//                if (!authClass.contains(".")) {
+//                    // Allows us to abbreviate the built-in auth classes
+//                    authClass = "nl.inl.blacklab.server.auth." + authClass;
+//                }
+//                Class<? extends AuthMethod> cl = (Class<? extends AuthMethod>)Class.forName(authClass);
+//                authObj = cl.getConstructor(Map.class).newInstance(authParam);
             } catch (Exception e) {
                 throw new ConfigurationException("Error instantiating auth system: " + authClass, e);
             }

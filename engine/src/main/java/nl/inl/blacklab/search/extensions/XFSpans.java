@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.extensions;
 import java.util.Arrays;
 import java.util.List;
 
+import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureOverlappingSpans;
@@ -35,8 +36,8 @@ public class XFSpans implements ExtensionFunctionClass {
 
     @Override
     public void register() {
-        QueryExtensions.register(FUNC_WITH_SPANS, QueryExtensions.ARGS_QQS,
-                Arrays.asList(null, QueryExtensions.VALUE_ANY_SPAN, "with-spans"),
+        QueryExtensions.register(FUNC_WITH_SPANS, ARGS_QQS,
+                Arrays.asList(null, QueryFunction.VALUE_ANY_SPAN, "with-spans"),
                 XFSpans::withSpans);
     }
 

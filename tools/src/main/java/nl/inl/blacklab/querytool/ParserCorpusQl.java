@@ -1,7 +1,6 @@
 package nl.inl.blacklab.querytool;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
@@ -29,7 +28,7 @@ class ParserCorpusQl extends Parser {
      */
     @Override
     public TextPattern parse(BlackLabIndex index, String query) throws InvalidQuery {
-        return CorpusQueryLanguageParser.parse(query, index.mainAnnotatedField().mainAnnotation().name());
+        return index.getQueryParser("bcql").parse(query).pattern();
     }
 
     @Override

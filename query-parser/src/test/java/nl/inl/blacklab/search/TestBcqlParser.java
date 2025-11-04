@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -16,7 +17,7 @@ public class TestBcqlParser {
     @Test
     public void testEscapedQuote() throws IOException, InvalidQuery {
         String pattern = "[lemma=\"\\\"\"]";
-        TextPattern tp = CorpusQueryLanguageParser.parse(pattern, "word");
+        TextPattern tp = CorpusQueryLanguageParser.parse(null, Map.of(), pattern);
         Assert.assertTrue(tp instanceof TextPatternTerm);
         Assert.assertEquals("\"", ((TextPatternTerm) tp).getValue());
     }
@@ -24,7 +25,7 @@ public class TestBcqlParser {
     @Test
     public void testParseAlignmentQuery() throws IOException, InvalidQuery {
         String pattern = "[word='the'] =verse-alignment=>nl [word='het']";
-        TextPattern tp = CorpusQueryLanguageParser.parse(pattern, "word");
+        TextPattern tp = CorpusQueryLanguageParser.parse(null, Map.of(), pattern);
         Assert.assertEquals(TextPatternRelationMatch.class, tp.getClass());
     }
 }

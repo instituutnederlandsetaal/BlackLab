@@ -1,0 +1,17 @@
+---
+# BlackLab config file
+# ===============================================================
+
+plugins:
+  delayInitialization: true
+
+  plugins:
+    OpenConvert:
+      jarPath: some-jar.jar
+
+    groovy-plugin:
+      message: Helloooo!
+      some-object:
+        this: fun
+        that: yay
+  

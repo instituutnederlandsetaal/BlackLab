@@ -33,7 +33,7 @@ public class TestYaml {
         try {
             ClassLoader classLoader = this.getClass().getClassLoader();
             File file = new File(classLoader.getResource("yaml/nodups.blf.yaml").getFile());
-            InputFormatWithConfig inputFormat = new InputFormatWithConfig("nodups", file);
+            InputFormatInfoWithConfig inputFormat = new InputFormatInfoWithConfig("nodups", file);
             inputFormat.getConfig();
             Assert.fail("expected duplicates error");
         } catch (InvalidInputFormatConfig ex) {

@@ -35,7 +35,7 @@ public class TextPatternQueryFunction extends TextPattern {
         this.name = name;
 
         // Make sure string arguments are recognized as such (and not seen as a query)
-        this.args = QueryExtensions.preprocessArgs(name, args);
+        this.args = QueryExtensions.get(name).preprocessArgs(args);
     }
 
     @Override
@@ -51,7 +51,7 @@ public class TextPatternQueryFunction extends TextPattern {
             }
         }
 
-        return QueryExtensions.apply(name, context, translated);
+        return QueryExtensions.get(name).apply(context, translated);
     }
 
     @Override
@@ -100,7 +100,7 @@ public class TextPatternQueryFunction extends TextPattern {
 
     @Override
     public boolean isRelationsQuery() {
-        if (QueryExtensions.isRelationsFunction(name))
+        if (QueryExtensions.get(name).isRelationsFunction())
             return true;
         for (Object arg : args) {
             if (arg instanceof TextPattern) {

@@ -10,16 +10,15 @@ public abstract class FileIteratorAbstract implements FileIterator {
 
     /**
      * Restrict the files we handle to a file glob? Note that this pattern is not
-     * applied to directories, and directories within archives. It is also not
-     * applied to the input file directly.
+     * applied to directories.
      */
-    protected final Pattern pattGlob;
+    protected final Pattern pattFileNameGlobGlobal;
 
     protected Iterator<FileReference> iterator;
 
     public FileIteratorAbstract(FileIteratorSettings settings) {
         this.settings = settings;
-        pattGlob = settings.pattGlob();
+        pattFileNameGlobGlobal = settings.pattFileNameGlobGlobal();
     }
 
     @Override
@@ -28,7 +27,10 @@ public abstract class FileIteratorAbstract implements FileIterator {
     }
 
     @Override
-    public Pattern pattGlob() {
-        return pattGlob;
+    public boolean includeFile(String fileName) {
+        //Skip files like Thumbs.db (Windows) and .DS_Store (OSX)
+        return !fileName.equals("Thumbs.db") && !fileName.equals(".DS_Store") &&
+                pattFileNameGlobGlobal.matcher(fileName).matches();
     }
+
 }

@@ -8,9 +8,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
@@ -27,13 +25,15 @@ import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.IndexSource;
 import nl.inl.blacklab.index.Indexer;
-import nl.inl.blacklab.index.InputFormat;
+import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.plugins.IndexSourceType;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.fileprocessor.FileIterator;
 
 /**
  * The indexer class and main program for the ANW corpus.
@@ -44,12 +44,14 @@ public class IndexTool {
     }
 
     public static void main(String[] args) throws ErrorOpeningIndex, ParseException, IOException {
+        BlackLab.setCheckCurrentDirForConfig(true);
         BlackLab.setConfigFromFile(); // read blacklab.yaml if exists and set config from that
 
         // Parse command line
         int maxDocsToIndex = 0;
         File indexDir = null;
-        IndexSource indexSource = null; // full file path, or other location to get input from
+        IndexSource indexSource = null; // full file path/glob, or other location to get input from
+        String fileNameGlobGlobal = "*"; // test all files we encounter against this glob (--file-glob)
         String formatIdentifier = null;
         boolean forceCreateNew = false;
         String command = "";
@@ -64,82 +66,90 @@ public class IndexTool {
             if (arg.startsWith("--")) {
                 String name = arg.substring(2);
                 switch (name) {
-                case "index-type":
-                    if (i + 1 == args.length || !List.of("integrated", "external").contains(args[i + 1].toLowerCase())) {
-                        System.err.println("--index-type only supports 'integrated' (the default); don't use this option.");
-                        usage();
-                        return;
+                    case "index-type" -> {
+                        if (i + 1 == args.length || !List.of("integrated", "external")
+                                .contains(args[i + 1].toLowerCase())) {
+                            System.err.println(
+                                    "--index-type only supports 'integrated' (the default); don't use this option.");
+                            usage();
+                            return;
+                        }
+                        if (args[i + 1].equalsIgnoreCase("external")) {
+                            System.err.println("The 'external' index type is no longer supported.");
+                            usage();
+                            return;
+                        }
+                        i++;
                     }
-                    if (args[i + 1].equalsIgnoreCase("external")) {
-                        System.err.println("The 'external' index type is no longer supported.");
-                        usage();
-                        return;
+                    case "create-empty" -> createEmptyIndex = true;
+                    case "threads" -> {
+                        if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                            try {
+                                numberOfThreadsToUse = Integer.parseInt(args[i + 1]);
+                                i++;
+                            } catch (NumberFormatException e) {
+                                System.err.println("Specify a valid integer for --threads option. Using default of 2.");
+                                numberOfThreadsToUse = 2;
+                            }
+                        } else
+                            numberOfThreadsToUse = 2;
                     }
-                    i++;
-                    break;
-                case "create-empty":
-                    createEmptyIndex = true;
-                    break;
-                case "threads":
-                    if (i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                    case "nothreads" -> numberOfThreadsToUse = 1;
+                    case "format-dir" -> {
+                        if (i + 1 == args.length) {
+                            System.err.println("--format-dir option needs argument");
+                            usage();
+                            return;
+                        }
+                        DocumentFormats.addConfigFormatsInDirectories(List.of(new File(args[i + 1])));
+                        i++;
+                    }
+                    case "linked-file-dir" -> {
+                        if (i + 1 == args.length) {
+                            System.err.println("--linked-file-dir option needs argument");
+                            usage();
+                            return;
+                        }
+                        linkedFileDirs.add(new File(args[i + 1]));
+                        i++;
+                    }
+                    case "file-glob" -> {
+                        if (i + 1 == args.length) {
+                            System.err.println("--file-glob option needs argument");
+                            usage();
+                            return;
+                        }
+                        fileNameGlobGlobal = args[i + 1];
+                        i++;
+                    }
+                    case "maxdocs" -> {
+                        if (i + 1 == args.length) {
+                            System.err.println("--maxdocs option needs argument");
+                            usage();
+                            return;
+                        }
                         try {
-                            numberOfThreadsToUse = Integer.parseInt(args[i + 1]);
+                            maxDocsToIndex = Integer.parseInt(args[i + 1]);
                             i++;
                         } catch (NumberFormatException e) {
-                            System.err.println("Specify a valid integer for --threads option. Using default of 2.");
-                            numberOfThreadsToUse = 2;
+                            System.err.println("--maxdocs option needs integer argument");
+                            usage();
+                            return;
                         }
-                    } else
-                        numberOfThreadsToUse = 2;
-                    break;
-                case "nothreads":
-                    numberOfThreadsToUse = 1;
-                    break;
-                case "format-dir":
-                    if (i + 1 == args.length) {
-                        System.err.println("--format-dir option needs argument");
+                    }
+                    case "create" -> {
+                        System.err.println("Option --create is deprecated; use create command (--help for details)");
+                        forceCreateNew = true;
+                    }
+                    case "help" -> {
                         usage();
                         return;
                     }
-                    DocumentFormats.addConfigFormatsInDirectories(List.of(new File(args[i + 1])));
-                    i++;
-                    break;
-                case "linked-file-dir":
-                    if (i + 1 == args.length) {
-                        System.err.println("--linked-file-dir option needs argument");
+                    default -> {
+                        System.err.println("Unknown option --" + name);
                         usage();
                         return;
                     }
-                    linkedFileDirs.add(new File(args[i + 1]));
-                    i++;
-                    break;
-                case "maxdocs":
-                    if (i + 1 == args.length) {
-                        System.err.println("--maxdocs option needs argument");
-                        usage();
-                        return;
-                    }
-                    try {
-                        maxDocsToIndex = Integer.parseInt(args[i + 1]);
-                        i++;
-                    } catch (NumberFormatException e) {
-                        System.err.println("--maxdocs option needs integer argument");
-                        usage();
-                        return;
-                    }
-                    break;
-                case "create":
-                    System.err.println("Option --create is deprecated; use create command (--help for details)");
-                    forceCreateNew = true;
-                    break;
-                case "help":
-                    usage();
-                    return;
-                default: {
-                    System.err.println("Unknown option --" + name);
-                    usage();
-                    return;
-                }
                 }
             } else {
                 if (command.isEmpty() && commands.contains(arg)) {
@@ -153,7 +163,7 @@ public class IndexTool {
                         // Windows JVM.
                         arg = arg.substring(1, arg.length() - 1);
                     }
-                    indexSource = IndexSource.fromUri(arg);
+                    indexSource = IndexSourceType.fromUri(arg);
                 } else if (addingFiles && formatIdentifier == null) {
                     formatIdentifier = arg;
                 } else if (command.equals("delete") && deleteQuery == null) {
@@ -204,6 +214,8 @@ public class IndexTool {
             usage();
             return;
         }
+        indexSource.setFileIteratorSettings(new FileIterator.FileIteratorSettings(true, true,
+                fileNameGlobGlobal));
 
         // Init log4j
         LogUtil.setupBasicLoggingConfig();
@@ -231,7 +243,9 @@ public class IndexTool {
         //  and /etc/blacklab/formats, but we also want it to look in the current dir, the input dir,
         //  and the parent(s) of the input and index dirs)
         File currentWorkingDir = new File(System.getProperty("user.dir"));
-        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir, inputDirParent));
+        Set<File> formatDirs = new LinkedHashSet<>(Arrays.asList(currentWorkingDir));
+        if (inputDirParent != null)
+            formatDirs.add(inputDirParent);
         inputDir.ifPresent(formatDirs::add);
         formatDirs.add(indexDirParent);
 
@@ -355,16 +369,17 @@ public class IndexTool {
                   IndexTool import-indexinfo <indexdir>  # imports indexmetadata.json into index
                 
                 Options:
-                  --maxdocs <n>                  Stop after indexing <n> documents
-                  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files
+                  --create-empty                 Create an empty index (ignore inputdir param)
+                  --file-glob <g>                Only index files matching glob <g> (default: '*')
                   --format-dir <d>               Look in directory <d> for formats (i.e. .blf.yaml files)
+                  --index-type <t>               Set the index type, integrated (new, default) or external (legacy)
+                  --linked-file-dir <d>          Look in directory <d> for linked (e.g. metadata) files
+                  --maxdocs <n>                  Stop after indexing <n> documents
                   --nothreads                    Disable multithreaded indexing (enabled by default)
                   --threads <n>                  Number of threads to use
-                  --index-type <t>               Set the index type, integrated (new, default) or external (legacy)
-                  --create-empty                 Create an empty index (ignore inputdir param)
                 
                 Available input format configurations:""");
-        for (InputFormat inputFormat: DocumentFormats.getFormats()) {
+        for (InputFormatInfo inputFormat: DocumentFormats.getFormats()) {
             String name = inputFormat.getIdentifier();
             String displayName = inputFormat.getDisplayName();
             String desc = inputFormat.getDescription();

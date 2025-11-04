@@ -3,6 +3,7 @@ package nl.inl.blacklab.querytool;
 import java.io.BufferedReader;
 import java.io.IOException;
 
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
 import org.jline.terminal.Terminal;
@@ -53,6 +54,8 @@ class CommandReader {
                 cmd = in.readLine();
             }
             return outputCommandIfNotSilenced(cmd);
+        } catch (EndOfFileException e) {
+            return "exit";
         } catch (IOException e1) {
             throw BlackLabException.wrapRuntime(e1);
         }

@@ -16,9 +16,10 @@ const redirects = Object.entries({
   '/BlackLab/changelog.html':                            '/development/changelog.html',
   '/BlackLab/development/changelog.html':                '/development/changelog.html',
   '/changelog.html':                                     '/development/changelog.html',
-  '/BlackLab/development/customization/plugins.html':    '/development/customization/plugins.html',
-  '/BlackLab/plugins.html':                              '/development/customization/plugins.html',
-  '/plugins.html':                                       '/development/customization/plugins.html',
+  '/BlackLab/development/customization/plugins.html':    '/development/customization/',
+  '/development/customization/plugins.html':             '/development/customization/',
+  '/BlackLab/plugins.html':                              '/development/customization/',
+  '/plugins.html':                                       '/development/customization/',
   '/BlackLab/development/downloads.html':                '/development/downloads.html',
   '/BlackLab/downloads.html':                            '/development/downloads.html',
   '/downloads.html':                                     '/development/downloads.html',
@@ -97,8 +98,8 @@ const redirects = Object.entries({
 });
 
 import DefaultTheme from 'vitepress/theme'
-import { inBrowser, useData, useRouter } from 'vitepress'
-import { watch } from 'vue'
+import {inBrowser, useData, useRouter} from 'vitepress'
+import {watch} from 'vue'
 
 const { page } = useData()
 const { go } = useRouter()

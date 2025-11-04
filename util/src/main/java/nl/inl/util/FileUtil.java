@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -253,6 +254,10 @@ public class FileUtil {
         }
     }
 
+    public static File findFile(List<File> dirsToSearch, String pathsToFile, List<String> extensions) {
+        return findFile(dirsToSearch, Collections.singletonList(pathsToFile), extensions);
+    }
+
     /**
      * Find a file, searching several directories and trying several extensions.
      *
@@ -263,48 +268,51 @@ public class FileUtil {
      * <code>../../etc/passwd</code> won't work.
      *
      * @param dirsToSearch directories to search for the file
-     * @param pathToFile file name or path to the file (without extension if
+     * @param pathsToFile file name or path to the file (without extension if
      *            extensions != null)
      * @param extensions extensions to try, or null if the extension is already in
      *            pathToFile
      * @return the file if found or null if not found
      */
-    public static File findFile(List<File> dirsToSearch, String pathToFile, List<String> extensions) {
+    public static File findFile(List<File> dirsToSearch, List<String> pathsToFile, List<String> extensions) {
         // Read JSON or YAML config file from any of the specified directories.
-        File configFile;
         int i = 0;
-        for (File dir : dirsToSearch) {
+        for (File dir: dirsToSearch) {
             if (dir == null)
                 throw new IllegalArgumentException("dirsToSearch[" + i + "] == null!");
             i++;
-            if (extensions == null) {
-                configFile = new File(dir, pathToFile);
-                boolean fileExists = configFile.exists();
-                boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
-                if (!fileExists)
-                    logger.trace("Configfile not found: " + configFile);
-                else if (!reallyInsideDir)
-                    logger.debug("Configfile found but not inside dir: " + configFile);
-                if (fileExists && reallyInsideDir)
-                    return configFile;
-            } else {
-                int j = 0;
-                for (String ext : extensions) {
-                    if (ext == null)
-                        throw new IllegalArgumentException("extensions[" + j + "] == null!");
-                    j++;
-                    configFile = new File(dir, pathToFile + "." + ext);
-                    boolean fileExists = configFile.exists();
-                    boolean reallyInsideDir = configFile.getAbsolutePath().startsWith(dir.getAbsolutePath());
-                    if (!fileExists)
-                        logger.trace("Configfile not found: " + configFile);
-                    else if (!reallyInsideDir)
-                        logger.debug("Configfile found but not inside dir: " + configFile);
-                    if (fileExists && reallyInsideDir)
+            for (String pathToFile : pathsToFile) {
+                if (pathToFile == null) // can happen if not all paths are always set on the caller's side
+                    continue;
+                if (extensions == null) {
+                    File configFile = checkFileInDir(new File(dir, pathToFile), dir);
+                    if (configFile != null)
                         return configFile;
+                } else {
+                    int j = 0;
+                    for (String ext : extensions) {
+                        if (ext == null)
+                            throw new IllegalArgumentException("extensions[" + j + "] == null!");
+                        j++;
+                        File configFile = checkFileInDir(new File(dir, pathToFile + "." + ext), dir);
+                        if (configFile != null)
+                            return configFile;
+                    }
                 }
             }
         }
+        return null;
+    }
+
+    private static File checkFileInDir(File file, File parentDir) {
+        boolean fileExists = file.exists();
+        boolean reallyInsideDir = file.getAbsolutePath().startsWith(parentDir.getAbsolutePath());
+        if (fileExists && reallyInsideDir)
+            return file;
+        if (!fileExists)
+            logger.trace("Configfile not found: " + file);
+        else
+            logger.debug("Configfile found but not inside dir: " + file);
         return null;
     }
 

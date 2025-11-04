@@ -1,6 +1,5 @@
 package nl.inl.blacklab.server.lib;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -166,9 +165,9 @@ public abstract class QueryParamsAbstract implements QueryParams {
      */
     protected List<String> getList(WebserviceParameter par) {
         String val = get(par).trim();
-        return StringUtils.isEmpty(val) ?
-                List.of() :
-                new ArrayList<>(Arrays.asList(val.split("\\s*,\\s*")));
+        if (StringUtils.isEmpty(val))
+            return List.of();
+        return Arrays.stream(val.split(",")).map(String::trim).toList();
     }
 
     /**

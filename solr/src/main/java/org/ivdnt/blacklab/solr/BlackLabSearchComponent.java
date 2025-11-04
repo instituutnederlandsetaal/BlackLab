@@ -8,6 +8,7 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexReader;
@@ -21,8 +22,11 @@ import org.apache.solr.util.plugin.SolrCoreAware;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
+import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.config.BLSConfigDebug;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
@@ -54,6 +58,8 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private RequestInstrumentationProvider instrumentationProvider = RequestInstrumentationProvider.noOpProvider();
 
     public BlackLabSearchComponent() {
+        // Before the plugin system is initialized, add our plugin type to it
+        PluginManager.addPluginType(AuthMethodProvider.class);
     }
 
     /**
@@ -72,7 +78,12 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         // Instantiate our search manager from the config
         config.setIsSolr(true);
         searchManager = new SearchManager(config, false);
-        instrumentationProvider = WebserviceUtil.createInstrumentationProvider(config);
+        BLSConfigDebug configDebug = config.getDebug();
+        String registryProviderName = configDebug.getMetricsProvider();
+        if (!StringUtils.isBlank(registryProviderName)) {
+            instrumentationProvider = WebserviceUtil.createInstrumentationProvider(registryProviderName,
+                    configDebug.getRequestInstrumentationProvider());
+        }
     }
 
     private BLSConfig getConfig(SolrCore core) {

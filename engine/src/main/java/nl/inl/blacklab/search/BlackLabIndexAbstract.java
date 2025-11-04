@@ -17,6 +17,7 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexFormatTooNewException;
 import org.apache.lucene.index.IndexFormatTooOldException;
+import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
@@ -42,7 +43,6 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.InvalidIndex;
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndexImpl;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
@@ -226,10 +226,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // Determine the index structure
             if (traceIndexOpening())
                 logger.debug("  Determining index structure...");
-            if (createNewIndex && config == null)
-                throw new InvalidInputFormatConfig("No configuration available");
-            else
-                indexMetadata = getIndexMetadata(createNewIndex, config);
+            indexMetadata = getIndexMetadata(createNewIndex, config);
             if (!indexMode)
                 indexMetadata.freeze();
             if (traceIndexOpening())
@@ -444,6 +441,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             logger.debug("  Opening IndexReader...");
         try {
             return DirectoryReader.open(FSDirectory.open(indexPath));
+        } catch (IndexNotFoundException e) {
+            throw new InvalidIndex("No index found in " + indexLocation, e);
         } catch (IllegalArgumentException e) {
             if (e.getMessage().contains("is in the future"))
                 throw new IndexVersionMismatch("Index appears to be created with a newer version.", e);

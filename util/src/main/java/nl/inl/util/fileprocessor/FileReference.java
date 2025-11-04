@@ -30,8 +30,8 @@ public interface FileReference {
         return new FileReferenceBytes(path, contents, assocFile);
     }
 
-    static FileReference fromBytesOverrideCharset(String path, byte[] contents, Charset charset) {
-        return new FileReferenceBytes(path, contents, charset);
+    static FileReference fromBytesOverrideCharset(String path, byte[] contents, File assocFile, Charset charset) {
+        return new FileReferenceBytes(path, contents, assocFile, charset);
     }
 
     static FileReference fromFile(File file) {
@@ -172,7 +172,7 @@ public interface FileReference {
     }
 
     /**
-     * The corresponding file or archive this content is from, or null if unknown.
+     * The corresponding file or archive this content is (originally) from, or null if unknown.
      */
     File getAssociatedFile();
 
