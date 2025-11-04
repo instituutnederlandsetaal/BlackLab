@@ -36,6 +36,7 @@ public class TestStandoffSpans {
 
     @BeforeClass
     public static void beforeClass() throws IOException {
+        BlackLab.implicitInstance(); // init plugin system
         InputFormatInfoWithConfig inputFormat = new InputFormatInfoWithConfig(TEST_FORMAT_NAME,
                 getFile("standoff/tei-standoff-spans.blf.yaml"));
         DocumentFormats.add(inputFormat);

@@ -18,7 +18,7 @@ import nl.inl.util.fileprocessor.FileReference;
 /**
  * Adds convert and tag plugin support to any input format.
  * <p>
- * Wraps a regular InputFormat to call StreamConverter/TextConverter plugin(s) first,
+ * Wraps a regular InputFormat to call FileConverter plugin(s) first,
  * then hands the result off to the wrapped InputFormat for indexing.
  */
 public class InputFormatTypeWithConverters extends InputFormatTypeBase {
