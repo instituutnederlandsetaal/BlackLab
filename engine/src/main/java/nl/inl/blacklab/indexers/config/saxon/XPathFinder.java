@@ -1,8 +1,13 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -12,7 +17,6 @@ import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.UnprefixedElementMatchingPolicy;
 import net.sf.saxon.s9api.XPathCompiler;
-import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XPathSelector;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
@@ -31,40 +35,51 @@ public class XPathFinder {
     /** URI for the implicitly declared xml namespace */
     public static final String NAMESPACE_XML_URI = "http://www.w3.org/XML/1998/namespace";
 
+    private final LoadingCache<Map<String, String>, XPathCompiler> compilerCache = CacheBuilder.newBuilder()
+        .maximumSize(50) // should be large enough for most use cases?
+        .expireAfterAccess(Duration.ofMinutes(1))
+        .build(new CacheLoader<Map<String, String>, XPathCompiler>() {
+            @Override
+            public XPathCompiler load(Map<String, String> namespaces) {
+                var fac = SaxonHelper.newXPathFactory();
+                fac.setCaching(true);
+                // xml namespace is implicit
+                fac.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
+                boolean hasNamespaces = false;
+                if (namespaces != null && !namespaces.isEmpty()) {
+                    for (Map.Entry<String, String> e: namespaces.entrySet()) {
+                        if (e.getKey().equals(NAMESPACE_XML_PREFIX)) {
+                            if (!e.getValue().equals(NAMESPACE_XML_URI))
+                                logger.warn("Tried to redefine implicit 'xml' namespace prefix to '" + e.getValue()
+                                        + "'); ignoring");
+                            continue;
+                        }
+                        hasNamespaces = true;
+                        fac.declareNamespace(e.getKey(), e.getValue());
+                    }
+                }
+                if (!hasNamespaces) {
+                    // No namespaces declared in the indexer config.
+                    // Set Saxon to ignore namespace on elements without a prefix.
+                    // This makes sure that we can index documents with or without namespaces, which
+                    // unfortunately sometimes happens in large corpora.
+                    fac.setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE);
+                }
+                return fac;
+            }
+        });
     private final XPathCompiler xPath;
 
     private final Serializer serializer;
 
+    private static final ThreadLocal<Map<String, XPathSelector>> compiledXPaths = ThreadLocal.withInitial(java.util.HashMap::new);
+
     public XPathFinder(Map<String, String> namespaces) {
-        XPathCompiler xPath = SaxonHelper.newXPathFactory();
-
-        // Set up namespace aware xpath that will compile xpath expressions
-        this.xPath = xPath;
-        this.xPath.setCaching(true); // cache xpaths
-
-        // xml namespace is implicit
-        xPath.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
-
-        boolean hasNamespaces = false;
-        if (namespaces != null && !namespaces.isEmpty()) {
-            for (Map.Entry<String, String> e: namespaces.entrySet()) {
-                if (e.getKey().equals(NAMESPACE_XML_PREFIX)) {
-                    if (!e.getValue().equals(NAMESPACE_XML_URI))
-                        logger.warn("Tried to redefine implicit 'xml' namespace prefix to '" + e.getValue() + "'); ignoring");
-                    continue;
-                }
-                hasNamespaces = true;
-                xPath.declareNamespace(e.getKey(), e.getValue());
-            }
+        try { this.xPath = compilerCache.get(namespaces != null ? namespaces : Collections.emptyMap()); }
+        catch (Exception e) {
+            throw new InvalidConfiguration("Error setting up XPath compiler", e);
         }
-        if (!hasNamespaces) {
-            // No namespaces declared in the indexer config.
-            // Set Saxon to ignore namespace on elements without a prefix.
-            // This makes sure that we can index documents with or without namespaces, which
-            // unfortunately sometimes happens in large corpora.
-            xPath.setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE);
-        }
-
+        
         // Set up serializer, for capturing XML code
         // (annotations can optionally capture XML instead of just a string value)
         serializer = SaxonHelper.getProcessor().newSerializer();
@@ -77,8 +92,14 @@ public class XPathFinder {
      * @param xpathExpr the xpath expression
      * @return the compiled expression
      */
-    private XPathExecutable acquireExpression(String xpathExpr) throws SaxonApiException {
-        return xPath.compile(xpathExpr);
+    private XPathSelector acquireExpression(String xpathExpr) throws SaxonApiException {
+        return compiledXPaths.get().computeIfAbsent(xpathExpr, expr -> {
+            try {
+                return xPath.compile(expr).load();
+            } catch (SaxonApiException e) {
+                throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
+            }
+        });
     }
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
@@ -99,8 +120,8 @@ public class XPathFinder {
      */
     public XdmValue find(String xPath, NodeInfo context) {
         try {
-            XPathSelector selector = acquireExpression(xPath).load();
-            selector.setContextItem(XdmValue.wrap(context).iterator().next());
+            XPathSelector selector = acquireExpression(xPath);
+            selector.setContextItem(new XdmNode(context));
             return selector.evaluate();
         } catch (SaxonApiException e) {
             throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
