@@ -795,17 +795,19 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
                     CorpusSize.Count fieldCount = CorpusSize.Count.create(); // [0] = token count, [1] = document count
                     // Add up token counts for all the documents
                     Annotation annot = field.mainAnnotation();
-                    AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
-                    index.forEachDocument((__, docId) -> {
-                        int docLength = afi.docLength(docId);
-                        if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
-                            // Positive docLength means that this document has a value for this annotated field
-                            // (e.g. the index metadata document does not and returns 0)
-                            fieldCount.add(1, (long)docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
-                            documentVersionCount++;
-                        }
-                    });
-                    countPerField.put(field.name(), fieldCount);
+                    if (annot != null) { // can happen if we e.g. store linked metadata XML
+                        AnnotationForwardIndex afi = index.forwardIndex(field).get(annot);
+                        index.forEachDocument((__, docId) -> {
+                            int docLength = afi.docLength(docId);
+                            if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
+                                // Positive docLength means that this document has a value for this annotated field
+                                // (e.g. the index metadata document does not and returns 0)
+                                fieldCount.add(1, (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                                documentVersionCount++;
+                            }
+                        });
+                        countPerField.put(field.name(), fieldCount);
+                    }
                 }
                 tokenCount = countPerField.values().stream().map(CorpusSize.Count::getTokens)
                         .mapToLong(Long::longValue).sum();
