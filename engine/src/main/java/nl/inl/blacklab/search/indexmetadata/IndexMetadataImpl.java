@@ -740,18 +740,20 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                 documentCount = 0;
                 for (AnnotatedField field: annotatedFields()) {
                     CorpusSize.Count fieldCount = new CorpusSize.Count(0, 0); // [0] = token count, [1] = document count
-                    countPerField.put(field.name(), fieldCount);
+                    if (field.mainAnnotation() != null) // can happen if we e.g. store linked metadata XML
+                        countPerField.put(field.name(), fieldCount);
                 }
                 index.forEachDocument(false, new DocTask() {
                     @Override
                     public void document(LeafReaderContext segment, int segmentDocId) {
                         boolean firstField = true;
                         for (AnnotatedField field: annotatedFields()) {
+                            Annotation annot = field.mainAnnotation();
+                            if (annot == null) // can happen if we e.g. store linked metadata XML
+                                continue;
                             CorpusSize.Count fieldCount = countPerField.get(field.name());
                             // Add up token counts for all the documents
-                            Annotation annot = field.mainAnnotation();
-                            String luceneField = annot
-                                    .forwardIndexSensitivity().luceneField();
+                            String luceneField = annot.forwardIndexSensitivity().luceneField();
                             AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
                             int docLength = (int) fi.docLength(segmentDocId);
                             if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
