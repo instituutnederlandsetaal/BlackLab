@@ -80,6 +80,12 @@ public final class BlackLab {
     /** Force a merge after every document? Can be useful when debugging Lucene codec issues. */
     public static final String FEATURE_DEBUG_FORCE_MERGE = "debugForceMerge";
 
+    /** 
+     * Defer merging of Lucene segments until indexing is complete. 
+     * This can speed up indexing, at the cost of a larger index on disk during indexing.
+     */
+    public static final String FEATURE_DEFER_SEGMENT_MERGES_DURING_INDEXING = "deferSegmentMergesDuringIndexing";
+
     private static Collator fieldValueSortCollator = null;
 
     /**
