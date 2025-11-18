@@ -1,7 +1,14 @@
 package nl.inl.util.fileprocessor;
 
 import java.io.File;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -54,22 +61,35 @@ public class FileIteratorDir extends FileIteratorAbstract {
     }
 
     private void listFiles(File fileOrDir, Pattern pattGlobFilesInThisDir, List<FileReference> result) {
-        if (fileOrDir.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
-            // Process files in directory, and recurse into subdirectories if needed
-            for (File childFile: FileUtil.listFilesSorted(fileOrDir)) {
-                if (pattGlobFilesInThisDir != null && !pattGlobFilesInThisDir.matcher(childFile.getName()).matches())
-                    continue; // Skip non-matching files/dirs
-                if (childFile.isFile() && !includeFile(childFile.getName()))
-                    continue; // Skip non-included files
-                if (settings.recurseSubdirs() || !childFile.isDirectory()) {
-                    // Note that we don't pass the glob pattern when recursing into subdirs;
-                    // only the global file name glob from the settings applies there (if specified).
-                    listFiles(childFile, null, result);
-                }
-            }
-        } else if (includeFile(fileOrDir.getName())) {
-            // Add the file
-            result.add(FileReference.fromFile(fileOrDir));
+        if (!fileOrDir.isDirectory()) {
+            if (includeFile(fileOrDir.getName()))
+                result.add(FileReference.fromFile(fileOrDir));
+            return;
+        }
+        try {
+            Files.walkFileTree(
+                    fileOrDir.toPath(),
+                    Collections.singleton(FileVisitOption.FOLLOW_LINKS),
+                    settings.recurseSubdirs() ? Integer.MAX_VALUE : 1,
+                    new SimpleFileVisitor<>() {
+                        @Override
+                        public java.nio.file.FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) {
+                            String fileName = filePath.getFileName().toString();
+                            if (attrs.isDirectory() && !settings.recurseSubdirs())
+                                return FileVisitResult.SKIP_SUBTREE;
+                            if (attrs.isOther())
+                                return FileVisitResult.CONTINUE; // skip special files
+
+                            // normal file-ish
+                            if (includeFile(fileName) && (pattGlobFilesInThisDir == null
+                                    || pattGlobFilesInThisDir.matcher(fileName).matches()))
+                                result.add(FileReference.fromFile(filePath.toFile()));
+                            return FileVisitResult.CONTINUE;
+                        }
+                    }
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Error listing files in directory: " + fileOrDir, e);
         }
     }
 

@@ -90,7 +90,7 @@ public class FileProcessor implements AutoCloseable {
     /** What to do with each file */
     private final FileHandler fileHandler;
 
-    /** Decides whether or not to continue when an error occurs */
+    /** Decides whether to continue when an error occurs */
     private final ErrorHandler errorHandler;
 
     /** Number of simultaneous indexing threads */
