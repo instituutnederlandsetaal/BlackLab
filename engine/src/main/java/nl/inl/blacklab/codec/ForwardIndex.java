@@ -81,7 +81,10 @@ public class ForwardIndex implements AutoCloseable {
         synchronized (this) {
             reader = new Reader();
         }
-        return new FieldForwardIndex(reader, fieldsByName.get(luceneField));
+        ForwardIndexField field = fieldsByName.get(luceneField);
+        if (field == null)
+            throw new IllegalArgumentException("Field " + luceneField + " has no forward index.");
+        return new FieldForwardIndex(reader, field);
     }
 
     public ForwardIndexField getForwardIndexField(String luceneField) {

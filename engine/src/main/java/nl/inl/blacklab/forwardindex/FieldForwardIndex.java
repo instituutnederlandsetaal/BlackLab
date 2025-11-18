@@ -24,6 +24,8 @@ public class FieldForwardIndex implements AnnotationForwardIndex {
     private final ForwardIndexField field;
 
     public FieldForwardIndex(ForwardIndexSegmentReader forwardIndex, ForwardIndexField field) {
+        assert forwardIndex != null;
+        assert field != null;
         this.forwardIndex = forwardIndex;
         this.field = field;
     }
