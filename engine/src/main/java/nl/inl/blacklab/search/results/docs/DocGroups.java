@@ -34,8 +34,11 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
      * @return document groups
      */
     public static DocGroups fromList(
-            QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
-        return new DocGroups(queryInfo, groups, groupBy, sampleParameters, windowStats);
+            QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy,
+            SampleParameters sampleParameters, WindowStats windowStats,
+            long totalNumberOfGroups, long totalResults, long largestGroupSize) {
+        return new DocGroups(queryInfo, groups, groupBy, sampleParameters, windowStats,
+                totalNumberOfGroups, totalResults, largestGroupSize);
     }
 
     /**
@@ -64,7 +67,9 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
     
     private final SampleParameters sampleParameters;
 
-    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy, SampleParameters sampleParameters, WindowStats windowStats) {
+    protected DocGroups(QueryInfo queryInfo, List<DocGroup> groups, DocProperty groupBy,
+            SampleParameters sampleParameters, WindowStats windowStats,
+            long totalNumberOfGroups, long totalResults, long largestGroupSize) {
         super(queryInfo);
 
         if (groups.size() > MAX_NUMBER_OF_GROUPS)
@@ -73,15 +78,29 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
         this.groupBy = groupBy;
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
+        boolean determineStats = totalNumberOfGroups == -1 || totalResults == -1 || largestGroupSize == -1;
+        if (determineStats) {
+            // We need to determine stats ourselves
+            // (i.e. they were not provided, and we know that we have all groups, not just a window)
+            totalNumberOfGroups = 0;
+            totalResults = 0;
+            largestGroupSize = 0;
+        }
         for (DocGroup group: groups) {
-            if (group.size() > largestGroupSize)
-                largestGroupSize = group.size();
-            totalResults += group.size();
+            if (determineStats) {
+                if (group.size() > largestGroupSize)
+                    largestGroupSize = group.size();
+                totalResults += group.size();
+            }
             resultObjects += group.numberOfStoredHits() + 1;
             results.add(group);
             this.groups.put(group.identity(), group);
         }
-        stats = new ResultsStatsSaved(results.size(), results.size(), MaxStats.NOT_EXCEEDED);
+        this.largestGroupSize = largestGroupSize;
+        this.totalResults = totalResults;
+        if (determineStats)
+            totalNumberOfGroups = results.size();
+        stats = new ResultsStatsSaved(totalNumberOfGroups, totalNumberOfGroups, MaxStats.NOT_EXCEEDED);
     }
 
     @Override
@@ -110,7 +129,10 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
             sorted,
             this.groupBy, 
             null,
-            null
+            null,
+            stats.processedTotal(),
+            totalResults,
+            largestGroupSize
        );
     }
 
@@ -120,7 +142,10 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
             this.results.stream().filter(group -> property.get(group).equals(value)).toList(),
             this.groupBy, 
             null,
-            null
+            null,
+            stats.processedTotal(),
+            totalResults,
+            largestGroupSize
        );
     }
 
@@ -143,7 +168,10 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
         List<DocGroup> resultsWindow = doWindow(this, first, number);
         boolean hasNext = resultsStats().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats);
+        return DocGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats,
+                stats.processedTotal(),
+                totalResults,
+                largestGroupSize);
     }
 
     @Override
@@ -158,7 +186,11 @@ public class DocGroups extends ResultsList<DocGroup> implements ResultGroups, It
      * @return the sample
      */
     public DocGroups sample(SampleParameters sampleParameters) {
-        return DocGroups.fromList(queryInfo(), doSample(this, sampleParameters), groupCriteria(), sampleParameters, null);
+        return DocGroups.fromList(queryInfo(), doSample(this, sampleParameters), groupCriteria(),
+                sampleParameters, null,
+                stats.processedTotal(),
+                totalResults,
+                largestGroupSize);
     }
     
     @Override

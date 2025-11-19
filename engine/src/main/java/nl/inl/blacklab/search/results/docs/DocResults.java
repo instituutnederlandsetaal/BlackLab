@@ -287,7 +287,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
         //    even better: make DocResults abstract and provide two implementations, DocResultsFromHits and DocResultsFromQuery.
         results = new ArrayList<>();
         try {
-            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo, (ResultsStatsPassive)stats));
+            queryInfo.index().searcher().search(query, new SimpleDocCollector(results, queryInfo, stats));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }
@@ -443,7 +443,8 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
             DocGroup docGroup = DocGroup.fromList(queryInfo(), e.getKey(), e.getValue(), groupSizes.get(e.getKey()), groupTokenSizes.get(e.getKey()));
             results.add(docGroup);
         }
-        return DocGroups.fromList(queryInfo(), results, groupBy, null, null);
+        return DocGroups.fromList(queryInfo(), results, groupBy, null, null,
+                -1, -1, -1);
     }
 
     /**
