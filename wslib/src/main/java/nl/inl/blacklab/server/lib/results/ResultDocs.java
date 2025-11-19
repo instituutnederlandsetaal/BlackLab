@@ -181,8 +181,9 @@ public class ResultDocs {
             number = defaultWindowSize;
         if (number > maxWindowSize)
             number = maxWindowSize;
-        window = viewingGroups ? docs : docs.window(first, number);
-        groups = viewingGroups ? groups.window(first, number) : groups;
+        window = viewingGroups ? null : docs.window(first, number);
+        if (viewingGroups)
+            groups = groups.window(first, number);
         WindowStats windowStats = viewingGroups ? groups.windowStats() : window.windowStats();
 
         long totalTime = search.timer().time();
@@ -198,7 +199,7 @@ public class ResultDocs {
         if (!isViewGroup) { // viewgroup response doesn't include subcorpus size (or should it...?)
             if (groups != null) {
                 metadataGroupProperties = groups.groupCriteria();
-                subcorpus = params.subcorpus().execute();
+                subcorpus = subcorpusResults;
                 subcorpusSize = subcorpus.subcorpusSize();
             } else if (params.getIncludeSubcorpusSize()) {
                 subcorpusSize = subcorpusResults.subcorpusSize();
