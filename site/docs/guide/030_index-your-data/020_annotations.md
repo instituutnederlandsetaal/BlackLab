@@ -299,7 +299,7 @@ the original input file, at the cost of performance. To do this, pass `useconten
 An annotation can optionally capture the raw xml content:
 ```yaml
     - name: word_xml
-      valuePath: serialize(.)
+      valuePath: serialize(./node())
 ```
 
 (the old `captureXml: true` option did the same thing, but this is deprecated and will be removed in a future version)

@@ -84,7 +84,7 @@ public class ConfigAnnotation {
     
     /** Should we capture the innerXml of the node instead of the text?
      *
-     * @deprecated use serialize(.) XPath instead
+     * @deprecated use serialize(./node()) XPath instead
      */
     @Deprecated
     private boolean captureXml = false;
