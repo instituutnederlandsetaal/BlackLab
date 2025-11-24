@@ -5,6 +5,8 @@
 ### New
 
 - BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
+- You can now request span attributes (e.g. sentence id) to be included in a CSV export. See https://blacklab.ivdnt.org/server/rest-api/
+- `IndexTool` will now default to `upsert` when adding a document with a persistent identifier that's already present.
 
 ### Changed
 
@@ -13,11 +15,21 @@
 - BLS: upgraded to Tomcat 10.
 - trying to use the old URLs like `/blacklab-server/CORPUSNAME/hits?...` will return an API mismatch error unless you set the API to v4 explicitly. Use the new URLs instead, e.g. `/blacklab-server/corpora/CORPUSNAME/hits?...`.
 - ICU4j is now used for collation instead of Java's internal collators. These are more up to date and faster.
+- The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins 
+  directory. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
+- `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or
+  a scheme associated with your custom plugin, e.g. `mydb:`.
+- You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
+- I you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't 
+  have this field.
+- By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of 
+  the XML documents have schema declarations but others don't.
 
 ### Performance
 
 - more operations are performed per-segment, which allows us to run them in parallel without additional locking.
 - A run-length encoding codec was added for forward indexes. It can reduce disk size for annotations that only occasionally have a value, or often repeat the same value. CPU cost could be a bit higher for these annotations. We only use this codec where it saves a significant amount of disk space.
+- indexing performance was improved.
 
 
 ### Refactored
@@ -25,6 +37,8 @@
 Too much to list, but most importantly:
 - `Hits` is now called `HitsResults` and represents all information needed to write a BLS response. The new `Hits` interface represents only a list of hits.
 - removed excessive use of generics in the `Results` and related class hierarchies.
+- BLS CSV export response code was refactored to eliminate duplicate code.
+- File processing was refactored to separate finding the files (file iteration) from how they are processed. 
 
 ### Removed
 
@@ -32,6 +46,7 @@ Too much to list, but most importantly:
 - support for the old index format with external forward index and content store.
 - rarely-used .blf.yaml inheritance feature (`baseFormat`). Copy and customize manually instead.
 - the VTD-XML processor. We now use Saxon for XML processing exclusively, which provides better XPath support and is generally faster. 
+- the `captureValuePaths` option (use XPath 3 instead)
 - legacy DocIndexers. All DocIndexers should be based on `DocIndexerConfig` or `DocIndexerBase`.
 - many deprecated and unused methods.
 

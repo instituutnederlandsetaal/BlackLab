@@ -10,7 +10,7 @@ public abstract class IndexSourceType extends Plugin {
 
     private static final String PROTOCOL_SEPARATOR = ":";
 
-    private static IndexSourceType forScheme(String id) {
+    public static IndexSourceType forScheme(String id) {
         if (id.isEmpty())
             id = "file"; // default
         try {

@@ -126,7 +126,7 @@ public class InputFormatReader extends YamlJsonReader {
             switch (e.getKey()) {
             case "version":
                 cfg.setVersion(integer(e));
-                logger.warn("Found version key in .blf.yaml file. This is ignored; it is better to remove it.");
+                logger.warn("Found version key in .blf.yaml file. This is ignored by BlackLab v5+; it is better to remove it.");
                 break;
             case KEY_DISPLAY_NAME:
                 cfg.setDisplayName(str(e));
@@ -145,7 +145,7 @@ public class InputFormatReader extends YamlJsonReader {
                 cfg.setType(str(e));
                 break;
             case KEY_PROCESSOR:
-                logger.warn("Encountered 'processor' key. This is ignored; it is better to remove it. Found" + inFormat());
+                logger.warn("Encountered 'processor' key. This is ignored by BlackLab v5+; it is better to remove it. Found" + inFormat());
                 break;
             case "fileType":
                 cfg.setFileType(FileType.fromStringValue(str(e)));
@@ -184,6 +184,7 @@ public class InputFormatReader extends YamlJsonReader {
                 readMetadata(e, cfg);
                 break;
             case "linkedDocuments":
+                logger.warn("'linkedDocuments' section is deprecated; use XPath 3 instead" + inFormat() + " (see https://blacklab.ivdnt.org/guide/index-your-data/metadata for instructions)");
                 readLinkedDocuments(e, cfg);
                 break;
             case "converters":

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -8,12 +9,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.sf.saxon.om.NodeInfo;
+import net.sf.saxon.s9api.QName;
 import net.sf.saxon.s9api.SaxonApiException;
 import net.sf.saxon.s9api.Serializer;
 import net.sf.saxon.s9api.UnprefixedElementMatchingPolicy;
 import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.s9api.XPathExecutable;
 import net.sf.saxon.s9api.XPathSelector;
+import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
@@ -35,12 +38,19 @@ public class XPathFinder {
 
     private final Serializer serializer;
 
-    public XPathFinder(Map<String, String> namespaces) {
-        XPathCompiler xPath = SaxonHelper.newXPathFactory();
+    /** Variables to make available from XPath */
+    private final Map<String, String> vars = new HashMap<>();
+
+    public XPathFinder(Map<String, String> namespaces, Map<String, String> vars) {
+        this.vars.putAll(vars);
 
         // Set up namespace aware xpath that will compile xpath expressions
-        this.xPath = xPath;
-        this.xPath.setCaching(true); // cache xpaths
+        xPath = SaxonHelper.newXPathFactory();
+        xPath.setCaching(true); // cache xpaths
+
+        for (String var: vars.keySet()) {
+            xPath.declareVariable(new QName(var));
+        }
 
         // xml namespace is implicit
         xPath.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
@@ -77,8 +87,19 @@ public class XPathFinder {
      * @param xpathExpr the xpath expression
      * @return the compiled expression
      */
-    private XPathExecutable acquireExpression(String xpathExpr) throws SaxonApiException {
-        return xPath.compile(xpathExpr);
+    private XPathSelector acquireExpression(String xpathExpr) throws SaxonApiException {
+        XPathExecutable compile = xPath.compile(xpathExpr);
+        XPathSelector selector = compile.load();
+        //if (xpathExpr.contains("$")) {
+        // XPath expression refers to variables; make sure they're available
+
+            // We've declared the variable, so we have to set it, whether it is used or not
+            for (Map.Entry<String, String> var: vars.entrySet()) {
+                selector.setVariable(new QName(var.getKey()), new XdmAtomicValue(var.getValue()));
+            }
+
+        //}
+        return selector;
     }
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
@@ -99,7 +120,7 @@ public class XPathFinder {
      */
     public XdmValue find(String xPath, NodeInfo context) {
         try {
-            XPathSelector selector = acquireExpression(xPath).load();
+            XPathSelector selector = acquireExpression(xPath);
             selector.setContextItem(XdmValue.wrap(context).iterator().next());
             return selector.evaluate();
         } catch (SaxonApiException e) {

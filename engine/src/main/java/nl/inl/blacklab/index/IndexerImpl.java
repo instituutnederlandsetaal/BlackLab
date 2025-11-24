@@ -16,6 +16,7 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.indexers.config.WarnOnce;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
@@ -325,6 +326,8 @@ class IndexerImpl implements DocWriter, Indexer {
     public void index(IndexSource indexSource) {
         try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), null)) {
             proc.process(indexSource.filesToIndex());
+        } catch (MaxDocsReached e) {
+            logger.warn("Maximum number of documents reached, stopping");
         }
     }
 

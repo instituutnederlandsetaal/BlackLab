@@ -20,7 +20,7 @@ public class IndexSourceTypeFile extends IndexSourceType {
         return new IndexSourceFile(path);
     }
 
-    protected class IndexSourceFile extends IndexSource {
+    protected static class IndexSourceFile extends IndexSource {
 
         private final File inputDir;
 

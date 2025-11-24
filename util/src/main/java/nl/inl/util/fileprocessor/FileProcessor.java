@@ -65,13 +65,19 @@ public class FileProcessor implements AutoCloseable {
         } else if (f.getName().endsWith(".zip")) {
             // We can do random access. Fetch the file we want.
             try {
-                ZipFile z = ZipHandleManager.openZip(f);
-                ZipEntry e = z.getEntry(pathInsideArchive);
-                if (e == null) {
-                    throw new ErrorIndexingFile("Linked document " + pathInsideArchive + " not found in archive " + f);
-                }
-                try (InputStream is = z.getInputStream(e)) {
-                    return FileReference.fromBytes(f.getCanonicalPath() + "/" + pathInsideArchive, IOUtils.toByteArray(is), f);
+                ZipFile z = ZipHandleManager.acquire(f);
+                try {
+                    ZipEntry e = z.getEntry(pathInsideArchive);
+                    if (e == null) {
+                        throw new ErrorIndexingFile(
+                                "Linked document " + pathInsideArchive + " not found in archive " + f);
+                    }
+                    try (InputStream is = z.getInputStream(e)) {
+                        return FileReference.fromBytes(f.getCanonicalPath() + "/" + pathInsideArchive,
+                                IOUtils.toByteArray(is), f);
+                    }
+                } finally {
+                    ZipHandleManager.release(z);
                 }
             } catch (IOException e) {
                 throw new ErrorIndexingFile(e);
@@ -198,6 +204,8 @@ public class FileProcessor implements AutoCloseable {
 
     /** Make sure file handling threads are running. */
     private void ensureThreadsRunning() {
+        if (!fileHandler.continueIndexing())
+            aborted = true;
         while (threadsRunning.get() < numberOfThreadsToUse) {
             if (aborted)
                 return;

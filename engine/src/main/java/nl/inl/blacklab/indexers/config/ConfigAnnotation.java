@@ -23,13 +23,13 @@ public class ConfigAnnotation {
 
     protected static final Logger logger = LogManager.getLogger(ConfigAnnotation.class);
 
-    /** Annotation name, or forEach (or name XPath, if forEach) */
+    /** Annotation name (or name XPath if forEach) */
     private String name;
 
     /** If specified, all other XPath expression are relative to this */
     private String basePath = null;
 
-    /** Where to find body text */
+    /** Where to find body text (XPath, or column number for tabular formats) */
     private String valuePath;
 
     /**
@@ -49,6 +49,7 @@ public class ConfigAnnotation {
     /** How to process annotation values (if at all) */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
+    /** "Compiled" process steps */
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
     /**

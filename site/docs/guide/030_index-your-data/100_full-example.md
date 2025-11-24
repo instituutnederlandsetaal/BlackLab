@@ -174,59 +174,6 @@ indexFieldAs:
   alsoNotAGreatName: butThisIsExcellent
 
 
-## Linked metadata (or other linked document)
-linkedDocuments:
-
-  # What does the linked document represent?
-  # (this is used internally to determine the name of the field to store content store id in)
-  metadata:
-
-    # Should we store the linked document?
-    store: true
-
-    # Values we need to locate the linked document
-    # (matching values will be substituted for $1-$9 below - the first linkValue is $1, etc.)
-    linkValues:
-    - valueField: fromInputFile       # fetch the "fromInputFile" field from the Lucene doc
-
-      # We process the raw value:
-      # - we replace backslashes with forward slashes
-      # - we keep only the last two path parts (e.g. /a/b/c/d --> c/d)
-      # - we replace .folia. with .cmdi.
-      # (processing steps like these can also be used with metadata fields and annotations!
-      #  see elsewhere for a list of available processing steps)
-      process:
-        # Normalize slashes
-      - action: replace
-        find: "\\\\"
-        replace: "/"
-        # Keep only the last two path parts (which indicate location inside metadata zip file)
-      - action: replace
-        find: "^.*/([^/]+/[^/]+)/?$"
-        replace: "$1"
-      - action: replace
-        find: "\\.folia\\."
-        replace: ".cmdi."
-
-    # How to fetch the linked input file containing the linked document
-    # (file or http(s) reference)
-    # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
-    inputFile: /molechaser/data/opensonar/metadata/SONAR500NEW.zip
-
-    # (Optional)
-    # If the linked input file is an archive, this is the path inside the archive where the file can be found
-    # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
-    pathInsideArchive: SONAR500/DATA/$1
-
-    # (Optional)
-    # XPath to the (single) linked document to process.
-    # If omitted, the entire file is processed, and must contain only one document.
-    # May contain $x (x = 1-9), which will be replaced with (processed) linkValue
-    #documentPath: /CMD/Components/SoNaRcorpus/Text[@ComponentId = $2]
-
-    # Format identifier of the linked input file
-    inputFormat: OpenSonarCmdi
-
 ## Configuration to be copied into indexmetadata.yaml when a new index is created
 ## from this format. These settings do not influence indexing but are for 
 ## BlackLab Server and search user interfaces. All settings are optional.

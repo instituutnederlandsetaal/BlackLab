@@ -30,6 +30,8 @@ public class ConfigMetadataField {
     /** How to process annotation values (if at all) */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
+    ProcessingStep processSteps = ProcessingInstruction.identity();
+
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
 
@@ -202,8 +204,6 @@ public class ConfigMetadataField {
     public boolean getSortValues() {
         return sortValues;
     }
-
-    ProcessingStep processSteps = ProcessingInstruction.identity();
 
     public ProcessingStep getProcess() {
         // We don't synchronize reads, as processSteps is only set once when config is read

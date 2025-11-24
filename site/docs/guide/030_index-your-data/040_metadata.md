@@ -113,7 +113,99 @@ metadata:
 
 ## Linking to external document metadata
 
-> **NOTE:** this is a rather complex and little-used feature. We may decide to deprecate or change this in the future. See if you can achieve your desired results using the `document()` function in XPath with the Saxon XML processor.
+::: info Old `linkedDocuments` feature
+
+Previously, external metadata could be indexed using the complex `linkedDocuments` feature. This was removed after BlackLab 4.0.
+
+The `doc()` approach here is a standard XPath technique and is significantly easier to use.
+
+:::
+
+<!-- ### Option 1: using XPath `doc()` -->
+
+If your metadata is stored in separate files, you can use the XPath `doc()` function to load the metadata file and extract the relevant information.
+
+For example, if your document looks like this:
+
+```xml
+<?xml version="1.0" ?>
+<document id="12345">
+    <text>
+        <!-- ... document contents... -->
+    </text>
+</document>
+```
+
+And the metadata file `metadata/12345.xml` looks like this:
+
+```xml
+<?xml version="1.0" ?>
+<metadata>
+    <title>How to configure indexing</title>
+    <author>Jan Niestadt</author>
+</metadata>
+```
+
+You can configure the metadata indexing like this:
+
+```yaml
+## Embedded metadata in document
+metadata:
+    # What element contains the metadata (relative to documentPath)
+    # (but here we actually point to an external file using doc())
+    containerPath: doc(concat('metadata/', ./@id, '.xml'))
+    
+    # What metadata fields do we have?
+    fields:
+    
+        # Load metadata from external file using doc()
+    - name: title
+      valuePath: ./metadata/title
+    
+    - name: author
+      valuePath: ./metadata/author
+```
+
+### Schemes
+
+By default, `doc()` looks for files on the local filesystem.
+
+However, you can prefix the path with a scheme to load files from other sources. For example, use `https://example.com/some/path.xml` to load from a web server.
+
+You can also use `archive:` to load a file from an archive, for example:
+
+```yaml
+containerPath: doc(concat('archive:metadata.zip/', ./@id, '.xml'))
+```
+
+You can even add your own schemes. For example, `my-db:12345` might load a document from a database. Each scheme such as `archive` refers to a `IndexSourceType` plugin, and [adding one](/development/customization/) isn't difficult.
+
+### Using the original input file path
+
+You can use `$inputFilePath` from XPath if you need. For example, if your input file is `content/doc0123.xml` and you 
+want to link to `metadata/meta0123.xml`, you could use this XPath:
+
+```yaml
+containerPath: doc(concat('metadata/meta', replace($inputFilePath, '^.*doc(\d+)\.xml$', '$1'), '.xml'))
+```
+
+### Store (part of) a linked document
+
+If you need to store the entire metadata XML content, this should work:
+
+```yaml
+metadata:
+  containerPath: doc(concat('metadata/', ./@id, '.xml'))
+  fields:
+    - name: metadata-xml
+      valuePath: serialize(.)
+```
+
+<!--
+
+### Option 2: using `linkedDocuments`
+
+> **NOTE:** this is a rather complex feature that is mostly unnecessary given the above alternative.We may decide to deprecate or change this in the future.
 
 Sometimes, documents link to external metadata sources, usually using an ID. You can configure linking to external files using a top-level element `linkedDocuments`. If our data looks like this:
 
@@ -122,7 +214,7 @@ Sometimes, documents link to external metadata sources, usually using an ID. You
 <root>
     <document>
         <text>
-            <!-- ... document contents... -->
+            < ! - - ... document contents... - - >
         </text>
         <externalMetadata id="54321" />
     </document>
@@ -177,6 +269,8 @@ linkedDocuments:
 As you can see, it's possible to use local files or files via http; you can use archives and specify how to find the relevant metadata inside the archive; and if the linked file contains the metadata for multiple documents, you can specify a path to the specific metadata for this document.
 
 Linking to external files is mostly done to fetch metadata to accompany a "contents" file, but there's no reason why you couldn't turn the tables if you wanted, and index a set of metadata files that link to the corresponding "contents" file. The mechanism is universal; it would even be possible to link to a document that links to another document, although that may not be very useful.
+
+-->
 
 ## Corpus metadata
 

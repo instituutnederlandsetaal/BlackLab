@@ -2,6 +2,7 @@ package nl.inl.blacklab.index;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
+import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.util.fileprocessor.FileHandler;
 import nl.inl.util.fileprocessor.FileReference;
@@ -32,6 +33,8 @@ class FileHandlerDocIndexer implements FileHandler {
         IndexerStats indexerStats;
         try {
             indexerStats = docIndexer.index(indexer, file);
+        } catch (MaxDocsReached e) {
+            throw e;
         } catch (Exception e) {
             throw new ErrorIndexingFile("Error while indexing input file: " + file.getPath(), e);
         }

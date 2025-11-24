@@ -61,6 +61,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
         void close();
 
         List<String> getMetadataField(String name);
+
+        BLInputDocument getCurrentDoc();
     }
 
     protected abstract class InputFormatBase implements InputFormat {
@@ -87,7 +89,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * If true, we're indexing into an existing Lucene document. Don't overwrite it
              * with a new one.
              */
-            private boolean indexingIntoExistingDoc = false;
+            protected boolean indexingIntoExistingDoc = false;
 
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
@@ -141,6 +143,11 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * @throws ErrorIndexingFile if there was an error indexing the file
              */
             public abstract IndexerStats index() throws ErrorIndexingFile;
+
+            @Override
+            public BLInputDocument getCurrentDoc() {
+                return currentDoc;
+            }
 
             public Map<String, List<String>> getMetadata() {
                 return metadataFieldValues;
@@ -558,6 +565,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
             public IndexerStats indexSpecificDocument(String documentExpr, Doc linkingDoc, String storeWithName) {
                 // documentExpr is ignored because plain text files always contain 1 document
                 this.linkingDoc = linkingDoc;
+                indexingIntoExistingDoc = true;
                 linkedDocumentContentStoreName = storeWithName;
                 return index();
             }
@@ -589,6 +597,8 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 if (!indexingIntoExistingDoc) {
                     currentDoc = createNewDocument();
                     addMetadataField("fromInputFile", documentName);
+                } else {
+                    currentDoc = linkingDoc.getCurrentDoc();
                 }
                 if (getDocWriter() != null && !indexingIntoExistingDoc)
                     getDocWriter().listener().documentStarted(documentName);
@@ -637,8 +647,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     storeDocument();
                 }
 
-                if (!indexingIntoExistingDoc)
-                    addMetadataToDocument();
+                addMetadataToDocument();
                 try {
                     // Add Lucene doc to indexer, if not existing already
                     if (getDocWriter() != null && !indexingIntoExistingDoc)

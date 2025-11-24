@@ -91,7 +91,13 @@ public interface FileReference {
     String getPath();
 
     /** Return a file reference where createReader() works,
-     *  so we can process the file multiple times (e.g. parse XML, get document contents to store). */
+     *  so we can process the file multiple times (e.g. parse XML, get document contents to store).
+     *
+     *  The returned FileReference may be this one, or a new one. It will either have the file in memory
+     *  as bytes or chars, or be a file on disk.
+     *
+     *  @return this or a new FileReference
+     */
     FileReference withCreateReader();
 
     /**
@@ -126,7 +132,8 @@ public interface FileReference {
 
     /**
      * Get a reader to the file contents.
-     * May be called multiple times.
+     * May be called multiple times. Not supported by all implementations; call withCreateReader() to get
+     * a version of this FileReference that does support it.
      * @return reader
      */
     default BufferedReader createReader() {
@@ -135,7 +142,8 @@ public interface FileReference {
 
     /**
      * Get a reader to the file contents.
-     * May be called multiple times.
+     * May be called multiple times. Not supported by all implementations; call withCreateReader() to get
+     * a version of this FileReference that does support it.
      * @param overrideEncoding if not null, use this encoding instead of the detected/configured one
      * @return reader
      */

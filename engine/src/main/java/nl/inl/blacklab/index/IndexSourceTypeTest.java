@@ -25,7 +25,7 @@ public class IndexSourceTypeTest extends IndexSourceType {
         return new IndexSourceTest(path);
     }
 
-    protected class IndexSourceTest extends IndexSource {
+    protected static class IndexSourceTest extends IndexSource {
 
         private final String content;
 

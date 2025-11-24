@@ -11,9 +11,12 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
 /** Iterate over the files in a .tar.gz archive. */
-class FileIteratorTarGzip extends FileIteratorAbstract {
+public class FileIteratorTarGzip extends FileIteratorAbstract {
 
     private final FileReference archiveFile;
+
+    /** Path to a single file in the zip file, or null to iterate over all files */
+    private final String pathInZip;
 
     private final InputStream fileInputStream;
 
@@ -25,9 +28,10 @@ class FileIteratorTarGzip extends FileIteratorAbstract {
 
     private boolean done = false;
 
-    public FileIteratorTarGzip(FileReference archiveFile, FileIterator.FileIteratorSettings settings) {
+    public FileIteratorTarGzip(FileReference archiveFile, String pathInZip, FileIterator.FileIteratorSettings settings) {
         super(settings);
         this.archiveFile = archiveFile;
+        this.pathInZip = pathInZip;
         fileInputStream = archiveFile.getSinglePassInputStream();
         try {
             zipInputStream = new GzipCompressorInputStream(fileInputStream);
@@ -55,7 +59,7 @@ class FileIteratorTarGzip extends FileIteratorAbstract {
                 TarArchiveEntry zipEntry = tarArchiveInputStream.getNextEntry();
                 if (zipEntry == null)
                     done = true;
-                else if (!zipEntry.isDirectory()) {
+                else if (accept(zipEntry)) {
                     lookahead = zipEntry;
                     break;
                 }
@@ -63,6 +67,10 @@ class FileIteratorTarGzip extends FileIteratorAbstract {
         } catch (IOException e) {
             throw new IllegalStateException("Error reading tar archive: " + archiveFile, e);
         }
+    }
+
+    private boolean accept(TarArchiveEntry zipEntry) {
+        return !zipEntry.isDirectory() && (pathInZip == null || zipEntry.getName().equals(pathInZip));
     }
 
     @Override

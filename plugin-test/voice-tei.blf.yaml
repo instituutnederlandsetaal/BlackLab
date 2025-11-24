@@ -14,7 +14,9 @@ type: content
 namespaces:
   # Default namespace: TEI
   '': 'http://www.tei-c.org/ns/1.0'
-  'xml': http://www.w3.org/XML/1998/namespace
+  #'xml': http://www.w3.org/XML/1998/namespace
+  #'fn': http://www.w3.org/2005/xpath-functions
+  'fun': https://ivdnt.org/my-fun-namespace
 
 # What element starts a new document?
 # (the only absolute XPath; the rest is relative)
@@ -103,12 +105,19 @@ corpusConfig:
 
 # FoLiA's native metadata
 metadata:
-  containerPath: .
+
+- containerPath: .
   fields:
+
   - name: pid
     valuePath: "@xml:id"
+
   - name: title
     valuePath: teiHeader/fileDesc/titleStmt/title
-  #- forEachPath: bibl/interpGrp/interp
-  #  namePath: ../@type                  # interpGrp/@type
-  #  valuePath: .                        # interp (text value of element, TEI P5)
+
+- containerPath: doc('test.xml')
+  fields:
+  - name: test
+    valuePath: ./fun:test/fun:value
+  - name: some
+    valuePath: ./fun:test/fun:something

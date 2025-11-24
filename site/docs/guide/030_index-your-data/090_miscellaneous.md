@@ -49,6 +49,10 @@ namespaces:
 documentPath: //TEI
 ```
 
+Note that if you do not declare namespaces in your `.blf.yaml` file, namespaces will be ignored during indexing. This can
+help to index 'messy' datasets where some documents have schema declarations and other do not.
+
+
 ## Unicode normalization
 
 Unicode normalization refers to the process of converting different ways of encoding the same character to a single, canonical form. For example, the character `é` can be encoded as a single character `é` (U+00E9), or as a combination of `e` (U+0065) and `´` (U+00B4).

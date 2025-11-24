@@ -32,7 +32,6 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingContentHandler;
 import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
@@ -241,13 +240,14 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     try (Reader reader = document.getDocumentReader()) {
                         try {
                             this.charPositions = new CharPosTrackingReader(reader);
-                            contents = SaxonHelper.parseDocument(charPositions, new CharPosTrackingContentHandler(charPositions),
-                                    config.isNamespaceAware());
+                            contents = SaxonHelper.parseDocument(charPositions, config.isNamespaceAware());
                         } finally {
                             this.charPositions.close();
                         }
                     }
-                    finder = new XPathFinder(config.isNamespaceAware() ? config.getNamespaces() : null);
+                    Map<String, String> vars = Map.of(
+                            "inputFilePath", documentName);
+                    finder = new XPathFinder(config.isNamespaceAware() ? config.getNamespaces() : null, vars);
                 } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
                     throw BlackLabException.wrapRuntime(e);
                 }
@@ -772,6 +772,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             public IndexerStats indexSpecificDocument(String documentXPath, Doc linkingDoc, String storeWithName) {
                 ensureInitialized();
                 this.linkingDoc = linkingDoc;
+                indexingIntoExistingDoc = true;
                 linkedDocumentContentStoreName = storeWithName;
                 resetStats();
 

@@ -41,6 +41,16 @@ public interface FileIterator extends Iterator<FileReference> {
         return fileReferenceToFileIterator(file, settings);
     }
 
+    static FileIterator archiveFile(FileReference archiveFile, String fileInsideArchive) {
+        String filePath = archiveFile.getPath();
+        if (filePath.endsWith(".tar.gz"))
+            return new FileIteratorTarGzip(archiveFile, fileInsideArchive, FileIteratorSettings.DUMMY);
+        else if (filePath.endsWith(".zip"))
+            return new FileIteratorZip(archiveFile, fileInsideArchive, FileIteratorSettings.DUMMY);
+        else
+            throw new IllegalArgumentException("Unsupported archive type: " + filePath);
+    }
+
     /** Settings for the file iteration process. */
     record FileIteratorSettings(boolean recurseSubdirs, boolean processArchives, String fileNameGlobGlobal) {
 
@@ -67,9 +77,9 @@ public interface FileIterator extends Iterator<FileReference> {
         if (settings.processArchives()) {
             // See if it's an archive we can process
             if (file.getPath().endsWith(".zip"))
-                return new FileIteratorRecursive(new FileIteratorZip(file, settings));
+                return new FileIteratorRecursive(new FileIteratorZip(file, null, settings));
             else if (file.getPath().endsWith(".tgz") || file.getPath().endsWith(".tar.gz"))
-                return new FileIteratorRecursive(new FileIteratorTarGzip(file, settings));
+                return new FileIteratorRecursive(new FileIteratorTarGzip(file, null, settings));
             else if (file.getPath().endsWith(".gz")) {
                 // Single GZipped file (last because we can process .tar.gz more efficiently)
                 try (InputStream is = file.getSinglePassInputStream();
