@@ -23,8 +23,12 @@ import net.sf.saxon.trans.XPathException;
  * A helper for indexing using Saxon.
  */
 public class SaxonHelper {
-
+    // make sure our content handler doesn't get overwritten by saxon
+    static SAXParserFactory parserFactory = SAXParserFactory.newInstance();
     static Processor saxonProcessor = new Processor(false);
+    static {
+        parserFactory.setXIncludeAware(true);
+    }
 
     private SaxonHelper() {}
 
@@ -40,9 +44,6 @@ public class SaxonHelper {
      */
     public static TreeInfo parseDocument(Reader reader, ContentHandler handler) throws ParserConfigurationException,
             SAXException, XPathException {
-        // make sure our content handler doesn't get overwritten by saxon
-        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-        parserFactory.setXIncludeAware(true);
         SAXParser parser = parserFactory.newSAXParser();
         XMLReader xmlReader = parser.getXMLReader();
         xmlReader.setContentHandler(handler);

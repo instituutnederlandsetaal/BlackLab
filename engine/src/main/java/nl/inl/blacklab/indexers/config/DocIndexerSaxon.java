@@ -20,6 +20,8 @@ import org.xml.sax.SAXException;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.iter.AxisIterator;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -36,7 +38,7 @@ import nl.inl.util.FileReference;
 /**
  * An indexer capable of XPath version supported by the provided saxon library.
  */
-public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
+public class DocIndexerSaxon extends DocIndexerXPath<XdmValue> {
 
     public static final String PROCESSOR_NAME = "saxon";
 
@@ -138,33 +140,33 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     @Override
-    protected void xpathForEach(String xPath, NodeInfo context, NodeHandler<NodeInfo> handler) {
+    protected void xpathForEach(String xPath, XdmValue context, NodeHandler<XdmValue> handler) {
         finder.xpathForEach(xPath, context, handler);
     }
 
     @Override
-    protected void xpathForEachStringValue(String xPath, NodeInfo context, StringValueHandler handler) {
+    protected void xpathForEachStringValue(String xPath, XdmValue context, StringValueHandler handler) {
         finder.xpathForEachStringValue(xPath, context, handler);
     }
 
     @Override
-    protected String xpathValue(String xpath, NodeInfo context) {
+    protected String xpathValue(String xpath, XdmValue context) {
         return finder.xpathValue(xpath, context);
     }
 
     @Override
-    protected String xpathXml(String xpath, NodeInfo context) {
+    protected String xpathXml(String xpath, XdmValue context) {
         return finder.xpathXml(xpath, context);
     }
 
     @Override
-    protected String currentNodeXml(NodeInfo node) {
+    protected String currentNodeXml(XdmValue node) {
         return finder.currentNodeXml(node);
     }
 
     @Override
-    protected NodeInfo contextNodeWholeDocument() {
-        return contents.getRootNode();
+    protected XdmValue contextNodeWholeDocument() {
+        return XdmItem.wrap(contents.getRootNode());
     }
 
     @Override
@@ -184,8 +186,8 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     Map<ConfigAnnotatedField, Pair<Long, Long>> docStartEndOffsetsPerField = new HashMap<>();
 
     @Override
-    protected void indexDocument(NodeInfo doc) {
-        CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(doc);
+    protected void indexDocument(XdmValue doc) {
+        CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd((NodeInfo) doc.getUnderlyingValue());
         docStartPos = nodeStartEnd.getStartPos();
         docEndPos = nodeStartEnd.getEndPos();
         super.indexDocument(doc);
@@ -198,7 +200,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
     }
 
     @Override
-    protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
+    protected void processAnnotatedFieldContainer(XdmValue container, ConfigAnnotatedField annotatedField,
             Map<String, Span> tokenPositionsMap) {
 
         // Is this a parallel corpus annotated field?
@@ -207,7 +209,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Yes; determine boundaries of this annotated field container so we can later store
             // this version of the document in the field's content store.
             // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-            CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(container);
+            CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd((NodeInfo) container.getUnderlyingValue());
             docVersionStartPos = nodeStartEnd.getStartPos() - docStartPos;
             long docVersionEndPos = nodeStartEnd.getEndPos() - docStartPos;
             docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
@@ -228,7 +230,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
         // For each word...
         Span tokenPosition = Span.token(0);
-        List<NodeInfo> words = finder.findNodes(annotatedField.getWordsPath(), container);
+        List<NodeInfo> words = finder.findNodes(annotatedField.getWordsPath(), (NodeInfo) container.getUnderlyingValue());
         words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
         for (NodeInfo word: words) {
             // Index any punctuation occurring before this word
@@ -254,7 +256,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
             // For each configured annotation...
             for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
-                processAnnotation(annotation, word, tokenPosition);
+                processAnnotation(annotation, XdmValue.wrap(word), tokenPosition);
             }
 
             charPos = nodeStartEnd.getEndPos() - docStartPos;
@@ -270,7 +272,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
 
             // Capture token id if needed (for standoff annotations)
             if (annotatedField.getTokenIdPath() != null) {
-                String tokenId = xpathValue(annotatedField.getTokenIdPath(), word);
+                String tokenId = xpathValue(annotatedField.getTokenIdPath(), XdmValue.wrap(word));
                 if (tokenId != null)
                     tokenPositionsMap.put(tokenId, tokenPosition.copy());
             }
@@ -287,26 +289,26 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
         }
     }
 
-    private List<NodeInfo> collectPunctuation(NodeInfo container, ConfigAnnotatedField annotatedField) {
+    private List<NodeInfo> collectPunctuation(XdmValue container, ConfigAnnotatedField annotatedField) {
         setAddDefaultPunctuation(true);
         if (annotatedField.getPunctPath() != null) {
             // We have punctuation occurring between word tags (as opposed to
             // punctuation that is tagged as a word itself). Collect this punctuation.
             setAddDefaultPunctuation(false);
-            List<NodeInfo> puncts = finder.findNodes(annotatedField.getPunctPath(), container);
+            List<NodeInfo> puncts = finder.findNodes(annotatedField.getPunctPath(), (NodeInfo) container.getUnderlyingValue());
             puncts.sort(NodeInfo::compareOrder);
             return puncts;
         }
         return Collections.emptyList();
     }
 
-    private List<InlineInfo> collectInlineTags(NodeInfo container, ConfigAnnotatedField annotatedField) {
+    private List<InlineInfo> collectInlineTags(XdmValue container, ConfigAnnotatedField annotatedField) {
         List<InlineInfo> inlines = new ArrayList<>(INITIAL_LIST_SIZE_INLINE_TAGS);
         for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
             String tokenIdXPath = inlineTag.getTokenIdPath();
             xpathForEach(inlineTag.getPath(), container, (tag) -> {
                 String tokenId = tokenIdXPath == null ? null : xpathValue(tokenIdXPath, tag);
-                inlines.add(new InlineInfo(tag, tokenId, inlineTag));
+                inlines.add(new InlineInfo((NodeInfo) tag.getUnderlyingValue(), tokenId, inlineTag));
             });
         }
         Collections.sort(inlines);
@@ -363,7 +365,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
                     value = atts.get(attribute.getName()).get(0);
                 } else {
                     // Extra attribute, not on tag. Evaluate XPath expression.
-                    value = xpathValue(attribute.getValuePath(), nodeInfo);
+                    value = xpathValue(attribute.getValuePath(), XdmValue.wrap(nodeInfo));
                 }
                 List<String> values = processStringMultipleValues(value, attribute.getProcess());
                 if (!values.isEmpty()) {
@@ -378,7 +380,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
             // Add tag to the list of tags to close at the correct position.
             // (calculate word position by determining the number of word tags inside this element)
             String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordsPath() + ")";
-            int numberOfWordsInsideTag = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
+            int numberOfWordsInsideTag = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, XdmValue.wrap(nodeInfo)));
             // close inline after the last word that's contained in it (position + numberOfWordsInsideTag - 1)
             inlinesToClose.computeIfAbsent(position.plus(numberOfWordsInsideTag - 1),
                             k -> new ArrayList<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS))
@@ -411,15 +413,17 @@ public class DocIndexerSaxon extends DocIndexerXPath<NodeInfo> {
      * @param handler      call handler for each value found, including that of subannotations
      */
     @Override
-    protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word,
+    protected void processAnnotation(ConfigAnnotation annotation, XdmValue word,
             Span positionSpanEndOrSource, Span spanEndOrRelTarget,
             AnnotationHandler handler) {
         if (StringUtils.isEmpty(annotation.getValuePath()))
             return; // assume this will be captured using forEach
 
         if (annotation.getBasePath() != null) {
-            for (NodeInfo baseNode: finder.findNodes(annotation.getBasePath(), word)) {
-                processAnnotationWithinBasePath(annotation, baseNode, positionSpanEndOrSource, spanEndOrRelTarget, handler);
+            // Use find() instead of findNodes() to support atomic values (e.g. strings from tokenize())
+            XdmValue results = finder.find(annotation.getBasePath(), word);
+            for (XdmItem item: results) {
+                processAnnotationWithinBasePath(annotation, XdmValue.wrap(item.getUnderlyingValue()), positionSpanEndOrSource, spanEndOrRelTarget, handler);
             }
         } else {
             processAnnotationWithinBasePath(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler);
