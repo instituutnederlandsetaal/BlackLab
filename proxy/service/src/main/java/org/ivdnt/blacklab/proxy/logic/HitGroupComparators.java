@@ -5,9 +5,11 @@ import java.util.Comparator;
 import org.ivdnt.blacklab.proxy.helper.Util;
 import org.ivdnt.blacklab.proxy.representation.HitOrDocGroup;
 
+import nl.inl.util.CollationKeyCache;
+
 public class HitGroupComparators {
 
-    private static final Comparator<HitOrDocGroup> CMP_IDENTITY = (a, b) -> Util.DEFAULT_COLLATOR.compare(a.identity, b.identity);
+    private static final Comparator<HitOrDocGroup> CMP_IDENTITY = (a, b) -> CollationKeyCache.compare(Util.DEFAULT_COLLATOR, a.identity, b.identity);
 
     private static final Comparator<HitOrDocGroup> CMP_SIZE = (a, b) -> Long.compare(b.size, a.size);
 

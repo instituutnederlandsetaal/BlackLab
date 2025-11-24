@@ -28,6 +28,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.search.BlackLabIndexIntegrated;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.CollationKeyCache;
 
 /**
  * Hook into the postings writer to construct the forward index.
@@ -152,10 +153,8 @@ class PWPluginForwardIndex implements PWPlugin {
         int[] ret = new int[terms.size()];
         for (int i = 0; i < ret.length; ++i) ret[i] = i;
 
-        // Collator.compare() is synchronized, so precomputing the collation keys speeds things up
-        CollationKey[] ck = new CollationKey[terms.size()];
-        for (int i = 0; i < ck.length; ++i)
-            ck[i] = coll.getCollationKey(terms.get(i));
+        // Use the CollationKeyCache for efficient parallel CollationKey generation
+        CollationKey[] ck = CollationKeyCache.forCollator(coll).get(terms);
 
         IntArrays.parallelQuickSort(ret, (a, b) -> ck[a].compareTo(ck[b]));
         return ret;
@@ -174,7 +173,7 @@ class PWPluginForwardIndex implements PWPlugin {
         for (int i = 0; i < array.length; i++) {
             int termId = array[i];
             int sortPosition = i;
-            if (prevTermId >= 0 && collator.equals(terms.get(prevTermId), terms.get(termId))) {
+            if (prevTermId >= 0 && CollationKeyCache.compare(collator, terms.get(prevTermId), terms.get(termId)) == 0) {
                 // Keep the same sort position because the terms are the same
                 sortPosition = prevSortPosition;
             } else {

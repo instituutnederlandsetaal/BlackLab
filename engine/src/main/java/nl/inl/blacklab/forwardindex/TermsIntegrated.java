@@ -19,6 +19,7 @@ import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.codec.BlackLabCodecUtil;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.util.BlockTimer;
+import nl.inl.util.CollationKeyCache;
 
 /** Keeps a list of unique terms and their sort positions.
  *
@@ -48,8 +49,8 @@ public class TermsIntegrated extends TermsReaderAbstract {
         public TermInIndex(String term, int globalTermId) {
             this.term = term;
             this.globalTermId = globalTermId;
-            ckSensitive = collatorSensitive.getCollationKey(term);
-            ckInsensitive = collatorInsensitive.getCollationKey(term);
+            ckSensitive = CollationKeyCache.getCollationKey(collatorSensitive, term);
+            ckInsensitive = CollationKeyCache.getCollationKey(collatorInsensitive, term);
         }
 
         @Override

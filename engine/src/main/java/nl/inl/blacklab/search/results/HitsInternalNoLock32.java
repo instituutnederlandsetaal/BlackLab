@@ -15,6 +15,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.util.CollationKeyCache;
 
 /**
  * A HitsInternal implementation that does no locking and can handle up to {@link Constants#JAVA_MAX_ARRAY_SIZE} hits.
@@ -265,9 +266,12 @@ class HitsInternalNoLock32 implements HitsInternalMutable {
         if (p.getValueType() == PropertyValueString.class) {
             // Collator.compare() is synchronized and therefore slow.
             // It is faster to calculate all the collationkeys first, then parallel sort them.
-            CollationKey[] sortValues = new CollationKey[docs.size()];
-            for (int i = 0; i < sortValues.length; ++i)
-                sortValues[i] = PropertyValue.collator.getCollationKey(p.get(i).toString());
+            // First collect all strings, then batch-generate CollationKeys using the cache
+            String[] strings = new String[docs.size()];
+            for (int i = 0; i < strings.length; ++i)
+                strings[i] = p.get(i).toString();
+            CollationKey[] sortValues = CollationKeyCache.forCollator(PropertyValue.collator)
+                    .get(strings);
             IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));
         } else {
             IntArrays.parallelQuickSort(indices, p::compare);

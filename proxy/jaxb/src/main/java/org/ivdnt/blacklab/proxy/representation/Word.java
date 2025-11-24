@@ -9,6 +9,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import org.ivdnt.blacklab.proxy.helper.MapAdapterAnnotations;
 import org.ivdnt.blacklab.proxy.helper.Util;
 
+import nl.inl.util.CollationKeyCache;
+
 @XmlJavaTypeAdapter(MapAdapterAnnotations.class)
 public class Word {
 
@@ -39,7 +41,7 @@ public class Word {
         String a = otherAnnotations.getOrDefault(annotation, "");
         String b = word.otherAnnotations.getOrDefault(annotation, "");
         Collator coll = sensitive ? Util.DEFAULT_COLLATOR : Util.DEFAULT_COLLATOR_INSENSITIVE;
-        return sensitive ? coll.compare(a, b) : a.compareToIgnoreCase(b);
+        return sensitive ? CollationKeyCache.compare(coll, a, b) : a.compareToIgnoreCase(b);
     }
 
     @Override

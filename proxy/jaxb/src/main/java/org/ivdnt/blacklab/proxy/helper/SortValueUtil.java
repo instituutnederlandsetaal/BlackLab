@@ -2,6 +2,8 @@ package org.ivdnt.blacklab.proxy.helper;
 
 import java.text.Collator;
 
+import nl.inl.util.CollationKeyCache;
+
 /**
  * Utility methods for generating a sortable string from various values.
  *
@@ -47,7 +49,7 @@ public class SortValueUtil {
     public static int compare(Collator collator, String[] aw, String[] bw) {
         int n = Math.min(aw.length, bw.length);
         for (int i = 0; i < n; i++) {
-            int cmp = collator.compare(aw[i], bw[i]);
+            int cmp = CollationKeyCache.compare(collator, aw[i], bw[i]);
             if (cmp != 0)
                 return cmp;
         }

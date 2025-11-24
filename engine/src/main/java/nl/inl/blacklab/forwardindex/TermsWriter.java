@@ -4,7 +4,6 @@ package nl.inl.blacklab.forwardindex;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.Buffer;
 import java.nio.IntBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -24,6 +23,7 @@ import net.jcip.annotations.NotThreadSafe;
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.util.CollationKeyCache;
 
 /**
  * Keeps a first-come-first-serve list of unique terms. Each term gets a unique
@@ -87,9 +87,9 @@ class TermsWriter implements Terms {
         }
 
         // We need to find id for term quickly while indexing
-        // Build the case-sensitive term index.
+        CollationKey[] keys = CollationKeyCache.forCollator(collator).get(terms);
         for (int i = 0; i < terms.length; i++) {
-            termIndex.put(collator.getCollationKey(terms[i]), i);
+            termIndex.put(keys[i], i);
         }
     }
 
@@ -97,7 +97,7 @@ class TermsWriter implements Terms {
     public int indexOf(String term) {
         synchronized (this) {
             // Yes, use the available term index.
-            CollationKey key = this.collator.getCollationKey(term);
+            CollationKey key = CollationKeyCache.getCollationKey(this.collator, term);
             Integer index = termIndex.get(key);
             if (index != null)
                 return index;
@@ -253,14 +253,14 @@ class TermsWriter implements Terms {
                     ib.put(sortPositionPerId);
 
                     // Now, sort case-insensitively and write those arrays as well
-                    Arrays.sort(insensitive, (a, b) -> collatorInsensitive.compare(terms[a], terms[b]));
+                    Arrays.sort(insensitive, (a, b) -> CollationKeyCache.compare(collatorInsensitive, terms[a], terms[b]));
                     // Copy into the sortPositionPerIdInsensitive array, making sure that
                     // identical values get identical sort positions!
                     int[] sortPositionPerIdInsensitive = new int[n];
                     int sortPos = 0;
                     for (i = 0; i < n; i++) {
                         if (i == 0
-                                || collatorInsensitive.compare(terms[insensitive[i - 1]], terms[insensitive[i]]) != 0) {
+                                || CollationKeyCache.compare(collatorInsensitive, terms[insensitive[i - 1]], terms[insensitive[i]]) != 0) {
                             // Not identical to previous value: gets its own sort position.
                             // If a value is identical to the previous one, it gets the same sort position.
                             sortPos = i;

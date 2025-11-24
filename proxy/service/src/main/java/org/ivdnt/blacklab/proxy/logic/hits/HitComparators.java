@@ -10,6 +10,7 @@ import org.ivdnt.blacklab.proxy.representation.HitMin;
 import org.ivdnt.blacklab.proxy.representation.MetadataValues;
 
 import nl.inl.blacklab.util.PropertySerializeUtil;
+import nl.inl.util.CollationKeyCache;
 
 class HitComparators {
 
@@ -112,7 +113,7 @@ class HitComparators {
             MetadataValues vb = b.docInfo.get(field);
             String sa = va == null ? "" : va.getValue().get(0);
             String sb = vb == null ? "" : vb.getValue().get(0);
-            return Util.DEFAULT_COLLATOR.compare(sa, sb);
+            return CollationKeyCache.compare(Util.DEFAULT_COLLATOR, sa, sb);
         };
     }
 

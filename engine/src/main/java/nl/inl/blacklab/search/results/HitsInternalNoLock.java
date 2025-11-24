@@ -18,6 +18,7 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.util.CollationKeyCache;
 
 /**
  * A HitsInternal implementation that does no locking and can handle huge result sets.
@@ -273,7 +274,8 @@ class HitsInternalNoLock implements HitsInternalMutable {
                 hitIndex = 0;
                 for (final CollationKey[] segment: sortValues) {
                     for (int displacement = 0; displacement < segment.length; displacement++) {
-                        segment[displacement] = PropertyValue.collator.getCollationKey(p.get(hitIndex).toString());
+                        segment[displacement] = CollationKeyCache.getCollationKey(PropertyValue.collator,
+                                p.get(hitIndex).toString());
                         hitIndex++;
                     }
                 }
