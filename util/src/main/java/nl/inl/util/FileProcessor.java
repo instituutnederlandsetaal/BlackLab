@@ -353,30 +353,28 @@ public class FileProcessor implements AutoCloseable {
             reportAndAbort(new FileNotFoundException("Input file or dir not found: " + file), file.getAbsolutePath(), file);
             return;
         }
-
         if (closed)
             return;
 
-        if (file.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
-            for (File childFile : FileUtil.listFilesSorted(file)) {
-                if (closed)
-                    return;
-
-                // Report
-                if (childFile.isDirectory()) {
-                    CompletableFuture.runAsync(makeRunnable(() -> fileHandler.directory(childFile)), executor)
-                            .exceptionally(e -> reportAndAbort(e, childFile.toString(), childFile));
-                }
-
-                if (recurseSubdirs || !childFile.isDirectory())
-                    processFileOrDirectory(childFile);
-            }
-        } else {
-            try {
+        try {
+            if (file.isDirectory()) {
+                FileUtil.processTree(file, "*", recurseSubdirs, f -> {
+                    if (closed) return;
+                    if (f.isFile()) {
+                        this.processFile(FileReference.fromFile(f));
+                    } else if (f.isDirectory() && !f.equals(file)) {
+                        try {
+                            fileHandler.directory(f);
+                        } catch (Exception e) {
+                            reportAndAbort(e, f.getAbsolutePath(), f);
+                        }
+                    }
+                });
+            } else {
                 processFile(FileReference.fromFile(file));
-            } catch (Exception e) {
-                reportAndAbort(e, file.getAbsolutePath(), file);
             }
+        } catch (Exception e) {
+            reportAndAbort(e, file.getAbsolutePath(), file);
         }
     }
 

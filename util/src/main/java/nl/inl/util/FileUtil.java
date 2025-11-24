@@ -12,9 +12,13 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileVisitOption;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.security.SecureRandom;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -193,20 +197,18 @@ public class FileUtil {
     /**
      * A task to execute on a file. Used by processTree().
      */
-    public abstract static class FileTask {
+    @FunctionalInterface
+    public interface FileTask {
         /**
          * Execute the task on this file.
          *
          * @param f the file to process
          */
-        public abstract void process(File f) throws IOException;
+        void process(File f) throws IOException;
     }
 
     /**
      * Perform an operation on all files in a tree.
-     *
-     * Sorts the files alphabetically, with directories first, so they are always
-     * processed in the same order.
      *
      * @param root the directory to start in (all subdirs are processed)
      * @param task the task to execute for every file
@@ -215,42 +217,36 @@ public class FileUtil {
         if (!root.isDirectory())
             throw new IllegalArgumentException("FileUtil.processTree: must be called with a directory! "
                     + root);
-        for (File f : listFilesSorted(root)) {
-            if (f.isFile())
-                task.process(f);
-            else if (f.isDirectory()) {
-                processTree(f, task);
-                task.process(f);
-            }
-        }
+        processTree(root, "*", true, task);
     }
 
     /**
      * Perform an operation on some files in a tree.
      *
-     * Sorts the files alphabetically, with directories first, so they are always
-     * processed in the same order.
-     *
-     * @param dir the directory to start in
-     * @param glob which files to process (e.g. "*.xml")
+     * @param dir            the directory to start in
+     * @param glob           which files to process (e.g. "*.xml")
      * @param recurseSubdirs whether or not to process subdirectories
-     * @param task the task to execute for every file
+     * @param task           the task to execute for every file
      */
     public static void processTree(File dir, String glob, boolean recurseSubdirs, FileTask task) throws IOException {
         Pattern pattGlob = Pattern.compile(FileUtil.globToRegex(glob));
-        for (File file : listFilesSorted(dir)) {
-            if (file.isDirectory()) {
-                // Process subdir?
-                if (recurseSubdirs)
-                    processTree(file, glob, recurseSubdirs, task);
-            } else if (file.isFile()) {
-                // Regular file; does it match our glob expression?
-                Matcher m = pattGlob.matcher(file.getName());
-                if (m.matches()) {
-                    task.process(file);
-                }
-            }
-        }
+        Files.walkFileTree(dir.toPath(), new java.util.HashSet<>(FileVisitOption.FOLLOW_LINKS.ordinal()),
+                recurseSubdirs ? Integer.MAX_VALUE : 1,
+                new java.nio.file.SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) throws IOException {
+                        File file = filePath.toFile();
+                        Matcher m = pattGlob.matcher(file.getName());
+                        if (m.matches()) {
+                            task.process(file);
+                        }
+                        return FileVisitResult.CONTINUE;
+                    }
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+                        task.process(dir.toFile());
+                        return FileVisitResult.CONTINUE;
+                    }
+                });
     }
 
     /**
@@ -327,26 +323,16 @@ public class FileUtil {
         return newFile;
     }
 
-    /**
-     * Returns files in a directory, sorted.
-     *
-     * Sorts alphabetically, case-insensitively, and puts subdirectories first.
-     *
-     * @param dir the directory to list files in
-     * @return the sorted array of files
-     */
-    public static File[] listFilesSorted(File dir) {
+    public static File[] listFiles(File dir) {
         File[] files = dir.listFiles();
         if (files == null)
             throw new IllegalArgumentException("Error listing in directory: " + dir);
-        Arrays.sort(files, LIST_FILES_COMPARATOR);
         return files;
     }
 
     /**
      * Convert a simple file glob expression (containing * and/or ?) to a regular
      * expression.
-     *
      * Example: "log*.txt" becomes "^log.*\\.txt$"
      *
      * @param glob the file glob expression
