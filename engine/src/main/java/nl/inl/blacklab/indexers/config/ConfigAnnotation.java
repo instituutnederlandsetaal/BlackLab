@@ -188,14 +188,14 @@ public class ConfigAnnotation {
         setForEachPath(forEachPath);
     }
 
-    public void validate(InputFormatMessages messages, boolean isSubannotation) {
+    void validate(InputFormatMessages messages, boolean isSubannotation) {
         String id = this.name == null ? (namePath == null ? "UNKNOWN" : namePath) : this.name;
         String t = "annotation " + id;
 
         if (isForEach())
-            messages.req(namePath, t, "namePath");
+            messages.mustHave(t, namePath, "namePath");
         else
-            messages.req(this.name, t, "name");
+            messages.mustHave(t, this.name, "name");
         if (!isForEach() && namePath != null)
             messages.error(t + " is not a forEach, may not have namePath");
         if (!isSubannotation) {

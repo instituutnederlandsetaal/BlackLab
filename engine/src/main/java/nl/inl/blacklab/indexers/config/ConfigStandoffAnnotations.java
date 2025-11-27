@@ -106,10 +106,10 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.tokenRefPath = tokenRefPath;
     }
 
-    public void validate(InputFormatMessages messages) {
+    void validate(InputFormatMessages messages) {
         String t = "standoff annotations";
-        messages.req(path, t, "path");
-        messages.req(tokenRefPath, t, "tokenRefPath");
+        messages.mustHave(t, path, "path");
+        messages.mustHave(t, tokenRefPath, "tokenRefPath");
         for (ConfigAnnotation a : annotations)
             a.validate(messages, false);
     }

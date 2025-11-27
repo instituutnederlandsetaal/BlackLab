@@ -22,7 +22,7 @@ public class ConfigMetadataBlock {
     /** Metadata fields (except forEach's) by name */
     private final Map<String, ConfigMetadataField> fieldsByName = new LinkedHashMap<>();
 
-    public void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
+    void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
         for (ConfigMetadataField f : fields) {
             f.validate(messages);
         }

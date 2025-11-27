@@ -54,8 +54,8 @@ public class ConfigInlineTag {
         setDisplayAs(displayAs);
     }
 
-    public void validate(InputFormatMessages messages) {
-        messages.req(path, "inline tag", "path");
+    void validate(InputFormatMessages messages) {
+        messages.mustHave("inline tag", path, "path");
         for (ConfigAttribute ea: attributes.values()) {
             ea.validate(messages);
         }

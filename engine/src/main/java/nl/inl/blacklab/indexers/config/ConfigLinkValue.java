@@ -29,7 +29,7 @@ public class ConfigLinkValue {
     public ConfigLinkValue() {
     }
 
-    public void validate(InputFormatMessages messages) {
+    void validate(InputFormatMessages messages) {
         if (valuePath == null && valueField == null)
             messages.error("Link value must have either valuePath or valueField");
         if (valuePath != null && valueField != null)

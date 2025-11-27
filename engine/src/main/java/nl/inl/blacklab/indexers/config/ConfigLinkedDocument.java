@@ -67,13 +67,12 @@ public class ConfigLinkedDocument {
         this.name = name;
     }
 
-    public void validate(InputFormatMessages messages) {
+    void validate(InputFormatMessages messages) {
         String t = "linked document";
-        messages.req(name, t, "name");
-        messages.req(!linkValues.isEmpty(), t, "have at least one linkPath");
+        messages.mustHave(t, name, "name");
         if (inputFormatIdentifier == null)
             messages.error("linked document must have inputFormat");
-        messages.req(inputFile, t, "inputFile");
+        messages.mustHave(t, inputFile, "inputFile");
         for (ConfigLinkValue lv : linkValues) {
             lv.validate(messages);
         }

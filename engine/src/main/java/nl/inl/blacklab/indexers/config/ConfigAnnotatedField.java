@@ -119,13 +119,13 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         setName(fieldName);
     }
 
-    public void validate(InputFormatMessages messages) {
+    void validate(InputFormatMessages messages) {
         String t = "annotated field";
-        messages.req(name, t, "name");
+        messages.mustHave(t, name, "name");
         if (dummyForStoringLinkedDocument)
             return; // dummy doesn't need anything other than a name
-        messages.req(containerPath, t, "containerPath");
-        messages.req(wordPath, t, "wordPath");
+        messages.mustHave(t, containerPath, "containerPath");
+        messages.mustHave(t, wordPath, "wordPath");
         for (ConfigAnnotation a: annotations)
             a.validate(messages, false);
         for (ConfigStandoffAnnotations s: standoffAnnotations)

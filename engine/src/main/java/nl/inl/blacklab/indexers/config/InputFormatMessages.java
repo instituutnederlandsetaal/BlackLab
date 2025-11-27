@@ -29,14 +29,9 @@ public class InputFormatMessages {
         return Collections.unmodifiableList(warnings);
     }
 
-    void req(String value, String type, String name) {
-        if (value == null || value.isEmpty())
-            error(type + " must have a " + name);
-    }
-
-    void req(boolean testSucceeded, String type, String mustMsg) {
-        if (!testSucceeded)
-            error(type + " must " + mustMsg);
+    void mustHave(String owner, String requiredValue, String valueName) {
+        if (requiredValue == null || requiredValue.isEmpty())
+            error(owner + " must have a " + valueName);
     }
 
     public void log(Logger logger, String formatIdentifier) {

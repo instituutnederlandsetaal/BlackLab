@@ -347,7 +347,7 @@ public class ConfigInputFormat {
         }
     }
 
-    public void finalizeAndValidate(InputFormatMessages messages) {
+    private void finalizeAndValidate(InputFormatMessages messages) {
         // Ensure that if we have any linked documents we want to store (like metadata), there exists an
         // annotated field where we can store it (even if it has no annotations).
         for (ConfigLinkedDocument ld: getLinkedDocuments().values()) {
@@ -365,8 +365,8 @@ public class ConfigInputFormat {
 
         // Validate
         String t = "input format";
-        req(name, t, "name");
-        req(documentPath, t, "documentPath");
+        messages.mustHave(t, name, "name");
+        messages.mustHave(t, documentPath, "documentPath");
         for (ConfigMetadataBlock b : metadata)
             b.validate(messages);
         for (ConfigAnnotatedField af : annotatedFields.values()) {
@@ -383,16 +383,6 @@ public class ConfigInputFormat {
             messages.warning("'linkedDocuments' section is deprecated; use XPath 3 doc() function instead (see https://blacklab.ivdnt.org/guide/index-your-data/metadata)");
         if (!indexFieldAs.isEmpty())
             messages.warning("'indexFieldAs' mapping is deprecated; use forEach with nameProcess (action 'map') instead (see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html)");
-    }
-
-    static void req(String value, String type, String name) {
-        if (value == null || value.isEmpty())
-            throw new InvalidInputFormatConfig(StringUtils.capitalize(type) + " must have a " + name);
-    }
-
-    static void req(boolean testSucceeded, String type, String mustMsg) {
-        if (!testSucceeded)
-            throw new InvalidInputFormatConfig(StringUtils.capitalize(type) + " must " + mustMsg);
     }
 
     public String getName() {

@@ -144,12 +144,12 @@ public class ConfigMetadataField {
         return cp;
     }
 
-    public void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
+    void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
         String t = "metadata field";
         if (isForEach())
-            messages.req(namePath, t, "namePath");
+            messages.mustHave(t, namePath, "namePath");
         else
-            messages.req(name, t, "name");
+            messages.mustHave(t, name, "name");
         for (ConfigProcessStep step : process) {
             step.validate(messages);
         }

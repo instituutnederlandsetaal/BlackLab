@@ -87,10 +87,10 @@ public class ConfigAttribute {
         processSteps = ProcessingInstruction.fromConfig(process);
     }
 
-    public void validate(InputFormatMessages messages) {
-        messages.req(name, "extra attribute", "name");
+    void validate(InputFormatMessages messages) {
+        messages.mustHave("extra attribute", name, "name");
         if (!exclude)
-            messages.req(valuePath, "extra attribute", "valuePath");
+            messages.mustHave("extra attribute", valuePath, "valuePath");
         for (ConfigProcessStep step: process) {
             step.validate(messages);
         }

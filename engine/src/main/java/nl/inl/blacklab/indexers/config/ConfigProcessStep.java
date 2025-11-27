@@ -76,9 +76,9 @@ public class ConfigProcessStep {
     /** Extra parameters to pass */
     private final Map<String, Object> param = new LinkedHashMap<>();
 
-    public void validate(InputFormatMessages messages) {
+    void validate(InputFormatMessages messages) {
         String t = "processing step";
-        messages.req(action, t, "method");
+        messages.mustHave(t, action, "method");
     }
 
     public ConfigProcessStep copy() {
