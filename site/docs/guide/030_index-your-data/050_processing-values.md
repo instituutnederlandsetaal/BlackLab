@@ -1,13 +1,12 @@
 # Processing values
 
-It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc. Or you might want to map a whole collection of values to different values. Both are possible.
+It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc. Or you might want to map a whole collection of values to different values. Both are possible. You can even define your own operations using plugins.
 
 ::: tip Processing steps, or everything in XPath?
 
-When using `processor: saxon`, you can often achieve the same results using XPath expressions ([examples](xpath-examples.md)).
+You can often achieve the same results using XPath expressions ([examples](xpath-examples.md)). Using XPath is often a bit faster.
 
-Just use what works best in your case. Of course, when indexing a non-XML format such as CSV, processing steps are the 
-only option.
+Just use what works best in your case. Of course, when indexing a non-XML format such as CSV, processing steps are the only option.
 
 :::
 
@@ -38,7 +37,7 @@ For example, to process a metadata field value, simply add the `process` key wit
 
 ```yaml
 metadata:
-  containerPath: metadata
+- containerPath: metadata
   fields:
   - name: author
     valuePath: author
@@ -56,7 +55,9 @@ metadata:
       replace: " "
 ```
 
-These are all the available generic processing steps:
+## Reference
+
+These are all the built-in generic processing steps:
 
 | Processing Step         | Parameters                          | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 |-------------------------|-------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -77,5 +78,24 @@ These processing steps are more specific to certain data formats:
 | `chatFormatAgeToMonths`   |                                                         | Convert age as reported in CHAT format to number of months. |
 | `concatDate`              | `yearField`<br>`monthField`<br>`dayField`<br>`autofill` | Concatenate 3 separate date fields into one, substituting unknown months and days with the first or last possible value. The output format is YYYYMMDD. Numbers are padded with leading zeroes.<br>Requires 4 arguments:**<br>`yearField`: the metadata field containing the numeric year<br>`monthField`: the metadata field containing the numeric month (so "12" instead of "december" or "dec")<br>`dayField`: the metadata field containing the numeric day<br>`autofill`: `start` to autofill missing month and day to the first possible value (01), or `end` to autofill the last possible value (12 for months, last day of the month in that year for days - takes into account leap years).<br>This step requires that at least the year is known. If the year is not known, no output is generated. |
 
-If you would like a new processing step to be added, please let us know.
+You can also add new processing steps by creating a simple [plugin](/development/customization/plugins.md).
 
+## Advanced: forEach and name processing
+
+You can use `forEachPath` and `namePath` to process multiple metadata fields or subannotations. In this case, `valuePath` and `process` work as normal. But what if you want to apply processing steps to the name of the field or subannotation itself, for example to apply a mapping from element name to desired field name? Here, `nameProcess` comes in handy:
+
+```yaml
+metadata:
+- containerPath: metadata
+  fields:
+    - forEachPath: field
+      namePath: "@code"   # code attribute gives the field type
+      nameProcess:
+        # map field type to a nicer field name
+        - action: map
+          table:
+            sp: species
+            au: author
+            yr: year
+      valuePath: "."
+```

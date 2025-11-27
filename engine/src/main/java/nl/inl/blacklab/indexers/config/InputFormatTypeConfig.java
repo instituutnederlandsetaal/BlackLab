@@ -194,8 +194,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                 }
             }
 
-            protected List<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
-                ProcessingStep processing = annotation.getCompiledProcessSteps();
+            protected List<String> processValues(ProcessingStep processing, Collection<String> values) {
                 boolean hasProcessing = processing != null;
                 boolean processingMultiple = hasProcessing && processing.canProduceMultipleValues();
 

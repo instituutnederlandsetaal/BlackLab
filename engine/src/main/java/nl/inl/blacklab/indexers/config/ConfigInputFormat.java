@@ -377,12 +377,12 @@ public class ConfigInputFormat {
         for (ConfigLinkedDocument ld : linkedDocuments.values())
             ld.validate(messages);
 
-        if (processor != null) {
-            messages.warning("encountered 'processor' key (whic is ignored by BlackLab v5+)");
-        }
-        if (!linkedDocuments.isEmpty()) {
-            messages.warning("'linkedDocuments' section is deprecated; use XPath 3 doc() function instead (see https://blacklab.ivdnt.org/guide/index-your-data/metadata for instructions)");
-        }
+        if (processor != null)
+            messages.warning("encountered 'processor' key (this is ignored by BlackLab v5+)");
+        if (!linkedDocuments.isEmpty())
+            messages.warning("'linkedDocuments' section is deprecated; use XPath 3 doc() function instead (see https://blacklab.ivdnt.org/guide/index-your-data/metadata)");
+        if (!indexFieldAs.isEmpty())
+            messages.warning("'indexFieldAs' mapping is deprecated; use forEach with nameProcess (action 'map') instead (see https://blacklab.ivdnt.org/guide/index-your-data/processing-values.html)");
     }
 
     static void req(String value, String type, String name) {

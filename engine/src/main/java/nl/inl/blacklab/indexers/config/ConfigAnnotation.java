@@ -98,6 +98,13 @@ public class ConfigAnnotation {
     @JsonIgnore
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
+    /** How to process namePath (if at all) */
+    private final List<ConfigProcessStep> nameProcess = new ArrayList<>();
+
+    /** "Compiled" process steps for namePath */
+    @JsonIgnore
+    ProcessingStep nameProcessSteps = ProcessingInstruction.identity();
+
     /**
      * What sensitivity setting to use to index this annotation (optional, default
      * depends on field name)
@@ -206,6 +213,8 @@ public class ConfigAnnotation {
         }
         for (ConfigProcessStep step : process)
             step.validate(messages);
+        for (ConfigProcessStep step : nameProcess)
+            step.validate(messages);
         if (captureXml)
             messages.warning("captureXml setting on " + id + " is deprecated, use XPath serialize(./node()) instead");
     }
@@ -213,6 +222,7 @@ public class ConfigAnnotation {
     public ConfigAnnotation copy() {
         ConfigAnnotation result = new ConfigAnnotation(name, valuePath, forEachPath);
         result.setProcess(process);
+        result.setNameProcess(nameProcess);
         result.setDisplayName(displayName);
         result.setDescription(description);
         result.setSensitivity(sensitivity);
@@ -306,6 +316,18 @@ public class ConfigAnnotation {
         return processSteps;
     }
 
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<ConfigProcessStep> getNameProcess() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
+        return nameProcess;
+    }
+
+    @JsonIgnore
+    public ProcessingStep getCompiledNameProcessSteps() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
+        return nameProcessSteps;
+    }
+
     public synchronized void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
@@ -316,6 +338,12 @@ public class ConfigAnnotation {
         // If we don't allow duplicate values (we never do, starting from v2),
         // add a unique() step to the end of the processing chain
         processSteps = ProcessingStep.combine(processSteps, new ProcessingInstructionUnique().get());
+    }
+
+    public synchronized void setNameProcess(List<ConfigProcessStep> nameProcess) {
+        this.nameProcess.clear();
+        this.nameProcess.addAll(nameProcess);
+        nameProcessSteps = ProcessingInstruction.fromConfig(this.nameProcess); // "compile"
     }
 
     public boolean isForwardIndex() {

@@ -146,7 +146,7 @@ metadataDefaultAnalyzer: default
 metadata:
 
   # Where the embedded metadata is found (relative to documentPath)
-  containerPath: metadata[@type='native']
+- containerPath: metadata[@type='native']
 
   # How each of the metadata fields can be found (relative to containerPath)
   fields:
@@ -161,17 +161,11 @@ metadata:
     # valuePath for each)
   - forEachPath: meta    # (relative to containerPath)
     namePath: "@id"      # (relative to forEachPath)
+    nameProcess:
+    - action: append
+      value: "_meta"   # append "_meta" to the name found at namePath
     valuePath: .         # (relative to forEachPath)
-    
 
-## (optional)
-## It is possible to specify a mapping to change the name of
-## metadata fields. This can be useful if you capture a lot of
-## metadata fields using forEachPath and want control over how they
-## are indexed.    
-indexFieldAs:
-  lessThanIdealName: muchBetterName
-  alsoNotAGreatName: butThisIsExcellent
 
 
 ## Configuration to be copied into indexmetadata.yaml when a new index is created

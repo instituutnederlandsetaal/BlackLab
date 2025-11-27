@@ -647,6 +647,14 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         xpathForEach(subannot.getForEachPath(), context, (match) -> {
                             // Find the name and value for this forEach match
                             String name = xpathValue(subannot.getNamePath(), match);
+                            List<String> result = processValues(subannot.getCompiledNameProcessSteps(),
+                                    List.of(name));
+                            if (result.size() != 1)
+                                throw new InvalidConfiguration("forEach XPath '"
+                                        + subannot.getNamePath() + "': nameProcess must return exactly one value; got "
+                                        + result.size() + " values.");
+                            name = result.get(0);
+
                             String subannotationName = parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
                             ConfigAnnotation declSubannot = parentAnnot.getSubannotation(subannotationName);
 
@@ -688,7 +696,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 List<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
                         parentValues :
                         findAnnotationMatches(indexAs, toIndex.getValuePath(), context);
-                List<String> processedValues = processAnnotationValues(indexAs, unprocessed);
+                List<String> processedValues = processValues(indexAs.getCompiledProcessSteps(), unprocessed);
                 handler.values(indexAs, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
             }
 
@@ -713,7 +721,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 if (valuePath != null) {
                     // Find annotation matches, process and dedupe and index them.
                     List<String> unprocessedValues = findAnnotationMatches(annotation, valuePath, word);
-                    List<String> processedValues = processAnnotationValues(annotation, unprocessedValues);
+                    List<String> processedValues = processValues(annotation.getCompiledProcessSteps(), unprocessedValues);
                     handler.values(annotation, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
                     processSubannotations(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler, unprocessedValues);
                 } else {
@@ -831,6 +839,13 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 xpathForEach(forEach.getForEachPath(), block, (match) -> {
                     // Find the fieldName and value for this forEach match
                     String fieldName = xpathValue(forEach.getNamePath(), match);
+                    List<String> result = processValues(forEach.getCompiledNameProcessSteps(),
+                            List.of(fieldName));
+                    if (result.size() != 1)
+                        throw new InvalidConfiguration("forEach XPath '"
+                                + forEach.getNamePath() + "': nameProcess must return exactly one value; got "
+                                + result.size() + " values.");
+                    fieldName = result.get(0);
                     ConfigMetadataField indexAsField = metaBlock.getOrCreateField(fieldName);
 
                     // This metadata field is matched by a for-each, but if it specifies its own xpath ignore it in the for-each section

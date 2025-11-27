@@ -70,6 +70,13 @@ public class ConfigMetadataField {
     @JsonIgnore
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
+    /** How to process namePath value (if at all) */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private final List<ConfigProcessStep> nameProcess = new ArrayList<>();
+
+    @JsonIgnore
+    ProcessingStep nameProcessSteps = ProcessingInstruction.identity();
+
     /** How to index the field (tokenized|untokenized|numeric) */
     private FieldType type = FieldType.TOKENIZED;
 
@@ -123,6 +130,7 @@ public class ConfigMetadataField {
     public ConfigMetadataField copy() {
         ConfigMetadataField cp = new ConfigMetadataField(name, valuePath, forEachPath);
         cp.setProcess(process);
+        cp.setNameProcess(nameProcess);
         cp.setDisplayName(displayName);
         cp.setDescription(description);
         cp.setType(type);
@@ -143,6 +151,9 @@ public class ConfigMetadataField {
         else
             messages.req(name, t, "name");
         for (ConfigProcessStep step : process) {
+            step.validate(messages);
+        }
+        for (ConfigProcessStep step : nameProcess) {
             step.validate(messages);
         }
     }
@@ -261,6 +272,23 @@ public class ConfigMetadataField {
         this.process.clear();
         this.process.addAll(process);
         processSteps = ProcessingInstruction.fromConfig(process);
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<ConfigProcessStep> getNameProcess() {
+        return Collections.unmodifiableList(nameProcess);
+    }
+
+    @JsonIgnore
+    public ProcessingStep getCompiledNameProcessSteps() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
+        return nameProcessSteps;
+    }
+
+    public synchronized void setNameProcess(List<ConfigProcessStep> nameProcess) {
+        this.nameProcess.clear();
+        this.nameProcess.addAll(nameProcess);
+        nameProcessSteps = ProcessingInstruction.fromConfig(nameProcess);
     }
 
     public void addDisplayOrder(List<String> fields) {

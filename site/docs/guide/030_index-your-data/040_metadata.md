@@ -25,7 +25,7 @@ To configure how metadata should be indexed, you can either name each metadata f
 metadata:
 
   # What element contains the metadata (relative to documentPath)
-  containerPath: metadata
+- containerPath: metadata
 
   # What metadata fields do we have?
   fields:
@@ -53,7 +53,7 @@ To prevent a metadata field from being tokenized:
 ```yaml
 metadata:
 
-  containerPath: metadata
+- containerPath: metadata
 
   fields:
 
@@ -77,7 +77,7 @@ Example:
 
 ```yaml
 metadata:
-    fields:
+- fields:
     - name: author
       uiType: select
       
@@ -98,7 +98,7 @@ You can add a field with a fixed value to every document indexed. This could be 
 ```yaml
 metadata:
 
-  containerPath: metadata
+- containerPath: metadata
 
   fields:
 
@@ -153,7 +153,7 @@ You can configure the metadata indexing like this:
 metadata:
     # What element contains the metadata (relative to documentPath)
     # (but here we actually point to an external file using doc())
-    containerPath: doc(concat('metadata/', ./@id, '.xml'))
+  - containerPath: doc(concat('metadata/', ./@id, '.xml'))
     
     # What metadata fields do we have?
     fields:
@@ -195,7 +195,7 @@ If you need to store the entire metadata XML content, this should work:
 
 ```yaml
 metadata:
-  containerPath: doc(concat('metadata/', ./@id, '.xml'))
+- containerPath: doc(concat('metadata/', ./@id, '.xml'))
   fields:
     - name: metadata-xml
       valuePath: serialize(.)
