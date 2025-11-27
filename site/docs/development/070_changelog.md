@@ -20,10 +20,11 @@
 - `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or
   a scheme associated with your custom plugin, e.g. `mydb:`.
 - You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
-- I you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't 
-  have this field.
+- I you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't have this field.
 - By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of 
   the XML documents have schema declarations but others don't.
+- BlackLab no longer sanitizes field/annotation names with illegal XML characters. API v5 will never use field/annotation names as XML element names, so this is now unnecessary. Note that if you still use API v4 and have characters in your field/annotation names not allowed in XML element names, the BLS XML responses will be invalid. But this should be rare.
+
 
 ### Performance
 

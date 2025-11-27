@@ -1,11 +1,15 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.util.XPathUtil;
 
 /** Configuration for linked document link values. */
 public class ConfigLinkValue {
@@ -19,18 +23,19 @@ public class ConfigLinkValue {
     /** Operations to perform on this value, if any */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
+    @JsonIgnore
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
     public ConfigLinkValue() {
     }
 
-    public void validate() {
+    public void validate(InputFormatMessages messages) {
         if (valuePath == null && valueField == null)
-            throw new InvalidInputFormatConfig("Link value must have either valuePath or valueField");
+            messages.error("Link value must have either valuePath or valueField");
         if (valuePath != null && valueField != null)
-            throw new InvalidInputFormatConfig("Link value may only define either valuePath or valueField");
+            messages.error("Link value may only define either valuePath or valueField");
         for (ConfigProcessStep step : process) {
-            step.validate();
+            step.validate(messages);
         }
     }
 
@@ -46,6 +51,10 @@ public class ConfigLinkValue {
         return valuePath;
     }
 
+    public void setValue(String value) {
+        this.valuePath = XPathUtil.fixedStringToXpath(value);
+    }
+
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
     }
@@ -58,7 +67,13 @@ public class ConfigLinkValue {
         this.valueField = valueField;
     }
 
-    public ProcessingStep getProcess() {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<ConfigProcessStep> getProcess() {
+        return Collections.unmodifiableList(process);
+    }
+
+    @JsonIgnore
+    public ProcessingStep getCompiledProcessSteps() {
         // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }

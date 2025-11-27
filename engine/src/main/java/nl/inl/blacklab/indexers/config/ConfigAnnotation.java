@@ -11,10 +11,16 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
+import nl.inl.util.XPathUtil;
 
 /**
  * Configuration for a single annotation (formerly "property") of an annotated field.
@@ -22,21 +28,6 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
 public class ConfigAnnotation {
 
     protected static final Logger logger = LogManager.getLogger(ConfigAnnotation.class);
-
-    /** Annotation name (or name XPath if forEach) */
-    private String name;
-
-    /** If specified, all other XPath expression are relative to this */
-    private String basePath = null;
-
-    /** Where to find body text (XPath, or column number for tabular formats) */
-    private String valuePath;
-
-    /**
-     * If valuePath consists only of digits, this is the integer value. Otherwise,
-     * it is Integer.MAX_VALUE
-     */
-    private int valuePathInt = Integer.MAX_VALUE;
 
     /**
      * If null: regular annotation definition. Otherwise, find all nodes matching
@@ -46,10 +37,65 @@ public class ConfigAnnotation {
      */
     private String forEachPath;
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String getForEachPath() {
+        return forEachPath;
+    }
+
+    public void setForEachPath(String forEachPath) {
+        this.forEachPath = forEachPath;
+    }
+
+    /** Annotation name (or name XPath if forEach) */
+    private String name;
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String getName() {
+        return name;
+    }
+
+    private String namePath;
+
+    public void setNamePath(String namePath) {
+        this.namePath = namePath;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String getNamePath() {
+        return namePath;
+    }
+
+    /** How to display the field in the interface (optional) */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private String displayName = "";
+
+    /** How to describe the field in the interface (optional) */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private String description = "";
+
+    /** If specified, all other XPath expression are relative to this */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String basePath = null;
+
+    /** Where to find body text (XPath, or column number for tabular formats) */
+    private String valuePath;
+
+    /**
+     * If valuePath consists only of digits, this is the integer value. Otherwise,
+     * it is Integer.MAX_VALUE
+     */
+    @JsonIgnore
+    private int valuePathInt = Integer.MAX_VALUE;
+
     /** How to process annotation values (if at all) */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
     /** "Compiled" process steps */
+    @JsonIgnore
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
     /**
@@ -63,30 +109,53 @@ public class ConfigAnnotation {
      * (i.e. there's no subsubannotations), although we could process more levels if
      * desired.
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<ConfigAnnotation> subannotations = new ArrayList<>();
+    public void setSubannotations(List<ConfigAnnotation> subannotations) {
+        this.subannotations.clear();
+        this.subannotationsByName.clear();
+        for (ConfigAnnotation a : subannotations) {
+            addSubannotation(a);
+        }
+    }
 
     /** Our subannotations (except forEach's) by name. */
-    private final Map<String, ConfigAnnotation> subAnnotationsByName = new LinkedHashMap<>();
+    @JsonIgnore
+    private final Map<String, ConfigAnnotation> subannotationsByName = new LinkedHashMap<>();
+
+    public List<ConfigAnnotation> getSubannotations() {
+        return Collections.unmodifiableList(subannotations);
+    }
+
+    public ConfigAnnotation getSubannotation(String name) {
+        return subannotationsByName.get(name);
+    }
+
+    public void addSubannotation(ConfigAnnotation subannotation) {
+
+        if (!subannotation.isForEach()) {
+            // Prefix subannotation with parent annotation name
+            String name = getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + subannotation.name;
+            subannotation.setName(name);
+        }
+
+        subannotations.add(subannotation);
+        if (!subannotation.isForEach())
+            subannotationsByName.put(subannotation.getName(), subannotation);
+    }
 
     /** Should we create a forward index for this annotation? */
     private boolean forwardIndex = true;
 
-    /** How to display the field in the interface (optional) */
-    private String displayName = "";
-
-    /** How to describe the field in the interface (optional) */
-    private String description = "";
-
     /** What UI element to show in the interface (optional) */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String uiType = "";
-    
-    /** Should we allow duplicate values at one token position? (if false, performs extra checking and discards duplicates) */
-    private boolean allowDuplicateValues = false;
     
     /** Should we capture the innerXml of the node instead of the text?
      *
      * @deprecated use serialize(./node()) XPath instead
      */
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     @Deprecated
     private boolean captureXml = false;
 
@@ -97,7 +166,8 @@ public class ConfigAnnotation {
      * We also allow users to explicitly mark their own annotations as "internal" annotations.
      * BlackLab itself does not use this flag.
      */
-    private boolean internal = false;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean isInternal = false;
 
     /** What annotations have we warned about using special default sensitivity? */
     private static final Set<String> warnSensitivity = new HashSet<>();
@@ -111,14 +181,33 @@ public class ConfigAnnotation {
         setForEachPath(forEachPath);
     }
 
-    public void validate() {
-        String t = "annotation";
-        ConfigInputFormat.req(name, t, isForEach() ? "namePath" : "name");
-        //ConfigInputFormat.req(valuePath, t, "valuePath");
-        for (ConfigAnnotation s : subannotations)
-            s.validate();
+    public void validate(InputFormatMessages messages, boolean isSubannotation) {
+        String id = this.name == null ? (namePath == null ? "UNKNOWN" : namePath) : this.name;
+        String t = "annotation " + id;
+
+        if (isForEach())
+            messages.req(namePath, t, "namePath");
+        else
+            messages.req(this.name, t, "name");
+        if (!isForEach() && namePath != null)
+            messages.error(t + " is not a forEach, may not have namePath");
+        if (!isSubannotation) {
+            if (isForEach())
+                messages.error("top-level " + t + " may not have forEachPath");
+        } else {
+            if (basePath != null)
+                messages.error("sub" + t + " may not have basePath");
+            if (!subannotationsByName.isEmpty())
+                messages.error("sub " + t + " may not have subannotations");
+        }
+
+        for (ConfigAnnotation s : subannotations) {
+            s.validate(messages, true);
+        }
         for (ConfigProcessStep step : process)
-            step.validate();
+            step.validate(messages);
+        if (captureXml)
+            messages.warning("captureXml setting on " + id + " is deprecated, use XPath serialize(./node()) instead");
     }
 
     public ConfigAnnotation copy() {
@@ -130,24 +219,19 @@ public class ConfigAnnotation {
         result.setUiType(uiType);
         result.setBasePath(basePath);
         for (ConfigAnnotation a : subannotations) {
-            result.addSubAnnotation(a.copy());
+            result.addSubannotation(a.copy());
         }
         result.setForwardIndex(forwardIndex);
-        result.setAllowDuplicateValues(allowDuplicateValues);
         result.setCaptureXml(captureXml);
         return result;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String getValuePath() {
         return valuePath;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setValue(String value) {
+        this.valuePath = XPathUtil.fixedStringToXpath(value);
     }
 
     public void setValuePath(String valuePath) {
@@ -156,6 +240,7 @@ public class ConfigAnnotation {
             valuePathInt = Integer.parseInt(valuePath);
     }
 
+    @JsonIgnore
     public boolean isValuePathInteger() {
         return valuePathInt != Integer.MAX_VALUE;
     }
@@ -164,28 +249,7 @@ public class ConfigAnnotation {
         return valuePathInt;
     }
 
-    public List<ConfigAnnotation> getSubAnnotations() {
-        return Collections.unmodifiableList(subannotations);
-    }
-
-    public ConfigAnnotation getSubAnnotation(String name) {
-        return subAnnotationsByName.get(name);
-    }
-
-    public void addSubAnnotation(ConfigAnnotation subAnnotation) {
-        subannotations.add(subAnnotation);
-        if (!subAnnotation.isForEach())
-            subAnnotationsByName.put(subAnnotation.getName(), subAnnotation);
-    }
-
-    public String getForEachPath() {
-        return forEachPath;
-    }
-
-    public void setForEachPath(String forEachPath) {
-        this.forEachPath = forEachPath;
-    }
-
+    @JsonIgnore
     public boolean isForEach() {
         return forEachPath != null;
     }
@@ -230,7 +294,14 @@ public class ConfigAnnotation {
         this.sensitivity = sensitivity;
     }
 
-    public ProcessingStep getProcess() {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<ConfigProcessStep> getProcess() {
+        // We don't synchronize reads, as processSteps is only set once when config is read
+        return process;
+    }
+
+    @JsonIgnore
+    public ProcessingStep getCompiledProcessSteps() {
         // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }
@@ -241,23 +312,18 @@ public class ConfigAnnotation {
 
         // "Compile" the process steps
         processSteps = ProcessingInstruction.fromConfig(this.process);
-        if (!allowDuplicateValues) {
-            // If we don't allow duplicate values (we never do, starting from v2),
-            // add a unique() step to the end of the processing chain
-            processSteps = ProcessingStep.combine(processSteps, new ProcessingInstructionUnique().get());
-        }
+
+        // If we don't allow duplicate values (we never do, starting from v2),
+        // add a unique() step to the end of the processing chain
+        processSteps = ProcessingStep.combine(processSteps, new ProcessingInstructionUnique().get());
     }
 
-    public boolean createForwardIndex() {
+    public boolean isForwardIndex() {
         return forwardIndex;
     }
 
     public void setForwardIndex(boolean forwardIndex) {
         this.forwardIndex = forwardIndex;
-    }
-
-    public void setAllowDuplicateValues(boolean allowDuplicateValues) {
-        this.allowDuplicateValues = allowDuplicateValues;
     }
 
     @Deprecated
@@ -271,11 +337,11 @@ public class ConfigAnnotation {
     }
     
     public void setInternal(boolean internal) {
-        this.internal = internal;
+        this.isInternal = internal;
     }
 
-    public boolean isInternal() {
-        return this.internal;
+    public boolean getIsInternal() {
+        return this.isInternal;
     }
 
     @Override
@@ -283,12 +349,20 @@ public class ConfigAnnotation {
         return "ConfigAnnotation [name=" + name + "]";
     }
 
+    @JsonIgnore
     public AnnotationSensitivities getSensitivitySetting() {
         AnnotationSensitivities sensitivity = getSensitivity();
         if (sensitivity == AnnotationSensitivities.DEFAULT) {
-            String name = getName();
             sensitivity = AnnotationSensitivities.defaultForAnnotation(name);
         }
         return sensitivity;
+    }
+
+    public void setMultipleValues(boolean b) {
+        throw new InvalidInputFormatConfig("The 'multipleValues' setting is no longer supported. All annotations support multiple values.");
+    }
+
+    public void setAllowDuplicateValues(boolean b) {
+        throw new InvalidInputFormatConfig("The 'allowDuplicateValues' setting is no longer supported. Duplicate values are automatically removed.");
     }
 }

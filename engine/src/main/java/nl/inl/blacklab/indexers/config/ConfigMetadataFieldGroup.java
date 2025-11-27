@@ -3,6 +3,8 @@ package nl.inl.blacklab.indexers.config;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Configuration for a group of metadata fields.
  *
@@ -17,6 +19,7 @@ public class ConfigMetadataFieldGroup {
     private final List<String> fields = new ArrayList<>();
 
     /** Add any fields not yet in any group to this one? */
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     private boolean addRemainingFields = false;
 
     public ConfigMetadataFieldGroup() {

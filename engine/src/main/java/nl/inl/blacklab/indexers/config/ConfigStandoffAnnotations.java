@@ -1,10 +1,15 @@
 package nl.inl.blacklab.indexers.config;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.util.XPathUtil;
 
 /**
  * Configuration for a block of standoff annotations (annotations that don't
@@ -49,7 +54,29 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     private String valuePath;
 
     /** The annotations to index at the referenced token positions. */
-    private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
+    private final List<ConfigAnnotation> annotations = new ArrayList<>();
+
+    public List<ConfigAnnotation> getAnnotations() {
+        return Collections.unmodifiableList(annotations);
+    }
+
+    public void setAnnotations(List<ConfigAnnotation> annotations) {
+        this.annotations.clear();
+        for (ConfigAnnotation a : annotations) {
+            addAnnotation(a);
+        }
+    }
+
+    @Override
+    @JsonIgnore
+    public List<ConfigAnnotation> getAnnotationsFlattened() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void addAnnotation(ConfigAnnotation annotation) {
+        this.annotations.add(annotation);
+    }
 
     /** For relations: the relation class to index this as. If not specified, "rel" is used
      */
@@ -79,17 +106,17 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.tokenRefPath = tokenRefPath;
     }
 
-    public void validate() {
+    public void validate(InputFormatMessages messages) {
         String t = "standoff annotations";
-        ConfigInputFormat.req(path, t, "path");
-        ConfigInputFormat.req(tokenRefPath, t, "tokenRefPath");
-        for (ConfigAnnotation a : annotations.values())
-            a.validate();
+        messages.req(path, t, "path");
+        messages.req(tokenRefPath, t, "tokenRefPath");
+        for (ConfigAnnotation a : annotations)
+            a.validate(messages, false);
     }
 
     public ConfigStandoffAnnotations copy() {
         ConfigStandoffAnnotations result = new ConfigStandoffAnnotations(path, tokenRefPath);
-        for (ConfigAnnotation a : annotations.values()) {
+        for (ConfigAnnotation a : annotations) {
             result.addAnnotation(a.copy());
         }
         return result;
@@ -111,12 +138,30 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         this.tokenRefPath = path;
     }
 
+    // synonym for span type
+    public void setSpanStartPath(String path) {
+        setTokenRefPath(path);
+    }
+
+    // synonym for relation type
+    public void setSourcePath(String path) {
+        setTokenRefPath(path);
+    }
+
     public String getSpanEndPath() {
         return spanEndPath;
     }
 
     public void setSpanEndPath(String spanEndPath) {
         this.spanEndPath = spanEndPath;
+        // Used to be implicit for annotation/span, so maintain backward compatibility.
+        // Type must be explicitly set for relations though.
+        setType(AnnotationType.SPAN);
+    }
+
+    // synonym for relation type
+    public void setTargetPath(String targetPath) {
+        setSpanEndPath(targetPath);
     }
 
     public boolean isSpanEndIsInclusive() {
@@ -131,23 +176,12 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         return valuePath;
     }
 
+    public void setValue(String value) {
+        this.valuePath = XPathUtil.fixedStringToXpath(value);
+    }
+
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
-    }
-
-    @Override
-    public Map<String, ConfigAnnotation> getAnnotations() {
-        return annotations;
-    }
-    
-    @Override
-    public Map<String, ConfigAnnotation> getAnnotationsFlattened() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void addAnnotation(ConfigAnnotation annotation) {
-        this.annotations.put(annotation.getName(), annotation);
     }
 
     @Override
@@ -232,5 +266,13 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
 
     public void setTargetVersionPath(String targetVersionPath) {
         this.targetVersionPath = targetVersionPath;
+    }
+
+    public void setRefTokenPositionIdPath(String v) {
+        throw new InvalidInputFormatConfig("Encountered removed key 'refTokenPositionIdPath' (rename to 'tokenRefPath')");
+    }
+
+    public void setSpanNamePath(String v) {
+        throw new InvalidInputFormatConfig("Encountered removed key 'spanNamePath' (rename to 'valuePath')");
     }
 }

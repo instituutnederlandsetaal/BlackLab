@@ -1,5 +1,8 @@
 package nl.inl.blacklab.indexers.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 /**
  * Text direction: left-to-right or right-to-left (and possible future values?)
  */
@@ -18,6 +21,7 @@ public enum TextDirection {
      * 
      * @return string code
      */
+    @JsonValue
     public String getCode() {
         return this.codes[0];
     }
@@ -43,6 +47,7 @@ public enum TextDirection {
      * @param code textDirection code to recognize
      * @return corresponding TextDirection
      */
+    @JsonCreator
     public static TextDirection fromCode(String code) {
         for (TextDirection d : TextDirection.values()) {
             if (d.matchesCode(code))

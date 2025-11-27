@@ -6,9 +6,9 @@ import java.util.List;
 
 import org.apache.commons.text.StringEscapeUtils;
 
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
+import nl.inl.util.XmlUtil;
 
 /**
  * Class to stream out XML data.
@@ -74,7 +74,8 @@ public class DataStreamXml extends DataStreamAbstract {
     private DataStreamXml openEl(String name) {
         // prevent invalid XML for dynamic elements in old API
         // (e.g. term frequencies, with each term being an element name and the frequency being the value)
-        name = AnnotatedFieldNameUtil.sanitizeXmlElementName(name);
+        if (api.getMajor() < 5)
+            name = XmlUtil.sanitizeXmlElementName(name);
 
         startOpenEl(name);
         endOpenEl();

@@ -165,26 +165,35 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     }
 
     @Override
-    public void addFromConfig(ConfigAnnotatedField f) {
-        AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(index, f.getName());
-        annotatedField.putCustom("displayName", f.getDisplayName());
-        annotatedField.putCustom("description", f.getDescription());
+    public void addFromConfig(ConfigAnnotatedField configField) {
+        AnnotatedFieldImpl annotatedField = new AnnotatedFieldImpl(index, configField.getName());
+        annotatedField.putCustom("displayName", configField.getDisplayName());
+        annotatedField.putCustom("description", configField.getDescription());
         List<String> displayOrder = new ArrayList<>();
 
-        if (!f.getAnnotations().isEmpty())
-            annotatedField.setMainAnnotationName(f.getAnnotations().values().iterator().next().getName());
+        // Set main annotation name (determined by first non-forEach annotation)
+        configField.getAnnotations().stream()
+                .filter(a -> !a.isForEach())
+                .findFirst()
+                .ifPresent(a -> annotatedField.setMainAnnotationName(a.getName()));
+
         boolean isFirstAnnotation = true;
         boolean hasOffsets;
-        for (ConfigAnnotation configAnnot: f.getAnnotations().values()) {
+        for (ConfigAnnotation configAnnot: configField.getAnnotations()) {
+            if (configAnnot.isForEach())
+                continue;
             hasOffsets = isFirstAnnotation; // first annotation gets offsets
             addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
             isFirstAnnotation = false;
-            for (ConfigAnnotation subAnnot: configAnnot.getSubAnnotations()) {
-                addAnnotationInfo(annotatedField, subAnnot, false, displayOrder);
+            for (ConfigAnnotation subAnnot: configAnnot.getSubannotations()) {
+                if (!subAnnot.isForEach())
+                    addAnnotationInfo(annotatedField, subAnnot, false, displayOrder);
             }
         }
-        for (ConfigStandoffAnnotations standoff: f.getStandoffAnnotations()) {
-            for (ConfigAnnotation configAnnot: standoff.getAnnotations().values()) {
+        for (ConfigStandoffAnnotations standoff: configField.getStandoffAnnotations()) {
+            for (ConfigAnnotation configAnnot: standoff.getAnnotations()) {
+                if (configAnnot.isForEach())
+                    continue;
                 hasOffsets = isFirstAnnotation; // first annotation gets offsets
                 addAnnotationInfo(annotatedField, configAnnot, hasOffsets, displayOrder);
                 isFirstAnnotation = false;

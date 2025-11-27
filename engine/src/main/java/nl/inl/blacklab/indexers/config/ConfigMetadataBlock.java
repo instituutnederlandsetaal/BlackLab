@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+
 /** Configuration for a block of metadata fields. */
 public class ConfigMetadataBlock {
 
@@ -20,9 +22,9 @@ public class ConfigMetadataBlock {
     /** Metadata fields (except forEach's) by name */
     private final Map<String, ConfigMetadataField> fieldsByName = new LinkedHashMap<>();
 
-    public void validate() {
+    public void validate(InputFormatMessages messages) throws InvalidInputFormatConfig {
         for (ConfigMetadataField f : fields) {
-            f.validate();
+            f.validate(messages);
         }
     }
 

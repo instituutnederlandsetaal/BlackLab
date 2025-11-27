@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
 
 /** Configuration for a linked document. */
 public class ConfigLinkedDocument {
@@ -14,10 +15,12 @@ public class ConfigLinkedDocument {
         WARN,
         FAIL;
 
+        @JsonCreator
         public static MissingLinkPathAction fromStringValue(String v) {
             return valueOf(v.toUpperCase());
         }
 
+        @JsonValue
         public String stringValue() {
             return toString().toLowerCase();
         }
@@ -64,13 +67,16 @@ public class ConfigLinkedDocument {
         this.name = name;
     }
 
-    public void validate() {
+    public void validate(InputFormatMessages messages) {
         String t = "linked document";
-        ConfigInputFormat.req(name, t, "name");
-        ConfigInputFormat.req(!linkValues.isEmpty(), t, "have at least one linkPath");
+        messages.req(name, t, "name");
+        messages.req(!linkValues.isEmpty(), t, "have at least one linkPath");
         if (inputFormatIdentifier == null)
-            throw new InvalidInputFormatConfig("linked document must have inputFormat");
-        ConfigInputFormat.req(inputFile, t, "inputFile");
+            messages.error("linked document must have inputFormat");
+        messages.req(inputFile, t, "inputFile");
+        for (ConfigLinkValue lv : linkValues) {
+            lv.validate(messages);
+        }
     }
 
     public String getName() {

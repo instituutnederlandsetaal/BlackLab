@@ -132,10 +132,14 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                     // Define the properties that make up our annotated field
                     if (af.isDummyForStoringLinkedDocuments())
                         continue;
-                    List<ConfigAnnotation> annotations = new ArrayList<>(af.getAnnotationsFlattened().values());
+                    List<ConfigAnnotation> annotations = af.getAnnotationsFlattened();
                     if (annotations.isEmpty())
                         throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
-                    ConfigAnnotation mainAnnotation = annotations.get(0);
+                    ConfigAnnotation mainAnnotation = annotations.stream()
+                            .filter(a -> !a.isForEach())
+                            .findFirst()
+                            .orElseThrow(() -> new InvalidInputFormatConfig(
+                                    "No main annotation defined for field " + af.getName()));
                     boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
                     AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(getDocWriter(), af.getName(),
                             mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
@@ -153,12 +157,13 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                         ConfigAnnotation annot = annotations.get(i);
                         if (!annot.isForEach())
                             fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
-                                    annot.createForwardIndex());
+                                    annot.isForwardIndex());
                     }
                     for (ConfigStandoffAnnotations standoff: af.getStandoffAnnotations()) {
-                        for (ConfigAnnotation annot: standoff.getAnnotations().values()) {
-                            fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
-                                    annot.createForwardIndex());
+                        for (ConfigAnnotation annot: standoff.getAnnotations()) {
+                            if (!annot.isForEach())
+                                fieldWriter.addAnnotation(annot.getName(), annot.getSensitivitySetting(), false,
+                                    annot.isForwardIndex());
                         }
                     }
                     if (!fieldWriter.hasAnnotation(AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME)) {
@@ -190,7 +195,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
             }
 
             protected List<String> processAnnotationValues(ConfigAnnotation annotation, Collection<String> values) {
-                ProcessingStep processing = annotation.getProcess();
+                ProcessingStep processing = annotation.getCompiledProcessSteps();
                 boolean hasProcessing = processing != null;
                 boolean processingMultiple = hasProcessing && processing.canProduceMultipleValues();
 
@@ -269,7 +274,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                     List<String> resultAfterProcessing = new ArrayList<>();
                     for (String inputValue: results) {
                         inputValue = StringUtil.sanitizeAndNormalizeUnicode(inputValue);
-                        resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getProcess()));
+                        resultAfterProcessing.addAll(processStringMultipleValues(inputValue, linkValue.getCompiledProcessSteps()));
                     }
                     results = resultAfterProcessing;
                 }
@@ -324,7 +329,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
             protected String processMetadataValue(String name, String value) {
                 ConfigMetadataField f = config.getMetadataField(name);
                 if (f != null)
-                    value = f.getProcess().performSingle(value, metadataFieldValues);
+                    value = f.getCompiledProcessSteps().performSingle(value, metadataFieldValues);
                 return value;
             }
 

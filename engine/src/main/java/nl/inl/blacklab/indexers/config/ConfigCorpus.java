@@ -1,7 +1,9 @@
 package nl.inl.blacklab.indexers.config;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -30,43 +32,52 @@ public class ConfigCorpus {
     final Map<String, String> specialFields = new LinkedHashMap<>();
 
     /** How to group metadata fields */
-    final Map<String, ConfigMetadataFieldGroup> metadataFieldGroups = new LinkedHashMap<>();
+    final List<ConfigMetadataFieldGroup> metadataFieldGroups = new ArrayList<>();
+
+    public List<ConfigMetadataFieldGroup> getMetadataFieldGroups() {
+        return Collections.unmodifiableList(metadataFieldGroups);
+    }
+
+    void addMetadataFieldGroup(ConfigMetadataFieldGroup g) {
+        metadataFieldGroups.add(g);
+    }
 
     /** How to group annotated fields' annotations */
-    final Map<String, ConfigAnnotationGroups> annotationGroups = new LinkedHashMap<>();
+    final Map<String, List<ConfigAnnotationGroup>> annotationGroups = new LinkedHashMap<>();
+
+    public void setAnnotationGroups(Map<String, List<ConfigAnnotationGroup>> groups) {
+        this.annotationGroups.clear();
+        annotationGroups.putAll(groups);
+    }
+
+    public Map<String, List<ConfigAnnotationGroup>> getAnnotationGroups() {
+        return Collections.unmodifiableMap(annotationGroups);
+    }
+
+    public void addAnnotationGroups(String name, List<ConfigAnnotationGroup> groups) {
+        annotationGroups.put(name, groups);
+    }
 
     public ConfigCorpus copy() {
         ConfigCorpus result = new ConfigCorpus();
         result.contentViewable = contentViewable;
         result.textDirection = textDirection;
         result.specialFields.putAll(specialFields);
-        for (ConfigMetadataFieldGroup g : getMetadataFieldGroups().values()) {
+        for (ConfigMetadataFieldGroup g : getMetadataFieldGroups()) {
             result.addMetadataFieldGroup(g.copy());
         }
-        for (ConfigAnnotationGroups g: getAnnotationGroups().values()) {
-            result.addAnnotationGroups(g.copy());
+        for (Map.Entry<String, List<ConfigAnnotationGroup>> entry: getAnnotationGroups().entrySet()) {
+            List<ConfigAnnotationGroup> groups = new ArrayList<>();
+            for (ConfigAnnotationGroup group: entry.getValue()) {
+                groups.add(group.copy());
+            }
+            result.addAnnotationGroups(entry.getKey(), groups);
         }
         return result;
     }
 
     public Map<String, String> getSpecialFields() {
         return Collections.unmodifiableMap(specialFields);
-    }
-
-    public Map<String, ConfigMetadataFieldGroup> getMetadataFieldGroups() {
-        return Collections.unmodifiableMap(metadataFieldGroups);
-    }
-
-    void addMetadataFieldGroup(ConfigMetadataFieldGroup g) {
-        metadataFieldGroups.put(g.getName(), g);
-    }
-    
-    public Map<String, ConfigAnnotationGroups> getAnnotationGroups() {
-        return Collections.unmodifiableMap(annotationGroups);
-    }
-
-    public void addAnnotationGroups(ConfigAnnotationGroups g) {
-        annotationGroups.put(g.getName(), g);        
     }
 
     public boolean isContentViewable() {

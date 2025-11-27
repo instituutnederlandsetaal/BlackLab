@@ -1,11 +1,8 @@
 package nl.inl.blacklab.index;
 
 import java.io.File;
-import java.io.IOException;
 
-import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.indexers.config.InputFormatTypeConfig;
 
 /**
@@ -26,18 +23,7 @@ public class InputFormatInfoWithConfig implements InputFormatInfo {
     }
 
     public InputFormatInfoWithConfig(String formatIdentifier, File formatFile) {
-        try {
-            config = new ConfigInputFormat(formatIdentifier);
-            assert formatFile != null;
-            config.setReadFromFile(formatFile);
-            InputFormatReader.read(formatFile, config);
-            config.validate();
-        } catch (InvalidInputFormatConfig e) {
-            throw e;
-        } catch (IOException e) {
-            String errorMessage = "Error reading input format config file " + formatFile + ": " + e.getMessage();
-            throw new InvalidInputFormatConfig(errorMessage, e);
-        }
+        config = ConfigInputFormat.read(formatFile, formatIdentifier);
         inputFormat = InputFormatTypeConfig.fromConfig(config);
     }
 
@@ -63,7 +49,7 @@ public class InputFormatInfoWithConfig implements InputFormatInfo {
 
     @Override
     public boolean isVisible() {
-        return config.isVisible();
+        return config.getIsVisible();
     }
 
     @Override

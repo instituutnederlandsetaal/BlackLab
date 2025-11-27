@@ -29,7 +29,7 @@ public abstract class InputFormatTypeTabularBase extends InputFormatTypeConfig {
             protected void indexValue(ConfigAnnotation annotation, String value) {
                 // Remove unwanted unprintable characters and normalize to canonical unicode composition
                 value = StringUtil.sanitizeAndNormalizeUnicode(value);
-                ProcessingStep process = annotation.getProcess();
+                ProcessingStep process = annotation.getCompiledProcessSteps();
                 if (process instanceof ProcessingInstructionIdentity || process.canProduceMultipleValues()) {
                     if (process instanceof ProcessingInstructionIdentity) {
                         // No explicit processing steps defined.

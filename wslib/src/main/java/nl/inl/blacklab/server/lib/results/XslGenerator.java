@@ -88,19 +88,19 @@ public class XslGenerator {
             // By default attempt to display the annotations of the word named "lemma" and "word"
             // TODO: if BlackLab is supposed be able to generate this kind of XSLT, we should allow users to configure
             //   how this is done. Only start guessing if no configuration has been provided.
-            ConfigAnnotation wordAnnot = f.getAnnotations().get("word");   // TODO: better use mainAnnotation() ?
-            ConfigAnnotation lemmaAnnot = f.getAnnotations().get("lemma");
+            ConfigAnnotation wordAnnot = f.getAnnotation("word");   // TODO: better use mainAnnotation() ?
+            ConfigAnnotation lemmaAnnot = f.getAnnotation("lemma");
 
             // Since the annotation can be named anything there is no guarantee there is a "word" annotation
             // (it's just a reasonable default guess), so just attempt to display whatever is first in the list otherwise
             // This ought to be correct - see DocIndexerConfig::init(), it sets the main annotation as the first annotation in the list
             // As for the "lemma" annotation that's used to generate hover tooltips, it's just a reasonable guess
             if (wordAnnot == null)
-                wordAnnot = f.getAnnotations().values().iterator().next();
+                wordAnnot = f.getAnnotations().iterator().next();
 
             // Begin word template
             // TODO: take containerPath into account too (optional, goes between documentPath and wordPath)
-            String wordBase = XPathUtil.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordsPath());
+            String wordBase = XPathUtil.joinXpath(config.getDocumentPath(), f.getContainerPath(), f.getWordPath());
             xslt.append(beginTemplate(wordBase))
                     .append("<span class=\"word\">");
 

@@ -1,10 +1,14 @@
 package nl.inl.blacklab.indexers.config;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum AnnotationType {
     TOKEN,
     SPAN,
     RELATION;
 
+    @JsonCreator
     public static AnnotationType fromStringValue(String t) {
         return switch (t.toLowerCase()) {
             case "token" -> TOKEN;
@@ -15,6 +19,7 @@ public enum AnnotationType {
     }
 
     @Override
+    @JsonValue
     public String toString() {
         return super.toString().toLowerCase();
     }

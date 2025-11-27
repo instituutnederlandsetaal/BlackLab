@@ -107,8 +107,8 @@ public class InputFormatTypePlainText extends InputFormatTypeConfig {
                             String word = m.group();
                             punct.append(line, i, m.start());
                             i = m.end();
-                            for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened().values()) {
-                                String processedWord = annotation.getProcess().performSingle(word, metadataFieldValues);
+                            for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened()) {
+                                String processedWord = annotation.getCompiledProcessSteps().performSingle(word, metadataFieldValues);
                                 if (annotation.getValuePath().equals(".")) {
                                     annotationValueAppend(annotation.getName(), processedWord, 1);
                                 } else {

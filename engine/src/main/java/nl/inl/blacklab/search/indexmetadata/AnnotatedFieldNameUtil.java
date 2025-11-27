@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import java.util.regex.Pattern;
-
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -33,12 +31,6 @@ public final class AnnotatedFieldNameUtil {
      *  contents__nl, contents__de, etc.
      */
     public static final String PARALLEL_VERSION_SEPARATOR = "__";
-
-    /**
-     * Valid XML element names. Field and annotation names should generally conform to
-     * this.
-     */
-    private static final Pattern REGEX_VALID_XML_ELEMENT_NAME = Pattern.compile("[a-zA-Z_][a-zA-Z\\d\\-_.]*");
 
     /**
      * String used to separate the base field name (say, contents) and the field
@@ -283,38 +275,6 @@ public final class AnnotatedFieldNameUtil {
      */
     public static boolean isAnnotatedField(String luceneFieldName) {
         return luceneFieldName.contains(ANNOT_SEP) || luceneFieldName.contains(SENSITIVITY_SEP);
-    }
-    
-    /**
-     * Is the specified name a valid XML element name?
-     * 
-     * Generally, field and annotation names should be valid XML element names, so we
-     * don't have to sanitize them when generating output XML.
-     * 
-     * @param name name to check
-     * @return true iff it's a valid XML element name
-     */
-    public static boolean isValidXmlElementName(String name) {
-        return REGEX_VALID_XML_ELEMENT_NAME.matcher(name).matches();
-    }
-
-    /**
-     * Sanitize name if necessary, replacing forbidden characters with underscores.
-     *
-     * Also prepends an underscore if the name start in an invalid way (with the letters "xml" or not with letter or underscore).
-     *
-     * @param name           name to sanitize
-     * @return sanitized name
-     */
-    public static String sanitizeXmlElementName(String name) {
-        if (name.isEmpty())
-            return "_EMPTY_";
-        // can only contain letter, digit, dash (used to be disallowed in config v1, but no more), underscore and period
-        name = name.replaceAll("[^\\p{L}\\p{N}_.\\-]", "_");
-        if (name.matches("^[^\\p{L}_].*$") || name.toLowerCase().startsWith("xml")) { // must start with letter or underscore, may not start with "xml"
-            name = "_" + name;
-        }
-        return name;
     }
 
     /**

@@ -239,7 +239,7 @@ public class InputFormatTypeCoNLLU extends InputFormatTypeTabularBase {
                     beginWord();
                     try {
                         // Index all annotations defined in the config file
-                        for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened().values()) {
+                        for (ConfigAnnotation annotation: annotatedField.getAnnotationsFlattened()) {
                             String value;
                             if (StringUtils.isEmpty(annotation.getValuePath()))
                                 continue; // e.g. mwt annotation doesn't have one

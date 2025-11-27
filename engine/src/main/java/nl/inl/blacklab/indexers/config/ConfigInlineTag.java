@@ -6,6 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
 /**
@@ -22,6 +25,7 @@ public class ConfigInlineTag {
      * several predefined classes such as sentence, paragraph, line-beginning,
      * page-beginning)
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String displayAs = "";
 
     /**
@@ -29,14 +33,17 @@ public class ConfigInlineTag {
      * so we can refer to them from standoff annotations.
      * (Used for tei:anchor, so end position is not used)
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private String tokenIdPath = null;
 
     /** Extra attributes to index with the tag via an XPath expression,
      *  as well as tag attributes to include/exclude (optionally with processing steps). */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private Map<String, ConfigAttribute> attributes = Collections.emptyMap();
 
     /** Should we index all attributes on the tag by default,
      *  or only those explicitly mentioned? */
+    @JsonIgnore
     private boolean defaultIndexAttributes = true;
 
     public ConfigInlineTag() {
@@ -47,10 +54,10 @@ public class ConfigInlineTag {
         setDisplayAs(displayAs);
     }
 
-    public void validate() {
-        ConfigInputFormat.req(path, "inline tag", "path");
+    public void validate(InputFormatMessages messages) {
+        messages.req(path, "inline tag", "path");
         for (ConfigAttribute ea: attributes.values()) {
-            ea.validate();
+            ea.validate(messages);
         }
     }
 
@@ -110,5 +117,17 @@ public class ConfigInlineTag {
     public Map<String, ConfigAttribute> getAttributes() {
         // We don't synchronize reads, as attributes is only set once when config is read
         return attributes;
+    }
+
+    public void setIncludeAttributes(Object v) {
+        throw new InvalidInputFormatConfig("includeAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
+    }
+
+    public void setExcludeAttributes(Object v) {
+        throw new InvalidInputFormatConfig("excludeAttributes no longer allowed in .blf.yaml (use 'attributes' with exclude: true instead)");
+    }
+
+    public void setExtraAttributes(Object v) {
+        throw new InvalidInputFormatConfig("excludeAttributes no longer allowed in .blf.yaml (use 'attributes' instead)");
     }
 }

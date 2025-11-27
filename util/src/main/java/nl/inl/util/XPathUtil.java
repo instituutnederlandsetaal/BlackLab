@@ -81,4 +81,14 @@ public class XPathUtil {
 
         return result;
     }
+
+    /**
+     * Convert a fixed string value to an XPath expression yielding that value.
+     *
+     * @param s fixed string the XPath should evaluate to
+     * @return XPath expression
+     */
+    public static String fixedStringToXpath(String s) {
+        return "\"" + s.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\"") + "\"";
+    }
 }

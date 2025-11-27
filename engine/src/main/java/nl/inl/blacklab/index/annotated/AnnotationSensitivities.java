@@ -1,5 +1,8 @@
 package nl.inl.blacklab.index.annotated;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 
@@ -13,7 +16,13 @@ public enum AnnotationSensitivities {
     SENSITIVE_AND_INSENSITIVE, // case+diac sensitive as well as case+diac insensitive
     CASE_AND_DIACRITICS_SEPARATE; // all four combinations (sens, insens, case-insens, diac-insens)
 
+    @JsonCreator
     public static AnnotationSensitivities fromStringValue(String v) {
+        // Direct match to enum name?
+        for (AnnotationSensitivities s: values()) {
+            if (s.name().equalsIgnoreCase(v))
+                return s;
+        }
         return switch (v.toLowerCase()) {
             case "default", "" -> DEFAULT;
             case "sensitive", "s" -> ONLY_SENSITIVE;
@@ -25,6 +34,7 @@ public enum AnnotationSensitivities {
         };
     }
 
+    @JsonValue
     public String getStringValue() {
         return switch (this) {
             case DEFAULT -> "default";

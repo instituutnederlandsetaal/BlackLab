@@ -1,10 +1,15 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.util.XPathUtil;
 
 /**
  * Configuration for attributes to index using XPath
@@ -30,6 +35,7 @@ public class ConfigAttribute {
      */
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
+    @JsonIgnore
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
     public ConfigAttribute() {
@@ -48,6 +54,10 @@ public class ConfigAttribute {
         return valuePath;
     }
 
+    public void setValue(String value) {
+        this.valuePath = XPathUtil.fixedStringToXpath(value);
+    }
+
     public void setValuePath(String valuePath) {
         this.valuePath = valuePath;
     }
@@ -60,7 +70,13 @@ public class ConfigAttribute {
         return exclude;
     }
 
-    public ProcessingStep getProcess() {
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    public List<ConfigProcessStep> getProcess() {
+        return Collections.unmodifiableList(process);
+    }
+
+    @JsonIgnore
+    public ProcessingStep getCompiledProcessSteps() {
         // We don't synchronize reads, as processSteps is only set once when config is read
         return processSteps;
     }
@@ -71,12 +87,12 @@ public class ConfigAttribute {
         processSteps = ProcessingInstruction.fromConfig(process);
     }
 
-    public void validate() {
-        ConfigInputFormat.req(name, "extra attribute", "name");
+    public void validate(InputFormatMessages messages) {
+        messages.req(name, "extra attribute", "name");
         if (!exclude)
-            ConfigInputFormat.req(valuePath, "extra attribute", "valuePath");
+            messages.req(valuePath, "extra attribute", "valuePath");
         for (ConfigProcessStep step: process) {
-            step.validate();
+            step.validate(messages);
         }
     }
 

@@ -475,8 +475,8 @@ public class InputFormatTypeChat extends InputFormatTypeConfig {
                 String[] words = line.trim().split(StringUtil.REGEX_WHITESPACE);
                 for (String word : words) {
                     beginWord();
-                    for (ConfigAnnotation annot : currentAnnotatedFieldConfig.getAnnotationsFlattened().values()) {
-                        String processed = annot.getProcess().performSingle(word, metadataFieldValues);
+                    for (ConfigAnnotation annot : currentAnnotatedFieldConfig.getAnnotationsFlattened()) {
+                        String processed = annot.getCompiledProcessSteps().performSingle(word, metadataFieldValues);
                         annotationValueAppend(annot.getName(), processed, 1);
                     }
                     endWord();

@@ -5,8 +5,15 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
 /**
  * This class represents an AnnotatedField (i.e. a collection of Annotations - formerly "complex field")
@@ -15,6 +22,9 @@ import java.util.Objects;
  */
 public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
+    private static final Logger logger = LogManager.getLogger(ConfigAnnotatedField.class);
+
+    @JsonIgnore
     private String name;
 
     /** How to display the field in the interface (optional) */
@@ -30,42 +40,98 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     private String wordPath;
 
     /** Unique id that will map to this token position */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String tokenIdPath = null;
 
     /** Punctuation between words (or null if we don't need/want to capture this) */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String punctPath = null;
 
-    /** Annotations on our words */
-    private final Map<String, ConfigAnnotation> annotations = new LinkedHashMap<>();
+    /** All annotations on our words. */
+    private final List<ConfigAnnotation> annotations = new ArrayList<>();
+
+    /** Non-forEach annotations on our words, as a map. */
+    @JsonIgnore
+    private final Map<String, ConfigAnnotation> annotationsMap = new LinkedHashMap<>();
+
+    /** All annotations on our words, with subannotations flattened. */
+    @JsonIgnore
+    private List<ConfigAnnotation> annotationsFlattened;
+
+    public List<ConfigAnnotation> getAnnotations() {
+        return Collections.unmodifiableList(annotations);
+    }
+
+    public void setAnnotations(List<ConfigAnnotation> annotations) {
+        this.annotationsMap.clear();
+        for (ConfigAnnotation a: annotations) {
+            if (!a.isForEach())
+                this.annotationsMap.put(a.getName(), a);
+        }
+        this.annotations.clear();
+        this.annotations.addAll(annotations);
+    }
+
+    public ConfigAnnotation getAnnotation(String name) {
+        return annotationsMap.get(name);
+    }
+
+    @Override
+    public synchronized List<ConfigAnnotation> getAnnotationsFlattened() {
+        if (annotationsFlattened == null) {
+            annotationsFlattened = new ArrayList<>();
+            for (ConfigAnnotation annot: annotations) {
+                annotationsFlattened.add(annot);
+                annotationsFlattened.addAll(annot.getSubannotations());
+            }
+        }
+        return Collections.unmodifiableList(annotationsFlattened);
+    }
 
     /** Annotations on our words, defined elsewhere in the document */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<ConfigStandoffAnnotations> standoffAnnotations = new ArrayList<>();
 
     /** Inline tags within body text */
-    private final List<ConfigInlineTag> inlineTags = new ArrayList<>();
+    private List<ConfigInlineTag> inlineTags = new ArrayList<>();
 
-    private Map<String, ConfigAnnotation> annotationsFlattened;
+    public List<ConfigInlineTag> getInlineTags() {
+        return inlineTags;
+    }
+
+    public void setInlineTags(List<ConfigInlineTag> inlineTags) {
+        this.inlineTags = inlineTags;
+    }
+
+    public void setSpans(List<ConfigInlineTag> inlineTags) {
+        setInlineTags(inlineTags);
+    }
 
     /** If true, this is a dummy annotated field that only exists to store linked documents, e.g. "metadata". */
+    @JsonIgnore
     private boolean dummyForStoringLinkedDocument = false;
+
+    ConfigAnnotatedField() {
+        this("UNKNOWN");
+    }
 
     ConfigAnnotatedField(String fieldName) {
         setName(fieldName);
     }
 
-    public void validate() {
+    public void validate(InputFormatMessages messages) {
         String t = "annotated field";
-        ConfigInputFormat.req(name, t, "name");
+        messages.req(name, t, "name");
         if (dummyForStoringLinkedDocument)
             return; // dummy doesn't need anything other than a name
-        ConfigInputFormat.req(containerPath, t, "containerPath");
-        ConfigInputFormat.req(wordPath, t, "wordPath");
-        for (ConfigAnnotation a : annotations.values())
-            a.validate();
-        for (ConfigStandoffAnnotations s : standoffAnnotations)
-            s.validate();
-        for (ConfigInlineTag tag : inlineTags)
-            tag.validate();
+        messages.req(containerPath, t, "containerPath");
+        messages.req(wordPath, t, "wordPath");
+        for (ConfigAnnotation a: annotations)
+            a.validate(messages, false);
+        for (ConfigStandoffAnnotations s: standoffAnnotations)
+            s.validate(messages);
+        for (ConfigInlineTag tag: inlineTags)
+            tag.validate(messages);
     }
 
     public ConfigAnnotatedField copy() {
@@ -77,11 +143,11 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         result.setWordPath(wordPath);
         result.setTokenIdPath(tokenIdPath);
         result.setPunctPath(punctPath);
-        for (ConfigAnnotation a : annotations.values())
+        for (ConfigAnnotation a: annotations)
             result.addAnnotation(a.copy());
-        for (ConfigStandoffAnnotations a : standoffAnnotations)
+        for (ConfigStandoffAnnotations a: standoffAnnotations)
             result.addStandoffAnnotation(a.copy());
-        for (ConfigInlineTag t : inlineTags)
+        for (ConfigInlineTag t: inlineTags)
             result.addInlineTag(t.copy());
         return result;
     }
@@ -112,7 +178,9 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     @Override
     public synchronized void addAnnotation(ConfigAnnotation annotation) {
-        this.annotations.put(annotation.getName(), annotation);
+        if (!annotation.isForEach())
+            this.annotationsMap.put(annotation.getName(), annotation);
+        this.annotations.add(annotation);
         annotationsFlattened = null;
     }
 
@@ -128,7 +196,7 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return containerPath;
     }
 
-    public String getWordsPath() {
+    public String getWordPath() {
         return wordPath;
     }
 
@@ -138,32 +206,6 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public String getPunctPath() {
         return punctPath;
-    }
-
-    public List<ConfigInlineTag> getInlineTags() {
-        return inlineTags;
-    }
-
-    @Override
-    public Map<String, ConfigAnnotation> getAnnotations() {
-        return Collections.unmodifiableMap(annotations);
-    }
-
-    @Override
-    public synchronized Map<String, ConfigAnnotation> getAnnotationsFlattened() {
-        if (annotationsFlattened == null) {
-            annotationsFlattened = new LinkedHashMap<>();
-            for (Entry<String, ConfigAnnotation> entry: annotations.entrySet()) {
-                annotationsFlattened.put(entry.getKey(), entry.getValue());
-                List<ConfigAnnotation> subannot = entry.getValue().getSubAnnotations();
-                if (!subannot.isEmpty()) {
-                    for (ConfigAnnotation a: subannot) {
-                        annotationsFlattened.put(a.getName(), a);
-                    }
-                }
-            }
-        }
-        return annotationsFlattened;
     }
 
     public List<ConfigStandoffAnnotations> getStandoffAnnotations() {
@@ -197,6 +239,7 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         return f;
     }
 
+    @JsonIgnore
     public boolean isDummyForStoringLinkedDocuments() {
         return dummyForStoringLinkedDocument;
     }
@@ -221,7 +264,11 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     @Override
     public int hashCode() {
         return Objects.hash(name, displayName, description, containerPath, wordPath, tokenIdPath, punctPath,
-                annotations,
+                annotationsMap,
                 standoffAnnotations, inlineTags, annotationsFlattened, dummyForStoringLinkedDocument);
+    }
+
+    public void setTokenPositionIdPath(String tokenPositionIdPath) {
+        throw new InvalidInputFormatConfig("Encountered removed key 'tokenPositionIdPath' (rename to 'tokenIdPath')");
     }
 }

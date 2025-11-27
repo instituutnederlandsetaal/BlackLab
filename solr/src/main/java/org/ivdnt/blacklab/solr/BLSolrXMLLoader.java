@@ -29,7 +29,6 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.InputFormatReader;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -61,11 +60,10 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         InputFormatInfo inputFormat = DocumentFormats.getFormat(paramFormat).orElse(null);
         ConfigInputFormat formatConfig = inputFormat != null ? inputFormat.getConfig() : null;
         if (formatConfig == null) {
-            // format isn't recongnized by name, try loading it as string (it might be the contents of the file).
-            formatConfig = new ConfigInputFormat("");
-            boolean isJson = paramFormat.trim().charAt(0) == '{';
+            // format isn't recognized by name, try loading it as string (it might be the contents of the file).
             Reader r = new StringReader(paramFormat);
-            InputFormatReader.read(r, isJson, formatConfig);
+            boolean isJson = paramFormat.trim().charAt(0) == '{';
+            formatConfig = ConfigInputFormat.read(r, isJson, "");
         }
         
         String fileName = params.get("bl.filename");

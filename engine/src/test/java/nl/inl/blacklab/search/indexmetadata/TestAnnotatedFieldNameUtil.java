@@ -3,6 +3,8 @@ package nl.inl.blacklab.search.indexmetadata;
 import org.junit.Assert;
 import org.junit.Test;
 
+import nl.inl.util.XmlUtil;
+
 public class TestAnnotatedFieldNameUtil {
 
     public static void assertValidXmlElementName(String name) {
@@ -10,7 +12,7 @@ public class TestAnnotatedFieldNameUtil {
     }
 
     public static void assertRewriteXmlElementName(String expected, String name) {
-        Assert.assertEquals(expected, AnnotatedFieldNameUtil.sanitizeXmlElementName(name));
+        Assert.assertEquals(expected, XmlUtil.sanitizeXmlElementName(name));
     }
 
     @Test

@@ -135,14 +135,6 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 super(docWriter, file);
             }
 
-            protected String optSanitizeFieldName(String origFieldName) {
-                String fieldName = AnnotatedFieldNameUtil.sanitizeXmlElementName(origFieldName);
-                if (!origFieldName.equals(fieldName)) {
-                    warnOnce().warn("Name '" + origFieldName + "' is not a valid XML element name; sanitized to '" + fieldName + "'");
-                }
-                return fieldName;
-            }
-
             /**
              * Process an annotation at the current position.
              * <p>
@@ -306,7 +298,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                 // For each word...
                 Span tokenPosition = Span.token(0);
-                List<NodeInfo> words = finder.findNodes(annotatedField.getWordsPath(), container);
+                List<NodeInfo> words = finder.findNodes(annotatedField.getWordPath(), container);
                 words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
                 for (NodeInfo word: words) {
                     // Index any punctuation occurring before this word
@@ -331,7 +323,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     beginWord();
 
                     // For each configured annotation...
-                    for (ConfigAnnotation annotation: annotatedField.getAnnotations().values()) {
+                    for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
                         processAnnotation(annotation, word, tokenPosition);
                     }
 
@@ -443,7 +435,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             // Extra attribute, not on tag. Evaluate XPath expression.
                             value = xpathValue(attribute.getValuePath(), nodeInfo);
                         }
-                        List<String> values = processStringMultipleValues(value, attribute.getProcess());
+                        List<String> values = processStringMultipleValues(value, attribute.getCompiledProcessSteps());
                         if (!values.isEmpty()) {
                             atts.put(attribute.getName(), values);
                         } else {
@@ -455,7 +447,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                     // Add tag to the list of tags to close at the correct position.
                     // (calculate word position by determining the number of word tags inside this element)
-                    String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordsPath() + ")";
+                    String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordPath() + ")";
                     int numberOfWordsInsideTag = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
                     // close inline after the last word that's contained in it (position + numberOfWordsInsideTag - 1)
                     inlinesToClose.computeIfAbsent(position.plus(numberOfWordsInsideTag - 1),
@@ -494,6 +486,11 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 // Collect any attribute values
                 Map<String, List<String>> attributes = new HashMap<>();
                 for (ConfigAnnotation annotation: standoffAnnotations) {
+                    if (annotation.isForEach()) {
+                        warnOnce().warn("Ignoring forEach annotation '" + annotation.getNamePath()
+                                + "' in standoff span/relation annotation; only regular annotations are supported here for now.");
+                        continue; // forEach annotations are not indexed as attributes (for now)
+                    }
                     // NOTE: we pass invalid values for the positions because they don't matter here; we're not indexing,
                     //       just finding XPath matches for the attributes and collecting them.
                     processAnnotation(annotation, standoffNode, null, null,
@@ -552,7 +549,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         }
                     });
 
-                    Collection<ConfigAnnotation> standoffAnnotations = standoff.getAnnotations().values();
+                    Collection<ConfigAnnotation> standoffAnnotations = standoff.getAnnotations();
                     if (type == AnnotationType.TOKEN) {
                         // "Regular" standoff annotation for a single token.
                         // Index annotation values at the position(s) indicated
@@ -636,7 +633,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     Span positionSpanEndOrSource, Span spanEndOrRelTarget,
                     AnnotationHandler handler, List<String> parentAnnotValues) {
                 // For each configured subannotation...
-                for (ConfigAnnotation subannot : parentAnnot.getSubAnnotations()) {
+                for (ConfigAnnotation subannot : parentAnnot.getSubannotations()) {
                     // Subannotation configs without a valuePath are just for
                     // adding information about subannotations captured in forEach's,
                     // such as extra processing steps
@@ -649,16 +646,16 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         // (allows us to capture multiple subannotations with 3 XPath expressions)
                         xpathForEach(subannot.getForEachPath(), context, (match) -> {
                             // Find the name and value for this forEach match
-                            String name = xpathValue(subannot.getName(), match);
+                            String name = xpathValue(subannot.getNamePath(), match);
                             String subannotationName = parentAnnot.getName() + AnnotatedFieldNameUtil.SUBANNOTATION_FIELD_PREFIX_SEPARATOR + name;
-                            ConfigAnnotation declSubannot = parentAnnot.getSubAnnotation(subannotationName);
+                            ConfigAnnotation declSubannot = parentAnnot.getSubannotation(subannotationName);
 
                             // It's not possible to create annotation on the fly at the moment.
                             // So since this was not declared in the config file, emit a warning and skip.
                             if (declSubannot == null) {
                                 if (!skippedAnnotations.contains(subannotationName)) {
                                     skippedAnnotations.add(subannotationName);
-                                    logger.error(documentName + ": skipping undeclared annotation " + name + " (" + "as declaredSubannot of forEachPath " + subannot.getName() + ")");
+                                    logger.error(documentName + ": skipping undeclared annotation " + name + " (" + "as declaredSubannot of forEachPath " + subannot.getNamePath() + ")");
                                 }
                                 return;
                             }
@@ -756,7 +753,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 }
 
                 // For each configured metadata block..
-                for (ConfigMetadataBlock b : config.getMetadataBlocks()) {
+                for (ConfigMetadataBlock b : config.getMetadata()) {
                     processMetadataBlock(doc, b);
                 }
 
@@ -824,7 +821,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         } else {
                             // Regular metadata field; just the fieldName and an XPath expression for the value
                             // Multiple matches will be indexed at the same position.
-                            processMetadataValue(block, field);
+                            indexMetadataFieldMatches(block, field, field.getName(), null);
                         }
                     }
                 });
@@ -833,8 +830,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach) {
                 xpathForEach(forEach.getForEachPath(), block, (match) -> {
                     // Find the fieldName and value for this forEach match
-                    String origFieldName = xpathValue(forEach.getName(), match);
-                    String fieldName = optSanitizeFieldName(origFieldName);
+                    String fieldName = xpathValue(forEach.getNamePath(), match);
                     ConfigMetadataField indexAsField = metaBlock.getOrCreateField(fieldName);
 
                     // This metadata field is matched by a for-each, but if it specifies its own xpath ignore it in the for-each section
@@ -848,21 +844,18 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 });
             }
 
-            protected void processMetadataValue(NodeInfo header, ConfigMetadataField field) {
-                indexMetadataFieldMatches(header, field, field.getName(), null);
-            }
-
-            protected void indexMetadataFieldMatches(NodeInfo forEach, ConfigMetadataField forEachField, String indexAsFieldName,
-                    ConfigMetadataField indexAsFieldConfig) {
-                xpathForEachStringValue(forEachField.getValuePath(), forEach, (unprocessedValue) -> {
+            protected void indexMetadataFieldMatches(NodeInfo node, ConfigMetadataField field,
+                    String indexAsFieldName, ConfigMetadataField indexAsFieldConfig) {
+                // NOTE: field may be a forEach, in which case indexAsFieldConfig is the actual field to index as
+                xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
                     unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
-                    for (String value: processStringMultipleValues(unprocessedValue, forEachField.getProcess())) {
+                    for (String value: processStringMultipleValues(unprocessedValue, field.getCompiledProcessSteps())) {
                         if (indexAsFieldConfig == null) {
                             addMetadataField(indexAsFieldName, value);
                         } else {
                             // Also execute process defined for named metadata field, if any
                             for (String processedValue: processStringMultipleValues(value,
-                                    indexAsFieldConfig.getProcess())) {
+                                    indexAsFieldConfig.getCompiledProcessSteps())) {
                                 addMetadataField(indexAsFieldName, processedValue);
                             }
                         }

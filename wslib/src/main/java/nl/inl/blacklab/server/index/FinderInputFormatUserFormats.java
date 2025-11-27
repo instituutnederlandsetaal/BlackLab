@@ -23,7 +23,7 @@ import nl.inl.blacklab.index.FinderInputFormat;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.index.InputFormatInfoWithConfigLazy;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.InputFormatReader;
+import nl.inl.blacklab.indexers.config.FormatFileNameUtil;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
@@ -69,9 +69,6 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
     }
 
     private static final String FORMATS_SUBDIR_NAME = "_input_formats";
-    private static final Pattern formatNamePattern = Pattern.compile("[\\w_\\-]+");
-    private static final Pattern fileNamePattern = Pattern
-            .compile(formatNamePattern.pattern() + "(\\.blf)?\\.(ya?ml|json)");
     /**
      * Only matches user formatIdentifiers, not the builtin formatIdentifiers,
      * captures the userId as group 1 and formatName as group 2. Does not validate
@@ -163,7 +160,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      */
     public void createUserFormat(User user, String fileName, InputStream is) throws NotAuthorized, BadRequest, InternalServerError {
         try {
-            String formatIdentifier = fileName.contains(":") ? ConfigInputFormat.stripExtensions(fileName) :
+            String formatIdentifier = fileName.contains(":") ? FormatFileNameUtil.stripExtensions(fileName) :
                     getFormatIdentifier(user.getId(), fileName);
             
             String userIdFromFormatIdentifier = getUserIdFromFormatIdentifier(formatIdentifier);
@@ -174,10 +171,9 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
             // once to validate the file's contents, then again to store the file once the validation passes
             byte[] content = IOUtils.toByteArray(is);
 
-            ConfigInputFormat config = new ConfigInputFormat(formatIdentifier);
-            InputFormatReader.read(new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8),
-                    fileName.endsWith(".json"), config);
-            config.validate();
+            InputStreamReader reader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8);
+            boolean isJson = fileName.endsWith(".json");
+            ConfigInputFormat config = ConfigInputFormat.read(reader, isJson, formatIdentifier);
 
             File userFormatDir = getUserFormatDir(this.userFormatParentDir, userIdFromFormatIdentifier);
             File formatFile = new File(userFormatDir, fileName);
@@ -286,14 +282,14 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
      *             characters, or fileName does not end in a supported extension
      */
     private static String getFormatIdentifier(String userId, String fileName) throws IllegalUserFormatIdentifier {
-        if (!fileNamePattern.matcher(fileName).matches())
+        if (!FormatFileNameUtil.isValidUploadedFileName(fileName))
             throw new IllegalUserFormatIdentifier(
                     "Format file name may only contain letters, digits, underscore and dash, and must end with .yaml or .json (or .blf.yaml/.blf.json)");
 
         if (!User.isValidUserId(userId) || userId.contains(":"))
             throw new IllegalUserFormatIdentifier("Illegal username " + userId);
 
-        return userId + ":" + ConfigInputFormat.stripExtensions(fileName);
+        return userId + ":" + FormatFileNameUtil.stripExtensions(fileName);
     }
 
     public static String getUserIdFromFormatIdentifier(String formatIdentifier) throws IllegalUserFormatIdentifier {
@@ -320,7 +316,7 @@ public class FinderInputFormatUserFormats implements FinderInputFormat {
         String formatName = m.group(2);
         if (!User.isValidUserId(userId))
             throw new IllegalUserFormatIdentifier(userId + " is not a valid username");
-        if (!formatNamePattern.matcher(formatName).matches())
+        if (!FormatFileNameUtil.isValidFormatIdentifier(formatName))
             throw new IllegalUserFormatIdentifier(
                     "Format configuration name may only contain letters, digits, underscore and dash");
 

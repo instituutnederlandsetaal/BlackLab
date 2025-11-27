@@ -35,7 +35,6 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.plugins.InputFormatType;
 import nl.inl.blacklab.search.BlackLab;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -179,10 +178,6 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
             public void addMetadataField(String name, String value) {
                 name = optTranslateMetadataFieldName(name);
-
-                if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
-                    logger.warn("Field name '" + name
-                            + "' is discouraged (field/annotation names should be valid XML element names)");
 
                 if (name == null || value == null) {
                     warn("Incomplete metadata field: " + name + "=" + value + " (skipping)");

@@ -257,12 +257,11 @@ public class IndexTool {
             File maybeFormatFile = new File(formatIdentifier);
             if (maybeFormatFile.isFile() && maybeFormatFile.canRead()) {
                 try {
-                    ConfigInputFormat format = new ConfigInputFormat(maybeFormatFile);
+                    ConfigInputFormat format = ConfigInputFormat.read(maybeFormatFile);
                     DocumentFormats.add(format);
                     formatIdentifier = format.getName();
-                } catch (IOException e) {
-                    System.err.println("Not a format, not a valid file: " + formatIdentifier + " . " + e.getMessage());
-                    System.err.println("Please specify a correct format on the command line.");
+                } catch (InvalidInputFormatConfig e) {
+                    System.err.println("Error(s) in format " + formatIdentifier + ": " + e.getMessage());
                     usage();
                     return;
                 }

@@ -275,7 +275,7 @@ public class InputFormatTypeTabular extends InputFormatTypeTabularBase {
                             }
 
                             // For each annotation
-                            for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened().values()) {
+                            for (ConfigAnnotation annotation : annotatedField.getAnnotationsFlattened()) {
                                 // Either column number or name
                                 String value;
                                 if (annotation.isValuePathInteger()) {

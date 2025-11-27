@@ -192,7 +192,7 @@ public class InputFormatTypeExample extends InputFormatTypeBase {
                 getDocWriter().metadata().annotatedFields().addFromConfig(fieldContents);
 
                 // Create a AnnotatedFieldWriter for this field so we can index it
-                Collection<ConfigAnnotation> annots = fieldContents.getAnnotations().values();
+                Collection<ConfigAnnotation> annots = fieldContents.getAnnotations();
                 Iterator<ConfigAnnotation> annotIt = annots.iterator();
                 ConfigAnnotation mainAnnotation = annotIt.next();
                 AnnotatedFieldWriter contents = new AnnotatedFieldWriter(getDocWriter(), fieldContents.getName(),
@@ -203,7 +203,7 @@ public class InputFormatTypeExample extends InputFormatTypeBase {
                     ConfigAnnotation annot = annotIt.next();
                     boolean includePayloads = annot.getName().equals(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
                     contents.addAnnotation(annot.getName(), annot.getSensitivitySetting(), includePayloads,
-                            annot.createForwardIndex());
+                            annot.isForwardIndex());
                 }
                 addAnnotatedField(contents);
             }

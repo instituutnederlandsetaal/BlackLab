@@ -38,7 +38,6 @@ import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.ConfigAnnotatedField;
 import nl.inl.blacklab.indexers.config.ConfigAnnotationGroup;
-import nl.inl.blacklab.indexers.config.ConfigAnnotationGroups;
 import nl.inl.blacklab.indexers.config.ConfigCorpus;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.indexers.config.ConfigLinkedDocument;
@@ -383,7 +382,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
     private void addFieldInfoFromConfig(ConfigInputFormat config) {
         // Add metadata info
-        for (ConfigMetadataBlock b: config.getMetadataBlocks()) {
+        for (ConfigMetadataBlock b: config.getMetadata()) {
             for (ConfigMetadataField f: b.getFields()) {
                 if (f.isForEach())
                     continue;
@@ -410,20 +409,20 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     private void addGroupsInfoFromConfig(ConfigInputFormat config) {
         // Metadata field groups
         ConfigCorpus corpusConfig = config.getCorpusConfig();
-        Map<String, MetadataFieldGroupImpl> groups = new LinkedHashMap<>();
-        for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups().values()) {
+        Map<String, MetadataFieldGroupImpl> metaGroups = new LinkedHashMap<>();
+        for (ConfigMetadataFieldGroup g: corpusConfig.getMetadataFieldGroups()) {
             MetadataFieldGroupImpl group = new MetadataFieldGroupImpl(g.getName(), g.getFields(),
                     g.isAddRemainingFields());
-            groups.put(group.name(), group);
+            metaGroups.put(group.name(), group);
         }
-        metadataFields.setMetadataGroups(groups);
+        metadataFields.setMetadataGroups(metaGroups);
 
         // Annotation groups
         custom.put("annotationGroups", new LinkedHashMap<>());
-        for (ConfigAnnotationGroups cfgField: corpusConfig.getAnnotationGroups().values()) {
-            String fieldName = cfgField.getName();
+        for (Map.Entry<String, List<ConfigAnnotationGroup>> entry: corpusConfig.getAnnotationGroups().entrySet()) {
+            String fieldName = entry.getKey();
             List<AnnotationGroup> annotGroups = new ArrayList<>();
-            for (ConfigAnnotationGroup cfgAnnotGroup: cfgField.getGroups()) {
+            for (ConfigAnnotationGroup cfgAnnotGroup: entry.getValue()) {
                 String groupName = cfgAnnotGroup.getName();
                 List<String> annotations = cfgAnnotGroup.getAnnotations();
                 boolean addRemaining = cfgAnnotGroup.isAddRemainingAnnotations();

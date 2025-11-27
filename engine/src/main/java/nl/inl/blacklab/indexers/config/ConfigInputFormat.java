@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,6 +18,21 @@ import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
@@ -25,12 +41,80 @@ import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.FileUtil;
+import nl.inl.util.Json;
 
 /**
  * Configuration for an input format (either contents, or metadata, or a mix of
  * both).
  */
 public class ConfigInputFormat {
+
+    private static final Logger logger = LogManager.getLogger(ConfigInputFormat.class);
+
+    /**
+     * Reads a config from a YAML or JSON reader.
+     *
+     * @param reader the reader to read from
+     * @param isJson true if the reader is JSON, false if YAML
+     * @param formatIdentifier the name to give this format
+     * @return the config
+     */
+    public static ConfigInputFormat read(Reader reader, boolean isJson, String formatIdentifier) {
+        assert formatIdentifier != null;
+        ObjectMapper mapper = isJson ? Json.getJsonObjectMapper() : Json.getYamlObjectMapper();
+        ConfigInputFormat config;
+        try {
+            config = mapper.readValue(reader, ConfigInputFormat.class);
+            config.setName(formatIdentifier);
+            InputFormatMessages messages = new InputFormatMessages();
+            config.finalizeAndValidate(messages);
+            if (!messages.getErrors().isEmpty()) {
+                String combined = String.join("; ", messages.getErrors());
+                throw new InvalidInputFormatConfig(combined);
+            }
+            else if (!messages.getWarnings().isEmpty()) {
+                messages.log(logger, formatIdentifier);
+            }
+            return config;
+        } catch (Exception e) {
+            throw InvalidInputFormatConfig.withFormatIdentifier(e, formatIdentifier);
+        }
+    }
+
+    /**
+     * Reads a config from a YAML or JSON file.
+     *
+     * @param file the file to read
+     * @param formatIdentifier the name to give this format
+     * @return the config
+     * @throws InvalidInputFormatConfig if the file is not a valid config
+     */
+    public static ConfigInputFormat read(File file, String formatIdentifier)  {
+        try {
+            assert file != null;
+            BufferedReader reader = FileUtil.openForReading(file);
+            boolean isJson = file.getName().endsWith(".json");
+            ConfigInputFormat cfg = read(reader, isJson, formatIdentifier);
+            cfg.setReadFromFile(file);
+            return cfg;
+        } catch (Exception e) {
+            throw InvalidInputFormatConfig.withFormatFile(e, file);
+        }
+    }
+
+    /**
+     * Read a config from a YAML or JSON file.
+     *
+     * The name of this file (minus the .blf.* extension) will be used as this format's name.
+     *
+     * @param file the file to read
+     * @return the config
+     * @throws InvalidInputFormatConfig if the file is not a valid config
+     */
+    public static ConfigInputFormat read(File file) {
+        String formatIdentifier = FormatFileNameUtil.stripExtensions(file.getName());
+        return read(file, formatIdentifier);
+    }
 
     /** Basic file types we support */
     public enum FileType {
@@ -40,104 +124,208 @@ public class ConfigInputFormat {
         CHAT, // CHILDES CHAT format
         CONLL_U; // CoNLL-U format
 
+        @JsonCreator
         public static FileType fromStringValue(String str) {
             return valueOf(str.toUpperCase().replace("-", "_"));
         }
 
+        @JsonValue
         public String stringValue() {
             return toString().toLowerCase().replace("_", "-");
         }
     }
 
+    public static final int MIN_VERSION = 2;
+
+    public static final int MAX_VERSION = 2;
+
+    @JsonPropertyDescription("Format version number (optional, defaults to latest).")
+    private int version = MAX_VERSION;
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        if (version < MIN_VERSION || version > MAX_VERSION)
+            throw new InvalidInputFormatConfig("Unsupported version number: " + version);
+        this.version = version;
+    }
+
     /**
      * This format's name.
      */
-    private final String name;
+    @JsonIgnore
+    private String name;
 
-    /** This format's display name (optional) */
+    public void setName(String formatIdentifier) {
+        this.name = formatIdentifier;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Display name for this format (optional)")
     private String displayName = "";
 
     /** This format's description (optional) */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Description of this format (optional)")
     private String description = "";
 
     /**
      * Link to a help page, e.g. showing an example of a correct input file
      * (optional)
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("URL where more information about the format can be found (optional)")
     private String helpUrl = "";
 
     /**
      * Should this format be visible in the list of formats.
      * <p>
-     * Used to set {@link InputFormatInfo#isVisible()}, to indicate internal formats to client
+     * Used to set {@link InputFormatInfo#getIsVisible()}, to indicate internal formats to client
      * applications, but has no other internal meaning.
      */
-    private boolean visible = true;
+    @JsonPropertyDescription("Whether or not to show the format in the format list (default: true)")
+    private boolean isVisible = true;
 
     /**
      * This format's type indicator (optional, not used by BlackLab. usually
      * 'contents' or 'metadata')
      */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Type of format, contents or metadata (deprecated, not used by BlackLab)")
     private String type = "";
 
-    /**
-     * What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass
-     * of {@link InputFormatTypeConfig} to instantiate
-     */
-    private FileType fileType = FileType.XML;
-
-    /** Options for the file type (i.e. separator in case of tabular, etc.) */
-    private final Map<String, String> fileTypeOptions = new HashMap<>();
-
-    /** Configuration that will be added to indexmetadata when creating a corpus */
-    private final ConfigCorpus corpusConfig = new ConfigCorpus();
-
-    /** XML namespace declarations */
-    final Map<String, String> namespaces = new LinkedHashMap<>();
-
-    /** How to find our documents */
-    private String documentPath = "/";
-
-    /** Should we store the document in the content store? (default: yes) */
-    private boolean store = true;
-
-    /**
-     * Before adding metadata fields to the document, this name mapping is applied.
-     */
-    final Map<String, String> indexFieldAs = new LinkedHashMap<>();
-
-    /** What default analyzer to use if not overridden */
-    private String metadataDefaultAnalyzer = "DEFAULT";
-
-    private UnknownCondition metadataDefaultUnknownCondition = UnknownCondition.NEVER;
-
-    private String metadataDefaultUnknownValue = "unknown";
-
-    /** Blocks of embedded metadata */
-    private final List<ConfigMetadataBlock> metadataBlocks = new ArrayList<>();
-
-    /** Annotated fields (usually just "contents") */
-    private final Map<String, ConfigAnnotatedField> annotatedFields = new LinkedHashMap<>();
-
-    /** Linked document(s), e.g. containing our metadata */
-    private final Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
-
     /** Ids of FileConverter plugins to be applied in order before indexing the file. */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Converter plugins to apply before indexing (optional)")
     private List<String> converters = new ArrayList<>();
 
     /** id of a {@link FileConverter} to run files through prior to indexing */
+    @JsonPropertyDescription("Deprecated; use converters list instead")
     private String convertPluginId;
 
     /**
      * id of a {@link FileConverter} to run files through prior to indexing, this
      * happens after converting (if applicable)
      */
+    @JsonPropertyDescription("Deprecated; use converters list instead")
     private String tagPluginId;
+
+    /**
+     * What type of file is this (e.g. xml, tabular, plaintext)? Determines subclass
+     * of {@link InputFormatTypeConfig} to instantiate
+     */
+    @JsonPropertyDescription("Input file type, e.g. xml/tabular/text (default: xml)")
+    private FileType fileType = FileType.XML;
+
+    /** Options for the file type (i.e. separator in case of tabular, etc.) */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Any options specific to the file type, such as the separator for tabular file formats (optional)")
+    private final Map<String, String> fileTypeOptions = new HashMap<>();
+
+    /** XML processor to use (deprecated, we always use Saxon) */
+    @JsonPropertyDescription("XML processor to use (deprecated, always Saxon)")
+    String processor = null;
+
+    public void setProcessor(String processor) {
+        this.processor = processor;
+    }
+
+    /** XML namespace declarations */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Any XML namespaces used in XPaths. Omit to ignore namespaces.")
+    final Map<String, String> namespaces = new LinkedHashMap<>();
+
+    /** How to find our documents */
+    @JsonPropertyDescription("XPath to document(s) in an input file (default: /)")
+    private String documentPath = "/";
+
+    /** Should we store the document in the content store? (default: yes) */
+    @JsonPropertyDescription("Should we store the document in the content store? (default: true)")
+    private boolean store = true;
+
+    /**
+     * Before adding metadata fields to the document, this name mapping is applied.
+     */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Metadata field name mapping. Deprecated, use processing step on name path instead.")
+    final Map<String, String> indexFieldAs = new LinkedHashMap<>();
+
+    /** What default analyzer to use if not overridden */
+    @JsonInclude(value=JsonInclude.Include.CUSTOM, valueFilter= JsonFilters.IsDefault.class)
+    @JsonPropertyDescription("Default analyzer to use for metadata fields (default: DEFAULT)")
+    private String metadataDefaultAnalyzer = "DEFAULT";
+
+    @JsonPropertyDescription("When to use the default unknown value for metadata fields")
+    private UnknownCondition metadataDefaultUnknownCondition = UnknownCondition.NEVER;
+
+    @JsonInclude(value=JsonInclude.Include.CUSTOM, valueFilter= JsonFilters.IsUnknown.class)
+    @JsonPropertyDescription("The unknown value to use for metadata fields")
+    private String metadataDefaultUnknownValue = "unknown";
+
+    public static class MetadataDeserializer extends StdDeserializer<List<ConfigMetadataBlock>> {
+        public MetadataDeserializer() {
+            super(List.class);
+        }
+
+        @Override
+        public List<ConfigMetadataBlock> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            ObjectCodec codec = p.getCodec();
+            JsonNode node = codec.readTree(p);
+            List<ConfigMetadataBlock> result = new ArrayList<>();
+            if (node.isObject()) {
+                // Single object: wrap it in a list
+                result.add(codec.treeToValue(node, ConfigMetadataBlock.class));
+            } else if (node.isArray()) {
+                // List of objects: parse as usual
+                for (JsonNode element : node) {
+                    result.add(codec.treeToValue(element, ConfigMetadataBlock.class));
+                }
+            }
+            return result;
+        }
+    }
+
+    /** Annotated fields (usually just "contents") */
+    @JsonPropertyDescription("Annotated fields in the document, usually just one, often named 'contents'")
+    private final Map<String, ConfigAnnotatedField> annotatedFields = new LinkedHashMap<>();
+
+    public void setAnnotatedFields(Map<String, ConfigAnnotatedField> annotatedFields) {
+        this.annotatedFields.clear();
+        this.annotatedFields.putAll(annotatedFields);
+        for (Map.Entry<String, ConfigAnnotatedField> entry : annotatedFields.entrySet()) {
+            // Make sure each field knows its name
+            entry.getValue().setName(entry.getKey());
+        }
+    }
+
+    /** Blocks of embedded metadata */
+    @JsonDeserialize(using = MetadataDeserializer.class)
+    @JsonPropertyDescription("Block(s) that configure how to index metadata fields.")
+    private final List<ConfigMetadataBlock> metadata = new ArrayList<>();
+
+    /** Linked document(s), e.g. containing our metadata */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonPropertyDescription("Linked documents. Deprecated, use XPath 3 doc() function instead.")
+    private final Map<String, ConfigLinkedDocument> linkedDocuments = new LinkedHashMap<>();
+
+    /** Configuration that will be added to indexmetadata when creating a corpus */
+    @JsonPropertyDescription("Corpus-level metadata, such as the persistent identifier (pidField) and text direction.")
+    private final ConfigCorpus corpusConfig = new ConfigCorpus();
 
     /**
      * What file was this format read from? Useful if we want to display it in BLS.
      */
+    @JsonIgnore
     private File readFromFile;
+
+    /**
+     * Construct empty input format instance.
+     */
+    public ConfigInputFormat() {
+        this("UNKNOWN");
+    }
 
     /**
      * Construct empty input format instance.
@@ -148,16 +336,7 @@ public class ConfigInputFormat {
         this.name = name;
     }
 
-    public static final int MIN_VERSION = 2;
-
-    public static final int MAX_VERSION = 2;
-
-    public void setVersion(int version) {
-        if (version < MIN_VERSION || version > MAX_VERSION)
-            throw new InvalidInputFormatConfig("Invalid version number: " + version);
-        // We ignore version now.
-    }
-
+    @JsonIgnore
     public String getOriginalFileContents() {
         try {
             if (readFromFile == null)
@@ -168,34 +347,42 @@ public class ConfigInputFormat {
         }
     }
 
-    /**
-     *
-     * @param file the file to read, the name of this file (minus the .blf.*
-     *            extension) will be used as this format's name.
-     * @throws IOException on error
-     */
-    public ConfigInputFormat(File file) throws IOException {
-        this.readFromFile = file;
-        this.name = ConfigInputFormat.stripExtensions(file.getName());
-        InputFormatReader.read(file, this);
-    }
+    public void finalizeAndValidate(InputFormatMessages messages) {
+        // Ensure that if we have any linked documents we want to store (like metadata), there exists an
+        // annotated field where we can store it (even if it has no annotations).
+        for (ConfigLinkedDocument ld: getLinkedDocuments().values()) {
+            if (ld.shouldStore() && getAnnotatedField(ld.getName()) == null) {
+                // Field doesn't exit yet. Create a dummy field for it.
+                addAnnotatedField(ConfigAnnotatedField.createDummyForStoringLinkedDocument(ld.getName()));
+            }
+        }
 
-    /**
-     * Validate this configuration.
-     */
-    public void validate() {
+        // Default to Saxon if no processor specified
+        if (getFileType() == FileType.XML &&
+                getFileTypeOptions().get(InputFormatTypeXml.FT_OPT_PROCESSOR) == null) {
+            addFileTypeOption(InputFormatTypeXml.FT_OPT_PROCESSOR, InputFormatTypeXml.PROCESSOR_NAME);
+        }
+
+        // Validate
         String t = "input format";
         req(name, t, "name");
         req(documentPath, t, "documentPath");
-        for (ConfigMetadataBlock b : metadataBlocks)
-            b.validate();
+        for (ConfigMetadataBlock b : metadata)
+            b.validate(messages);
         for (ConfigAnnotatedField af : annotatedFields.values()) {
             if (fileType != FileType.XML)
                 af.setWordPath("N/A"); // prevent validation error
-            af.validate();
+            af.validate(messages);
         }
         for (ConfigLinkedDocument ld : linkedDocuments.values())
-            ld.validate();
+            ld.validate(messages);
+
+        if (processor != null) {
+            messages.warning("encountered 'processor' key (whic is ignored by BlackLab v5+)");
+        }
+        if (!linkedDocuments.isEmpty()) {
+            messages.warning("'linkedDocuments' section is deprecated; use XPath 3 doc() function instead (see https://blacklab.ivdnt.org/guide/index-your-data/metadata for instructions)");
+        }
     }
 
     static void req(String value, String type, String name) {
@@ -203,8 +390,8 @@ public class ConfigInputFormat {
             throw new InvalidInputFormatConfig(StringUtils.capitalize(type) + " must have a " + name);
     }
 
-    static void req(boolean test, String type, String mustMsg) {
-        if (!test)
+    static void req(boolean testSucceeded, String type, String mustMsg) {
+        if (!testSucceeded)
             throw new InvalidInputFormatConfig(StringUtils.capitalize(type) + " must " + mustMsg);
     }
 
@@ -236,12 +423,13 @@ public class ConfigInputFormat {
         this.fileType = fileType;
     }
 
-    public boolean isVisible() {
-        return visible;
+    @JsonInclude(value=JsonInclude.Include.CUSTOM, valueFilter= JsonFilters.IsTrue.class)
+    public boolean getIsVisible() {
+        return isVisible;
     }
 
-    public void setVisible(boolean visible) {
-        this.visible = visible;
+    public void setIsVisible(boolean visible) {
+        this.isVisible = visible;
     }
 
     public void setDocumentPath(String documentPath) {
@@ -251,18 +439,22 @@ public class ConfigInputFormat {
     void addMetadataBlock(ConfigMetadataBlock b) {
         if (b.getAnalyzer().isEmpty())
             b.setDefaultAnalyzer(metadataDefaultAnalyzer);
-        metadataBlocks.add(b);
+        metadata.add(b);
     }
 
     public ConfigMetadataBlock createMetadataBlock() {
         ConfigMetadataBlock b = new ConfigMetadataBlock();
         b.setDefaultAnalyzer(metadataDefaultAnalyzer);
-        metadataBlocks.add(b);
+        metadata.add(b);
         return b;
     }
 
-    public List<ConfigMetadataBlock> getMetadataBlocks() {
-        return Collections.unmodifiableList(metadataBlocks);
+    public Map<String, ConfigAnnotatedField> getAnnotatedFields() {
+        return Collections.unmodifiableMap(annotatedFields);
+    }
+
+    public List<ConfigMetadataBlock> getMetadata() {
+        return Collections.unmodifiableList(metadata);
     }
 
     public void addAnnotatedField(ConfigAnnotatedField f) {
@@ -275,10 +467,12 @@ public class ConfigInputFormat {
     }
 
     public void setConvertPluginId(String id) {
+        logger.warn("'convertPlugin' key in input format config is deprecated; please use 'converters' list instead.");
         this.convertPluginId = id;
     }
 
     public void setTagPluginId(String id) {
+        logger.warn("'tagPlugin' key in input format config is deprecated; please use 'converters' list instead.");
         this.tagPluginId = id;
     }
 
@@ -298,6 +492,7 @@ public class ConfigInputFormat {
         return !converters.isEmpty() || !StringUtils.isEmpty(convertPluginId) || !StringUtils.isEmpty(tagPluginId);
     }
 
+    @JsonIgnore
     public boolean isNamespaceAware() {
         return !namespaces.isEmpty();
     }
@@ -308,10 +503,6 @@ public class ConfigInputFormat {
 
     public String getDocumentPath() {
         return documentPath;
-    }
-
-    public Map<String, ConfigAnnotatedField> getAnnotatedFields() {
-        return Collections.unmodifiableMap(annotatedFields);
     }
 
     public ConfigAnnotatedField getAnnotatedField(String name) {
@@ -389,7 +580,7 @@ public class ConfigInputFormat {
     }
 
     public ConfigMetadataField getMetadataField(String fieldname) {
-        for (ConfigMetadataBlock bl : metadataBlocks) {
+        for (ConfigMetadataBlock bl : metadata) {
             ConfigMetadataField f = bl.getMetadataField(fieldname);
             if (f != null)
                 return f;
@@ -397,17 +588,11 @@ public class ConfigInputFormat {
         return null;
     }
 
-    public static String stripExtensions(String fileName) {
-        String name = fileName.replaceAll("\\.(ya?ml|json)$", "");
-        if (name.endsWith(".blf"))
-            return name.substring(0, name.length() - 4);
-        return name;
-    }
-
     public File getReadFromFile() {
         return readFromFile;
     }
 
+    @JsonIgnore
     public BufferedReader getFormatFile() {
         try {
             if (readFromFile == null)
@@ -415,7 +600,7 @@ public class ConfigInputFormat {
 
             if (readFromFile.getPath().startsWith("$BLACKLAB_JAR")) {
                 InputStream stream = DocumentFormats.class.getClassLoader()
-                        .getResourceAsStream("formats/" + getName() + ".blf.yaml");
+                        .getResourceAsStream("formats/" + FormatFileNameUtil.yamlFormatFileName(getName()));
                 return new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8));
             }
             return FileUtil.openForReading(readFromFile);
@@ -457,8 +642,14 @@ public class ConfigInputFormat {
         this.metadataDefaultUnknownValue = unknownValue;
     }
 
+    @JsonIgnore
     public String getConfigFileType() {
         return FilenameUtils.getExtension(getReadFromFile().getName()).toLowerCase();
+    }
+
+    public void setBaseFormat(String baseFormatName) {
+        throw new InvalidInputFormatConfig("Input format configuration inheritance ('baseFormat' key) was removed. " +
+                "Please copy the base format configuration to your own format and customize it.");
     }
 
 }

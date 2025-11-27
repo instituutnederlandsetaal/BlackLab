@@ -94,10 +94,6 @@ public class AnnotatedFieldWriter {
         this.docWriter = docWriter;
         relationsStrategy = docWriter.getRelationsStrategy();
         relationAnnotationName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
-        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
-            logger.warn("Field name '" + name + MSG_IS_DISCOURAGED_REASON);
-        if (!AnnotatedFieldNameUtil.isValidXmlElementName(mainAnnotationName))
-            logger.warn("Annotation name '" + mainAnnotationName + MSG_IS_DISCOURAGED_REASON);
         boolean includeOffsets = true;
         fieldName = name;
         this.needsPrimaryValuePayloads = needsPrimaryValuePayloads;
@@ -112,8 +108,6 @@ public class AnnotatedFieldWriter {
 
     public AnnotationWriter addAnnotation(String name, AnnotationSensitivities sensitivity, boolean includePayloads,
             boolean createForwardIndex) {
-        if (!AnnotatedFieldNameUtil.isValidXmlElementName(name))
-            logger.warn("Annotation name '" + name + MSG_IS_DISCOURAGED_REASON);
         AnnotationWriter p = new AnnotationWriter(this, name, sensitivity, false, includePayloads,
                 needsPrimaryValuePayloads);
         if (noForwardIndexAnnotations.contains(name) || !createForwardIndex) {

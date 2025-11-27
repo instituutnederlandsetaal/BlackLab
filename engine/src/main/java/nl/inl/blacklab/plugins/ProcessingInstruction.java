@@ -35,14 +35,14 @@ public abstract class ProcessingInstruction extends Plugin {
     }
 
     public static ProcessingStep fromConfig(ConfigProcessStep configProcessStep) {
-        String method = configProcessStep.getMethod();
-        if (method.equals("default")) // (default was the old name for ifEmpty)
-            method = "ifEmpty";
+        String action = configProcessStep.getAction();
+        if (action.equals("default")) // (default was the old name for ifEmpty)
+            action = "ifEmpty";
         try {
-            ProcessingInstruction pt = PluginManager.type(ProcessingInstruction.class).get(method);
+            ProcessingInstruction pt = PluginManager.type(ProcessingInstruction.class).get(action);
             return pt.get(configProcessStep.getParam());
         } catch (PluginException e){
-            throw new IllegalArgumentException("Unknown method: " + method);
+            throw new IllegalArgumentException("Unknown action: " + action);
         }
     }
 

@@ -24,7 +24,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.indexers.config.InputFormatReader;
+import nl.inl.blacklab.indexers.config.FormatFileNameUtil;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.util.FileUtil;
 
@@ -78,7 +78,6 @@ public class DocumentFormats {
     }
 
     public static InputFormatInfo add(ConfigInputFormat format) throws InvalidInputFormatConfig {
-        format.validate();
         return add(new InputFormatInfoWithConfig(format));
     }
 
@@ -167,16 +166,16 @@ public class DocumentFormats {
                 "tei-p5-legacy", "testformat", "tsv-frog",
                 "tsv", "txt" };
         for (String formatIdentifier : formats) {
-            String fileNameRelative = "formats/" + formatIdentifier + ".blf.yaml";
+            String fileNameRelative = "formats/" + FormatFileNameUtil.yamlFormatFileName(formatIdentifier);
             try (InputStream is = DocumentFormats.class.getClassLoader()
                     .getResourceAsStream(fileNameRelative)) {
                 if (is == null)
                     continue; // not found
 
                 try (Reader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-                    ConfigInputFormat format = new ConfigInputFormat(formatIdentifier);
+
+                    ConfigInputFormat format = ConfigInputFormat.read(reader, false, formatIdentifier);
                     format.setReadFromFile(new File("$BLACKLAB_JAR/" + fileNameRelative));
-                    InputFormatReader.read(reader, false, format);
                     add(format);
                 }
             } catch (InvalidInputFormatConfig | IOException e) {
@@ -211,8 +210,8 @@ public class DocumentFormats {
         FileUtil.FileTask configLocator = new FileUtil.FileTask() {
             @Override
             public void process(File f) {
-                if (f.getName().matches("^[\\-\\w]+\\.blf\\.(ya?ml|json)$")) {
-                    String formatIdentifier = ConfigInputFormat.stripExtensions(f.getName());
+                if (FormatFileNameUtil.isValidFileName(f.getName())) {
+                    String formatIdentifier = FormatFileNameUtil.stripExtensions(f.getName());
                     if (!Files.isReadable(f.toPath()) || !Files.isRegularFile(f.toPath())) {
                         logger.trace("Skipping unreadable config file " + f);
                         return;
