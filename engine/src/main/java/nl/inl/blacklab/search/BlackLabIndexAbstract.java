@@ -499,7 +499,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             if (mainContentsField == null) {
                 if (!indexMode) {
                     if (!isEmptyIndex)
-                        throw new InvalidIndex("Main contents field unknown");
+                        throw new ErrorOpeningIndex("Main contents field unknown");
                 }
             }
 
