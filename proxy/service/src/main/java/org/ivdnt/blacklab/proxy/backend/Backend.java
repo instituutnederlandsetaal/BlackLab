@@ -4,6 +4,7 @@ import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestFieldInfo;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 
 /** Represents a backend that executes requests (e.g. proxy to another BLS, or directly to BlackLab) */
@@ -14,6 +15,8 @@ public interface Backend {
     }
 
     Response corpusInfo(ApiVersion apiVersion, RequestCorpusInfo req);
+
+    Response field(ApiVersion apiVersion, RequestFieldInfo req);
 
     Response hits(ApiVersion apiVersion, String corpusName, MultivaluedMap<String, String> parameters,
             HttpHeaders headers, String method);
@@ -37,9 +40,6 @@ public interface Backend {
             String method);
 
     Response termFreq(ApiVersion apiVersion, String corpusName, MultivaluedMap<String, String> parameters, String method);
-
-    Response field(ApiVersion apiVersion, String corpusName, String fieldName, MultivaluedMap<String, String> parameters,
-            String method);
 
     Response status(ApiVersion apiVersion, String corpusName, MultivaluedMap<String, String> parameters,
             String method);
