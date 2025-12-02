@@ -1,13 +1,32 @@
 package org.ivdnt.blacklab.proxy.backend.blacklab;
 
 import org.ivdnt.blacklab.proxy.backend.Backend;
+import org.ivdnt.blacklab.proxy.logic.Requests;
+import org.ivdnt.blacklab.proxy.representation.AutocompleteResponse;
 import org.ivdnt.blacklab.proxy.representation.Corpus;
+import org.ivdnt.blacklab.proxy.representation.CorpusStatus;
+import org.ivdnt.blacklab.proxy.representation.DocContentsResults;
+import org.ivdnt.blacklab.proxy.representation.DocInfoResponse;
+import org.ivdnt.blacklab.proxy.representation.DocSnippetResponse;
+import org.ivdnt.blacklab.proxy.representation.DocsResults;
+import org.ivdnt.blacklab.proxy.representation.HitsResults;
+import org.ivdnt.blacklab.proxy.representation.InputFormatInfo;
+import org.ivdnt.blacklab.proxy.representation.InputFormatXsltResults;
+import org.ivdnt.blacklab.proxy.representation.InputFormats;
+import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
+import org.ivdnt.blacklab.proxy.representation.ParsePatternResponse;
+import org.ivdnt.blacklab.proxy.representation.RelationsResponse;
+import org.ivdnt.blacklab.proxy.representation.Server;
+import org.ivdnt.blacklab.proxy.representation.TermFreqList;
+import org.ivdnt.blacklab.proxy.representation.TokenFreqList;
+import org.ivdnt.blacklab.proxy.resources.ParamsUtil;
 import org.ivdnt.blacklab.proxy.resources.SimpleResponse;
 
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestFieldInfo;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 
@@ -32,6 +51,11 @@ public class BlacklabBackend implements Backend {
         // TODO: full API version handling
         Corpus corpus = conv(apiVersion).corpus(req, WebserviceOperations.corpusInfo(req));
         return SimpleResponse.success(corpus);
+    }
+
+    @Override
+    public Response field(ApiVersion apiVersion, RequestFieldInfo req) {
+        return SimpleResponse.success(conv(apiVersion).field(req, WebserviceOperations.field(req)));
     }
 
     @Override

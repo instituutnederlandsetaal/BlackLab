@@ -33,6 +33,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestFieldInfo;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WsParam;
@@ -56,6 +57,18 @@ public class ProxyBackend implements Backend {
                 WsParam.LIMIT_VALUES, Long.toString(req.limitValues())
         );
         return SimpleResponse.success(Requests.get(this.client, params, Corpus.class));
+    }
+
+    @Override
+    public Response field(ApiVersion apiVersion, RequestFieldInfo req) {
+        Map<WebserviceParameter, String> params = Map.of(
+                WebserviceParameter.CORPUS_NAME, req.corpusName(),
+                WebserviceParameter.OPERATION, WebserviceOperation.FIELD_INFO.toString(),
+                WebserviceParameter.FIELD, req.fieldName()
+        );
+        return SimpleResponse.success(
+                Requests.request(this.client, params, req.method(),
+                        List.of(MetadataField.class, AnnotatedField.class)));
     }
 
     @Override
