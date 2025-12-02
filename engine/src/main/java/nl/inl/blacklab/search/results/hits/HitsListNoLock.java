@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.BigArrays;
 import it.unimi.dsi.fastutil.ints.IntBigArrayBigList;
 import it.unimi.dsi.fastutil.ints.IntBigList;
 import it.unimi.dsi.fastutil.longs.LongBigArrays;
+import it.unimi.dsi.fastutil.longs.LongComparator;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrays;
 import it.unimi.dsi.fastutil.objects.ObjectBigList;
@@ -262,11 +263,10 @@ class HitsListNoLock extends HitsListAbstract {
                     hitIndex++;
                 }
             }
-            LongBigArrays.parallelQuickSort(indices, (a, b) -> {
-                CollationKey o1 = BigArrays.get(sortValues, a);
-                CollationKey o2 = BigArrays.get(sortValues, b);
-                return o1.compareTo(o2);
-            });
+            LongComparator longComparator = sortBy.isReverse() ?
+                    (a, b) -> BigArrays.get(sortValues, b).compareTo(BigArrays.get(sortValues, a)) :
+                    (a, b) -> BigArrays.get(sortValues, a).compareTo(BigArrays.get(sortValues, b));
+            LongBigArrays.parallelQuickSort(indices, longComparator);
         } else {
             LongBigArrays.parallelQuickSort(indices, sortBy);
         }

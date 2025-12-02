@@ -8,6 +8,7 @@ import org.apache.lucene.queries.spans.Spans;
 import com.ibm.icu.text.CollationKey;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
+import it.unimi.dsi.fastutil.ints.IntComparator;
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValueString;
@@ -191,7 +192,10 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
             for (int i = 0; i < sortValues.length; ++i) {
                 sortValues[i] = sortBy.getCollationKey(i);
             }
-            IntArrays.parallelQuickSort(indices, (a, b) -> sortValues[a].compareTo(sortValues[b]));
+            IntComparator cmp = sortBy.isReverse() ?
+                    (a, b) -> sortValues[b].compareTo(sortValues[a]) :
+                    (a, b) -> sortValues[a].compareTo(sortValues[b]);
+            IntArrays.parallelQuickSort(indices, cmp);
         } else {
             IntArrays.parallelQuickSort(indices, sortBy::compare);
         }
