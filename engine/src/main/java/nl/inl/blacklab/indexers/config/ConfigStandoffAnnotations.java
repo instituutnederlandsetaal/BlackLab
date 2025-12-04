@@ -162,6 +162,7 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
     // synonym for relation type
     public void setTargetPath(String targetPath) {
         setSpanEndPath(targetPath);
+        setType(AnnotationType.RELATION);
     }
 
     public boolean isSpanEndIsInclusive() {
