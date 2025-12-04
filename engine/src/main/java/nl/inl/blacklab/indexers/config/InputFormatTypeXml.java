@@ -597,7 +597,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             if (indexAtPositions.isEmpty()) {
                                 if (type != AnnotationType.RELATION) {
                                     warn("Standoff annotation for inline tag has end but no start: "
-                                            + standoffNode);
+                                            + standoff.getPath());
                                 } else {
                                     // Standoff root relation
                                     processStandoffSpan(standoffNode, type, Span.invalid(), endOrTarget,

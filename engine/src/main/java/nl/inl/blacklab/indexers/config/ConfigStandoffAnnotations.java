@@ -189,6 +189,10 @@ public class ConfigStandoffAnnotations implements ConfigWithAnnotations {
         return "ConfigStandoffAnnotations [path=" + path + "]";
     }
 
+    public void setType(String type) {
+        setType(AnnotationType.fromStringValue(type));
+    }
+
     public void setType(AnnotationType type) {
         this.type = type;
     }
