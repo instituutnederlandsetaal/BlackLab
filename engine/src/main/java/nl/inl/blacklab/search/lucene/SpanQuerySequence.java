@@ -373,11 +373,14 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         // clause?
         anyRewritten |= optimizeClauses(cl, reader);
 
+        // If there's just one clause (left), return that directly
+        // (regardless of whether anything was rewritten)
+        if (cl.size() == 1)
+            return cl.get(0);
+
         if (!anyRewritten) {
             // Nothing rewritten. If this is a sequence of length one, just return the clause;
             // otherwise return this object unchanged.
-            if (cl.size() == 1)
-                return cl.get(0);
             return this;
         }
         return new SpanQuerySequence(cl.toArray(new BLSpanQuery[0]));

@@ -11,7 +11,6 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.optimize.ClauseCombinerNfa;
 import nl.inl.blacklab.search.results.QueryInfo;
@@ -289,7 +288,7 @@ public class TestQueryRewrite {
 
     @Test
     public void testRewriteRegexWithExclude() {
-        assertRewriteResult("'qu[^a]ck'", "OR(TERM(contents%word@i:quick))");
+        assertRewriteResult("'qu[^a]ck'", "TERM(contents%word@i:quick)");
     }
 
     @Test

@@ -174,6 +174,8 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         SpanQuery[] clauses = in.getClauses();
         if (clauses.length == 0)
             return new SpanQueryNoHits(queryInfo, queryInfo.field().mainAnnotation().mainSensitivity().luceneField());
+        if (clauses.length == 1)
+            return BLSpanQuery.wrap(queryInfo, clauses[0]);
         BLSpanQuery[] blClauses = new BLSpanQuery[clauses.length];
         String field = null;
         boolean allInSameField = true;

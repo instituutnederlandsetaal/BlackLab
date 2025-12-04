@@ -162,7 +162,7 @@ public class TestNfaFromQuery {
 
         @Override
         public int getTokenSegmentSortPosition(int annotIndex, int pos, MatchSensitivity sensitivity) {
-            throw new UnsupportedOperationException();
+            return getTokenSegmentTermId(annotIndex, pos); //throw new UnsupportedOperationException();
         }
 
         @Override

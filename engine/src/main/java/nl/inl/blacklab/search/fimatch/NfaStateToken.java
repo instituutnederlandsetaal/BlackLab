@@ -27,6 +27,9 @@ public class NfaStateToken extends NfaState {
     /** What annotation we're trying to match */
     protected final String luceneField;
 
+    /** Sensitivity of the luceneField */
+    private final MatchSensitivity sensitivity;
+
     /**
      * Index of the annotation we're trying to match. Only valid after
      * lookupAnnotationIndexes() called.
@@ -51,18 +54,17 @@ public class NfaStateToken extends NfaState {
     protected ForwardIndexAccessor fiAccessor;
 
     public NfaStateToken(String luceneField, String inputToken, NfaState nextState) {
-        this.luceneField = luceneField;
-        inputTokenStrings = new HashSet<>();
-        if (inputToken == null)
-            acceptAnyToken = true;
-        else
-            inputTokenStrings.add(inputToken);
-        this.nextState = nextState;
+        this(luceneField, inputToken == null ? null : Set.of(inputToken), nextState);
     }
 
     public NfaStateToken(String luceneField, Set<String> inputTokens, NfaState nextState) {
         this.luceneField = luceneField;
-        this.inputTokenStrings = new HashSet<>(inputTokens);
+        sensitivity = AnnotatedFieldNameUtil.sensitivity(luceneField);
+        if (inputTokens == null) {
+            inputTokenStrings = Set.of();
+            acceptAnyToken = true;
+        } else
+            inputTokenStrings = new HashSet<>(inputTokens);
         this.nextState = nextState;
     }
 
@@ -78,8 +80,8 @@ public class NfaStateToken extends NfaState {
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         // Token state. Check if it matches token from token source, and if so, continue.
-        int actualTokenSegmentTermId = fiDoc.getTokenSegmentTermId(annotationIndex, pos);
-        if (acceptAnyToken && actualTokenSegmentTermId >= 0 || inputTokensSortPositions.contains(actualTokenSegmentTermId)) {
+        int actualTokenSegmentSortPos = fiDoc.getTokenSegmentSortPosition(annotationIndex, pos, sensitivity);
+        if (acceptAnyToken && actualTokenSegmentSortPos >= 0 || inputTokensSortPositions.contains(actualTokenSegmentSortPos)) {
             if (nextState == null) {
                 // null stands for the match state
                 if (matchEnds != null)
