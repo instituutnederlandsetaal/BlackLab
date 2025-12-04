@@ -51,7 +51,8 @@ public class TestYaml {
         BlackLab.implicitInstance(); // init plugins
         //ClassLoader classLoader = this.getClass().getClassLoader();
         //File file = new File(classLoader.getResource("formats/tei-p5.blf.yaml").getFile());
-        File file = new File("/home/jan/int-projects/corpus-frontend-config/chn-intern/chn-intern-ngrams.blf.yaml");
+        //File file = new File("/home/jan/int-projects/corpus-frontend-config/chn-intern/chn-intern-ngrams.blf.yaml");
+        File file = new File("/home/jan/int-projects/corpus-frontend-config/OFR/OFR.blf.yaml");
         //File file = new File("/home/jan/int-projects/corpus-frontend-config/opensonar/CgnFolia.blf.yaml");
         ObjectMapper mapper = Json.getYamlObjectMapper();
         ConfigInputFormat config = ConfigInputFormat.read(file);

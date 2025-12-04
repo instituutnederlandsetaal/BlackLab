@@ -350,7 +350,9 @@ public class ConfigInputFormat {
     private void finalizeAndValidate(InputFormatMessages messages) {
         // Ensure that if we have any linked documents we want to store (like metadata), there exists an
         // annotated field where we can store it (even if it has no annotations).
-        for (ConfigLinkedDocument ld: getLinkedDocuments().values()) {
+        for (Map.Entry<String, ConfigLinkedDocument> e: linkedDocuments.entrySet()) {
+            ConfigLinkedDocument ld = e.getValue();
+            ld.setName(e.getKey());
             if (ld.shouldStore() && getAnnotatedField(ld.getName()) == null) {
                 // Field doesn't exit yet. Create a dummy field for it.
                 addAnnotatedField(ConfigAnnotatedField.createDummyForStoringLinkedDocument(ld.getName()));
@@ -374,8 +376,11 @@ public class ConfigInputFormat {
                 af.setWordPath("N/A"); // prevent validation error
             af.validate(messages);
         }
-        for (ConfigLinkedDocument ld : linkedDocuments.values())
+        for (Map.Entry<String, ConfigLinkedDocument> e : linkedDocuments.entrySet()) {
+            ConfigLinkedDocument ld = e.getValue();
+            ld.setName(e.getKey());
             ld.validate(messages);
+        }
 
         if (processor != null)
             messages.warning("encountered 'processor' key (this is ignored by BlackLab v5+)");
@@ -514,6 +519,14 @@ public class ConfigInputFormat {
 
     public Map<String, ConfigLinkedDocument> getLinkedDocuments() {
         return Collections.unmodifiableMap(linkedDocuments);
+    }
+
+    public void setLinkedDocuments(Map<String, ConfigLinkedDocument> linkedDocuments) {
+        this.linkedDocuments.clear();
+        for (Map.Entry<String, ConfigLinkedDocument> e : linkedDocuments.entrySet()) {
+            e.getValue().setName(e.getKey());
+        }
+        this.linkedDocuments.putAll(linkedDocuments);
     }
 
     private ConfigLinkedDocument getLinkedDocument(String name, boolean createIfNotFound) {

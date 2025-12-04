@@ -398,7 +398,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormat()).orElse(null);
             if (inputFormat.isConfigurationBased()) {
                 addFieldInfoFromConfig(inputFormat.getConfig());
             }
@@ -433,7 +433,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
         // Also (recursively) add groups config from any linked documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
+            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormat()).orElse(null);
             if (inputFormat.isConfigurationBased())
                 addGroupsInfoFromConfig(inputFormat.getConfig());
         }

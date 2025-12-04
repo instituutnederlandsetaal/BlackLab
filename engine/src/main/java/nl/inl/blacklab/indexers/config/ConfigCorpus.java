@@ -34,6 +34,11 @@ public class ConfigCorpus {
     /** How to group metadata fields */
     final List<ConfigMetadataFieldGroup> metadataFieldGroups = new ArrayList<>();
 
+    public void setMetadataFieldGroups(List<ConfigMetadataFieldGroup> groups) {
+        this.metadataFieldGroups.clear();
+        metadataFieldGroups.addAll(groups);
+    }
+
     public List<ConfigMetadataFieldGroup> getMetadataFieldGroups() {
         return Collections.unmodifiableList(metadataFieldGroups);
     }

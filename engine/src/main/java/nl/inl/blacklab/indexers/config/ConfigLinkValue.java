@@ -15,12 +15,15 @@ import nl.inl.util.XPathUtil;
 public class ConfigLinkValue {
 
     /** XPath to find value */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String valuePath;
 
     /** Field name to get from Lucene doc */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String valueField;
 
     /** Operations to perform on this value, if any */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private final List<ConfigProcessStep> process = new ArrayList<>();
 
     @JsonIgnore

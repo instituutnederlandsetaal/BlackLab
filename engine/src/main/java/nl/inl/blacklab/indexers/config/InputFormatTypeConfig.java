@@ -285,7 +285,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
 
                 try {
                     // Fetch and index the linked document
-                    indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormatIdentifier(),
+                    indexLinkedDocument(inputFile, pathInsideArchive, documentPath, ld.getInputFormat(),
                             ld.shouldStore() ? ld.getName() : null);
                 } catch (Exception e) {
                     String moreInfo = "(inputFile = " + inputFile;

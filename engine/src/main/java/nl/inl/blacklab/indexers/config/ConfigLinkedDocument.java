@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 /** Configuration for a linked document. */
@@ -47,7 +48,7 @@ public class ConfigLinkedDocument {
     private MissingLinkPathAction ifLinkPathMissing = MissingLinkPathAction.FAIL;
 
     /** Format of the linked input file */
-    private String inputFormatIdentifier;
+    private String inputFormat;
 
     /** File or URL reference to our linked document (or archive containing it) */
     private String inputFile;
@@ -55,13 +56,19 @@ public class ConfigLinkedDocument {
     /**
      * If input file is a TAR or ZIP archive, this is the path inside the archive
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String pathInsideArchive;
 
     /**
      * Path to our specific document inside this file (if omitted, file must contain
      * exactly one document)
      */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private String documentPath;
+
+    public ConfigLinkedDocument() {
+        this("");
+    }
 
     public ConfigLinkedDocument(String name) {
         this.name = name;
@@ -70,7 +77,7 @@ public class ConfigLinkedDocument {
     void validate(InputFormatMessages messages) {
         String t = "linked document";
         messages.mustHave(t, name, "name");
-        if (inputFormatIdentifier == null)
+        if (inputFormat == null)
             messages.error("linked document must have inputFormat");
         messages.mustHave(t, inputFile, "inputFile");
         for (ConfigLinkValue lv : linkValues) {
@@ -110,12 +117,12 @@ public class ConfigLinkedDocument {
         this.ifLinkPathMissing = ifLinkPathMissing;
     }
 
-    public String getInputFormatIdentifier() {
-        return inputFormatIdentifier;
+    public String getInputFormat() {
+        return inputFormat;
     }
 
-    public void setInputFormatIdentifier(String formatIdentifier) {
-        this.inputFormatIdentifier = formatIdentifier;
+    public void setInputFormat(String formatIdentifier) {
+        this.inputFormat = formatIdentifier;
     }
 
     public String getInputFile() {
