@@ -809,6 +809,11 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock) {
                 // For each instance of this metadata block...
                 xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
+                    // For each subblock... (for multiple levels of containerPaths)
+                    for (ConfigMetadataBlock subBlock: metaBlock.getBlocks()) {
+                        processMetadataBlock(block, subBlock);
+                    }
+
                     // For each configured metadata field...
                     List<ConfigMetadataField> fields = metaBlock.getFields();
                     //noinspection ForLoopReplaceableByForEach

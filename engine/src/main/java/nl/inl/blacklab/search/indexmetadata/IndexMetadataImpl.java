@@ -383,11 +383,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
     private void addFieldInfoFromConfig(ConfigInputFormat config) {
         // Add metadata info
         for (ConfigMetadataBlock b: config.getMetadata()) {
-            for (ConfigMetadataField f: b.getFields()) {
-                if (f.isForEach())
-                    continue;
-                MetadataFieldImpl metadataField = metadataFields.addFromConfig(f);
-            }
+            handleMetadataBlock(b);
         }
 
         // Add annotated field info
@@ -404,6 +400,17 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
             }
         }
 
+    }
+
+    private void handleMetadataBlock(ConfigMetadataBlock b) {
+        for (ConfigMetadataField f: b.getFields()) {
+            if (f.isForEach())
+                continue;
+            MetadataFieldImpl metadataField = metadataFields.addFromConfig(f);
+        }
+        for (ConfigMetadataBlock nestedBlock: b.getBlocks()) {
+            handleMetadataBlock(nestedBlock);
+        }
     }
 
     private void addGroupsInfoFromConfig(ConfigInputFormat config) {

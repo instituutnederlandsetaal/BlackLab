@@ -34,7 +34,7 @@ metadata:
   - name: docId
     valuePath: "@id"
 
-    # Each <meta/> tag corresponds with a metadata field
+    # Each <meta/> child element of <metadata/> corresponds with a metadata field
   - forEachPath: meta
     namePath: "@name"   # name attribute contains field name
     valuePath: .        # element text is the field value
@@ -43,6 +43,28 @@ metadata:
 It's also possible to process metadata values before they are indexed (see [Processing values](processing-values.md)), although it's 
 often preferable to do as much processing as possible in XPath.
 
+As you can see, `metadata` is a list, so you can define several metadata blocks, each with their own containerPath.
+Actually, you can even nest metadata blocks, so you can use multiple levels of containerPaths:
+
+```yaml
+metadata:
+  - containerPath: //metadata
+    blocks:
+      - containerPath: author        # relative to //metadata
+        fields:
+          - name: authorName
+            valuePath: name          # relative to //metadata/author
+          - name: authorYearOfBirth
+            valuePath: yearOfBirth   # relative to //metadata/author
+      - containerPath: title         # relative to //metadata
+        fields:
+          - name: titleLevel1
+            valuePath: main          # relative to //metadata/title
+          - name: titleLevel2
+            valuePath: sub           # relative to //metadata/title
+```
+
+As you can see, this can help reduce duplication, keeping your XPath expressions short and readable.
 
 ## Tokenize or not?
 
@@ -61,54 +83,6 @@ metadata:
   - name: docId
     valuePath: @docId
     type: untokenized
-```
-
-## Custom properties
-
-> Note that custom properties may be removed in a future version.
-
-Just like with annotations, you can specify a `displayName`, `description` and `uiType` for a metadata field. This 
-information is not used by BlackLab, but can be used by BlackLab Frontend or another application.
-For example, see [Metadata (Filters)](https://blacklab-frontend.ivdnt.org/customizing_the_interface/search_form/widgets.html#metadata-filters)
-
-In the `fields` section, you can specify `uiType` for each field to override the default GUI widget to use for the field. By default, fields that have only a few values will use `select`, while others will use `text`. There's also a `range` type for a range of numbers.
-
-Example:
-
-```yaml
-metadata:
-- fields:
-    - name: author
-      uiType: select
-      
-    - name: year
-      uiType: range
-      
-    - name: genre
-      uiType: text
-```
-
-Again, note that these properties may be removed from the `.blf.yaml` file specification in the future. It makes more sense to configure the frontend directly, for example using a custom script. See [Customizing the interface](https://blacklab-frontend.ivdnt.org/customizing_the_interface/intro.html).
-
-
-## Add a fixed metadata value to each document
-
-You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name. To do this, simply specify `value` instead of `valuePath`.
-
-```yaml
-metadata:
-
-- containerPath: metadata
-
-  fields:
-
-    # Regular metadata field    
-  - name: author
-    valuePath: author
-
-    # Metadata field with fixed value
-  - name: collection
-    value: blacklab-docs
 ```
 
 ## Linking to external document metadata
@@ -271,6 +245,54 @@ As you can see, it's possible to use local files or files via http; you can use 
 Linking to external files is mostly done to fetch metadata to accompany a "contents" file, but there's no reason why you couldn't turn the tables if you wanted, and index a set of metadata files that link to the corresponding "contents" file. The mechanism is universal; it would even be possible to link to a document that links to another document, although that may not be very useful.
 
 -->
+
+## Custom properties
+
+> Note that custom properties may be removed in a future version.
+
+Just like with annotations, you can specify a `displayName`, `description` and `uiType` for a metadata field. This
+information is not used by BlackLab, but can be used by BlackLab Frontend or another application.
+For example, see [Metadata (Filters)](https://blacklab-frontend.ivdnt.org/customizing_the_interface/search_form/widgets.html#metadata-filters)
+
+In the `fields` section, you can specify `uiType` for each field to override the default GUI widget to use for the field. By default, fields that have only a few values will use `select`, while others will use `text`. There's also a `range` type for a range of numbers.
+
+Example:
+
+```yaml
+metadata:
+- fields:
+    - name: author
+      uiType: select
+      
+    - name: year
+      uiType: range
+      
+    - name: genre
+      uiType: text
+```
+
+Again, note that these properties may be removed from the `.blf.yaml` file specification in the future. It makes more sense to configure the frontend directly, for example using a custom script. See [Customizing the interface](https://blacklab-frontend.ivdnt.org/customizing_the_interface/intro.html).
+
+
+## Add a fixed metadata value to each document
+
+You can add a field with a fixed value to every document indexed. This could be useful if you plan to add several data sets to one index and want to make sure each document is tagged with the data set name. To do this, simply specify `value` instead of `valuePath`.
+
+```yaml
+metadata:
+
+- containerPath: metadata
+
+  fields:
+
+    # Regular metadata field    
+  - name: author
+    valuePath: author
+
+    # Metadata field with fixed value
+  - name: collection
+    value: blacklab-docs
+```
 
 ## Corpus metadata
 

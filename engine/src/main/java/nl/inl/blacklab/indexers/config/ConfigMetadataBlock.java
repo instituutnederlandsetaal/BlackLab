@@ -5,6 +5,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 
 /** Configuration for a block of metadata fields. */
@@ -15,6 +17,18 @@ public class ConfigMetadataBlock {
 
     /** What default analyzer to use for these fields */
     private String defaultAnalyzer = "";
+
+    /** Optional sub-blocks, if we want to use multiple levels of containerPath */
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private List<ConfigMetadataBlock> blocks = new ArrayList<>();
+
+    public List<ConfigMetadataBlock> getBlocks() {
+        return blocks;
+    }
+
+    public void setBlocks(List<ConfigMetadataBlock> blocks) {
+        this.blocks = blocks;
+    }
 
     /** Metadata fields */
     private final List<ConfigMetadataField> fields = new ArrayList<>();
