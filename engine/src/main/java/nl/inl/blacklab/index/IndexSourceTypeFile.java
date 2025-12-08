@@ -46,6 +46,8 @@ public class IndexSourceTypeFile extends IndexSourceType {
                 FileReference file = FileReference.fromFile(dirAndGlob);
                 return FileIterator.from(file, getFileIteratorSettings());
             }
+            if (!globFilesInThisDir.contains("*") && !globFilesInThisDir.contains("?"))
+                throw new IllegalArgumentException("File does not exist: " + dirAndGlob);
             // No exact file, treat as directory + glob
             return FileIterator.from(inputDir, globFilesInThisDir, getFileIteratorSettings());
         }
