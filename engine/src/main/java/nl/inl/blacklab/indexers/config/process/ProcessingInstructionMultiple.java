@@ -1,5 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class ProcessingInstructionMultiple extends ProcessingInstruction {
         }
 
         @Override
-        public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
+        public Stream<String> perform(Stream<String> values, Map<String, Collection<String>> metadata) {
             for (ProcessingStep step: steps) {
                 values = step.perform(values, metadata);
             }
@@ -51,7 +52,7 @@ public class ProcessingInstructionMultiple extends ProcessingInstruction {
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             for (ProcessingStep step: steps) {
                 value = step.performSingle(value, metadata);
             }

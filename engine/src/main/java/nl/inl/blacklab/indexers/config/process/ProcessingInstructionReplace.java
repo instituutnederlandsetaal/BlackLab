@@ -1,6 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -54,7 +54,7 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
         }
 
         @Override
-        public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
+        public Stream<String> perform(Stream<String> values, Map<String, Collection<String>> metadata) {
             if (keepOriginal) {
                 return values.flatMap(v -> Stream.of(v, performSingle(v, metadata)));
             } else {
@@ -63,7 +63,7 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             return pattern.matcher(value).replaceAll(replacement);
         }
 

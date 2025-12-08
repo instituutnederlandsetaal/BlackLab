@@ -1,7 +1,7 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.time.YearMonth;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -53,7 +53,7 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             Integer y, m, d;
             y = getIntFieldValue(metadata, yearField);
             if (y == null)
@@ -71,12 +71,12 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
                     StringUtils.leftPad(d.toString(), 2, '0');
         }
 
-        private Integer getIntFieldValue(Map<String, List<String>> metadata, String fieldName) {
+        private Integer getIntFieldValue(Map<String, Collection<String>> metadata, String fieldName) {
             try {
-                List<String> metadataField = metadata.get(fieldName);
-                if (metadataField == null)
+                Collection<String> metadataField = metadata.get(fieldName);
+                if (metadataField == null || metadataField.isEmpty())
                     return null;
-                return Integer.parseInt(metadataField.get(0));
+                return Integer.parseInt(metadataField.iterator().next());
             } catch (Exception e) {
                 return null;
             }

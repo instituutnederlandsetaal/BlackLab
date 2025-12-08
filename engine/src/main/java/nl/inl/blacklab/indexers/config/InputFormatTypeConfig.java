@@ -2,7 +2,6 @@ package nl.inl.blacklab.indexers.config;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -120,8 +119,6 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
             }
 
             boolean inited = false;
-
-            protected final Map<String, Collection<String>> sortedMetadataValues = new HashMap<>();
 
             protected void ensureInitialized() {
                 if (inited)
@@ -264,7 +261,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                         results.add(result);
                     } else if (valueField != null) {
                         // Fetch value from Lucene doc
-                        List<String> metadataField = getMetadataField(valueField);
+                        Collection<String> metadataField = getMetadataField(valueField);
                         if (metadataField == null) {
                             throw new ErrorIndexingFile("Link value field " + valueField + " has no values (null)!");
                         }
@@ -350,14 +347,18 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                     return;
                 }
                 final String indexAsName = optTranslateMetadataFieldName(name);
-                this.sortedMetadataValues.computeIfAbsent(indexAsName, __ -> {
-                    ConfigMetadataField conf = config.getMetadataField(indexAsName);
-                    if (conf != null && conf.getSortValues()) {
-                        return new TreeSet<>(BlackLab.defaultCollator()::compare);
-                    } else {
-                        return new ArrayList<>();
-                    }
-                }).add(value);
+                value = StringUtil.trimWhitespace(value);
+                if (!value.isEmpty()) {
+                    metadataFieldValues.computeIfAbsent(indexAsName, __ -> {
+                        ConfigMetadataField conf = config.getMetadataField(indexAsName);
+                        if (conf != null && conf.getSortValues()) {
+                            return new TreeSet<>(BlackLab.defaultCollator()::compare);
+                        } else {
+                            return new ArrayList<>();
+                        }
+                    }).add(value);
+                    getDocWriter().metadata().registerMetadataField(indexAsName);
+                }
             }
 
             @Override
@@ -370,20 +371,15 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
 
             /**
              * Get a metadata field value.
-             * Overridden because we collect them in sortedMetadataValues while parsing the document,
-             * and if a value is needed while parsing (such as with linked metadata), we wouldn't
-             * otherwise be able to return it.
-             * Note that these values aren't processed yet, so that's still an issue.
+             * Overridden because we might need to get the value from document that linked to us
+             * (via the deprecated linkedDocuments system).
              *
              * @param name field name
              * @return value(s), or null if not defined
              */
             @Override
-            public List<String> getMetadataField(String name) {
-                List<String> v = super.getMetadataField(name);
-                if (v != null)
-                    return v;
-                v = collectionToList(sortedMetadataValues.get(name));
+            public Collection<String> getMetadataField(String name) {
+                Collection<String> v = super.getMetadataField(name);
                 if (v != null)
                     return v;
                 if (linkingDoc != null) {
@@ -396,13 +392,6 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
 
             @Override
             protected void endDocument() {
-                for (Map.Entry<String, Collection<String>> metadataValues: sortedMetadataValues.entrySet()) {
-                    String fieldName = metadataValues.getKey();
-                    for (String s: metadataValues.getValue()) {
-                        super.addMetadataField(fieldName, s);
-                    }
-                }
-                sortedMetadataValues.clear();
                 super.endDocument();
                 linkingDoc = null; // help GC
             }

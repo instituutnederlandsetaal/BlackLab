@@ -1,5 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -138,7 +139,7 @@ public class TestProcessingStepsType {
                 Collectors.toList()));
     }
 
-    private static final Map<String, List<String>> metadata = new HashMap<>();
+    private static final Map<String, Collection<String>> metadata = new HashMap<>();
     
     static {
         metadata.put("test", List.of("testValue"));

@@ -1,7 +1,7 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -48,7 +48,7 @@ public class ProcessingInstructionParsePos extends ProcessingInstruction {
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             // Trim character/string from beginning and end
             value = StringUtil.trimWhitespace(value);
             if (featureName.equals("_")) {

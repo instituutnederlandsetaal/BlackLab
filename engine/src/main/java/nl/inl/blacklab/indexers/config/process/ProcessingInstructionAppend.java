@@ -1,6 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -67,11 +67,11 @@ public class ProcessingInstructionAppend extends ProcessingInstruction {
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             String appendValue;
             if (field != null) {
                 // Append value of field
-                List<String> metadataField = metadata.get(field);
+                Collection<String> metadataField = metadata.get(field);
                 appendValue = metadataField == null ? "" : StringUtils.join(metadataField, separator);
             } else {
                 // Append fixed value

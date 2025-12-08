@@ -1,6 +1,7 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -57,11 +58,11 @@ public interface ProcessingStep {
         return param.getOrDefault(key, defaultValue).toString();
     }
 
-    default Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
+    default Stream<String> perform(Stream<String> values, Map<String, Collection<String>> metadata) {
         return values.map(v -> performSingle(v, metadata));
     }
 
-    String performSingle(String value, Map<String, List<String>> metadata);
+    String performSingle(String value, Map<String, Collection<String>> metadata);
 
     /**
      * Can this produce multiple values from a single value?

@@ -1,7 +1,7 @@
 package nl.inl.blacklab.indexers.config.process;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -38,12 +38,12 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
         }
 
         @Override
-        public Stream<String> perform(Stream<String> values, Map<String, List<String>> metadata) {
+        public Stream<String> perform(Stream<String> values, Map<String, Collection<String>> metadata) {
             return values.map(v -> mapping.getOrDefault(v, v));
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             return mapping.getOrDefault(value, value);
         }
 

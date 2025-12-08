@@ -1,6 +1,6 @@
 package nl.inl.blacklab.indexers.config.process;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -47,7 +47,7 @@ public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
         }
 
         @Override
-        public String performSingle(String value, Map<String, List<String>> metadata) {
+        public String performSingle(String value, Map<String, Collection<String>> metadata) {
             if (value.isEmpty()) {
                 String defaultValue;
                 if (field != null)

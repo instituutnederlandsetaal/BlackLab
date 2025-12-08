@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -59,7 +60,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
 
         void close();
 
-        List<String> getMetadataField(String name);
+        Collection<String> getMetadataField(String name);
 
         BLInputDocument getCurrentDoc();
     }
@@ -89,6 +90,12 @@ public abstract class InputFormatTypeBase extends InputFormatType {
              * with a new one.
              */
             protected boolean indexingIntoExistingDoc = false;
+
+            /**
+             * Document metadata. Added at the end to deal with unknown values, multiple occurrences
+             * (only the first is actually indexed, because of DocValues, among others), etc.
+             */
+            protected Map<String, Collection<String>> metadataFieldValues = new HashMap<>();
 
             protected DocBase(DocWriter docWriter, FileReference file) {
                 this.docWriter = docWriter;
@@ -148,17 +155,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 return currentDoc;
             }
 
-            public Map<String, List<String>> getMetadata() {
-                return metadataFieldValues;
-            }
-
             // ------------------------------- Metadata ----------------------------------
-
-            /**
-             * Document metadata. Added at the end to deal with unknown values, multiple occurrences
-             * (only the first is actually indexed, because of DocValues, among others), etc.
-             */
-            protected Map<String, List<String>> metadataFieldValues = new HashMap<>();
 
             /**
              * Translate a field name before adding it.
@@ -172,7 +169,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 return from;
             }
 
-            public List<String> getMetadataField(String name) {
+            public Collection<String> getMetadataField(String name) {
                 return metadataFieldValues.get(name);
             }
 
@@ -208,7 +205,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                     if (fd.type() == FieldType.NUMERIC)
                         continue;
                     boolean missing = false, empty = false;
-                    List<String> currentValue = getMetadataField(fd.name());
+                    Collection<String> currentValue = getMetadataField(fd.name());
                     if (currentValue == null)
                         missing = true;
                     else if (currentValue.isEmpty() || currentValue.stream().allMatch(String::isEmpty))
@@ -248,17 +245,17 @@ public abstract class InputFormatTypeBase extends InputFormatType {
                 // (see https://lucene.apache.org/core/9_0_0/changes/Changes.html
                 // LUCENE-6898: In the default codec, the last stored field value will not be fully read from disk if the supplied
                 // StoredFieldVisitor doesn't want it. So put your largest text field value last to benefit.)
-                List<Map.Entry<String, List<String>>> entries = metadataFieldValues.entrySet().stream()
+                List<Map.Entry<String, Collection<String>>> entries = metadataFieldValues.entrySet().stream()
                         .sorted(Comparator.comparingInt(
                                 e -> e.getValue().stream().map(String::length).reduce(0, Integer::sum)))
                         .toList();
-                for (Map.Entry<String, List<String>> e: entries) {
+                for (Map.Entry<String, Collection<String>> e: entries) {
                     addMetadataFieldToDocument(e.getKey(), e.getValue());
                 }
                 metadataFieldValues.clear();
             }
 
-            private void addMetadataFieldToDocument(String name, List<String> values) {
+            private void addMetadataFieldToDocument(String name, Collection<String> values) {
                 IndexMetadataWriter indexMetadata = getDocWriter().metadata();
                 //indexMetadata.registerMetadataField(name);
 
