@@ -23,6 +23,8 @@ import org.xml.sax.SAXException;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Axis;
+import net.sf.saxon.s9api.XdmItem;
+import net.sf.saxon.s9api.XdmValue;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.iter.AxisIterator;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -55,6 +57,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
     public interface NodeHandler {
         void handle(NodeInfo node);
+    }
+
+    public interface XdmValueHandler {
+        void handle(XdmValue value);
     }
 
     public interface StringValueHandler {
@@ -144,19 +150,20 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
              * its XPath expression should evaluate to "person", obviously).
              *
              * @param annotation   annotation to process.
+             * @param word         the context node or value for XPath evaluation
              * @param positionSpanEndOrSource     position to index at
              * @param spanEndOrRelTarget   if >= 0, index as a span annotation with this end position (exclusive)
              * @param handler      call handler for each value found, including that of subannotations
              */
-            protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word,
+            protected void processAnnotation(ConfigAnnotation annotation, XdmValue word,
                     Span positionSpanEndOrSource, Span spanEndOrRelTarget,
                     AnnotationHandler handler) {
                 if (StringUtils.isEmpty(annotation.getValuePath()))
                     return; // assume this will be captured using forEach
 
                 if (annotation.getBasePath() != null) {
-                    for (NodeInfo baseNode: finder.findNodes(annotation.getBasePath(), word)) {
-                        processAnnotationWithinBasePath(annotation, baseNode, positionSpanEndOrSource, spanEndOrRelTarget, handler);
+                    for (XdmItem item : finder.find(annotation.getBasePath(), word)) {
+                        processAnnotationWithinBasePath(annotation, XdmValue.wrap(item.getUnderlyingValue()), positionSpanEndOrSource, spanEndOrRelTarget, handler);
                     }
                 } else {
                     processAnnotationWithinBasePath(annotation, word, positionSpanEndOrSource, spanEndOrRelTarget, handler);
@@ -245,26 +252,14 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 }
             }
 
-            protected void xpathForEach(String xPath, NodeInfo context, NodeHandler handler) {
-                finder.xpathForEach(xPath, context, handler);
-            }
-
-            protected void xpathForEachStringValue(String xPath, NodeInfo context, StringValueHandler handler) {
-                finder.xpathForEachStringValue(xPath, context, handler);
-            }
-
-            protected String xpathValue(String xpath, NodeInfo context) {
-                return finder.xpathValue(xpath, context);
-            }
-
             /**
              * Process an annotation at the current position.
              *
              * @param annotation   annotation to process.
-             * @param word         current node in the document
+             * @param word         context for XPath evaluation
              * @param positionSpanStartOrRelSource     position to index at
              */
-            protected void processAnnotation(ConfigAnnotation annotation, NodeInfo word, Span positionSpanStartOrRelSource) {
+            protected void processAnnotation(ConfigAnnotation annotation, XdmValue word, Span positionSpanStartOrRelSource) {
                 processAnnotation(annotation, word, positionSpanStartOrRelSource, null, this::indexAnnotationValues);
             }
 
@@ -324,7 +319,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                     // For each configured annotation...
                     for (ConfigAnnotation annotation: annotatedField.getAnnotations()) {
-                        processAnnotation(annotation, word, tokenPosition);
+                        processAnnotation(annotation, XdmValue.wrap(word), tokenPosition);
                     }
 
                     charPos = nodeStartEnd.getEndPos() - docStartPos;
@@ -340,7 +335,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                     // Capture token id if needed (for standoff annotations)
                     if (annotatedField.getTokenIdPath() != null) {
-                        String tokenId = xpathValue(annotatedField.getTokenIdPath(), word);
+                        String tokenId = finder.xpathValue(annotatedField.getTokenIdPath(), word);
                         if (tokenId != null)
                             tokenPositionsMap.put(tokenId, tokenPosition.copy());
                     }
@@ -374,8 +369,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 List<InlineInfo> inlines = new ArrayList<>(INITIAL_LIST_SIZE_INLINE_TAGS);
                 for (ConfigInlineTag inlineTag: annotatedField.getInlineTags()) {
                     String tokenIdXPath = inlineTag.getTokenIdPath();
-                    xpathForEach(inlineTag.getPath(), container, (tag) -> {
-                        String tokenId = tokenIdXPath == null ? null : xpathValue(tokenIdXPath, tag);
+                    finder.xpathForEach(inlineTag.getPath(), container, (tag) -> {
+                        String tokenId = tokenIdXPath == null ? null : finder.xpathValue(tokenIdXPath, tag);
                         inlines.add(new InlineInfo(tag, tokenId, inlineTag));
                     });
                 }
@@ -433,7 +428,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             value = atts.get(attribute.getName()).get(0);
                         } else {
                             // Extra attribute, not on tag. Evaluate XPath expression.
-                            value = xpathValue(attribute.getValuePath(), nodeInfo);
+                            value = finder.xpathValue(attribute.getValuePath(), nodeInfo);
                         }
                         List<String> values = processStringMultipleValues(value, attribute.getCompiledProcessSteps());
                         if (!values.isEmpty()) {
@@ -448,7 +443,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     // Add tag to the list of tags to close at the correct position.
                     // (calculate word position by determining the number of word tags inside this element)
                     String xpNumberOfWordsInsideTag = "count(" + annotatedField.getWordPath() + ")";
-                    int numberOfWordsInsideTag = Integer.parseInt(xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
+                    int numberOfWordsInsideTag = Integer.parseInt(finder.xpathValue(xpNumberOfWordsInsideTag, nodeInfo));
                     // close inline after the last word that's contained in it (position + numberOfWordsInsideTag - 1)
                     inlinesToClose.computeIfAbsent(position.plus(numberOfWordsInsideTag - 1),
                                     k -> new ArrayList<>(INITIAL_CAPACITY_PER_WORD_COLLECTIONS))
@@ -493,7 +488,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     }
                     // NOTE: we pass invalid values for the positions because they don't matter here; we're not indexing,
                     //       just finding XPath matches for the attributes and collecting them.
-                    processAnnotation(annotation, standoffNode, null, null,
+                    processAnnotation(annotation, XdmValue.wrap(standoffNode), null, null,
                             (annot, pos, spanEndPos, values) -> attributes.put(annot.getName(), values));
                 }
 
@@ -535,10 +530,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             protected void processStandoffAnnotation(ConfigStandoffAnnotations standoff, NodeInfo container, Map<String, Span> tokenPositionsMap) {
                 // For each instance of this standoff annotation..
                 AnnotationType type = standoff.getType();
-                xpathForEach(standoff.getPath(), container, (standoffNode) -> {
+                finder.xpathForEach(standoff.getPath(), container, (standoffNode) -> {
                     // Determine what token positions to index these values at
                     List<Span> indexAtPositions = new ArrayList<>();
-                    xpathForEachStringValue(standoff.getTokenRefPath(), standoffNode, (tokenPositionId) -> {
+                    finder.xpathForEachStringValue(standoff.getTokenRefPath(), standoffNode, (tokenPositionId) -> {
                         if (!tokenPositionId.isEmpty()) {
                             Span span = tokenPositionsMap.get(tokenPositionId);
                             if (span == null) {
@@ -555,7 +550,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         // Index annotation values at the position(s) indicated
                         for (ConfigAnnotation annotation: standoffAnnotations) {
                             for (Span position: indexAtPositions) {
-                                processAnnotation(annotation, standoffNode, position);
+                                processAnnotation(annotation, XdmValue.wrap(standoffNode), position);
                             }
                         }
                     } else {
@@ -565,7 +560,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         // end/target
                         Span endOrTarget = Span.invalid();
                         Span[] endOrTargetArr = new Span[] { endOrTarget };
-                        xpathForEachStringValue(standoff.getSpanEndPath(), standoffNode, (tokenId) -> {
+                        finder.xpathForEachStringValue(standoff.getSpanEndPath(), standoffNode, (tokenId) -> {
                             Span tokenPos = tokenPositionsMap.get(tokenId);
                             if (tokenPos == null) {
                                 warnUnresolvedTokenId(tokenId,
@@ -585,11 +580,11 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                             }
 
                             // type
-                            String spanOrRelType = xpathValue(standoff.getValuePath(), standoffNode);
+                            String spanOrRelType = finder.xpathValue(standoff.getValuePath(), standoffNode);
                             if (type == AnnotationType.RELATION && !spanOrRelType.contains(RelationUtil.CLASS_TYPE_SEPARATOR)) {
                                 // If no relation class specified, prepend the configured default relation class.
                                 String targetVersion = standoff.getTargetVersionPath().isEmpty() ? "" :
-                                        xpathValue(standoff.getTargetVersionPath(), standoffNode);
+                                        finder.xpathValue(standoff.getTargetVersionPath(), standoffNode);
                                 String relationClass = standoff.resolveRelationClass(currentAnnotatedField.name(), targetVersion);
                                 spanOrRelType = RelationUtil.fullType(relationClass, spanOrRelType);
                             }
@@ -629,7 +624,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 warnOnce().warn(baseMessage + ": '" + tokenIdPrefix, tokenIdRest + "'");
             }
 
-            protected void processSubannotations(ConfigAnnotation parentAnnot, NodeInfo context,
+            protected void processSubannotations(ConfigAnnotation parentAnnot, XdmValue context,
                     Span positionSpanEndOrSource, Span spanEndOrRelTarget,
                     AnnotationHandler handler, List<String> parentAnnotValues) {
                 // For each configured subannotation...
@@ -644,9 +639,9 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     if (subannot.isForEach()) {
                         // "forEach" subannotation specification
                         // (allows us to capture multiple subannotations with 3 XPath expressions)
-                        xpathForEach(subannot.getForEachPath(), context, (match) -> {
+                        finder.xpathForEach(subannot.getForEachPath(), context, (match) -> {
                             // Find the name and value for this forEach match
-                            String name = xpathValue(subannot.getNamePath(), match);
+                            String name = finder.xpathValue(subannot.getNamePath(), match);
                             List<String> result = processValues(subannot.getCompiledNameProcessSteps(),
                                     List.of(name));
                             if (result.size() != 1)
@@ -690,7 +685,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 }
             }
 
-            protected void findAndIndexSubannotation(ConfigAnnotation toIndex, NodeInfo context, ConfigAnnotation indexAs,
+            protected void findAndIndexSubannotation(ConfigAnnotation toIndex, XdmValue context, ConfigAnnotation indexAs,
                     Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler,
                     ConfigAnnotation parent, List<String> parentValues) {
                 List<String> unprocessed = !toIndex.isForEach() && canReuseParentValues(indexAs, toIndex.getValuePath(), parent) ?
@@ -700,14 +695,14 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 handler.values(indexAs, positionSpanEndOrSource, spanEndOrRelTarget, processedValues);
             }
 
-            protected List<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, NodeInfo context) {
+            protected List<String> findAnnotationMatches(ConfigAnnotation annotation, String valuePath, XdmValue context) {
                 // Not the same values as the parent annotation; we have to find our own.
                 List<String> values = new ArrayList<>();
                 // Multiple matches will be indexed at the same position.
                 if (annotation.isCaptureXml()) {
-                    xpathForEach(valuePath, context, (value) -> values.add(currentNodeXml(value)));
+                    finder.xpathForEach(valuePath, context, (value) -> values.add(currentNodeXml(value)));
                 } else {
-                    xpathForEachStringValue(valuePath, context, values::add);
+                    finder.xpathForEachStringValue(valuePath, context, values::add);
                 }
                 // No annotations have been added, the result of the xPath query must have been empty.
                 if (values.isEmpty())
@@ -715,7 +710,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 return values;
             }
 
-            protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, NodeInfo word,
+            protected void processAnnotationWithinBasePath(ConfigAnnotation annotation, XdmValue word,
                     Span positionSpanEndOrSource, Span spanEndOrRelTarget, AnnotationHandler handler) {
                 String valuePath = annotation.getValuePath();
                 if (valuePath != null) {
@@ -767,7 +762,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
                 // For each linked document...
                 for (ConfigLinkedDocument ld : config.getLinkedDocuments().values()) {
-                    processLinkedDocument(ld, xpath -> xpathValue(xpath, doc));
+                    processLinkedDocument(ld, xpath -> finder.xpathValue(xpath, doc));
                 }
 
                 endDocument();
@@ -786,7 +781,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     if (documentXPath != null) {
                         indexParsedFile(documentXPath, true);
                         // Find our specific document in the file
-                        xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
+                        finder.xpathForEach(documentXPath, contextNodeWholeDocument(), (doc) -> {
                             if (docDone.get())
                                 throw new ErrorIndexingFile(
                                         "Document link " + documentXPath + " matched multiple documents in "
@@ -808,7 +803,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
 
             protected void processMetadataBlock(NodeInfo doc, ConfigMetadataBlock metaBlock) {
                 // For each instance of this metadata block...
-                xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
+                finder.xpathForEach(metaBlock.getContainerPath(), doc, (block) -> {
                     // For each subblock... (for multiple levels of containerPaths)
                     for (ConfigMetadataBlock subBlock: metaBlock.getBlocks()) {
                         processMetadataBlock(block, subBlock);
@@ -841,9 +836,9 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
 
             protected void processMetaForEach(ConfigMetadataBlock metaBlock, NodeInfo block, ConfigMetadataField forEach) {
-                xpathForEach(forEach.getForEachPath(), block, (match) -> {
+                finder.xpathForEach(forEach.getForEachPath(), block, (match) -> {
                     // Find the fieldName and value for this forEach match
-                    String fieldName = xpathValue(forEach.getNamePath(), match);
+                    String fieldName = finder.xpathValue(forEach.getNamePath(), match);
                     List<String> result = processValues(forEach.getCompiledNameProcessSteps(),
                             List.of(fieldName));
                     if (result.size() != 1)
@@ -867,7 +862,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             protected void indexMetadataFieldMatches(NodeInfo node, ConfigMetadataField field,
                     String indexAsFieldName, ConfigMetadataField indexAsFieldConfig) {
                 // NOTE: field may be a forEach, in which case indexAsFieldConfig is the actual field to index as
-                xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
+                finder.xpathForEachStringValue(field.getValuePath(), node, (unprocessedValue) -> {
                     unprocessedValue = StringUtil.sanitizeAndNormalizeUnicode(unprocessedValue);
                     for (String value: processStringMultipleValues(unprocessedValue, field.getCompiledProcessSteps())) {
                         if (indexAsFieldConfig == null) {
@@ -889,7 +884,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 setCurrentAnnotatedFieldName(annotatedField.getName());
 
                 // For each container (e.g. "text" or "body" element) ...
-                xpathForEach(annotatedField.getContainerPath(), document,
+                finder.xpathForEach(annotatedField.getContainerPath(), document,
                         (container) -> processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap));
             }
 
@@ -903,7 +898,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 setCurrentAnnotatedFieldName(annotatedField.getName());
 
                 // For each container (e.g. "text" or "body" element) ...
-                xpathForEach(annotatedField.getContainerPath(), document,
+                finder.xpathForEach(annotatedField.getContainerPath(), document,
                         (container) -> processAnnotatedFieldContainerStandoff(container, annotatedField, tokenPositionsMap));
             }
 
@@ -918,7 +913,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 readDocument();
                 try {
                     AtomicBoolean docDone = new AtomicBoolean(false); // any doc(s) processed?
-                    xpathForEach(docXPath, contextNodeWholeDocument(),(doc) -> {
+                    finder.xpathForEach(docXPath, contextNodeWholeDocument(),(doc) -> {
                         if (mustBeSingleDocument && docDone.get())
                             throw new ErrorIndexingFile(
                                     "Linked file contains multiple documents (and no document path given) in "
@@ -933,6 +928,10 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
 
             protected String currentNodeXml(NodeInfo node) {
+                return finder.currentNodeXml(XdmItem.wrap(node));
+            }
+
+            protected String currentNodeXml(XdmValue node) {
                 return finder.currentNodeXml(node);
             }
 

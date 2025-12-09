@@ -24,6 +24,7 @@ import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
+import net.sf.saxon.trans.XPathException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.indexers.config.InputFormatTypeXml;
@@ -119,7 +120,7 @@ public class XPathFinder {
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
         List<NodeInfo> results = new ArrayList<>();
-        for (XdmItem item: find(wordsPath, container)) {
+        for (XdmItem item: find(wordsPath, XdmItem.wrap(container))) {
             if (item.isNode())
                 results.add(((XdmNode) item).getUnderlyingNode());
             else
@@ -132,43 +133,84 @@ public class XPathFinder {
      * Find results in a context, return a list of Objects. This approach is useful if you don't know
      * the return type(s) in advance. This works for all return types of an xPath, also the ones that
      * return for example one boolean. Often a List&lt;NodeInfo> will be returned.
+     * 
+     * The context can be an XdmValue containing multiple items; the XPath will be evaluated for each
+     * item in the context and all results will be collected.
      */
-    public XdmValue find(String xPath, NodeInfo context) {
+    public XdmValue find(String xPath, XdmValue context) {
         try {
             XPathSelector selector = acquireExpression(xPath);
-            selector.setContextItem(new XdmNode(context));
-            return selector.evaluate();
+            List<XdmItem> results = new ArrayList<>();
+            for (XdmItem v : context) {
+                selector.setContextItem(v);
+                for (XdmItem item : selector.evaluate()) {
+                    results.add(item);
+                }
+            }
+            return XdmValue.makeSequence(results);
         } catch (SaxonApiException e) {
             throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
         }
     }
 
     public void xpathForEach(String xPath, NodeInfo context, InputFormatTypeXml.NodeHandler handler) {
-        for (XdmItem item: find(xPath, context)) {
+        XdmValue ctx = XdmItem.wrap(context);
+        for (XdmItem item: find(xPath, ctx)) {
             if (item.isNode()) {
-                handler.handle(((XdmNode) item).getUnderlyingNode());
+                XdmNode node = (XdmNode)item;
+                handler.handle(node.getUnderlyingNode());
             }
         }
     }
 
-    public void xpathForEachStringValue(String xPath, NodeInfo context, InputFormatTypeXml.StringValueHandler handler) {
+    public void xpathForEach(String xPath, XdmValue context, InputFormatTypeXml.XdmValueHandler handler) {
+        for (XdmItem item: find(xPath, context)) {
+            handler.handle(XdmValue.wrap(item.getUnderlyingValue()));
+        }
+    }
+
+    public void xpathForEachStringValue(String xPath, XdmValue context, InputFormatTypeXml.StringValueHandler handler) {
         for (XdmItem item: find(xPath, context)) {
             handler.handle(item.getStringValue());
         }
     }
 
+    public void xpathForEachStringValue(String xPath, NodeInfo context, InputFormatTypeXml.StringValueHandler handler) {
+        xpathForEachStringValue(xPath, XdmValue.wrap(context), handler);
+    }
+
+    /**
+     * Capture the XML code for the given node.
+     * If the value is not a node, its string values is returned.
+     *
+     * @param node the node to capture
+     * @return the XML code for the node
+     */
+    public String currentNodeXml(XdmValue node) {
+        StringBuilder sb = new StringBuilder();
+        for (XdmItem item: node) {
+            if (item.isNode()) {
+                try {
+                    sb.append(serializer.serializeNodeToString((XdmNode)item));
+                } catch (SaxonApiException e) {
+                    throw new ErrorIndexingFile(e);
+                }
+            } else {
+                sb.append(item.getStringValue());
+            }
+        }
+        return sb.toString();
+    }
+
     /**
      * Capture the XML code for the given node.
      *
-     * @param value the node to capture
+     * @param xPath   the xpath to capture
+     * @param context context to capture it from
      * @return the XML code for the node
      */
-    public String currentNodeXml(NodeInfo value) {
-        try {
-            return serializer.serializeNodeToString(new XdmNode(value));
-        } catch (SaxonApiException e) {
-            throw new ErrorIndexingFile(e);
-        }
+    public String xpathXml(String xPath, XdmValue context) {
+        return currentNodeXml(find(xPath, context));
     }
 
     /**
@@ -177,22 +219,16 @@ public class XPathFinder {
      *
      * @throws InvalidConfiguration when the xpath returns multiple results
      */
-    public String xpathValue(String xPath, NodeInfo context) {
+    public String xpathValue(String xPath, XdmValue context) {
         XdmValue list = find(xPath, context);
-        if (list.size() == 1) {
-            return list.itemAt(0).getStringValue();
-        } else {
-            if (list.isEmpty())
-                return "";
-            else
-                throw new InvalidConfiguration(
-                        String.format(
-                                "list %s contains multiple values, change your xpath %s to return one result or concatenate",
-                                list.stream()
-                                        .map(o -> o instanceof NodeInfo ?
-                                                ((NodeInfo) o).toShortString() :
-                                                String.valueOf(o))
-                                        .toList(), xPath));
+        try {
+            return list.getUnderlyingValue().getStringValue();
+        } catch (XPathException e) {
+            throw new InvalidConfiguration(String.format("Error getting string value for xpath %s : %s" + xPath, e.getMessage()), e);
         }
+    }
+
+    public String xpathValue(String xPath, NodeInfo context) {
+        return xpathValue(xPath, XdmItem.wrap(context));
     }
 }
