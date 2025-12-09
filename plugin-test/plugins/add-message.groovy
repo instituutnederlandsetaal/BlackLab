@@ -1,1 +1,0 @@
-../../engine/src/main/resources/add-message.groovy

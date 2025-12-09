@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<test xmlns="https://ivdnt.org/my-fun-namespace">
-  <value>42</value>
-  <something>123</something>
-</test>

@@ -33,4 +33,8 @@ public abstract class FileIteratorAbstract implements FileIterator {
                 pattFileNameGlobGlobal.matcher(fileName).matches();
     }
 
+    @Override
+    public void close() {
+        // Nothing to do by default
+    }
 }

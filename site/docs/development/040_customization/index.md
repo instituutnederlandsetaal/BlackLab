@@ -59,6 +59,15 @@ If your plugin needs configuration, create a file named `AmazingPlugin.yaml` in 
 If your plugin needs to read files, create a directory named `AmazingPlugin/` in the same `plugins/` directory. BlackLab will pass this directory to your plugin automatically. Call `pluginsDir()` from your plugin to get the path to this directory. This method will always return a `File` object, but the directory may not exist.
 
 
+## Troubleshooting common issues
+
+### Groovy: stack overflow
+
+In Groovy, if you don't declare variables with `def`, Groovy will try to access a property of the same name instead. This can lead to infinite recursion and a stack overflow if you're inside a closure.
+
+Always declare variables inside Groovy closures with `def` to avoid accidental property access and recursion.
+
+
 ## Examples
 
 We'll now discuss examples for many of the plugin types. Most are implemented as Groovy scripts. For a `.jar` plugin, see the [`ProcessingInstruction`](#processinginstruction) example below.
@@ -170,8 +179,8 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.queries.spans.BLSpanOrQuery
 import org.apache.lucene.queries.spans.SpanTermQuery
 
-class QueryFunctionFixedSpan extends QueryFunction {
-    QueryFunctionFixedSpan() {
+class QueryFunctionOrReverse extends QueryFunction {
+    QueryFunctionOrReverse() {
         super("orReverse", ARGS_S, Arrays.asList(null), false)
     }
 
@@ -187,7 +196,7 @@ class QueryFunctionFixedSpan extends QueryFunction {
         return new BLSpanOrQuery(a, b)
     }
 }
-return new QueryFunctionFixedSpan()
+return new QueryFunctionOrReverse()
 ```
 
 
