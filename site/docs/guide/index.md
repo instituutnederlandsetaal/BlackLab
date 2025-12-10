@@ -7,7 +7,7 @@ order: -1
 
 Major new features include [dependency relations](https://blacklab.ivdnt.org/guide/query-language/relations.html) and [parallel corpora](https://blacklab.ivdnt.org/guide/query-language/parallel.html).
 
-See the [release notes](https://github.com/instituutnederlandsetaal/BlackLab/releases/tag/v4.0.0) and the [full changelog](https://blacklab.ivdnt.org/development/changelog.html).
+See the [release notes](https://github.com/instituutnederlandsetaal/BlackLab/releases/tag/v4.0.0) and the [full changelog](https://blacklab.ivdnt.org/development/changelog.html#v4-0-0).
 
 :::
 

@@ -1,11 +1,27 @@
 # Change Log
 
-## Changes in dev
+## v4.1.0
 
 ### New
 
 - BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
 
+### Changed
+
+- If no namespaces are specified in `.blf.yaml`, ignore namespaces altogether. VTD did this by default, but Saxon is more strict. This change allows easier processing of inconsistent datasets where some documents have namespaces declared while others do not.
+- FrequencyTool was completely overhauled. It is now much faster and includes a database output format, which produces several TSVs that refer to each other and can easily be loaded into a database. Also adds cutoff options and better compression (lz4).
+- Improved error message when trying to open an index with a newer Lucene version.
+
+### Fixed
+
+- Finding DocIndexer classes could crash because of incorrect usage of the Reflections library.
+- Fix NPE when requestion corpus info for a corpus with linked documents.
+- Fix NPE in BLSConfig.java.
+- Fix viewing group after grouping on a numeric field.
+- Fix rewrite bug in SpanQueryFiltered.
+- Fix bug in SingleDocIdFilter.
+- Update proxy with various BLS changes.
+- Update Solr version.
 
 ## v4.0.0
 
@@ -16,14 +32,11 @@
     - proper support for multiple annotated fields per document
     - parallel corpora
 - BCQL:
-    - you can request all relations in a sentence now (`within rcapture(<s/>)`).
+    - you can capture all tags/relations in e.g. a sentence now (`within rcapture(<s/>)`).
     - new `overlap` operator to e.g. find hits in the overlaps of two tags (`"the" within <heading /> overlap <named-entity/>`). Useful to build a query when you don't know the hierarchy of tags.
     - integer range query for annotations (`[pos="verb" & pos_confidence=in[50,100]]`) and attribute values (`<verse number=in[1,10]/>`)
     - lookahead/lookbehind: `(?<=...)` and `(?=...)` for positive lookbehind and lookahead, and `(?<!...)` and `(?!...)` for negative lookbehind and lookahead.
     - `punctBefore`/`punctAfter` pseudo-annotations: `[word="good" & punctAfter=","]` (translates to `[word="good"] (?= [punct=","])`)
-    - `withspans=true` parameter will capture all overlapping spans for each hit (`with-spans(...)` function does the same).
-    - option `omitEmptyCaptures` to omit empty captures
-    - `csvdescription` parameter
 - Matching:
   - match info includes captures, inline tags and relations. Captured tags are returned with their attributes.
   - hit uniqueness now considers match info (capture groups etc.) as well, so multiple hits with the same doc, start and end may be reported (with each having different match info)
@@ -35,6 +48,9 @@
   - group by capture, e.g. `capture:word:s:A` to group on the words from the group captured as `A` in your query.
   - group on a tag in a list of overlapping tags, e.g. `capture:word:s:with-spans[named-entity]` to group on the whole named entity (if the match overlap with one) if you passed `withspans=true` as a parameter.
   - group on a span attribute, e.g. `span-attribute:speech:lang:c` for the contents of the span named `speech` (your pattern might be `"test" within <speech />`
+  - `withspans=true` parameter will capture all overlapping spans for each hit (`with-spans(...)` function does the same).
+  - `csvdescription` parameter to add a description to a CSV export
+  - option `omitEmptyCaptures` to omit empty captures
   - new BLS endpoint `/relations` gives a list of all inline tags and relations in the index, including attribute values and frequencies.
   - new BLS endpoint `/shared-with-me` that returns a list of corpora shared with the currently logged-in user, if any. Also reported on the `/` (server info) page.
   - new `limitvalues` parameter to control the length of value lists (i.e. field, attribute values)
