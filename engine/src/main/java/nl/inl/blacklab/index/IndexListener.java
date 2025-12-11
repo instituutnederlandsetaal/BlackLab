@@ -8,9 +8,14 @@ import nl.inl.util.fileprocessor.ErrorHandler;
  * Used to report progress while indexing, so we can give feedback to the user.
  */
 public class IndexListener implements ErrorHandler {
-    private long indexStartTime;
+    private long indexStartTime = -1;
 
     public long getIndexStartTime() {
+        // NOTE: technically, this method should be synchronized, but it's called quite often and
+        // in practice it doesn't matter if two threads set indexStartTime at the same time to the
+        // same value.
+        if (indexStartTime < 0)
+            indexStartTime = System.currentTimeMillis();
         return indexStartTime;
     }
 
@@ -41,11 +46,9 @@ public class IndexListener implements ErrorHandler {
     /**
      * Started processing a file.
      *
-     * Synchronized to allow parallel indexing.
-     *
      * @param name name of the file
      */
-    public synchronized void fileStarted(String name) {
+    public void fileStarted(String name) {
         //
     }
 
@@ -74,7 +77,7 @@ public class IndexListener implements ErrorHandler {
      *
      * @param name name of the document
      */
-    public synchronized void documentStarted(String name) {
+    public void documentStarted(String name) {
         //
     }
 
@@ -129,14 +132,15 @@ public class IndexListener implements ErrorHandler {
      * The indexing process started
      */
     public synchronized void indexStart() {
-        indexStartTime = System.currentTimeMillis();
+        // we don't set indexStartTime here, as gathering the list of files to index may take a few minutes,
+        // which would throw off the indexing speed by a lot.
     }
 
     /**
      * The indexing process ended
      */
     public synchronized void indexEnd() {
-        indexTime = System.currentTimeMillis() - indexStartTime;
+        indexTime = System.currentTimeMillis() - getIndexStartTime();
     }
 
     /**

@@ -166,6 +166,13 @@ IndexTool create index myindex "index-test:This is a test" tei-p5
 
 It will create a TEI file in memory with the words "This is a test" wrapped in `<w>` tags, and index it using the `tei-p5` input format.
 
+::: tip Skipping files
+
+If you want to skip certain files from being indexed, have your `FileIterator.next()` method return 
+`FileReference.DUMMY`. This can sometimes be a convenient way of e.g. skipping some files based on content. 
+
+:::
+
 
 ### QueryFunction example
 

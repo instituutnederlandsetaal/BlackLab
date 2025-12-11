@@ -70,6 +70,8 @@ public class SaxonHelper {
             String restOfUri = uri.substring(scheme.length() + 1);
             FileIterator fileIt = indexSourceType.get().get(restOfUri).filesToIndex();
             FileReference file = fileIt.next();
+            if (file == FileReference.DUMMY)
+                throw new IllegalArgumentException("doc() URI resolves to FileReference.DUMMY: " + uri);
             if (fileIt.hasNext()) // must match single file
                 throw new IllegalArgumentException("doc() URI matches multiple files: " + uri);
             // Read the file and return its contents as a StreamSource

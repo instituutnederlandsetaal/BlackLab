@@ -27,13 +27,6 @@ public abstract class FileIteratorAbstract implements FileIterator {
     }
 
     @Override
-    public boolean includeFile(String fileName) {
-        //Skip files like Thumbs.db (Windows) and .DS_Store (OSX)
-        return !fileName.equals("Thumbs.db") && !fileName.equals(".DS_Store") &&
-                pattFileNameGlobGlobal.matcher(fileName).matches();
-    }
-
-    @Override
     public void close() {
         // Nothing to do by default
     }

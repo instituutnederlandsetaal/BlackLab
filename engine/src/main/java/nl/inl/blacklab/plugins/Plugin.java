@@ -97,13 +97,13 @@ public abstract class Plugin {
      * Read a string value from our config if present.
      *
      * @param name setting name
-     * @return the value as a string
+     * @return the value
      * @throws PluginException if not found or not a string
      */
     public String cfgString(String name) throws PluginException {
         String value = cfgString(name, null);
         if (value == null)
-            throw new PluginException("Missing configuration value: " + name);
+            throw new PluginException("Missing string configuration value: " + name);
         return value;
     }
 
@@ -124,6 +124,72 @@ public abstract class Plugin {
         if (value instanceof String s)
             return s;
         throw new PluginException("Configuration value " + name + " is not a string");
+    }
+
+    /**
+     * Read a string value from our config if present.
+     *
+     * @param name setting name
+     * @return the value
+     * @throws PluginException if not found or not an integer
+     */
+    public int cfgInt(String name) throws PluginException {
+        Integer value = cfgInt(name, null);
+        if (value == null)
+            throw new PluginException("Missing integer configuration value: " + name);
+        return value;
+    }
+
+    /**
+     * Read an integer value from our config, or a default value if not present.
+     *
+     * @param name setting name
+     * @param defaultValue value to return if not present (may be null)
+     * @return the value as a string
+     * @throws PluginException if value was found but is not a string
+     */
+    public Integer cfgInt(String name, Integer defaultValue) throws PluginException {
+        Object value = config.get(name);
+        if (value == null)
+            value = defaultValue;
+        if (value == null)
+            return null;
+        if (value instanceof Integer s)
+            return s;
+        throw new PluginException("Configuration value " + name + " is not an integer");
+    }
+
+    /**
+     * Read a string value from our config if present.
+     *
+     * @param name setting name
+     * @return the value
+     * @throws PluginException if not found or not an integer
+     */
+    public long cfgLong(String name) throws PluginException {
+        Long value = cfgLong(name, null);
+        if (value == null)
+            throw new PluginException("Missing long configuration value: " + name);
+        return value;
+    }
+
+    /**
+     * Read a long value from our config, or a default value if not present.
+     *
+     * @param name setting name
+     * @param defaultValue value to return if not present (may be null)
+     * @return the value
+     * @throws PluginException if value was found but is not a long
+     */
+    public Long cfgLong(String name, Long defaultValue) throws PluginException {
+        Object value = config.get(name);
+        if (value == null)
+            value = defaultValue;
+        if (value == null)
+            return null;
+        if (value instanceof Long s)
+            return s;
+        throw new PluginException("Configuration value " + name + " is not a long");
     }
 
     /**

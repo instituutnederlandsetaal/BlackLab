@@ -13,10 +13,10 @@ import nl.inl.util.FileUtil;
 
 /**
  * Iterate over files to index.
- *
+ * <p>
  * Depending on settings, this may include recursing into subdirectories and
  * processing archive files (zip, tar.gz, gz).
- *
+ * <p>
  * Implementations are not thread-safe.
  */
 public interface FileIterator extends Iterator<FileReference> {
@@ -95,17 +95,6 @@ public interface FileIterator extends Iterator<FileReference> {
         }
         return new FileIteratorSingle(file);
     }
-
-    /**
-     * Should we skip the specified file?
-     *
-     * Skips Windows Thumbs.db file and Mac OSX .DS_Store file.
-     * Also skips files not matching the global file name glob, if any.
-     *
-     * @param fileName name of the file
-     * @return true if we should skip it, false otherwise
-     */
-    boolean includeFile(String fileName);
 
     void close();
 

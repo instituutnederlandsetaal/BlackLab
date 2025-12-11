@@ -15,10 +15,40 @@ import nl.inl.util.TextContent;
 import nl.inl.util.UnicodeStream;
 
 /** Represents a file to be indexed.
- *
+ * <p>
  * May be in the form of an input stream, byte array, or file.
  */
 public interface FileReference {
+
+    /** A dummy file reference. FileIterator may return this; it will simply be skipped.
+     * Can be convenient when implementing an IndexSource that filters based on file content.
+     */
+    FileReference DUMMY = new FileReference() {
+        @Override
+        public String getPath() {
+            return "<DUMMY>";
+        }
+
+        @Override
+        public FileReference withCreateReader() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public InputStream getSinglePassInputStream() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public File getAssociatedFile() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Charset getCharSet() {
+            throw new UnsupportedOperationException();
+        }
+    };
 
     /** When we have a choice, should we prefer a byte array (true) or a char array (false)?
      * (byte arrays are more memory-efficient, char arrays are generally more CPU-efficient
@@ -92,7 +122,7 @@ public interface FileReference {
 
     /** Return a file reference where createReader() works,
      *  so we can process the file multiple times (e.g. parse XML, get document contents to store).
-     *
+     * <p>
      *  The returned FileReference may be this one, or a new one. It will either have the file in memory
      *  as bytes or chars, or be a file on disk.
      *
@@ -152,7 +182,7 @@ public interface FileReference {
     }
 
     /** Is getTextContent(start, end) supported?
-     *
+     * <p>
      * Only supported for implementations that can do it efficiently (i.e. with random access).
      */
     default boolean hasGetTextContent() {

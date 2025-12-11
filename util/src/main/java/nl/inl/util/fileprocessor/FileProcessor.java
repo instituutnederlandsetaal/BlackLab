@@ -262,7 +262,12 @@ public class FileProcessor implements AutoCloseable {
             while (!aborted && !toProcess.isEmpty()) {
                 FileIterator it = toProcess.get(0);
                 if (it.hasNext()) {
-                    return it.next();
+                    FileReference next = it.next();
+                    if (next != FileReference.DUMMY) {
+                        // FileIterator may return DUMMY to skip a file
+                        // (this can make plugin implementation a little easier)
+                        return next;
+                    }
                 } else {
                     toProcess.remove(0);
                     try {

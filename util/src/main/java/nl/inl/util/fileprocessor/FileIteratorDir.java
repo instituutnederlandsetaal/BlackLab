@@ -38,6 +38,21 @@ public class FileIteratorDir extends FileIteratorAbstract {
         // Nothing to do
     }
 
+    /**
+     * Should we skip the specified file?
+     * <p>
+     * Skips Windows Thumbs.db file and Mac OSX .DS_Store file.
+     * Also skips files not matching the global file name glob, if any.
+     *
+     * @param fileName name of the file
+     * @return true if we should skip it, false otherwise
+     */
+    protected boolean includeFile(String fileName) {
+        //Skip files like Thumbs.db (Windows) and .DS_Store (OSX)
+        return !fileName.equals("Thumbs.db") && !fileName.equals(".DS_Store") &&
+                pattFileNameGlobGlobal.matcher(fileName).matches();
+    }
+
     private void listFiles(File fileOrDir, Pattern pattGlobFilesInThisDir, List<FileReference> result) {
         if (fileOrDir.isDirectory()) { // Even if recurseSubdirs is false, we should process all direct children
             // Process files in directory, and recurse into subdirectories if needed
