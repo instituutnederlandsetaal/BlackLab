@@ -206,7 +206,8 @@
                 <executions>
                     <execution>
                         <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
+                        <phase>package</phase>
+                        <?m2e ignore?> <!-- skip this in eclipse/vscode -->
                         <goals>
                             <goal>copy-dependencies</goal>
                         </goals>

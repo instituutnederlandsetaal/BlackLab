@@ -8,7 +8,7 @@ import nl.inl.blacklab.index.IndexSource;
  * a database, or a web service. */
 public abstract class IndexSourceType extends Plugin {
 
-    private static final String PROTOCOL_SEPARATOR = ":";
+    private static final String PROTOCOL_SEPARATOR = "//:"; // avoid matching random ':' or windows pathnames.
 
     public static IndexSourceType forScheme(String id) {
         if (id.isEmpty())

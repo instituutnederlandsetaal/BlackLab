@@ -2,7 +2,6 @@ package nl.inl.blacklab.indexers.config;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,15 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.stream.XMLStreamException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.util.BytesRef;
-import org.xml.sax.SAXException;
-
+import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
-import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmValue;
@@ -34,7 +31,7 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
-import nl.inl.blacklab.indexers.config.saxon.CharPosTrackingReader;
+import nl.inl.blacklab.indexers.config.saxon.SaxonDocumentWithElementOffsets;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
 import nl.inl.blacklab.indexers.config.saxon.XmlDocRef;
@@ -108,12 +105,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             /** Our document (in memory or on disk). */
             private XmlDocRef document;
 
-            /** The parsed document. */
-            private TreeInfo contents;
-
-            /** Can calculate character position for a given line/column position. */
-            private CharPosTrackingReader charPositions;
-
+            private SaxonDocumentWithElementOffsets parsedDocument;
+           
             /** Current character position in the current document */
             private long charPos = 0;
 
@@ -192,9 +185,9 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     document.clean();
                     document = null;
                 }
+                
                 // make sure we don't hold on to memory needlessly
-                charPositions = null;
-                contents = null;
+                parsedDocument = null;
             }
 
             @Override
@@ -233,21 +226,14 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     // XInclude processing incurs an overhead, so it's best to only enable it when needed.
                     if (config.getFileTypeOptions().getOrDefault("enableXInclude", "").equalsIgnoreCase("true"))
                         document.setXIncludeDirectory(currentXIncludeDir);
+                    
+                    // Use the shared Saxon configuration from SaxonHelper so that the document tree
+                    // is compatible with XPath expressions compiled using the same processor.
+                    this.parsedDocument = SaxonHelper.parseDocument(document.getDocumentReader(), config.isNamespaceAware());
 
-                    // Now parse the document
-                    // (our special reader will capture the character positions for each tag while parsing)
-                    try (Reader reader = document.getDocumentReader()) {
-                        try {
-                            this.charPositions = new CharPosTrackingReader(reader);
-                            contents = SaxonHelper.parseDocument(charPositions, config.isNamespaceAware());
-                        } finally {
-                            this.charPositions.close();
-                        }
-                    }
-                    Map<String, String> vars = Map.of(
-                            "inputFilePath", documentName);
+                    Map<String, String> vars = Map.of("inputFilePath", documentName);
                     finder = new XPathFinder(config.isNamespaceAware() ? config.getNamespaces() : null, vars);
-                } catch (IOException | XPathException | SAXException | ParserConfigurationException e) {
+                } catch (IOException | XPathException | XMLStreamException e) {
                     throw BlackLabException.wrapRuntime(e);
                 }
             }
@@ -272,9 +258,11 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     // Yes; determine boundaries of this annotated field container so we can later store
                     // this version of the document in the field's content store.
                     // (so we can retrieve only the desired version of the document later, e.g. only the Dutch version)
-                    CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(container);
-                    docVersionStartPos = nodeStartEnd.getStartPos() - docStartPos;
-                    long docVersionEndPos = nodeStartEnd.getEndPos() - docStartPos;
+                    long nodeStart = parsedDocument.getElementStartCharOffset(container);
+                    long nodeEnd = parsedDocument.getElementEndCharOffset(container);
+                    
+                    docVersionStartPos = nodeStart - docStartPos;
+                    long docVersionEndPos = nodeEnd - docStartPos;
                     docStartEndOffsetsPerField.put(annotatedField, Pair.of(docVersionStartPos, docVersionEndPos));
                 }
 
@@ -313,8 +301,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     }
 
                     // Index our word
-                    CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(word);
-                    charPos = nodeStartEnd.getStartPos() - docStartPos;
+                    charPos = parsedDocument.getElementStartCharOffset(word) - docStartPos;
                     beginWord();
 
                     // For each configured annotation...
@@ -322,7 +309,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                         processAnnotation(annotation, XdmValue.wrap(word), tokenPosition);
                     }
 
-                    charPos = nodeStartEnd.getEndPos() - docStartPos;
+                    charPos = parsedDocument.getElementEndCharOffset(word) - docStartPos;
                     endWord();
 
                     // Make sure we close inline tags at the correct position
@@ -728,9 +715,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
              * Index document from the current node.
              */
             protected void indexDocument(NodeInfo doc) {
-                CharPosTrackingReader.StartEndPos nodeStartEnd = charPositions.getNodeStartEnd(doc);
-                docStartPos = nodeStartEnd.getStartPos();
-                docEndPos = nodeStartEnd.getEndPos();
+                docStartPos =  parsedDocument.getElementStartCharOffset(doc);
+                docEndPos = parsedDocument.getElementEndCharOffset(doc);
                 startDocument();
 
                 // This is where we'll capture token ("word") ids and remember the position associated with each id.
@@ -936,7 +922,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
             }
 
             protected NodeInfo contextNodeWholeDocument() {
-                return contents.getRootNode();
+                return parsedDocument.getDocument().getRootNode();
             }
 
             protected interface AnnotationHandler {

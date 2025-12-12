@@ -2,25 +2,19 @@ package nl.inl.blacklab.indexers.config.saxon;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.Optional;
 
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.Source;
-import javax.xml.transform.sax.SAXSource;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
 
 import net.sf.saxon.Configuration;
 import net.sf.saxon.lib.ResourceRequest;
-import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.trans.XPathException;
@@ -40,8 +34,12 @@ public class SaxonHelper {
     static Processor saxonProcessor = new Processor(false);
 
     static {
+        // Configure the shared processor
+        Configuration config = saxonProcessor.getUnderlyingConfiguration();
         // Custom "URI resolver" (actually resource resolver) for doc() function
-        saxonProcessor.getUnderlyingConfiguration().setResourceResolver(SaxonHelper::resolve);
+        config.setResourceResolver(SaxonHelper::resolve);
+        // Enable line numbering for all documents built with this configuration
+        config.setLineNumbering(true);
     }
 
     /** Cache contents of linked documents for a short time, so repeated references to the same document are fast */
@@ -75,7 +73,6 @@ public class SaxonHelper {
             if (fileIt.hasNext()) // must match single file
                 throw new IllegalArgumentException("doc() URI matches multiple files: " + uri);
             // Read the file and return its contents as a StreamSource
-            StringReader reader;
             try (BufferedReader r = file.getSinglePassReader()) {
                 return IOUtils.toString(r);
             } catch (IOException e) {
@@ -88,40 +85,9 @@ public class SaxonHelper {
 
     private static Source resolve(ResourceRequest req) {
         String contents = uriContentsCache.acquire(req.uri);
-        uriContentsCache.releaseObject(contents); // we can release it right away, it's just a string reference
-        StringReader reader = new StringReader(contents);
-        try {
-            // reader will never be closed but that's okay
-            CharPosTrackingReader charPositions = new CharPosTrackingReader(reader);
-            return getSaxSource(charPositions, true); // namespace-aware configurable?
-        } catch (ParserConfigurationException | SAXException e) {
-            throw new ErrorIndexingFile(e);
-        }
-    }
-
-    private static SAXSource getSaxSource(CharPosTrackingReader charPositions, boolean namespaceAware)
-            throws ParserConfigurationException, SAXException {
-        CharPosTrackingContentHandler handler = new CharPosTrackingContentHandler(charPositions);
-        XMLReader trackingReader = getXmlReader(handler, namespaceAware);
-        InputSource inputSrc = new InputSource(charPositions);
-        return new SAXSource(trackingReader, inputSrc);
-    }
-
-    private static XMLReader getXmlReader(ContentHandler handler, boolean namespaceAware)
-            throws ParserConfigurationException, SAXException {
-        // make sure our content handler doesn't get overwritten by saxon
-        SAXParserFactory parserFactory = SAXParserFactory.newInstance();
-        parserFactory.setXIncludeAware(true);
-        if (!namespaceAware) {
-            // FIXME: this doesn't seem to work; Saxon still sees the namespaces?
-            //   (we need to call XPathCompiler::setUnprefixedElementMatchingPolicy(UnprefixedElementMatchingPolicy.ANY_NAMESPACE,
-            //    but how do we get the XPathCompiler here?)
-            parserFactory.setNamespaceAware(false);
-        }
-        SAXParser parser = parserFactory.newSAXParser();
-        XMLReader xmlReader = parser.getXMLReader();
-        xmlReader.setContentHandler(handler);
-        return new CharPosTrackingXMLReader(xmlReader);
+        uriContentsCache.releaseObject(req.uri); // we can release it right away, it's just a string reference
+        // Return a StreamSource with the contents for Saxon to parse
+        return new StreamSource(new StringReader(contents), req.uri);
     }
 
     private SaxonHelper() {}
@@ -130,18 +96,8 @@ public class SaxonHelper {
         return saxonProcessor.newXPathCompiler();
     }
 
-    /** Parse the document, using the given content handler.
-     *
-     * @param reader document to parse
-     * @param namespaceAware whether to be namespace-aware
-     * @return parsed document
-     */
-    public static TreeInfo parseDocument(CharPosTrackingReader reader, boolean namespaceAware) throws ParserConfigurationException,
-            SAXException, XPathException {
-        Source source = getSaxSource(reader, namespaceAware);
-        Configuration config = newXPathFactory().getUnderlyingStaticContext().getConfiguration();
-        config.setLineNumbering(true);
-        return config.buildDocumentTree(source);
+    public static SaxonDocumentWithElementOffsets parseDocument(Reader reader, boolean namespaceAware) throws XPathException, XMLStreamException, IOException {
+        return new SaxonDocumentWithElementOffsets(reader, saxonProcessor.getUnderlyingConfiguration());
     }
 
     public static Processor getProcessor() {
