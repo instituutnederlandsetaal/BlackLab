@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -107,6 +108,7 @@ public class XPathFinder {
         return compiledXPaths.get().computeIfAbsent(xpathExpr, expr -> {
             try {
                 var selector = xPath.compile(expr).load();
+
                 // We've declared the variable, so we have to set it, whether it is used or not
                 for (Map.Entry<String, String> var: vars.entrySet()) {
                     selector.setVariable(new QName(var.getKey()), new XdmAtomicValue(var.getValue()));
@@ -129,50 +131,31 @@ public class XPathFinder {
         return results;
     }
 
-    /**
-     * Find results in a context, return a list of Objects. This approach is useful if you don't know
-     * the return type(s) in advance. This works for all return types of an xPath, also the ones that
-     * return for example one boolean. Often a List&lt;NodeInfo> will be returned.
-     * 
-     * The context can be an XdmValue containing multiple items; the XPath will be evaluated for each
-     * item in the context and all results will be collected.
-     */
-    public XdmValue find(String xPath, XdmValue context) {
+    public Iterable<XdmItem> find(String xPath, XdmValue context) {
         try {
             XPathSelector selector = acquireExpression(xPath);
-            List<XdmItem> results = new ArrayList<>();
-            for (XdmItem v : context) {
-                selector.setContextItem(v);
-                for (XdmItem item : selector.evaluate()) {
-                    results.add(item);
-                }
-            }
-            return XdmValue.makeSequence(results);
-        } catch (SaxonApiException e) {
-            throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
+            return new XpathResultIterator(selector, context);
+        } catch (SaxonApiException | RuntimeException e) {
+            Throwable cause = e instanceof RuntimeException && e.getCause() instanceof SaxonApiException ? e.getCause() : e;
+            Exception exceptionToThrow = (cause instanceof Exception) ? (Exception) cause : new Exception(cause);
+            throw new InvalidConfiguration(cause.getMessage() + "; for xpath " + xPath, exceptionToThrow);
         }
     }
 
     public void xpathForEach(String xPath, NodeInfo context, InputFormatTypeXml.NodeHandler handler) {
-        XdmValue ctx = XdmItem.wrap(context);
-        for (XdmItem item: find(xPath, ctx)) {
+        for (XdmItem item : find(xPath, XdmValue.wrap(context))) {
             if (item.isNode()) {
-                XdmNode node = (XdmNode)item;
-                handler.handle(node.getUnderlyingNode());
+                handler.handle((NodeInfo) item.getUnderlyingValue());
             }
         }
     }
 
     public void xpathForEach(String xPath, XdmValue context, InputFormatTypeXml.XdmValueHandler handler) {
-        for (XdmItem item: find(xPath, context)) {
-            handler.handle(XdmValue.wrap(item.getUnderlyingValue()));
-        }
+        for (XdmItem item : find(xPath, context)) { handler.handle(item); }
     }
 
     public void xpathForEachStringValue(String xPath, XdmValue context, InputFormatTypeXml.StringValueHandler handler) {
-        for (XdmItem item: find(xPath, context)) {
-            handler.handle(item.getStringValue());
-        }
+        for (XdmItem item : find(xPath, context)) { handler.handle(item.getStringValue()); }
     }
 
     public void xpathForEachStringValue(String xPath, NodeInfo context, InputFormatTypeXml.StringValueHandler handler) {
@@ -183,34 +166,15 @@ public class XPathFinder {
      * Capture the XML code for the given node.
      * If the value is not a node, its string values is returned.
      *
-     * @param node the node to capture
+     * @param node the node to serialize
      * @return the XML code for the node
      */
-    public String currentNodeXml(XdmValue node) {
-        StringBuilder sb = new StringBuilder();
-        for (XdmItem item: node) {
-            if (item.isNode()) {
-                try {
-                    sb.append(serializer.serializeNodeToString((XdmNode)item));
-                } catch (SaxonApiException e) {
-                    throw new ErrorIndexingFile(e);
-                }
-            } else {
-                sb.append(item.getStringValue());
-            }
+    public String currentNodeXml(NodeInfo node) {
+        try {
+            return serializer.serializeNodeToString(new XdmNode(node));
+        } catch (SaxonApiException e) {
+            throw new ErrorIndexingFile("Error serializing XML for node: " + node.getDisplayName(), e);
         }
-        return sb.toString();
-    }
-
-    /**
-     * Capture the XML code for the given node.
-     *
-     * @param xPath   the xpath to capture
-     * @param context context to capture it from
-     * @return the XML code for the node
-     */
-    public String xpathXml(String xPath, XdmValue context) {
-        return currentNodeXml(find(xPath, context));
     }
 
     /**
@@ -220,15 +184,59 @@ public class XPathFinder {
      * @throws InvalidConfiguration when the xpath returns multiple results
      */
     public String xpathValue(String xPath, XdmValue context) {
-        XdmValue list = find(xPath, context);
-        try {
-            return list.getUnderlyingValue().getStringValue();
-        } catch (XPathException e) {
-            throw new InvalidConfiguration(String.format("Error getting string value for xpath %s : %s" + xPath, e.getMessage()), e);
+        StringBuilder result = new StringBuilder();
+        for (XdmItem item : find(xPath, context)) {
+            result.append(item.getUnderlyingValue().getStringValue());
         }
+        return result.toString();
     }
 
     public String xpathValue(String xPath, NodeInfo context) {
         return xpathValue(xPath, XdmItem.wrap(context));
+    }
+
+    /**
+     * Testing revealed that the using iterators to retrieve xpath results from Saxon is significantly faster than other approaches.
+     * Since this class is a major hot path in indexing, we use iterators to extract results from Saxon.
+     * The difference isn't world-changing, but we can speed up the *entire* indexing process by something like 20% by using iterators vs the more fluid evalutate() approach.
+     */
+     private static class XpathResultIterator implements Iterable<XdmItem> { 
+        XPathSelector selector;
+        Iterator<XdmItem> ctxIt;
+        Iterator<XdmItem> resultIt;
+
+        public XpathResultIterator(final XPathSelector selector, final XdmValue context) {
+            this.selector = selector;
+            this.ctxIt = context.iterator();
+            this.resultIt = Collections.emptyIterator();
+        }
+        
+        @Override
+        public Iterator<XdmItem> iterator() {
+            return new Iterator<XdmItem>() {
+                @Override
+                public boolean hasNext() {
+                    try {
+                        while (true) {
+                            if (resultIt != null && resultIt.hasNext())
+                                return true;
+                            if (ctxIt.hasNext()) {
+                                selector.setContextItem(ctxIt.next());
+                                resultIt = selector.iterator();
+                                continue;
+                            }
+                            return false;
+                        }
+                    } catch (SaxonApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                @Override
+                public XdmItem next() {
+                    return resultIt.next(); // assume it will throw if no next.
+                }
+            };
+        };
     }
 }

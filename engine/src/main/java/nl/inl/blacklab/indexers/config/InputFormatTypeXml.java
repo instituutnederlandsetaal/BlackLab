@@ -155,7 +155,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     return; // assume this will be captured using forEach
 
                 if (annotation.getBasePath() != null) {
-                    for (XdmItem item : finder.find(annotation.getBasePath(), word)) {
+                    for (XdmItem item : finder.find (annotation.getBasePath(), word)) {
                         processAnnotationWithinBasePath(annotation, XdmValue.wrap(item.getUnderlyingValue()), positionSpanEndOrSource, spanEndOrRelTarget, handler);
                     }
                 } else {
@@ -687,7 +687,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 List<String> values = new ArrayList<>();
                 // Multiple matches will be indexed at the same position.
                 if (annotation.isCaptureXml()) {
-                    finder.xpathForEach(valuePath, context, (value) -> values.add(currentNodeXml(value)));
+                    finder.xpathForEach(valuePath, context, (value) -> values.add(finder.currentNodeXml((NodeInfo) value.getUnderlyingValue())));
                 } else {
                     finder.xpathForEachStringValue(valuePath, context, values::add);
                 }
@@ -911,14 +911,6 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 } catch (InvalidConfiguration e) {
                     throw new InvalidConfiguration(e.getMessage() + String.format("; when indexing file: %s", documentName), e.getCause());
                 }
-            }
-
-            protected String currentNodeXml(NodeInfo node) {
-                return finder.currentNodeXml(XdmItem.wrap(node));
-            }
-
-            protected String currentNodeXml(XdmValue node) {
-                return finder.currentNodeXml(node);
             }
 
             protected NodeInfo contextNodeWholeDocument() {
