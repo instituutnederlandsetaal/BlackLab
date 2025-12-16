@@ -31,7 +31,7 @@ import net.sf.saxon.type.Type;
  * character offsets for XML elements.
  */
 @RunWith(Parameterized.class)
-public class CharPosTrackingComparisonTest {
+public class TestCharPosTracking {
 
     /** Record storing the expected results for an element. */
     record ExpectedElementOffset(String elementName, long startOffset, long endOffset) {}
@@ -142,7 +142,16 @@ public class CharPosTrackingComparisonTest {
                         "<root><?pi data?><child>text</child></root>",
                         List.of(
                                 new ExpectedElementOffset("root", 0, 43),
-                                new ExpectedElementOffset("child", 17, 36)))
+                                new ExpectedElementOffset("child", 17, 36))),
+                
+                // Replicates the failing CI test scenario: element followed by newline and spaces
+                // This tests the StAX parser buffer boundary issue where getCharacterOffset() drifts
+                new TestCase("element-followed-by-newline",
+                        "<root><a>text</a>\n<b>more</b></root>",
+                        List.of(
+                                new ExpectedElementOffset("root", 0, 36),
+                                new ExpectedElementOffset("a", 6, 17),  // <a>text</a> ends at position 17 (exclusive), not including newline
+                                new ExpectedElementOffset("b", 18, 29)))
         );
 
         for (TestCase tc : cases) {
@@ -209,5 +218,51 @@ public class CharPosTrackingComparisonTest {
         while ((child = children.next()) != null) {
             collectElementsRecursive(child, result);
         }
+    }
+
+    /**
+     * Test that element offsets are correct even after the parser's internal buffer refills.
+     * The bug was that after ~8K of data, the StAX parser's getCharacterOffset() would be
+     * off by 1, causing extracted element content to include trailing newlines.
+     */
+    @Test
+    public void testElementOffsetsAfterBufferRefill() throws Exception {
+        // Create a document large enough to trigger buffer refills (>8K)
+        // Each element is ~40 chars, so we need ~250 elements to exceed 8K
+        StringBuilder sb = new StringBuilder();
+        sb.append("<root>");
+        for (int i = 0; i < 400; i++) {
+            sb.append("\n        <w id=\"").append(i).append("\">word").append(i).append("</w>");
+        }
+        sb.append("\n</root>");
+        String xml = sb.toString();
+        
+        SaxonDocumentWithElementOffsets doc = new SaxonDocumentWithElementOffsets(
+                new StringReader(xml),
+                SaxonHelper.getProcessor().getUnderlyingConfiguration()
+        );
+        
+        // Find all <w> elements and verify their offsets
+        NodeInfo root = doc.getDocument().getRootNode();
+        AxisIterator descendants = root.iterateAxis(AxisInfo.DESCENDANT);
+        NodeInfo node;
+        int checkedCount = 0;
+        while ((node = descendants.next()) != null) {
+            if (node.getNodeKind() == Type.ELEMENT && "w".equals(node.getLocalPart())) {
+                long start = doc.getElementStartCharOffset(node);
+                long end = doc.getElementEndCharOffset(node);
+                String extracted = xml.substring((int) start, (int) end);
+                
+                // Verify: should start with <w, end with </w>, and contain no newlines
+                assertEquals("Element should start with '<w'", true, extracted.startsWith("<w"));
+                assertEquals("Element should end with '</w>'", true, extracted.endsWith("</w>"));
+                assertEquals("Element should not contain newlines", false, extracted.contains("\n"));
+                
+                checkedCount++;
+            }
+        }
+        
+        // Sanity check: we should have checked all 400 elements
+        assertEquals("Should have checked all elements", 400, checkedCount);
     }
 }

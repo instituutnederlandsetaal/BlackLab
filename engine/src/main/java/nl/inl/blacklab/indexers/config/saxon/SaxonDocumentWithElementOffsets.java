@@ -22,7 +22,6 @@ import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.trans.XPathException;
-import nl.inl.util.CountingReader;
 
 /**
  * <pre>
@@ -51,7 +50,11 @@ public class SaxonDocumentWithElementOffsets {
 	@FunctionalInterface
 	interface StaxEventCallback { int apply(int value, Location context); }
 
-	private LongArrayList bracketPositions = new LongArrayList();
+	/** Positions of all '<' characters in the document. */
+	private LongArrayList openBracketPositions = new LongArrayList();
+	/** Positions of all '>' characters in the document (position AFTER the '>').
+	 *  We store the position after so it can be used as an exclusive end offset directly. */
+	private LongArrayList closeBracketPositions = new LongArrayList();
 	/** Contains the start/end pairs of currently open elements. */
 	private ObjectList<LongLongPair> openElementStack = new ObjectArrayList<>();
 
@@ -61,8 +64,8 @@ public class SaxonDocumentWithElementOffsets {
 	private TreeInfo document;
 
 	public SaxonDocumentWithElementOffsets(Reader source, Configuration configuration) throws XMLStreamException, XPathException, IOException {
-		source = wrapReaderAndAttachCallbackOnBracketEncountered(source, this.bracketPositions::add);
-		StAXSource staxSource = wrapStaxSourceAndAttachCallbackOnElementEncountered(new CountingReader(source), this::handleEvent);
+		source = wrapReaderAndAttachCallbackOnBracketsEncountered(source, this.openBracketPositions::add, this.closeBracketPositions::add);
+		StAXSource staxSource = wrapStaxSourceAndAttachCallbackOnElementEncountered(source, this::handleEvent);
 
 		this.document = configuration.buildDocumentTree(staxSource);
 
@@ -70,7 +73,8 @@ public class SaxonDocumentWithElementOffsets {
 		staxSource.getXMLStreamReader().close();
 		source.close();
 		this.openElementStack = null;
-		this.bracketPositions = null;
+		this.openBracketPositions = null;
+		this.closeBracketPositions = null;
 	}
 
 	
@@ -78,9 +82,11 @@ public class SaxonDocumentWithElementOffsets {
 		return document;
 	}
 
+	/** Return the inclusive start offset of the element in the document. */
 	public long getElementStartCharOffset(NodeInfo node) {
 		return elementLocationToBracketPositions.get(encodeElementLocation(node)).leftLong();
 	}
+	/** Return the exclusive end offset of the element in the document. */
 	public long getElementEndCharOffset(NodeInfo node) {
 		return elementLocationToBracketPositions.get(encodeElementLocation(node)).rightLong();
 	}
@@ -97,7 +103,7 @@ public class SaxonDocumentWithElementOffsets {
 	}
 
 	private void trackElementStart(Location loc) {
-		long positionOfOpeningBracket = this.findNearestOpeningBracketBefore(loc.getCharacterOffset());
+		long positionOfOpeningBracket = findNearestBracketBefore(loc.getCharacterOffset(), this.openBracketPositions);
 		long encodedElementLocation = this.encodeElementLocation(loc.getLineNumber(), loc.getColumnNumber());
 		
 		LongLongPair startEndPos = LongLongMutablePair.of(positionOfOpeningBracket, -1L);
@@ -108,7 +114,10 @@ public class SaxonDocumentWithElementOffsets {
 
 	private void trackElementEnd(Location loc) {
 		LongLongPair startEndPos = this.openElementStack.remove(this.openElementStack.size() - 1);
-		startEndPos.right(loc.getCharacterOffset());
+		// closeBracketPositions stores positions AFTER the '>', so we can use them as exclusive end offsets directly.
+		// Add +1 to include positions equal to charOffset in the search.
+		long endPosition = findNearestBracketBefore(loc.getCharacterOffset() + 1, this.closeBracketPositions);
+		startEndPos.right(endPosition);
 	}
 
 	private long encodeElementLocation(NodeInfo node) {
@@ -117,40 +126,46 @@ public class SaxonDocumentWithElementOffsets {
 	private long encodeElementLocation(long line, long col) {
 		return (line << 32) | col;
 	}
-	private long findNearestOpeningBracketBefore(long charOffset) {
+
+	private static long findNearestBracketBefore(long charOffset, LongArrayList bracketPositions) {
 		for (int i = bracketPositions.size() - 1; i >= 0; i--) {
 			long position = bracketPositions.getLong(i);
 			if (position < charOffset) {
 				return position;
 			}
 		}
-		throw new IllegalStateException("No opening bracket found before the given character offset: " + charOffset);
+		throw new IllegalStateException("No bracket found before the given character offset: " + charOffset);
 	}
 
-
+	
 
 	/// ========
 	/// Setup logic/wrappers to enable tracking
 	/// ========
 	
 
-	private static Reader wrapReaderAndAttachCallbackOnBracketEncountered(Reader source, LongConsumer trackPosition) {
+	private static Reader wrapReaderAndAttachCallbackOnBracketsEncountered(Reader source, LongConsumer trackOpenBracket, LongConsumer trackCloseBracket) {
 		return new Reader() {
 			long charsRead = 0;
 
 			@Override
 			public int read(char[] cbuf, int off, int len) throws IOException {
 				int n = source.read(cbuf, off, len);
-				for (int i = off; i < off + n; ++i) {
-					if (cbuf[i] == '<') { trackPosition.accept(charsRead + i - off); }
+				if (n > 0) {
+					for (int i = off; i < off + n; ++i) {
+						char c = cbuf[i];
+						if (c == '<') { trackOpenBracket.accept(charsRead + i - off); }
+						else if (c == '>') { trackCloseBracket.accept(charsRead + i - off + 1); } // store position AFTER '>'
+					}
+					charsRead += n;
 				}
-				charsRead += n;
 				return n;
 			}
 
 			public int read() throws IOException {
 				int ch = source.read();
-				if (ch == '<') { trackPosition.accept(charsRead); }
+				if (ch == '<') { trackOpenBracket.accept(charsRead); }
+				else if (ch == '>') { trackCloseBracket.accept(charsRead + 1); } // store position AFTER '>'
 				if (ch != -1) { charsRead += 1; }
 				return ch;
 			}
@@ -162,24 +177,13 @@ public class SaxonDocumentWithElementOffsets {
 		};
 	}
 
-	private static StAXSource wrapStaxSourceAndAttachCallbackOnElementEncountered(CountingReader source, StaxEventCallback handler) throws XMLStreamException {
+	private static StAXSource wrapStaxSourceAndAttachCallbackOnElementEncountered(Reader source, StaxEventCallback handler) throws XMLStreamException {
 		XMLStreamReader streamReaderImpl = createXmlStreamReader(source);
 		XMLStreamReader wrapper = new StreamReaderDelegate(streamReaderImpl) {
-			static class LocationWrapper implements Location {
-				private final Location base;
-				private final int maxOffset;
-				public LocationWrapper(Location base, int maxOffset) { this.base = base; this.maxOffset = maxOffset; }
-				@Override public int getLineNumber() { return base.getLineNumber(); }
-				@Override public int getColumnNumber() { return base.getColumnNumber(); }
-				@Override public int getCharacterOffset() { return Math.min(base.getCharacterOffset(), maxOffset); }
-				@Override public String getPublicId() { return base.getPublicId(); }
-				@Override public String getSystemId() { return base.getSystemId(); }
-			};
-
 			@Override
-			public int next() throws XMLStreamException { return handler.apply(super.next(), new LocationWrapper(this.getLocation(), (int) source.getCharsRead())); }
+			public int next() throws XMLStreamException { return handler.apply(super.next(), this.getLocation()); }
 			@Override
-			public int nextTag() throws XMLStreamException { return handler.apply(super.nextTag(), new LocationWrapper(this.getLocation(), (int) source.getCharsRead())); }
+			public int nextTag() throws XMLStreamException { return handler.apply(super.nextTag(), this.getLocation()); }
 		};
 		return new StAXSource(wrapper);
 	}
