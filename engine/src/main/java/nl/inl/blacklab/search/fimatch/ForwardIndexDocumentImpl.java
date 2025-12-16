@@ -67,6 +67,7 @@ class ForwardIndexDocumentImpl implements ForwardIndexDocument {
     }
 
     public int getTokenTermId(int annotIndex, int pos) {
+        assert annotIndex >= 0;
         if (pos < 0 || pos >= docLengthTokens)
             return Constants.NO_TERM;
 

@@ -51,6 +51,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         // Token state. Check if it matches token from token source, and if so, continue.
+        assert annotationIndex >= 0 : "Annotation indexes not looked up yet";
         int actualTokenSegmentTermId = fiDoc.getTokenSegmentTermId(annotationIndex, pos);
         if (actualTokenSegmentTermId >= 0) {
             String tokenString = fiDoc.getTermString(annotationIndex, actualTokenSegmentTermId);
@@ -82,6 +83,7 @@ public abstract class NfaStateMultiTermPattern extends NfaState {
     @Override
     NfaStateMultiTermPattern copyInternal(Collection<NfaState> dangling, Map<NfaState, NfaState> copiesMade, Consumer<NfaState> onCopyState) {
         NfaStateMultiTermPattern copy = copyNoNextState();
+        copy.annotationIndex = annotationIndex;
         copiesMade.put(this, copy);
         copy.nextState = nextState == null ? null : nextState.copy(dangling, copiesMade, onCopyState);
         if (nextState == null && dangling != null)
