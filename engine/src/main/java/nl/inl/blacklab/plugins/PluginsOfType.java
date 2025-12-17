@@ -128,6 +128,10 @@ public class PluginsOfType<T extends Plugin> {
         return plugin.orElseThrow(() -> new IllegalArgumentException("Plugin id " + id + " not found."));
     }
 
+    public boolean exists(String id) {
+        return pluginsById.containsKey(id.toLowerCase());
+    }
+
     public Optional<T> getIfExists(String id) throws PluginException {
         PluginData<T> pluginData = pluginsById.get(id.toLowerCase());
         if (pluginData == null)
