@@ -12,6 +12,9 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
  */
 public class HitsFiltered extends HitsMutable {
 
+    /** Timeout for waiting on monitor (fallback in case of missed signals) */
+    private static final int WAIT_TIMEOUT_MS = 100;
+
     private final Lock ensureHitsReadLock = new ReentrantLock();
 
     /**
@@ -77,10 +80,12 @@ public class HitsFiltered extends HitsMutable {
             while (!ensureHitsReadLock.tryLock()) {
                 /*
                  * Another thread is already counting, we don't want to straight up block until it's done
-                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
-                 * So instead poll our own state, then if we're still missing results after that just count them ourselves
+                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
+                 * Wait for notification that results have been added, then check if we have enough.
                  */
-                Thread.sleep(50);
+                synchronized (hitsInternalMutable) {
+                    hitsInternalMutable.wait(WAIT_TIMEOUT_MS);
+                }
                 if (doneFiltering || number >= 0 && hitsInternalMutable.size() >= number)
                     return;
             }
@@ -104,6 +109,10 @@ public class HitsFiltered extends HitsMutable {
                                 docsRetrieved++;
                                 previousHitDoc = hit.doc();
                             }
+                            // Signal waiting threads that a new hit is available
+                            synchronized (hitsInternalMutable) {
+                                hitsInternalMutable.notifyAll();
+                            }
                         }
                     } else {
                         doneFiltering = true;
@@ -113,6 +122,10 @@ public class HitsFiltered extends HitsMutable {
                 }
             } finally {
                 ensureHitsReadLock.unlock();
+                // Signal waiting threads we're done, they may be waiting for more results than we can provide.
+                synchronized (hitsInternalMutable) {
+                    hitsInternalMutable.notifyAll();
+                }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // preserve interrupted status

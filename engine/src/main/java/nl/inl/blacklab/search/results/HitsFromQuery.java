@@ -29,8 +29,9 @@ import nl.inl.util.CurrentThreadExecutorService;
 
 public class HitsFromQuery extends HitsMutable {
 
-    /** If another thread is busy fetching hits and we're monitoring it, how often should we check? */
-    private static final int HIT_POLLING_TIME_MS = 50;
+    /** Maximum time to wait for hits to be signaled before checking state (ms).
+     *  This is a fallback in case of missed signals; normally the Condition will wake us immediately. */
+    private static final int HIT_WAIT_TIMEOUT_MS = 100;
 
     protected final AtomicLong globalDocsProcessed = new AtomicLong();
     protected final AtomicLong globalDocsCounted = new AtomicLong();
@@ -115,7 +116,7 @@ public class HitsFromQuery extends HitsMutable {
                     leafReaderContext,
                     this.hitQueryContext,
                     this.hitsInternalMutable,
-                        this.globalDocsProcessed,
+                    this.globalDocsProcessed,
                     this.globalDocsCounted,
                     this.globalHitsProcessed,
                     this.globalHitsCounted,
@@ -170,14 +171,18 @@ public class HitsFromQuery extends HitsMutable {
         boolean hasLock = false;
         List<Future<?>> pendingResults = null;
         try {
-            while (!ensureHitsReadLock.tryLock(HIT_POLLING_TIME_MS, TimeUnit.MILLISECONDS)) {
+            while (!ensureHitsReadLock.tryLock(0, TimeUnit.MILLISECONDS)) {
                 /*
                 * Another thread is already working on hits, we don't want to straight up block until it's done,
                 * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
-                * So instead poll our own state, then if we're still missing results after that just count them ourselves
+                * So instead wait for notification that hits have been added, then check if we have enough.
                 */
                 if (allSourceSpansFullyRead || (hitsInternalMutable.size() >= clampedNumber)) {
                     return;
+                }
+                // Wait for hits to be added (with timeout as fallback)
+                synchronized (hitsInternalMutable) {
+                    hitsInternalMutable.wait(HIT_WAIT_TIMEOUT_MS);
                 }
             }
             hasLock = true;

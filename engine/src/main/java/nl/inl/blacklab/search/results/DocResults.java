@@ -161,6 +161,9 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
 
     Lock ensureResultsReadLock;
 
+    /** Timeout for waiting on monitor (fallback in case of missed signals) */
+    private static final int WAIT_TIMEOUT_MS = 100;
+
     /** Largest number of hits in a single document */
     private long mostHitsInDocument = 0;
 
@@ -282,10 +285,12 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             while (!ensureResultsReadLock.tryLock()) {
                 /*
                 * Another thread is already counting, we don't want to straight up block until it's done
-                * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction
-                * So instead poll our own state, then if we're still missing results after that just count them ourselves
+                * as it might be counting/retrieving all results, while we might only want trying to retrieve a small fraction.
+                * Wait for notification that results have been added, then check if we have enough.
                 */
-                Thread.sleep(50);
+                synchronized (results) {
+                    results.wait(WAIT_TIMEOUT_MS);
+                }
                 if (doneProcessingAndCounting() || (number >= 0 && results.size() >= number))
                     return;
             }
@@ -330,6 +335,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                     }
                 }
             } finally {
+                // Signal waiting threads we're done, they may be waiting for more results than we can provide.
+                synchronized (results) {
+                    results.notifyAll();
+                }
                 ensureResultsReadLock.unlock();
             }
         } catch (InterruptedException e) {
@@ -353,6 +362,10 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
         else
             docResult = DocResult.fromHits(doc, docHits, totalNumberOfHits);
         results.add(docResult);
+        // Signal waiting threads that a new result is available
+        synchronized (results) {
+            results.notifyAll();
+        }
         if (docHits.size() > mostHitsInDocument)
             mostHitsInDocument = docHits.size();
         totalHits += docHits.size();
