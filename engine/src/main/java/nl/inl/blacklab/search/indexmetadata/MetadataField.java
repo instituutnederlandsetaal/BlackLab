@@ -3,9 +3,9 @@ package nl.inl.blacklab.search.indexmetadata;
 /** A metadata field. */
 public interface MetadataField extends Field {
 
-	FieldType type();
+    FieldType type();
 
-	String analyzerName();
+    String analyzerName();
 
     MetadataFieldValues values(long maxValues);
 

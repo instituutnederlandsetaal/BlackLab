@@ -107,10 +107,10 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
             results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(globalDocId), 0.0f, 0));
         }
 
-		@Override
-		public ScoreMode scoreMode() {
-			return ScoreMode.COMPLETE_NO_SCORES;
-		}
+        @Override
+        public ScoreMode scoreMode() {
+            return ScoreMode.COMPLETE_NO_SCORES;
+        }
     }
 
     /**

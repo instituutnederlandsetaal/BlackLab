@@ -8,43 +8,43 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 /** An annotation on an annotated field. */
 public interface Annotation {
     
-	/** @return field for which this is an annotation */
-	AnnotatedField field();
+    /** @return field for which this is an annotation */
+    AnnotatedField field();
 
-	/** @return this annotation's name */
-	String name();
+    /** @return this annotation's name */
+    String name();
 
-	boolean hasForwardIndex();
+    boolean hasForwardIndex();
 
-	/**
-	 * Return which sensitivity-indexing contains character offset information.
-	 *
-	 * Note that there may not be such a sensitivity-indexing.
-	 *
-	 * @return the alternative, or null if there is none.
-	 */
-	AnnotationSensitivity offsetsSensitivity();
+    /**
+     * Return which sensitivity-indexing contains character offset information.
+     *
+     * Note that there may not be such a sensitivity-indexing.
+     *
+     * @return the alternative, or null if there is none.
+     */
+    AnnotationSensitivity offsetsSensitivity();
 
-	/**
-	 * What sensitivity alternatives were indexed for this annotation?
-	 * @return the sensitivity setting
-	 */
-	Collection<AnnotationSensitivity> sensitivities();
+    /**
+     * What sensitivity alternatives were indexed for this annotation?
+     * @return the sensitivity setting
+     */
+    Collection<AnnotationSensitivity> sensitivities();
 
-	/**
-	 * Was this annotation indexed with the sensitivity specified?
-	 * @param sensitivity desired sensitivity
-	 * @return true if yes, false if not
-	 */
-	boolean hasSensitivity(MatchSensitivity sensitivity);
-	
-	/**
-	 * Get a reference to the specified sensitivity.
-	 * 
-	 * @param sensitivity desired sensitivity
-	 * @return reference to the specified sensitivity.
-	 */
-	AnnotationSensitivity sensitivity(MatchSensitivity sensitivity);
+    /**
+     * Was this annotation indexed with the sensitivity specified?
+     * @param sensitivity desired sensitivity
+     * @return true if yes, false if not
+     */
+    boolean hasSensitivity(MatchSensitivity sensitivity);
+
+    /**
+     * Get a reference to the specified sensitivity.
+     *
+     * @param sensitivity desired sensitivity
+     * @return reference to the specified sensitivity.
+     */
+    AnnotationSensitivity sensitivity(MatchSensitivity sensitivity);
 
     /**
      * Is this 'annotation' internal to BlackLab?
@@ -61,9 +61,9 @@ public interface Annotation {
      * Return the Lucene field prefix for this annotation.
      * @return Lucene field prefix
      */
-	default String luceneFieldPrefix() {
-		return AnnotatedFieldNameUtil.annotationField(field().name(), name());
-	}
+    default String luceneFieldPrefix() {
+        return AnnotatedFieldNameUtil.annotationField(field().name(), name());
+    }
 
     /**
      * Get names of the subannotations for this annotation.
@@ -78,17 +78,17 @@ public interface Annotation {
     @Override
     int hashCode();
 
-	/**
-	 * Get the alternative that has the forward index.
-	 *
-	 * @return alternative with the forward index
-	 * @throws RuntimeException if annotation has no forward index
-	 */
+    /**
+     * Get the alternative that has the forward index.
+     *
+     * @return alternative with the forward index
+     * @throws RuntimeException if annotation has no forward index
+     */
     default AnnotationSensitivity forwardIndexSensitivity() {
-		if (!hasForwardIndex())
-			throw new UnsupportedOperationException("Annotation has no forward index: " + name());
+        if (!hasForwardIndex())
+            throw new UnsupportedOperationException("Annotation has no forward index: " + name());
         return mainSensitivity();
-	}
+    }
 
     /**
      * Get the main sensitivity.

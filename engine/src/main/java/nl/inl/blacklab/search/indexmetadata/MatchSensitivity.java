@@ -50,7 +50,7 @@ public enum MatchSensitivity {
     private final boolean diacriticsSensitive;
     
     private final String luceneFieldCode;
-	
+
     MatchSensitivity(boolean caseSensitive, boolean diacriticsSensitive, String luceneFieldCode) {
         this.caseSensitive = caseSensitive;
         this.diacriticsSensitive = diacriticsSensitive;
@@ -60,21 +60,21 @@ public enum MatchSensitivity {
     public boolean isCaseSensitive() {
         return caseSensitive;
     }
-	
+
     public boolean isDiacriticsSensitive() {
         return diacriticsSensitive;
     }
     
-	/** @return Suffix used for corresponding Lucene field */
-	public String luceneFieldSuffix() {
-	    return luceneFieldCode;
-	}
-	
-	@Override
-	public String toString() {
-	    return luceneFieldSuffix();
-	}
-	
+    /** @return Suffix used for corresponding Lucene field */
+    public String luceneFieldSuffix() {
+        return luceneFieldCode;
+    }
+
+    @Override
+    public String toString() {
+        return luceneFieldSuffix();
+    }
+
     public String desensitize(String input) {
         return switch (this) {
             case CASE_INSENSITIVE -> input.toLowerCase();

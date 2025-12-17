@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -65,12 +64,12 @@ public class SpanQueryNot extends BLSpanQueryAbstract {
         return clauses.get(0); // Just return our clause, dropping the NOT operation
     }
 
-	@Override
-	public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
-		BLSpanQuery query = clauses.get(0);
+    @Override
+    public BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException {
+        BLSpanQuery query = clauses.get(0);
         BLSpanWeight weight = query == null ? null : query.createWeight(searcher, scoreMode, boost);
         return new SpanWeightNot(weight, searcher, scoreMode.needsScores() ? getTermStates(weight) : null, boost);
-	}
+    }
 
     class SpanWeightNot extends BLSpanWeight {
 

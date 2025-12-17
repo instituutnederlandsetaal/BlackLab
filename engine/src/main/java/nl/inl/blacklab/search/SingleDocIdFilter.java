@@ -90,8 +90,8 @@ public class SingleDocIdFilter extends Query {
 
                     @Override
                     public float getMaxScore(int upTo) {
-						return 0;
-					}
+                        return 0;
+                    }
                 };
             }
 

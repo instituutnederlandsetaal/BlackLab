@@ -9,32 +9,32 @@ public interface MetadataFields extends Iterable<MetadataField> {
 
     public static final String SPECIAL_FIELD_SETTING_PID = "pidField";
 
-	/**
-	 * Name of the default analyzer to use for metadata fields.
-	 * @return the analyzer name (or DEFAULT for the BlackLab default)
-	 */
-	String defaultAnalyzerName();
+    /**
+     * Name of the default analyzer to use for metadata fields.
+     * @return the analyzer name (or DEFAULT for the BlackLab default)
+     */
+    String defaultAnalyzerName();
 
-	Stream<MetadataField> stream();
+    Stream<MetadataField> stream();
 
-	/**
-	 * Get the specified metadata field config.
-	 *
-	 * @param fieldName metadata field name
-	 * @return metadata field config
-	 * @throws IllegalArgumentException if field not found
-	 */
-	MetadataField get(String fieldName);
+    /**
+     * Get the specified metadata field config.
+     *
+     * @param fieldName metadata field name
+     * @return metadata field config
+     * @throws IllegalArgumentException if field not found
+     */
+    MetadataField get(String fieldName);
 
     Map<String, ? extends MetadataFieldGroup> groups();
 
     MetadataField pidField();
 
     /**
-	 * Does the specified field exist?
-	 * 
-	 * @return true if it exists, false if not
-	 */
+     * Does the specified field exist?
+     *
+     * @return true if it exists, false if not
+     */
     boolean exists(String name);
 
     List<String> names();

@@ -25,7 +25,6 @@ import net.sf.saxon.s9api.XdmAtomicValue;
 import net.sf.saxon.s9api.XdmItem;
 import net.sf.saxon.s9api.XdmNode;
 import net.sf.saxon.s9api.XdmValue;
-import net.sf.saxon.trans.XPathException;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.indexers.config.InputFormatTypeXml;
@@ -82,13 +81,14 @@ public class XPathFinder {
             return fac;
         });
 
-    private static final ThreadLocal<Map<String, XPathSelector>> compiledXPaths = ThreadLocal.withInitial(java.util.HashMap::new);
+    private final Map<String, XPathSelector> compiledXPaths = new HashMap<>();
 
     public XPathFinder(Map<String, String> namespaces, Map<String, String> vars) {
         this.vars.putAll(vars);
 
-        try { this.xPath = compilerCache.get(namespaces != null ? namespaces : Collections.emptyMap()); }
-        catch (Exception e) {
+        try {
+            this.xPath = compilerCache.get(namespaces != null ? namespaces : Collections.emptyMap());
+        } catch (Exception e) {
             throw new InvalidConfiguration("Error setting up XPath compiler", e);
         }
 
@@ -105,7 +105,7 @@ public class XPathFinder {
      * @return the compiled expression
      */
     private XPathSelector acquireExpression(String xpathExpr) throws SaxonApiException {
-        return compiledXPaths.get().computeIfAbsent(xpathExpr, expr -> {
+        return compiledXPaths.computeIfAbsent(xpathExpr, expr -> {
             try {
                 var selector = xPath.compile(expr).load();
 
@@ -131,6 +131,13 @@ public class XPathFinder {
         return results;
     }
 
+    /**
+     * Find results in a context, return an iterable.
+     *
+     * @param xPath the xpath expression
+     * @param context the context to evaluate the xpath in
+     * @return the results
+     */
     public Iterable<XdmItem> find(String xPath, XdmValue context) {
         try {
             XPathSelector selector = acquireExpression(xPath);
@@ -151,11 +158,13 @@ public class XPathFinder {
     }
 
     public void xpathForEach(String xPath, XdmValue context, InputFormatTypeXml.XdmValueHandler handler) {
-        for (XdmItem item : find(xPath, context)) { handler.handle(item); }
+        for (XdmItem item : find(xPath, context))
+            handler.handle(item);
     }
 
     public void xpathForEachStringValue(String xPath, XdmValue context, InputFormatTypeXml.StringValueHandler handler) {
-        for (XdmItem item : find(xPath, context)) { handler.handle(item.getStringValue()); }
+        for (XdmItem item : find(xPath, context))
+            handler.handle(item.getStringValue());
     }
 
     public void xpathForEachStringValue(String xPath, NodeInfo context, InputFormatTypeXml.StringValueHandler handler) {
@@ -196,11 +205,13 @@ public class XPathFinder {
     }
 
     /**
-     * Testing revealed that the using iterators to retrieve xpath results from Saxon is significantly faster than other approaches.
+     * Testing revealed that the using iterators to retrieve xpath results from Saxon is significantly faster than
+     * other approaches.
      * Since this class is a major hot path in indexing, we use iterators to extract results from Saxon.
-     * The difference isn't world-changing, but we can speed up the *entire* indexing process by something like 20% by using iterators vs the more fluid evalutate() approach.
+     * The difference isn't world-changing, but we can speed up the *entire* indexing process by something like 20%
+     * by using iterators vs the more fluid evaluate() approach.
      */
-     private static class XpathResultIterator implements Iterable<XdmItem> { 
+     private static class XpathResultIterator implements Iterable<XdmItem> {
         XPathSelector selector;
         Iterator<XdmItem> ctxIt;
         Iterator<XdmItem> resultIt;
@@ -213,7 +224,7 @@ public class XPathFinder {
         
         @Override
         public Iterator<XdmItem> iterator() {
-            return new Iterator<XdmItem>() {
+            return new Iterator<>() {
                 @Override
                 public boolean hasNext() {
                     try {

@@ -257,9 +257,8 @@ public final class StringUtil {
         };
     }
 
-    private static final String REGEX_REMOVE_UNPRINTABLES = "[" + CHAR_ZERO_WIDTH_SPACE + CHAR_SOFT_HYPHEN + "]";
-
-    private static final Pattern PATT_REMOVE_UNPRINTABLES = Pattern.compile(REGEX_REMOVE_UNPRINTABLES);
+    private static final Pattern PATT_REMOVE_UNPRINTABLES = Pattern.compile(
+            "[" + CHAR_ZERO_WIDTH_SPACE + CHAR_SOFT_HYPHEN + "]");
 
     /**
      * Remove unprintable characters and normalize to canonical unicode composition.

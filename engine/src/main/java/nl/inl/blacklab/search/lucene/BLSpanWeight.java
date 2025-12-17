@@ -24,9 +24,9 @@ public abstract class BLSpanWeight extends SpanWeight {
     @Override
     public abstract BLSpans getSpans(LeafReaderContext ctx, Postings requiredPostings) throws IOException;
     
-//	public boolean isCacheable(LeafReaderContext ctx) {
-//		// OPT look into SpanWeight.isCacheable() and implement properly
-//		return false;
-//	}
+//    public boolean isCacheable(LeafReaderContext ctx) {
+//        // OPT look into SpanWeight.isCacheable() and implement properly
+//        return false;
+//    }
 
 }

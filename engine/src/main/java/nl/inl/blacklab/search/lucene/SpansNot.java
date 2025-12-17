@@ -4,8 +4,8 @@ import java.io.IOException;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.MultiBits;
-import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.queries.spans.SpanCollector;
+import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.util.Bits;
 
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
@@ -253,12 +253,12 @@ class SpansNot extends BLSpans {
             return nextDoc();
         }
 
-//		// If it's not already (past) there, skip clause
-//		// to doc (or beyond if there's no hits in doc)
-//		if (clauseStart != NO_MORE_POSITIONS && (clauseStart == -1 || clauseDoc < doc)) {
-//			clauseDoc = clause.advance(doc);
-//			clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
-//		}
+//        // If it's not already (past) there, skip clause
+//        // to doc (or beyond if there's no hits in doc)
+//        if (clauseStart != NO_MORE_POSITIONS && (clauseStart == -1 || clauseDoc < doc)) {
+//            clauseDoc = clause.advance(doc);
+//            clauseStart = clauseDoc == NO_MORE_DOCS ? NO_MORE_POSITIONS : -1;
+//        }
 
         // Advance to first livedoc containing matches at or after requested docID
         currentDoc = doc - 1;

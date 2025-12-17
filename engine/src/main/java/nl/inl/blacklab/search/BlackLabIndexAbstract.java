@@ -663,7 +663,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
      * Let TieredMergePolicy naturally merge segments until it's satisfied with the distribution.
      * This is done after indexing when deferred segment merges were enabled.
      * You should never call this outside of index closing! 
-     * Swapping the mergepolicy is safe, but potentially tramples expliciy configuration in downstream code in BlackLab
+     * Swapping the mergepolicy is safe, but potentially tramples explicit configuration in downstream code in BlackLab
      */
     protected void performNaturalMerges() {
         if (!indexMode || indexWriter == null)

@@ -8,7 +8,11 @@ import nl.inl.blacklab.index.IndexSource;
  * a database, or a web service. */
 public abstract class IndexSourceType extends Plugin {
 
-    private static final String PROTOCOL_SEPARATOR = ":"; // avoid matching random ':' or windows pathnames.
+    /** Separator between the scheme and the path in a URI */
+    private static final String URI_PROTOCOL_SEPARATOR = ":";
+
+    /** Optional double slash after the colon in a URI */
+    private static final String URI_DOUBLE_SLASH = "//";
 
     public static IndexSourceType forScheme(String id) {
         if (id.isEmpty())
@@ -30,11 +34,14 @@ public abstract class IndexSourceType extends Plugin {
      * @return an array with [scheme, path]
      */
     public static String[] parseUri(String uri) {
-        int index = uri.indexOf(PROTOCOL_SEPARATOR);
-        String scheme = index >= 0 ? uri.substring(0, index) : "";
+        int schemeEndIndex = uri.indexOf(URI_PROTOCOL_SEPARATOR);
+        String scheme = schemeEndIndex >= 0 ? uri.substring(0, schemeEndIndex) : "";
         if (!schemeExists(scheme))
             return new String[] { "", uri }; // no scheme, path might contain a colon (e.g. Windows path)
-        String path = index >= 0 ? uri.substring(index + PROTOCOL_SEPARATOR.length()) : uri;
+        int pathStartIndex = schemeEndIndex >= 0 ? schemeEndIndex + URI_PROTOCOL_SEPARATOR.length() : 0;
+        if (schemeEndIndex >= 0 && uri.startsWith(URI_DOUBLE_SLASH, pathStartIndex))
+            pathStartIndex += URI_DOUBLE_SLASH.length();
+        String path = uri.substring(pathStartIndex);
         return new String[] { scheme, path };
     }
 

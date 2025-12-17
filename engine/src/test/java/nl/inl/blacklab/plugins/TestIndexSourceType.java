@@ -1,5 +1,6 @@
 package nl.inl.blacklab.plugins;
 
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -16,28 +17,19 @@ public class TestIndexSourceType {
         BlackLab.implicitInstance(); // init plugin system
     }
 
+    public void assertParse(String expectedScheme, String expectedPath, String uri) {
+        String[] parts = IndexSourceType.parseUri(uri);
+        Assert.assertEquals("Expected scheme '" + expectedScheme + "', got '" + parts[0] + "'", expectedScheme, parts[0]);
+        Assert.assertEquals("Expected path '" + expectedPath + "', got '" + parts[1] + "'", expectedPath, parts[1]);
+    }
+
     @Test
     public void testParseUri() {
-        String[] parts;
-
-        parts = IndexSourceType.parseUri("file:" + WIN_PATH);
-        assert parts[0].equals("file");
-        assert parts[1].equals(WIN_PATH);
-
-        parts = IndexSourceType.parseUri(WIN_PATH);
-        assert parts[0].isEmpty();
-        assert parts[1].equals(WIN_PATH);
-
-        parts = IndexSourceType.parseUri("file:" + PATH);
-        assert parts[0].equals("file");
-        assert parts[1].equals(PATH);
-
-        parts = IndexSourceType.parseUri(PATH);
-        assert parts[0].isEmpty();
-        assert parts[1].equals(PATH);
-
-        parts = IndexSourceType.parseUri("archive:test.zip/file.xml");
-        assert parts[0].equals("archive");
-        assert parts[1].equals("test.zip/file.xml");
+        assertParse("file", WIN_PATH, "file:" + WIN_PATH);
+        assertParse("file", WIN_PATH, "file://" + WIN_PATH);
+        assertParse("", WIN_PATH, WIN_PATH);
+        assertParse("file", PATH, "file:" + PATH);
+        assertParse("", PATH, PATH);
+        assertParse("archive", "test.zip/file.xml", "archive:test.zip/file.xml");
     }
 }

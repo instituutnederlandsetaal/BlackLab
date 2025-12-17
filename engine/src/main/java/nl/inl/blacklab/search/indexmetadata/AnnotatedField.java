@@ -7,23 +7,23 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 /** An annotated field */
 public interface AnnotatedField extends Field {
 
-	/**
-	 * Get the annotations for this field.
-	 *
-	 * Properties are returned sorted according to the displayOrder defined in the
-	 * index metadata, if any.
-	 *
-	 * @return the annotations
-	 */
-	Annotations annotations();
-	
-	default Annotation mainAnnotation() {
-	    return annotations().main();
-	}
-	
-	default Annotation annotation(String name) {
-	    return annotations().get(name);
-	}
+    /**
+     * Get the annotations for this field.
+     *
+     * Properties are returned sorted according to the displayOrder defined in the
+     * index metadata, if any.
+     *
+     * @return the annotations
+     */
+    Annotations annotations();
+
+    default Annotation mainAnnotation() {
+        return annotations().main();
+    }
+
+    default Annotation annotation(String name) {
+        return annotations().get(name);
+    }
 
     boolean hasRelationAnnotation();
 

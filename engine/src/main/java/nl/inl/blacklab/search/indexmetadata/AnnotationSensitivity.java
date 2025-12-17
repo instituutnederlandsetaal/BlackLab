@@ -19,10 +19,10 @@ public interface AnnotationSensitivity {
     }
 
     Annotation annotation();
-	
-	MatchSensitivity sensitivity();
-	
-	default String luceneField() {
-		return AnnotatedFieldNameUtil.annotationSensitivity(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
-	}
+
+    MatchSensitivity sensitivity();
+
+    default String luceneField() {
+        return AnnotatedFieldNameUtil.annotationSensitivity(annotation().luceneFieldPrefix(), sensitivity().luceneFieldSuffix());
+    }
 }

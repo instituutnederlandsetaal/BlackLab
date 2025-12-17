@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -275,11 +274,11 @@ public class SpanQueryRepetition extends BLSpanQueryAbstract {
     public int forwardMatchingCost() {
         int nMax = max == MAX_UNLIMITED ? 50 : max;
         int clauseCost = clauses.get(0).forwardMatchingCost();
-//		int cost = 0;
-//		for (int i = min; i <= nMax; i++) {
-//			cost += i * clauseCost;
-//		}
-//		return cost;
+//        int cost = 0;
+//        for (int i = min; i <= nMax; i++) {
+//            cost += i * clauseCost;
+//        }
+//        return cost;
 
         // NOTE: you would expect a more correct cost estimation to be
         //   clauseCost * (min + (min + 1) + ... + max)

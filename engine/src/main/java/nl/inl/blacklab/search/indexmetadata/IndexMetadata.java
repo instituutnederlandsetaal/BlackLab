@@ -27,20 +27,20 @@ public interface IndexMetadata extends Freezable {
     String indexFlag(String name);
 
     AnnotatedFields annotatedFields();
-	
-	default AnnotatedField mainAnnotatedField() {
-	    return annotatedFields().main();
-	}
-	
+
+    default AnnotatedField mainAnnotatedField() {
+        return annotatedFields().main();
+    }
+
     default AnnotatedField annotatedField(String name) {
         return annotatedFields().get(name);
     }
     
-	MetadataFields metadataFields();
-	
-	default MetadataField metadataField(String name) {
-	    return metadataFields().get(name);
-	}
+    MetadataFields metadataFields();
+
+    default MetadataField metadataField(String name) {
+        return metadataFields().get(name);
+    }
 
     /**
      * Get the custom properties for this corpus.
@@ -54,52 +54,52 @@ public interface IndexMetadata extends Freezable {
      */
     CustomProps custom();
 
-	/**
-	 * Is the content freely viewable by all users, or is it restricted?
-	 * @return true if the full content may be retrieved by anyone
-	 */
-	boolean contentViewable();
+    /**
+     * Is the content freely viewable by all users, or is it restricted?
+     * @return true if the full content may be retrieved by anyone
+     */
+    boolean contentViewable();
 
-	/**
-	 * What format(s) is/are the documents in?
-	 *
-	 * This is in the form of a format identifier as understood
-	 * by the DocumentFormats class (either an abbreviation or a
-	 * (qualified) class name).
-	 *
-	 * @return the document format(s)
-	 */
-	String documentFormat();
+    /**
+     * What format(s) is/are the documents in?
+     *
+     * This is in the form of a format identifier as understood
+     * by the DocumentFormats class (either an abbreviation or a
+     * (qualified) class name).
+     *
+     * @return the document format(s)
+     */
+    String documentFormat();
 
-	/**
-	 * What version of the index format is this?
-	 * @return the index format version
-	 */
-	String indexFormat();
+    /**
+     * What version of the index format is this?
+     * @return the index format version
+     */
+    String indexFormat();
 
-	/**
-	 * When was this index created?
-	 * @return date/time
-	 */
-	String timeCreated();
+    /**
+     * When was this index created?
+     * @return date/time
+     */
+    String timeCreated();
 
-	/**
-	 * When was this index last modified?
-	 * @return date/time
-	 */
-	String timeModified();
+    /**
+     * When was this index last modified?
+     * @return date/time
+     */
+    String timeModified();
 
-	/**
-	 * When was the BlackLab.jar used for indexing built?
-	 * @return date/time
-	 */
-	String indexBlackLabBuildTime();
+    /**
+     * When was the BlackLab.jar used for indexing built?
+     * @return date/time
+     */
+    String indexBlackLabBuildTime();
 
-	/**
-	 * When was the BlackLab.jar used for indexing built?
-	 * @return date/time stamp
-	 */
-	String indexBlackLabVersion();
+    /**
+     * When was the BlackLab.jar used for indexing built?
+     * @return date/time stamp
+     */
+    String indexBlackLabVersion();
 
     /**
      * What SCM revision (i.e. Git hash) was this indexed with?
@@ -108,12 +108,12 @@ public interface IndexMetadata extends Freezable {
      */
     String indexBlackLabScmRevision();
 
-	/**
-	 * How many tokens are in the main annotated field?
+    /**
+     * How many tokens are in the main annotated field?
      *
-	 * @return number of tokens
-	 */
-	long tokenCount();
+     * @return number of tokens
+     */
+    long tokenCount();
 
     /**
      * How many tokens are in the annotated fields?
@@ -150,15 +150,15 @@ public interface IndexMetadata extends Freezable {
         return -1;
     }
 
-	/**
-	 * Is this a new, empty index?
-	 *
-	 * An empty index is one that doesn't have a main contents field yet,
-	 * or has a main contents field but no indexed tokens yet.
-	 *
-	 * @return true if it is, false if not.
-	 */
-	boolean isNewIndex();
+    /**
+     * Is this a new, empty index?
+     *
+     * An empty index is one that doesn't have a main contents field yet,
+     * or has a main contents field but no indexed tokens yet.
+     *
+     * @return true if it is, false if not.
+     */
+    boolean isNewIndex();
 
     /**
      * Return the id of the index metadata document.

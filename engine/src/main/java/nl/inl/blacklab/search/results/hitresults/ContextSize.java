@@ -247,19 +247,19 @@ public class ContextSize {
         return after;
     }
 
-	/**
-	 * Should the hit itself be included in the context or not?
-	 *
-	 * By default it always is, but for some operations you only need
-	 * the before context. And to determine collocations you might only want
-	 * before and after context and not the hit context itself (because you're
-	 * counting words that occur around the hit)
-	 *
-	 * @return whether or not the hit context should be included
-	 */
-	public boolean includeHit() {
-	    return includeHit;
-	}
+    /**
+     * Should the hit itself be included in the context or not?
+     *
+     * By default it always is, but for some operations you only need
+     * the before context. And to determine collocations you might only want
+     * before and after context and not the hit context itself (because you're
+     * counting words that occur around the hit)
+     *
+     * @return whether or not the hit context should be included
+     */
+    public boolean includeHit() {
+        return includeHit;
+    }
 
     /** Base the context on inline tag instead of the normal hit?
      *

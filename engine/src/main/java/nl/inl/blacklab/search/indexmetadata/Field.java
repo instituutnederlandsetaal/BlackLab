@@ -4,13 +4,13 @@ import nl.inl.blacklab.search.BlackLabIndex;
 
 /** Shared base interface between metadata and annotated fields */
 public interface Field {
-	
-	/** Get this field's name
-	 * @return this field's name */
-	String name();
-	
-	/** Is this field's content stored in a content store? 
-	 * @return true if it does, false if not */
+
+    /** Get this field's name
+     * @return this field's name */
+    String name();
+
+    /** Is this field's content stored in a content store?
+     * @return true if it does, false if not */
     boolean hasContentStore();
 
     /** Get the Lucene field that contains character offsets (if any) 
