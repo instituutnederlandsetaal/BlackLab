@@ -13,7 +13,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.Query;
-import org.jspecify.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
@@ -25,14 +24,23 @@ import nl.inl.util.StringUtil;
  * Simple proxy for Lucene IndexWriter.
  */
 public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
-    private boolean pidsInitialized = false;
-    private Set<String> usedPids = null;
 
     private final BlackLabIndexWriter index;
 
     private final IndexWriter indexWriter;
 
+    /** Which field, if any, contains our persistent identifiers. Otherwise null.
+     * Lazily initialized on first use; only access through getPidFieldName().
+     */
     private String pidFieldName;
+
+    /** Have we looked for the pid field name? If true and pidFieldName is null, there is no pid field, don't look again. */
+    private boolean pidFieldNameInitialized = false;
+
+    /** All persistent identifier field values in this index so far.
+     * Lazily initialized on first use. Only access through addToPids().
+     */
+    private Set<String> usedPids = null;
 
     public BLIndexWriterProxyLucene(IndexWriter indexWriter, BlackLabIndexWriter index) {
         this.indexWriter = indexWriter;
@@ -40,52 +48,60 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
 
     }
 
-    synchronized String getPidFieldName() {
-        if (pidFieldName == null) {
-
+    private synchronized String getPidFieldName() {
+        if (pidFieldName == null && !pidFieldNameInitialized) {
             MetadataField pidField = index.metadata().metadataFields().pidField();
             pidFieldName = pidField == null ? null : pidField.name();
+            pidFieldNameInitialized = true;
         }
         return pidFieldName;
     }
 
-    /** Get the PID for this document, if the index has a PID field. */
-    private @Nullable Term getPid(BLInputDocument document) {
+    /** Get the PID for this document, if the index has a PID field.
+     *
+     * @param document the document
+     * @return the PID term, or null if no PID field is configured
+     */
+    private Term getPidTerm(BLInputDocument document) {
         String pidFieldName = getPidFieldName();
         if (pidFieldName == null)
-            return null;
+            throw new ErrorIndexingFile("Missing pid field name");
         String pid = document.get(pidFieldName);
         if (pid == null) {
-            throw new ErrorIndexingFile("Document has no persistent identifier (pidField '" + pidFieldName + "'). Document: " + document);
+            throw new ErrorIndexingFile("Document has no persistent identifier (pidField '" + pidFieldName +
+                    "'). Document: " + document);
         }
         String desensitizedPid = StringUtil.desensitize(pid); // lowercase, remove accents
         return new Term(pidFieldName, desensitizedPid);
     }
 
-    private enum Action { ADD, UPSERT, SKIP, FAIL }
-    private synchronized Action getActionForPid(@Nullable Term pid) {
-        if (pid == null) return Action.ADD;
-
-        var usedPids = getUsedPids();
-        if (!usedPids.add(pid.text())) { // is not a new entry in the set
-            return switch(index.getIfDocumentExists()) {
-                case UPSERT -> Action.UPSERT;
-                case SKIP -> Action.SKIP;
-                case FAIL -> Action.FAIL;
-            };
-        }
-        return Action.ADD;
-    }
-
     @Override
     public void addDocument(BLInputDocument document) throws IOException {
-        Term pid = getPid(document);
-        switch (getActionForPid(pid)) {
-        case ADD -> { indexWriter.addDocument(luceneDoc(document)); }
-        case UPSERT -> { indexWriter.updateDocument(pid, luceneDoc(document)); }
-        case SKIP -> { /* do nothing */ }
-        case FAIL ->  { throw new ErrorIndexingFile("Document with pid '" + pid + "' already exists in index; cannot add document: " + document); }
-        };
+        // Do we have a persistent identifier?
+        if (getPidFieldName() != null) {
+            // Yes; does this pid already exist in the corpus?
+            Term pid = getPidTerm(document);
+            if (!addToPids(pid.text())) {
+                // Already exists; handle according to configuration
+                switch (index.getIfDocumentExists()) {
+                case UPSERT:
+                    indexWriter.updateDocument(pid, luceneDoc(document));
+                    break;
+                case SKIP:
+                    /* do nothing */
+                    break;
+                case FAIL:
+                    throw new ErrorIndexingFile("Document with pid '" + pid +
+                            "' already exists in corpus; cannot add document: " + document);
+                default:
+                    throw new IllegalArgumentException();
+                }
+                return;
+            }
+        }
+        // We don't have persistent identifiers, or this pid doesn't occur in the corpus yet.
+        // Just add the document.
+        indexWriter.addDocument(luceneDoc(document));
     }
 
     private Document luceneDoc(BLInputDocument document) {
@@ -131,14 +147,20 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
         return indexWriter.getDocStats().numDocs;
     }
 
-    private Set<String> getUsedPids() {
-        if (!pidsInitialized) {
-            usedPids = new ObjectOpenHashSet<>();
-            String pidFieldName = getPidFieldName();
-            if (pidFieldName != null) {
+    /**
+     * Add a pid to the set of used pids.
+     *
+     * @param pid the pid to add
+     * @return true if it's a new pid, false if it was already present
+     */
+    private synchronized boolean addToPids(String pid) {
+        if (usedPids == null) {
+            usedPids = new ObjectOpenHashSet<>(getNumberOfDocs());
+            String pidFieldName1 = getPidFieldName();
+            if (pidFieldName1 != null) {
                 try (IndexReader reader = DirectoryReader.open(indexWriter)) {
                     var fields = reader.storedFields();
-                    var fieldsToVisit = Collections.singleton(pidFieldName);
+                    var fieldsToVisit = Collections.singleton(pidFieldName1);
 
                     for (int i = 0; i < reader.maxDoc(); i++) {
                         var visitor = new DocumentStoredFieldVisitor(fieldsToVisit) {
@@ -158,9 +180,9 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
                         fields.document(i, visitor);
                         var doc = visitor.getDocument();
 
-                        String pid = doc.get(pidFieldName);
-                        if (pid != null) {
-                            usedPids.add(pid);
+                        String pid1 = doc.get(pidFieldName1);
+                        if (pid1 != null) {
+                            usedPids.add(pid1);
                         }
                     }
                 } catch (IOException e) {
@@ -168,8 +190,7 @@ public class BLIndexWriterProxyLucene implements BLIndexWriterProxy, Closeable {
                 }
             }
         }
-
-        pidsInitialized = true;
-        return usedPids;
+        return usedPids.add(pid);
     }
+
 }
