@@ -158,7 +158,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return implicitFields.computeIfAbsent(fieldName,
                 __ -> {
                     logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
-                    return new MetadataFieldImpl(fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
+                    MetadataFieldImpl mf = new MetadataFieldImpl(fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
+                    mf.putCustom("unknownCondition", defaultUnknownCondition());
+                    mf.putCustom("unknownValue", defaultUnknownValue());
+                    return mf;
                 }
         );
     }
