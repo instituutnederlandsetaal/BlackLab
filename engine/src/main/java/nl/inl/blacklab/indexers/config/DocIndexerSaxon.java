@@ -131,7 +131,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<XdmValue> {
 
     @Override
     protected void xpathForEach(String xPath, XdmValue context, NodeHandler<XdmValue> handler) {
-        finder.xpathForEach(xPath, context, handler);
+        finder.xpathForEach(xPath, context, (item) -> handler.handle(XdmValue.wrap(item.getUnderlyingValue())));
     }
 
     @Override
@@ -151,7 +151,9 @@ public class DocIndexerSaxon extends DocIndexerXPath<XdmValue> {
 
     @Override
     protected String currentNodeXml(XdmValue node) {
-        return finder.currentNodeXml(node);
+        if (node.size() != 1)
+            throw new IllegalArgumentException("Expected exactly one node, got " + node.size());
+        return finder.currentNodeXml(node.itemAt(0));
     }
 
     @Override
@@ -412,8 +414,7 @@ public class DocIndexerSaxon extends DocIndexerXPath<XdmValue> {
 
         if (annotation.getBasePath() != null) {
             // Use find() instead of findNodes() to support atomic values (e.g. strings from tokenize())
-            XdmValue results = finder.find(annotation.getBasePath(), word);
-            for (XdmItem item: results) {
+            for (XdmItem item: finder.find(annotation.getBasePath(), word)) {
                 processAnnotationWithinBasePath(annotation, XdmValue.wrap(item.getUnderlyingValue()), positionSpanEndOrSource, spanEndOrRelTarget, handler);
             }
         } else {
