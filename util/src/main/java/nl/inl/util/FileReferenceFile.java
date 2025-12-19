@@ -23,17 +23,23 @@ public class FileReferenceFile implements FileReference {
     /** The encoding, or null if BOM not yet detected */
     private Charset charSet;
 
+    /** Cached canonical path (can be quite slow to retrieve) */
+    private String canonicalPath;
+
     FileReferenceFile(File file) {
         this.file = file;
     }
 
     @Override
     public String getPath() {
-        try {
-            return file.getCanonicalPath();
-        } catch (IOException e) {
-            throw new ErrorIndexingFile(e);
+        if (canonicalPath == null) {
+            try {
+                canonicalPath = file.getCanonicalPath();
+            } catch (IOException e) {
+                throw new ErrorIndexingFile(e);
+            }
         }
+        return canonicalPath;
     }
 
     @Override
