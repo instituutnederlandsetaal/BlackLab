@@ -3,6 +3,7 @@ package nl.inl.blacklab.indexers.config.saxon;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -37,7 +38,12 @@ public class XPathFinder {
     /** URI for the implicitly declared xml namespace */
     public static final String NAMESPACE_XML_URI = "http://www.w3.org/XML/1998/namespace";
 
-    private final LoadingCache<Map<String, String>, XPathCompiler> compilerCache = CacheBuilder.newBuilder()
+    /**
+     * Cache of XPathCompiler instances, keyed by namespace configuration.
+     * Static so it can be shared across all XPathFinder instances (i.e. across documents).
+     * Creating XPathCompilers is slow, so we want to reuse them.
+     */
+    private static final LoadingCache<Map<String, String>, XPathCompiler> compilerCache = CacheBuilder.newBuilder()
         .maximumSize(50) // should be large enough for most use cases?
         .expireAfterAccess(Duration.ofMinutes(1))
         .build(new CacheLoader<Map<String, String>, XPathCompiler>() {
@@ -70,11 +76,26 @@ public class XPathFinder {
                 return fac;
             }
         });
+
+    /**
+     * Cache of XPathSelector instances per XPathCompiler, with thread-local storage.
+     * XPathSelector.load() is slow, but the resulting selectors are reusable across documents
+     * and variable values. We cache them per-thread (since they hold mutable state like context)
+     * and per-compiler (since they're tied to the compiler's namespace/variable configuration).
+     */
+    private static final LoadingCache<XPathCompiler, ThreadLocal<Map<String, XPathSelector>>> selectorCache =
+            CacheBuilder.newBuilder()
+                    .weakKeys() // allow GC of XPathCompiler instances
+                    .build(new CacheLoader<XPathCompiler, ThreadLocal<Map<String, XPathSelector>>>() {
+                        @Override
+                        public ThreadLocal<Map<String, XPathSelector>> load(XPathCompiler key) {
+                            return ThreadLocal.withInitial(HashMap::new);
+                        }
+                    });
+
     private final XPathCompiler xPath;
 
     private final Serializer serializer;
-
-    private static final ThreadLocal<Map<String, XPathSelector>> compiledXPaths = ThreadLocal.withInitial(java.util.HashMap::new);
 
     public XPathFinder(Map<String, String> namespaces) {
         try { this.xPath = compilerCache.get(namespaces != null ? namespaces : Collections.emptyMap()); }
@@ -89,19 +110,29 @@ public class XPathFinder {
     }
 
     /**
-     * Compile XPath expression.
+     * Compile XPath expression and get a selector for it.
+     * <p>
+     * XPathSelector instances are cached per-thread and per-compiler, since:
+     * - load() is slow but selectors are reusable across documents
+     * - selectors hold mutable state (context item) so need to be per-thread
+     * - selectors are tied to the compiler's namespace configuration
      *
      * @param xpathExpr the xpath expression
-     * @return the compiled expression
+     * @return the compiled expression selector
      */
     private XPathSelector acquireExpression(String xpathExpr) throws SaxonApiException {
-        return compiledXPaths.get().computeIfAbsent(xpathExpr, expr -> {
-            try {
-                return xPath.compile(expr).load();
-            } catch (SaxonApiException e) {
-                throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
-            }
-        });
+        try {
+            Map<String, XPathSelector> selectors = selectorCache.get(xPath).get();
+            return selectors.computeIfAbsent(xpathExpr, expr -> {
+                try {
+                    return xPath.compile(expr).load();
+                } catch (SaxonApiException e) {
+                    throw new InvalidConfiguration(e.getMessage() + "; for xpath " + xPath, e);
+                }
+            });
+        } catch (Exception e) {
+            throw new SaxonApiException(e);
+        }
     }
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
