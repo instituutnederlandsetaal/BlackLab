@@ -5,6 +5,7 @@ import java.io.StringWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -62,6 +63,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
     /** Exception thrown by our thread, or null if no exception was thrown (set by thread) */
     private Throwable exceptionThrown = null;
+
+    /** Latch to signal completion - allows efficient blocking instead of polling */
+    private final CountDownLatch completionLatch = new CountDownLatch(1);
 
     /** If the search couldn't complete or was aborted, this may contain the exact reason why, e.g.
      *  "Search aborted because it took longer than the maximum of 5 minutes. This may be a very demanding
@@ -147,6 +151,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
 
             // Record the time the task was done, for e.g. cache management.
             doneTime = now();
+
+            // Signal completion to any waiting threads
+            completionLatch.countDown();
         }
     }
 
@@ -249,12 +256,12 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
     }
 
     @Override
-    public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-        // Wait until result available
-        long ms = unit.toMillis(time);
-        while (ms > 0 && !isDone() && !isCancelled()) {
-            Thread.sleep(POLLING_TIME_MS);
-            ms -= POLLING_TIME_MS;
+    public T get(long time, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {        // Wait efficiently using the latch instead of polling
+        if (!isDone() && !isCancelled()) {
+            boolean completed = completionLatch.await(time, unit);
+            if (!completed && !isDone() && !isCancelled()) {
+                throw new TimeoutException("Result still not available after " + unit.toMillis(time) + "ms");
+            }
         }
         if (isCancelled()) {
             InterruptedSearch interruptedSearch = InterruptedSearch.cancelled();
@@ -263,8 +270,6 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
         }
         if (exceptionThrown != null)
             throw new ExecutionException(exceptionThrown);
-        if (!isDone())
-            throw new TimeoutException("Result still not available after " + ms + "ms");
         return result;
     }
 
@@ -341,6 +346,9 @@ public class BlsCacheEntry<T extends SearchResult> extends SearchCacheEntry<T> {
             this.result = null;
 
             doneTime = now();
+
+            // Signal completion to any waiting threads
+            completionLatch.countDown();
         }
         return result;
     }
