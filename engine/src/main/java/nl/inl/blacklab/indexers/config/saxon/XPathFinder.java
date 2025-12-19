@@ -7,6 +7,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -39,27 +41,38 @@ public class XPathFinder {
     /** URI for the implicitly declared xml namespace */
     public static final String NAMESPACE_XML_URI = "http://www.w3.org/XML/1998/namespace";
 
-    private final XPathCompiler xPath;
+    /**
+     * Cache key for XPathCompiler instances. Includes namespaces and variable names
+     * (but not values, since values can change while the compiler can be reused).
+     */
+    private record CompilerCacheKey(Map<String, String> namespaces, Set<String> varNames) {
+        CompilerCacheKey {
+            // Make defensive copies to ensure immutability
+            namespaces = namespaces == null ? Map.of() : Map.copyOf(namespaces);
+            varNames = varNames == null ? Set.of() : Set.copyOf(varNames);
+        }
+    }
 
-    private final Serializer serializer;
-
-    /** Variables to make available from XPath */
-    private final Map<String, String> vars = new HashMap<>();
-
-    private final LoadingCache<Map<String, String>, XPathCompiler> compilerCache = Caffeine.newBuilder()
+    /**
+     * Cache of XPathCompiler instances.
+     * Static so it can be shared across all XPathFinder instances (i.e. across documents).
+     * Creating XPathCompilers is slow, so we want to reuse them.
+     */
+    private static final LoadingCache<CompilerCacheKey, XPathCompiler> compilerCache = Caffeine.newBuilder()
         .maximumSize(50) // should be large enough for most use cases?
         .expireAfterAccess(Duration.ofMinutes(1))
-        .build(namespaces -> {
+        .build(key -> {
             var fac = SaxonHelper.newXPathFactory();
             fac.setCaching(true);
-            
-            for (String var: vars.keySet()) {
+
+            for (String var: key.varNames()) {
                 fac.declareVariable(new QName(var));
             }
             // xml namespace is implicit
             fac.declareNamespace(NAMESPACE_XML_PREFIX, NAMESPACE_XML_URI);
+            Map<String, String> namespaces = key.namespaces();
             boolean hasNamespaces = false;
-            if (namespaces != null && !namespaces.isEmpty()) {
+            if (!namespaces.isEmpty()) {
                 for (Map.Entry<String, String> e: namespaces.entrySet()) {
                     if (e.getKey().equals(NAMESPACE_XML_PREFIX)) {
                         if (!e.getValue().equals(NAMESPACE_XML_URI))
@@ -67,10 +80,12 @@ public class XPathFinder {
                                     + "'); ignoring");
                         continue;
                     }
+                    // Don't use namespace-aware matching if only the xml namespace is defined
                     hasNamespaces = true;
                     fac.declareNamespace(e.getKey(), e.getValue());
                 }
             }
+
             if (!hasNamespaces) {
                 // No namespaces declared in the indexer config.
                 // Set Saxon to ignore namespace on elements without a prefix.
@@ -81,13 +96,33 @@ public class XPathFinder {
             return fac;
         });
 
-    private final Map<String, XPathSelector> compiledXPaths = new HashMap<>();
+    /**
+     * Cache of XPathSelector instances per XPathCompiler, with thread-local storage.
+     * XPathSelector.load() is slow, but the resulting selectors are reusable across documents
+     * and variable values. We cache them per-thread, since they're not thread-safe, 
+     * but we do cache them, as they are perfectly fine to reuse across documents,
+     * as long as the underlying namespaces and variable declarations
+     * are the same (which they are, since they're tied to the XPathCompiler).
+     */
+    private static final LoadingCache<XPathCompiler, ThreadLocal<Map<String, XPathSelector>>> selectorCache =
+            Caffeine.newBuilder()
+                    // allow GC of XPathCompiler instances
+                    .weakKeys() 
+                    // map is ThreadLocal, so no need for concurrent map
+                    .build(key -> ThreadLocal.withInitial(HashMap::new)); 
+
+    private final XPathCompiler xPath;
+
+    private final Serializer serializer;
+
+    /** Variables to make available from XPath */
+    private final Map<String, String> vars = new HashMap<>();
 
     public XPathFinder(Map<String, String> namespaces, Map<String, String> vars) {
         this.vars.putAll(vars);
 
         try {
-            this.xPath = compilerCache.get(namespaces != null ? namespaces : Collections.emptyMap());
+            this.xPath = compilerCache.get(new CompilerCacheKey(namespaces, this.vars.keySet()));
         } catch (Exception e) {
             throw new InvalidConfiguration("Error setting up XPath compiler", e);
         }
@@ -105,19 +140,17 @@ public class XPathFinder {
      * @return the compiled expression
      */
     private XPathSelector acquireExpression(String xpathExpr) throws SaxonApiException {
-        return compiledXPaths.computeIfAbsent(xpathExpr, expr -> {
-            try {
-                var selector = xPath.compile(expr).load();
-
-                // We've declared the variable, so we have to set it, whether it is used or not
-                for (Map.Entry<String, String> var: vars.entrySet()) {
-                    selector.setVariable(new QName(var.getKey()), new XdmAtomicValue(var.getValue()));
-                }
-                return selector;
-            } catch (SaxonApiException e) {
-                throw new InvalidConfiguration(e.getMessage() + "; for xpath '" + xpathExpr + "'", e);
-            }
-        });
+        Map<String, XPathSelector> selectors = selectorCache.get(xPath).get();
+        XPathSelector selector = selectors.get(xpathExpr);
+        if (selector == null) {
+            selector = xPath.compile(xpathExpr).load();
+            selectors.put(xpathExpr, selector);
+        }
+        // Always set variables since values may have changed between documents
+        for (Map.Entry<String, String> var : vars.entrySet()) {
+            selector.setVariable(new QName(var.getKey()), new XdmAtomicValue(var.getValue()));
+        }
+        return selector;
     }
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
