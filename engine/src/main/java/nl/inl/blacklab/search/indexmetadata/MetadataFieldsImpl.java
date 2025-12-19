@@ -348,6 +348,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     public void fixAfterDeserialization(IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
         setTopLevelCustom(metadata.custom());
 
+        // Read default unknown condition/value from custom properties
+        // (these were stored there when the index was created)
+        defaultUnknownCondition = topLevelCustom.get("unknownCondition", UnknownCondition.NEVER.stringValue());
+        defaultUnknownValue = topLevelCustom.get("unknownValue", "unknown");
+
         metadataFieldValuesFactory = factory;
 //        for (Map.Entry<String, MetadataFieldImpl> e: metadataFieldInfos.entrySet()) {
 //            e.getValue().fixAfterDeserialization(metadata.index, e.getKey(), factory);

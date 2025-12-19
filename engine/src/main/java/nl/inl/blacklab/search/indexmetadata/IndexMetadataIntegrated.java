@@ -366,6 +366,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
         }
         custom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
         custom.put("unknownValue", config.getMetadataDefaultUnknownValue());
+        // Also set on metadataFields so dynamically registered fields get the right defaults
+        metadataFields.setDefaultUnknownCondition(config.getMetadataDefaultUnknownCondition().stringValue());
+        metadataFields.setDefaultUnknownValue(config.getMetadataDefaultUnknownValue());
 
         addGroupsInfoFromConfig(config);
 
@@ -449,6 +452,9 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             custom.put("displayName", IndexMetadata.indexNameFromDirectory(dir));
         custom.put("description", "");
         custom.put("textDirection", "ltr");
+        // Store default unknown condition/value (NEVER/unknown) in custom for consistency
+        custom.put("unknownCondition", UnknownCondition.NEVER.stringValue());
+        custom.put("unknownValue", "unknown");
         versionInfo.populateWithDefaults();
         metadataFields.clearSpecialFields();
         custom.put("annotationGroups", new LinkedHashMap<>());
