@@ -1,60 +1,24 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
-import java.io.Reader;
-
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import javax.xml.transform.Source;
-import javax.xml.transform.sax.SAXSource;
-
-import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.XMLReader;
-
 import net.sf.saxon.Configuration;
-import net.sf.saxon.om.TreeInfo;
 import net.sf.saxon.s9api.Processor;
 import net.sf.saxon.s9api.XPathCompiler;
-import net.sf.saxon.trans.XPathException;
 
 /**
  * A helper for indexing using Saxon.
  */
 public class SaxonHelper {
-    // make sure our content handler doesn't get overwritten by saxon
-    static SAXParserFactory parserFactory = SAXParserFactory.newInstance();
     static Processor saxonProcessor = new Processor(false);
     static {
-        parserFactory.setXIncludeAware(true);
+        // Enable line numbering for all documents built with this configuration
+        Configuration config = saxonProcessor.getUnderlyingConfiguration();
+        config.setLineNumbering(true);
     }
 
     private SaxonHelper() {}
 
     public static XPathCompiler newXPathFactory() {
         return saxonProcessor.newXPathCompiler();
-    }
-
-    /** Parse the document, using the given content handler.
-     *
-     * @param reader document to parse
-     * @param handler content handler to use
-     * @return parsed document
-     */
-    public static TreeInfo parseDocument(Reader reader, ContentHandler handler) throws ParserConfigurationException,
-            SAXException, XPathException {
-        SAXParser parser = parserFactory.newSAXParser();
-        XMLReader xmlReader = parser.getXMLReader();
-        xmlReader.setContentHandler(handler);
-        XMLReader trackingReader = new CharPosTrackingXMLReader(xmlReader);
-        // regular parsing with line numbering enabled
-        InputSource inputSrc = new InputSource(reader);
-        Source source = new SAXSource(trackingReader, inputSrc);
-
-        Configuration config = newXPathFactory().getUnderlyingStaticContext().getConfiguration();
-        config.setLineNumbering(true);
-        return config.buildDocumentTree(source);
     }
 
     public static Processor getProcessor() {
