@@ -22,6 +22,8 @@ import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.IndexWriterConfig.OpenMode;
 import org.apache.lucene.index.MultiBits;
+import org.apache.lucene.index.NoMergePolicy;
+import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -41,6 +43,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.index.BLIndexObjectFactory;
 import nl.inl.blacklab.index.BLIndexWriterProxy;
+import nl.inl.blacklab.index.BLIndexWriterProxyLucene;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -588,6 +591,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 reader.close();
             }
             if (indexWriter != null) {
+                // Perform natural merges if deferred merge feature is enabled
+                if (Boolean.parseBoolean(BlackLab.featureFlag(BlackLab.FEATURE_DEFER_SEGMENT_MERGES_DURING_INDEXING))) {
+                    logger.info("Deferred segment merges enabled; starting natural merges before closing index...");
+                    performNaturalMerges();
+                }
                 indexWriter.commit();
                 indexWriter.close();
             }
@@ -652,12 +660,38 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         IndexWriterConfig config = new IndexWriterConfig(useAnalyzer);
         config.setOpenMode(create ? OpenMode.CREATE : OpenMode.CREATE_OR_APPEND);
         config.setRAMBufferSizeMB(150); // faster indexing
+        // Defer segment merges during indexing
+        // Merge once indexing is finished, skipping intermediate merges, which saves time
+        if (Boolean.parseBoolean(BlackLab.featureFlag(BlackLab.FEATURE_DEFER_SEGMENT_MERGES_DURING_INDEXING))) {
+            logger.info("Deferred segment merges during indexing enabled.");
+            config.setMergePolicy(NoMergePolicy.INSTANCE);
+        }
+        
         customizeIndexWriterConfig(config);
         return new IndexWriter(indexLuceneDir, config);
     }
 
     protected void customizeIndexWriterConfig(IndexWriterConfig config) {
         // subclasses can override
+    }
+
+    /**
+     * Let TieredMergePolicy naturally merge segments until it's satisfied with the distribution.
+     * This is done after indexing when deferred segment merges were enabled.
+     * You should never call this outside of index closing! 
+     * Swapping the mergepolicy is safe, but potentially tramples expliciy configuration in downstream code in BlackLab
+     */
+    protected void performNaturalMerges() {
+        if (!indexMode || indexWriter == null)
+            return;
+
+        try {
+            IndexWriter writer = ((BLIndexWriterProxyLucene) indexWriter).getWriter();
+            writer.getConfig().setMergePolicy(new TieredMergePolicy());
+            writer.maybeMerge();
+        } catch (IOException e) {
+            throw BlackLabException.wrapRuntime(e);
+        }
     }
 
     @Override
