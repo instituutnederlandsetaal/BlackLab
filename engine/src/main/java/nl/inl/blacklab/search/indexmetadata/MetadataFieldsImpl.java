@@ -164,7 +164,10 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return implicitFields.computeIfAbsent(fieldName,
                 __ -> {
                     logger.warn("Encountered undeclared metadata field '" + fieldName + "'. Make sure all metadata fields are declared.");
-                    return new MetadataFieldImpl(index, fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
+                    MetadataFieldImpl mf = new MetadataFieldImpl(index, fieldName, FieldType.TOKENIZED, metadataFieldValuesFactory);
+                    mf.putCustom("unknownCondition", defaultUnknownCondition());
+                    mf.putCustom("unknownValue", defaultUnknownValue());
+                    return mf;
                 }
         );
     }
@@ -199,8 +202,16 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
         return defaultUnknownCondition;
     }
 
+    public void setDefaultUnknownCondition(String defaultUnknownCondition) {
+        this.defaultUnknownCondition = defaultUnknownCondition;
+    }
+
     public String defaultUnknownValue() {
         return defaultUnknownValue;
+    }
+
+    public void setDefaultUnknownValue(String defaultUnknownValue) {
+        this.defaultUnknownValue = defaultUnknownValue;
     }
 
     // Methods that mutate data
@@ -306,6 +317,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     public void fixAfterDeserialization(BlackLabIndex index, IndexMetadataImpl metadata, MetadataFieldValues.Factory factory) {
         this.index = index;
         setTopLevelCustom(metadata.custom());
+
+        // Read default unknown condition/value from custom properties
+        // (these were stored there when the index was created)
+        defaultUnknownCondition = topLevelCustom.get("unknownCondition", UnknownCondition.NEVER.stringValue());
+        defaultUnknownValue = topLevelCustom.get("unknownValue", "unknown");
 
         metadataFieldValuesFactory = factory;
 
