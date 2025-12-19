@@ -116,7 +116,7 @@ class SpansReader implements Runnable {
      * @param weight                span weight we're querying
      * @param leafReaderContext     leaf reader we're running on
      * @param sourceHitQueryContext source HitQueryContext from HitsFromQueryParallel; we'll derive our own context from it
-     * @param globalResults         global results object (must be locked before writing)
+     * @param globalResults         global results object (must be locked before writing) - we'll send a notify() on it when we add hits
      * @param globalDocsProcessed   global docs retrieved counter
      * @param globalDocsCounted     global docs counter (includes ones that weren't retrieved because of max. settings)
      * @param globalHitsProcessed   global hits retrieved counter
@@ -130,7 +130,7 @@ class SpansReader implements Runnable {
         HitQueryContext sourceHitQueryContext,
 
         HitsInternalMutable globalResults,
-            AtomicLong globalDocsProcessed,
+        AtomicLong globalDocsProcessed,
         AtomicLong globalDocsCounted,
         AtomicLong globalHitsProcessed,
         AtomicLong globalHitsCounted,
@@ -350,6 +350,11 @@ class SpansReader implements Runnable {
             if (results.size() > 0) {
                 addToGlobalResults(results);
                 results.clear();
+            } else {
+                // Signal that we're done expicitly, even though we had no leftover hits.
+                synchronized(globalResults) {
+                    globalResults.notifyAll();
+                }
             }
         }
 
@@ -363,6 +368,10 @@ class SpansReader implements Runnable {
 
     void addToGlobalResults(HitsInternal hits) {
         globalResults.addAll(hits);
+        // Signal any waiting threads that new hits are available
+        synchronized(globalResults) {
+            globalResults.notifyAll();
+        }
     }
 
     public HitQueryContext getHitContext() {
