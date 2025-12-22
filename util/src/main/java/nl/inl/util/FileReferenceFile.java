@@ -1,5 +1,6 @@
 package nl.inl.util;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -84,7 +85,13 @@ public class FileReferenceFile implements FileReference {
         if (overrideEncoding == null)
             overrideEncoding = getCharSet();
         try {
-            return new BufferedReader(new InputStreamReader(new FileInputStream(file), overrideEncoding));
+            // 10% of file size within range 8KB-8MB; speed up indexing from remote filesystems
+            // buffer as close to the IO as possible, as InputStreamReader uses a miniscule internal buffer.
+            // If we don't buffer its source InputStream, it will fire thousands of tiny reads
+            // and severely slow down indexing from a remote filesystem.
+            var bufferSize = (int) Math.max(8 * 1024, Math.min(file.length() * 0.1 + 1, 8 * 1024 * 1024));
+            var baseFileInputStream = new BufferedInputStream(new FileInputStream(file), bufferSize);
+            return new BufferedReader(new InputStreamReader(baseFileInputStream, overrideEncoding)); // use default buffer size here.
         } catch (FileNotFoundException e) {
             throw new ErrorIndexingFile(e);
         }

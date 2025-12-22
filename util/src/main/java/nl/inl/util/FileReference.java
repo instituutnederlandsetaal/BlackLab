@@ -44,9 +44,13 @@ public interface FileReference {
     static FileReference readIntoMemoryFromTextualInputStream(String path, InputStream is, File assocFile) {
         try {
             if (PREFER_BYTE_ARRAY) {
-                // Read into byte array. This takes less memory, but character decoding has
-                // to be done each time we process the file.
-                return fromBytes(path, IOUtils.toByteArray(is), assocFile);
+                if (assocFile != null) {
+                    // Read into byte array. This takes less memory, but character decoding has
+                    // to be done each time we process the file.
+                    return fromBytes(path, IOUtils.toByteArray(is, assocFile.length()), assocFile);
+                } else {
+                    return fromBytes(path, IOUtils.toByteArray(is), assocFile);
+                }
             } else {
                 // Read into char array. This will generally take about twice as much memory
                 // (for Latin text), but we only do the character decoding once if we process
