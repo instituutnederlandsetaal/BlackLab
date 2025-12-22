@@ -342,7 +342,9 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
 
     @Override
     public List<String> names() {
-        return new ArrayList<>(metadataFieldInfos.keySet());
+        synchronized (metadataFieldInfos) {
+            return new ArrayList<>(metadataFieldInfos.keySet());
+        }
     }
 
     public void fixAfterDeserialization(IndexMetadataIntegrated metadata, MetadataFieldValues.Factory factory) {
