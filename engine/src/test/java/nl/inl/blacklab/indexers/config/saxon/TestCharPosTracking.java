@@ -143,7 +143,15 @@ public class TestCharPosTracking {
                         List.of(
                                 new ExpectedElementOffset("root", 0, 43),
                                 new ExpectedElementOffset("child", 17, 36))),
-                
+
+                // Just as a precaution:
+                // Test that a '>' not part of a tag doesn't break bracket tracking
+                new TestCase("gt-in-attribute-value",
+                        "<root attr=\"a>b\"><child>text</child></root>",
+                        List.of(
+                                new ExpectedElementOffset("root", 0, 43),
+                                new ExpectedElementOffset("child", 17, 36))),
+
                 // Replicates the failing CI test scenario: element followed by newline and spaces
                 // This tests the StAX parser buffer boundary issue where getCharacterOffset() drifts
                 new TestCase("element-followed-by-newline",
