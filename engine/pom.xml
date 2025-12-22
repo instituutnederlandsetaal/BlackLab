@@ -152,6 +152,13 @@
             </exclusions>            
         </dependency>
 
+        <!-- Woodstox StAX implementation - provides accurate character offset reporting -->
+        <dependency>
+            <groupId>com.fasterxml.woodstox</groupId>
+            <artifactId>woodstox-core</artifactId>
+            <version>7.1.1</version>
+        </dependency>
+
         <!-- Encoding detection -->
         <dependency>
             <groupId>com.github.albfernandez</groupId>
