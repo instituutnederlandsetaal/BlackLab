@@ -2,7 +2,6 @@ package nl.inl.blacklab.indexers.config.saxon;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.List;
 
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLInputFactory;
@@ -13,13 +12,12 @@ import javax.xml.transform.stax.StAXSource;
 
 import com.ctc.wstx.stax.WstxInputFactory;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.Long2IntMap;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
-import it.unimi.dsi.fastutil.longs.LongLongMutablePair;
-import it.unimi.dsi.fastutil.longs.LongLongPair;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.om.TreeInfo;
@@ -56,16 +54,22 @@ public class SaxonDocumentWithElementOffsets {
      *  document order (offsets always increase), we can skip already-processed brackets. */
     private int nextCloseBracketIndex = 0;
 
-    /** Contains the start/end pairs of currently open elements. */
-    private List<LongLongPair> openElementStack;
+    /** Start offsets of elements, indexed by element index. */
+    private LongList elementStartOffsets = new LongArrayList();
 
-    /** Contains the starting [line, col] of elements mapped to the [start offset, end offset] in the document. */
-    private final Long2ObjectMap<LongLongPair> elementLocationToBracketPositions = new Long2ObjectOpenHashMap<>();
+    /** End offsets of elements, indexed by element index. */
+    private LongList elementEndOffsets = new LongArrayList();
+
+    /** Stack of indices into elementStartOffsets/elementEndOffsets for currently open elements. */
+    private IntList openElementStack;
+
+    /** Contains the starting [line, col] of elements mapped to their index in elementStartOffsets/elementEndOffsets. */
+    private final Long2IntMap elementLocationToIndex = new Long2IntOpenHashMap();
 
     private final TreeInfo document;
 
     public SaxonDocumentWithElementOffsets(Reader source, Configuration configuration) throws XMLStreamException, XPathException, IOException {
-        openElementStack = new ObjectArrayList<>();
+        openElementStack = new IntArrayList();
         source = wrapReaderAndTrackCloseBrackets(source, closeBracketPositions::add);
         StAXSource staxSource = wrapStaxSourceAndAttachCallbackOnElementEncountered(source, this::handleEvent);
 
@@ -85,11 +89,13 @@ public class SaxonDocumentWithElementOffsets {
 
     /** Return the inclusive start offset of the element in the document. */
     public long getElementStartCharOffset(NodeInfo node) {
-        return elementLocationToBracketPositions.get(encodeElementLocation(node)).leftLong();
+        int index = elementLocationToIndex.get(encodeElementLocation(node));
+        return elementStartOffsets.getLong(index);
     }
     /** Return the exclusive end offset of the element in the document. */
     public long getElementEndCharOffset(NodeInfo node) {
-        return elementLocationToBracketPositions.get(encodeElementLocation(node)).rightLong();
+        int index = elementLocationToIndex.get(encodeElementLocation(node));
+        return elementEndOffsets.getLong(index);
     }
 
 
@@ -110,19 +116,21 @@ public class SaxonDocumentWithElementOffsets {
         long startPosition = loc.getCharacterOffset();
         long encodedElementLocation = this.encodeElementLocation(loc.getLineNumber(), loc.getColumnNumber());
 
-        LongLongPair startEndPos = LongLongMutablePair.of(startPosition, -1L);
+        int index = elementStartOffsets.size();
+        elementStartOffsets.add(startPosition);
+        elementEndOffsets.add(-1L); // placeholder, will be filled in trackElementEnd
 
-        this.openElementStack.add(startEndPos);
-        this.elementLocationToBracketPositions.put(encodedElementLocation, startEndPos);
+        this.openElementStack.add(index);
+        this.elementLocationToIndex.put(encodedElementLocation, index);
     }
 
     private void trackElementEnd(Location loc) {
-        LongLongPair startEndPos = this.openElementStack.remove(this.openElementStack.size() - 1);
+        int index = this.openElementStack.removeInt(this.openElementStack.size() - 1);
         // closeBracketPositions stores positions AFTER the '>', so we can use them as exclusive end offsets directly.
         // Woodstox reports END_ELEMENT offset at the '<' of the closing tag, so we need to find
         // the next '>' after that position.
         long endPosition = findNearestCloseBracketAfter(loc.getCharacterOffset());
-        startEndPos.right(endPosition);
+        elementEndOffsets.set(index, endPosition);
     }
 
     private long encodeElementLocation(NodeInfo node) {
