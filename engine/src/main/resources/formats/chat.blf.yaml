@@ -12,7 +12,3 @@ annotatedFields:
       displayName: Word
       valuePath: .
       sensitivity: sensitive_insensitive
-
-# You may change the names of metadata fields if you wish
-indexFieldAs:
-  oldName: newName
