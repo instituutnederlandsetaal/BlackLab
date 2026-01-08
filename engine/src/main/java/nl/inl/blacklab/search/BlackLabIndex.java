@@ -15,7 +15,9 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
+import org.apache.lucene.store.MMapDirectory;
+import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.util.Constants;
 
 import com.ibm.icu.text.Collator;
 
@@ -53,6 +55,8 @@ import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 /** Interface for reading/searching a BlackLab index. For writing, see {@link BlackLabIndexWriter}. */
 public interface BlackLabIndex extends AutoCloseable {
 
+    /** Special metadata field that indicates whether or not the full content may be returned by BlackLab
+     *  (if not, usually for IPR reasons) */
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
     default BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex, Map<String, String> attributes,
@@ -83,7 +87,32 @@ public interface BlackLabIndex extends AutoCloseable {
 
     // Static [factory] methods
     //---------------------------------------------------------------
-    
+
+    /**
+     * Open an index directory using MMapDirectory on Linux/macOS and NIOFSDirectory on Windows.
+     *
+     * This replaces FSDirectory.open(), which essentially does the same thing.
+     * The reason is that we want to limit maximum chunk size for MMapDirectory
+     * to avoid memory mapping fragmentation issues we've encountered (64-bit JVM,
+     * workstation with 64GB memory).
+     *
+     * @param path the index path
+     * @return the directory
+     * @throws IOException
+     */
+    static Directory openIndexDirectory(Path path) throws IOException {
+        // WAS: return FSDirectory.open(path);
+        // (but this caused issues with MMapDirectory on Linux due to large chunk sizes?)
+        if (Constants.JRE_IS_64BIT && MMapDirectory.UNMAP_SUPPORTED) {
+            // Linux/macOS: use MMapDirectory with safe chunk size (16MB)
+            long MMAP_DIRECTORY_MAX_CHUNK_SIZE = 16 * 1024 * 1024L;
+            return new MMapDirectory(path, MMAP_DIRECTORY_MAX_CHUNK_SIZE);
+        } else {
+            // Windows or 32-bit JVM: use NIOFSDirectory
+            return new NIOFSDirectory(path);
+        }
+    }
+
     /**
      * Does the specified directory contain a BlackLab index?
      *
@@ -97,7 +126,7 @@ public interface BlackLabIndex extends AutoCloseable {
             // We also support integrated indexes which don't have a version file.
             // So just see if it's a Lucene index and assume it's a BlackLab index if so.
             // (Lucene index always has a segments_* file)
-            try (Directory dir = FSDirectory.open(indexDir.toPath())){
+            try (Directory dir = openIndexDirectory(indexDir.toPath())){
                 return DirectoryReader.indexExists(dir);
             }
         } catch (IOException e) {

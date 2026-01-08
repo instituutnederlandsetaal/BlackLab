@@ -31,7 +31,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.store.FSDirectory;
 import org.apache.lucene.util.Bits;
 
 import com.ibm.icu.text.Collator;
@@ -452,7 +451,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         if (trace)
             logger.debug("  Opening IndexReader...");
         try {
-            return DirectoryReader.open(FSDirectory.open(indexPath));
+            return DirectoryReader.open(BlackLabIndex.openIndexDirectory(indexPath));
         } catch (IndexNotFoundException e) {
             throw new InvalidIndex("No index found in " + indexLocation, e);
         } catch (IllegalArgumentException e) {
@@ -646,7 +645,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // Resolve symlinks, as FSDirectory.open() can't handle them
             indexPath = Files.readSymbolicLink(indexPath);
         }
-        Directory indexLuceneDir = FSDirectory.open(indexPath);
+        Directory indexLuceneDir = BlackLabIndex.openIndexDirectory(indexPath);
         if (useAnalyzer == null)
             useAnalyzer = BuiltinAnalyzers.DUTCH.getAnalyzer();
 
