@@ -88,7 +88,7 @@ public class SaxonHelper {
 
     private static Source resolve(ResourceRequest req) {
         String contents = uriContentsCache.acquire(req.uri);
-        uriContentsCache.release(req.uri); // we can release it right away, it's just a string reference
+        uriContentsCache.releaseObject(contents); // we can release it right away, it's just a string reference
         StringReader reader = new StringReader(contents);
         try {
             // reader will never be closed but that's okay

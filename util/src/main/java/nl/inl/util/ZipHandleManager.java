@@ -50,7 +50,7 @@ public class ZipHandleManager {
     }
 
     public static void release(ZipFile zipFile) {
-        handleManager.release(zipFile);
+        handleManager.releaseObject(zipFile);
     }
 
     public static void setMaxOpen(int zipFilesMaxOpen) {

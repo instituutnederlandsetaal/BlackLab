@@ -102,7 +102,7 @@ public class ObjectCache<T, P> {
     }
 
     /** Release a handle. Decrement acquisition count. */
-    public void release(T object) {
+    public void releaseObject(T object) {
         synchronized (openHandles) {
             for (Handle h : openHandles.values()) {
                 if (h.object == object) {
