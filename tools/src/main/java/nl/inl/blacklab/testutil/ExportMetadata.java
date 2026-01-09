@@ -101,14 +101,14 @@ public class ExportMetadata implements AutoCloseable {
                     if (!f.name().contains("#")) {
                         fieldNames.add(f.name());
                         if (f.stringValue() != null)
-                            metadata.put(f.name(), f.stringValue());
+                            metadata.put(f.name(), f.stringValue().intern());
                         else if (f.numericValue() != null)
-                            metadata.put(f.name(), f.numericValue().toString());
+                            metadata.put(f.name(), f.numericValue().toString().intern());
                     }
                 }
                 values.add(metadata);
                 docsDone++;
-                if (docsDone % 100 == 0) {
+                if (docsDone % 100_000 == 0) {
                     int perc = docsDone * 100 / totalDocs;
                     System.out.println(docsDone + " docs exported (" + perc + "%)...");
                 }
