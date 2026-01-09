@@ -180,6 +180,11 @@ public class IndexTool {
             usage();
             return;
         }
+        if (formatIdentifier == null) {
+            System.err.println("No format identifier given.");
+            usage();
+            return;
+        }
 
         // Check the command
         if (command.isEmpty()) {
@@ -236,7 +241,7 @@ public class IndexTool {
 
         String op = forceCreateNew ? "Creating new" : "Appending to";
         System.out.println(op + " index in " + indexDir + File.separator + " from " + indexSource +
-                (formatIdentifier != null ? " (using format " + formatIdentifier + ")" : "(using autodetected format)"));
+                " (using format " + formatIdentifier + ")");
 
         // Make sure BlackLab can find our format configuration files
         // (by default, it will already look in $BLACKLAB_CONFIG_DIR/formats, $HOME/.blacklab/formats
@@ -253,7 +258,7 @@ public class IndexTool {
 
         // Create the indexer and index the files
         // First check if the format is a file: if so, load it before continuing.
-        if (formatIdentifier != null && !DocumentFormats.isSupported(formatIdentifier)) {
+        if (!DocumentFormats.isSupported(formatIdentifier)) {
             File maybeFormatFile = new File(formatIdentifier);
             if (maybeFormatFile.isFile() && maybeFormatFile.canRead()) {
                 try {
