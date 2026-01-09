@@ -85,7 +85,7 @@ public class SaxonHelper {
 
     private static Source resolve(ResourceRequest req) {
         String contents = uriContentsCache.acquire(req.uri);
-        uriContentsCache.releaseObject(req.uri); // we can release it right away, it's just a string reference
+        uriContentsCache.releaseObject(contents); // we can release it right away, it's just a string reference
         // Return a StreamSource with the contents for Saxon to parse
         return new StreamSource(new StringReader(contents), req.uri);
     }
