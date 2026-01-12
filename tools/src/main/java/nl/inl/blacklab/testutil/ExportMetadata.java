@@ -1,20 +1,20 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.IndexReader;
@@ -26,6 +26,7 @@ import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocTask;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.util.LogUtil;
 
 /** Export the metadata of all documents from a BlackLab index. */
@@ -56,33 +57,59 @@ public class ExportMetadata implements AutoCloseable {
         File exportFile = new File(args[1]);
 
         try (ExportMetadata exportMetadata = new ExportMetadata(indexDir)) {
-            System.out.println("Collecting metadata...");
-            exportMetadata.collect();
-            System.out.println("Exporting metadata...");
-            exportMetadata.exportCsv(exportFile);
-            System.out.println("Done exporting metadata.");
-            System.out.flush();
+            exportMetadata.collectAndExport(exportFile);
         } catch (Exception e) {
             throw new InvalidIndex(e);
         }
     }
 
-    final Set<String> fieldNames = new HashSet<>();
+    final Set<String> fieldNames = new LinkedHashSet<>();
 
     BlackLabIndex index;
-
-    final List<Map<String, String>> values = new ArrayList<>();
 
     public ExportMetadata(File indexDir) throws ErrorOpeningIndex {
         System.out.println("Open index " + indexDir + "...");
         index = BlackLab.open(indexDir);
         System.out.println("Done.");
+
+        // Ensure pid field is first so we can easily sort by it
+        MetadataField pidField = index.metadataFields().pidField();
+        if (pidField != null)
+            fieldNames.add(pidField.name()); // Ensure pid is first column
+    }
+
+    private void collectAndExport(File exportFile) throws IOException {
+        File tmpFile = new File(exportFile.getAbsolutePath() + ".tmp");
+        try (FileOutputStream out = new FileOutputStream(tmpFile);
+                OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.TDF)) {
+            System.out.println("Collecting metadata...");
+            collect(csvPrinter);
+            System.out.println("Exporting metadata...");
+            System.out.println("Done exporting metadata.");
+            System.out.flush();
+        }
+        try (FileOutputStream out = new FileOutputStream(exportFile);
+                OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+            // Write header
+            writer.append(StringUtils.join(fieldNames, "\t") + "\r\n");
+            // Copy data from tmp file
+            try (java.io.FileInputStream in = new java.io.FileInputStream(tmpFile);
+                    java.io.InputStreamReader reader = new java.io.InputStreamReader(in, StandardCharsets.UTF_8)) {
+                char[] buffer = new char[8192];
+                int len;
+                while ((len = reader.read(buffer)) != -1) {
+                    writer.write(buffer, 0, len);
+                }
+            }
+            tmpFile.delete();
+        }
     }
 
     /**
      * Export the corpus metadata.
      */
-    private void collect() {
+    private void collect(CSVPrinter csvPrinter) throws IOException {
 
         System.out.println("Getting IndexReader...");
         final IndexReader reader = index.reader();
@@ -90,7 +117,7 @@ public class ExportMetadata implements AutoCloseable {
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(true, new DocTask() {
 
-            AtomicInteger docsDone = new AtomicInteger(0);
+            final AtomicInteger docsDone = new AtomicInteger(0);
 
             @Override
             public void document(LeafReaderContext segment, int segmentDocId) {
@@ -99,16 +126,33 @@ public class ExportMetadata implements AutoCloseable {
                 Document luceneDoc = index.luceneDoc(docId);
                 for (IndexableField f: luceneDoc.getFields()) {
                     // If this is a regular metadata field, not a control field
+                    if (f.name().equals("contents") || f.name().equals("metadata")) {
+                        // HACK: skip common original document contents fields
+                        continue;
+                    }
                     if (!f.name().contains("#")) {
-                        fieldNames.add(f.name());
-                        if (f.stringValue() != null)
-                            metadata.put(f.name(), f.stringValue());
+                        synchronized (fieldNames) {
+                            fieldNames.add(f.name());
+                        }
+                        String value = f.stringValue();
+                        if (value != null) {
+                            if (value.length() > 255)
+                                value = StringUtils.abbreviate(value, 255);
+                            metadata.put(f.name(), value);
+                        }
                         else if (f.numericValue() != null)
                             metadata.put(f.name(), f.numericValue().toString());
                     }
                 }
-                synchronized (values) {
-                    values.add(metadata);
+                try {
+                    synchronized (csvPrinter) {
+                        synchronized (fieldNames) {
+                            Stream<String> rec = fieldNames.stream().map(f -> metadata.getOrDefault(f, ""));
+                            csvPrinter.printRecord(rec);
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
                 int n = docsDone.incrementAndGet();
                 if (n % 100 == 0) {
@@ -116,24 +160,6 @@ public class ExportMetadata implements AutoCloseable {
                 }
             }
         });
-    }
-
-    private void exportCsv(File exportFile) throws FileNotFoundException {
-        try (PrintWriter pw = new PrintWriter(new OutputStreamWriter(new FileOutputStream(exportFile), StandardCharsets.UTF_8))) {
-            List<String> listFieldNames = new ArrayList<>(fieldNames);
-            Collections.sort(listFieldNames);
-            for (String fieldName: listFieldNames) {
-                pw.append(fieldName).append("\t");
-            }
-            pw.println();
-            for (Map<String, String> documentMetadata: values) {
-                for (String fieldName: listFieldNames) {
-                    pw.append(escapeTabs(documentMetadata.getOrDefault(fieldName, ""))).append("\t");
-                }
-                pw.println();
-            }
-            System.out.println("Close export file...");
-        }
     }
 
     @Override
