@@ -1,6 +1,6 @@
 # Stage "builder": build the WAR file
 #--------------------------------------
-FROM maven:3.9-eclipse-temurin-17 AS builder
+FROM maven:3.9-eclipse-temurin-21 AS builder
 
 # Copy source
 WORKDIR /app
@@ -14,7 +14,7 @@ RUN --mount=type=cache,target=/root/.m2 mvn -q --no-transfer-progress package
 
 # Tomcat container with the WAR file
 #--------------------------------------
-FROM tomcat:10-jre17
+FROM tomcat:10-jre21
 ARG CONFIG_ROOT=docker/config
 ARG TOMCAT_APP_NAME=blacklab-server
 
