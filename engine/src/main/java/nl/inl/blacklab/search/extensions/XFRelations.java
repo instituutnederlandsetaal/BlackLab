@@ -200,7 +200,7 @@ public class XFRelations implements ExtensionFunctionClass {
         QueryExtensions.register("rfield", ARGS_QS, NO_DEFAULT_VALUES,
                 XFRelations::rfield);
         QueryExtensions.registerRelationsFunction(FUNC_RCAPTURE, ARGS_QSS,
-                Arrays.asList(null, DEFAULT_RCAP_NAME, ".+"), XFRelations::rcapture);
+                Arrays.asList(null, DEFAULT_RCAP_NAME, ".+::.+"), XFRelations::rcapture);
     }
 
 }

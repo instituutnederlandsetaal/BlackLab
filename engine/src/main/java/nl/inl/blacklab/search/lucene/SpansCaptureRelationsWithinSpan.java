@@ -92,8 +92,15 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
                 if (relations.startPosition() < start)
                     relations.advanceStartPosition(start);
                 while (relations.startPosition() < end) {
-                    if (relations.endPosition() <= end)
-                        capturedRelations.add(relations.getRelationInfo().copy());
+                    RelationInfo relationInfo = relations.getRelationInfo();
+                    // Capture relation if:
+                    // - start is within the to-capture span, and
+                    // - end is within the to-capture span, OR
+                    //   the relation is a cross-field relation (i.e. parallel corpus)
+                    //   (in that case, target is in a different field, so the to-capture span doesn't apply)
+                    if (relationInfo.isCrossFieldRelation() || relations.endPosition() <= end) {
+                        capturedRelations.add(relationInfo.copy());
+                    }
                     relations.nextStartPosition();
                 }
             }
