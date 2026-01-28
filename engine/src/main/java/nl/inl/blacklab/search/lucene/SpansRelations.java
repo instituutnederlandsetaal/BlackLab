@@ -23,6 +23,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations.Direction;
 import nl.inl.util.CollectionsUtil;
+import nl.inl.util.StringUtil;
 
 /**
  * Gets spans for relations matches.
@@ -77,6 +78,15 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
 
     private final AnnotatedField sourceField;
 
+    /** For this query, could target field vary with each hit?
+     *
+     * i.e. a query like _ -.*::.*-> _ can find relations with multiple target fields
+     * (e.g. relClass al_en, al_nl, etc.) depending on the hit.
+     *
+     * If so, we need to determine the target field for each hit separately.
+     */
+    private boolean targetFieldMayVaryWithHit;
+
     /**
      * Construct SpansRelations.
      * NOTE: relation payloads contain the location of the other side of the relation. To work with these,
@@ -116,6 +126,11 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
         String version = isInlineTag ? "" : AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
         AnnotatedField targetField = StringUtils.isEmpty(version) ? sourceField :
                 context.index().annotatedField(AnnotatedFieldNameUtil.changeParallelFieldVersion(context.getDefaultField().name(), version));
+
+        // If relationType is a regex like e.g. ".*::.*", targetfield may vary per match.
+        // If this is the case, we'll set target field per matched relation, based on the relation class
+        // (e.g. relation class al__de with source field contents__en means the target field is contents__de)
+        targetFieldMayVaryWithHit = version.isEmpty() && StringUtil.containsRegexCharacters(relClass);
 
         // When capturing relations, remember that we're producing hits in a different field.
         // (used with parallel corpora)
@@ -163,8 +178,9 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
             } catch (IOException e) {
                 throw new InvalidIndex("Error getting payload");
             }
-            if (collector.term != null) // can happen during testing...
-                setIndexedTerm(relationInfo, collector.term.text(), docID(), relInfo, relStrat);
+            if (collector.term != null) { // can happen during testing...
+                setIndexedTerm(targetFieldMayVaryWithHit, relationInfo, collector.term.text(), docID(), relInfo, relStrat);
+            }
             fetchedRelationInfo = true;
         }
         return relationInfo;
@@ -177,10 +193,15 @@ class SpansRelations extends BLFilterSpans<BLSpans> {
      * Note that if multiple values were indexed for a single attribute, only the first
      * value is extracted.
      *
+     * @param targetFieldMayVaryWithHit if true, we have to update target field as well
+     * @param info relation info object to set values in
      * @param term indexed term
+     * @param docId current doc id
+     * @param relInfo relation info segment reader (may be null)
+     * @param relStrat relations strategy
      */
-    public static void setIndexedTerm(RelationInfo info, String term, int docId, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
-        info.setFullRelationType(relStrat.fullTypeFromIndexedTerm(term));
+    public static void setIndexedTerm(boolean targetFieldMayVaryWithHit, RelationInfo info, String term, int docId, RelationInfoSegmentReader relInfo, RelationsStrategy relStrat) {
+        info.setFullRelationType(relStrat.fullTypeFromIndexedTerm(term), targetFieldMayVaryWithHit);
         Map<String, List<String>> attributes = CollectionsUtil.toMapOfLists(relStrat.getAllAttributesFromIndexedTerm(term));
         if (attributes == null && relInfo != null) {
             if (info.mayHaveInfoInRelationIndex()) {

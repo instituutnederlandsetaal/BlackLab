@@ -53,6 +53,18 @@ public final class StringUtil {
     }
 
     /**
+     * Check if a string contains any regex special characters
+     *
+     * @param relClass the string to check
+     * @return true if it contains regex special characters
+     */
+    public static boolean containsRegexCharacters(String relClass) {
+        Matcher m = PATT_REGEX_CHARACTERS_LUCENE.matcher(relClass);
+        return m.find();
+    }
+
+
+    /**
      * Escape regex special characters
      *
      * (Pattern.quote() also does this, but this method is needed if you use a different regex

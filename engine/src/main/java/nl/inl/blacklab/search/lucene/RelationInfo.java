@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 
 /**
@@ -151,7 +152,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     private Map<String, List<String>> attributes;
 
     /** Field this points to (for non-parallel corpora, this will always be identical to source field). */
-    private final AnnotatedField targetField;
+    private AnnotatedField targetField;
 
     private RelationInfo(boolean onlyHasTarget, int sourceStart, int sourceEnd, int targetStart, int targetEnd,
             int relationId, String fullRelationType, Map<String, List<String>> attributes, AnnotatedField sourceField, AnnotatedField targetField, boolean hasExtraInfoStored) {
@@ -299,8 +300,21 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     /** (Used by SpansRelations) */
-    public void setFullRelationType(String fullRelationType) {
+    public void setFullRelationType(String fullRelationType, boolean updateTargetField) {
         this.fullRelationType = fullRelationType;
+        if (updateTargetField) {
+            // Because each match for this particular search may have a different target field,
+            // we have to update it based on the relation type.
+            // For example, dependency relations will have relation class "dep" and their
+            // target field is always the source field (not a cross-field relation),
+            // but for parallel alignment relations the relation class may be e.g. "al__de",
+            // and the target field must then be the "contents__de" field.
+            String relClass = RelationUtil.classFromFullType(fullRelationType);
+            String version = AnnotatedFieldNameUtil.versionFromParallelFieldName(relClass);
+            String newTargetFieldName = AnnotatedFieldNameUtil.changeParallelFieldVersion(getField().name(), version);
+            if (!newTargetFieldName.equals(targetField.name()))
+                targetField = targetField.index().annotatedField(newTargetFieldName);
+        }
     }
 
     /** (Used by SpansRelations) */
