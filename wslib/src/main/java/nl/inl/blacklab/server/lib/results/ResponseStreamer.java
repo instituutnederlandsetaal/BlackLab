@@ -20,6 +20,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.resultproperty.DocProperty;
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLab;
@@ -1111,6 +1112,12 @@ public class ResponseStreamer {
                 stringMap("metadataFieldDisplayNames", resultHits.getMetaDisplayNames());
             }
 
+            if (resultHits.getGroup() != null) {
+                ds.startEntry("groupInfo").startMap();
+                groupStats(resultHits.getGroupCriteria(), resultHits.getGroup());
+                ds.endMap().endEntry();
+            }
+
             // Include explanation of how the query was executed?
             if (params.getExplain()) {
                 TextPattern tp = params.patternWithinContextTag().orElseThrow();
@@ -1163,11 +1170,13 @@ public class ResponseStreamer {
 
             ds.startEntry("hitGroups").startList();
             {
+                List<HitProperty> criteria = hitsGrouped.getGroups().groupCriteria().propsList();
                 List<ResultHitGroup> groupInfos = hitsGrouped.getGroupInfos();
                 for (ResultHitGroup groupInfo: groupInfos) {
                     ds.startItem(KEY_HIT_GROUP).startMap();
                     {
-                        groupStats(groupInfo.getGroup(), groupInfo.getProperties());
+                        groupStats(criteria, groupInfo.getGroup());
+                        ds.entry(KEY_GROUP_SIZE, groupInfo.getGroup().size());
                         ds.entry(KEY_NUMBER_OF_DOCS, groupInfo.getNumberOfDocsInGroup());
                         if (hitsGrouped.getMetadataGroupProperties() != null)
                             subcorpusSizeStats(groupInfo.getSubcorpusSize());
@@ -1186,12 +1195,12 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    private void groupStats(Group group, Map<ResultProperty, PropertyValue> properties) {
+    private void groupStats(List<? extends ResultProperty> criteria, Group group) {
         ds
                 .entry("identity", group.identity().serialize())
-                .entry("identityDisplay", group.identity().toString())
-                .entry(KEY_GROUP_SIZE, group.size());
+                .entry("identityDisplay", group.identity().toString());
 
+        Map<ResultProperty, PropertyValue> properties = group.getGroupProperties(criteria);
         ds.startEntry("properties").startList();
         for (Map.Entry<ResultProperty, PropertyValue> p: properties.entrySet()) {
             ds.startItem("property").startMap();
@@ -1238,7 +1247,8 @@ public class ResponseStreamer {
                 for (long i = ourWindow.first(); i <= ourWindow.last(); ++i) {
                     DocGroup group = groups.get(i);
                     ds.startItem(KEY_DOC_GROUP).startMap();
-                    groupStats(group, group.getGroupProperties(prop));
+                    groupStats(prop, group);
+                    ds.entry(KEY_GROUP_SIZE, group.size());
                     ds.entry(KEY_NUMBER_OF_TOKENS, group.totalTokens());
                     if (result.getParams().hasPattern()) {
                         subcorpusSizeStats(it.next());

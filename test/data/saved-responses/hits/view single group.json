@@ -259,6 +259,16 @@
     }
   ],
   "summary": {
+    "groupInfo": {
+      "identity": "str:service encounter about visa application for family members",
+      "identityDisplay": "service encounter about visa application for family members",
+      "properties": [
+        {
+          "name": "field:title",
+          "value": "service encounter about visa application for family members"
+        }
+      ]
+    },
     "params": {
       "group": "field:title",
       "indexname": "test",

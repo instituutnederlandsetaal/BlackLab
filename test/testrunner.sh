@@ -29,7 +29,7 @@ export BLACKLAB_TEST_PORT=8082
 cd "$( dirname -- "$0"; )"/
 
 # Ensure latest-test-output dirs exist
-mkdir -p data/latest-test-output-integrated
+mkdir -p data/latest-test-output
 
 # Check how to call Compose
 #COMPOSE=docker-compose

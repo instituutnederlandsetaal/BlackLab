@@ -24,11 +24,11 @@ public abstract class Group {
         this.totalSize = totalSize;
     }
 
-    public Map<ResultProperty, PropertyValue> getGroupProperties(List<? extends ResultProperty> prop) {
+    public Map<ResultProperty, PropertyValue> getGroupProperties(List<? extends ResultProperty> criteria) {
         List<PropertyValue> valuesForGroup = identity().valuesList();
-        Map<ResultProperty, PropertyValue> properties = new LinkedHashMap<>(prop.size());
-        for (int j = 0; j < prop.size(); ++j) {
-            properties.put(prop.get(j), valuesForGroup.get(j));
+        Map<ResultProperty, PropertyValue> properties = new LinkedHashMap<>(criteria.size());
+        for (int j = 0; j < criteria.size(); ++j) {
+            properties.put(criteria.get(j), valuesForGroup.get(j));
         }
         return properties;
     }

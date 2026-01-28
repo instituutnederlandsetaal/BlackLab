@@ -26,6 +26,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
 import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.PropertyValue;
+import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -36,6 +37,7 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.Group;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.docs.DocGroups;
@@ -71,6 +73,10 @@ public class ResultHits {
     private final WebserviceParams params;
 
     private final HitResults hitResults;
+
+    private List<? extends ResultProperty> groupCriteria = null;
+
+    private Group group = null;
 
     private ResultsStats hitsStats = null;
 
@@ -140,9 +146,11 @@ public class ResultHits {
         try {
             if (isViewGroup) {
                 // We're viewing a single group. Get the hits from the grouping results.
-                Pair<SearchCacheEntry<?>, HitResults> res = getHitsFromGroup(params, viewGroup.get());
-                cacheEntry = res.getLeft();
-                hitResults = res.getRight();
+                HitsFromGroup res = getHitsFromGroup(params, viewGroup.get());
+                cacheEntry = res.cacheEntry();
+                hitResults = res.hitResults();
+                group = res.group();
+                groupCriteria = res.criteria();
 
                 // The hits are already complete - get the stats directly.
                 hitsStats = hitResults.resultsStats();
@@ -335,13 +343,17 @@ public class ResultHits {
         return hits;
     }
 
-    private static Pair<SearchCacheEntry<?>, HitResults> getHitsFromGroup(WebserviceParams params, String viewGroup)
+    record HitsFromGroup(SearchCacheEntry<?> cacheEntry, HitResults hitResults, Group group,
+                         List<? extends ResultProperty> criteria) {}
+
+    private static HitsFromGroup getHitsFromGroup(WebserviceParams params, String viewGroup)
             throws InterruptedException, ExecutionException {
         PropertyValue viewGroupVal = PropertyValue.deserialize(params.blIndex(), params.getAnnotatedField(), viewGroup);
         if (viewGroupVal == null)
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
         SearchCacheEntry<HitGroups> jobHitGroups = params.hitsGroupedStats().executeAsync();
         HitGroups hitGroups = jobHitGroups.get();
+        List<HitProperty> groupCriteria = hitGroups.groupCriteria().propsList();
         HitGroup group = hitGroups.get(viewGroupVal);
         if (group == null)
             throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
@@ -361,7 +373,7 @@ public class ResultHits {
                 // place the group-contents query in the cache and return the results.
                 SearchCacheEntry<ResultsStats> cacheEntry = findHitsFromOnlyRequestedGroup.count().executeAsync();
                 hitResults = (findHitsFromOnlyRequestedGroup.executeAsync()).get();
-                return Pair.of(cacheEntry, hitResults);
+                return new HitsFromGroup(cacheEntry, hitResults, group, groupCriteria);
             }
 
             // This is a special case:
@@ -388,7 +400,7 @@ public class ResultHits {
         if (sortBy != null)
             hitResults = hitResults.sorted(sortBy);
 
-        return Pair.of(jobHitGroups, hitResults);
+        return new HitsFromGroup(jobHitGroups, hitResults, group, groupCriteria);
     }
 
     public synchronized Map<String, List<Pair<String, Long>>> getFacetInfo() throws InvalidQuery {
@@ -462,6 +474,14 @@ public class ResultHits {
         return isViewGroup;
     }
 
+    public List<? extends ResultProperty> getGroupCriteria() {
+        return groupCriteria;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
     public List<Annotation> getAnnotationsToWrite() {
         return annotationsToWrite;
     }
@@ -485,5 +505,4 @@ public class ResultHits {
     public ResultListOfHits getListOfHits() {
         return listOfHits;
     }
-
 }
