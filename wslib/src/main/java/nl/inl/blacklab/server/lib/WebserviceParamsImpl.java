@@ -879,6 +879,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public List<SpanAndAttributeName> getSpanAttributes() {
-        return params.getListSpanAttributes().stream().map(SpanAndAttributeName::fromString).toList();
+        List<String> listSpanAttributes = params.getListSpanAttributes();
+        return listSpanAttributes.stream().map(SpanAndAttributeName::fromString).toList();
     }
 }

@@ -116,6 +116,8 @@ public interface WebserviceParams extends QueryParams {
 
     record SpanAndAttributeName(String spanName, String attributeName) {
         public static SpanAndAttributeName fromString(String sa) {
+            if (sa.equals("*"))
+                return new SpanAndAttributeName("*", "*");
             String[] parts = sa.split("\\.", 2);
             if (parts.length == 2) {
                 return new SpanAndAttributeName(parts[0], parts[1]);

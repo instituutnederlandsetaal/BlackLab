@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -15,6 +16,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.document.Document;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -26,6 +28,7 @@ import nl.inl.blacklab.search.indexmetadata.Field;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
@@ -142,7 +145,20 @@ public class WriteCsv {
             }
 
             // Add requested span attributes
-            for (WebserviceParams.SpanAndAttributeName spanAttr : resultHitsCsv.getParams().getSpanAttributes()) {
+
+            List<WebserviceParams.SpanAndAttributeName> spanAttributes = resultHitsCsv.getParams().getSpanAttributes();
+            if (spanAttributes.contains(new WebserviceParams.SpanAndAttributeName("*", "*"))) {
+                // We want all span attributes. Look them up.
+                // (listspanattributes=* or listspanattributes=*.*)
+                spanAttributes = getAllSpanAttributes(hitResults, params);
+            } else {
+                // We don't (yet) support e.g. listspanattributes=span.* to get all attributes of a specific span
+                if (spanAttributes.stream().anyMatch(sa -> sa.attributeName().equals("*"))) {
+                    throw new IllegalArgumentException("listspanattributes=span.* is not supported. To get all span attributes, use listspanattributes=*");
+                }
+            }
+
+            for (WebserviceParams.SpanAndAttributeName spanAttr : spanAttributes) {
                 row.add(escape("span " + spanAttr.spanName() + "." + spanAttr.attributeName()));
             }
 
@@ -173,7 +189,7 @@ public class WriteCsv {
                 String docPid = WebserviceOperations.getDocumentPid(index, hit.doc(), doc);
                 writeHit(hit, kwics.get(hit), doc, mainTokenProperty,
                         resultHitsCsv.getAnnotationsToWrite(), docPid,
-                        resultHitsCsv.getParams().getSpanAttributes(),
+                        spanAttributes,
                         metadataFieldsToWrite, printer);
             }
             printer.flush();
@@ -181,6 +197,23 @@ public class WriteCsv {
         } catch (IOException e) {
             throw new InternalServerError("Cannot write response: " + e.getMessage(), "INTERR_WRITING_HITS_CSV2");
         }
+    }
+
+    private static @NonNull List<WebserviceParams.SpanAndAttributeName> getAllSpanAttributes(HitResults hitResults,
+            WebserviceParams params) {
+        List<WebserviceParams.SpanAndAttributeName> spanAttributes;
+        spanAttributes = new ArrayList<>();
+        RelationsStats relationsStats = hitResults.field().getRelationsStats(params.getLimitValues());
+        RelationsStats.ClassStats tags = relationsStats.getClasses().get(RelationUtil.CLASS_INLINE_TAG);
+        for (Map.Entry<String, RelationsStats.TypeStats> e : tags.getRelationTypes().entrySet()) {
+            String tagName = e.getKey();
+            RelationsStats.TypeStats stats = e.getValue();
+            Set<String> attNames = stats.getAttributes().keySet();
+            for (String attName : attNames) {
+                spanAttributes.add(new WebserviceParams.SpanAndAttributeName(tagName, attName));
+            }
+        }
+        return spanAttributes;
     }
 
     public static CSVPrinter createHeader(List<String> row, boolean declareSeparator) throws IOException {
@@ -326,7 +359,8 @@ public class WriteCsv {
         for (Map.Entry<WebserviceParameter, String> param : searchParam.getParameters().entrySet()) {
             WebserviceParameter par = param.getKey();
             if (par == WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS ||
-                    par == WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS)
+                    par == WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS ||
+                    par == WebserviceParameter.LIST_VALUES_FOR_SPAN_ATTR)
                 continue;
             writeRow(printer, numColumns, summ + rs.KEY_PARAMS + "." + par, param.getValue());
         }

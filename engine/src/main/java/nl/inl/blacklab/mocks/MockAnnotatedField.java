@@ -125,7 +125,7 @@ public class MockAnnotatedField implements AnnotatedField {
     }
 
     @Override
-    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
+    public RelationsStats getRelationsStats(long limitValues) {
         throw new UnsupportedOperationException();
     }
 }

@@ -195,16 +195,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     /**
      * Get information about relations in this corpus.
-     *
      * Includes classes and types of relations that occur, the frequency for each,
      * and any attributes and their values.
      *
-     * @param index the index
      * @param limitValues truncate lists/maps of values to this length
      * @return information about relations in this corpus
      */
     @Override
-    public RelationsStats getRelationsStats(BlackLabIndex index, long limitValues) {
+    public RelationsStats getRelationsStats(long limitValues) {
         RelationsStats results;
         synchronized (this) {
             results = cachedRelationsStats;

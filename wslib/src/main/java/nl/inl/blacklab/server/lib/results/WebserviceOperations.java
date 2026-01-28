@@ -101,7 +101,7 @@ public class WebserviceOperations {
         BlackLabIndex index = params.blIndex();
         MetadataFields fields = index.metadataFields();
         Collection<String> requestedFields = params.getListMetadataValuesFor();
-        boolean includeAllFields = requestedFields.isEmpty();
+        boolean includeAllFields = requestedFields.isEmpty() || requestedFields.contains("*");
         Set<MetadataField> ret = new HashSet<>();
         for (MetadataField field: fields) {
             if (includeAllFields || requestedFields.contains(field.name()))
@@ -224,12 +224,16 @@ public class WebserviceOperations {
         BlackLabIndex index = params.blIndex();
         AnnotatedFields fields = index.annotatedFields();
         Collection<String> requestedAnnotations = params.getListValuesFor();
+        boolean all = false;
+        if (requestedAnnotations.contains("*")) {
+            all = true;
+        }
         // NOTE: we use all fields to make sure this works for parallel corpora too!
         //       obviously only annotations that are actually from the field(s) searched will be included in the output.
         List<Annotation> ret = new ArrayList<>();
         for (AnnotatedField f : fields) {
             for (Annotation a : f.annotations()) {
-                if (requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
+                if (all || requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
                     ret.add(a);
                 }
             }
@@ -731,9 +735,11 @@ public class WebserviceOperations {
         Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
         BlackLabIndex index = params.blIndex();
         Collection<String> listValuesFor = params.getListValuesFor();
+        boolean all = listValuesFor.contains("*");
         for (Annotation annotation: fieldDesc.annotations()) {
-            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation,
-                    listValuesFor.contains(annotation.name()), params.getLimitValues());
+            boolean showValues = (all || listValuesFor.contains(annotation.name())) &&
+                    !annotation.isRelationAnnotation(); // spans/relations are reported separately
+            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, showValues, params.getLimitValues());
             annotInfos.put(annotation.name(), ai);
         }
         return new ResultAnnotatedField(params.blIndex(), includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);

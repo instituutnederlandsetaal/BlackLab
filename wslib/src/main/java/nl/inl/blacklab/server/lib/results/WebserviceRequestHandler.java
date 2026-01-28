@@ -309,7 +309,8 @@ public class WebserviceRequestHandler {
         AnnotatedField field = params.getAnnotatedField();
         RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
         Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
-        Collection<String> relClasses = params.getRelClasses().isEmpty() ? classesMap.keySet() :
+        Collection<String> relClasses = params.getRelClasses().isEmpty() || params.getRelClasses().equals("*") ?
+                classesMap.keySet() : // all classes
                 new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
         String spansClass = RelationUtil.CLASS_INLINE_TAG;
         if (params.getRelOnlySpans()) {

@@ -769,6 +769,6 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public RelationsStats getRelationsStats(AnnotatedField field, long limitValues) {
-        return field.getRelationsStats(this, limitValues);
+        return field.getRelationsStats(limitValues);
     }
 }

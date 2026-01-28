@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.indexmetadata;
 
-import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessorIntegrated;
 
@@ -27,7 +26,7 @@ public interface AnnotatedField extends Field {
 
     boolean hasRelationAnnotation();
 
-    RelationsStats getRelationsStats(BlackLabIndex index, long limitValues);
+    RelationsStats getRelationsStats(long limitValues);
 
     /**
      * Returns the Lucene field that contains the length (in tokens) of this field,
