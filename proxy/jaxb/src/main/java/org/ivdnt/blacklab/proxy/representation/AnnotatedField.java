@@ -3,6 +3,7 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
@@ -85,10 +86,13 @@ public class AnnotatedField {
     public Long documentCount;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String displayName = "";
+    public Map<String, Object> custom;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String description = "";
+    public String displayName;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String description;
 
     public boolean hasContentStore;
 

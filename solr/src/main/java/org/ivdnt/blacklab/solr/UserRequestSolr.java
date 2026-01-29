@@ -18,7 +18,6 @@ import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
@@ -28,14 +27,11 @@ public class UserRequestSolr implements UserRequest {
 
     private final BlackLabSearchComponent searchComponent;
 
-    private final SearchManager searchMan;
-
     private User user;
 
     public UserRequestSolr(ResponseBuilder rb, BlackLabSearchComponent searchComponent) {
         this.rb = rb;
         this.searchComponent = searchComponent;
-        this.searchMan = searchComponent.getSearchManager();
     }
 
     @Override
@@ -47,11 +43,6 @@ public class UserRequestSolr implements UserRequest {
             user = User.anonymous(p == null ? "UNKNOWN" : p.getName());
         }
         return user;
-    }
-
-    @Override
-    public SearchManager getSearchManager() {
-        return searchMan;
     }
 
     @Override
@@ -93,13 +84,13 @@ public class UserRequestSolr implements UserRequest {
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = new QueryParamsJson(getCorpusName(), searchMan, user, blReq, operation);
+                qpSolr = new QueryParamsJson(getCorpusName(), getSearchManager(), user, blReq, operation);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = new QueryParamsSolr(getCorpusName(), searchMan, solrParams, user);
+            qpSolr = new QueryParamsSolr(getCorpusName(), getSearchManager(), solrParams, user);
         }
         try {
             operation = qpSolr.getOperation();
@@ -124,13 +115,13 @@ public class UserRequestSolr implements UserRequest {
 
     @Override
     public boolean isDebugMode() {
-        return rb.req.getHttpSolrCall() == null || searchMan.isDebugMode(getRemoteAddr());
+        return rb.req.getHttpSolrCall() == null || getSearchManager().isDebugMode(getRemoteAddr());
     }
 
     @Override
     public ApiVersion apiVersion() {
         String paramApi = rb.req.getParams().get("bl.api");
-        return paramApi == null ? searchMan.config().getParameters().getApi() :
+        return paramApi == null ? getSearchManager().config().getParameters().getApi() :
                 ApiVersion.fromValue(paramApi);
     }
 }

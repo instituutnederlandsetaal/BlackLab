@@ -6,10 +6,9 @@ import org.apache.logging.log4j.ThreadContext;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
@@ -26,11 +25,7 @@ import nl.inl.blacklab.webservice.WebserviceOperation;
 /** Represents a servlet request to the webservice. */
 public class UserRequestBls implements UserRequest {
 
-    private final BlackLabServer servlet;
-
     private final HttpServletRequest request;
-
-    private final HttpServletResponse response;
 
     /** Newly added encdpoint that always uses v5 conventions for response, etc.? */
     private boolean newEndpoint = false;
@@ -46,13 +41,11 @@ public class UserRequestBls implements UserRequest {
 
     private User user;
 
-    public UserRequestBls(BlackLabServer servlet, HttpServletRequest request, HttpServletResponse response) {
-        this.servlet = servlet;
+    public UserRequestBls(HttpServletRequest request) {
         this.request = request;
-        this.response = response;
 
         // Pass requestId to instrumentationProvider
-        String requestId = BlackLabServer.getInstrumentationProvider().getRequestID(request).orElse("");
+        String requestId = BlsMain.get().getInstrumentationProvider().getRequestID(request).orElse("");
         ThreadContext.put("requestId", requestId);
 
         // Parse the URL path
@@ -86,7 +79,8 @@ public class UserRequestBls implements UserRequest {
     @Override
     public synchronized User getUser() {
         if (user == null) {
-            AuthMethod authObj = getSearchManager().getAuthSystem().getAuthObject();
+            SearchManager searchManager = BlsMain.get().getSearchManager();
+            AuthMethod authObj = searchManager.getAuthSystem().getAuthObject();
 
             // If no auth system is configured, all users are anonymous
             if (authObj == null) {
@@ -94,7 +88,7 @@ public class UserRequestBls implements UserRequest {
             } else {
 
                 // Is client on debug IP and is there a userid parameter?
-                if (servlet.getSearchManager().config().getAuthentication().isOverrideIp(request.getRemoteAddr())
+                if (searchManager.config().getAuthentication().isOverrideIp(request.getRemoteAddr())
                         && request.getParameter("userid") != null) {
                     user = User.fromIdAndSessionId(request.getParameter("userid"), request.getSession().getId());
                 } else {
@@ -108,7 +102,7 @@ public class UserRequestBls implements UserRequest {
             }
 
             // Override via HTTP header? (insecure, normally disabled)
-            String debugHttpHeaderToken = getSearchManager().config().getAuthentication().getDebugHttpHeaderAuthToken();
+            String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
             if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
                 String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
                 if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
@@ -119,17 +113,8 @@ public class UserRequestBls implements UserRequest {
         return user;
     }
 
-    public BlackLabServer getServlet() {
-        return servlet;
-    }
-
     public HttpServletRequest getRequest() {
         return request;
-    }
-
-    @Override
-    public SearchManager getSearchManager() {
-        return servlet.getSearchManager();
     }
 
     @Override
@@ -159,7 +144,7 @@ public class UserRequestBls implements UserRequest {
 
     @Override
     public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
-        String jsonRequest = getRequest().getParameter("req");
+        String jsonRequest = request.getParameter("req");
         QueryParams blsParams;
         if (jsonRequest != null) {
             // Request was passed as a JSON structure. Parse that.
@@ -170,7 +155,7 @@ public class UserRequestBls implements UserRequest {
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            blsParams = new QueryParamsBlackLabServer(corpusName, getSearchManager(), getUser(), getRequest(), operation);
+            blsParams = new QueryParamsBlackLabServer(corpusName, getSearchManager(), getUser(), request, operation);
         }
         return WebserviceParamsImpl.get(operation.isDocsOperation(), isDebugMode(), blsParams);
     }
@@ -196,7 +181,7 @@ public class UserRequestBls implements UserRequest {
     @Override
     public ApiVersion apiVersion() {
         String paramApi = request.getParameter("api");
-        return paramApi == null ? servlet.getSearchManager().config().getParameters().getApi() :
+        return paramApi == null ? getSearchManager().config().getParameters().getApi() :
                 ApiVersion.fromValue(paramApi);
     }
 }

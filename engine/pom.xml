@@ -86,11 +86,6 @@
             <artifactId>lucene-backward-codecs</artifactId>
             <version>${blacklab.luceneVersion}</version>
         </dependency>
-<!--		<dependency>-->
-<!--		    <groupId>org.apache.solr</groupId>-->
-<!--		    <artifactId>solr-core</artifactId>-->
-<!--		    <version>${blacklab.luceneVersion}</version>-->
-<!--		</dependency>-->
 
         <!-- Specific more efficient collection types -->
         <dependency>
@@ -124,6 +119,13 @@
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-json-provider</artifactId>
             <version>${jackson.version}</version>
+            <!-- to avoid conflict with jakarta xmlbind annotations -->
+            <exclusions>
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.module</groupId>
+                    <artifactId>jackson-module-jaxb-annotations</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         
 

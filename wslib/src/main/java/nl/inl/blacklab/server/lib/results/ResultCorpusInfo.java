@@ -1,14 +1,11 @@
-package nl.inl.blacklab.server.lib;
+package nl.inl.blacklab.server.lib.results;
 
 import java.util.List;
 import java.util.Map;
 
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
-import nl.inl.blacklab.server.lib.results.ResultAnnotatedField;
-import nl.inl.blacklab.server.lib.results.ResultIndexStatus;
-import nl.inl.blacklab.server.lib.results.ResultMetadataField;
 
-public class ResultIndexMetadata {
+public class ResultCorpusInfo {
 
     private final ResultIndexStatus progress;
     private final List<ResultAnnotatedField> afs;
@@ -16,7 +13,7 @@ public class ResultIndexMetadata {
     private final List<ResultMetadataField> mfs;
     private final Map<String, List<String>> metadataFieldGroups;
 
-    public ResultIndexMetadata(ResultIndexStatus progress, List<ResultAnnotatedField> afs,
+    public ResultCorpusInfo(ResultIndexStatus progress, List<ResultAnnotatedField> afs,
             String mainAnnotatedField, List<ResultMetadataField> mfs, Map<String, List<String>> metadataFieldGroups) {
         this.progress = progress;
         this.afs = afs;

@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
@@ -70,7 +71,7 @@ public class AuthRequestValue extends AuthMethodProvider {
                 String userId = null;
 
                 // Overridden in URL?
-                SearchManager searchMan = request.getSearchManager();
+                SearchManager searchMan = BlsMain.get().getSearchManager();
                 if (searchMan.config().getAuthentication().isOverrideIp(request.getRemoteAddr()) && request.getParameter("userid") != null) {
                     userId = request.getParameter("userid");
                 }

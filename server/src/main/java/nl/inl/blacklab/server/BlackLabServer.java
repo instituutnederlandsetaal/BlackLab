@@ -8,18 +8,13 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.index.IndexFormatTooOldException;
 
-import com.fasterxml.jackson.core.JacksonException;
-
 import io.micrometer.core.instrument.Metrics;
+import jakarta.servlet.ServletConfig;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,18 +23,11 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.IndexVersionMismatch;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
-import nl.inl.blacklab.plugins.AuthMethodProvider;
-import nl.inl.blacklab.plugins.PluginManager;
-import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.config.BLSConfigDebug;
-import nl.inl.blacklab.server.config.ConfigFileReader;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamAbstract;
 import nl.inl.blacklab.server.exceptions.BlsException;
-import nl.inl.blacklab.server.exceptions.ConfigurationException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -59,93 +47,29 @@ public class BlackLabServer extends HttpServlet {
 
     private static final Charset OUTPUT_ENCODING = StandardCharsets.UTF_8;
 
-    private static final String CONFIG_FILE_NAME = "blacklab-server";
-
     /** Pretty-print the response? */
     public static final String PARAM_PRETTYPRINT = "prettyprint";
 
     /** Include XML fragments from document escaped as CDATA or not (i.e. as part of the XML structure)? */
     public static final String PARAM_ESCAPE_XML_FRAGMENT = "escapexmlfragment";
 
-    /** Manages all our searches */
-    private static SearchManager searchManager;
+    /** Servlet-independent main web service code */
+    BlsMain blsMain;
 
-    private static RequestInstrumentationProvider requestInstrumentationProvider = null;
-
-    /** Default output type to use if none given. */
-    private static DataFormat defaultOutputType;
+    /** If a startup error occurred, save it so we can produce an error response later. */
+    private Exception initializationException;
 
     @Override
-    public void init() throws ServletException {
-        logger.info("Starting BlackLab Server...");
-
-        // Before the plugin system is initialized, add our plugin type to it
-        PluginManager.addPluginType(AuthMethodProvider.class);
-
-        super.init();
-        logger.info("BlackLab Server ready.");
-    }
-
-    private synchronized void ensureSearchManagerAvailable() throws BlsException {
-        if (searchManager == null) {
-            try {
-                BLSConfig config = readConfig();
-
-                // Create our search manager (main webservice class)
-                searchManager = new SearchManager(config, true);
-
-                // Set defaults from config in ParameterDefaults
-                config.getParameters().setParameterDefaults();
-
-                // Configure metrics provider (e.g Prometheus)
-                setMetricsProvider(config.getDebug());
-
-                checkExpectedDebugAddresses(config);
-
-                // Determine default output type.
-                defaultOutputType = DataFormat.fromString(searchManager.config().getProtocol().getDefaultOutputType(),
-                        DataFormat.XML);
-            } catch (JacksonException e) {
-                throw new ConfigurationException("Invalid JSON in configuration file", e);
-            } catch (IOException e) {
-                throw new ConfigurationException("Error reading configuration file", e);
-            }
-        }
-    }
-
-    /** Check if localhost addresses are in the list of debug addresses. If not, warn about it.
-     * This may help to debug issues in some cases.
-     */
-    public static void checkExpectedDebugAddresses(BLSConfig config) {
-        List<String> addresses = config.getDebug().getAddresses();
-        Set<String> missingLocalhosts = new HashSet<>(BLSConfigDebug.DEBUG_ADDRESSES_LOCALHOST);
-        for (String address: addresses)
-            missingLocalhosts.remove(address);
-        if (!missingLocalhosts.isEmpty()) {
-            logger.info("NOTE: debug.addresses has been overridden and no longer contains these expected localhost values: " +
-                    StringUtils.join(missingLocalhosts, "; "));
-        }
-    }
-
-    private BLSConfig readConfig() throws IOException, ConfigurationException {
-        File servletPath = new File(getServletContext().getRealPath("."));
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        File servletPath = new File(config.getServletContext().getRealPath("."));
         logger.debug("Running from dir: " + servletPath);
-        return ConfigFileReader.getBlsConfig(CONFIG_FILE_NAME);
-    }
 
-    private void setMetricsProvider(BLSConfigDebug configDebug) throws ConfigurationException {
-        String registryProviderClassName = configDebug.getMetricsProvider();
-        if (StringUtils.isBlank(registryProviderClassName)) {
-            requestInstrumentationProvider = RequestInstrumentationProvider.noOpProvider();
-        } else {
-            // Create instrumentation provider
-            requestInstrumentationProvider = WebserviceUtil.createInstrumentationProvider(registryProviderClassName,
-                    configDebug.getRequestInstrumentationProvider());
+        try {
+            blsMain = BlsMain.get();
+        } catch (Exception e) {
+            initializationException = e;
         }
-    }
-
-    public static RequestInstrumentationProvider getInstrumentationProvider() {
-        return requestInstrumentationProvider;
     }
 
     /**
@@ -187,14 +111,13 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    protected void doOptions(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
+    protected void doOptions(HttpServletRequest request, HttpServletResponse response) {
         try {
             super.doOptions(request, response);
         } catch (ServletException|IOException e) {
             DataFormat outputType = ServletUtil.getOutputType(request);
             if (outputType == null)
-                outputType = defaultOutputType;
+                outputType = blsMain.getDefaultOutputType();
             ApiVersion api = ApiVersion.CURRENT;
             DataStream es = DataStreamAbstract.create(outputType, true, api);
             es.outputProlog();
@@ -222,29 +145,21 @@ public class BlackLabServer extends HttpServlet {
     }
 
     private String optAddAllowOriginHeader(HttpServletResponse responseObject) {
-        String allowOrigin = searchManager == null ? "*" : searchManager.config().getProtocol().getAccessControlAllowOrigin();
+        String allowOrigin = blsMain == null ? "*" : blsMain.getSearchManager().config().getProtocol().getAccessControlAllowOrigin();
         if (allowOrigin != null)
             responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
         return allowOrigin;
     }
 
     private void handleRequest(HttpServletRequest request, HttpServletResponse responseObject) {
+        if (!ensureInitialized(request, responseObject))
+            return;
+
         DataFormat outputType = ServletUtil.getOutputType(request);
         try {
             request.setCharacterEncoding(REQUEST_ENCODING.name());
         } catch (UnsupportedEncodingException ex) {
             logger.error(ex);
-        }
-
-        try {
-            ensureSearchManagerAvailable();
-        } catch (RuntimeException e) {
-            boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, true);
-            String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
-                    ApiVersion.CURRENT.toString());
-            ApiVersion apiVersion = ApiVersion.fromValue(strApiVersion);
-            initializationErrorResponse(responseObject, e, outputType, apiVersion, prettyPrint);
-            return;
         }
 
         if (PrometheusMetricsProvider.handlePrometheus(Metrics.globalRegistry, request, responseObject, OUTPUT_ENCODING.name())) {
@@ -263,14 +178,14 @@ public class BlackLabServer extends HttpServlet {
         // about which handler to use
         // Note that only some requests support CSV output (hits/docs); requesting it should return an error on
         // requests that don't support it.
-        UserRequestBls userRequest = new UserRequestBls(this, request, responseObject);
+        UserRequestBls userRequest = new UserRequestBls(request);
         int httpCode;
         RequestHandler requestHandler = null;
         int cacheTime = 0;
         ApiVersion api = ApiVersion.CURRENT;
         boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, userRequest.isDebugMode());
         DataStream ds = DataStreamAbstract.create(outputType, prettyPrint, api);
-        ds.setOmitEmptyAnnotations(searchManager.config().getProtocol().isOmitEmptyProperties());
+        ds.setOmitEmptyAnnotations(blsMain.getSearchManager().config().getProtocol().isOmitEmptyProperties());
         if (request.getParameterMap().containsKey(PARAM_ESCAPE_XML_FRAGMENT)) {
             // We want to override whether XML fragments are output as CDATA or not
             // (defaults to true for v5, false before)
@@ -286,12 +201,12 @@ public class BlackLabServer extends HttpServlet {
             if (outputType == null)
                 outputType = requestHandler.getOverrideType();
             if (outputType == null)
-                outputType = defaultOutputType;
+                outputType = blsMain.getDefaultOutputType();
 
             // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
-            searchManager.getAuthSystem().persistUser(userRequest, requestHandler.getUser());
+            blsMain.getSearchManager().getAuthSystem().persistUser(userRequest, requestHandler.getUser());
 
-            cacheTime = requestHandler.isCacheAllowed() ? searchManager.config().getCache().getClientCacheTimeSec() : 0;
+            cacheTime = requestHandler.isCacheAllowed() ? blsMain.getSearchManager().config().getCache().getClientCacheTimeSec() : 0;
 
             String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
             ds.startDocument(rootEl);
@@ -357,6 +272,20 @@ public class BlackLabServer extends HttpServlet {
         }
     }
 
+    private boolean ensureInitialized(HttpServletRequest request, HttpServletResponse responseObject) {
+        if (initializationException != null) {
+            boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, true);
+            String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
+                    ApiVersion.CURRENT.toString());
+            ApiVersion apiVersion = ApiVersion.fromValue(strApiVersion);
+            DataFormat outputType = ServletUtil.getOutputType(request);
+            initializationErrorResponse(responseObject, initializationException, outputType,
+                    apiVersion, prettyPrint);
+            return false;
+        }
+        return true;
+    }
+
     private void initializationErrorResponse(HttpServletResponse responseObject, Exception e, DataFormat outputType,
             ApiVersion api, boolean prettyPrint) {
         if (outputType == null)
@@ -384,12 +313,9 @@ public class BlackLabServer extends HttpServlet {
     }
 
     @Override
-    public synchronized void destroy() {
-        // Stops the load management thread
-        if (searchManager != null) {
-            searchManager.cleanup();
-            searchManager = null;
-        }
+    public void destroy() {
+        // Cleans up search manager
+        blsMain.cleanup();
         super.destroy();
     }
 
@@ -408,6 +334,6 @@ public class BlackLabServer extends HttpServlet {
     }
 
     public synchronized SearchManager getSearchManager() {
-        return searchManager;
+        return blsMain.getSearchManager();
     }
 }

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -18,7 +19,9 @@ public interface UserRequest {
      */
     User getUser();
 
-    SearchManager getSearchManager();
+    default SearchManager getSearchManager() {
+        return BlsMain.get().getSearchManager();
+    }
 
     /**
      * Get our current session id.

@@ -75,13 +75,16 @@ public class MetadataField {
     public boolean isAnnotatedField = false;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
+    public Map<String, Object> custom;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public String displayName;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String description;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String uiType = "";
+    public String uiType;
 
     public String type = "";
 
@@ -94,7 +97,7 @@ public class MetadataField {
     public String unknownValue;
 
     @XmlJavaTypeAdapter(MapAdapter.class)
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonSerialize(using = SerializationUtil.StringMapSerializer.class)
     @JsonDeserialize(using = SerializationUtil.StringMapDeserializer.class)
     public Map<String, String> displayValues = new LinkedHashMap<>();
@@ -103,7 +106,7 @@ public class MetadataField {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonSerialize(using = FieldValuesSerializer.class)
     @JsonDeserialize(using = FieldValuesDeserializer.class)
-    public Map<String, Integer> fieldValues = new LinkedHashMap<>();
+    public Map<String, Long> fieldValues = new LinkedHashMap<>();
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Boolean valueListComplete = true;

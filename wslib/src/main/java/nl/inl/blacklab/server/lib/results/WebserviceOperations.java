@@ -63,6 +63,7 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -73,10 +74,10 @@ import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.LuceneUtil;
@@ -731,23 +732,17 @@ public class WebserviceOperations {
         FinderInputFormatUserFormats.deleteUserFormat(params.getUser(), formatIdentifier);
     }
 
-    public static ResultAnnotatedField annotatedField(WebserviceParams params, AnnotatedField fieldDesc, boolean includeIndexName) {
+    public static ResultAnnotatedField annotatedField(BlackLabIndex index, AnnotatedField fieldDesc,
+            Collection<String> listValuesFor, long limitValues, boolean includeIndexName) {
         Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
-        BlackLabIndex index = params.blIndex();
-        Collection<String> listValuesFor = params.getListValuesFor();
         boolean all = listValuesFor.contains("*");
         for (Annotation annotation: fieldDesc.annotations()) {
             boolean showValues = (all || listValuesFor.contains(annotation.name())) &&
                     !annotation.isRelationAnnotation(); // spans/relations are reported separately
-            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, showValues, params.getLimitValues());
+            ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, showValues, limitValues);
             annotInfos.put(annotation.name(), ai);
         }
-        return new ResultAnnotatedField(params.blIndex(), includeIndexName ? params.getCorpusName() : null, fieldDesc, annotInfos);
-    }
-
-    public static ResultIndexStatus resultIndexStatus(WebserviceParams params) {
-        Index index = params.getIndexManager().getIndex(params.getCorpusName());
-        return resultIndexStatus(index, params.getUser());
+        return new ResultAnnotatedField(index, includeIndexName ? index.name() : null, fieldDesc, annotInfos);
     }
 
     public static ResultIndexStatus resultIndexStatus(Index index, User user) {
@@ -773,9 +768,9 @@ public class WebserviceOperations {
         return new ResultListOfHits(params, window, concordanceContext, docIdToPid);
     }
 
-    public static ResultMetadataField metadataField(WebserviceParams params, MetadataField fieldDesc, String indexName) {
+    public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
         logger.info("        " + fieldDesc.name());
-        MetadataFieldValues values = fieldDesc.values(params.getLimitValues());
+        MetadataFieldValues values = fieldDesc.values(limitValues);
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
                 !values.valueList().isTruncated());
@@ -803,31 +798,33 @@ public class WebserviceOperations {
         return new ResultUserInfo(user.isLoggedIn(), user.getId(), params.getIndexManager().canCreateIndex(user));
     }
 
-    public static ResultIndexMetadata indexMetadata(WebserviceParams params) {
+    public static ResultCorpusInfo corpusInfo(RequestCorpusInfo req) {
         logger.info("START indexMetadata");
-        ResultIndexStatus progress = resultIndexStatus(params);
+        Index index = BlsMain.get().getSearchManager().getIndexManager().getIndex(req.corpusName());
+        if (index == null)
+            throw new IllegalArgumentException("Corpus '" + req.corpusName() + "' not found.");
+        ResultIndexStatus progress = resultIndexStatus(index, req.user());
         IndexMetadata metadata = progress.getMetadata();
 
         logger.info("    get annotated fields");
         List<ResultAnnotatedField> afs = new ArrayList<>();
         for (AnnotatedField field: metadata.annotatedFields()) {
-            afs.add(annotatedField(params, field, false));
+            afs.add(annotatedField(index.blIndex(), field, req.listValuesFor(), req.limitValues(), false));
         }
         afs.sort(ResultAnnotatedField::compare);
         logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
-            mfs.add(metadataField(params, f, null));
+            mfs.add(metadataField(req.limitValues(), f, null));
         }
 
         logger.info("    get metadata field groups");
-        Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(
-                params.blIndex());
+        Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(index.blIndex());
 
         logger.info("    construct response object");
         AnnotatedField mainAnnotatedField = metadata.mainAnnotatedField();
         String mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
-        return new ResultIndexMetadata(progress, afs, mainAnnotatedFieldName, mfs, metadataFieldGroups);
+        return new ResultCorpusInfo(progress, afs, mainAnnotatedFieldName, mfs, metadataFieldGroups);
     }
 
     public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {

@@ -13,12 +13,12 @@ import jakarta.xml.bind.annotation.adapters.XmlAdapter;
 /**
  * Helps us to (de)serialize the map of fieldValues.
  */
-public class MapAdapterFieldValues extends XmlAdapter<MapAdapterFieldValues.WrapperFieldValues, Map<String, Integer>> {
+public class MapAdapterFieldValues extends XmlAdapter<MapAdapterFieldValues.WrapperFieldValues, Map<String, Long>> {
     @Override
-    public WrapperFieldValues marshal(Map<String, Integer> m) {
+    public WrapperFieldValues marshal(Map<String, Long> m) {
         WrapperFieldValues wrapper = new WrapperFieldValues();
         List<FieldValueFreq> elements = new ArrayList<>();
-        for (Map.Entry<String, Integer> property : m.entrySet()) {
+        for (Map.Entry<String, Long> property : m.entrySet()) {
             elements.add(new FieldValueFreq(property.getKey(), property.getValue()));
         }
         wrapper.elements = elements;
@@ -26,8 +26,8 @@ public class MapAdapterFieldValues extends XmlAdapter<MapAdapterFieldValues.Wrap
     }
 
     @Override
-    public Map<String, Integer> unmarshal(WrapperFieldValues v) {
-        Map<String, Integer> returnval = new LinkedHashMap();
+    public Map<String, Long> unmarshal(WrapperFieldValues v) {
+        Map<String, Long> returnval = new LinkedHashMap();
         for (FieldValueFreq e: v.elements) {
             returnval.put(e.text, e.freq);
         }
@@ -40,9 +40,9 @@ public class MapAdapterFieldValues extends XmlAdapter<MapAdapterFieldValues.Wrap
         public String text;
 
         @XmlValue
-        public Integer freq;
+        public Long freq;
 
-        public FieldValueFreq(String text, Integer freq) {
+        public FieldValueFreq(String text, Long freq) {
             this.text = text;
             this.freq = freq;
         }

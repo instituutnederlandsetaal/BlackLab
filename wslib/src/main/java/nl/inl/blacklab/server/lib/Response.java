@@ -1,14 +1,13 @@
 package nl.inl.blacklab.server.lib;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.net.HttpURLConnection;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
-
-import java.util.Map;
 
 /**
  * Different BLS responses with response code and message.
@@ -67,25 +66,25 @@ public class Response {
         }
         logger.error("INTERNAL ERROR " + code + ":", e);
         rs.getDataStream().internalError(e, debugMode, code);
-        return HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
+        return HttpURLConnection.HTTP_INTERNAL_ERROR;
     }
 
     public static int success(ResponseStreamer rs, String msg) {
-        return status(rs, "SUCCESS", msg, HttpServletResponse.SC_OK);
+        return status(rs, "SUCCESS", msg, HttpURLConnection.HTTP_OK);
     }
 
     public static int forbidden(ResponseStreamer rs) {
         return error(rs, "FORBIDDEN_REQUEST", "Forbidden operation.", null,
-                HttpServletResponse.SC_FORBIDDEN);
+                HttpURLConnection.HTTP_FORBIDDEN);
     }
 
     public static int forbidden(ResponseStreamer rs, String reason) {
         return error(rs, "FORBIDDEN_REQUEST", "Forbidden request. " + reason, null,
-                HttpServletResponse.SC_FORBIDDEN);
+                HttpURLConnection.HTTP_FORBIDDEN);
     }
 
     public static int badRequest(ResponseStreamer rs, String code, String message) {
-        return error(rs, code, message, null,HttpServletResponse.SC_BAD_REQUEST);
+        return error(rs, code, message, null,HttpURLConnection.HTTP_BAD_REQUEST);
     }
 
 }

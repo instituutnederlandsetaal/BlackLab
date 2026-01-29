@@ -17,7 +17,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.server.BlackLabServer;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -135,7 +135,7 @@ public abstract class RequestHandler {
         // If we're modifying a private index, it must be our own.
         Index privateIndex = null;
         //logger.debug("Got indexName = \"" + indexName + "\" (len=" + indexName.length() + ")");
-        IndexManager indexManager = userRequest.getSearchManager().getIndexManager();
+        IndexManager indexManager = BlsMain.get().getSearchManager().getIndexManager();
         if (IndexUtil.isUserIndex(indexName)) {
             // It's a private index. Check if the logged-in user has access.
             if (!user.isLoggedIn())
@@ -387,8 +387,8 @@ public abstract class RequestHandler {
      */
     private boolean newEndpoint = false;
 
-    /** The servlet object */
-    protected BlackLabServer servlet;
+//    /** The servlet object */
+//    protected BlackLabServer servlet;
 
     /** The HTTP request object */
     protected HttpServletRequest request;
@@ -424,8 +424,7 @@ public abstract class RequestHandler {
 
     RequestHandler(UserRequestBls userRequest, WebserviceOperation operation) {
         debugMode = userRequest.isDebugMode();
-        servlet = userRequest.getServlet();
-        searchMan = servlet.getSearchManager();
+        searchMan = BlsMain.get().getSearchManager();
         indexMan = searchMan.getIndexManager();
         request = userRequest.getRequest();
         user = userRequest.getUser();

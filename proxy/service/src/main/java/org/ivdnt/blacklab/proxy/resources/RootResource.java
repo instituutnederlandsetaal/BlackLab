@@ -1,5 +1,7 @@
 package org.ivdnt.blacklab.proxy.resources;
 
+import org.ivdnt.blacklab.proxy.backend.Backend;
+
 import jakarta.inject.Inject;
 import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.FormParam;
@@ -17,6 +19,7 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 
 @Path("")
 public class RootResource {
@@ -24,21 +27,25 @@ public class RootResource {
     /** REST client */
     private final Client client;
 
+    /** Object that actually carries out the request */
+    private final Backend backend;
+
     @Inject
-    public RootResource(Client client) {
+    public RootResource(Client client, Backend backend) {
         this.client = client;
+        this.backend = backend;
     }
 
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getServerInfo(@DefaultValue ("") @QueryParam("api") String apiVersion) {
-        return ProxyRequest.serverInfo(client, apiVersion, HttpMethod.GET);
+        return backend.serverInfo(ApiVersion.fromValue(apiVersion), HttpMethod.GET);
     }
 
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postServerInfo(@DefaultValue ("") @FormParam("api") String apiVersion) {
-        return ProxyRequest.serverInfo(client, apiVersion, HttpMethod.POST);
+        return backend.serverInfo(ApiVersion.fromValue(apiVersion), HttpMethod.POST);
     }
 
     @Path("/input-formats")
@@ -47,7 +54,7 @@ public class RootResource {
     public Response getFormats(
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers) {
-        return ProxyRequest.listInputFormats(client, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return backend.listInputFormats(ApiVersion.V4_0, uriInfo.getQueryParameters(), HttpMethod.GET);
     }
 
     @Path("/input-formats")
@@ -56,7 +63,7 @@ public class RootResource {
     public Response postFormats(
             MultivaluedMap<String, String> formParams,
             @Context HttpHeaders headers) {
-        return ProxyRequest.listInputFormats(client, formParams, HttpMethod.POST);
+        return backend.listInputFormats(ApiVersion.V4_0, formParams, HttpMethod.POST);
     }
 
     @Path("/input-formats/{formatName}")
@@ -66,7 +73,7 @@ public class RootResource {
             @PathParam("formatName") String formatName,
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers) {
-        return ProxyRequest.inputFormat(client, formatName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return backend.inputFormat(ApiVersion.V4_0, formatName, uriInfo.getQueryParameters(), HttpMethod.GET);
     }
 
     @Path("/input-formats/{formatName}")
@@ -76,7 +83,7 @@ public class RootResource {
             @PathParam("formatName") String formatName,
             MultivaluedMap<String, String> formParams,
             @Context HttpHeaders headers) {
-        return ProxyRequest.inputFormat(client, formatName, formParams, HttpMethod.POST);
+        return backend.inputFormat(ApiVersion.V4_0, formatName, formParams, HttpMethod.POST);
     }
 
     @Path("/input-formats/{formatName}/xslt")
@@ -86,7 +93,7 @@ public class RootResource {
             @PathParam("formatName") String formatName,
             @Context UriInfo uriInfo,
             @Context HttpHeaders headers) {
-        return ProxyRequest.inputFormatXslt(client, formatName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return backend.inputFormatXslt(ApiVersion.V4_0, formatName, uriInfo.getQueryParameters(), HttpMethod.GET);
     }
 
     @Path("/input-formats/{formatName}/xslt")
@@ -96,7 +103,7 @@ public class RootResource {
             @PathParam("formatName") String formatName,
             MultivaluedMap<String, String> formParams,
             @Context HttpHeaders headers) {
-        return ProxyRequest.inputFormatXslt(client, formatName, formParams, HttpMethod.POST);
+        return backend.inputFormatXslt(ApiVersion.V4_0, formatName, formParams, HttpMethod.POST);
     }
 
 }

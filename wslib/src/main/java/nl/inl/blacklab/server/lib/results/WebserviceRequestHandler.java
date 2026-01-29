@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.net.HttpURLConnection;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
@@ -8,7 +9,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import jakarta.servlet.http.HttpServletResponse;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
@@ -23,9 +23,11 @@ import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.index.Index;
+import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.Response;
-import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -53,12 +55,13 @@ public class WebserviceRequestHandler {
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             // Annotated field
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
-            ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(params, fieldDesc, true);
+            ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(index, fieldDesc,
+                    params.getListValuesFor(), params.getLimitValues(), true);
             rs.annotatedField(resultAnnotatedField, includeCustomInfo);
         } else if (indexMetadata.metadataFields().exists(fieldName)) {
             // Metadata field
             MetadataField fieldDesc = indexMetadata.metadataField(fieldName);
-            ResultMetadataField metadataField = WebserviceOperations.metadataField(params, fieldDesc, params.getCorpusName());
+            ResultMetadataField metadataField = WebserviceOperations.metadataField(params.getLimitValues(), fieldDesc, params.getCorpusName());
             rs.metadataField(metadataField, includeCustomInfo);
         } else {
             // Unknown field
@@ -73,7 +76,9 @@ public class WebserviceRequestHandler {
      * @param rs output stream
      */
     public static void opCorpusInfo(WebserviceParams params, ResponseStreamer rs) {
-        ResultIndexMetadata corpusInfo = WebserviceOperations.indexMetadata(params);
+        RequestCorpusInfo req = new RequestCorpusInfo(params.getCorpusName(),
+                params.getUser(), params.getListValuesFor(), params.getLimitValues(), params.getIncludeCustomInfo());
+        ResultCorpusInfo corpusInfo = WebserviceOperations.corpusInfo(req);
         rs.corpusMetadataResponse(corpusInfo, params.getIncludeCustomInfo());
     }
 
@@ -84,7 +89,10 @@ public class WebserviceRequestHandler {
      * @param rs output stream
      */
     public static void opCorpusStatus(WebserviceParams params, ResponseStreamer rs) {
-        ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(params);
+        IndexManager indexManager = params.getIndexManager();
+        String corpusName = params.getCorpusName();
+        Index index = indexManager.getIndex(corpusName);
+        ResultIndexStatus corpusStatus = WebserviceOperations.resultIndexStatus(index, params.getUser());
         rs.corpusStatusResponse(corpusStatus, params.getIncludeCustomInfo());
     }
 
@@ -260,7 +268,7 @@ public class WebserviceRequestHandler {
             return Response.forbidden(rs);
         } else {
             params.getSearchManager().getBlackLabCache().clear(false);
-            return Response.status(rs, "SUCCESS", "Cache cleared succesfully.", HttpServletResponse.SC_OK);
+            return Response.status(rs, "SUCCESS", "Cache cleared succesfully.", HttpURLConnection.HTTP_OK);
         }
     }
 

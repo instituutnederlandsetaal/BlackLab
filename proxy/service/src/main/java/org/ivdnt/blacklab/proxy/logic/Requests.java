@@ -13,7 +13,7 @@ import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrGeneralErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrResponse;
 import org.ivdnt.blacklab.proxy.resources.ParamsUtil;
-import org.ivdnt.blacklab.proxy.resources.ProxyResponse;
+import org.ivdnt.blacklab.proxy.resources.SimpleResponse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -205,7 +205,7 @@ public class Requests {
             String csv = jcr.csv;
             return Response.ok().type(ParamsUtil.MIME_TYPE_CSV).entity(csv).build();
         } else {
-            return ProxyResponse.success(entity);
+            return SimpleResponse.success(entity);
         }
     }
 

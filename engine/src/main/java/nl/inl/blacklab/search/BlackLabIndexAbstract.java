@@ -244,7 +244,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
             // so that we do not need this (ugly and brittle!) check here and can just call the function on whichever IndexObjectFactory
             // we have and trust that it will do the right thing.
             finishOpeningIndex(indexDir, createNewIndex, solrMode);
-            logger.debug("    (done with finishOpeningIndex)");
+            if (traceIndexOpening())
+                logger.debug("    (done with finishOpeningIndex)");
 
         } catch (IndexFormatTooNewException|IndexFormatTooOldException e) {
             throw new IndexVersionMismatch(e);

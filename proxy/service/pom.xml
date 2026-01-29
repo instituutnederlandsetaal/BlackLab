@@ -110,6 +110,24 @@
             <version>${project.version}</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>nl.inl.blacklab</groupId>
+            <artifactId>blacklab-wslib</artifactId>
+            <version>5.0.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <!-- JAXB-runtime is our XML serialization library. It's an implementation of Jakarta XML Binding (part of Jakarta EE) -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>${jaxb.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>3.0.1</version>
+        </dependency>
 
     </dependencies>
 </project>

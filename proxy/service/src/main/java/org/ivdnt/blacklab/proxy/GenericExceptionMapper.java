@@ -8,7 +8,7 @@ import java.util.Set;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.ivdnt.blacklab.proxy.logic.Requests;
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
-import org.ivdnt.blacklab.proxy.resources.ProxyResponse;
+import org.ivdnt.blacklab.proxy.resources.SimpleResponse;
 
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.Context;
@@ -49,7 +49,7 @@ public class GenericExceptionMapper implements ExceptionMapper<Exception> {
 		//	a page parameter contains an invalid value, etc.
         if (exception instanceof Requests.BlsRequestException blsEx) {
             ErrorResponse.Desc err = blsEx.getResponse().getError();
-            return ProxyResponse.error(blsEx.getStatus(), err.getCode(), err.getMessage(), err.getStackTrace());
+            return SimpleResponse.error(blsEx.getStatus(), err.getCode(), err.getMessage(), err.getStackTrace());
         } else if (exception instanceof WebApplicationException appEx) {
 
             // Preserve the original response, containing (among others) the http status code.

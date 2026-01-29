@@ -4,9 +4,12 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.ivdnt.blacklab.proxy.backend.Backend;
+import org.ivdnt.blacklab.proxy.backend.blacklab.BlacklabBackend;
 import org.ivdnt.blacklab.proxy.resources.CorpusResource;
 import org.ivdnt.blacklab.proxy.resources.RootResource;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.client.ClientBuilder;
@@ -36,6 +39,28 @@ public class AppConfig extends ResourceConfig {
 		}
 	}
 
+    /** Creates a backend and closes it on dispose. */
+    private static class BackendFactory implements Factory<Backend> {
+
+        /** REST client to forward requests to the BlackLab instance we're proxying */
+        Client client;
+
+        @Inject
+        public BackendFactory(Client client) {
+            this.client = client;
+        }
+
+        @Override
+        public Backend provide() {
+            return new BlacklabBackend(); // new ProxyBackend(client);
+        }
+
+        @Override
+        public void dispose(Backend service) {
+            service.close();
+        }
+    }
+
 	public AppConfig() {
     	super(
 			JacksonFeature.class, // Enable Jackson as our JAXB provider
@@ -60,9 +85,9 @@ public class AppConfig extends ResourceConfig {
 			protected void configure() {
 				// "when @Inject'ing a Client, use this factory and a singleton instance."
 				// (Client is a heavy object and Jersey clients should be thread-safe)
-				bindFactory(ClientFactory.class).to(Client.class).in(Singleton.class);
+                bindFactory(ClientFactory.class).to(Client.class).in(Singleton.class);
+                bindFactory(BackendFactory.class).to(Backend.class).in(Singleton.class);
 			}
 		});
 	}
-
 }

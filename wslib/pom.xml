@@ -25,17 +25,12 @@
             <artifactId>blacklab</artifactId>
             <version>${project.version}</version>
         </dependency>
+
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-instrumentation</artifactId>
             <version>${project.version}</version>
         </dependency>
-<!--        <dependency>-->
-<!--            <groupId>${project.parent.groupId}</groupId>-->
-<!--            <artifactId>blacklab-convert-and-tag-indexer</artifactId>-->
-<!--            <version>${project.version}</version>-->
-<!--        </dependency>-->
-
         <dependency>
             <groupId>${project.parent.groupId}</groupId>
             <artifactId>blacklab-instrumentation-impl</artifactId>

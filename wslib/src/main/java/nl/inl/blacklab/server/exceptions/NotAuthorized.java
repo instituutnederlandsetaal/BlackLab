@@ -1,11 +1,11 @@
 package nl.inl.blacklab.server.exceptions;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.net.HttpURLConnection;
 
 public class NotAuthorized extends BlsException {
 
     public NotAuthorized(String msg) {
-        super(HttpServletResponse.SC_UNAUTHORIZED, "NOT_AUTHORIZED", "Unauthorized operation. " + msg);
+        super(HttpURLConnection.HTTP_UNAUTHORIZED, "NOT_AUTHORIZED", "Unauthorized operation. " + msg);
     }
 
 }

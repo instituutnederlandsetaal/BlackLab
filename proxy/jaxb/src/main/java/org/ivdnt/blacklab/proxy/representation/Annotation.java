@@ -28,19 +28,22 @@ public class Annotation {
     public String name;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String displayName = "";
+    public Map<String, Object> custom;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String description = "";
+    public String displayName;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String uiType = "";
+    public String description;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String uiType;
 
     public boolean hasForwardIndex;
 
     public String sensitivity;
 
-    public String offsetsAlternative;
+    public String offsetsAlternative = "";
 
     public boolean isInternal;
 

@@ -1,6 +1,6 @@
 package nl.inl.blacklab.server.exceptions;
 
-import jakarta.servlet.http.HttpServletResponse;
+import java.net.HttpURLConnection;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,7 +25,7 @@ public class InternalServerError extends BlsException {
     }
 
     public InternalServerError(String msg, String internalErrorCode, Throwable cause) {
-        super(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "INTERNAL_ERROR",
+        super(HttpURLConnection.HTTP_INTERNAL_ERROR, "INTERNAL_ERROR",
                 msg + (cause == null ? "" : " (" + cause + ")"), cause);
         this.internalErrorCode = internalErrorCode;
         logger.debug("INTERNAL ERROR " + internalErrorCode + (cause == null ? " (no cause given): " : ": ") + msg);

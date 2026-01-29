@@ -1,10 +1,10 @@
 package org.ivdnt.blacklab.proxy.resources;
 
-import jakarta.ws.rs.core.Response;
-
 import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 
-public class ProxyResponse {
+import jakarta.ws.rs.core.Response;
+
+public class SimpleResponse {
     public static Response error(Response.Status status, String code, String message) {
         return error(status, code, message, null);
     }

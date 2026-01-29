@@ -2,50 +2,61 @@ package org.ivdnt.blacklab.proxy.resources;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
-import org.ivdnt.blacklab.proxy.logic.Requests;
-import org.ivdnt.blacklab.proxy.representation.Corpus;
+import org.apache.commons.lang3.StringUtils;
+import org.ivdnt.blacklab.proxy.backend.Backend;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.HttpMethod;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.client.Client;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
-import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 
-@Path("/{corpusName : (?!input-formats\\b)[^/]+}")
+@Path("{corpora:(corpora/)?}{corpusName : (?!input-formats\\b)[^/]+}")
 public class CorpusResource {
 
-    /** REST client */
-    private final Client client;
+    private static ApiVersion getApiVersion(String corporaPathPart, String strApiVersion) {
+        return strApiVersion.isEmpty() ?
+                // Default: v5 if path starts with /corpora; v4 otherwise
+                (StringUtils.isEmpty(corporaPathPart) ? ApiVersion.V4_LATEST : ApiVersion.V5_0) :
+                ApiVersion.fromValue(strApiVersion);
+    }
+
+    /** Object that actually carries out the request */
+    private final Backend backend;
 
     @Inject
-    public CorpusResource(Client client) {
-        this.client = client;
+    public CorpusResource(Backend backend) {
+        this.backend = backend;
     }
 
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response corpusInfo(@PathParam("corpusName") String corpusName) {
-
+    public Response corpusInfo(
+            @PathParam("corpora") String corporaPath,
+            @PathParam("corpusName") String corpusName) {
         if (corpusName.equals("cache-clear")) {// POST naar /cache-clear : clear cache (not implemented)
-            return ProxyResponse.notImplemented("/cache-clear");
+            return SimpleResponse.notImplemented("/cache-clear");
         }
 
         // POST naar /CORPUSNAME ; not supported
-        return ProxyResponse.notImplemented("POST to /CORPUSNAME");
+        return SimpleResponse.notImplemented("POST to /CORPUSNAME");
     }
 
     /**
@@ -56,186 +67,46 @@ public class CorpusResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response corpusInfo(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        return switch (corpusName) {
-            case "cache-info" -> ProxyResponse.notImplemented("/cache-info");
-            case "help" -> ProxyResponse.notImplemented("/help");
-            case "cache-clear" -> ProxyResponse.error(Response.Status.BAD_REQUEST, "WRONG_METHOD",
-                    "/cache-clear works only with POST");
-            default -> {
-                // Actually a corpus name (we assume), so get the corpus info.
-                Map<WebserviceParameter, String> params = ParamsUtil.get(uriInfo.getQueryParameters(), corpusName,
-                        WebserviceOperation.CORPUS_INFO);
-                yield ProxyResponse.success(Requests.get(client, params, Corpus.class));
-            }
-        };
-    }
-
-    @Path("/parse-pattern")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getParsePattern(
+    public Response corpusInfo(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
-            @Context UriInfo uriInfo) {
-        Response hits = ProxyRequest.parsePattern(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
-        return hits;
+            @QueryParam("custom") @DefaultValue ("false") boolean customInfo,
+            @QueryParam("listvalues") @DefaultValue("") String parListValuesFor,
+            @QueryParam("limitvalues") @DefaultValue("200") long limitValues) {
+        // TODO: apiVersion default from config
+        Response response = null;
+        if (StringUtils.isEmpty(corporaPath)) {
+            // Old API: handle endpoints that are not actually corpora
+            response = switch (corpusName) {
+                case "cache-info" -> SimpleResponse.notImplemented("/cache-info");
+                case "help" -> SimpleResponse.notImplemented("/help");
+                case "cache-clear" -> SimpleResponse.error(Response.Status.BAD_REQUEST, "WRONG_METHOD",
+                        "/cache-clear works only with POST");
+                default -> null;
+            };
+        }
+        if (response == null) {
+            // Actually a corpus name, so get the corpus info.
+            response = getCorpusInfo(corporaPath, strApiVersion, corpusName, customInfo, parListValuesFor, limitValues);
+        }
+        return response;
     }
 
-    @Path("/parse-pattern")
-    @POST
-    @Consumes("application/x-www-form-urlencoded")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response postParsePattern(
-            @PathParam("corpusName") String corpusName,
-            MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.parsePattern(client, corpusName, formParams, HttpMethod.POST);
+    private Response getCorpusInfo(String corporaPath, String strApiVersion, String corpusName, boolean customInfo,
+            String parListValuesFor, long limitValues) {
+        User user = User.anonymous(""); // TODO detect user
+        List<String> listValuesFor = parListValuesFor.isEmpty() ? List.of() :
+                Arrays.asList(parListValuesFor.split(",", -1));
+        RequestCorpusInfo req = new RequestCorpusInfo(corpusName, user, listValuesFor, limitValues, customInfo);
+        return backend.corpusInfo(getApiVersion(corporaPath, strApiVersion), req);
     }
 
-    @Path("/relations")
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getRelations(
-            @PathParam("corpusName") String corpusName,
-            @Context UriInfo uriInfo) {
-        Response hits = ProxyRequest.relations(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
-        return hits;
-    }
-
-    @Path("/relations")
-    @POST
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response postRelations(
-            @PathParam("corpusName") String corpusName,
-            @Context UriInfo uriInfo) {
-        Response hits = ProxyRequest.relations(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
-        return hits;
-    }
-
-    @Path("/hits")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
-    public Response getHits(
-            @PathParam("corpusName") String corpusName,
-            @Context UriInfo uriInfo,
-            @Context HttpHeaders headers) {
-        Response hits = ProxyRequest.hits(client, corpusName, uriInfo.getQueryParameters(), headers, HttpMethod.GET);
-        return hits;
-    }
-
-    @Path("/hits")
-    @POST
-    @Consumes("application/x-www-form-urlencoded")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
-    public Response postHits(
-            @PathParam("corpusName") String corpusName,
-            MultivaluedMap<String, String> formParams,
-            @Context HttpHeaders headers) {
-        return ProxyRequest.hits(client, corpusName, formParams, headers, HttpMethod.POST);
-    }
-
-    @Path("/docs")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
-    public Response getDocs(
-            @PathParam("corpusName") String corpusName,
-            @Context UriInfo uriInfo,
-            @Context HttpHeaders headers) {
-        return ProxyRequest.docs(client, corpusName, uriInfo.getQueryParameters(), headers, HttpMethod.GET);
-    }
-
-    @Path("/docs")
-    @POST
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
-    public Response postDocs(
-            @PathParam("corpusName") String corpusName,
-            MultivaluedMap<String, String> formParams,
-            @Context HttpHeaders headers) {
-        return ProxyRequest.docs(client, corpusName, formParams, headers, HttpMethod.POST);
-    }
-
-    @Path("/docs/{pid}")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getDocInfo(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String docPid,
-            @Context UriInfo uriInfo) {
-        return ProxyRequest.docInfo(client, corpusName, docPid, uriInfo.getQueryParameters(), HttpMethod.GET);
-    }
-
-    @Path("/docs/{pid}")
-    @POST
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response postDocInfo(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String docPid,
-            MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.docInfo(client, corpusName, docPid, formParams, HttpMethod.POST);
-    }
-
-    @Path("/docs/{pid}/contents")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getDocContents(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String docPid,
-            @Context UriInfo uriInfo) {
-        return ProxyRequest.docContents(client, corpusName, docPid, uriInfo.getQueryParameters(), HttpMethod.GET);
-    }
-
-    @Path("/docs/{pid}/contents")
-    @POST
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getDocContents(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String docPid,
-            MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.docContents(client, corpusName, docPid, formParams, HttpMethod.POST);
-    }
-
-    @Path("/docs/{pid}/snippet")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getDocSnippet(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String docPid,
-            @Context UriInfo uriInfo) {
-        return ProxyRequest.docSnippet(client, corpusName, docPid, uriInfo.getQueryParameters(), HttpMethod.GET);
-    }
-
-    @Path("/docs/{pid}/snippet")
-    @POST
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response postDocSnippet(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("pid") String docPid,
-            MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.docSnippet(client, corpusName, docPid, formParams, HttpMethod.POST);
-    }
-
-    @Path("/termfreq")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getTermFreq(@PathParam("corpusName") String corpusName, @Context UriInfo uriInfo) {
-        return ProxyRequest.termFreq(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
-    }
-
-    @Path("/termfreq")
-    @POST
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response postTermFreq(@PathParam("corpusName") String corpusName, MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.termFreq(client, corpusName, formParams, HttpMethod.POST);
-    }
-
-    @Path("/fields/{fieldName}")
-    @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getField(
-            @PathParam("corpusName") String corpusName,
-            @PathParam("fieldName") String fieldName,
-            @Context UriInfo uriInfo) {
+    private Response doField(String corporaPath, String strApiVersion, String corpusName, String fieldName,
+            MultivaluedMap<String, String> params, String httpMethod) {
         try {
-            return ProxyRequest.field(client, corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
+            return backend.field(getApiVersion(corporaPath, strApiVersion),
+                    corpusName, fieldName, params, httpMethod);
         } catch (Exception e) {
             // If the field is not found, we return a 404 Not Found error.
             // This is consistent with how the BlackLab web service behaves.
@@ -249,101 +120,339 @@ public class CorpusResource {
     }
 
     @Path("/fields/{fieldName}")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getField(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("fieldName") String fieldName,
+            @Context UriInfo uriInfo) {
+        MultivaluedMap<String, String> params = uriInfo.getQueryParameters();
+        return doField(corporaPath, strApiVersion, corpusName, fieldName, params, HttpMethod.GET);
+    }
+
+    @Path("/fields/{fieldName}")
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postField(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.field(client, corpusName, fieldName, formParams, HttpMethod.POST);
+        return doField(corporaPath, strApiVersion, corpusName, fieldName, formParams, HttpMethod.POST);
+    }
+
+    @Path("/parse-pattern")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getParsePattern(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        return backend.parsePattern(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/parse-pattern")
+    @POST
+    @Consumes("application/x-www-form-urlencoded")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response postParsePattern(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            MultivaluedMap<String, String> formParams) {
+        return backend.parsePattern(getApiVersion(corporaPath, strApiVersion),
+                corpusName, formParams, HttpMethod.POST);
+    }
+
+    @Path("/relations")
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getRelations(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        return backend.relations(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/relations")
+    @POST
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response postRelations(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        return backend.relations(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/hits")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    public Response getHits(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers) {
+        return backend.hits(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), headers, HttpMethod.GET);
+    }
+
+    @Path("/hits")
+    @POST
+    @Consumes("application/x-www-form-urlencoded")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    public Response postHits(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            MultivaluedMap<String, String> formParams,
+            @Context HttpHeaders headers) {
+        return backend.hits(getApiVersion(corporaPath, strApiVersion),
+                corpusName, formParams, headers, HttpMethod.POST);
+    }
+
+    @Path("/docs")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    public Response getDocs(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo,
+            @Context HttpHeaders headers) {
+        return backend.docs(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), headers, HttpMethod.GET);
+    }
+
+    @Path("/docs")
+    @POST
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    public Response postDocs(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            MultivaluedMap<String, String> formParams,
+            @Context HttpHeaders headers) {
+        return backend.docs(getApiVersion(corporaPath, strApiVersion),
+                corpusName, formParams, headers, HttpMethod.POST);
+    }
+
+    @Path("/docs/{pid}")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getDocInfo(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            @Context UriInfo uriInfo) {
+        return backend.docInfo(getApiVersion(corporaPath, strApiVersion),
+                corpusName, docPid, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/docs/{pid}")
+    @POST
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response postDocInfo(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            MultivaluedMap<String, String> formParams) {
+        return backend.docInfo(getApiVersion(corporaPath, strApiVersion),
+                corpusName, docPid, formParams, HttpMethod.POST);
+    }
+
+    @Path("/docs/{pid}/contents")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getDocContents(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            @Context UriInfo uriInfo) {
+        return backend.docContents(getApiVersion(corporaPath, strApiVersion),
+                corpusName, docPid, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/docs/{pid}/contents")
+    @POST
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getDocContents(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            MultivaluedMap<String, String> formParams) {
+        return backend.docContents(getApiVersion(corporaPath, strApiVersion),
+                corpusName, docPid, formParams, HttpMethod.POST);
+    }
+
+    @Path("/docs/{pid}/snippet")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getDocSnippet(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            @Context UriInfo uriInfo) {
+        return backend.docSnippet(getApiVersion(corporaPath, strApiVersion),
+                corpusName, docPid, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/docs/{pid}/snippet")
+    @POST
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response postDocSnippet(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @PathParam("pid") String docPid,
+            MultivaluedMap<String, String> formParams) {
+        return backend.docSnippet(getApiVersion(corporaPath, strApiVersion),
+                corpusName, docPid, formParams, HttpMethod.POST);
+    }
+
+    @Path("/termfreq")
+    @GET
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response getTermFreq(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            @Context UriInfo uriInfo) {
+        return backend.termFreq(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+    }
+
+    @Path("/termfreq")
+    @POST
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    public Response postTermFreq(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
+            @PathParam("corpusName") String corpusName,
+            MultivaluedMap<String, String> formParams) {
+        return backend.termFreq(getApiVersion(corporaPath, strApiVersion),
+                corpusName, formParams, HttpMethod.POST);
     }
 
     @Path("/status")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getStatus(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             @Context UriInfo uriInfo) {
-        return ProxyRequest.status(client, corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return backend.status(getApiVersion(corporaPath, strApiVersion),
+                corpusName, uriInfo.getQueryParameters(), HttpMethod.GET);
     }
 
     @Path("/status")
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postStatus(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.status(client, corpusName, formParams, HttpMethod.POST);
+        return backend.status(getApiVersion(corporaPath, strApiVersion),
+                corpusName, formParams, HttpMethod.POST);
     }
 
     @Path("/autocomplete/{fieldName}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAutocompleteMetadata(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             @Context UriInfo uriInfo) {
-        return ProxyRequest.autocompleteMetadata(client, corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
+        return backend.autocompleteMetadata(getApiVersion(corporaPath, strApiVersion),
+                corpusName, fieldName, uriInfo.getQueryParameters(), HttpMethod.GET);
     }
 
     @Path("/autocomplete/{fieldName}")
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postAutocompleteMetadata(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.autocompleteMetadata(client, corpusName, fieldName, formParams, HttpMethod.POST);
+        return backend.autocompleteMetadata(getApiVersion(corporaPath, strApiVersion),
+                corpusName, fieldName, formParams, HttpMethod.POST);
     }
 
     @Path("/autocomplete/{fieldName}/{annotationName}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getAutocompleteAnnotated(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             @PathParam("annotationName") String annotationName,
             @Context UriInfo uriInfo) {
-        return ProxyRequest.autocompleteAnnotated(client, corpusName, fieldName, annotationName, uriInfo.getQueryParameters(),
-                HttpMethod.GET);
+        return backend.autocompleteAnnotated(getApiVersion(corporaPath, strApiVersion),
+                corpusName, fieldName, annotationName, uriInfo.getQueryParameters(), HttpMethod.GET);
     }
 
     @Path("/autocomplete/{fieldName}/{annotationName}")
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postAutocompleteAnnotated(
+            @PathParam("corpora") String corporaPath,
+            @QueryParam("api") @DefaultValue ("") String strApiVersion,
             @PathParam("corpusName") String corpusName,
             @PathParam("fieldName") String fieldName,
             @PathParam("annotationName") String annotationName,
             MultivaluedMap<String, String> formParams) {
-        return ProxyRequest.autocompleteAnnotated(client, corpusName, fieldName, annotationName, formParams, HttpMethod.POST);
+        return backend.autocompleteAnnotated(getApiVersion(corporaPath, strApiVersion),
+                corpusName, fieldName, annotationName, formParams, HttpMethod.POST);
     }
 
     @Path("/sharing")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response getSharing() {
-        return ProxyResponse.notImplemented("/sharing");
+        return SimpleResponse.notImplemented("/sharing");
     }
 
     @Path("/sharing")
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public Response postSharing() {
-        return ProxyResponse.notImplemented("/sharing");
+        return SimpleResponse.notImplemented("/sharing");
     }
 
     @Path("/{resource:debug|explain}")
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response getErrorNotImplemented(@PathParam("resource") String resource) {
-        return ProxyResponse.notImplemented("/CORPUS/" + resource);
+    public Response getErrorNotImplemented(
+            @PathParam("resource") String resource) {
+        return SimpleResponse.notImplemented("/CORPUS/" + resource);
     }
 
     @Path("/{resource:debug|explain}")
     @POST
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public Response postErrorNotImplemented(@PathParam("resource") String resource) {
-        return ProxyResponse.notImplemented("/CORPUS/" + resource);
+    public Response postErrorNotImplemented(
+            @PathParam("resource") String resource) {
+        return SimpleResponse.notImplemented("/CORPUS/" + resource);
     }
 }

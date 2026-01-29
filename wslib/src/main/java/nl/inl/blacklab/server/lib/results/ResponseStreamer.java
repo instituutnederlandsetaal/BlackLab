@@ -74,7 +74,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.ResultIndexMetadata;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WriteCsv;
@@ -1457,7 +1456,7 @@ public class ResponseStreamer {
         ds.endAttrEntry();
     }
 
-    public void corpusMetadataResponse(ResultIndexMetadata result, boolean includeCustom) {
+    public void corpusMetadataResponse(ResultCorpusInfo result, boolean includeCustom) {
         IndexMetadata metadata = result.getMetadata();
         ds.startMap();
         {

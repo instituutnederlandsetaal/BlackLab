@@ -3,6 +3,7 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.ivdnt.blacklab.proxy.helper.ErrorReadingResponse;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
@@ -239,17 +240,20 @@ public class Corpus {
     public String indexName = "";
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String displayName = "";
+    public Map<String, Object> custom;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String description = "";
+    public String displayName;
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public String description;
 
     public String status = "available";
 
     public boolean contentViewable = false;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public String textDirection = "ltr";
+    public String textDirection;
 
     public String documentFormat = "";
 

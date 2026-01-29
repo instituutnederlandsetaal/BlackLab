@@ -1,7 +1,6 @@
 package nl.inl.blacklab.server.exceptions;
 
-import jakarta.servlet.http.HttpServletResponse;
-
+import java.net.HttpURLConnection;
 import java.util.Map;
 
 public class BadRequest extends BlsException {
@@ -19,7 +18,7 @@ public class BadRequest extends BlsException {
     }
 
     public BadRequest(String code, String msg, Map<String, String> info, Throwable cause) {
-        super(HttpServletResponse.SC_BAD_REQUEST, code, msg, info, cause);
+        super(HttpURLConnection.HTTP_BAD_REQUEST, code, msg, info, cause);
     }
 
 }
