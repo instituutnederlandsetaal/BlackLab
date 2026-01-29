@@ -26,7 +26,7 @@ public class TextPatternSettings extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         for (Map.Entry<String, String> e : settings.entrySet()) {
             String key = e.getKey();
             String value = e.getValue();
@@ -40,7 +40,7 @@ public class TextPatternSettings extends TextPattern {
                 throw new InvalidQuery("Unknown setting: " + key + "= " + value);
             }
         }
-        return clause.translate(context);
+        return clause.toQuery(context);
     }
 
     @Override

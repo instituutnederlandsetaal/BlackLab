@@ -10,11 +10,12 @@ import org.apache.solr.common.util.SimpleOrderedMap;
 import org.apache.solr.response.SolrQueryResponse;
 
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.textpattern.MatchValue;
-import nl.inl.blacklab.search.textpattern.MatchValueIntRange;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueString;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerJson;
+import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.util.ObjectSerializationWriter;
 
@@ -243,7 +244,7 @@ public class DataStreamSolr implements DataStream {
     public DataStream value(TextPattern pattern) {
         TextPatternSerializerJson.serialize(pattern, (type, args) -> {
             startMap();
-            entry("bcqlFragment", TextPatternSerializerCql.serialize(pattern));
+            entry("bcqlFragment", TextPatternSerializerBcql.serialize(pattern));
             entry("type", type);
             Map<String, Object> map = ObjectSerializationWriter.mapFromArgs(args);
             for (Map.Entry<String, Object> e: map.entrySet()) {
@@ -251,25 +252,25 @@ public class DataStreamSolr implements DataStream {
                 Object value = e.getValue();
                 if (value != null) {
                     if (key.equals(TextPatternSerializerJson.KEY_ATTRIBUTES)) {
-                        // Attributes in "tags" node. Special case because match values can now be an int range
-                        // as well as (the more common) regex.
-                        // (we could have made MatchValue a TextPatternStruct, but that would change
-                        //  the JSON structure (each attribute value would be a JSON object with a type).
-                        //  We want to keep everything as-is while also adding the int range filter option)
                         startEntry(key).startMap();
-                        Map<String, MatchValue> attributes = (Map<String, MatchValue>) value;
-                        for (Map.Entry<String, MatchValue> attr: attributes.entrySet()) {
+                        Map<String, TextPattern> attributes = (Map<String, TextPattern>) value;
+                        for (Map.Entry<String, TextPattern> attr: attributes.entrySet()) {
                             startEntry(attr.getKey());
-                            if (attr.getValue() instanceof MatchValueIntRange range) {
-                                // Int range; serialize as an object with min and max fields
-                                startMap();
-                                entry(TextPatternSerializerJson.KEY_MIN, range.min());
-                                entry(TextPatternSerializerJson.KEY_MAX, range.max());
-                                endMap();
-                            } else {
-                                // Regex; serialize as a simple string (as we have always done)
-                                value(attr.getValue().regex());
-                            }
+                            if (attr.getValue() instanceof TextPatternValue tpv) {
+                                if (tpv.getValue() instanceof ConstraintValueIntRange cvir) {
+                                    // Int range; serialize as an object with min and max fields
+                                    startMap();
+                                    entry(TextPatternSerializerJson.KEY_MIN, cvir.getMin());
+                                    entry(TextPatternSerializerJson.KEY_MAX, cvir.getMax());
+                                    endMap();
+                                } else if (tpv.getValue() instanceof ConstraintValueString cvs) {
+                                    // Regex; serialize as a simple string (as we have always done)
+                                    value(cvs.getValue());
+                                } else {
+                                    throw new IllegalStateException("Unsupported ConstraintValue for attribute: " + tpv.getValue());
+                                }
+                            } else
+                                throw new IllegalStateException("Attribute value is not a TextPatternValue: " + attr.getValue());
                             endEntry();
                         }
                         endMap().endEntry();

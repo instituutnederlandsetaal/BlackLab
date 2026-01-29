@@ -1,78 +1,80 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
+import org.apache.commons.lang3.StringUtils;
+
+import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
 public class MatchFilterFunctionCall extends MatchFilter {
-    private final String functionName;
 
-    private final String groupName;
+    private final List<MatchFilter> parameters;
 
-    private int groupIndex;
+    private final QueryFunction func;
 
-    public MatchFilterFunctionCall(String functionName, String groupName) {
-        this.functionName = functionName;
-        if (!functionName.matches("start|end"))
-            throw new IllegalArgumentException("Unknown function: " + functionName);
-        this.groupName = groupName;
+    public MatchFilterFunctionCall(QueryFunction func, List<MatchFilter> parameters) {
+        this.func = func;
+        this.parameters = parameters;
     }
 
     @Override
     public String toString() {
-        return functionName + "(" + groupName + ")";
+        return func.getName() + "(" + StringUtils.join(parameters, ", ") + ")";
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
         if (o == null || getClass() != o.getClass())
             return false;
         MatchFilterFunctionCall that = (MatchFilterFunctionCall) o;
-        return Objects.equals(functionName, that.functionName) && Objects.equals(groupName, that.groupName);
+        return Objects.equals(parameters, that.parameters)
+                && Objects.equals(func, that.func);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(functionName, groupName);
+        return Objects.hash(parameters, func);
     }
 
     @Override
     public void setHitQueryContext(HitQueryContext context) {
-        groupIndex = context.registerMatchInfo(groupName, null);
+        for (MatchFilter p: parameters) {
+            p.setHitQueryContext(context);
+        }
     }
 
     @Override
     public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
-        MatchInfo span = groupIndex < matchInfo.length ? matchInfo[groupIndex] : null;
-        if (span == null)
-            return ConstraintValue.undefined();
-        return switch (functionName) {
-            case "start" -> ConstraintValue.get(span.getSpanStart());
-            case "end" -> ConstraintValue.get(span.getSpanEnd());
-            default -> throw new UnsupportedOperationException("Unknown function: " + functionName);
-        };
+        List<Object> evaluatedParams = parameters.stream()
+                .map(p -> p.evaluate(fiDoc, matchInfo))
+                .map(ConstraintValue::getValue)
+                .toList();
+        return (ConstraintValue)func.apply(null, evaluatedParams);
     }
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
-        // NOP
+        for (MatchFilter p: parameters) {
+            p.lookupAnnotationIndices(fiAccessor);
+        }
     }
 
     @Override
     public MatchFilter rewrite() {
-        return this;
-    }
-
-    public String getName() {
-        return functionName;
-    }
-
-    public String getCapture() {
-        return groupName;
+        List<MatchFilter> rewritten = new ArrayList<>();
+        boolean changed = false;
+        for (MatchFilter p: parameters) {
+            MatchFilter r = p.rewrite();
+            if (r != p)
+                changed = true;
+            rewritten.add(r);
+        }
+        return changed ? new MatchFilterFunctionCall(func, rewritten) : this;
     }
 }

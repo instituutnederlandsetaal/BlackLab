@@ -9,11 +9,11 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
-import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 
 /** A function that operates on (part of) a query and can be called from BCQL. */
 public abstract class QueryFunction extends Plugin {
@@ -24,134 +24,79 @@ public abstract class QueryFunction extends Plugin {
     /** Default value for a query parameter that means "any span" (<code><'.*' //></code>) */
     public static final String VALUE_ANY_SPAN = "_ANY_SPAN_";
 
-    /** Value to pass if there are no default parameter values. */
-    public static List<Object> NO_DEFAULT_VALUES = Collections.emptyList();
-
-    /** Variable number of query params */
-    public static List<ArgType> ARGS_VAR_Q = List.of(ArgType.QUERY, ArgType.ELLIPSIS);
-
-    /** Variable number of string params */
-    public static List<ArgType> ARGS_VAR_S = List.of(ArgType.STRING, ArgType.ELLIPSIS);
-
-    /** Two strings */
-    public static List<ArgType> ARGS_S = List.of(ArgType.STRING);
-
-    /** A single query as an argument */
-    public static List<ArgType> ARGS_Q = List.of(ArgType.QUERY);
-
-    /** Two strings */
-    public static List<ArgType> ARGS_SS = List.of(ArgType.STRING, ArgType.STRING);
-
-    /** Two strings */
-    public static List<ArgType> ARGS_SQ = List.of(ArgType.STRING, ArgType.QUERY);
-
-    /** A query and a string */
-    public static List<ArgType> ARGS_QS = List.of(ArgType.QUERY, ArgType.STRING);
-
-    /** Two queries as an argument */
-    public static List<ArgType> ARGS_QQ = List.of(ArgType.QUERY, ArgType.QUERY);
-
-    /** Two strings */
-    public static List<ArgType> ARGS_SSS = List.of(ArgType.STRING, ArgType.STRING, ArgType.STRING);
-
-    /** A query, a string and another query */
-    public static List<ArgType> ARGS_SSQ = List.of(ArgType.STRING, ArgType.STRING, ArgType.QUERY);
-
-    /** A query, a string and another query */
-    public static List<ArgType> ARGS_SQS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING);
-
-    /** A query, a string and another query */
-    public static List<ArgType> ARGS_SQQ = List.of(ArgType.STRING, ArgType.QUERY, ArgType.QUERY);
-
-    /** A query, a string and another query */
-    public static List<ArgType> ARGS_QSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING);
-
-    /** A query, a string and another query */
-    public static List<ArgType> ARGS_QSQ = List.of(ArgType.QUERY, ArgType.STRING, ArgType.QUERY);
-
-    /** A query, a string and another query */
-    public static List<ArgType> ARGS_QQS = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.STRING);
-
-    /** Three queries as an argument */
-    public static List<ArgType> ARGS_QQQ = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.QUERY);
-
-    /** Two queries, two strings */
-    public static List<ArgType> ARGS_QQSS = List.of(ArgType.QUERY, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
-
-    /** A string, a query, and three strings */
-    public static List<ArgType> ARGS_SQSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING);
-
-    /** A string, a query, and three strings */
-    public static List<ArgType> ARGS_SQSSS = List.of(ArgType.STRING, ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
-
-    /** A query and three strings */
-    public static List<ArgType> ARGS_QSSS = List.of(ArgType.QUERY, ArgType.STRING, ArgType.STRING, ArgType.STRING);
-
-
     /** Function name */
     private final String name;
 
     /** Parameter types */
-    private final List<ArgType> argTypes;
+    private final List<ExprType> argTypes;
 
     /** Parameter default values, if any */
     private final List<Object> defaultValues;
 
-    /** Does this take a variable number of arguments? */
-    private final boolean isVarArg;
-
     /** Is this a function that operates specifically on relations queries? */
     private final boolean relationsFunction;
 
-    public QueryFunction(String name,List<ArgType> argTypes,
+    public QueryFunction(String name, List<ExprType> argTypes) {
+        this(name, argTypes, null, false);
+    }
+
+    public QueryFunction(String name, List<ExprType> argTypes,
+            List<Object> defaultValues) {
+        this(name, argTypes, defaultValues, false);
+    }
+
+    public QueryFunction(String name, List<ExprType> argTypes,
             List<Object> defaultValues, boolean relationsFunction) {
         this.name = name;
         this.argTypes = argTypes;
-        isVarArg = argTypes.size() == 2 && argTypes.get(1) == ArgType.ELLIPSIS;
-        if (isVarArg) {
-            if (argTypes.get(0) == ArgType.ELLIPSIS)
-                throw new IllegalArgumentException("Illegal var args type ELLIPSIS");
-        } else {
-            if (argTypes.stream().anyMatch(t -> t == ArgType.ELLIPSIS))
-                throw new IllegalArgumentException("Illegal argument type ELLIPSIS");
-        }
         this.defaultValues = defaultValues == null ? Collections.emptyList() : defaultValues;
         this.relationsFunction = relationsFunction;
     }
 
-    public List<Object> preprocessArgs(List<?> args) {
+    public List<Object> preprocessArgs(QueryExecutionContext context, List<TextPattern> args) {
         // Make sure argument are interpreted as the correct type
         // (the parser interprets all strings as queries, so we sometimes need to convert them back...)
         List<Object> newArgs = new ArrayList<>(args);
         for (int i = 0; i < args.size(); i++) {
-            Object arg = args.get(i);
+            TextPattern arg = args.get(i);
             if (i >= argTypes.size())
                 continue; // either vararg or too many param (will be caught later)
-            ArgType type = getExpectedParameterType(i);
-            if (Objects.requireNonNull(type) == ArgType.STRING) {
-                if (arg instanceof TextPatternRegex) {
-                    // Interpret as regular string, not as a query
-                    // kind of a hack, but should work
-                    String regex = ((TextPatternTerm) arg).getValue();
-                    if (regex.startsWith("^") && regex.endsWith("$")) {
-                        // strip off ^ and $
-                        regex = regex.substring(1, regex.length() - 1);
+            ExprType type = getExpectedParameterType(i);
+            Objects.requireNonNull(type);
+            if (type == ExprType.ANY || type == ExprType.STRING || type == ExprType.INTEGER ||
+                    type == ExprType.BOOLEAN) {
+                String strValue = TextPattern.getSimpleStringValue(context, arg);
+                if (strValue != null) {
+                    switch (type) {
+                    case INTEGER -> {
+                        // Try to convert to number
+                        try {
+                            newArgs.set(i, Integer.parseInt(strValue));
+                        } catch (NumberFormatException e) {
+                            // Ignore, will be caught later as wrong type
+                        }
                     }
-                    newArgs.set(i, regex);
-                } else if (arg instanceof TextPatternTerm) {
-                    // Interpret as regular string, not as a query
-                    newArgs.set(i, ((TextPatternTerm) arg).getValue());
+                    case BOOLEAN -> {
+                        // Convert to boolean
+                        if (strValue.equalsIgnoreCase("true"))
+                            newArgs.set(i, true);
+                        else
+                            newArgs.set(i, false);
+                    }
+                    default -> newArgs.set(i, strValue);
+                    }
                 }
             }
         }
         return newArgs;
     }
 
-    public BLSpanQuery apply(QueryExecutionContext context, List<Object> args) {
+    public Object apply(QueryExecutionContext context, List<Object> args) {
         // Add any default argument values
         List<Object> newArgs = new ArrayList<>(args);
         int n = Math.max(newArgs.size(), requiredNumberOfArguments());
         for (int i = 0; i < n; i++) {
+            ExprType expectedType = getExpectedParameterType(i);
             // Fill in default value for argument if missing
             if (i < defaultValues.size()) {
                 Object defVal = getDefaultParameterValue(i);
@@ -166,51 +111,75 @@ public abstract class QueryFunction extends Plugin {
                 }
                 if (i >= newArgs.size()) {
                     // Missing argument; use default value
+                    if (defVal == null) {
+                        // No default value available, error
+                        throw new InvalidQuery(
+                                "Missing argument " + (i + 1) + " for function " + getName()
+                                        + " (no default value available)");
+                    }
                     newArgs.add(defVal);
                 } else if (newArgs.get(i) instanceof SpanQueryDefaultValue) {
                     // Explicitly set to undefined (_); use default value
                     newArgs.set(i, defVal);
                 }
             }
-            if (newArgs.get(i) == null) {
-                // Still null, so no default value available
-                throw new InvalidQuery(
-                        "Missing argument " + (i + 1) + " for function " + getName() + " (no default value available)");
+
+            // See if last argument should be a list type, but was passed another value (with possibly additional
+            // values after that). If this is the case, treat it as a vararg and wrap the remaining arguments in a list.
+            if (i == argTypes.size() - 1 &&
+                    (expectedType == ExprType.LIST || expectedType == ExprType.ANY || expectedType == ExprType.ANY_INCLUDING_QUERY) &&
+                    !(newArgs.get(i) instanceof List) && newArgs.size() > argTypes.size()) {
+                List<Object> varArgList = new ArrayList<>();
+                for (int j = i; j < newArgs.size(); j++) {
+                    varArgList.add(newArgs.get(j));
+                }
+                newArgs = newArgs.subList(0, i);
+                newArgs.add(varArgList);
+                break;
             }
 
             // Check argument type
-            ArgType expectedType = getExpectedParameterType(i);
             boolean wrongType = switch (expectedType) {
+                case ANY_INCLUDING_QUERY -> false;
+                case ANY -> newArgs.get(i) instanceof BLSpanQuery; // does not allow query
+                case UNDEFINED -> newArgs.get(i) != null;
                 case QUERY -> !(newArgs.get(i) instanceof BLSpanQuery);
                 case STRING -> !(newArgs.get(i) instanceof String);
-                default -> true;
+                case INTEGER -> !(newArgs.get(i) instanceof Integer);
+                case INT_RANGE -> !(newArgs.get(i) instanceof Integer[] arr && arr.length == 2);
+                case BOOLEAN -> !(newArgs.get(i) instanceof Boolean);
+                case LIST -> !(newArgs.get(i) instanceof List);
+                case SYMBOL -> throw new InvalidQuery("Function argument value cannot be of type SYMBOL");
+                case MATCH_INFO -> !(newArgs.get(i) instanceof MatchInfo);
             };
             if (wrongType)
                 throw new InvalidQuery(
                         "Argument " + (i + 1) + " for function " + getName() + " has the wrong type: expected "
                                 + expectedType
-                                + ", got " + ArgType.typeOf(newArgs.get(i)));
+                                + ", got " + ExprType.of(newArgs.get(i)));
         }
 
-        if (!isVarArg && newArgs.size() != argTypes.size())
+        if (newArgs.size() != argTypes.size())
             throw new InvalidQuery(
                     "Wrong number of arguments for query function " + getName() + ": expected " + argTypes.size()
                             + ", got " + newArgs.size());
         return applyFunc(context, newArgs);
     }
 
-    protected abstract BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters);
+    protected abstract Object applyFunc(QueryExecutionContext context, List<Object> parameters);
 
     public int requiredNumberOfArguments() {
-        return isVarArg ? 0 : argTypes.size();
+        return argTypes.size();
     }
 
     public Object getDefaultParameterValue(int i) {
-        return defaultValues.get(isVarArg ? 0 : i);
+        return defaultValues.get(i);
     }
 
-    public ArgType getExpectedParameterType(int i) {
-        return argTypes.get(isVarArg ? 0 : i);
+    public ExprType getExpectedParameterType(int i) {
+        if (i >= argTypes.size())
+            return ExprType.ANY_INCLUDING_QUERY; // vararg of any type
+        return argTypes.get(i);
     }
 
     public boolean isRelationsFunction() {
@@ -221,18 +190,20 @@ public abstract class QueryFunction extends Plugin {
         return name;
     }
 
-    public enum ArgType {
-        QUERY,
-        STRING,
-        ELLIPSIS,
-        ; // not a real type, used to indicate a variable number of arguments
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof QueryFunction that))
+            return false;
+        return Objects.equals(name, that.name);
+    }
 
-        public static ArgType typeOf(Object o) {
-            if (o instanceof BLSpanQuery)
-                return QUERY;
-            if (o instanceof String)
-                return STRING;
-            throw new IllegalArgumentException("Unknown argument type: " + o);
-        }
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(name);
+    }
+
+    @Override
+    public String toString() {
+        return name + "(" + argTypes + ")";
     }
 }

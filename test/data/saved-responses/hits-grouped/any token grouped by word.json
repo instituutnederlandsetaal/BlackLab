@@ -372,17 +372,24 @@
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "[word!=\"abcdefg\"]",
+      "bcql": "[word != \"abcdefg\"]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "[word!=\"abcdefg\"]",
-        "clause": {
-          "annotation": "word",
-          "bcqlFragment": "[word=\"abcdefg\"]",
-          "type": "regex",
-          "value": "abcdefg"
-        },
-        "type": "not"
+        "bcqlFragment": "[word != \"abcdefg\"]",
+        "clauses": [
+          {
+            "bcqlFragment": "word",
+            "type": "symbol",
+            "value": "word"
+          },
+          {
+            "bcqlFragment": "\"abcdefg\"",
+            "type": "string",
+            "value": "abcdefg"
+          }
+        ],
+        "operation": "!=",
+        "type": "compare"
       }
     },
     "resultWindow": {

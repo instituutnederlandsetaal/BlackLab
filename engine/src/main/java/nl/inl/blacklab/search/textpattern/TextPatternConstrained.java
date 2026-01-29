@@ -20,18 +20,19 @@ public class TextPatternConstrained extends TextPattern {
 
     final TextPattern clause;
 
-    final MatchFilter constraint;
+    final TextPattern constraint;
 
-    public TextPatternConstrained(TextPattern clause, MatchFilter constraint) {
+    public TextPatternConstrained(TextPattern clause, TextPattern constraint) {
         this.clause = clause;
         this.constraint = constraint;
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        BLSpanQuery translate = clause.translate(context);
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        BLSpanQuery translate = clause.toQuery(context);
         ForwardIndexAccessor fiAccessor = translate.getAnnotatedField().forwardIndexAccessor();
-        return new SpanQueryConstrained(translate, constraint.withField(translate.getAnnotatedField()), fiAccessor);
+        MatchFilter constraintFilter = constraint.toMatchFilter(context.withInConstraint());
+        return new SpanQueryConstrained(translate, constraintFilter.withField(translate.getAnnotatedField()), fiAccessor);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class TextPatternConstrained extends TextPattern {
         return clause;
     }
 
-    public MatchFilter getConstraint() {
+    public TextPattern getConstraint() {
         return constraint;
     }
 

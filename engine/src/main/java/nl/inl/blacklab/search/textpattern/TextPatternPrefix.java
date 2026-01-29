@@ -25,12 +25,12 @@ public class TextPatternPrefix extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         try {
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
             return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(),
                     new PrefixQuery(new Term(context.luceneField(),
-                            context.optDesensitize(optInsensitive(context, value)))));
+                            context.optDesensitize(context.optDesensitize(value)))));
         } catch (InvalidQuery e) {
             throw e;
         } catch (StackOverflowError e) {

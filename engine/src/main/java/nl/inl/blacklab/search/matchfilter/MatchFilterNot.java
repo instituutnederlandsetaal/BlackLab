@@ -85,8 +85,4 @@ public class MatchFilterNot extends MatchFilter {
             return new MatchFilterNot(x);
         return this;
     }
-
-    public TextPatternStruct getClause() {
-        return a;
-    }
 }

@@ -55,7 +55,7 @@ public class MatchFilterTokenAnnotationEqualsString extends MatchFilter {
 
     @Override
     public String toString() {
-        return groupName + (annotationName() == null ? "" : "." + annotationName()) + " = " + compareToTermString;
+        return "TOK_ANNOT_STR(" + groupName + (annotationName() == null ? "" : ", " + annotationName()) + ", \"" + compareToTermString + "\")";
     }
 
     private String annotationName() {

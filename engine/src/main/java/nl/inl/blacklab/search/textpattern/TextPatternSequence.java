@@ -33,10 +33,10 @@ public class TextPatternSequence extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         List<BLSpanQuery> chResults = new ArrayList<>();
         for (TextPattern cl : clauses) {
-            chResults.add(cl.translate(context));
+            chResults.add(cl.toQuery(context));
         }
         if (chResults.size() == 1)
             return chResults.get(0); // just one part, return that

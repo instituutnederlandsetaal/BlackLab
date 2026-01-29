@@ -181,13 +181,35 @@
         "clauses": [
           {
             "bcqlFragment": "\"two\"",
-            "type": "regex",
-            "value": "two"
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"two\"",
+                "type": "string",
+                "value": "two"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
           },
           {
             "bcqlFragment": "\"four\"",
-            "type": "regex",
-            "value": "four"
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"four\"",
+                "type": "string",
+                "value": "four"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
           }
         ],
         "type": "or"

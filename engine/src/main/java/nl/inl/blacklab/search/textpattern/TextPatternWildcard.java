@@ -28,14 +28,14 @@ public class TextPatternWildcard extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         TextPattern result = rewriteForQuery();
         if (result != this)
-            return result.translate(context);
+            return result.toQuery(context);
         try {
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
             return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), new WildcardQuery(new Term(context.luceneField(),
-                    context.optDesensitize(optInsensitive(context, value)))));
+                    context.optDesensitize(context.optDesensitize(value)))));
         } catch (StackOverflowError e) {
             // If we pass in a really large wildcard expression,
             // stack overflow might occurs inside Lucene's automaton building

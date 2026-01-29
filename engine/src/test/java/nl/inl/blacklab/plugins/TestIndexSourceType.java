@@ -13,7 +13,7 @@ public class TestIndexSourceType {
     public static final String WIN_PATH = "C:\\path\\to\\documents";
 
     @BeforeClass
-    public static void setUpBeforeClass() throws Exception {
+    public static void beforeClass() throws Exception {
         BlackLab.implicitInstance(); // init plugin system
     }
 

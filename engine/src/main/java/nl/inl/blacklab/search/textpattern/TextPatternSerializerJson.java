@@ -17,18 +17,10 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryExpansion;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.matchfilter.MatchFilter;
-import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
+import nl.inl.blacklab.search.matchfilter.ConstraintValue;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
-import nl.inl.blacklab.search.matchfilter.MatchFilterEquals;
-import nl.inl.blacklab.search.matchfilter.MatchFilterFunctionCall;
-import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
-import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
-import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
-import nl.inl.blacklab.search.matchfilter.MatchFilterSameTokens;
-import nl.inl.blacklab.search.matchfilter.MatchFilterString;
-import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
-import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotationEqualsString;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 import nl.inl.blacklab.util.ObjectSerializationWriter;
 
@@ -45,37 +37,14 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             try {
                 gen.writeStartObject();
                 {
-                    gen.writeStringField("bcqlFragment", TextPatternSerializerCql.serialize(pattern));
+                    gen.writeStringField("bcqlFragment", TextPatternSerializerBcql.serialize(pattern));
                     gen.writeStringField("type", type);
                     Map<String, Object> map = ObjectSerializationWriter.mapFromArgs(args);
                     for (Map.Entry<String, Object> e: map.entrySet()) {
                         Object value = e.getValue();
                         if (value != null) {
                             gen.writeFieldName(e.getKey());
-                            if (e.getKey().equals(KEY_ATTRIBUTES)) {
-                                // Attributes in "tags" node. Special case because match values can now be an int range
-                                // as well as (the more common) regex.
-                                // (we could have made MatchValue a TextPatternStruct, but that would change
-                                //  the JSON structure (each attribute value would be a JSON object with a type).
-                                //  We want to keep everything as-is while also adding the int range filter option)
-                                gen.writeStartObject();
-                                Map<String, MatchValue> attributes = (Map<String, MatchValue>) value;
-                                for (Map.Entry<String, MatchValue> attr: attributes.entrySet()) {
-                                    gen.writeFieldName(attr.getKey());
-                                    if (attr.getValue() instanceof MatchValueIntRange range) {
-                                        // Int range; serialize as an object with min and max fields
-                                        gen.writeStartObject();
-                                        gen.writeNumberField(KEY_MIN, range.min());
-                                        gen.writeNumberField(KEY_MAX, range.max());
-                                        gen.writeEndObject();
-                                    } else {
-                                        // Regex; serialize as a simple string (as we have always done)
-                                        gen.writeString(attr.getValue().regex());
-                                    }
-                                }
-                                gen.writeEndObject();
-                            } else
-                                serializerProvider.defaultSerializeValue(value, gen);
+                            serializerProvider.defaultSerializeValue(value, gen);
                         }
                     }
                 }
@@ -101,16 +70,13 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
     private static final String KEY_ARGS = "args";
     public static final String KEY_ATTRIBUTES = "attributes";
     private static final String KEY_CAPTURE = "capture"; // capture, tags
-    private static final String KEY_CAPTURES = "captures";
     private static final String KEY_CHILDREN = "children";
     private static final String KEY_CLAUSE = "clause";
     private static final String KEY_CLAUSES = "clauses";
     private static final String KEY_CONSTRAINT = "constraint";
     private static final String KEY_DIRECTION = "direction";
     private static final String KEY_END = "end";
-    private static final String KEY_EXCLUDE = "exclude";
     private static final String KEY_FILTER = "filter";
-    private static final String KEY_INCLUDE = "include";
     private static final String KEY_INVERT = "invert";
     public static final String KEY_MAX = "max"; // (same)
     public static final String KEY_MIN = "min"; // repeat, ngrams, anytoken
@@ -136,13 +102,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         jsonSerializers.put(TextPatternAnd.class, (pattern, writer) -> {
             writer.write(TextPattern.NT_AND, KEY_CLAUSES, ((TextPatternAnd)pattern).getClauses());
         });
-
-        // ANDNOT
-        //noinspection deprecation
-//        jsonSerializers.put(TextPatternAndNot.class, (pattern, writer) -> {
-//            TextPatternAndNot tp = (TextPatternAndNot) pattern;
-//            writer.write(TextPattern.NT_ANDNOT, KEY_INCLUDE, tp.getInclude(), KEY_EXCLUDE, tp.getExclude());
-//        });
 
         // Anytoken
         jsonSerializers.put(TextPatternAnyToken.class, (pattern, writer) -> {
@@ -202,15 +161,6 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             writer.write(TextPattern.NT_FIXEDSPAN, KEY_START, tp.getStart(), KEY_END, tp.getEnd());
         });
 
-        // IntRange
-        jsonSerializers.put(TextPatternIntRange.class, (pattern, writer) -> {
-            TextPatternIntRange tp = (TextPatternIntRange) pattern;
-            writer.write(TextPattern.NT_INT_RANGE,
-                    KEY_MIN, tp.getMin(),
-                    KEY_MAX, tp.getMax(),
-                    KEY_ANNOTATION, tp.getAnnotation());    // (omitted if null)
-        });
-
         // Not
         jsonSerializers.put(TextPatternNot.class, (pattern, writer) -> {
             writer.write(TextPattern.NT_NOT, KEY_CLAUSE, ((TextPatternNot) pattern).getClause());
@@ -242,9 +192,9 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         });
 
         // QueryFunction
-        jsonSerializers.put(TextPatternQueryFunction.class, (pattern, writer) -> {
-            TextPatternQueryFunction tp = (TextPatternQueryFunction) pattern;
-            writer.write(TextPattern.NT_CALLFUNC,KEY_NAME, tp.getName(), KEY_ARGS, tp.getArgs());
+        jsonSerializers.put(TextPatternFunctionCall.class, (pattern, writer) -> {
+            TextPatternFunctionCall tp = (TextPatternFunctionCall) pattern;
+            writer.write(TextPattern.NT_CALL_FUNC,KEY_NAME, tp.getName(), KEY_ARGS, tp.getArgs());
         });
 
         // Regex
@@ -320,86 +270,45 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     KEY_SENSITIVITY, sensitivity(tp.getSensitivity())); // (omitted if null)
         });
 
-        // MatchFilterAnd
-        jsonSerializers.put(MatchFilterAnd.class, (pattern, writer) -> {
-            MatchFilterAnd tp = (MatchFilterAnd) pattern;
-            writer.write(MatchFilter.NT_AND, KEY_CLAUSES, tp.getClauses());
+        // TextPatternCompare
+        jsonSerializers.put(TextPatternCompare.class, (pattern, writer) -> {
+            TextPatternCompare tp = (TextPatternCompare) pattern;
+            writer.write(TextPattern.NT_COMPARE,
+                    KEY_CLAUSES, List.of(tp.getLeftClause(), tp.getRightClause()),
+                    KEY_OPERATION, tp.getOperator().toString());
         });
 
-        // MatchFilterCompare
-        jsonSerializers.put(MatchFilterCompare.class, (pattern, writer) -> {
-            MatchFilterCompare tp = (MatchFilterCompare) pattern;
-            writer.write(MatchFilter.NT_COMPARE,
-                    KEY_CLAUSES, tp.getClauses(),
-                    KEY_OPERATION, tp.getOperator().toString(),
-                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity()));
+        // TextPatternImplication
+        jsonSerializers.put(TextPatternImplication.class, (pattern, writer) -> {
+            TextPatternImplication tp = (TextPatternImplication) pattern;
+            writer.write(TextPattern.NT_IMPLICATION, KEY_CLAUSES, tp.getClauses());
         });
 
-        // MatchFilterEquals
-        jsonSerializers.put(MatchFilterEquals.class, (pattern, writer) -> {
-            MatchFilterEquals tp = (MatchFilterEquals) pattern;
-            writer.write(MatchFilter.NT_EQUALS,
-                    KEY_CLAUSES, tp.getClauses(),
-                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity()));
+        // TextPatternValue
+        jsonSerializers.put(TextPatternValue.class, (pattern, writer) -> {
+            TextPatternValue tp = (TextPatternValue) pattern;
+            ConstraintValue cv = tp.getValue();
+            switch (cv.getType()) {
+            case STRING -> writer.write(TextPattern.NT_VALUE_STRING, KEY_VALUE, cv.getValue());
+            case BOOLEAN -> writer.write(TextPattern.NT_VALUE_BOOLEAN, KEY_VALUE, cv.getValue());
+            case INTEGER -> writer.write(TextPattern.NT_VALUE_INTEGER, KEY_VALUE, cv.getValue());
+            case INT_RANGE -> {
+                ConstraintValueIntRange cvir = (ConstraintValueIntRange) cv;
+                writer.write(TextPattern.NT_VALUE_INT_RANGE, KEY_MIN, cvir.getMin(), KEY_MAX, cvir.getMax());
+            }
+            case SYMBOL -> writer.write(TextPattern.NT_VALUE_SYMBOL, KEY_VALUE, ((ConstraintValueSymbol)cv).getValue());
+            case UNDEFINED -> writer.write(TextPattern.NT_VALUE_UNDEFINED);
+            default -> throw new UnsupportedOperationException(
+                    "Cannot serialize ConstraintValue of type: " + cv.getClass().getName());
+            }
         });
 
-        // MatchFilterFunctionCall
-        jsonSerializers.put(MatchFilterFunctionCall.class, (pattern, writer) -> {
-            MatchFilterFunctionCall tp = (MatchFilterFunctionCall) pattern;
-            writer.write(MatchFilter.NT_CALLFUNC,
-                    KEY_NAME, tp.getName(),
-                    KEY_CAPTURE, tp.getCapture());
-        });
-
-        // MatchFilterImplication
-        jsonSerializers.put(MatchFilterImplication.class, (pattern, writer) -> {
-            MatchFilterImplication tp = (MatchFilterImplication) pattern;
-            writer.write(MatchFilter.NT_IMPLICATION, KEY_CLAUSES, tp.getClauses());
-        });
-
-        // MatchFilterNot
-        jsonSerializers.put(MatchFilterNot.class, (pattern, writer) -> {
-            MatchFilterNot tp = (MatchFilterNot) pattern;
-            writer.write(MatchFilter.NT_NOT, KEY_CLAUSE, tp.getClause());
-        });
-
-        // MatchFilterOr
-        jsonSerializers.put(MatchFilterOr.class, (pattern, writer) -> {
-            MatchFilterOr tp = (MatchFilterOr) pattern;
-            writer.write(MatchFilter.NT_OR, KEY_CLAUSES, tp.getClauses());
-        });
-
-        // MatchFilterString
-        jsonSerializers.put(MatchFilterString.class, (pattern, writer) -> {
-            MatchFilterString tp = (MatchFilterString) pattern;
-            writer.write(MatchFilter.NT_STRING, KEY_VALUE, tp.getValue());
-        });
-
-        // MatchFilterSameTokens
-        jsonSerializers.put(MatchFilterSameTokens.class, (pattern, writer) -> {
-            MatchFilterSameTokens tp = (MatchFilterSameTokens) pattern;
-            writer.write(MatchFilter.NT_TOKEN_ANNOTATION_EQUAL,
-                    KEY_CAPTURES, tp.getCaptures(),
-                    KEY_ANNOTATION, tp.getAnnotation(),
-                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity()));
-        });
-
-        // MatchFilterTokenAnnotation
-        jsonSerializers.put(MatchFilterTokenAnnotation.class, (pattern, writer) -> {
-            MatchFilterTokenAnnotation tp = (MatchFilterTokenAnnotation) pattern;
-            writer.write(MatchFilter.NT_TOKEN_ANNOTATION,
-                    KEY_CAPTURE, tp.getCapture(),
+        // TextPatternTokenAnnotation
+        jsonSerializers.put(TextPatternPropertySelect.class, (pattern, writer) -> {
+            TextPatternPropertySelect tp = (TextPatternPropertySelect) pattern;
+            writer.write(TextPattern.NT_PROP_SELECT,
+                    KEY_CAPTURE, tp.getLabel(),
                     KEY_ANNOTATION, tp.getAnnotation());
-        });
-
-        // MatchFilterTokenAnnotationEqualsString
-        jsonSerializers.put(MatchFilterTokenAnnotationEqualsString.class, (pattern, writer) -> {
-            MatchFilterTokenAnnotationEqualsString tp = (MatchFilterTokenAnnotationEqualsString) pattern;
-            writer.write(MatchFilter.NT_TOKEN_ANNOTATION_STRING,
-                    KEY_CAPTURE, tp.getCapture(),
-                    KEY_ANNOTATION, tp.getAnnotation(),
-                    KEY_VALUE, tp.getValue(),
-                    KEY_SENSITIVITY, sensitivity(tp.getSensitivity()));
         });
     }
 
@@ -442,10 +351,18 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
             return new TextPatternCaptureGroup(
                     (TextPattern) args.get(KEY_CLAUSE),
                     (String) args.get(KEY_CAPTURE));
+        case TextPattern.NT_COMPARE: {
+            List<TextPattern> cl = (List<TextPattern>) args.get(KEY_CLAUSES);
+            return new TextPatternCompare(
+                    cl.get(0),
+                    cl.get(1),
+                    MatchFilterCompare.Operator.fromSymbol((String) args.get(KEY_OPERATION))
+            );
+        }
         case TextPattern.NT_CONSTRAINED:
             return new TextPatternConstrained(
                     (TextPattern) args.get(KEY_CLAUSE),
-                    (MatchFilter) args.get(KEY_CONSTRAINT));
+                    (TextPattern) args.get(KEY_CONSTRAINT));
         case TextPattern.NT_DEFVAL:
             return TextPatternDefaultValue.get();
         case TextPattern.NT_LOOK:
@@ -471,11 +388,10 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (int) args.get(KEY_END));
         case TextPattern.NT_FUZZY:
             throw new UnsupportedOperationException("Cannot deserialize deprecated TextPatternFuzzy");
-        case TextPattern.NT_INT_RANGE:
-            return new TextPatternIntRange(
-                    (int) args.get(KEY_MIN),
-                    (int) args.get(KEY_MAX),
-                    (String) args.get(KEY_ANNOTATION));
+        case TextPattern.NT_IMPLICATION: {
+            List<TextPattern> cl = (List<TextPattern>) args.get(KEY_CLAUSES);
+            return new TextPatternImplication(cl.get(0), cl.get(1));
+        }
         case TextPattern.NT_NOT:
             return new TextPatternNot((TextPattern) args.get(KEY_CLAUSE));
         case TextPattern.NT_OR:
@@ -501,8 +417,8 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (String) args.get(KEY_VALUE),
                     (String) args.get(KEY_ANNOTATION),
                     optArgSensitivity(args));
-        case TextPattern.NT_CALLFUNC:
-            return new TextPatternQueryFunction(
+        case TextPattern.NT_CALL_FUNC:
+            return new TextPatternFunctionCall(
                     (String) args.get(KEY_NAME),
                     (List<TextPattern>) args.get(KEY_ARGS));
         case TextPattern.NT_REGEX:
@@ -539,7 +455,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         case TextPattern.NT_TAGS:
             return new TextPatternTags(
                     (String) args.get(KEY_NAME),
-                     (Map<String, MatchValue>)args.get(KEY_ATTRIBUTES),
+                     (Map<String, TextPattern>)args.get(KEY_ATTRIBUTES),
                     optArgAdjust(args),
                     (String) args.get(KEY_CAPTURE));
         case TextPattern.NT_TERM:
@@ -547,65 +463,25 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
                     (String) args.get(KEY_VALUE),
                     (String) args.get(KEY_ANNOTATION),
                     optArgSensitivity(args));
+        case TextPattern.NT_VALUE_STRING:
+            return TextPatternValue.fromObject(args.get(KEY_VALUE).toString());
+        case TextPattern.NT_VALUE_BOOLEAN:
+            return TextPatternValue.fromObject(args.get(KEY_VALUE));
+        case TextPattern.NT_VALUE_INTEGER:
+            return TextPatternValue.fromObject(args.get(KEY_VALUE));
+        case TextPattern.NT_VALUE_INT_RANGE:
+            return new TextPatternValue(new ConstraintValueIntRange(
+                    (int) args.get(KEY_MIN),
+                    (int) args.get(KEY_MAX)));
+        case TextPattern.NT_VALUE_SYMBOL:
+            return new TextPatternValue(ConstraintValue.symbol((String) args.get(KEY_VALUE)));
+        case TextPattern.NT_VALUE_UNDEFINED:
+            return new TextPatternValue(ConstraintValue.undefined());
         case TextPattern.NT_WILDCARD:
             throw new UnsupportedOperationException("Cannot deserialize deprecated TextPatternWildcard");
-        case MatchFilter.NT_AND: {
-            List<MatchFilter> clauses = (List<MatchFilter>) args.get(KEY_CLAUSES);
-            assert clauses.size() == 2;
-            return new MatchFilterAnd(clauses.get(0), clauses.get(1));
-            }
-        case MatchFilter.NT_COMPARE: {
-            List<MatchFilter> clauses = (List<MatchFilter>) args.get(KEY_CLAUSES);
-            assert clauses.size() == 2;
-            return new MatchFilterCompare(
-                    clauses.get(0), clauses.get(1),
-                    MatchFilterCompare.Operator.fromSymbol((String) args.get(KEY_OPERATION)),
-                    optArgSensitivity(args));
-            }
-        case MatchFilter.NT_EQUALS: {
-            List<MatchFilter> clauses = (List<MatchFilter>) args.get(KEY_CLAUSES);
-            assert clauses.size() == 2;
-            return new MatchFilterEquals(
-                    clauses.get(0), clauses.get(1),
-                    optArgSensitivity(args));
-            }
-        case MatchFilter.NT_CALLFUNC:
-            return new MatchFilterFunctionCall(
-                    (String) args.get(KEY_NAME),
-                    (String) args.get(KEY_CAPTURE));
-        case MatchFilter.NT_IMPLICATION: {
-            List<MatchFilter> clauses = (List<MatchFilter>) args.get(KEY_CLAUSES);
-            assert clauses.size() == 2;
-            return new MatchFilterImplication(clauses.get(0), clauses.get(1));
-            }
-        case MatchFilter.NT_NOT:
-            return new MatchFilterNot((MatchFilter) args.get(KEY_CLAUSE));
-        case MatchFilter.NT_OR: {
-            List<MatchFilter> clauses = (List<MatchFilter>) args.get(KEY_CLAUSES);
-            assert clauses.size() == 2;
-            return new MatchFilterOr(clauses.get(0), clauses.get(1));
-            }
-        case MatchFilter.NT_STRING:
-            return new MatchFilterString((String) args.get(KEY_VALUE));
-        case MatchFilter.NT_TOKEN_ANNOTATION_EQUAL: {
-            List<String> captures = (List<String>) args.get(KEY_CAPTURES);
-            assert captures.size() == 2;
-            return new MatchFilterSameTokens(
-                    captures.get(0),
-                    captures.get(1),
-                    (String) args.get(KEY_ANNOTATION),
-                    optArgSensitivity(args));
-            }
-        case MatchFilter.NT_TOKEN_ANNOTATION:
-            return new MatchFilterTokenAnnotation(
-                    (String) args.get(KEY_CAPTURE),
-                    (String) args.get(KEY_ANNOTATION));
-        case MatchFilter.NT_TOKEN_ANNOTATION_STRING:
-            return new MatchFilterTokenAnnotationEqualsString(
-                    (String) args.get(KEY_CAPTURE),
-                    (String) args.get(KEY_ANNOTATION),
-                    (String) args.get(KEY_VALUE),
-                    optArgSensitivity(args));
+        case TextPattern.NT_PROP_SELECT:
+            return new TextPatternPropertySelect((TextPattern) args.get(KEY_CAPTURE),
+                    (TextPattern) args.get(KEY_ANNOTATION));
         default:
             throw new UnsupportedOperationException("Unable to deserialize TextPattern type: " + nodeType);
         }

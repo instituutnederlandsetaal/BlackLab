@@ -5,31 +5,24 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 
-public class MatchFilterString extends MatchFilter {
-    final ConstraintValueString string;
+/** A simple value (string, number, ...) */
+public class MatchFilterValue extends MatchFilter {
+    final ConstraintValue value;
 
-    public MatchFilterString(String string) {
-        this(new ConstraintValueString(string));
-    }
-
-    public MatchFilterString(ConstraintValueString string) {
-        this.string = string;
-    }
-
-    public String getString() {
-        return string.getValue();
+    public MatchFilterValue(ConstraintValue value) {
+        this.value = value;
     }
 
     @Override
     public String toString() {
-        return "\"" + string + "\"";
+        return value.toString();
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((string == null) ? 0 : string.hashCode());
+        result = prime * result + ((value == null) ? 0 : value.hashCode());
         return result;
     }
 
@@ -41,11 +34,11 @@ public class MatchFilterString extends MatchFilter {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        MatchFilterString other = (MatchFilterString) obj;
-        if (string == null) {
-            if (other.string != null)
+        MatchFilterValue other = (MatchFilterValue) obj;
+        if (value == null) {
+            if (other.value != null)
                 return false;
-        } else if (!string.equals(other.string))
+        } else if (!value.equals(other.value))
             return false;
         return true;
     }
@@ -57,7 +50,7 @@ public class MatchFilterString extends MatchFilter {
 
     @Override
     public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
-        return string;
+        return value;
     }
 
     @Override
@@ -70,7 +63,7 @@ public class MatchFilterString extends MatchFilter {
         return this;
     }
 
-    public String getValue() {
-        return string.getValue();
+    public ConstraintValue getValue() {
+        return value;
     }
 }

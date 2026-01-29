@@ -115,13 +115,35 @@
           "clauses": [
             {
               "bcqlFragment": "\"very\"",
-              "type": "regex",
-              "value": "very"
+              "clauses": [
+                {
+                  "bcqlFragment": "_",
+                  "type": "defval"
+                },
+                {
+                  "bcqlFragment": "\"very\"",
+                  "type": "string",
+                  "value": "very"
+                }
+              ],
+              "operation": "=",
+              "type": "compare"
             },
             {
               "bcqlFragment": "\"good\"",
-              "type": "regex",
-              "value": "good"
+              "clauses": [
+                {
+                  "bcqlFragment": "_",
+                  "type": "defval"
+                },
+                {
+                  "bcqlFragment": "\"good\"",
+                  "type": "string",
+                  "value": "good"
+                }
+              ],
+              "operation": "=",
+              "type": "compare"
             }
           ],
           "type": "sequence"

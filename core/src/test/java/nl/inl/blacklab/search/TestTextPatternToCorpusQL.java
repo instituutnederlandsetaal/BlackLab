@@ -3,18 +3,24 @@ package nl.inl.blacklab.search;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 
 public class TestTextPatternToCorpusQL {
 
+    @BeforeClass
+    public static void beforeClass() {
+        BlackLab.implicitInstance(); // init plugin system
+    }
+
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
         TextPattern p = CorpusQueryLanguageParser.parse(null, Map.of(), input);
-        String cql = TextPatternSerializerCql.serialize(p);
+        String cql = TextPatternSerializerBcql.serialize(p);
         Assert.assertEquals(expected, cql);
     }
 
@@ -34,10 +40,10 @@ public class TestTextPatternToCorpusQL {
 
     @Test
     public void testBrackets() throws InvalidQuery {
-        assertRoundtrip("[word!=\"the\" & (lemma=\"cat\" | pos=\"dog\")] \"turtle\"");
+        assertRoundtrip("[!((word = \"a\") & (word = \"b\"))]");
+        assertRoundtrip("[(word != \"the\") & ((lemma = \"cat\") | (pos = \"dog\"))] \"turtle\"");
         assertRoundtrip("!\"cat\"");
-        assertRoundtrip("[!(word=\"a\" & word=\"b\")]");
-        assertCanonicalized("[word!=\"a\" & word!=\"b\"]", "[!(word=\"a\") & !(word=\"b\")]");
+        assertRoundtrip("[!(word = \"a\") & !(word = \"b\")]");
     }
 
     @Test
@@ -101,9 +107,9 @@ public class TestTextPatternToCorpusQL {
 
     @Test
     public void testRelationsWithoutRspan() throws InvalidQuery {
-        assertCanonicalized("_ -test-> _", "_ -test-> _");
-        assertCanonicalized("[]+ -test-> []+", "[]+ -test-> []+");
-        assertCanonicalized("^--> _", "^--> _");
+        assertRoundtrip("_ -test-> _");
+        assertRoundtrip("[]+ -test-> []+");
+        assertRoundtrip("^--> _");
     }
 
     @Test
@@ -115,14 +121,14 @@ public class TestTextPatternToCorpusQL {
 
     @Test
     public void testConstraints() throws InvalidQuery {
-        assertRoundtrip("((A:[]) (B:[])) :: ((A.lemma = B.lemma) | (A.word = B.word))");
+        assertRoundtrip("((A:[]) (B:[])) :: (((A.lemma) = (B.lemma)) | ((A.word) = (B.word)))");
         assertRoundtrip("((A:[]) (B:[])) :: (start(A) <= end(B))");
-        assertRoundtrip("[] (((A:[]) (B:[])) :: ((A.lemma = B.lemma) & (start(A) <= end(B)))) []");
+        assertRoundtrip("[] (((A:[]) (B:[])) :: (((A.lemma) = (B.lemma)) & (start(A) <= end(B)))) []");
     }
 
     @Test
     public void testIntRange() throws InvalidQuery {
-        assertRoundtrip("[number=in[24,42]]");
+        assertRoundtrip("[number = in[24,42]]");
         assertRoundtrip("<s number=in[123,4567]/>");
     }
 }

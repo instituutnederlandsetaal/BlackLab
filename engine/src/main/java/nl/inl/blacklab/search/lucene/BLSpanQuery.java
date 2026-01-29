@@ -175,6 +175,11 @@ public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGive
     public abstract BLSpanQuery rewrite(IndexReader reader) throws IOException;
 
     @Override
+    public BLSpanQuery rewrite(IndexSearcher searcher) throws IOException {
+        return rewrite(searcher.getIndexReader());
+    }
+
+    @Override
     public abstract BLSpanWeight createWeight(IndexSearcher searcher, ScoreMode scoreMode, float boost) throws IOException;
 
     /**

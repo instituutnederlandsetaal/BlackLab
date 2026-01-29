@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.QueryFunction;
 
@@ -44,7 +45,7 @@ public class QueryExtensions {
      * @param func query extension function
      * @param argTypes argument types
      */
-    public static void register(String name, ExtensionFunction func, List<QueryFunction.ArgType> argTypes) {
+    public static void register(String name, ExtensionFunction func, List<ExprType> argTypes) {
         register(name, argTypes, Collections.emptyList(), func, false);
     }
 
@@ -55,11 +56,11 @@ public class QueryExtensions {
      * @param defaultValues default values for arguments
      * @param func          query extension function
      */
-    public static void register(String name, List<QueryFunction.ArgType> argTypes, List<Object> defaultValues, ExtensionFunction func) {
+    public static void register(String name, List<ExprType> argTypes, List<Object> defaultValues, ExtensionFunction func) {
         register(name, argTypes, defaultValues, func, false);
     }
 
-    private static void register(String name, List<QueryFunction.ArgType> argTypes, List<Object> defaultValues, ExtensionFunction func,
+    private static void register(String name, List<ExprType> argTypes, List<Object> defaultValues, ExtensionFunction func,
             boolean relationsFunction) {
         register(new QueryFunctionLambda(name, func, argTypes, defaultValues, relationsFunction));
     }
@@ -72,12 +73,12 @@ public class QueryExtensions {
         functions.put(func.getName(), func);
     }
 
-    public static void registerRelationsFunction(String name, List<QueryFunction.ArgType> argTypes, List<Object> defaultValues,
+    public static void registerRelationsFunction(String name, List<ExprType> argTypes, List<Object> defaultValues,
             ExtensionFunction func) {
         register(name, argTypes, defaultValues, func, true);
     }
 
-    public static void registerPseudoAnnotation(String name, List<QueryFunction.ArgType> argTypes, List<Object> defaultValues,
+    public static void registerPseudoAnnotation(String name, List<ExprType> argTypes, List<Object> defaultValues,
             ExtensionFunction func) {
         register(pseudoAnnotationFunctionName(name), argTypes, defaultValues, func);
     }

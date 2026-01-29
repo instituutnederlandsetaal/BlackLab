@@ -32,10 +32,9 @@ public class TextPatternFuzzy extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
-        int prefixLength1 = prefixLength;
+    public BLSpanQuery evaluate(QueryExecutionContext context) {
         return new SpanFuzzyQuery(context.queryInfo(), new Term(context.luceneField(), context.optDesensitize(value)),
-                maxEdits, prefixLength1);
+                maxEdits, prefixLength);
     }
 
     @Override

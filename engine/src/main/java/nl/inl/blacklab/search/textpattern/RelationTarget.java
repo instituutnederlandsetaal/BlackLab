@@ -72,7 +72,7 @@ public class RelationTarget implements TextPatternStruct {
                 context.queryInfo(),
                 context,
                 relationType,
-                targetNoDefVal.translate(targetContext),
+                targetNoDefVal.toQuery(targetContext),
                 opInfo.getDirection(),
                 captureName,
                 spanMode,

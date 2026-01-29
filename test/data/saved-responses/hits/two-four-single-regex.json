@@ -178,8 +178,19 @@
       "fieldName": "contents",
       "json": {
         "bcqlFragment": "\"two|four\"",
-        "type": "regex",
-        "value": "two|four"
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"two|four\"",
+            "type": "string",
+            "value": "two|four"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
       }
     },
     "resultWindow": {

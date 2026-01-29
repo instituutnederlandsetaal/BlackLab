@@ -23,27 +23,31 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
   /** RegularExpression Id. */
   int IN = 10;
   /** RegularExpression Id. */
-  int DEFAULT_VALUE = 11;
+  int TRUE = 11;
   /** RegularExpression Id. */
-  int ROOT_DEP_OP = 12;
+  int FALSE = 12;
   /** RegularExpression Id. */
-  int DEP_OP = 13;
+  int DEFAULT_VALUE = 13;
   /** RegularExpression Id. */
-  int ALIGNMENT_OP = 14;
+  int ROOT_DEP_OP = 14;
   /** RegularExpression Id. */
-  int LOOKAHEAD_OP = 15;
+  int DEP_OP = 15;
   /** RegularExpression Id. */
-  int QUOTED_STRING = 16;
+  int ALIGNMENT_OP = 16;
   /** RegularExpression Id. */
-  int SINGLE_QUOTED_STRING = 17;
+  int LOOKAHEAD_OP = 17;
   /** RegularExpression Id. */
-  int NAME = 18;
+  int QUOTED_STRING = 18;
   /** RegularExpression Id. */
-  int FLAGS = 19;
+  int SINGLE_QUOTED_STRING = 19;
   /** RegularExpression Id. */
-  int NUMBER = 20;
+  int NAME = 20;
   /** RegularExpression Id. */
-  int SETTINGS_OP = 21;
+  int FLAGS = 21;
+  /** RegularExpression Id. */
+  int INTEGER = 22;
+  /** RegularExpression Id. */
+  int SETTINGS_OP = 23;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -61,6 +65,8 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\"containing\"",
     "\"overlap\"",
     "\"in\"",
+    "\"true\"",
+    "\"false\"",
     "\"_\"",
     "<ROOT_DEP_OP>",
     "<DEP_OP>",
@@ -70,7 +76,7 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "<SINGLE_QUOTED_STRING>",
     "<NAME>",
     "<FLAGS>",
-    "<NUMBER>",
+    "<INTEGER>",
     "<SETTINGS_OP>",
     "\"::\"",
     "\"=\"",
@@ -81,13 +87,13 @@ public interface GeneratedCorpusQueryLanguageParserConstants {
     "\"<\"",
     "\"(\"",
     "\")\"",
-    "\"!\"",
     "\".\"",
+    "\"!\"",
+    "\",\"",
     "\";\"",
     "\":\"",
     "\"/\"",
     "\"[\"",
-    "\",\"",
     "\"]\"",
     "\"*\"",
     "\"+\"",

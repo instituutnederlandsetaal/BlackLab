@@ -29,8 +29,8 @@ public class TextPatternLook extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        BLSpanQuery result = new SpanQueryEdge(clause.translate(context), behind);
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        BLSpanQuery result = new SpanQueryEdge(clause.toQuery(context), behind);
         if (negate) {
             // Expand edges to single tokens (in the correct direction)
             int startAdjust = behind ? -1 : 0;

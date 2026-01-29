@@ -104,12 +104,12 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
         return list;
     }
 
-    public static Map<String, MatchValue> readMatchValueMap(JsonParser parser) throws IOException {
+    public Map<String, TextPattern> readMatchValueMap(JsonParser parser) throws IOException {
         JsonToken token = parser.currentToken();
         if (token != JsonToken.START_OBJECT)
             throw new InvalidQuery("Expected START_OBJECT, found " + token);
 
-        Map<String, MatchValue> result = new LinkedHashMap<>();
+        Map<String, TextPattern> result = new LinkedHashMap<>();
         while (true) {
             token = parser.nextToken();
             if (token == JsonToken.END_OBJECT)
@@ -120,33 +120,41 @@ public class TextPatternDeserializer extends JsonDeserializer<TextPatternStruct>
             String key = parser.getCurrentName();
 
             token = parser.nextToken();
-            if (token == JsonToken.VALUE_STRING) {
-                // Regex (just a string value)
-                String value = parser.getValueAsString();
-                result.put(key, MatchValue.regex(value));
-            } else if (token == JsonToken.START_OBJECT) {
-                // Range (object with min and max fields)
-                int min = Integer.MIN_VALUE, max = Integer.MAX_VALUE;
-                while (true) {
-                    token = parser.nextToken();
-                    if (token == JsonToken.END_OBJECT)
-                        break;
+            if (token != JsonToken.START_OBJECT)
+                throw new InvalidQuery("Expected START_OBJECT for key " + key + ", found " + token);
+            Object value = readObject(parser);
+            if (!(value instanceof TextPattern))
+                throw new InvalidQuery("Expected TextPattern value for key " + key);
+            result.put(key, (TextPattern) value);
 
-                    if (token != JsonToken.FIELD_NAME)
-                        throw new InvalidQuery("Expected END_OBJECT or FIELD_NAME, found " + token);
-                    String rangeKey = parser.getCurrentName();
-                    if (rangeKey.equals(TextPatternSerializerJson.KEY_MIN))
-                        min = parser.nextIntValue(-1);
-                    else if (rangeKey.equals(TextPatternSerializerJson.KEY_MAX))
-                        max = parser.nextIntValue(-1);
-                    else
-                        throw new InvalidQuery("Expected min or max, found " + key);
-                }
-                if (min == Integer.MIN_VALUE && max == Integer.MAX_VALUE)
-                    throw new InvalidQuery("Range must have min, max or both");
-                result.put(key, MatchValue.intRange(min, max));
-            } else
-                throw new InvalidQuery("Expected VALUE_STRING, found " + token);
+//            token = parser.nextToken();
+//            if (token == JsonToken.VALUE_STRING) {
+//                // Regex (just a string value)
+//                String value = parser.getValueAsString();
+//                result.put(key, TextPatternValue.fromObject(value));
+//            } else if (token == JsonToken.START_OBJECT) {
+//                // Range (object with min and max fields)
+//                int min = Integer.MIN_VALUE, max = Integer.MAX_VALUE;
+//                while (true) {
+//                    token = parser.nextToken();
+//                    if (token == JsonToken.END_OBJECT)
+//                        break;
+//
+//                    if (token != JsonToken.FIELD_NAME)
+//                        throw new InvalidQuery("Expected END_OBJECT or FIELD_NAME, found " + token);
+//                    String rangeKey = parser.getCurrentName();
+//                    if (rangeKey.equals(TextPatternSerializerJson.KEY_MIN))
+//                        min = parser.nextIntValue(-1);
+//                    else if (rangeKey.equals(TextPatternSerializerJson.KEY_MAX))
+//                        max = parser.nextIntValue(-1);
+//                    else
+//                        throw new InvalidQuery("Expected min or max, found " + key);
+//                }
+//                if (min == Integer.MIN_VALUE && max == Integer.MAX_VALUE)
+//                    throw new InvalidQuery("Range must have min, max or both");
+//                result.put(key, TextPatternValue.fromObject(new Integer[]{ min, max }));
+//            } else
+//                throw new InvalidQuery("Expected VALUE_STRING, found " + token);
         }
         return result;
     }

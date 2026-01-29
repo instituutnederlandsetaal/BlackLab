@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import nl.inl.blacklab.plugins.ExprType;
+
 public class ConstraintValueInt extends ConstraintValue {
 
     final int i;
@@ -8,7 +10,7 @@ public class ConstraintValueInt extends ConstraintValue {
         this.i = i;
     }
 
-    public int getValue() {
+    public Integer getValue() {
         return i;
     }
 
@@ -47,6 +49,16 @@ public class ConstraintValueInt extends ConstraintValue {
     @Override
     public String toString() {
         return Integer.toString(i);
+    }
+
+    @Override
+    public ExprType getType() {
+        return ExprType.INTEGER;
+    }
+
+    @Override
+    public ConstraintValueString asString() {
+        return new ConstraintValueString(Integer.toString(i));
     }
 
 }

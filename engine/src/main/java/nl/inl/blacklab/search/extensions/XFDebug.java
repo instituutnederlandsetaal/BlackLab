@@ -1,9 +1,9 @@
 package nl.inl.blacklab.search.extensions;
 
 import java.util.Arrays;
+import java.util.List;
 
-import nl.inl.blacklab.plugins.QueryFunction;
-import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -13,7 +13,6 @@ import nl.inl.blacklab.search.lucene.SpanQueryEdge;
 import nl.inl.blacklab.search.lucene.SpanQueryFiSeq;
 import nl.inl.blacklab.search.lucene.SpanQueryFilterByHitLength;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.SpanQueryFixedSpan;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 
 /**
@@ -25,11 +24,15 @@ public class XFDebug implements ExtensionFunctionClass {
     public void register() {
 
         // Adjust hits
-        QueryExtensions.register("_adjust", ARGS_QSS, Arrays.asList(null, "0", "0"),
+        QueryExtensions.register("_adjust", List.of(
+                ExprType.QUERY,
+                        ExprType.INTEGER,
+                        ExprType.INTEGER),
+                Arrays.asList(null, 0, 0),
                 (queryInfo, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
-                    int startAdjust = Integer.parseInt((String) args.get(1));
-                    int endAdjust = Integer.parseInt((String) args.get(2));
+                    int startAdjust = (Integer) args.get(1);
+                    int endAdjust = (Integer) args.get(2);
                     return new SpanQueryAdjustHits(query, startAdjust, endAdjust);
                 });
 
@@ -43,11 +46,15 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Resolve the first query using the forward index and the second using the inverted index
-        QueryExtensions.register("_fimatch", ARGS_QQS, Arrays.asList(null, null, "0"),
+        QueryExtensions.register("_fimatch", List.of(
+                    ExprType.QUERY,
+                    ExprType.QUERY,
+                    ExprType.INTEGER),
+                    Arrays.asList(null, null, 0),
                 (queryInfo, context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
                     BLSpanQuery b = (BLSpanQuery) args.get(1);
-                    int fiIndex = Integer.parseInt((String) args.get(2));
+                    int fiIndex = (Integer) args.get(2);
                     if (fiIndex != 1)
                         fiIndex = 0;
                     if (fiIndex == 0) {
@@ -86,45 +93,41 @@ public class XFDebug implements ExtensionFunctionClass {
                             fiAccessor);
                 });
 
-        // A fixed span in every matching doc, e.g. _fixed("0", "7") find tokens 0 (inclusive) to 7 (exclusive) in
-        // every doc
-        QueryExtensions.register(new QueryFunction("_fixed", ARGS_SS, Arrays.asList(null, null), false) {
-            @Override
-            public BLSpanQuery applyFunc(QueryExecutionContext context, java.util.List<Object> parameters) {
-                int start = Integer.parseInt((String) parameters.get(0));
-                int end = Integer.parseInt((String) parameters.get(1));
-                return new SpanQueryFixedSpan(context.queryInfo(), context.luceneField(), start, end);
-            }
-        });
-
         // Return the argument unchanged
         QueryExtensions.register("_ident", ARGS_Q, NO_DEFAULT_VALUES,
                 (queryInfo, context, args) -> (BLSpanQuery) args.get(0));
 
         // Search within a single docId, e.g. _indoc("water", "3") to find "water" in docId 3 only
-        QueryExtensions.register("_indoc", ARGS_QS, NO_DEFAULT_VALUES,
+        QueryExtensions.register("_indoc",
+                List.of(ExprType.QUERY, ExprType.INTEGER),
+                NO_DEFAULT_VALUES,
                 (queryInfo, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
-                    int docId = Integer.parseInt((String) args.get(1));
+                    int docId = (Integer) args.get(1);
                     return new SpanQueryFiltered(query, new SingleDocIdFilter(docId));
                 });
 
         // Filter by hit length; min and max are inclusive.
-        QueryExtensions.register("_lenfilter", ARGS_QSS, Arrays.asList(null, "0", "0"),
+        QueryExtensions.register("_lenfilter", List.of(
+                ExprType.QUERY, ExprType.INTEGER, ExprType.INTEGER),
+                Arrays.asList(null, 0, 0),
                 (queryInfo, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
-                    int minLength = Integer.parseInt((String) args.get(1));
-                    int maxLength = Integer.parseInt((String) args.get(2));
+                    int minLength = (Integer) args.get(1);
+                    int maxLength = (Integer) args.get(2);
                     return new SpanQueryFilterByHitLength(query, minLength, maxLength);
                 });
 
         // Filter producer hits by filter query using the specified operation (optionally inverted)
-        QueryExtensions.register("_posfilter", ARGS_QQSS, Arrays.asList(null, null, "matches", "false"),
+        QueryExtensions.register("_posfilter", List.of(
+                        ExprType.QUERY, ExprType.QUERY,
+                        ExprType.STRING, ExprType.BOOLEAN),
+                Arrays.asList(null, null, "matches", false),
                 (queryInfo, context, args) -> {
                     BLSpanQuery producer = (BLSpanQuery) args.get(0);
                     BLSpanQuery filter = (BLSpanQuery) args.get(1);
                     SpanQueryPositionFilter.Operation operation = SpanQueryPositionFilter.Operation.fromStringValue((String) args.get(2));
-                    boolean inverted = Boolean.parseBoolean((String) args.get(3));
+                    boolean inverted = (boolean) args.get(3);
                     return new SpanQueryPositionFilter(producer, filter, operation, inverted);
                 });
     }

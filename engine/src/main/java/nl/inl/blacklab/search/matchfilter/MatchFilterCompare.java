@@ -5,6 +5,7 @@ import java.util.Objects;
 
 import org.apache.lucene.index.LeafReaderContext;
 
+import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -69,7 +70,7 @@ public class MatchFilterCompare extends MatchFilter {
 
     @Override
     public String toString() {
-        return a + " " + operator + " " + b;
+        return "CMP(" + a + ", " + operator + ", " + b + ")";
     }
 
     @Override
@@ -96,6 +97,14 @@ public class MatchFilterCompare extends MatchFilter {
     public ConstraintValue evaluate(ForwardIndexDocument fiDoc, MatchInfo[] matchInfo) {
         ConstraintValue ra = a.evaluate(fiDoc, matchInfo);
         ConstraintValue rb = b.evaluate(fiDoc, matchInfo);
+
+        // Perform type coercion if needed
+        ExprType targetType = ExprType.getWiderType(ra.getType(), rb.getType());
+        if (targetType == null)
+            throw new IllegalArgumentException(
+                    "Cannot compare values of incompatible types: " + ra.getType() + " and " + rb.getType());
+        ra = ConstraintValue.convertToType(ra, targetType);
+        rb = ConstraintValue.convertToType(rb, targetType);
 
         // Compare values
         int cmp;
@@ -132,10 +141,11 @@ public class MatchFilterCompare extends MatchFilter {
         MatchFilter y = b.rewrite();
 
         if (operator == Operator.EQUAL) {
-            if (x instanceof MatchFilterTokenAnnotation && y instanceof MatchFilterString) {
+            if (x instanceof MatchFilterTokenAnnotation && y instanceof MatchFilterValue yv &&
+                    yv.getValue() instanceof ConstraintValueString ys) {
                 // Simple annotation to string comparison, e.g. a.word = "cow"
                 // This can be done more efficiently without string comparisons
-                String termString = ((MatchFilterString) y).getString();
+                String termString = ys.getValue();
                 return ((MatchFilterTokenAnnotation) x).matchTokenString(termString, sensitivity);
             }
 
@@ -143,7 +153,7 @@ public class MatchFilterCompare extends MatchFilter {
                 if (xtp.getAnnotationName().equals(ytp.getAnnotationName())) {
                     // Expression of the form a.word = b.word;
                     // This can be done more efficiently without string comparisons
-                    return xtp.matchOtherTokenSameProperty(ytp.getGroupName(), sensitivity);
+                    return xtp.matchOtherTokenSameAnnotation(ytp.getGroupName(), sensitivity);
                 }
             }
         }

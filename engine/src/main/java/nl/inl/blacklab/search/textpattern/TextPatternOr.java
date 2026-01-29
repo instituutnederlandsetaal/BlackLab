@@ -5,10 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
+import org.apache.lucene.queries.spans.BLSpanOrQuery;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
 
 /**
  * A TextPattern matching at least one of its child clauses.
@@ -35,14 +38,24 @@ public class TextPatternOr extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
-        for (TextPattern cl : clauses) {
-            chResults.add(cl.translate(context));
+    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+        if (context.isInConstraint()) {
+            // We're in the constraint part of the query; create MatchFilter
+            if (clauses.size() != 2)
+                throw new InvalidQuery("OR in constraint context requires exactly two clauses");
+            MatchFilter a = clauses.get(0).toMatchFilter(context);
+            MatchFilter b = clauses.get(1).toMatchFilter(context);
+            return new MatchFilterOr(a, b);
+        } else {
+            // Regular query
+            List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
+            for (TextPattern cl : clauses) {
+                chResults.add(cl.toQuery(context));
+            }
+            if (chResults.size() == 1)
+                return chResults.get(0);
+            return new BLSpanOrQuery(chResults.toArray(new BLSpanQuery[] {}));
         }
-        if (chResults.size() == 1)
-            return chResults.get(0);
-        return new BLSpanOrQuery(chResults.toArray(new BLSpanQuery[] {}));
     }
 
     @Override

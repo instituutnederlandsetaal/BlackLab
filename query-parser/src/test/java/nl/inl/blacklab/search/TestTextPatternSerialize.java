@@ -5,17 +5,23 @@ import java.io.StringWriter;
 import java.util.Map;
 
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
-import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.Json;
 
 public class TestTextPatternSerialize {
+
+    @BeforeClass
+    public static void beforeClass() throws Exception {
+        BlackLab.implicitInstance();
+    }
 
     private static void assertRewritesTo(String expected, TextPattern pattern) throws IOException {
         StringWriter writer = new StringWriter();
@@ -45,7 +51,7 @@ public class TestTextPatternSerialize {
         pattern = parser.parseQuery(cqlQuery);
         assertRoundtrip(pattern);
         if (checkSerializeToCql)
-            Assert.assertEquals(cqlQuery, TextPatternSerializerCql.serialize(pattern));
+            Assert.assertEquals(cqlQuery, TextPatternSerializerBcql.serialize(pattern));
     }
 
     @Test
@@ -97,15 +103,15 @@ public class TestTextPatternSerialize {
 
     @Test
     public void testIntRange() throws IOException {
-        //assertRoundtrip("[number=in[24,42]]");
+        assertRoundtrip("[number=in[24,42]]");
         assertRoundtrip("<s number=\"1\"/>", true);
-        //assertRoundtrip("<s number=in[123,4567]/>");
+        assertRoundtrip("<s number=in[123,4567]/>");
     }
 
     @Test
     public void testCloseTag() throws IOException {
         //assertRoundtrip("[number=in[24,42]]");
         assertRoundtrip("\"it\" </s>", true);
-        //assertRoundtrip("<s number=in[123,4567]/>");
+        assertRoundtrip("<s number=in[123,4567]/>");
     }
 }

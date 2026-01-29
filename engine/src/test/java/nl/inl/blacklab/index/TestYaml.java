@@ -48,7 +48,7 @@ public class TestYaml {
     }
 
     public static void main(String[] args) throws IOException {
-        BlackLab.implicitInstance(); // init plugins
+        BlackLab.implicitInstance(); // init plugin system
         //ClassLoader classLoader = this.getClass().getClassLoader();
         //File file = new File(classLoader.getResource("formats/tei-p5.blf.yaml").getFile());
         //File file = new File("/home/jan/int-projects/corpus-frontend-config/chn-intern/chn-intern-ngrams.blf.yaml");

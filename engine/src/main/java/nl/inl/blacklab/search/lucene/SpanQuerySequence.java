@@ -225,7 +225,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         clauses.remove(startTagIndex); // end tag
         boolean startAny = false;
-        if (search.get(0) instanceof SpanQueryAnyToken any1) {
+        if (!search.isEmpty() && search.get(0) instanceof SpanQueryAnyToken any1) {
             if (any1.guarantees().hitsLengthMin() == 0 &&
                     any1.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                 startAny = true;
@@ -234,29 +234,34 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
         }
         boolean endAny = false;
         int last = search.size() - 1;
-        if (search.get(last) instanceof SpanQueryAnyToken any2) {
+        if (!search.isEmpty() && search.get(last) instanceof SpanQueryAnyToken any2) {
             if (any2.guarantees().hitsLengthMin() == 0 &&
                     any2.guarantees().hitsLengthMax() == MAX_UNLIMITED) {
                 endAny = true;
                 search.remove(last);
             }
         }
-        BLSpanQuery filter = new SpanQuerySequence(search.toArray(new BLSpanQuery[0]));
-        SpanQueryPositionFilter.Operation op;
-        if (startAny) {
-            if (endAny) {
-                op = SpanQueryPositionFilter.Operation.CONTAINING;
-            } else {
-                op = SpanQueryPositionFilter.Operation.CONTAINING_AT_END;
-            }
+        if (search.isEmpty()) {
+            // Nothing to filter, e.g. <s> []* </s>
+            clauses.add(startTagIndex, producer);
         } else {
-            if (endAny) {
-                op = SpanQueryPositionFilter.Operation.CONTAINING_AT_START;
+            BLSpanQuery filter = new SpanQuerySequence(search.toArray(new BLSpanQuery[0]));
+            SpanQueryPositionFilter.Operation op;
+            if (startAny) {
+                if (endAny) {
+                    op = SpanQueryPositionFilter.Operation.CONTAINING;
+                } else {
+                    op = SpanQueryPositionFilter.Operation.CONTAINING_AT_END;
+                }
             } else {
-                op = SpanQueryPositionFilter.Operation.MATCHES;
+                if (endAny) {
+                    op = SpanQueryPositionFilter.Operation.CONTAINING_AT_START;
+                } else {
+                    op = SpanQueryPositionFilter.Operation.MATCHES;
+                }
             }
+            clauses.add(startTagIndex, new SpanQueryPositionFilter(producer, filter, op, false));
         }
-        clauses.add(startTagIndex, new SpanQueryPositionFilter(producer, filter, op, false));
     }
 
     static boolean rewriteClauses(List<BLSpanQuery> clauses, IndexReader reader) throws IOException {

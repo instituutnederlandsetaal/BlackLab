@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.extensions;
 import java.util.List;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
@@ -11,5 +10,5 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * Such a function takes a number of arguments and returns a BLSpanQuery.
  */
 public interface ExtensionFunction {
-    BLSpanQuery apply(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args);
+    Object apply(QueryInfo queryInfo, QueryExecutionContext context, List<Object> args);
 }

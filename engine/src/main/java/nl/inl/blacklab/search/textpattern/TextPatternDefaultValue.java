@@ -47,7 +47,7 @@ public class TextPatternDefaultValue extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         return new SpanQueryDefaultValue(context.queryInfo(), context.luceneField());
     }
 
@@ -70,7 +70,7 @@ public class TextPatternDefaultValue extends TextPattern {
     protected TextPattern applyWithSpans() {
         // Turn this into with-spans([]+), because with-spans(_) would mean "default value for the 1st parameter", which
         // with-spans() doesn't have.
-        return new TextPatternQueryFunction(XFSpans.FUNC_WITH_SPANS,
+        return new TextPatternFunctionCall(XFSpans.FUNC_WITH_SPANS,
                 List.of(new TextPatternAnyToken(1, BLSpanQuery.MAX_UNLIMITED)));
     }
 

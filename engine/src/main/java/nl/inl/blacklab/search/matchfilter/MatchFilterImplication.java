@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.matchfilter;
 
-import java.util.List;
-
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
@@ -94,9 +92,5 @@ public class MatchFilterImplication extends MatchFilter {
         if (x != a || y != b)
             return new MatchFilterImplication(x, y);
         return this;
-    }
-
-    public List<TextPatternStruct> getClauses() {
-        return List.of(a, b);
     }
 }

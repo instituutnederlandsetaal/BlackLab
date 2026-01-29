@@ -88,8 +88,19 @@
       "fieldName": "contents",
       "json": {
         "bcqlFragment": "\"very\"",
-        "type": "regex",
-        "value": "very"
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"very\"",
+            "type": "string",
+            "value": "very"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
       }
     },
     "resultWindow": {

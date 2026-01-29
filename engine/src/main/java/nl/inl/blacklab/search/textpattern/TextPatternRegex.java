@@ -26,21 +26,21 @@ public class TextPatternRegex extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         // Rewrite pseudo-annotation to extension function call
         TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, false);
         if (rewrittenPseudoAnnot != null)
-            return rewrittenPseudoAnnot.translate(context);
+            return rewrittenPseudoAnnot.toQuery(context);
 
         // See if this is really a regex query or just a term query maskerading as one...
-        TextPattern result = rewriteForQuery();
-        if (result != this) {
+        TextPattern result = rewriteToSimplerTextPattern(annotation, sensitivity, value);
+        if (result != null) {
             // Rewritten into a regular term query; translate that instead
-            return result.translate(context);
+            return result.toQuery(context);
         }
         // We're dealing with an actual regex query.
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
-        String valueDesensitized = optInsensitive(context, value);
+        String valueDesensitized = context.optDesensitize(value);
 
         // Lucene's regex engine requires double quotes to be escaped, unlike most others.
         // Escape double quotes
@@ -74,7 +74,7 @@ public class TextPatternRegex extends TextPatternTerm {
      *
      * @return the TextPattern
      */
-    private TextPattern rewriteForQuery() {
+    public static TextPattern rewriteToSimplerTextPattern(String annotation, MatchSensitivity sensitivity, String value) {
         // Do we want to force an (in)sensitive search?
         boolean forceSensitive = false;
         boolean forceInsensitive = false;
@@ -107,7 +107,7 @@ public class TextPatternRegex extends TextPatternTerm {
             // Not a term query. Did we strip off a sensitivity flag above?
             if (!forceSensitive && !forceInsensitive) {
                 // Nope. Nothing to rewrite.
-                return this;
+                return null;
             }
             // Yes. Create new TP from remaining regex, and add TextPatternSensitive below.
             result = new TextPatternRegex(newValue, annotation, sensitivity);

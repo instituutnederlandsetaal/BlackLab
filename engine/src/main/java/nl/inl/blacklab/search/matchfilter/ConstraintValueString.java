@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.matchfilter;
 
 import nl.inl.blacklab.forwardindex.Collators;
+import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
 public class ConstraintValueString extends ConstraintValue {
@@ -56,7 +57,7 @@ public class ConstraintValueString extends ConstraintValue {
 
     @Override
     public String toString() {
-        return value;
+        return "\"" + value + "\"";
     }
 
     // TODO: use configured collator for field
@@ -68,5 +69,15 @@ public class ConstraintValueString extends ConstraintValue {
 
     public int stringCompareTo(ConstraintValueString rb, MatchSensitivity sensitivity) {
         return collators.get(sensitivity).compare(getValue(), rb.getValue());
+    }
+
+    @Override
+    public ExprType getType() {
+        return ExprType.STRING;
+    }
+
+    @Override
+    public ConstraintValueString asString() {
+        return this;
     }
 }

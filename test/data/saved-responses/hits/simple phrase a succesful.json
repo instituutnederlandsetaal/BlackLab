@@ -84,21 +84,43 @@
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "\"a\" [lemma=\"successful\"]",
+      "bcql": "\"a\" [(lemma = \"successful\")]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "\"a\" [lemma=\"successful\"]",
+        "bcqlFragment": "\"a\" [(lemma = \"successful\")]",
         "clauses": [
           {
             "bcqlFragment": "\"a\"",
-            "type": "regex",
-            "value": "a"
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"a\"",
+                "type": "string",
+                "value": "a"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
           },
           {
-            "annotation": "lemma",
-            "bcqlFragment": "[lemma=\"successful\"]",
-            "type": "regex",
-            "value": "successful"
+            "bcqlFragment": "[lemma = \"successful\"]",
+            "clauses": [
+              {
+                "bcqlFragment": "lemma",
+                "type": "symbol",
+                "value": "lemma"
+              },
+              {
+                "bcqlFragment": "\"successful\"",
+                "type": "string",
+                "value": "successful"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
           }
         ],
         "type": "sequence"

@@ -34,8 +34,8 @@ public class TextPatternCaptureGroup extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryCaptureGroup(clause.translate(context), captureAs, 0, 0, null);
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        return new SpanQueryCaptureGroup(clause.toQuery(context), captureAs, 0, 0, null);
     }
     
     @Override

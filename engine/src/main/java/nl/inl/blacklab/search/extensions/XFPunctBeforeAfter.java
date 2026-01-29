@@ -44,7 +44,7 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
      */
     private static BLSpanQuery getPunctQuery(QueryExecutionContext context, String regex) {
         return new TextPatternRegex(regex, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
-                MatchSensitivity.INSENSITIVE).translate(context);
+                MatchSensitivity.INSENSITIVE).toQuery(context);
     }
 
 }

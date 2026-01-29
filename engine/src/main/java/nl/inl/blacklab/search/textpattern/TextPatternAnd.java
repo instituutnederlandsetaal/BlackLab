@@ -8,6 +8,8 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAndNot;
+import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
 
 /**
  * AND operation.
@@ -36,12 +38,22 @@ public class TextPatternAnd extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
-        for (TextPattern cl : clauses) {
-            chResults.add(cl.translate(context));
+    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+        if (context.isInConstraint()) {
+            // We're in the constraint part of the query; create MatchFilter
+            if (clauses.size() != 2)
+                throw new InvalidQuery("AND in constraint context requires exactly two clauses");
+            MatchFilter a = clauses.get(0).toMatchFilter(context);
+            MatchFilter b = clauses.get(1).toMatchFilter(context);
+            return new MatchFilterAnd(a, b);
+        } else {
+            // Regular query
+            List<BLSpanQuery> chResults = new ArrayList<>(clauses.size());
+            for (TextPattern cl: clauses) {
+                chResults.add(cl.toQuery(context));
+            }
+            return new SpanQueryAndNot(chResults, null);
         }
-        return new SpanQueryAndNot(chResults, null);
     }
 
     @Override

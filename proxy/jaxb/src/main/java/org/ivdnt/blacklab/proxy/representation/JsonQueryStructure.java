@@ -3,13 +3,13 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElement;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class JsonQueryStructure {
@@ -67,18 +67,8 @@ public class JsonQueryStructure {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     Integer end;
 
-    @XmlElementWrapper(name = "excludes")
-    @XmlElement(name = "exclude")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    List<JsonQueryStructure> exclude;
-
     @JsonInclude(JsonInclude.Include.NON_NULL)
     JsonQueryStructure filter;
-
-    @XmlElementWrapper(name = "includes")
-    @XmlElement(name = "include")
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    List<JsonQueryStructure> include;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     Boolean invert;

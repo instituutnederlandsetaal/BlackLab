@@ -18,20 +18,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * the :: operator, e.g. <code>a:[] "and" b:[] :: a.word = b.word</code>
  * to find things like "more and more", "less and less", etc.
  */
-public abstract class MatchFilter implements TextPatternStruct {
-
-    // Node types
-    public static final String NT_AND = "mf-and";
-    public static final String NT_COMPARE = "mf-compare";
-    public static final String NT_EQUALS = "mf-equals";
-    public static final String NT_CALLFUNC = "mf-callfunc";
-    public static final String NT_IMPLICATION = "mf-implication";
-    public static final String NT_NOT = "mf-not";
-    public static final String NT_OR = "mf-or";
-    public static final String NT_STRING = "mf-string";
-    public static final String NT_TOKEN_ANNOTATION_EQUAL = "mf-token-annotation-equal";
-    public static final String NT_TOKEN_ANNOTATION = "mf-token-annotation";
-    public static final String NT_TOKEN_ANNOTATION_STRING = "mf-token-annotation-string";
+public abstract class MatchFilter {
 
     @Override
     public abstract String toString();

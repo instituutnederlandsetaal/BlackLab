@@ -83,7 +83,7 @@ public class ResultDocSnippet {
             TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagNameRegex, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,
                     params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
-            BLSpanQuery query = pattern.translate(queryContext);
+            BLSpanQuery query = pattern.toQuery(queryContext);
             query = new SpanQueryFiltered(query, new SingleDocIdFilter(luceneDocId));
             hitResults = index.search(field, params.useCache()).find(query).execute();
         }

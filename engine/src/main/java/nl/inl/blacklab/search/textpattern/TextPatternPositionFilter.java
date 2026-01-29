@@ -6,6 +6,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
 
 /**
  * A TextPattern searching for TextPatterns that contain a hit from another
@@ -47,9 +48,28 @@ public class TextPatternPositionFilter extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryPositionFilter(producer.translate(context), filter.translate(context),
-                operation, invert, adjustLeading, adjustTrailing);
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        Object result = filter.evaluate(context);
+        if (result instanceof BLSpanQuery filterQuery) {
+            return new SpanQueryPositionFilter(producer.toQuery(context), filterQuery,
+                    operation, invert, adjustLeading, adjustTrailing);
+        } else if (result instanceof ConstraintValueList cvl) {
+            // Apply multiple filters in sequence
+            // Example: A containing list(B, C) -> (A containing B) containing C
+            BLSpanQuery resultQuery = producer.toQuery(context);
+            for (Object item: cvl.getValue()) {
+                if (item instanceof BLSpanQuery filterQuery) {
+                    resultQuery = new SpanQueryPositionFilter(resultQuery, filterQuery,
+                            operation, invert, adjustLeading, adjustTrailing);
+                } else {
+                    throw new InvalidQuery("Non-query filter parameter to position filter " + operation + ": " + item);
+                }
+            }
+            return resultQuery;
+        } else {
+            throw new InvalidQuery("Right-hand side of position filter " + operation +
+                    " must be a query or list of queries: " + result);
+        }
     }
 
     @Override

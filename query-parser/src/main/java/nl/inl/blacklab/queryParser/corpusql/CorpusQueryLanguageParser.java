@@ -8,12 +8,13 @@ import java.util.Map;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
-import nl.inl.blacklab.search.textpattern.MatchValue;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.StringUtil;
@@ -32,17 +33,19 @@ public class CorpusQueryLanguageParser implements BLQueryParser {
         return parser.parseQuery(query);
     }
 
-    /** Allow strings to be quoted using single quotes? */
-    private final boolean allowSingleQuotes;
-
     private final String defaultAnnotation;
+
+    private final MatchSensitivity defaultSensitivity;
 
     public CorpusQueryLanguageParser(BlackLabIndex index, Map<String, Object> config) {
         defaultAnnotation = cfgString(config, "defaultAnnotation",
                 index == null ? "word" : index.mainAnnotatedField().mainAnnotation().name());
         if (index != null && index.mainAnnotatedField().annotation(defaultAnnotation) == null)
             throw new IllegalArgumentException("Default annotation '" + defaultAnnotation + "' not found in index");
-        allowSingleQuotes = cfgBoolean(config, "allowSingleQuotes", true);
+        String strDefaultSensitivity = cfgString(config, "defaultSensitivity",
+                index == null ? "insensitive" :
+                    index.defaultMatchSensitivity().toString().toLowerCase());
+        defaultSensitivity = MatchSensitivity.fromName(strDefaultSensitivity);
     }
 
     private boolean cfgBoolean(Map<String, Object> config, String name, boolean defVal) {
@@ -66,7 +69,7 @@ public class CorpusQueryLanguageParser implements BLQueryParser {
         try {
             GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
             parser.wrapper = this;
-            return parser.query();
+            return parser.query(BCQLParseContext.DEFAULT);
         } catch (ParseException | TokenMgrError e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }
@@ -76,21 +79,28 @@ public class CorpusQueryLanguageParser implements BLQueryParser {
         return Integer.parseInt(t.toString());
     }
 
-    String chopEnds(String input) {
+    public static String chopEnds(String input) {
         if (input.length() >= 2)
             return input.substring(1, input.length() - 1);
         throw new IllegalArgumentException("Cannot chop ends off string shorter than 2 chars");
     }
 
-    String getStringBetweenQuotes(String input) throws SingleQuotesException {
+    /** Get a regex from a quoted (possibly literal) string.
+     *
+     * If the first quote is preceded by 'l', it is a literal string:
+     * escape any special regex characters.
+     * Otherwise, just chop off the quotes and unescape any escaped
+     * quotes in the string.
+     */
+    public static String getRegexFromQuotedString(String input) {
         boolean isLiteral = input.charAt(0) == 'l';
         if (isLiteral)
             input = input.substring(1);
 
         String quoteUsed = input.substring(0, 1);
+        if (!quoteUsed.equals("'") && !quoteUsed.equals("\""))
+            throw new IllegalArgumentException("String does not start with a quote: " + input);
         input = chopEnds(input); // eliminate quotes
-        if (!allowSingleQuotes && quoteUsed.equals("\'"))
-            throw new SingleQuotesException();
 
         // Unescape ONLY the quotes found around this string
         // Leave other escaped characters as-is for Lucene's regex engine
@@ -102,12 +112,16 @@ public class CorpusQueryLanguageParser implements BLQueryParser {
         return quotedUnescaped;
     }
 
-    TextPatternTerm simplePattern(MatchValue str) {
-        return str.textPattern();
-    }
-
     public String getDefaultAnnotation() {
         return defaultAnnotation;
+    }
+
+    TextPattern queryDefaultAnnotation(String regex) {
+        return new TextPatternRegex(regex);
+    }
+
+    public MatchSensitivity getDefaultSensitivity() {
+        return defaultSensitivity;
     }
 
     TextPattern annotationClause(String annot, TextPatternTerm value) {

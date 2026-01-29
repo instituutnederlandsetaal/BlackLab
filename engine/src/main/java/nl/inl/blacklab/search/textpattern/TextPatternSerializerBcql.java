@@ -11,26 +11,20 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
-import nl.inl.blacklab.search.matchfilter.MatchFilterAnd;
+import nl.inl.blacklab.search.matchfilter.ConstraintValue;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueString;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
-import nl.inl.blacklab.search.matchfilter.MatchFilterEquals;
-import nl.inl.blacklab.search.matchfilter.MatchFilterFunctionCall;
-import nl.inl.blacklab.search.matchfilter.MatchFilterImplication;
-import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
-import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
-import nl.inl.blacklab.search.matchfilter.MatchFilterSameTokens;
-import nl.inl.blacklab.search.matchfilter.MatchFilterString;
-import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
-import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotationEqualsString;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 import nl.inl.util.StringUtil;
 
 /**
- * Serialize a TextPattern (back) to a CorpusQL query.
+ * Serialize a TextPattern (back) to a BCQL query.
  */
-public class TextPatternSerializerCql {
+public class TextPatternSerializerBcql {
 
-    private TextPatternSerializerCql() {
+    private TextPatternSerializerBcql() {
     }
 
     public static String serialize(TextPatternStruct pattern) {
@@ -51,16 +45,10 @@ public class TextPatternSerializerCql {
         nodeSerializer.serialize(pattern, b, parenthesizeIfNecessary, insideTokenBrackets);
     }
 
-    private static void serializeRegexOrTerm(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
-            boolean insideTokenBrackets) {
-        handleRegexOrTerm(pattern, b, insideTokenBrackets, false);
-    }
-
     private static void handleRegexOrTerm(TextPatternStruct pattern, StringBuilder b, boolean insideTokenBrackets,
             boolean negate) {
         String className = pattern.getClass().getSimpleName();
         boolean isRegexPattern = pattern instanceof TextPatternRegex;
-        boolean isIntRange = pattern instanceof TextPatternIntRange;
         TextPatternTerm tp = (TextPatternTerm) pattern;
         String annotation = tp.getAnnotation();
         if (negate && annotation == null)
@@ -68,27 +56,19 @@ public class TextPatternSerializerCql {
         MatchSensitivity sensitivity = tp.getSensitivity();
         if (sensitivity != null)
             throw new UnsupportedOperationException("Cannot serialize " + className + " with sensitivity to CQL");
-        String optOpenBracket = insideTokenBrackets ? "" : "[";
-        String optCloseBracket = insideTokenBrackets ? "" : "]";
+//        String optOpenBracket = insideTokenBrackets ? "" : "[";
+//        String optCloseBracket = insideTokenBrackets ? "" : "]";
         if (annotation != null)
-            b.append(optOpenBracket).append(annotation).append(negate ? "!" : "").append("=");
-        if (isIntRange) {
-            // Integer range, e.g. [number=in[1,5]]
-            TextPatternIntRange tpIntRange = (TextPatternIntRange) tp;
-            int min = tpIntRange.getMin();
-            int max = tpIntRange.getMax();
-            b.append("in[").append(min).append(",").append(max).append("]");
-        } else {
-            // Regular regex or literal, e.g. [word="the"]
-            String value = tp.getValue();
-            if (!isRegexPattern) {
-                // We're looking for an exact value, which may include regex characters.
-                value = StringUtil.escapeLuceneRegexCharacters(value);
-            }
-            serializeToQuotedString(b, value);
+            b/*.append(optOpenBracket)*/.append(annotation).append(negate ? "!" : "").append("=");
+        // Regular regex or literal, e.g. [word="the"]
+        String value = tp.getValue();
+        if (!isRegexPattern) {
+            // We're looking for an exact value, which may include regex characters.
+            value = StringUtil.escapeLuceneRegexCharacters(value);
         }
-        if (annotation != null)
-            b.append(optCloseBracket);
+        serializeToQuotedString(b, value);
+//        if (annotation != null)
+//            b.append(optCloseBracket);
     }
 
     interface NodeSerializer {
@@ -147,7 +127,7 @@ public class TextPatternSerializerCql {
         });
 
         // EXPANSION
-        cqlSerializers.put(TextPatternExpansion.class, TextPatternSerializerCql::serializeExpansion);
+        cqlSerializers.put(TextPatternExpansion.class, TextPatternSerializerBcql::serializeExpansion);
 
         // NOT
         cqlSerializers.put(TextPatternNot.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
@@ -173,19 +153,14 @@ public class TextPatternSerializerCql {
         });
 
         // POSFILTER
-        cqlSerializers.put(TextPatternPositionFilter.class, TextPatternSerializerCql::serializePosFilter);
+        cqlSerializers.put(TextPatternPositionFilter.class, TextPatternSerializerBcql::serializePosFilter);
 
         // OVERLAPPING
-        cqlSerializers.put(TextPatternOverlapping.class, TextPatternSerializerCql::serializeOverlapping);
+        cqlSerializers.put(TextPatternOverlapping.class, TextPatternSerializerBcql::serializeOverlapping);
 
         // QUERYFUNCTION
-        cqlSerializers.put(TextPatternQueryFunction.class, TextPatternSerializerCql::serializeFuncCall);
+        cqlSerializers.put(TextPatternFunctionCall.class, TextPatternSerializerBcql::serializeFuncCall);
 
-        // INTRANGE
-        cqlSerializers.put(TextPatternIntRange.class, TextPatternSerializerCql::serializeRegexOrTerm);
-
-        // REGEX
-        cqlSerializers.put(TextPatternRegex.class, TextPatternSerializerCql::serializeRegexOrTerm);
 
         // Relation match (parent + children)
         cqlSerializers.put(TextPatternRelationMatch.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
@@ -285,69 +260,63 @@ public class TextPatternSerializerCql {
             b.append(optCapture).append("<").append(slashBefore).append(tp.getElementNameRegex()).append(optAttr).append(slashAfter).append(">");
         });
 
+        // REGEX
+        cqlSerializers.put(TextPatternRegex.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            serializeOptBrackets(pattern, b, parenthesizeIfNecessary, insideTokenBrackets,
+                    (parenthesize, brackets) -> {
+                handleRegexOrTerm(pattern, b, brackets, false);
+            });
+        });
+
         // TERM
-        cqlSerializers.put(TextPatternTerm.class, TextPatternSerializerCql::serializeRegexOrTerm);
-
-        // MatchFilter AND
-        cqlSerializers.put(MatchFilterAnd.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            infix(b, parenthesizeIfNecessary, insideTokenBrackets, " & ", ((MatchFilterAnd) pattern).getClauses());
+        cqlSerializers.put(TextPatternTerm.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            serializeOptBrackets(pattern, b, parenthesizeIfNecessary, insideTokenBrackets,
+                    (parenthesize, brackets) -> {
+                        handleRegexOrTerm(pattern, b, brackets, false);
+                    });
         });
 
-        // MatchFilter compare
-        cqlSerializers.put(MatchFilterCompare.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            MatchFilterCompare tp = (MatchFilterCompare) pattern;
-            infix(b, parenthesizeIfNecessary, insideTokenBrackets, " " + tp.getOperator() + " ", tp.getClauses());
+        // TextPattern compare
+        cqlSerializers.put(TextPatternCompare.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            TextPatternCompare tp = (TextPatternCompare) pattern;
+            TextPattern left = tp.getLeftClause();
+            if (left instanceof TextPatternDefaultValue) {
+                // Special case: a top-level string in BCQL is comparing with the default annotation
+                // (i.e. "cow" means [word="cow"])
+                if (tp.operator == MatchFilterCompare.Operator.EQUAL && tp.getRightClause() instanceof TextPatternValue tpv &&
+                        tpv.getValue() instanceof ConstraintValueString cvs) {
+                    handleRegexOrTerm(new TextPatternRegex(cvs.getValue()), b, insideTokenBrackets, false);
+                } else {
+                    throw new UnsupportedOperationException("TextPatternCompare with default annotation is only allowed with = and a string value");
+                }
+            } else {
+                serializeOptBrackets(pattern, b, parenthesizeIfNecessary, insideTokenBrackets,
+                        (parenthesize, brackets) -> {
+                            infix(b, parenthesizeIfNecessary, insideTokenBrackets, " " + tp.getOperator() + " ",
+                                    List.of(tp.getLeftClause(), tp.getRightClause()));
+                        });
+            }
         });
 
-        // MatchFilter equals
-        cqlSerializers.put(MatchFilterEquals.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            infix(b, parenthesizeIfNecessary, insideTokenBrackets, " = ", ((MatchFilterEquals) pattern).getClauses());
+        // TextPattern implication
+        cqlSerializers.put(TextPatternImplication.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            serializeOptBrackets(pattern, b, parenthesizeIfNecessary, insideTokenBrackets,
+                    (parenthesize, brackets) -> {
+                        TextPatternImplication tp = (TextPatternImplication) pattern;
+                        infix(b, parenthesizeIfNecessary, insideTokenBrackets, " -> ", List.of(tp.getAntecedent(), tp.getConsequent()));
+                    });
         });
 
-        // MatchFilter funccall
-        cqlSerializers.put(MatchFilterFunctionCall.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            MatchFilterFunctionCall tp = (MatchFilterFunctionCall) pattern;
-            b.append(tp.getName() + "(" + tp.getCapture() + ")");
+        // TextPattern value
+        cqlSerializers.put(TextPatternValue.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            TextPatternValue tp = (TextPatternValue) pattern;
+            serializeConstraintValue(b, tp.getValue());
         });
 
-        // MatchFilter implication
-        cqlSerializers.put(MatchFilterImplication.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            MatchFilterImplication tp = (MatchFilterImplication) pattern;
-            infix(b, parenthesizeIfNecessary, insideTokenBrackets, " -> ", tp.getClauses());
-        });
-
-        // MatchFilter NOT
-        cqlSerializers.put(MatchFilterNot.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            b.append("!");
-            serialize(((MatchFilterNot)pattern).getClause(), b, parenthesizeIfNecessary, insideTokenBrackets);
-        });
-
-        // MatchFilter OR
-        cqlSerializers.put(MatchFilterOr.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            infix(b, parenthesizeIfNecessary, insideTokenBrackets, " | ", ((MatchFilterOr)pattern).getClauses());
-        });
-
-        // MatchFilter same tokens
-        cqlSerializers.put(MatchFilterSameTokens.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            throw new UnsupportedOperationException("Cannot serialize MatchFilterSameTokens to CQL");
-        });
-
-        // MatchFilter string
-        cqlSerializers.put(MatchFilterString.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            MatchFilterString tp = (MatchFilterString) pattern;
-            serializeToQuotedString(b, tp.getValue());
-        });
-
-        // MatchFilter token annotation
-        cqlSerializers.put(MatchFilterTokenAnnotation.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            MatchFilterTokenAnnotation tp = (MatchFilterTokenAnnotation) pattern;
-            b.append(tp.getGroupName()).append(".").append(tp.getAnnotationName());
-        });
-
-        // MatchFilter token annotation equals string
-        cqlSerializers.put(MatchFilterTokenAnnotationEqualsString.class,
-                (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
-            throw new UnsupportedOperationException("Cannot serialize MatchFilterTokenAnnotationEqualsString to CQL");
+        // TextPattern token annotation
+        cqlSerializers.put(TextPatternPropertySelect.class, (pattern, b, parenthesizeIfNecessary, insideTokenBrackets) -> {
+            TextPatternPropertySelect tp = (TextPatternPropertySelect) pattern;
+            infix(b, parenthesizeIfNecessary, insideTokenBrackets, ".", List.of(tp.getLabel(), tp.getAnnotation()));
         });
     }
 
@@ -400,9 +369,9 @@ public class TextPatternSerializerCql {
 
     private static void serializeFuncCall(TextPatternStruct pattern, StringBuilder b, boolean parenthesizeIfNecessary,
             boolean insideTokenBrackets) {
-        if (insideTokenBrackets)
-            throw new UnsupportedOperationException("Cannot serialize TextPatternQueryFunction inside brackets to CQL");
-        TextPatternQueryFunction tp = (TextPatternQueryFunction) pattern;
+//        if (insideTokenBrackets)
+//            throw new UnsupportedOperationException("Cannot serialize TextPatternQueryFunction inside brackets to CQL");
+        TextPatternFunctionCall tp = (TextPatternFunctionCall) pattern;
         b.append(tp.getName()).append("(");
         boolean first = true;
         for (Object arg: tp.getArgs()) {
@@ -461,14 +430,25 @@ public class TextPatternSerializerCql {
     /** Use double quotes for CQL */
     private static final String USE_QUOTE = "\"";
 
+    private static StringBuilder serializeConstraintValue(StringBuilder b, ConstraintValue cv) {
+        if (cv instanceof ConstraintValueString s)
+            return serializeToQuotedString(b, s.getValue());
+        else if (cv instanceof ConstraintValueSymbol cvs)
+            return b.append(cvs.getValue());
+        else if (cv instanceof ConstraintValueIntRange cvir)
+            return b.append("in[").append(cvir.getMin()).append(",").append(cvir.getMax()).append("]");
+        else
+            return b.append(cv.getValue().toString());
+    }
+
     private static StringBuilder serializeToQuotedString(StringBuilder b, String value) {
         return b.append(USE_QUOTE).append(StringUtil.escapeQuote(value, USE_QUOTE)).append(USE_QUOTE);
     }
 
-    private static String serializeAttributes(Map<String, MatchValue> attr) {
+    private static String serializeAttributes(Map<String, TextPattern> attr) {
         return attr.entrySet().stream()
                 .map(e -> {
-                    return e.getKey() + "=" + e.getValue().getBcql();
+                    return e.getKey() + "=" + serialize(e.getValue());
                 })
                 .collect(Collectors.joining(" "));
     }
@@ -478,11 +458,16 @@ public class TextPatternSerializerCql {
         if (parenthesize)
             b.append("(");
         boolean first = true;
+        boolean isConstrainOperator = operator.matches("\\s*::\\s*");
         for (TextPatternStruct clause: clauses) {
             if (!first)
                 b.append(operator);
+
+            // never add [brackets] to the constraint on the right side of ::
+            boolean isConstraint = isConstrainOperator && !first;
+
+            serialize(clause, b, true, insideTokenBrackets || isConstraint);
             first = false;
-            serialize(clause, b, true, insideTokenBrackets);
         }
         if (parenthesize)
             b.append(")");

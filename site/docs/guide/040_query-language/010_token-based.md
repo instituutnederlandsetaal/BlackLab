@@ -216,7 +216,6 @@ Note that in special cases where more than one punctuation mark is indexed with 
 
 Note that `punctBefore` and `punctAfter` look like annotations when used in the query, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index.
 
-
 ## Spans
 
 Your input data may contains "spans": marked regions of text, such as paragraphs, sentences, named entities, etc. If your input data is XML these may be XML elements, but they may also be marked in other ways. Non-XML formats may also define spans.
@@ -340,12 +339,6 @@ You can capture multiple words as well:
 
 This will capture the adjectives found for each match in a captured group named _adjectives_.
 
-The capture name can also just be a number:
-
-```
-"an?|the" 1:[pos="ADJ"]+ "man"
-```
-
 <!--
 ::: details Compared to other corpus engines
 CWB and Sketch Engine offer similar functionality, but instead of capturing part of the match, they label a single token.
@@ -415,3 +408,107 @@ A:[] ("and" B:[] :: A.word = B.word) "again"   # BAD
 ```
 
 
+## Functions
+
+BCQL supports a number of useful functions. Some functions produce queries as output, which you can use as part of a larger query; others produce values that you can pass to other functions.
+
+Some of these functions exist in some form in other dialects of Corpus Query Language.
+
+Functions to do with relations search are described [there](./relations.html).
+
+### meet: nearby words
+
+You can use the `meet` function to filter matches based on the presence of other words nearby. For example, to find all occurrences of the word _cat_ that are within 5 tokens of the word _fluffy_ (before or after), you can use:
+
+```
+meet("cat", "fluffy", -5, 5)
+```
+
+To find occurrences of the phrase _black dog_ with the word _good_ occurring up to 10 tokens before it, use:
+
+```
+meet("black" "dog", "good", -10, -1)
+```
+
+To find occurrences of the word _fish_ with the phrase _in water_ occurring between 2 and 5 tokens after it:
+
+```
+meet("fish", "in" "water", 2, 5)
+```
+
+::: details How `meet` works
+
+The `meet` function was inspired by the function with the same name in the [Sketch Engine](https://www.sketchengine.eu/documentation/cql-meet-union/).
+
+Note that the `meet` function is just syntactic sugar for a "regular" BCQL query. For example, the last example is equivalent to:
+
+```
+"fish" (?= [] ([]{4,4} containing "in" "water") )
+```
+
+(read as: find those occurrences of _fish_ that are followed by any token, followed by exactly 4 tokens that contain the phrase _in water_)
+
+:::
+
+### union: combine matches
+
+The `union` function allows you to combine matches from a list of queries into a single result set. For example, to find all occurrences of either _fluffy cat_ or _good dog_, use:
+
+```
+union("fluffy" "cat", "good" "dog")
+```
+
+This is equivalent to the following query using the OR operator (`|`):
+
+```
+"fluffy" "cat" | "good" "dog"
+```
+
+The function is provided for those familiar with it from other corpus query languages.
+
+### list: list of values
+
+Some functions take a list of values as input. You can create such a list using the `list` function. For example, to pass multiple clauses to the `union` function, you could use:
+
+```
+union(list("cat", "dog"))
+```
+
+Note that you won't need `list()` to pass the function's final (or in this, only) parameter: anytime the final parameter to a function is of type list, you can simply pass a variable number of arguments and they will automatically be combined into a list. For example:
+
+```
+union("one", "two", "three")  # same as union(list("one", "two", "three"))
+```
+
+
+### str: interpret as string
+
+A quoted string in BCQL can be interpreted as either a string or a token query, depending on the context. For example, `"duck"` might mean `[word="duck"]` (a query), or it might just mean the simple string value. When building a list of strings, BlackLab doesn't know which one you mean, so you need to explicitly tell it. For example, to create a list of strings _cat_ and _dog_, use:
+
+```
+list(str("cat"), str("dog"))
+```
+
+note that this is different from
+
+```
+list("cat", "dog")
+```
+
+which will create a list of token queries.
+
+### symbol: interpret as a symbol
+
+To specify a symbol (e.g. an annotation) using a string:
+
+```
+[ symbol("word") = "cow" ]
+```
+
+is equivalent to
+
+```
+[ word = "cow" ]
+```
+
+For now, this mostly exists to prove that functions can return symbols, but it might prove useful in rare cases in the future. 

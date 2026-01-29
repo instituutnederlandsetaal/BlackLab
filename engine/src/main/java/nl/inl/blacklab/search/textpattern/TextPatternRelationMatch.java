@@ -45,7 +45,7 @@ public class TextPatternRelationMatch extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         if (children.isEmpty())
             throw new InvalidQuery("Relation match has no children");
         if (children.get(0).getOperatorInfo().isAlignment()) {
@@ -59,7 +59,7 @@ public class TextPatternRelationMatch extends TextPattern {
 
     private BLSpanQuery createAlignmentQuery(QueryExecutionContext context) throws InvalidQuery {
         assert parent != null;
-        BLSpanQuery source = TextPatternDefaultValue.replaceWithAnyToken(parent).translate(context);
+        BLSpanQuery source = TextPatternDefaultValue.replaceWithAnyToken(parent).toQuery(context);
         List<SpanQueryCaptureRelationsBetweenSpans.Target> targets = new ArrayList<>();
         for (RelationTarget child: children) {
             targets.add(alignmentTarget(child, context));
@@ -82,7 +82,7 @@ public class TextPatternRelationMatch extends TextPattern {
         // replace _ with any ngram
         TextPattern targetNoDefVal = TextPatternDefaultValue.replaceWithAnyToken(target.getTarget());
         QueryExecutionContext targetContext = context.withDocVersion(opInfo.getTargetVersion());
-        BLSpanQuery targetQuery = targetNoDefVal.translate(targetContext);
+        BLSpanQuery targetQuery = targetNoDefVal.toQuery(targetContext);
 
         return SpanQueryCaptureRelationsBetweenSpans.Target.get(
                 context.queryInfo(), context.withRelationAnnotation().luceneFieldRef(), targetQuery,
@@ -94,7 +94,7 @@ public class TextPatternRelationMatch extends TextPattern {
         List<BLSpanQuery> clauses = new ArrayList<>();
         if (parent != null) { // might be a root relation operator, which has no parent
             BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
-                    .translate(context);
+                    .toQuery(context);
             clauses.add(translatedParent);
         }
         for (RelationTarget child: children) {

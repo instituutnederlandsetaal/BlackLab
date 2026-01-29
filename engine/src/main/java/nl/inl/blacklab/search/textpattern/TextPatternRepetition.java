@@ -4,14 +4,11 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
-import nl.inl.blacklab.util.ObjectSerializationWriter;
 
 /**
  * Repetition of a pattern.
  */
 public class TextPatternRepetition extends TextPattern {
-
-    private ObjectSerializationWriter writer;
 
     public static TextPattern get(TextPattern clause, int min, int max) {
         if (min == 0 && max == 0)
@@ -33,15 +30,15 @@ public class TextPatternRepetition extends TextPattern {
         this.max = max == -1 ? MAX_UNLIMITED : max;
         if (min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0 || this.max < 0)
+        if (min < 0)
             throw new IllegalArgumentException("min or max can't be negative");
         if (min == max && (min == 0 || min == 1))
             throw new IllegalArgumentException("not really a repetition (min == max == " + min + ")");
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        BLSpanQuery baseTranslated = clause.translate(context);
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        BLSpanQuery baseTranslated = clause.toQuery(context);
 
         if (min == 1 && max == 1)
             return baseTranslated; // no repetition

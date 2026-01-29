@@ -27,7 +27,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     @Override
     public String toString() {
-        return groupName + "." + annotationName;
+        return "TOK_ANNOT(" + groupName + ", " + annotationName + ")";
     }
 
     @Override
@@ -98,7 +98,7 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
         return mf.withField(field);
     }
 
-    public MatchFilter matchOtherTokenSameProperty(String otherGroupName, MatchSensitivity sensitivity) {
+    public MatchFilter matchOtherTokenSameAnnotation(String otherGroupName, MatchSensitivity sensitivity) {
         return new MatchFilterSameTokens(groupName, otherGroupName, annotationName, sensitivity);
     }
 
@@ -108,13 +108,5 @@ public class MatchFilterTokenAnnotation extends MatchFilter {
 
     public String getGroupName() {
         return groupName;
-    }
-
-    public String getCapture() {
-        return groupName;
-    }
-
-    public String getAnnotation() {
-        return annotationName;
     }
 }

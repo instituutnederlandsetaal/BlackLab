@@ -11,8 +11,11 @@ import org.junit.Test;
 
 import nl.inl.blacklab.mocks.MockBlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPatternCompare;
+import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
+import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -40,7 +43,8 @@ public class TestBlsUtils {
 
     @Test
     public void testParsePatt() throws BlsException {
-        TextPattern pattThe = new TextPatternRegex("the");
+        TextPattern pattThe = new TextPatternCompare(TextPatternDefaultValue.get(), TextPatternValue.fromObject("the"),
+                MatchFilterCompare.Operator.EQUAL);
         Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "bcql"));
     }
 

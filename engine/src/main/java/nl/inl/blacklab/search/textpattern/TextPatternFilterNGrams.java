@@ -35,8 +35,8 @@ public class TextPatternFilterNGrams extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryFilterNGrams(clause.translate(context), operation, min, max, 0, 0);
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        return new SpanQueryFilterNGrams(clause.toQuery(context), operation, min, max, 0, 0);
     }
 
     @Override

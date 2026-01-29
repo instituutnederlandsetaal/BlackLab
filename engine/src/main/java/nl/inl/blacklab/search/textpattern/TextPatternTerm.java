@@ -41,15 +41,15 @@ public class TextPatternTerm extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
         // Rewrite pseudo-annotation to extension function call
         TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, true);
         if (rewrittenPseudoAnnot != null)
-            return rewrittenPseudoAnnot.translate(context);
+            return rewrittenPseudoAnnot.toQuery(context);
 
         context = context.withAnnotationAndSensitivity(annotation, sensitivity);
         return new BLSpanTermQuery(context.queryInfo(), new Term(context.luceneField(),
-                context.optDesensitize(optInsensitive(context, value))));
+                context.optDesensitize(context.optDesensitize(value))));
     }
 
     /**
@@ -67,7 +67,8 @@ public class TextPatternTerm extends TextPattern {
             String functionName = QueryExtensions.pseudoAnnotationFunctionName(annotation);
             if (QueryExtensions.exists(functionName)) {
                 String regex = convertToRegex ? StringUtil.escapeLuceneRegexCharacters(value) : value;
-                rewrittenPseudoAnnot = new TextPatternQueryFunction(functionName, List.of(regex));
+                TextPatternValue tpRegex = TextPatternValue.fromObject(regex);
+                rewrittenPseudoAnnot = new TextPatternFunctionCall(functionName, List.of(tpRegex));
             }
         }
         return rewrittenPseudoAnnot;

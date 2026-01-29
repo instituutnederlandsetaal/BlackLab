@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -298,7 +298,7 @@ public class WebserviceRequestHandler {
                 try {
                     TextPattern tp = params.pattern().orElse(null);
                     try {
-                        ds.entry(ResponseStreamer.KEY_BCQL, TextPatternSerializerCql.serialize(tp));
+                        ds.entry(ResponseStreamer.KEY_BCQL, TextPatternSerializerBcql.serialize(tp));
                     } catch (Exception e) {
                         ds.entry("corpusql-error", e.getMessage());
                     }

@@ -2,23 +2,21 @@
 
 These functions can be useful when debugging BCQL queries. They allow you to create queries that might not be easily expressible in regular BCQL.
 
-NOTE: BCQL functions currently only support query and string arguments. Wherever e.g. a number or boolean is expected, you must enclose it in quotes.
-
 # `_adjust`
 
-    _adjust(query, startAdjust, endAdjust)
+    _adjust(query, startAdjust: int, endAdjust: int)
 
 will adjust the start and end of the hits from `query` by `startAdjust` and `endAdjust` tokens respectively. Negative numbers are allowed.
 
 Example:
 
-    _adjust('word' 'for' 'word', '1', '-1')
+    _adjust('word' 'for' 'word', 1, -1)
 
 will adjust the hits from the query to only match the word _for_ between the two occurrences of _word_.
 
 # `_edge`
 
-    _edge(query, whichEdge)
+    _edge(query, whichEdge: string)
 
 will only return either the starts or ends of hits as 0-length hits.
 
@@ -28,17 +26,19 @@ Example: if `query` matches a hit with start 3 and end 5, `_edge(query, 'trailin
 
 # `_fixed`
 
-    _fixed(start, end)
+    _fixed(start: int, end: int)
+
+will return a hit in every document starting and ending at the specified token offsets.
 
 # `_fimatch`
 
-    _fimatch(query1, query2, fiClause)
+    _fimatch(query1, query2, fiClause: int)
 
-will resolve a sequence query (`query1` followed by `query2`) using forward index matching. Set `fiClause` to `'0'` to match the first clause using the forward index (the default). Set it to `'1'` for the second clause.
+will resolve a sequence query (`query1` followed by `query2`) using forward index matching. Set `fiClause` to `0` to match the first clause using the forward index (the default). Set it to `1` for the second clause.
 
 Example:
 
-    _fimatch('clear', 'water', '1')
+    _fimatch('clear', 'water', 1)
 
 will use the reverse index to find the word _clear_,
 then use the forward index to verify that it is followed by the word _water_.
@@ -51,7 +51,7 @@ will return the query unchanged.
 
 # `_indoc`
 
-    _indoc(query, docId)
+    _indoc(query, docId: int)
 
 will only return hits from `query` that occur in the document with id `docId`.
 
@@ -59,30 +59,30 @@ will only return hits from `query` that occur in the document with id `docId`.
 
 Example:
 
-    _indoc('water', '0')
+    _indoc('water', 0)
 
 Find _water_ in the document with docId 0.
 
 # `_lenfilter`
 
-    _lenfilter(query, minLength, maxLength)
+    _lenfilter(query, minLength: int, maxLength: int)
 
 will filter `query` hits by length. `minLength` and `maxLength` are inclusive.
 
 Example:
 
-    _lenfilter(<s/>, '1', '3')
+    _lenfilter(<s/>, 1, 3)
 
 will find sentences with lengths between 1 and 3 tokens.
 # `_posfilter`
 
-    _posfilter(producer, filter, operation, invert)
+    _posfilter(producer, filter, operation: string, invert: boolean)
 
 will filter `producer` hits using the `filter` query. `operation` may be `matches`, `contains`, `within`, `starts_at`, `ends_at`, `containing_at_start`, or `containing_at_end`. If `invert` is set to `true`, the filter will be inverted.
 
 Example:
 
-    _posfilter([lemma='water'], [pos='NOU'], 'matches', 'false')
+    _posfilter([lemma='water'], [pos='NOU'], 'matches', false)
 
 will return hits `[lemma='water]` that DON'T match a hit from `[pos='NOU']`.
 

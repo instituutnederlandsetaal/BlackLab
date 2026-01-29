@@ -30,8 +30,8 @@ public class TextPatternOverlapping extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryOverlapping(left.translate(context), right.translate(context),
+    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+        return new SpanQueryOverlapping(left.toQuery(context), right.toQuery(context),
                 operation);
     }
 

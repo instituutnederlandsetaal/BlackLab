@@ -1,10 +1,12 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import nl.inl.blacklab.plugins.ExprType;
+
 public class ConstraintValueBoolean extends ConstraintValue {
 
-    static final ConstraintValue FALSE = new ConstraintValueBoolean(false);
+    public static final ConstraintValueBoolean FALSE = new ConstraintValueBoolean(false);
 
-    static final ConstraintValue TRUE = new ConstraintValueBoolean(true);
+    public static final ConstraintValueBoolean TRUE = new ConstraintValueBoolean(true);
 
     private final boolean b;
 
@@ -47,5 +49,20 @@ public class ConstraintValueBoolean extends ConstraintValue {
         if (other instanceof ConstraintValueBoolean)
             return Boolean.compare(b, ((ConstraintValueBoolean) other).b);
         throw new IllegalArgumentException("Can only compare equal types! Tried to compare bool to " + other.getClass().getName());
+    }
+
+    @Override
+    public Boolean getValue() {
+        return b;
+    }
+
+    @Override
+    public ExprType getType() {
+        return ExprType.BOOLEAN;
+    }
+
+    @Override
+    public ConstraintValueString asString() {
+        return new ConstraintValueString(Boolean.toString(b));
     }
 }

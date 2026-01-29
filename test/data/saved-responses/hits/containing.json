@@ -522,8 +522,19 @@
         "bcqlFragment": "<u/> containing \"good\"",
         "filter": {
           "bcqlFragment": "\"good\"",
-          "type": "regex",
-          "value": "good"
+          "clauses": [
+            {
+              "bcqlFragment": "_",
+              "type": "defval"
+            },
+            {
+              "bcqlFragment": "\"good\"",
+              "type": "string",
+              "value": "good"
+            }
+          ],
+          "operation": "=",
+          "type": "compare"
         },
         "operation": "containing",
         "producer": {

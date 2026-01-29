@@ -34,10 +34,9 @@ public class InputFormatInfoWithConfigLazy implements InputFormatInfo {
                 delegateInputFormat = new InputFormatInfoWithConfig(formatIdentifier, formatFile);
             } catch (InvalidInputFormatConfig e) {
                 errorMessage = e.getMessage();
+                throw e;
             }
         }
-        if (errorMessage != null)
-            throw new IllegalStateException("Input format " + formatIdentifier + " is not valid: " + errorMessage);
         return delegateInputFormat;
     }
 

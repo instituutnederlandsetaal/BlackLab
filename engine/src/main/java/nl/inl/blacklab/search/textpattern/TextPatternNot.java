@@ -4,8 +4,8 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
+import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
 
 /**
  * NOT operator for TextPattern queries at token and sequence level. Really only
@@ -21,8 +21,12 @@ public class TextPatternNot extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryNot(clause.translate(context));
+    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+        if (context.isInConstraint()) {
+            return new MatchFilterNot(clause.toMatchFilter(context));
+        } else {
+            return new SpanQueryNot(clause.toQuery(context));
+        }
     }
 
     @Override

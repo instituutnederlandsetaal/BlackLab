@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -177,7 +179,7 @@ public class XFRelations implements ExtensionFunctionClass {
                 Arrays.asList(".+", QueryFunction.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
                 XFRelations::rel);
 
-        QueryExtensions.register(new QueryFunction("rmatch", QueryFunction.ARGS_VAR_Q,
+        QueryExtensions.register(new QueryFunction("rmatch", List.of(ExprType.LIST),
                 List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM), false) {
             /**
              * Perform an AND operation with the additional requirement that clauses match unique relations.
@@ -190,7 +192,11 @@ public class XFRelations implements ExtensionFunctionClass {
             protected BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
                 if (parameters.isEmpty())
                     throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
-                List<BLSpanQuery> tps = parameters.stream().map(o -> (BLSpanQuery)o).toList();
+                List<BLSpanQuery> tps = ((List<?>)parameters.get(0)).stream().map(o -> {
+                    if (o instanceof BLSpanQuery p)
+                        return p;
+                    throw new InvalidQuery("Non-query parameter to rmatch(): " + o);
+                }).toList();
                 return TextPatternRelationMatch.createRelMatchQuery(context, tps);
             }
         });

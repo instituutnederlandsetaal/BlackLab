@@ -67,7 +67,7 @@ import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternSerializerCql;
+import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BadRequest;
@@ -378,7 +378,7 @@ public class ResponseStreamer {
                 ds.entry(KEY_JSON, textPattern);
             }
             try {
-                ds.entry(KEY_BCQL, TextPatternSerializerCql.serialize(textPattern));
+                ds.entry(KEY_BCQL, TextPatternSerializerBcql.serialize(textPattern));
             } catch (Exception e) {
                 // some queries cannot be serialized to CQL;
                 // that's okay, just leave it out

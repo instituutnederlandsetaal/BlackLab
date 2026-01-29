@@ -156,8 +156,19 @@
         "clauses": [
           {
             "bcqlFragment": "\"one\"",
-            "type": "regex",
-            "value": "one"
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"one\"",
+                "type": "string",
+                "value": "one"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
           },
           {
             "bcqlFragment": "A:[]",

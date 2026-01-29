@@ -188,7 +188,7 @@ import org.apache.lucene.queries.spans.SpanTermQuery
 
 class QueryFunctionOrReverse extends QueryFunction {
     QueryFunctionOrReverse() {
-        super("orReverse", ARGS_S, Arrays.asList(null), false)
+        super("orReverse", List.of(ArgType.STRING));
     }
 
     BLSpanQuery term(String field, String value) {
@@ -206,6 +206,14 @@ class QueryFunctionOrReverse extends QueryFunction {
 return new QueryFunctionOrReverse()
 ```
 
+Note that `QueryFunction.applyFunc()` is declared to return Object. Valid types to return are:
+- `BLSpanQuery` for span queries
+- `String` for string values
+- `Integer` for integer values
+- `Boolean` for boolean values
+- `List` for lists of values
+
+The same types can be used for the parameters as well, declared in the constructor.
 
 ### ProcessingInstruction
 

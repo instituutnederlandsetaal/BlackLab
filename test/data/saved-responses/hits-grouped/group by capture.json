@@ -140,8 +140,19 @@
         "clauses": [
           {
             "bcqlFragment": "\"a|the\"",
-            "type": "regex",
-            "value": "a|the"
+            "clauses": [
+              {
+                "bcqlFragment": "_",
+                "type": "defval"
+              },
+              {
+                "bcqlFragment": "\"a|the\"",
+                "type": "string",
+                "value": "a|the"
+              }
+            ],
+            "operation": "=",
+            "type": "compare"
           },
           {
             "bcqlFragment": "X:[]",

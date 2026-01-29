@@ -9,6 +9,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.matchfilter.ConstraintValue;
+import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
 import nl.inl.util.StringUtil;
 
 /**
@@ -40,17 +42,17 @@ public class TextPatternTags extends TextPattern {
 
     private final String elementNameRegex;
 
-    private final Map<String, MatchValue> attributes;
+    private final Map<String, TextPattern> attributes;
 
     private final Adjust adjust;
 
     private final String captureAs;
 
-    public TextPatternTags(String elementNameRegex, Map<String, MatchValue> attributes) {
+    public TextPatternTags(String elementNameRegex, Map<String, TextPattern> attributes) {
         this(elementNameRegex, attributes, Adjust.FULL_TAG, "");
     }
 
-    public TextPatternTags(String elementNameRegex, Map<String, MatchValue> attributes, Adjust adjust, String captureAs) {
+    public TextPatternTags(String elementNameRegex, Map<String, TextPattern> attributes, Adjust adjust, String captureAs) {
         this.elementNameRegex = elementNameRegex;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
         this.adjust = adjust == null ? Adjust.FULL_TAG : adjust;
@@ -62,13 +64,24 @@ public class TextPatternTags extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery translate(QueryExecutionContext context) {
+    public BLSpanQuery evaluate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
         context = context.withRelationAnnotation();
-        String optDesensitizedElNameRegex = optInsensitive(context, elementNameRegex);
+        String optDesensitizedElNameRegex = context.optDesensitize(elementNameRegex);
         Map<String, String> attrOptIns = new HashMap<>();
-        for (Map.Entry<String, MatchValue> e : attributes.entrySet()) {
-            attrOptIns.put(e.getKey(), optInsensitive(context, e.getValue().regex()));
+        for (Map.Entry<String, TextPattern> e : attributes.entrySet()) {
+            TextPattern tp = e.getValue();
+            Object o = tp.evaluate(context);
+            String regex;
+            if (o instanceof ConstraintValue cvs) {
+                if (o instanceof ConstraintValueIntRange cvir)
+                    regex = TextPatternCompare.regexForRange(cvir.getMin(), cvir.getMax());
+                else
+                    regex = cvs.asString().getValue();
+            } else {
+                throw new IllegalArgumentException("Attribute value must evaluate to a string or int range");
+            }
+            attrOptIns.put(e.getKey(), context.optDesensitize(regex));
         }
 
         // Use element name if no explicit name given. Keep only characters and add unique number if needed.
@@ -112,7 +125,7 @@ public class TextPatternTags extends TextPattern {
         return elementNameRegex;
     }
 
-    public Map<String, MatchValue> getAttributes() {
+    public Map<String, TextPattern> getAttributes() {
         return attributes;
     }
 

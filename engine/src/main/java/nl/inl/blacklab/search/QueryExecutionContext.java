@@ -14,17 +14,22 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
- * Represents the current "execution context" for executing a TextPattern query.
- * Inside a query, this context may change: a different annotation may be
+ * Represents the context while evaluating a TextPattern query.
+ *
+ * While evaluating a query, this context may change: a different annotation may be
  * "selected" to search in, the case sensitivity setting may change, etc. This
  * object is passed to the translation methods and keeps track of this context.
+ *
+ * The context also keeps track of whether we're in the query part or the
+ * constraint part (after :: ), as this affects what object type the patterns
+ * evaluate to (BLSpanQuery vs MatchFilter).
  */
 public class QueryExecutionContext {
 
     public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation,
             MatchSensitivity matchSensitivity) {
         return new QueryExecutionContext(index, annotation.field().name(), null, annotation.name(),
-                matchSensitivity, null, null);
+                matchSensitivity, null, null, false);
     }
 
     /** The index object, representing the BlackLab index */
@@ -63,6 +68,9 @@ public class QueryExecutionContext {
     /** Registered capture names */
     private final Set<String> captures;
 
+    /** Are we currently in a constraint (e.g. after :: )? */
+    boolean inConstraint;
+
     /**
      * Construct a query execution context object.
      *
@@ -75,7 +83,7 @@ public class QueryExecutionContext {
      * @param captures unique capture names assigned so far
      */
     private QueryExecutionContext(BlackLabIndex index, String fieldName, String version, String annotationName,
-            MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures) {
+            MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint) {
         this.index = index;
         this.fieldName = version == null ? fieldName :
                 AnnotatedFieldNameUtil.changeParallelFieldVersion(fieldName, version);
@@ -91,6 +99,7 @@ public class QueryExecutionContext {
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
+        this.inConstraint = inConstraint;
         queryInfo = QueryInfo.create(index, field);
     }
 
@@ -100,7 +109,7 @@ public class QueryExecutionContext {
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
         return new QueryExecutionContext(index, fieldName, version, annotation.name(), matchSensitivity,
-                defaultRelationClass, captures);
+                defaultRelationClass, captures, inConstraint);
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
@@ -130,7 +139,7 @@ public class QueryExecutionContext {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
         return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
-                defaultRelationClass, captures);
+                defaultRelationClass, captures, inConstraint);
     }
 
     /**
@@ -143,13 +152,13 @@ public class QueryExecutionContext {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
         return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
-                relClass, captures);
+                relClass, captures, inConstraint);
     }
 
     public String optDesensitize(String value) {
         return sensitivity.sensitivity().desensitize(value);
     }
-    
+
     /**
      * Return sensitivity to use.
      *
@@ -193,7 +202,7 @@ public class QueryExecutionContext {
     /**
      * Returns the correct current Lucene field name to use, based on the annotated
      * field name, annotation name and list of alternatives.
-     * 
+     *
      * @return null if field, annotation or alternative not found; valid Lucene field
      *         name otherwise
      */
@@ -225,7 +234,7 @@ public class QueryExecutionContext {
 
     /**
      * Return the annotated field we're searching.
-     * 
+     *
      * @return annotated field
      */
     public AnnotatedField field() {
@@ -245,5 +254,23 @@ public class QueryExecutionContext {
         }
         captures.add(capture);
         return capture;
+    }
+
+    /** Are we currently in a constraint (e.g. after :: )?
+     *
+     * TextPatterns before the :: will evaluate to BLSpanQueries,
+     * those after to MatchFilters. The first are used to find matches,
+     * the second to filter them.
+     */
+    public boolean isInConstraint() {
+        return inConstraint;
+    }
+
+    /** Get new context with inConstraint set to true */
+    public QueryExecutionContext withInConstraint() {
+        if (inConstraint)
+            return this;
+        return new QueryExecutionContext(index, fieldName, version, annotationName,
+                requestedSensitivity, defaultRelationClass, captures, true);
     }
 }

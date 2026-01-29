@@ -1,8 +1,10 @@
 package nl.inl.blacklab.search.matchfilter;
 
+import nl.inl.blacklab.plugins.ExprType;
+
 public class ConstraintValueUndefined extends ConstraintValue {
 
-    static final ConstraintValue INSTANCE = new ConstraintValueUndefined();
+    public static final ConstraintValue INSTANCE = new ConstraintValueUndefined();
 
     ConstraintValueUndefined() {
         // NOP
@@ -35,4 +37,13 @@ public class ConstraintValueUndefined extends ConstraintValue {
         return "undefined";
     }
 
+    @Override
+    public Object getValue() {
+        return null;
+    }
+
+    @Override
+    public ExprType getType() {
+        return ExprType.UNDEFINED;
+    }
 }
