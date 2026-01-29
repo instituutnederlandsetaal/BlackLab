@@ -23,7 +23,7 @@ If both are specified, the parameter has precedence.
 
 For CSV hits/docs results, the parameters `csvsummary` determines whether to include a summary of the search parameters in the output `[no]` and `csvsepline` determines whether to include a separator declaration that will help Microsoft Excel read the file `[no]`.
 
-`listvalues` can be a comma-separated list of annotations to include in the results. `listmetadatavalues` is the same for metadata fields. `listspanattributes` for span attributes (e.g. if your document has `<speech speaker="Joe">` tags, then `listspanattributes=speech.speaker` will include a column with the speaker of the matched text). 
+`listvalues` can be a comma-separated list of annotations to include in the results. `listmetadatavalues` is the same for metadata fields. `listspanattributes` for span attributes (e.g. if your document has `<speech speaker="Joe">` tags, then `listspanattributes=speech.speaker` will include a column with the speaker of the matched text). For each of these parameters, `*` means include all. 
 
 If a metadata field has multiple values (e.g. if a document has multiple authors), they will be concatenated with `|` as the separator. `|`, `\n`, `\r` and `\\` will be backslash-escaped.
 
