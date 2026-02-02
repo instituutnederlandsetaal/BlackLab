@@ -26,6 +26,7 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestRelations;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 
 @Path("{corpora:(corpora/)?}{corpusName : (?!input-formats\\b)[^/]+}")
@@ -73,7 +74,8 @@ public class CorpusResource {
             @PathParam("corpusName") String corpusName,
             @QueryParam("custom") @DefaultValue ("false") boolean customInfo,
             @QueryParam("listvalues") @DefaultValue("") String parListValuesFor,
-            @QueryParam("limitvalues") @DefaultValue("200") long limitValues) {
+            @QueryParam("limitvalues") @DefaultValue("200") long limitValues,
+            @QueryParam("relclasses") @DefaultValue("") String relClasses) {
         // TODO: apiVersion default from config
         Response response = null;
         if (StringUtils.isEmpty(corporaPath)) {
@@ -88,17 +90,19 @@ public class CorpusResource {
         }
         if (response == null) {
             // Actually a corpus name, so get the corpus info.
-            response = getCorpusInfo(corporaPath, strApiVersion, corpusName, customInfo, parListValuesFor, limitValues);
+            response = getCorpusInfo(corporaPath, strApiVersion, corpusName, customInfo, parListValuesFor, limitValues,
+                    relClasses);
         }
         return response;
     }
 
     private Response getCorpusInfo(String corporaPath, String strApiVersion, String corpusName, boolean customInfo,
-            String parListValuesFor, long limitValues) {
+            String parListValuesFor, long limitValues, String relClasses) {
         User user = User.anonymous(""); // TODO detect user
         List<String> listValuesFor = parListValuesFor.isEmpty() ? List.of() :
                 Arrays.asList(parListValuesFor.split(",", -1));
-        RequestCorpusInfo req = new RequestCorpusInfo(corpusName, user, listValuesFor, limitValues, customInfo);
+        RequestRelations reqRel = new RequestRelations(corpusName, null/*each field*/, limitValues, relClasses, true, false);
+        RequestCorpusInfo req = new RequestCorpusInfo(corpusName, user, listValuesFor, limitValues, customInfo, reqRel);
         return backend.corpusInfo(getApiVersion(corporaPath, strApiVersion), req);
     }
 

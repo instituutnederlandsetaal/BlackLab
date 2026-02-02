@@ -43,6 +43,7 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.indexmetadata.RelationsStats;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
@@ -1059,6 +1060,12 @@ public class ResponseStreamer {
             ds.endMap().endAttrEntry();
         }
         ds.endMap().endEntry();
+
+        ds.startEntry("relations");
+        if (annotatedField.getRelations() != null)
+            relations(annotatedField.getRelations());
+        ds.endEntry();
+
         ds.endMap();
     }
 
@@ -1537,6 +1544,79 @@ public class ResponseStreamer {
             }
         }
         ds.endMap();
+    }
+
+    public void relations(ResultRelations relations) {
+        boolean keepSpansSeparate = relations.isSeparateSpans();
+        Collection<String> includeClasses = relations.getRelClasses();
+        Map<String, RelationsStats.ClassStats> classesMap = relations.getClassesMap();
+        boolean onlySpans = keepSpansSeparate && includeClasses.size() == 1 && includeClasses.iterator().next().equals(
+                RelationUtil.CLASS_INLINE_TAG);
+        ds.startMap();
+        {
+            boolean separateSpansResponse = keepSpansSeparate && classesMap.containsKey(RelationUtil.CLASS_INLINE_TAG) &&
+                    includeClasses.contains(RelationUtil.CLASS_INLINE_TAG);
+            if (separateSpansResponse) {
+                relationClass("spans", classesMap.get(RelationUtil.CLASS_INLINE_TAG));
+            }
+            if (!onlySpans) {
+                ds.startEntry("relations").startMap();
+                {
+                    for (Map.Entry<String, RelationsStats.ClassStats> e: classesMap.entrySet()) {
+                        String relClass = e.getKey();
+                        if (!includeClasses.isEmpty() && !includeClasses.contains(relClass)) {
+                            // Not a relation class we're interested in
+                            continue;
+                        }
+                        if (relClass.equals(RelationUtil.CLASS_INLINE_TAG) && separateSpansResponse) {
+                            // Already handled above
+                            continue;
+                        }
+                        relationClass(relClass, e.getValue());
+                    }
+                }
+                ds.endMap().endEntry();
+            }
+        }
+        ds.endMap();
+    }
+
+    public void relationClass(String relClass, RelationsStats.ClassStats classStats) {
+        ds.startDynEntry(relClass).startMap();
+        {
+            for (Map.Entry<String, RelationsStats.TypeStats> relTypeEntry: classStats.getRelationTypes().entrySet()) {
+                String typeName = relTypeEntry.getKey();
+                RelationsStats.TypeStats typeStats = relTypeEntry.getValue();
+                ds.startDynEntry(typeName).startMap();
+                {
+                    ds.entry(KEY_COUNT, typeStats.getCount());
+                    Map<String, TruncatableFreqList> attributes = typeStats.getAttributes();
+                    if (!attributes.isEmpty()) {
+                        ds.startEntry(KEY_ATTRIBUTES).startMap();
+                        {
+                            for (Map.Entry<String, TruncatableFreqList> attrEntry: attributes.entrySet()) {
+                                ds.startDynEntry(attrEntry.getKey()).startMap();
+                                {
+                                    TruncatableFreqList values = attrEntry.getValue();
+                                    ds.startEntry(KEY_VALUES).startMap();
+                                    {
+                                        for (Map.Entry<String, Long> valueEntry: values.getValues().entrySet()) {
+                                            ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
+                                        }
+                                    }
+                                    ds.endMap().endEntry();
+                                    ds.entry(KEY_VALUE_LIST_COMPLETE, !values.isTruncated());
+                                }
+                                ds.endMap().endDynEntry();
+                            }
+                        }
+                        ds.endMap().endEntry();
+                    }
+                }
+                ds.endMap().endDynEntry();
+            }
+        }
+        ds.endMap().endDynEntry();
     }
 
     private void annotationGroups(IndexMetadata metadata) {

@@ -188,7 +188,7 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
             const expectedContent = JSON.parse(fs.readFileSync(EXPECTED_INDEX_CONTENT_PATH, READ_FILE_OPTS));
 
             const keys = ['summary', 'searchTime'];
-            expect(clearKeys(keys, expectedContent)).to.be.deep.equal(clearKeys(keys, body));
+            expect(clearKeys(keys, body)).to.be.deep.equal(clearKeys(keys, expectedContent));
         }).timeout(3000); // allow a little more time for slower servers
 
         it('get index metadata', async () => {
@@ -210,7 +210,7 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
             const expectedMetadata = JSON.parse(fs.readFileSync(EXPECTED_INDEX_METADATA_PATH, READ_FILE_OPTS));
 
             const keys = ['corpusName', 'versionInfo', 'documentFormat']
-            expect(clearKeys(keys, expectedMetadata)).to.be.deep.equal(clearKeys(keys, body));
+            expect(clearKeys(keys, body)).to.be.deep.equal(clearKeys(keys, expectedMetadata));
         });
 
         it('query from config', async () => {
@@ -238,7 +238,7 @@ if (process.env.SKIP_INDEXING_TESTS !== 'true') { // Solr doesn't implement thes
                     expect(results['hits']).to.be.empty;
                 } else {
                     const expectedOutput = await xmlToJson(fs.readFileSync(path.resolve(TEST_DATA_ROOT, testCase['expected'])));
-                    expect(clearKeys(key, expectedOutput['blacklabResponse'])).to.be.deep.equal(clearKeys(key, body['blacklabResponse']));
+                    expect(clearKeys(key, body['blacklabResponse'])).to.be.deep.equal(clearKeys(key, expectedOutput['blacklabResponse']));
                 }
             }
         });

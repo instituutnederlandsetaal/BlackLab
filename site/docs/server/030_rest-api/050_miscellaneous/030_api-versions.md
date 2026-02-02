@@ -61,7 +61,7 @@ To prepare for API version 5.0 (which will likely be the default in BlackLab 5.0
 - Pages that list values for fields, tags, etc. now support the `limitvalues` parameter. This parameter defaults to `200`, but can be set higher if you need really long value lists.
 - New endpoints were added for all operations on corpora, at `/corpora/CORPUSNAME/...` (for now alongside existing endpoints `/CORPUSNAME`). These endpoints are available in BlackLab v4 but only "speak" API v5 (see below). You should move to these endpoints for future compatibility.
 - A new endpoint `/parse-pattern` was added that allows you to parse a CorpusQL or JSON query structure pattern without actually executing the search.
-- A new endpoint `.../CORPUSNAME/relations` that will return all the spans ("inline tags") and relations indexed in the corpus.
+- Field info will return `relations` block containing all the spans ("inline tags") and relations indexed in the corpus.
 - Doc info on results pages and document info page: the new `tokenCounts` array gives token counts for all annotated fields. The first annotated field is the main one, which has the same value as `lengthInTokens`.
 - When using `usecontent=orig`, you can now specify `escapexmlfragment` to control whether XML fragments are escaped as CDATA or not. This defaults to `false` for API v4 and older, but will be `true` for API v5+.
 

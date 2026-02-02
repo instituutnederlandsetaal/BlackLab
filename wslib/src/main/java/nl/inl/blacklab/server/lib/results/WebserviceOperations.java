@@ -437,7 +437,7 @@ public class WebserviceOperations {
         AnnotationSensitivity as = annotation.sensitivity(sensitivity);
         String luceneField = as.luceneField();
         if (annotation.isRelationAnnotation()) {
-            throw new IllegalArgumentException("Use /relations endpoint to find values for spans (tags) and relations");
+            throw new IllegalArgumentException("Spans (tags) and relations are reported in the relations section.");
         } else {
             // Regular annotated field.
             LuceneUtil.getFieldTerms(index.reader(), luceneField, null, (term, freq) -> {
@@ -733,7 +733,7 @@ public class WebserviceOperations {
     }
 
     public static ResultAnnotatedField annotatedField(BlackLabIndex index, AnnotatedField fieldDesc,
-            Collection<String> listValuesFor, long limitValues, boolean includeIndexName) {
+            Collection<String> listValuesFor, long limitValues, boolean includeIndexName, ResultRelations relations) {
         Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
         boolean all = listValuesFor.contains("*");
         for (Annotation annotation: fieldDesc.annotations()) {
@@ -742,7 +742,7 @@ public class WebserviceOperations {
             ResultAnnotationInfo ai = new ResultAnnotationInfo(index, annotation, showValues, limitValues);
             annotInfos.put(annotation.name(), ai);
         }
-        return new ResultAnnotatedField(index, includeIndexName ? index.name() : null, fieldDesc, annotInfos);
+        return new ResultAnnotatedField(index, includeIndexName ? index.name() : null, fieldDesc, annotInfos, relations);
     }
 
     public static ResultIndexStatus resultIndexStatus(Index index, User user) {
@@ -809,7 +809,8 @@ public class WebserviceOperations {
         logger.info("    get annotated fields");
         List<ResultAnnotatedField> afs = new ArrayList<>();
         for (AnnotatedField field: metadata.annotatedFields()) {
-            afs.add(annotatedField(index.blIndex(), field, req.listValuesFor(), req.limitValues(), false));
+            ResultRelations relations = new ResultRelations(req.relations().withAnnotatedField(field.name()));
+            afs.add(annotatedField(index.blIndex(), field, req.listValuesFor(), req.limitValues(), false, relations));
         }
         afs.sort(ResultAnnotatedField::compare);
         logger.info("    get metadata fields");
@@ -824,6 +825,7 @@ public class WebserviceOperations {
         logger.info("    construct response object");
         AnnotatedField mainAnnotatedField = metadata.mainAnnotatedField();
         String mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
+
         return new ResultCorpusInfo(progress, afs, mainAnnotatedFieldName, mfs, metadataFieldGroups);
     }
 

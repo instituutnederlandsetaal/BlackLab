@@ -16,14 +16,17 @@ public class ResultAnnotatedField {
 
     private final Map<String, ResultAnnotationInfo> annotInfos;
 
+    private final ResultRelations relations;
+
     private CorpusSize.Count count;
 
     ResultAnnotatedField(BlackLabIndex index, String indexName, AnnotatedField fieldDesc,
-            Map<String, ResultAnnotationInfo> annotInfos) {
+            Map<String, ResultAnnotationInfo> annotInfos, ResultRelations relations) {
         this.index = index;
         this.indexName = indexName;
         this.fieldDesc = fieldDesc;
         this.annotInfos = annotInfos;
+        this.relations = relations;
         count = index.metadata().countPerField().get(fieldDesc.name());
         if (count == null)
             count = new CorpusSize.Count(0, 0);
@@ -41,6 +44,10 @@ public class ResultAnnotatedField {
         return annotInfos;
     }
 
+    public ResultRelations getRelations() {
+        return relations;
+    }
+
     public int compare(ResultAnnotatedField resultAnnotatedField) {
         // sort main at the top
         if (index.mainAnnotatedField() == fieldDesc)
@@ -52,5 +59,9 @@ public class ResultAnnotatedField {
 
     public CorpusSize.Count getCount() {
         return count;
+    }
+
+    public boolean hasRelations() {
+        return relations != null && !relations.relClasses.isEmpty();
     }
 }

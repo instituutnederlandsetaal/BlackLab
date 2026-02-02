@@ -1,13 +1,10 @@
 package nl.inl.blacklab.server.lib.results;
 
 import java.net.HttpURLConnection;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -15,9 +12,6 @@ import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.blacklab.search.indexmetadata.RelationsStats;
-import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 import nl.inl.blacklab.searches.SearchCache;
@@ -28,6 +22,7 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestRelations;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -55,8 +50,12 @@ public class WebserviceRequestHandler {
         if (indexMetadata.annotatedFields().exists(fieldName)) {
             // Annotated field
             AnnotatedField fieldDesc = indexMetadata.annotatedField(fieldName);
+            RequestRelations reqRel = new RequestRelations(params.getCorpusName(), fieldName,
+                    params.getLimitValues(), params.getRelClasses(),
+                    params.getRelSeparateSpans(), params.getRelOnlySpans());
+            ResultRelations relations = new ResultRelations(reqRel);
             ResultAnnotatedField resultAnnotatedField = WebserviceOperations.annotatedField(index, fieldDesc,
-                    params.getListValuesFor(), params.getLimitValues(), true);
+                    params.getListValuesFor(), params.getLimitValues(), true, relations);
             rs.annotatedField(resultAnnotatedField, includeCustomInfo);
         } else if (indexMetadata.metadataFields().exists(fieldName)) {
             // Metadata field
@@ -76,8 +75,12 @@ public class WebserviceRequestHandler {
      * @param rs output stream
      */
     public static void opCorpusInfo(WebserviceParams params, ResponseStreamer rs) {
+        RequestRelations reqRel = new RequestRelations(params.getCorpusName(), null/*each field*/,
+                params.getLimitValues(), params.getRelClasses(),
+                params.getRelSeparateSpans(), params.getRelOnlySpans());
         RequestCorpusInfo req = new RequestCorpusInfo(params.getCorpusName(),
-                params.getUser(), params.getListValuesFor(), params.getLimitValues(), params.getIncludeCustomInfo());
+                params.getUser(), params.getListValuesFor(), params.getLimitValues(), params.getIncludeCustomInfo(),
+                reqRel);
         ResultCorpusInfo corpusInfo = WebserviceOperations.corpusInfo(req);
         rs.corpusMetadataResponse(corpusInfo, params.getIncludeCustomInfo());
     }
@@ -313,86 +316,19 @@ public class WebserviceRequestHandler {
     }
 
     public static void opRelations(WebserviceParams params, ResponseStreamer rs) {
-        BlackLabIndex index = params.blIndex();
-        AnnotatedField field = params.getAnnotatedField();
-        RelationsStats stats = index.getRelationsStats(field, params.getLimitValues());
-        Map<String, RelationsStats.ClassStats> classesMap = stats.getClasses();
-        Collection<String> relClasses = params.getRelClasses().isEmpty() || params.getRelClasses().equals("*") ?
-                classesMap.keySet() : // all classes
-                new HashSet<>(Arrays.asList(params.getRelClasses().split(",")));
-        String spansClass = RelationUtil.CLASS_INLINE_TAG;
-        if (params.getRelOnlySpans()) {
-            relClasses = Set.of(spansClass);
-        }
+        String corpusName = params.getCorpusName();
+        String annotatedFieldName = params.getFieldName().isEmpty() ? null : params.getFieldName();
+        long limitValues = params.getLimitValues();
+        String parRelClasses = params.getRelClasses();
         boolean separateSpans = params.getRelSeparateSpans();
-        boolean onlySpans = separateSpans && relClasses.size() == 1 && relClasses.iterator().next().equals(spansClass);
+        boolean onlySpans = params.getRelOnlySpans();
+        RequestRelations request = new RequestRelations(corpusName, annotatedFieldName, limitValues,
+                parRelClasses, separateSpans, onlySpans);
+
+        ResultRelations result = new ResultRelations(request);
 
         // Write response
-        DataStream ds = rs.getDataStream();
-        ds.startMap();
-        {
-            boolean separateSpansResponse = separateSpans && classesMap.containsKey(spansClass) &&
-                    relClasses.contains(spansClass);
-            if (separateSpansResponse) {
-                outputClass(ds, "spans", classesMap.get(spansClass));
-            }
-            if (!onlySpans) {
-                ds.startEntry("relations").startMap();
-                {
-                    for (Map.Entry<String, RelationsStats.ClassStats> e: classesMap.entrySet()) {
-                        String relClass = e.getKey();
-                        if (!relClasses.isEmpty() && !relClasses.contains(relClass)) {
-                            // Not a relation class we're interested in
-                            continue;
-                        }
-                        if (relClass.equals(spansClass) && separateSpansResponse) {
-                            // Already handled above
-                            continue;
-                        }
-                        outputClass(ds, relClass, e.getValue());
-                    }
-                }
-                ds.endMap().endEntry();
-            }
-        }
-        ds.endMap();
+        rs.relations(result);
     }
 
-    private static void outputClass(DataStream ds, String relClass, RelationsStats.ClassStats classStats) {
-        ds.startDynEntry(relClass).startMap();
-        {
-            for (Map.Entry<String, RelationsStats.TypeStats> relTypeEntry: classStats.getRelationTypes().entrySet()) {
-                String typeName = relTypeEntry.getKey();
-                RelationsStats.TypeStats typeStats = relTypeEntry.getValue();
-                ds.startDynEntry(typeName).startMap();
-                {
-                    ds.entry(ResponseStreamer.KEY_COUNT, typeStats.getCount());
-                    Map<String, TruncatableFreqList> attributes = typeStats.getAttributes();
-                    if (!attributes.isEmpty()) {
-                        ds.startEntry(ResponseStreamer.KEY_ATTRIBUTES).startMap();
-                        {
-                            for (Map.Entry<String, TruncatableFreqList> attrEntry: attributes.entrySet()) {
-                                ds.startDynEntry(attrEntry.getKey()).startMap();
-                                {
-                                    TruncatableFreqList values = attrEntry.getValue();
-                                    ds.startEntry(ResponseStreamer.KEY_VALUES).startMap();
-                                    {
-                                        for (Map.Entry<String, Long> valueEntry: values.getValues().entrySet()) {
-                                            ds.dynEntry(valueEntry.getKey(), valueEntry.getValue());
-                                        }
-                                    }
-                                    ds.endMap().endEntry();
-                                    ds.entry(ResponseStreamer.KEY_VALUE_LIST_COMPLETE, !values.isTruncated());
-                                }
-                                ds.endMap().endDynEntry();
-                            }
-                        }
-                        ds.endMap().endEntry();
-                    }
-                }
-                ds.endMap().endDynEntry();
-            }
-        }
-        ds.endMap().endDynEntry();
-    }
 }

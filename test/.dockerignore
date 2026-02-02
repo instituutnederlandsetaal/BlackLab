@@ -6,3 +6,7 @@
 /.dockerignore
 /Dockerfile
 /*.md
+
+# These will be bind mounted (BUT DOESN'T WORK, LOOK INTO THIS)
+#./data
+#./start-with-test-data.sh

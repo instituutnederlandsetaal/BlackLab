@@ -1,5 +1,11 @@
 # Spans and relations
 
+::: warn DEPRECATED (dev/v5+)
+
+Now that this information is included with the annotated field info (on the `/corpora/CORPUSNAME` and `corpora/CORPUSNAME/field/FIELDNAME` pages), this separate endpoint is no longer needed and will be phased out.
+
+:::
+
 Return an overview of spans ("inline tags") and relations classes and types in the corpus, and their approximate frequencies.
 
 **NOTE:** as a technical detail, spans are a special relation type with the builtin relation class `__tag`, but by default, we report them separately for convenience.

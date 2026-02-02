@@ -51,6 +51,68 @@
           "offsetsAlternative": "",
           "isInternal": true
         }
+      },
+      "relations": {
+        "spans": {
+          "u": {
+            "attributes": {
+              "id": {
+                "valueListComplete": true,
+                "values": {
+                  "PBsve430_u_1": 1,
+                  "PBsve430_u_10": 1,
+                  "PBsve430_u_11": 1,
+                  "PBsve430_u_12": 1,
+                  "PBsve430_u_13": 1,
+                  "PBsve430_u_14": 1,
+                  "PBsve430_u_15": 1,
+                  "PBsve430_u_16": 1,
+                  "PBsve430_u_17": 1,
+                  "PBsve430_u_18": 1,
+                  "PBsve430_u_19": 1,
+                  "PBsve430_u_2": 1,
+                  "PBsve430_u_20": 1,
+                  "PBsve430_u_21": 1,
+                  "PBsve430_u_22": 1,
+                  "PBsve430_u_23": 1,
+                  "PBsve430_u_24": 1,
+                  "PBsve430_u_25": 1,
+                  "PBsve430_u_26": 1,
+                  "PBsve430_u_27": 1,
+                  "PBsve430_u_28": 1,
+                  "PBsve430_u_29": 1,
+                  "PBsve430_u_3": 1,
+                  "PBsve430_u_30": 1,
+                  "PBsve430_u_31": 1,
+                  "PBsve430_u_32": 1,
+                  "PBsve430_u_33": 1,
+                  "PBsve430_u_34": 1,
+                  "PBsve430_u_35": 1,
+                  "PBsve430_u_36": 1,
+                  "PBsve430_u_37": 1,
+                  "PBsve430_u_38": 1,
+                  "PBsve430_u_39": 1,
+                  "PBsve430_u_4": 1,
+                  "PBsve430_u_40": 1,
+                  "PBsve430_u_41": 1,
+                  "PBsve430_u_5": 1,
+                  "PBsve430_u_6": 1,
+                  "PBsve430_u_7": 1,
+                  "PBsve430_u_8": 1,
+                  "PBsve430_u_9": 1
+                }
+              },
+              "who": {
+                "valueListComplete": true,
+                "values": {
+                  "#PBsve430_S1": 20,
+                  "#PBsve430_S2": 21
+                }
+              }
+            },
+            "count": 41
+          }
+        }
       }
     }
   },

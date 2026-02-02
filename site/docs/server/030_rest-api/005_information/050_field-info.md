@@ -1,6 +1,6 @@
 # Field information
 
-Metadata about a field, including indexing settings, field values and more.
+Metadata about a field, including indexing settings, field values and more. For annotated fields, info about annotations, spans and relations.
 
 **URL** : `/blacklab-server/<corpus-name>/fields/<fieldname>`
 
@@ -8,10 +8,11 @@ Metadata about a field, including indexing settings, field values and more.
 
 #### Parameters
 
-| Parameter     | Description                                                                                                                                                                                                                                       |
-|---------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Parameter     | Description                                                                                                                                                                                                                                      |
+|---------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `listvalues`  | Comma-separated list of annotations we want to list the values for, or `*` for all. Terms and frequencies will be returned under the `terms` key (API v4+) or `values` key (old API). `valueListComplete` will indicate if all values are listed. |
-| `limitvalues` | Maximum number of values to return. Default: `200`                                                                                                                                                                                                |
+| `limitvalues` | Maximum number of values to return. Default: `200`                                                                                                                                                                                               |
+| `relclasses`  | Relation classes to return. Default: all                                                                                                                                                                                                    |
 
 ## Success Response
 
