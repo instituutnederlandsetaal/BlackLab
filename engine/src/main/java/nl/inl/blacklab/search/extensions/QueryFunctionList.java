@@ -6,7 +6,7 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
-import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** Creates a list from its arguments. */
 public class QueryFunctionList extends QueryFunction {
@@ -18,7 +18,7 @@ public class QueryFunctionList extends QueryFunction {
     }
 
     @SuppressWarnings("unchecked")
-    public ConstraintValueList applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         return ConstraintValue.get((List<Object>)parameters.get(0));
     }
 }

@@ -48,8 +48,8 @@ public class TextPatternPositionFilter extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
-        Object result = filter.evaluate(context);
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+        EvalResult result = filter.evaluate(context);
         if (result instanceof BLSpanQuery filterQuery) {
             return new SpanQueryPositionFilter(producer.toQuery(context), filterQuery,
                     operation, invert, adjustLeading, adjustTrailing);

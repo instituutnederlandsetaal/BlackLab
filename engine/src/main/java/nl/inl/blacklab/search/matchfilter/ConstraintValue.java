@@ -5,6 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
  * Data value a constraint (MatchFilter) can evaluate to.
@@ -13,7 +14,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * ConstraintValueString while the constraint
  * <code>a.lemma = b.lemma</code> evaluates to a ConstraintValueBoolean.
  */
-public abstract class ConstraintValue implements Comparable<ConstraintValue> {
+public abstract class ConstraintValue implements Comparable<ConstraintValue>, TextPattern.EvalResult {
 
     public static ConstraintValue fromObject(Object o) {
         if (o == null)

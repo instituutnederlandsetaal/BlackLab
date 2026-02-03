@@ -8,7 +8,6 @@ import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
-import nl.inl.blacklab.search.matchfilter.ConstraintValueString;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** Ensures its argument is interpreted as a string. */
@@ -18,7 +17,7 @@ public class QueryFunctionStr extends QueryFunction {
                 null, false);
     }
 
-    public ConstraintValueString applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         Object o = parameters.get(0);
         if (o instanceof BLSpanQuery q) {
             String v = TextPattern.getSimpleStringValue(context, q);

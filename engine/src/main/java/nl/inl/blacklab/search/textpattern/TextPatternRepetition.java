@@ -37,7 +37,7 @@ public class TextPatternRepetition extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         BLSpanQuery baseTranslated = clause.toQuery(context);
 
         if (min == 1 && max == 1)

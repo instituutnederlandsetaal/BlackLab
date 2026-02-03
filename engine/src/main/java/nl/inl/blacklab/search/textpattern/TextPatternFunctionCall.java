@@ -37,7 +37,7 @@ public class TextPatternFunctionCall extends TextPattern {
     }
 
     @Override
-    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
 
         // Make sure arguments are interpreted with the correct types
         // (e.g. "duck" can be a string or a query)
@@ -47,10 +47,6 @@ public class TextPatternFunctionCall extends TextPattern {
         List<Object> translated = evaluateArgs(context, preprocessedArgs);
 
         if (context.isInConstraint()) {
-//            if (preprocessedArgs.size() != 1 || !(preprocessedArgs.get(0) instanceof String s)) {
-//                // @@@ make more general
-//                throw new InvalidQuery("In constraints, functions take a single argument (capture label)");
-//            }
             List<MatchFilter> matchFilters = translated.stream().map(t -> toMatchFilter(t)).toList();
             return new MatchFilterFunctionCall(func, matchFilters);
         } else {

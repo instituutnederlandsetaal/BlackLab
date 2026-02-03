@@ -45,8 +45,8 @@ public enum ExprType {
     MATCH_INFO;
 
     public static ExprType of(Object o) {
-        if (o instanceof ConstraintValue)
-            return ((ConstraintValue) o).getType();
+        if (o instanceof ConstraintValue cv)
+            return cv.getType();
         if (o instanceof BLSpanQuery)
             return QUERY;
         throw new IllegalArgumentException("Unknown argument type: " + o);

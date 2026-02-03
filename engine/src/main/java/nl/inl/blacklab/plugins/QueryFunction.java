@@ -16,7 +16,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 
 /** A function that operates on (part of) a query and can be called from BCQL. */
-public abstract class QueryFunction extends Plugin {
+public abstract class QueryFunction extends Plugin implements TextPattern.EvalResult {
 
     /** Default value for a query parameter that means "any n-gram" (<code>[]*</code> ) */
     public static final String VALUE_QUERY_ANY_NGRAM = "_ANY_NGRAM_";
@@ -91,7 +91,7 @@ public abstract class QueryFunction extends Plugin {
         return newArgs;
     }
 
-    public Object apply(QueryExecutionContext context, List<Object> args) {
+    public TextPattern.EvalResult apply(QueryExecutionContext context, List<Object> args) {
         // Add any default argument values
         List<Object> newArgs = new ArrayList<>(args);
         int n = Math.max(newArgs.size(), requiredNumberOfArguments());
@@ -166,7 +166,7 @@ public abstract class QueryFunction extends Plugin {
         return applyFunc(context, newArgs);
     }
 
-    protected abstract Object applyFunc(QueryExecutionContext context, List<Object> parameters);
+    protected abstract TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters);
 
     public int requiredNumberOfArguments() {
         return argTypes.size();

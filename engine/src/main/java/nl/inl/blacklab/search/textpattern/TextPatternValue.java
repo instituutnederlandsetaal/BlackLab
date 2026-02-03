@@ -28,7 +28,7 @@ public class TextPatternValue extends TextPattern {
     }
 
     @Override
-    public Object evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(QueryExecutionContext context) {
         if (context.isInConstraint()) {
             if (value instanceof ConstraintValueSymbol cvs) {
                 /** In constraint, symbol A in  :: start(A)  means "pass the span captured for A to start()",

@@ -10,6 +10,7 @@ import nl.inl.blacklab.search.fimatch.ForwardIndexDocument;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.HitQueryContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
  * A global constraint (or "match filter") for our matches.
@@ -18,7 +19,7 @@ import nl.inl.blacklab.search.lucene.MatchInfo;
  * the :: operator, e.g. <code>a:[] "and" b:[] :: a.word = b.word</code>
  * to find things like "more and more", "less and less", etc.
  */
-public abstract class MatchFilter {
+public abstract class MatchFilter implements TextPattern.EvalResult {
 
     @Override
     public abstract String toString();

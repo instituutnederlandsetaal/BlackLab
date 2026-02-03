@@ -33,7 +33,7 @@ public class TextPatternSequence extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         List<BLSpanQuery> chResults = new ArrayList<>();
         for (TextPattern cl : clauses) {
             chResults.add(cl.toQuery(context));

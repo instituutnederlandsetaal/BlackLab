@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryOverlapping;
 
 /**
@@ -30,7 +29,7 @@ public class TextPatternOverlapping extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         return new SpanQueryOverlapping(left.toQuery(context), right.toQuery(context),
                 operation);
     }

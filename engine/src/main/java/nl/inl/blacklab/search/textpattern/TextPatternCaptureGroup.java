@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 
 /**
@@ -34,7 +33,7 @@ public class TextPatternCaptureGroup extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         return new SpanQueryCaptureGroup(clause.toQuery(context), captureAs, 0, 0, null);
     }
     

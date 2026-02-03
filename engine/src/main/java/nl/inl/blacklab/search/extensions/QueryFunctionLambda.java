@@ -5,6 +5,7 @@ import java.util.List;
 import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** A QueryFunction instantiated by passing it a lambda. */
 public class QueryFunctionLambda extends QueryFunction {
@@ -18,7 +19,7 @@ public class QueryFunctionLambda extends QueryFunction {
     }
 
     @Override
-    protected Object applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    protected TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         return func.apply(context.queryInfo(), context, parameters);
     }
 }

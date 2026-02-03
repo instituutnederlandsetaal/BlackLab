@@ -7,7 +7,6 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * Apply some settings to part of the query.
@@ -26,7 +25,7 @@ public class TextPatternSettings extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         for (Map.Entry<String, String> e : settings.entrySet()) {
             String key = e.getKey();
             String value = e.getValue();

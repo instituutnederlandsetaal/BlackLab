@@ -8,7 +8,6 @@ import java.util.Objects;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueIntRange;
 import nl.inl.util.StringUtil;
@@ -64,14 +63,14 @@ public class TextPatternTags extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(QueryExecutionContext context) {
         // Desensitize tag name and attribute values if required
         context = context.withRelationAnnotation();
         String optDesensitizedElNameRegex = context.optDesensitize(elementNameRegex);
         Map<String, String> attrOptIns = new HashMap<>();
         for (Map.Entry<String, TextPattern> e : attributes.entrySet()) {
             TextPattern tp = e.getValue();
-            Object o = tp.evaluate(context);
+            EvalResult o = tp.evaluate(context);
             String regex;
             if (o instanceof ConstraintValue cvs) {
                 if (o instanceof ConstraintValueIntRange cvir)

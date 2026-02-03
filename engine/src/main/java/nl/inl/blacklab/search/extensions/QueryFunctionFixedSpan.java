@@ -6,8 +6,8 @@ import java.util.List;
 import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFixedSpan;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** A fixed span in every matching doc.
  * <p>
@@ -19,7 +19,7 @@ public class QueryFunctionFixedSpan extends QueryFunction {
         super("_fixed", List.of(ExprType.INTEGER, ExprType.INTEGER), Arrays.asList(null, null), false);
     }
 
-    public BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         int start = (Integer) parameters.get(0);
         int end = (Integer) parameters.get(1);
         if (start < 0 || end < 0)

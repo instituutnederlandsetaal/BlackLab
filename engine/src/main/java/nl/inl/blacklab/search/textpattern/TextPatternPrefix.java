@@ -8,7 +8,6 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * A TextPattern matching words that start with the specified prefix.
@@ -25,7 +24,7 @@ public class TextPatternPrefix extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         try {
             context = context.withAnnotationAndSensitivity(annotation, sensitivity);
             return new BLSpanMultiTermQueryWrapper<>(context.queryInfo(),

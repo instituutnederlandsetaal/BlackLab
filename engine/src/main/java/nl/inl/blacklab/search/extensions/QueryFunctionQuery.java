@@ -6,6 +6,7 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** Ensures its string argument is interpreted as a query. */
 public class QueryFunctionQuery extends QueryFunction {
@@ -14,7 +15,7 @@ public class QueryFunctionQuery extends QueryFunction {
                 null, false);
     }
 
-    public BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         Object o = parameters.get(0);
         if (o instanceof BLSpanQuery q)
             return q;

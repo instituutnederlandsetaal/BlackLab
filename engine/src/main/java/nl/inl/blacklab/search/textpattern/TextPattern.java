@@ -103,7 +103,7 @@ public abstract class TextPattern implements TextPatternStruct {
         if (arg instanceof TextPatternCompare tpc) {
             // E.g. passing a string to a function was interpreted as a query on the
             // default annotation. Extract the original string value.
-            Object result = tpc.getRightClause().evaluate(context);
+            EvalResult result = tpc.getRightClause().evaluate(context);
             if (result instanceof ConstraintValue cv) {
                 strValue = cv.asString().getValue();
             } else {
@@ -140,9 +140,11 @@ public abstract class TextPattern implements TextPatternStruct {
         return b.toString();
     }
 
+    public interface EvalResult {
+    }
+
     /**
      * Evaluate this TextPattern node.
-     *
      * This should be called when several result types are acceptable
      * (e.g. BLSpanQuery or a List (of BLSpanQueries)).
      *
@@ -150,7 +152,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return resulting value
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
-    public abstract Object evaluate(QueryExecutionContext context) throws InvalidQuery;
+    public abstract EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery;
 
     /**
      * Translate this TextPattern into a BLSpanQuery.
@@ -162,7 +164,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
     public BLSpanQuery toQuery(QueryExecutionContext context) throws InvalidQuery {
-        Object result = evaluate(context);
+        EvalResult result = evaluate(context);
         if (result instanceof BLSpanQuery q)
             return q;
         throw new InvalidQuery("Expected a BLSpanQuery evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
@@ -177,7 +179,7 @@ public abstract class TextPattern implements TextPatternStruct {
      * @return resulting MatchFilter
      */
     public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
-        Object result = evaluate(context);
+        EvalResult result = evaluate(context);
         if (result instanceof MatchFilter mf)
             return mf;
         throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
@@ -207,7 +209,7 @@ public abstract class TextPattern implements TextPatternStruct {
             tp = tp.applyWithSpans();
         }
         QueryExecutionContext context = queryInfo.index().defaultExecutionContext(queryInfo.field());
-        Object result = tp.evaluate(context);
+        EvalResult result = tp.evaluate(context);
         if (result == null)
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {

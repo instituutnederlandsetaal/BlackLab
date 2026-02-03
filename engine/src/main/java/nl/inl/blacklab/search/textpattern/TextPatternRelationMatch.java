@@ -45,7 +45,7 @@ public class TextPatternRelationMatch extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         if (children.isEmpty())
             throw new InvalidQuery("Relation match has no children");
         if (children.get(0).getOperatorInfo().isAlignment()) {

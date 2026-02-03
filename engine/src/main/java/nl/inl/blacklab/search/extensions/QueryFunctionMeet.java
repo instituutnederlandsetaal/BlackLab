@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryEdge;
 import nl.inl.blacklab.search.lucene.SpanQueryFilterNGrams;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.lucene.SpanQuerySequence;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** Implements the SkE meet function that finds hits for a clause
  * that have a second clause in a defined context window before or after the clause hit.
@@ -21,7 +22,7 @@ public class QueryFunctionMeet extends QueryFunction {
                 null, false);
     }
 
-    public BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         BLSpanQuery findClause = (BLSpanQuery) parameters.get(0);
         BLSpanQuery nearClause = (BLSpanQuery) parameters.get(1);
         int contextStart = (Integer) parameters.get(2);

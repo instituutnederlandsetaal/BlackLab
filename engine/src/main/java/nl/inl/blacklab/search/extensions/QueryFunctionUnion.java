@@ -9,6 +9,7 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** Implements the union function that combines clauses using OR */
 public class QueryFunctionUnion extends QueryFunction {
@@ -17,7 +18,7 @@ public class QueryFunctionUnion extends QueryFunction {
                 null, false);
     }
 
-    public BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         List<?> list = (List<?>)parameters.get(0);
         BLSpanQuery[] clauses = new BLSpanQuery[list.size()];
         for (int i = 0; i < list.size(); i++) {

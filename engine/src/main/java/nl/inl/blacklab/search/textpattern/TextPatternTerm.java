@@ -9,7 +9,6 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.util.StringUtil;
 
@@ -41,7 +40,7 @@ public class TextPatternTerm extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         // Rewrite pseudo-annotation to extension function call
         TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, true);
         if (rewrittenPseudoAnnot != null)

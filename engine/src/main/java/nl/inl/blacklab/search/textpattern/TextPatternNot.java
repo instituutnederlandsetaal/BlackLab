@@ -21,7 +21,7 @@ public class TextPatternNot extends TextPattern {
     }
 
     @Override
-    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         if (context.isInConstraint()) {
             return new MatchFilterNot(clause.toMatchFilter(context));
         } else {

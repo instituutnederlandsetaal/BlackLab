@@ -4,9 +4,10 @@ import java.util.Collection;
 import java.util.Set;
 
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** An annotation on an annotated field. */
-public interface Annotation {
+public interface Annotation extends TextPattern.EvalResult {
     
     /** @return field for which this is an annotation */
     AnnotatedField field();

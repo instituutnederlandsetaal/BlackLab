@@ -37,7 +37,7 @@ public class TextPatternAnyToken extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(QueryExecutionContext context) {
         return new SpanQueryAnyToken(context.queryInfo(), min, max, context.luceneField());
     }
 

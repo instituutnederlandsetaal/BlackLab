@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryRelationSpanAdjust;
 import nl.inl.blacklab.search.lucene.SpanQueryRelations;
 import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
 
 /**
@@ -177,19 +178,19 @@ public class XFRelations implements ExtensionFunctionClass {
     public void register() {
         QueryExtensions.registerRelationsFunction(FUNC_REL, ARGS_SQSSS,
                 Arrays.asList(".+", QueryFunction.VALUE_QUERY_ANY_NGRAM, "source", "", "both"),
-                XFRelations::rel);
+                (queryInfo, context, args) -> rel(queryInfo, context, args));
 
         QueryExtensions.register(new QueryFunction("rmatch", List.of(ExprType.LIST),
                 List.of(QueryFunction.VALUE_QUERY_ANY_NGRAM), false) {
             /**
              * Perform an AND operation with the additional requirement that clauses match unique relations.
              *
-             * @param context query execution context
+             * @param context    query execution context
              * @param parameters function arguments: clauses
              * @return AND query with unique relations requirement
              */
             @Override
-            protected BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
+            protected TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
                 if (parameters.isEmpty())
                     throw new IllegalArgumentException("rmatch() requires one or more queries as arguments");
                 List<BLSpanQuery> tps = ((List<?>)parameters.get(0)).stream().map(o -> {
@@ -202,11 +203,12 @@ public class XFRelations implements ExtensionFunctionClass {
         });
 
         QueryExtensions.register(FUNC_RSPAN, ARGS_QS, Arrays.asList(null, "full"),
-                XFRelations::rspan);
+                (queryInfo, context, args) -> rspan(queryInfo, context, args));
         QueryExtensions.register("rfield", ARGS_QS, NO_DEFAULT_VALUES,
-                XFRelations::rfield);
+                (queryInfo, context, args) -> rfield(queryInfo, context, args));
         QueryExtensions.registerRelationsFunction(FUNC_RCAPTURE, ARGS_QSS,
-                Arrays.asList(null, DEFAULT_RCAP_NAME, ".+::.+"), XFRelations::rcapture);
+                Arrays.asList(null, DEFAULT_RCAP_NAME, ".+::.+"),
+                (queryInfo, context, args) -> rcapture(queryInfo, context, args));
     }
 
 }

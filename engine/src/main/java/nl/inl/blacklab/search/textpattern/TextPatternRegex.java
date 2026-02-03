@@ -10,7 +10,6 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.util.StringUtil;
 
 /**
@@ -26,7 +25,7 @@ public class TextPatternRegex extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         // Rewrite pseudo-annotation to extension function call
         TextPattern rewrittenPseudoAnnot = rewriteIfPseudoAnnotation(context, false);
         if (rewrittenPseudoAnnot != null)

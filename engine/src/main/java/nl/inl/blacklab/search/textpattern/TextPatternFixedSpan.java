@@ -4,7 +4,6 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFixedSpan;
 import nl.inl.blacklab.search.results.QueryInfo;
 
@@ -23,7 +22,7 @@ public class TextPatternFixedSpan extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         return new SpanQueryFixedSpan(QueryInfo.create(context.index(), context.field()), context.luceneField(), start, end);
     }
 

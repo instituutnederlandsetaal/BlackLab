@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.textpattern;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanFuzzyQuery;
 
 /**
@@ -32,7 +31,7 @@ public class TextPatternFuzzy extends TextPattern {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) {
+    public EvalResult evaluate(QueryExecutionContext context) {
         return new SpanFuzzyQuery(context.queryInfo(), new Term(context.luceneField(), context.optDesensitize(value)),
                 maxEdits, prefixLength);
     }

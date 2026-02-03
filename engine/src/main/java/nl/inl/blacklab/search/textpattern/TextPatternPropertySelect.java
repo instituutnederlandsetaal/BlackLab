@@ -5,7 +5,6 @@ import java.util.Objects;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
-import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.MatchFilterSpan;
 import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
 
@@ -34,13 +33,13 @@ public class TextPatternPropertySelect extends TextPattern {
     }
 
     @Override
-    public MatchFilter evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         // Evaluate left and right sides, getting the symbol, not MatchFilterSpan
         if (!context.isInConstraint())
             throw new InvalidQuery("Property selector . can only be used in constraints");
         // Select an annotation of a position
         // (e.g. A.lemma selects the lemma for the first token in capture group A)
-        Object resultLabel = tpLabel.evaluate(context);
+        EvalResult resultLabel = tpLabel.evaluate(context);
         if (!(resultLabel instanceof MatchFilterSpan mfs))
             throw new InvalidQuery("Expected a reference to a span left of . for token annotation reference");
         if (tpAnnotation instanceof TextPatternValue tpv && tpv.value instanceof ConstraintValueSymbol cvsa) {

@@ -8,6 +8,7 @@ import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /** Creates a list from its arguments. */
 public class QueryFunctionLen extends QueryFunction {
@@ -18,7 +19,7 @@ public class QueryFunctionLen extends QueryFunction {
                 null, false);
     }
 
-    public ConstraintValue applyFunc(QueryExecutionContext context, List<Object> parameters) {
+    public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
         int result;
         Object o = parameters.get(0);
         if (o == null) {

@@ -8,7 +8,6 @@ import nl.inl.blacklab.exceptions.RegexpTooLarge;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanMultiTermQueryWrapper;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 
 /**
  * A textpattern matching a simple wildcard expression.
@@ -28,7 +27,7 @@ public class TextPatternWildcard extends TextPatternTerm {
     }
 
     @Override
-    public BLSpanQuery evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         TextPattern result = rewriteForQuery();
         if (result != this)
             return result.toQuery(context);

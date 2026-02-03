@@ -21,6 +21,7 @@ import nl.inl.blacklab.search.fimatch.NfaTwoWay;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
  * A required interface for a BlackLab SpanQuery. All our queries must be
@@ -31,7 +32,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
  * if every hit is equal in length, if there may be duplicates, etc. This information
  * will help us optimize certain operations, such as sequence queries, in certain cases.
  */
-public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGiver {
+public abstract class BLSpanQuery extends SpanQuery implements SpanGuaranteeGiver, TextPattern.EvalResult {
 
     public static final int MAX_UNLIMITED = Integer.MAX_VALUE;
 

@@ -49,7 +49,7 @@ public class TextPatternCompare extends TextPattern {
     }
 
     @Override
-    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         TextPattern actualLeft = left instanceof TextPatternDefaultValue ? // use default annotation
                 new TextPatternValue(ConstraintValue.symbol(context.field().mainAnnotation().name())) :
                 left;
@@ -63,13 +63,13 @@ public class TextPatternCompare extends TextPattern {
             if (!isNot && operator != MatchFilterCompare.Operator.EQUAL)
                 throw new InvalidQuery("Only equality comparisons are supported in queries, not " + operator);
 
-            Object evaluated = actualLeft.evaluate(context); // TODO: pseudo-annotation punctBefore etc.
+            EvalResult evaluated = actualLeft.evaluate(context);
             if (evaluated instanceof ConstraintValueSymbol cvs) {
                 evaluated = context.field().annotation(cvs.getValue());
             }
             BLSpanQuery query;
             if (evaluated instanceof Annotation annotation) {
-                Object result2 = right.evaluate(context);
+                EvalResult result2 = right.evaluate(context);
                 String regex;
                 if (result2 instanceof ConstraintValue cv) {
                     if (cv instanceof ConstraintValueIntRange cvir) {
@@ -100,8 +100,7 @@ public class TextPatternCompare extends TextPattern {
 
                     try {
                         Term term = new Term(context.luceneField(), valueDesensitized);
-                        RegexpQuery regexpQuery = new RegexpQuery(
-                                term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
+                        RegexpQuery regexpQuery = new RegexpQuery(term); //, RegExp.COMPLEMENT); causes issues with NFA matching!
                         query = new BLSpanMultiTermQueryWrapper<>(context.queryInfo(), regexpQuery);
                     } catch (IllegalArgumentException e) {
                         throw new InvalidQuery("Invalid query: " + e.getMessage() + " (while parsing regex)");

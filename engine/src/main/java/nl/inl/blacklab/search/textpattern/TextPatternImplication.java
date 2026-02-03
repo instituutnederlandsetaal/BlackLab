@@ -28,7 +28,7 @@ public class TextPatternImplication extends TextPattern {
     }
 
     @Override
-    public Object evaluate(QueryExecutionContext context) throws InvalidQuery {
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         if (context.isInConstraint()) {
             // We're in the constraint part of the query; create MatchFilter
             MatchFilter a = antecedent.toMatchFilter(context);
