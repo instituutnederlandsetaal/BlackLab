@@ -201,6 +201,7 @@
       "documents": 1,
       "hits": 2,
       "status": "finished",
+      "stoppedBecauseTooMany": false,
       "timeMs": "VALUE_REMOVED"
     }
   }

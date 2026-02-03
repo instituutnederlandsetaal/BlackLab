@@ -1772,6 +1772,7 @@
       "documents": 3,
       "hits": 35,
       "status": "finished",
+      "stoppedBecauseTooMany": false,
       "timeMs": "VALUE_REMOVED"
     }
   }

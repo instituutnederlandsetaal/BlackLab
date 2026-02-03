@@ -448,6 +448,7 @@
       "documents": 1,
       "hits": 9,
       "status": "finished",
+      "stoppedBecauseTooMany": false,
       "timeMs": "VALUE_REMOVED"
     }
   }

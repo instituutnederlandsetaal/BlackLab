@@ -494,14 +494,15 @@ public class ResponseStreamer {
                 ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsProcessed);
                 ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsProcessed);
                 ds.entry(KEY_STATS_TIME_MS, result.getTimings().getProcessingTime());
+                ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
                 if (limitReached) {
-                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
                     ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
                     {
                         ds.entry(KEY_STATS_STATUS, !hitsStats.done() ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
                         ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsCounted);
                         ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsCounted);
                         ds.entry(KEY_STATS_TIME_MS, result.getTimings().getCountTime());
+                        ds.entry(KEY_STATS_STOPPED_TOO_MANY, hitsStats.maxStats().isTooManyToCount());
                     }
                     ds.endMap().endEntry();
                 }

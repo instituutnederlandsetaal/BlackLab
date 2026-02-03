@@ -395,6 +395,7 @@
       "largestGroupSize": 22,
       "numberOfGroups": 118,
       "status": "finished",
+      "stoppedBecauseTooMany": false,
       "subcorpusSize": {
         "documents": 1,
         "tokens": 334

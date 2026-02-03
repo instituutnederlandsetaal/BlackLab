@@ -92,6 +92,7 @@
       "largestGroupSize": 8,
       "numberOfGroups": 3,
       "status": "finished",
+      "stoppedBecauseTooMany": false,
       "subcorpusSize": {
         "documents": 3,
         "tokens": 766

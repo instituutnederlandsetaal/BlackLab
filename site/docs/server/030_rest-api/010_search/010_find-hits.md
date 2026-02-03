@@ -25,7 +25,7 @@ Use these to find text patterns in the corpus and control which results are retu
 | `context`     | (formerly `wordsaroundhit`) how much context to return around hits. Examples: `5` gives 5 words around hit, `5:10` gives 5 before and 10 after, `s` returns full sentences (if `s` is an inline tag in your data). Default: `5`                                                                                                                                                                                                                                                       |
 | `first`       | first result (0-based) to return with this request. Use this to get a page of results from the total set. Default: `0`                                                                                                                                                                                                                                                                                                                                                                |
 | `number`      | number of results to return (if available) with this request. Use this to get a page of results from the total set. Default: `50`.<br/>**NOTE:** this value is limited by the `parameters.pageSize.max` [setting](/server/configuration.md#parameters) in `blacklab-server.yaml`.<br/>**NOTE2:** if you are only interested in the total number of results, not the results themselves, set this to 0. The total number of results will be in the response as `summary.numberOfHits`. |
-
+| `waitfortotal`       | Whether or not to wait for the total number of results to be known. If no (the default), subsequent requests (with number=0 if you don’t need more hits) can be used to monitor the total count progress. When using the API from a script, you usually want to set this to `true`, so you get the correct totals in your response. Default: `false`                                                                                                                                             |
 #### Parameters for sampling
 
 Take a random sampling of hits. Note that this has to retrieve all hits (or at least as many hits as the `maxretrieve` setting allows), then perform the sampling, so it may take a while.
@@ -127,9 +127,8 @@ Some less commonly used parameters for advanced use cases.
 
 | Parameter            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 |----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `waitfortotal`       | Whether or not to wait for the total number of results to be known. If no (the default), subsequent requests (with number=0 if you don’t need more hits) can be used to monitor the total count progress. Default: `false`                                                                                                                                                                                                                                                                       |
 | `listvalues`         | Comma-separated list of annotation names to return for each result. By default, all annotations are included.                                                                                                                                                                                                                                                                                                                                                                                    |
-| `listmetadatavalues` | Comma-separated list of metadata fields to return for each document. By default, all are included.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `listmetadatavalues` | Comma-separated list of metadata fields to return for each document. By default, all are included.                                                                                                                                                                                                                                                                                                                                                                                               |
 | `field`              | the annotated field to search using `patt`, if your corpus contains multiple annotated fields. Most corpora only contain one. Defaults to the first (or only) annotated field defined. (NOTE: for a parallel corpus, if you only specify a version, e.g. `en`, BlackLab will automatically use the `contents__en` field if that exists)                                                                                                                                                          |
 | `subcorpussize`      | Whether to include the size of the subcorpus defined by the `filter` query. Default: `false` (NOTE: this parameter used to be called `includetokencount`)                                                                                                                                                                                                                                                                                                                                        |
 | `pattlang`           | pattern language to use for `patt`. Defaults to `bcql` (BlackLab Corpus Query Language). The other values (`contextql` and `luceneql`) have very limited support at the moment.  Other, more useful query languages may be added in the future.                                                                                                                                                                                                                                                  |
@@ -158,6 +157,12 @@ You may leave 'gaps' in the double-quoted strings in your BCQL query that can be
 
 ::: tabs
 === API v4
+
+::: warn Aborted queries
+
+BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary` object in the response will contain `"stoppedRetrievingHits": true` and/or `"stoppedCountingHits": true`. The first means counting continued, but not all hits can be fetched from the result set. The second means BlackLab has given up counting hits altogether.
+
+:::
 
 ```jsonc
 // API v5: /blacklab-server/chn-intern/hits?patt="waterval"
@@ -300,6 +305,12 @@ You may leave 'gaps' in the double-quoted strings in your BCQL query that can be
 
 
 === API v5
+
+::: warn Aborted queries
+
+BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary.resultsStats.stoppedBecauseTooMany` and/or `"summary.resultsStats.countOnly.stoppedBecauseTooMany` will be true. The first means counting continued, but not all hits can be fetched from the result set. The second means BlackLab has given up counting hits altogether.
+
+:::
 
 ```jsonc
 // API v5: /blacklab-server/corpora/chn-intern/hits?patt="waterval"

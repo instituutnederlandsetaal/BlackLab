@@ -20,7 +20,7 @@ Returns frequencies per term, sorted by descending frequency.
 | `terms`      | comma-separated list of terms for which to get the frequencies. Default: all terms                                                                                                                                                                                |
 
 **NOTE:** this operation always has to find the frequencies for all terms, even if it only needs to return one page.
-Hence there is no `waitfortotal` parameter like some other operations have (you always have to wait). Results
+Hence there is no `waitfortotal` parameter like `/hits` and `/docs` operations have (you always have to wait). Results
 are cached though, so after the first page is returned, using multiple requests to page through the results should be fast.
 
 ## Success Response
