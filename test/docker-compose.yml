@@ -69,7 +69,7 @@ services:
       # Allow us to attach to the JVM using JDWP for remote debugging
       - "5005:5005"
 
-  # Runs the tests on the CI server (doesn't save missing test responses, just fails)
+  # Runs the tests
   test:
     build: .
     environment:
@@ -83,11 +83,8 @@ services:
       - BLACKLAB_TEST_SAVE_MISSING_RESPONSES=${BLACKLAB_TEST_SAVE_MISSING_RESPONSES:-false}
 
     volumes:
-      # We need access to the previous responses and be able to save responses for any new tests.
-      - ./data/saved-responses:/app/data/saved-responses
-      - ./data/saved-responses-solr:/app/data/saved-responses-solr
-      - ./data/latest-test-output:/app/data/latest-test-output
-      - ./data/latest-test-output-solr:/app/data/latest-test-output-solr
+      # We need access to the tests data, previous responses and be able to save responses for any new tests.
+      - ./data:/app/data
 
 
 
