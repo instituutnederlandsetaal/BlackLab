@@ -1,6 +1,7 @@
 package nl.inl.blacklab.search.textpattern;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -47,10 +48,12 @@ public class TextPatternValue extends TextPattern {
                 if (annotation == null) {
                     // Annotation doesn't exist in the data.
                     // Check if there's an extension function that functions as a pseudo-annotation,
-                    // e.g. annot_punctAfter(query, ".") to enable [punctAfter="."]
-                    String functionName = QueryExtensions.pseudoAnnotationFunctionName(name);
-                    if (QueryExtensions.exists(functionName)) {
-                        return QueryExtensions.get(functionName);
+                    // e.g. punctAfter(".") to enable [punctAfter="."]
+                    if (QueryExtensions.exists(name)) {
+                        QueryFunction queryFunction = QueryExtensions.get(name);
+                        if (queryFunction.requiredNumberOfArguments() != 1)
+                            throw new InvalidQuery("Extension function " + name + " cannot be used as a pseudo-annotation because it requires " + queryFunction.requiredNumberOfArguments() + " arguments (expected 1)");
+                        return queryFunction;
                     }
                 }
                 if (annotation == null) {

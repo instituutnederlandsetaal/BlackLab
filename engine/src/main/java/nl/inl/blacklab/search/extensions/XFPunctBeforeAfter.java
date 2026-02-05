@@ -23,10 +23,10 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
     /** Register the punctBefore and punctAfter functions to simplify finding punctuation. */
     @Override
     public void register() {
-        QueryExtensions.registerPseudoAnnotation("punctBefore", ARGS_S, List.of(ANY_NON_WS),
+        QueryExtensions.register("punctBefore", ARGS_S, List.of(ANY_NON_WS),
             (queryInfo, context, args) -> getPunctQuery(context, OPT_WS + args.get(0) + OPT_WS)
         );
-        QueryExtensions.registerPseudoAnnotation("punctAfter", ARGS_S,
+        QueryExtensions.register("punctAfter", ARGS_S,
             List.of(ANY_NON_WS),
             (queryInfo, context, args) -> {
                 BLSpanQuery punctQuery = getPunctQuery(context, OPT_WS + args.get(0) + OPT_WS);

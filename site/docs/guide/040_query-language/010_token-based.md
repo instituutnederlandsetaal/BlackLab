@@ -216,6 +216,27 @@ Note that in special cases where more than one punctuation mark is indexed with 
 
 Note that `punctBefore` and `punctAfter` look like annotations when used in the query, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index.
 
+::: tip Pseudo-annotations are actually functions
+
+The query
+
+```
+[punctAfter=","]
+```
+
+is actually syntactic sugar for
+
+```
+[ punctAfter(",") ]
+```
+
+If a non-existent annotation is referenced in the query, BlackLab will check if there is a function with that name that takes a single parameter. If so, it will use that function instead.
+
+You can therefore add your own pseudo-annotations by [implementing a QueryFunction plugin](/development/customization/) that take a single parameter and returns a `BLSpanQuery`.
+
+:::
+
+
 ## Spans
 
 Your input data may contains "spans": marked regions of text, such as paragraphs, sentences, named entities, etc. If your input data is XML these may be XML elements, but they may also be marked in other ways. Non-XML formats may also define spans.

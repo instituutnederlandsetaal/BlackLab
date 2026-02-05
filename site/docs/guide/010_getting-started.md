@@ -83,7 +83,7 @@ BlackLab supports a number of input formats, but the most well-known are [TEI](h
 ::: warning PLEASE NOTE
 BlackLab needs *tokenized* data files as input. That means the word boundaries have already been determined and BlackLab can just index each word as it parses the input file.
 
-It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/development/customization/plugins.md).
+It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/development/customization/).
 :::
 
 

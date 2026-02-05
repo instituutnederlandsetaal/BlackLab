@@ -14,9 +14,6 @@ import nl.inl.blacklab.plugins.QueryFunction;
  */
 public class QueryExtensions {
 
-    /** Prefix for extension functions that enable pseudo-annotations like punctAfter */
-    public static final String PSEUDO_ANNOTATION_EXTENSION_FUNCTION_PREFIX = "annot_";
-
     private QueryExtensions() {
     }
 
@@ -76,15 +73,6 @@ public class QueryExtensions {
     public static void registerRelationsFunction(String name, List<ExprType> argTypes, List<Object> defaultValues,
             ExtensionFunction func) {
         register(name, argTypes, defaultValues, func, true);
-    }
-
-    public static void registerPseudoAnnotation(String name, List<ExprType> argTypes, List<Object> defaultValues,
-            ExtensionFunction func) {
-        register(pseudoAnnotationFunctionName(name), argTypes, defaultValues, func);
-    }
-
-    public static String pseudoAnnotationFunctionName(String annotName) {
-        return PSEUDO_ANNOTATION_EXTENSION_FUNCTION_PREFIX + annotName;
     }
 
     /**

@@ -195,5 +195,5 @@ plugins:
     lexiconFile: /path/to/dutchtagger/lexicon.tab
 ```
 
-Currently the files and exact version of OpenConvert are not publically available, but look at the [plugins](/development/customization/plugins.md) page for more information on how write your own plugin.
+Currently the files and exact version of OpenConvert are not publically available, but look at the [plugins](/development/customization/) page for more information on how write your own plugin.
 

@@ -78,7 +78,7 @@ These processing steps are more specific to certain data formats:
 | `chatFormatAgeToMonths`   |                                                         | Convert age as reported in CHAT format to number of months. |
 | `concatDate`              | `yearField`<br>`monthField`<br>`dayField`<br>`autofill` | Concatenate 3 separate date fields into one, substituting unknown months and days with the first or last possible value. The output format is YYYYMMDD. Numbers are padded with leading zeroes.<br>Requires 4 arguments:**<br>`yearField`: the metadata field containing the numeric year<br>`monthField`: the metadata field containing the numeric month (so "12" instead of "december" or "dec")<br>`dayField`: the metadata field containing the numeric day<br>`autofill`: `start` to autofill missing month and day to the first possible value (01), or `end` to autofill the last possible value (12 for months, last day of the month in that year for days - takes into account leap years).<br>This step requires that at least the year is known. If the year is not known, no output is generated. |
 
-You can also add new processing steps by creating a simple [plugin](/development/customization/plugins.md).
+You can also add new processing steps by creating a simple [plugin](/development/customization/).
 
 ## Advanced: forEach and name processing
 

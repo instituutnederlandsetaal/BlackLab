@@ -6,6 +6,7 @@ import java.util.Objects;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.QueryFunction;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.QueryExtensions;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -62,12 +63,14 @@ public class TextPatternTerm extends TextPattern {
         if (!context.field().annotations().exists(annotation)) {
             // Annotation doesn't exist in the data.
             // Check if there's an extension function that functions as a pseudo-annotation,
-            // e.g. annot_punctAfter(query, ".") to enable [punctAfter="."]
-            String functionName = QueryExtensions.pseudoAnnotationFunctionName(annotation);
-            if (QueryExtensions.exists(functionName)) {
+            // e.g. punctAfter(".") to enable [punctAfter="."]
+            if (QueryExtensions.exists(annotation)) {
+                QueryFunction func = QueryExtensions.get(annotation);
+                if (func.requiredNumberOfArguments() != 1)
+                    throw new InvalidQuery("Pseudo-annotation function " + annotation + " must take exactly one argument.");
                 String regex = convertToRegex ? StringUtil.escapeLuceneRegexCharacters(value) : value;
                 TextPatternValue tpRegex = TextPatternValue.fromObject(regex);
-                rewrittenPseudoAnnot = new TextPatternFunctionCall(functionName, List.of(tpRegex));
+                rewrittenPseudoAnnot = new TextPatternFunctionCall(annotation, List.of(tpRegex));
             }
         }
         return rewrittenPseudoAnnot;

@@ -463,7 +463,7 @@ performance:
 
 Plugins allow you to automatically convert files (e.g. .html, .docx) or apply linguistic tagging before indexing via BLS (experimental functionality).
 
-For more information about plugins, see [Plugins for converting/tagging](/development/customization/plugins.md).
+For more information about plugins, see [Plugins for converting/tagging](/development/customization/).
 
 ```yaml
 plugins:

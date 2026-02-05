@@ -176,7 +176,7 @@ If you want to skip certain files from being indexed, have your `FileIterator.ne
 
 ### QueryFunction example
 
-For a simple `QueryFunction` that matches a word and its reverse, create a text file `$BLACKLAB_CONFIG_DIR/plugins/orReverse.groovy` with the following content:
+For a simple `QueryFunction` that matches a word and its reverse, create a text file `$BLACKLAB_CONFIG_DIR/plugins/wordOrReverse.groovy` with the following content:
 
 ```groovy
 import nl.inl.blacklab.plugins.QueryFunction
@@ -186,9 +186,9 @@ import org.apache.lucene.index.Term
 import org.apache.lucene.queries.spans.BLSpanOrQuery
 import org.apache.lucene.queries.spans.SpanTermQuery
 
-class QueryFunctionOrReverse extends QueryFunction {
+class QueryFunctionWordOrReverse extends QueryFunction {
     QueryFunctionOrReverse() {
-        super("orReverse", List.of(ArgType.STRING));
+        super("wordOrReverse", List.of(ArgType.STRING));
     }
 
     BLSpanQuery term(String field, String value) {
@@ -203,15 +203,27 @@ class QueryFunctionOrReverse extends QueryFunction {
         return new BLSpanOrQuery(a, b)
     }
 }
-return new QueryFunctionOrReverse()
+return new QueryFunctionWordOrReverse()
 ```
 
-Note that `QueryFunction.applyFunc()` is declared to return Object. Valid types to return are:
+This plugin can be used in BCQL like this to find both `stressed` and `desserts`:
+
+```
+[wordOrReverse("stressed")]
+```
+
+or as a pseudo-annotation:
+
+```
+[wordOrReverse="stressed"]
+```
+
+Note that `QueryFunction.applyFunc()` is declared to return `TextPattern.EvalResult`. Valid types to return are:
 - `BLSpanQuery` for span queries
-- `String` for string values
-- `Integer` for integer values
-- `Boolean` for boolean values
-- `List` for lists of values
+- `MatchFilter` for the constraint part of the query (after `::`)
+- `ConstraintValue` for simple values (string, integer, boolean, list)
+- `Annotation` for an annotation in the corpus
+- `QueryFunction` to return another function
 
 The same types can be used for the parameters as well, declared in the constructor.
 
