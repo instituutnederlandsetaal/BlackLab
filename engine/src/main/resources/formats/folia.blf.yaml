@@ -171,8 +171,8 @@ annotatedFields:
     # XML tags within the content we'd like to index
     # (relative to container)
     inlineTags:
-    - path: .//s
-    - path: .//p
+    - path: .//folia:s
+    - path: .//folia:p
 
 # FoLiA's native metadata
 # Embedded metadata: all attributes of the document element
