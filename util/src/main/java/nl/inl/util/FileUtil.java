@@ -31,10 +31,11 @@ public class FileUtil {
 
     protected static final Logger logger = LogManager.getLogger(FileUtil.class);
 
-    /**
-     * The default encoding for opening files.
-     */
+    /** The default encoding for opening files. */
     private static final Charset DEFAULT_ENCODING = StandardCharsets.UTF_8;
+
+    /** Used for creating temp files with unique names. */
+    private static final SecureRandom random = new SecureRandom();
 
     /**
      * Sorts File objects alphabetically, case-insensitively, subdirectories first.
@@ -181,7 +182,6 @@ public class FileUtil {
      */
     public static File createTempFileSafe(String fileName) throws IOException {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
-        SecureRandom random = new SecureRandom();
         File file = new File(tempDir, random.nextInt(Integer.MAX_VALUE) + "_" + fileName);
         boolean ok = isFileInDirectory(file, tempDir);
         if (!ok)

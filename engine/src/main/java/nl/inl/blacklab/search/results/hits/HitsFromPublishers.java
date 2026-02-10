@@ -631,6 +631,7 @@ public class HitsFromPublishers extends HitsAbstract {
                     publishers.forEach(HitPublisher::activate);
 
                     // Wait until some hits are added to check again
+                    // We don't check the return value because we intend to do the same thing regardless of the outcome.
                     // (write lock is automatically released while waiting)
                     hitsAdded.await(HITS_ADDED_TIMEOUT_MS, TimeUnit.MILLISECONDS);
                 }

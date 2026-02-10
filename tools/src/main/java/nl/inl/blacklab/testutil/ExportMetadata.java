@@ -33,7 +33,7 @@ import nl.inl.util.LogUtil;
 public class ExportMetadata implements AutoCloseable {
 
     private static String escapeTabs(String str) {
-        return str.replaceAll("\t", "\\t");
+        return str.replace("\t", "\\t");
     }
 
     public static void main(String[] args) {
@@ -102,7 +102,8 @@ public class ExportMetadata implements AutoCloseable {
                     writer.write(buffer, 0, len);
                 }
             }
-            tmpFile.delete();
+            if (!tmpFile.delete())
+                throw new IOException("Failed to delete temporary file: " + tmpFile);
         }
     }
 
@@ -145,11 +146,9 @@ public class ExportMetadata implements AutoCloseable {
                     }
                 }
                 try {
-                    synchronized (csvPrinter) {
-                        synchronized (fieldNames) {
-                            Stream<String> rec = fieldNames.stream().map(f -> metadata.getOrDefault(f, ""));
-                            csvPrinter.printRecord(rec);
-                        }
+                    synchronized (fieldNames) {
+                        Stream<String> rec = fieldNames.stream().map(f -> metadata.getOrDefault(f, ""));
+                        csvPrinter.printRecord(rec);
                     }
                 } catch (IOException e) {
                     throw new RuntimeException(e);

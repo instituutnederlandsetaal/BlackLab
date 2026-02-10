@@ -307,6 +307,7 @@ public class TermsGlobal implements Terms {
                             }
 
                         } catch (InterruptedException e1) {
+                            Thread.currentThread().interrupt(); // preserve interrupted status
                             return e1;
                         }
                         return null;

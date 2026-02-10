@@ -117,32 +117,26 @@ public class FileIteratorZip extends FileIteratorAbstract {
 
     private FileReference getFileReferenceForEntry() {
         InputStream is = zipInputStream;
-        if (single) {
-            try {
-                is = zipFile.getInputStream(lookahead);
-            } catch (IOException e) {
-                throw new ErrorIndexingFile(e);
-            }
-        }
-        // We have to convert the InputStream to a byte[], because we will
-        // pass it to the handler asynchronously, and we can't guarantee that
-        // the InputStream will still be valid when the handler is called.
-        // (we can't use char[], even though that would be better for XML files,
-        //  because file may be binary)
         try {
-            String path = FilenameUtils.concat(archiveFile.getPath(), lookahead.getName());
-            return FileReference.fromBytes(path, IOUtils.toByteArray(is),
-                    archiveFile.getAssociatedFile());
-        } catch (IOException e) {
-            throw new IllegalStateException("Error reading zip entry", e);
-        }  finally {
-            if (single) {
-                try {
+            if (single)
+                is = zipFile.getInputStream(lookahead);
+            try {
+                // We have to convert the InputStream to a byte[], because we will
+                // pass it to the handler asynchronously, and we can't guarantee that
+                // the InputStream will still be valid when the handler is called.
+                // (we can't use char[], even though that would be better for XML files,
+                //  because file may be binary)
+                String path = FilenameUtils.concat(archiveFile.getPath(), lookahead.getName());
+                return FileReference.fromBytes(path, IOUtils.toByteArray(is),
+                        archiveFile.getAssociatedFile());
+            } catch (IOException e) {
+                throw new IllegalStateException("Error reading zip entry", e);
+            }  finally {
+                if (single)
                     is.close();
-                } catch (IOException e) {
-                    throw new ErrorIndexingFile(e);
-                }
             }
+        } catch (IOException e) {
+            throw new ErrorIndexingFile(e);
         }
     }
 }

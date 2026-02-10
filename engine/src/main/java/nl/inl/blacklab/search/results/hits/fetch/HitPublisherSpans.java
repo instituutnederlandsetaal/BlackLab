@@ -335,7 +335,7 @@ public class HitPublisherSpans implements HitPublisher {
                             if (hitsCounted > hitsCountedPrev) {
                                 subscribers.counted(hitsCounted - hitsCountedPrev, docsCounted - docsCountedPrev);
                                 hitsStats.add(0, hitsCounted - hitsCountedPrev);
-                                docsStats.add(0, docsCounted - docsCountedPrev);
+                                docsStats.add(0, (long)docsCounted - docsCountedPrev);
                                 hitsCountedPrev = hitsCounted;
                                 docsCountedPrev = docsCounted;
                             }

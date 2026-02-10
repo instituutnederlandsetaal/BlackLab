@@ -36,15 +36,15 @@ public class BLConfigCollator {
         collator = null;
     }
 
-    public String getCountry() {
+    public synchronized String getCountry() {
         return country;
     }
 
-    public String getVariant() {
+    public synchronized String getVariant() {
         return variant;
     }
 
-    public String getLanguage() {
+    public synchronized String getLanguage() {
         return language;
     }
 

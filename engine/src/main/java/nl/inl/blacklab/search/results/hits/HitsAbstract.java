@@ -236,6 +236,7 @@ public abstract class HitsAbstract implements Hits {
         try {
             segmentDoneLatch.await();
         } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new RuntimeException(e);
         }
     }

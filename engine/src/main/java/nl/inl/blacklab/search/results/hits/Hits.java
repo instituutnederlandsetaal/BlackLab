@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results.hits;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Supplier;
 
 import org.apache.logging.log4j.LogManager;
@@ -265,7 +266,7 @@ public interface Hits extends Iterable<EphemeralHit> {
             @Override
             public EphemeralHit next() {
                 if (nextHit >= size())
-                    throw new IndexOutOfBoundsException("No more hits available");
+                    throw new NoSuchElementException("No more hits available");
                 getEphemeral(nextHit, hit);
                 findNextHit();
                 return hit;
