@@ -180,6 +180,7 @@ For a simple `QueryFunction` that matches a word and its reverse, create a text 
 
 ```groovy
 import nl.inl.blacklab.plugins.QueryFunction
+import nl.inl.blacklab.plugins.ExprType
 import nl.inl.blacklab.search.QueryExecutionContext
 import nl.inl.blacklab.search.lucene.BLSpanQuery
 import org.apache.lucene.index.Term
@@ -187,19 +188,19 @@ import org.apache.lucene.queries.spans.BLSpanOrQuery
 import org.apache.lucene.queries.spans.SpanTermQuery
 
 class QueryFunctionWordOrReverse extends QueryFunction {
-    QueryFunctionOrReverse() {
-        super("wordOrReverse", List.of(ArgType.STRING));
+    QueryFunctionWordOrReverse() {
+        super("wordOrReverse", List.of(ExprType.STRING));
     }
 
-    BLSpanQuery term(String field, String value) {
+    BLSpanQuery term(QueryExecutionContext context, String field, String value) {
         return BLSpanQuery.wrap(context.queryInfo(), new SpanTermQuery(new Term(field, value)))
     }
 
     BLSpanQuery applyFunc(QueryExecutionContext context, List<Object> parameters) {
         String field = context.field().mainAnnotation().mainSensitivity().luceneField()
         String value = (String) parameters.get(0)
-        BLSpanQuery a = term(field, value)
-        BLSpanQuery b = term(field, value.reverse())
+        BLSpanQuery a = term(context, field, value)
+        BLSpanQuery b = term(context, field, value.reverse())
         return new BLSpanOrQuery(a, b)
     }
 }

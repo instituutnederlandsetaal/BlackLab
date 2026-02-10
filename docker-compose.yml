@@ -19,6 +19,7 @@ services:
       - blacklab-data:/data
       # Default values have no effect, but user can override CORPUS_DIR/_NAME to bind mount a corpus
       - ${CORPUS_DIR:-./README.md}:/data/index/${CORPUS_NAME:-README.md}
+      - ${PLUGINS_DIR:-./README.md}:/etc/blacklab/plugins
 
   # Creates new index
   indexer:
@@ -39,7 +40,7 @@ services:
 
   # BlackLab as a Solr component
   solr:
-    profiles: [ "tools" ]
+    profiles: [ "experimental" ]
     image: instituutnederlandsetaal/blacklab-solr:${VERSION:-latest}
     environment:
       # Allow BlackLab plugin to access configs and indexes (TODO: use security policy file)
