@@ -149,10 +149,10 @@
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "\"one\" (A:[])",
+      "bcql": "\"one\" A:[]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "\"one\" (A:[])",
+        "bcqlFragment": "\"one\" A:[]",
         "clauses": [
           {
             "bcqlFragment": "\"one\"",

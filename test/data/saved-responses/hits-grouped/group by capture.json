@@ -133,10 +133,10 @@
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "\"a|the\" (X:[])",
+      "bcql": "\"a|the\" X:[]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "\"a|the\" (X:[])",
+        "bcqlFragment": "\"a|the\" X:[]",
         "clauses": [
           {
             "bcqlFragment": "\"a|the\"",

@@ -1,25 +1,28 @@
 package nl.inl.blacklab.queryParser.corpusql;
 
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.RelationOperatorInfo;
 import nl.inl.blacklab.search.textpattern.RelationTarget;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
 import nl.inl.blacklab.search.textpattern.TextPatternRelationMatch;
-import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.StringUtil;
 
-public class CorpusQueryLanguageParser implements BLQueryParser {
+public class BcqlQueryLanguageParser implements BLQueryParser {
 
     /**
      * Parse a Contextual Query Language query.
@@ -29,54 +32,60 @@ public class CorpusQueryLanguageParser implements BLQueryParser {
      * @throws InvalidQuery on parse error
      */
     public static TextPattern parse(BlackLabIndex index, Map<String, Object> config, String query) throws InvalidQuery {
-        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(index, config);
+        BcqlQueryLanguageParser parser = new BcqlQueryLanguageParser(index, config);
         return parser.parseQuery(query);
     }
 
-    private final String defaultAnnotation;
-
-    private final MatchSensitivity defaultSensitivity;
-
-    public CorpusQueryLanguageParser(BlackLabIndex index, Map<String, Object> config) {
-        defaultAnnotation = cfgString(config, "defaultAnnotation",
-                index == null ? "word" : index.mainAnnotatedField().mainAnnotation().name());
-        if (index != null && index.mainAnnotatedField().annotation(defaultAnnotation) == null)
-            throw new IllegalArgumentException("Default annotation '" + defaultAnnotation + "' not found in index");
-        String strDefaultSensitivity = cfgString(config, "defaultSensitivity",
-                index == null ? "insensitive" :
-                    index.defaultMatchSensitivity().toString().toLowerCase());
-        defaultSensitivity = MatchSensitivity.fromName(strDefaultSensitivity);
+    public BcqlQueryLanguageParser(BlackLabIndex index, Map<String, Object> config) {
     }
 
-    private boolean cfgBoolean(Map<String, Object> config, String name, boolean defVal) {
-        Object allow = config.get(name);
-        if (allow == null)
-            return defVal;
-        return Boolean.parseBoolean(allow.toString());
-    }
-
-    private static String cfgString(Map<String, Object> config, String name, String defVal) {
-        String defAnnot = config.getOrDefault(name, "").toString();
-        return defAnnot.isEmpty() ? defVal : defAnnot;
-    }
-
+    @Override
     public CompleteQuery parse(String query) throws InvalidQuery {
         TextPattern tp = parseQuery(query);
         return new CompleteQuery(tp, null);
     }
 
-    public TextPattern parseQuery(String query) throws InvalidQuery {
+    public static TextPattern parseQuery(String query) throws InvalidQuery {
         try {
-            GeneratedCorpusQueryLanguageParser parser = new GeneratedCorpusQueryLanguageParser(new StringReader(query));
-            parser.wrapper = this;
-            return parser.query(BCQLParseContext.DEFAULT);
-        } catch (ParseException | TokenMgrError e) {
+
+            // Create a CharStream from the query string
+            CharStream input = CharStreams.fromString(query);
+
+            // Create a lexer that feeds off of input CharStream
+            BcqlLexer lexer = new BcqlLexer(input);
+
+            // Create a buffer of tokens pulled from the lexer
+            CommonTokenStream tokens = new CommonTokenStream(lexer);
+
+            // Create a parser that feeds off the tokens buffer
+            BcqlParser parser = new BcqlParser(tokens);
+            List<String> syntaxErrors = new ArrayList<>();
+            parser.addErrorListener(new BaseErrorListener() {
+                @Override
+                public void syntaxError(Recognizer<?, ?> recognizer,
+                        Object offendingSymbol,
+                        int line, int charPositionInLine,
+                        String msg, RecognitionException e)
+                {
+                    syntaxErrors.add("Syntax error at position " + charPositionInLine + ": " + msg);
+                }
+            });
+
+            // Begin parsing at the 'query' rule
+            BcqlParser.QueryContext tree = parser.query();
+
+            // Detect syntax errors
+            if (!syntaxErrors.isEmpty()) {
+                throw new InvalidQuery("Syntax error(s) in query: " + query + "\n" + String.join("\n", syntaxErrors));
+            }
+
+            BcqlAstVisitor visitor = new BcqlAstVisitor();
+
+            return visitor.visit(tree);
+
+        } catch (Exception e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }
-    }
-
-    int num(Token t) {
-        return Integer.parseInt(t.toString());
     }
 
     public static String chopEnds(String input) {
@@ -112,38 +121,21 @@ public class CorpusQueryLanguageParser implements BLQueryParser {
         return quotedUnescaped;
     }
 
-    public String getDefaultAnnotation() {
-        return defaultAnnotation;
-    }
+    public record ChildRelationStruct(RelationOperatorInfo type, TextPattern target, String captureAs) {}
 
-    TextPattern queryDefaultAnnotation(String regex) {
-        return new TextPatternRegex(regex);
-    }
-
-    public MatchSensitivity getDefaultSensitivity() {
-        return defaultSensitivity;
-    }
-
-    TextPattern annotationClause(String annot, TextPatternTerm value) {
-        // Main annotation has a name. Use that.
-        if (annot == null || annot.isEmpty())
-            annot = defaultAnnotation;
-        return value.withAnnotationAndSensitivity(annot, null);
-    }
-
-    record ChildRelationStruct(RelationOperatorInfo type, TextPattern target, String captureAs) {}
-
-    TextPattern relationQuery(TextPattern parent, List<ChildRelationStruct> childRels) {
+    public static TextPattern relationQuery(TextPattern parent, List<ChildRelationStruct> childRels) {
         List<RelationTarget> children = new ArrayList<>();
         for (ChildRelationStruct childRel: childRels) {
             RelationTarget child = new RelationTarget(childRel.type, childRel.target,
                     RelationInfo.SpanMode.SOURCE, childRel.captureAs);
             children.add(child);
         }
+        if (childRels.isEmpty())
+            return parent;
         return new TextPatternRelationMatch(parent, children);
     }
 
-    TextPattern rootRelationQuery(ChildRelationStruct childRel) {
+    public static TextPattern rootRelationQuery(ChildRelationStruct childRel) {
         assert !childRel.type.isNegate() : "Cannot negate root query";
         return new TextPatternRelationMatch(null,
                 List.of(new RelationTarget(childRel.type, childRel.target,

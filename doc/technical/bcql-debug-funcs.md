@@ -43,6 +43,12 @@ Example:
 will use the reverse index to find the word _clear_,
 then use the forward index to verify that it is followed by the word _water_.
 
+# `_fuzzy`
+
+    _fuzzy(word, maxEdits=2, prefixLength=0)
+
+Performs fuzzy matching.
+
 # `_ident`
 
     _ident(query)

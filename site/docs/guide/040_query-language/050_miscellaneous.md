@@ -5,29 +5,32 @@
 This is the precedence of the different BCQL operators, from highest to lowest. The highest precedence operators "bind 
 most tightly". See the examples below.
 
-Inside token brackets `[ ]`:
+Inside token brackets `[ ]`, constraints and tag attribute expressions:
 
-| Operator | Description    | Associativity |
-|----------|----------------|---------------|
-| `!`      | logical not    | right-to-left |
-| `=` `!=` | (not) equals   | left-to-right |
-| `&` `\|` | logical and/or | left-to-right |
+| Operator          | Description                            | Associativity |
+|-------------------|----------------------------------------|---------------|
+| `!`               | logical not                            | right-associative |
+| `( )`             | function call                          | left-associative |
+| `.`               | (constraint only) annotation selector  | left-associative |
+| `=` `!=`          | equals/not equals                      | left-associative |
+| `<` `<=` `>` `>=` | (constraint-only) comparison operators | left-associative |
+| `&` `\|` `->`     | logical and/or/implication             | left-associative |
 
 At the sequence level (i.e. outside token brackets):
 
-| Operator                                     | Description                                   | Associativity |
-|----------------------------------------------|-----------------------------------------------|---------------|
-| `!`                                          | logical not                                   | right-to-left |
-| `[ ]`                                        | token brackets                                | left-to-right |
-| `( )`                                        | function call                                 | left-to-right |
-| `*` `+` `?`<br>`{n}` `{n,m}`                 | repetition                                    | left-to-right |
-| `:`                                          | capture                                       | right-to-left |
-| `< />` `< >` `</ >`                          | span (start/end)                              | left-to-right |
-| `[] []`                                      | sequence<br>(implied operator)                | left-to-right |
-| `\|` `&`                                     | union/intersection                            | left-to-right |
-| `--> [ ; --> ]`<br>`^-->`<br>`==> [ ; ==> ]` | child relations<br>root relation<br>alignment | right-to-left |
-| `within` `containing`                        | position filter                               | right-to-left |
-| `::`                                         | capture constraint                            | left-to-right |
+| Operator                                     | Description                                  | Associativity |
+|----------------------------------------------|----------------------------------------------|---------------|
+| `!`                                          | logical not                                  | right-associative |
+| `[ ]`                                        | token brackets                               | left-associative |
+| `( )`                                        | function call                                | left-associative |
+| `*` `+` `?`<br>`{n}` `{n,m}`                 | repetition                                   | left-associative |
+| `:`                                          | capture                                      | right-associative |
+| `< />` `< >` `</ >`                          | span (start/end)                             | left-associative |
+| `[] []`                                      | sequence<br>(implied operator)               | left-associative |
+| `\|` `&`                                     | union/intersection                           | left-associative |
+| `--> [ ; --> ]`<br>`^-->`<br>`==> [ ; ==> ]` | child relations<br>root relation<br>alignment | right-associative |
+| `within` `containing` `overlap`              | position filter                              | right-associative |
+| `::`                                         | capture constraint                           | left-associative |
 
 NOTES:
 - you can always use grouping parens `( )` (at either token or sequence level) to override this precedence.

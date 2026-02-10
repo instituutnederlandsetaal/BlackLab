@@ -22,7 +22,7 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
@@ -45,7 +45,8 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
+import nl.inl.blacklab.search.textpattern.TextPatternFunctionCall;
+import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.blacklab.testutil.TestIndex;
 
 @RunWith(Parameterized.class)
@@ -707,7 +708,8 @@ public class TestSearches {
                 "noot [mier] aap",
                 "The [quick] brown",
                 "To [find] or");
-        TextPattern patt = new TextPatternFixedSpan(1, 2);
+        TextPattern patt = new TextPatternFunctionCall("_fixed", List.of(TextPatternValue.fromObject(1),
+                TextPatternValue.fromObject(2)));
         HitProperty sortBy = new HitPropertyBeforeHit(testIndex.index(), null,
                 MatchSensitivity.INSENSITIVE, 5);
         BLSpanQuery query = patt.toQuery(QueryExecutionContext.get(testIndex.index(),
@@ -727,7 +729,7 @@ public class TestSearches {
     }
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
-        TextPattern tp = CorpusQueryLanguageParser.parse(testIndex.index(), Map.of(), "\"" + bcqlPattern + "\"");
+        TextPattern tp = BcqlQueryLanguageParser.parse(testIndex.index(), Map.of(), "\"" + bcqlPattern + "\"");
         BLSpanQuery q = tp.toQuery(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
@@ -748,7 +750,7 @@ public class TestSearches {
     }
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
-        TextPattern patt = CorpusQueryLanguageParser.parse(testIndex.index(), Map.of(), query);
+        TextPattern patt = BcqlQueryLanguageParser.parse(testIndex.index(), Map.of(), query);
         BLSpanQuery blQuery = patt.toQuery(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));

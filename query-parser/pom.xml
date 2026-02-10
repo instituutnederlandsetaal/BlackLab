@@ -17,6 +17,7 @@
     <build>
     
         <pluginManagement>
+
             <plugins>
                 <!--This plugin's configuration is used to store Eclipse 
                     m2e settings only. It has no influence on the Maven build itself. -->
@@ -75,7 +76,77 @@
                         <version>6.1.2</version>
                     </dependency>
                 </dependencies>
-            </plugin>   
+            </plugin>
+
+            <!-- Plugin to compile the g4 files ahead of the java files
+           See https://github.com/antlr/antlr4/blob/master/antlr4-maven-plugin/src/site/apt/examples/simple.apt.vm
+           Except that the grammar does not need to contain the package declaration as stated in the documentation (I do not know why)
+           To use this plugin, type:
+             mvn antlr4:antlr4
+           In any case, Maven will invoke this plugin before the Java source is compiled
+            -->
+            <plugin>
+                <groupId>org.antlr</groupId>
+                <artifactId>antlr4-maven-plugin</artifactId>
+                <version>4.13.2</version>
+                <executions>
+                    <execution>
+                        <id>antlr</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <visitor>true</visitor>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>antlr-test</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>antlr4</goal>
+                        </goals>
+                        <configuration>
+                            <visitor>true</visitor>
+                            <sourceDirectory>src/main/antlr4</sourceDirectory>
+                            <outputDirectory>target/generated-test-sources/antlr4</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Make sure generated-sources and generated-test-sources are added to the compile path -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>add-source</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>add-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>target/generated-sources/antlr4</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>add-test-source</id>
+                        <phase>generate-test-sources</phase>
+                        <goals>
+                            <goal>add-test-source</goal>
+                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>target/generated-test-sources/antlr4</source>
+                            </sources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
              
         </plugins>
     </build>
@@ -87,8 +158,13 @@
             <artifactId>blacklab-engine</artifactId>
             <version>${project.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.13.2</version>
+        </dependency>
         
     </dependencies>
-
 
 </project>

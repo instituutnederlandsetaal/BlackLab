@@ -18,7 +18,6 @@ import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
-import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 import nl.inl.util.StringUtil;
 
 public class ContextualQueryLanguageParser implements BLQueryParser {
@@ -106,7 +105,7 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
         if (parts.length == 1) {
             // Single term, possibly with wildcards
             if (isContentsSearch)
-                tp = new TextPatternWildcard(value.trim(), annotation, null);
+                tp = TextPattern.wildcard(value.trim(), annotation, null);
             else
                 q = new WildcardQuery(new Term(field, value));
         } else {
@@ -114,7 +113,7 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
             if (isContentsSearch) {
                 List<TextPattern> clauses = new ArrayList<>();
                 for (String part : parts) {
-                    clauses.add(new TextPatternWildcard(part, annotation, null));
+                    clauses.add(TextPattern.wildcard(part, annotation, null));
                 }
                 tp = new TextPatternSequence(clauses.toArray(new TextPattern[0]));
             } else {

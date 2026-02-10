@@ -20,7 +20,6 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.HitPropertyHitPosition;

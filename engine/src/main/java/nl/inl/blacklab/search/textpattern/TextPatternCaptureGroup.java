@@ -9,6 +9,8 @@ import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
  */
 public class TextPatternCaptureGroup extends TextPattern {
 
+    public static int PRECEDENCE = 4;
+
     public static TextPattern get(TextPattern input, String captureAs) {
         if (input instanceof TextPatternTags) {
             return ((TextPatternTags)input).withCapture(captureAs);
@@ -28,6 +30,7 @@ public class TextPatternCaptureGroup extends TextPattern {
      * @param captureAs the tag name
      */
     public TextPatternCaptureGroup(TextPattern clause, String captureAs) {
+        super(PRECEDENCE);
         this.clause = clause;
         this.captureAs = captureAs;
     }

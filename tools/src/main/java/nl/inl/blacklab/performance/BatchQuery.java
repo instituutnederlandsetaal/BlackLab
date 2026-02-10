@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;

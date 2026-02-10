@@ -1,5 +1,6 @@
 nl.inl.blacklab.search.extensions.QueryFunctionEnd
 nl.inl.blacklab.search.extensions.QueryFunctionFixedSpan
+nl.inl.blacklab.search.extensions.QueryFunctionFuzzy
 nl.inl.blacklab.search.extensions.QueryFunctionLen
 nl.inl.blacklab.search.extensions.QueryFunctionList
 nl.inl.blacklab.search.extensions.QueryFunctionMeet

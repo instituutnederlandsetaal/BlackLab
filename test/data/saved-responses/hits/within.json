@@ -100,10 +100,10 @@
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "(\"very\" \"good\") within <u/>",
+      "bcql": "\"very\" \"good\" within <u/>",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "(\"very\" \"good\") within <u/>",
+        "bcqlFragment": "\"very\" \"good\" within <u/>",
         "filter": {
           "bcqlFragment": "<u/>",
           "name": "u",

@@ -18,11 +18,14 @@ import nl.inl.blacklab.search.matchfilter.MatchFilter;
  */
 public class TextPatternConstrained extends TextPattern {
 
+    public static int PRECEDENCE = 11;
+
     final TextPattern clause;
 
     final TextPattern constraint;
 
     public TextPatternConstrained(TextPattern clause, TextPattern constraint) {
+        super(PRECEDENCE);
         this.clause = clause;
         this.constraint = constraint;
     }

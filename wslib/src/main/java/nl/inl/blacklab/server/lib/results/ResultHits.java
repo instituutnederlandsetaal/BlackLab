@@ -50,7 +50,6 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnd;
-import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -307,7 +306,7 @@ public class ResultHits {
                 Annotation annot = prop.getAnnotation();
                 MatchSensitivity sensitivity = prop.getSensitivity();
 
-                tp = new TextPatternAnd(tp, new TextPatternTerm(valueForAnnotation, annot.name(), sensitivity));
+                tp = new TextPatternAnd(tp, TextPattern.term(valueForAnnotation, annot.name(), sensitivity));
             } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
                 Object value = vals.get(i).value();
                 int luceneDocId = value instanceof Integer ?

@@ -13,7 +13,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;

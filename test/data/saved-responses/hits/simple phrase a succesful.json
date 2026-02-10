@@ -84,10 +84,10 @@
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "\"a\" [(lemma = \"successful\")]",
+      "bcql": "\"a\" [lemma = \"successful\"]",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "\"a\" [(lemma = \"successful\")]",
+        "bcqlFragment": "\"a\" [lemma = \"successful\"]",
         "clauses": [
           {
             "bcqlFragment": "\"a\"",

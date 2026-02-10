@@ -7,7 +7,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAdjustHits;
-import nl.inl.blacklab.search.textpattern.TextPatternRegex;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 
 /**
  * Extension functions for easily matching punctuation.
@@ -43,7 +43,7 @@ public class XFPunctBeforeAfter implements ExtensionFunctionClass {
      * @return the query
      */
     private static BLSpanQuery getPunctQuery(QueryExecutionContext context, String regex) {
-        return new TextPatternRegex(regex, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
+        return TextPattern.regex(regex, AnnotatedFieldNameUtil.PUNCTUATION_ANNOT_NAME,
                 MatchSensitivity.INSENSITIVE).toQuery(context);
     }
 

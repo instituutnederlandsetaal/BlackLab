@@ -15,6 +15,8 @@ import nl.inl.blacklab.search.lucene.SpanQuerySequence;
  */
 public class TextPatternSequence extends TextPattern {
 
+    public static int PRECEDENCE = 7;
+
     protected final List<TextPattern> clauses = new ArrayList<>();
 
     public TextPatternSequence(TextPattern... clauses) {
@@ -22,6 +24,7 @@ public class TextPatternSequence extends TextPattern {
     }
 
     public TextPatternSequence(List<TextPattern> clauses) {
+        super(PRECEDENCE);
         for (TextPattern clause : clauses) {
             if (clause instanceof TextPatternSequence) {
                 // Flatten nested sequences

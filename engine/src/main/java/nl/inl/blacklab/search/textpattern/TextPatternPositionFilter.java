@@ -15,6 +15,8 @@ import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
  */
 public class TextPatternPositionFilter extends TextPattern {
 
+    public static int PRECEDENCE = 10;
+
     /** The hits we're (possibly) looking for */
     private final TextPattern producer;
 
@@ -39,6 +41,7 @@ public class TextPatternPositionFilter extends TextPattern {
 
     public TextPatternPositionFilter(TextPattern producer, TextPattern filter, SpanQueryPositionFilter.Operation operation,
             boolean invert, int adjustLeading, int adjustTrailing) {
+        super(PRECEDENCE);
         this.producer = producer;
         this.filter = filter;
         this.operation = operation;

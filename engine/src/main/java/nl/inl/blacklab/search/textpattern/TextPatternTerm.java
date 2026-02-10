@@ -18,6 +18,8 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternTerm extends TextPattern {
 
+    public static int PRECEDENCE = 5;
+
     /** Annotation to match, or null for default (usually "word"). */
     protected final String annotation;
 
@@ -30,11 +32,8 @@ public class TextPatternTerm extends TextPattern {
         return value;
     }
 
-    public TextPatternTerm(String value) {
-        this(value, null, null);
-    }
-
-    public TextPatternTerm(String value, String annotation, MatchSensitivity sensitivity) {
+    protected TextPatternTerm(String value, String annotation, MatchSensitivity sensitivity) {
+        super(PRECEDENCE);
         this.annotation = annotation;
         this.sensitivity = sensitivity;
         this.value = value;

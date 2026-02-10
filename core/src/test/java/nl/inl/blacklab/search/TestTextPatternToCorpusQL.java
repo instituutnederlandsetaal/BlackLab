@@ -7,7 +7,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
 
@@ -19,7 +19,7 @@ public class TestTextPatternToCorpusQL {
     }
 
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
-        TextPattern p = CorpusQueryLanguageParser.parse(null, Map.of(), input);
+        TextPattern p = BcqlQueryLanguageParser.parse(null, Map.of(), input);
         String cql = TextPatternSerializerBcql.serialize(p);
         Assert.assertEquals(expected, cql);
     }
@@ -34,14 +34,14 @@ public class TestTextPatternToCorpusQL {
 
         assertRoundtrip("((\"the\" & \"c\\\\at\") | \"do\\\"g\") \"turtle\"");
 
-        // NOTE: & and | have same precedence. Parsed as a right-leaning binary tree, then flattened per operator.
-        assertCanonicalized("\"a\" & (\"b\" | (\"c\" & \"d\" & \"e\"))", "\"a\" & \"b\" | \"c\" & \"d\" & \"e\"");
+        // NOTE: & and | have same precedence. Parsed as a left-leaning binary tree, then flattened per operator.
+        assertCanonicalized("((\"a\" & \"b\") | \"c\") & \"d\" & \"e\"", "\"a\" & \"b\" | \"c\" & \"d\" & \"e\"");
     }
 
     @Test
     public void testBrackets() throws InvalidQuery {
-        assertRoundtrip("[!((word = \"a\") & (word = \"b\"))]");
-        assertRoundtrip("[(word != \"the\") & ((lemma = \"cat\") | (pos = \"dog\"))] \"turtle\"");
+        assertRoundtrip("[!(word = \"a\" & word = \"b\")]");
+        assertRoundtrip("[word != \"the\" & (lemma = \"cat\" | pos = \"dog\")] \"turtle\"");
         assertRoundtrip("!\"cat\"");
         assertRoundtrip("[!(word = \"a\") & !(word = \"b\")]");
     }
@@ -63,19 +63,20 @@ public class TestTextPatternToCorpusQL {
 
     @Test
     public void testRepetition() throws InvalidQuery {
+        assertRoundtrip("(\"a\" | \"the\")? \"cat\"");
         assertRoundtrip("\"the\" \"cat\"");
-        assertRoundtrip("((\"a\" | \"the\")?) \"cat\"");
-        assertRoundtrip("(\"the\"*) \"cat\"");
-        assertRoundtrip("(\"the\"+) \"cat\"");
-        assertRoundtrip("(\"the\"{2,3}) \"cat\"");
-        assertRoundtrip("(\"the\"{2,}) \"cat\"");
+        assertRoundtrip("\"the\"* \"cat\"");
+        assertRoundtrip("\"the\"+ \"cat\"");
+        assertRoundtrip("\"the\"{2,3} \"cat\"");
+        assertRoundtrip("\"the\"{2,} \"cat\"");
     }
 
     @Test
     public void testCaptureTags() throws InvalidQuery {
-        assertRoundtrip("(A:\"the\") within B:<s/>");
-        assertRoundtrip("(A:(\"the\" | \"a\")) containing <s/>");
-        assertRoundtrip("(A:(\"the\" | \"a\")) within (<s1/> | <s2/>)");
+        assertRoundtrip("A:\"the\" within B:<s/>");
+        assertRoundtrip("A:(\"the\" | \"a\") containing <s/>");
+        assertRoundtrip("A:(\"the\" | \"a\") within <s1/> | <s2/>");
+        assertRoundtrip("<\"s.*\"/>");
     }
 
     @Test
@@ -103,6 +104,8 @@ public class TestTextPatternToCorpusQL {
         assertRoundtrip("rel(\"test\", _)");
         assertRoundtrip("rel(\"test\", []+)");
         assertRoundtrip("rspan(<s/>, \"full\")");
+        assertRoundtrip("[word = len(\"cat\")]");
+        assertRoundtrip("<s typeId=len(\"bleh\")/>");
     }
 
     @Test
@@ -110,6 +113,7 @@ public class TestTextPatternToCorpusQL {
         assertRoundtrip("_ -test-> _");
         assertRoundtrip("[]+ -test-> []+");
         assertRoundtrip("^--> _");
+        assertRoundtrip("\"cat\" =w=>nl \"kat\"");
     }
 
     @Test
@@ -121,14 +125,33 @@ public class TestTextPatternToCorpusQL {
 
     @Test
     public void testConstraints() throws InvalidQuery {
-        assertRoundtrip("((A:[]) (B:[])) :: (((A.lemma) = (B.lemma)) | ((A.word) = (B.word)))");
-        assertRoundtrip("((A:[]) (B:[])) :: (start(A) <= end(B))");
-        assertRoundtrip("[] (((A:[]) (B:[])) :: (((A.lemma) = (B.lemma)) & (start(A) <= end(B)))) []");
+        assertRoundtrip("A:[] B:[] :: A.lemma = B.lemma | A.word = B.word");
+        assertRoundtrip("A:[] B:[] :: start(A) <= end(B)");
+        assertRoundtrip("[] (A:[] B:[] :: A.lemma = B.lemma & start(A) <= end(B)) []");
+    }
+
+    @Test
+    public void testTypes() throws InvalidQuery {
+        assertRoundtrip("\"the\" :: 1 = 1");
+        assertCanonicalized("\"the\" :: ((1 = 1) = 2) = 2", "\"the\" :: 1 = 1 = 2 = 2");
+        assertRoundtrip("\"the\" :: (1 = 1) = (2 = 2)");
+        assertRoundtrip("\"the\" :: true != false");
+        assertRoundtrip("\"the\" :: \"me\" != \"you\"");
+        assertRoundtrip("\"the\" :: in[1,2] != in[3,4]");
     }
 
     @Test
     public void testIntRange() throws InvalidQuery {
         assertRoundtrip("[number = in[24,42]]");
         assertRoundtrip("<s number=in[123,4567]/>");
+    }
+
+    @Test
+    public void testOperatorChaining() throws InvalidQuery {
+        assertRoundtrip("!(!\"de\")");
+        assertCanonicalized("[] :: (1 = 1) != false", "[] :: 1=1!=false");
+        assertCanonicalized("([] :: true) :: true", "[] :: true :: true");
+        assertCanonicalized("[] :: (1 = 1 & 2 = 2) | 3 = 3", "[] :: 1 = 1 & 2 = 2 | 3 = 3");
+        assertCanonicalized("A:(B:[])", "A:B:[]");
     }
 }

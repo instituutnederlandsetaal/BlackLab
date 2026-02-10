@@ -11,7 +11,6 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.corpusql.CorpusQLParserProvider;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.QueryExplanation;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;

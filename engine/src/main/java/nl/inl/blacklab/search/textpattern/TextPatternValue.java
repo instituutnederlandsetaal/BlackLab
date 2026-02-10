@@ -15,6 +15,8 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterValue;
  */
 public class TextPatternValue extends TextPattern {
 
+    public static int PRECEDENCE = 0;
+
     /*
      * The maximum number of tokens in this stretch.
      */
@@ -25,6 +27,7 @@ public class TextPatternValue extends TextPattern {
     }
 
     public TextPatternValue(ConstraintValue value) {
+        super(PRECEDENCE);
         this.value = value;
     }
 

@@ -19,4 +19,6 @@ public interface TextPatternStruct {
     default boolean isBracketQuery() {
         return false;
     }
+
+    int getPrecedence();
 }

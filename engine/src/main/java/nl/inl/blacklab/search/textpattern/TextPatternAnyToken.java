@@ -11,6 +11,9 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
  * This may be used to implement a 'wildcard' token in a pattern language.
  */
 public class TextPatternAnyToken extends TextPattern {
+
+    public static int PRECEDENCE = 0;
+
     /*
      * The minimum number of tokens in this stretch.
      */
@@ -22,6 +25,7 @@ public class TextPatternAnyToken extends TextPattern {
     protected final int max;
 
     public TextPatternAnyToken(int min, int max) {
+        super(PRECEDENCE);
         this.min = min;
         this.max = max;
     }

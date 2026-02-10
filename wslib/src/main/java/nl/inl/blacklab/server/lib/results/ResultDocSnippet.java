@@ -20,7 +20,8 @@ import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternFixedSpan;
+import nl.inl.blacklab.search.textpattern.TextPatternFunctionCall;
+import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
@@ -78,7 +79,7 @@ public class ResultDocSnippet {
 
         if (context.isInlineTag()) {
             // Make sure we capture the tag so we can use its boundaries for the snippet
-            TextPatternFixedSpan producer = new TextPatternFixedSpan(start, end);
+            TextPatternFunctionCall producer = new TextPatternFunctionCall("_fixed", List.of(TextPatternValue.fromObject(start), TextPatternValue.fromObject(end)));
             String tagNameRegex = StringUtil.escapeLuceneRegexCharacters(context.inlineTagName());
             TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagNameRegex, XFRelations.DEFAULT_CONTEXT_REL_NAME);
             QueryExecutionContext queryContext = QueryExecutionContext.get(index,

@@ -16,7 +16,6 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternCompare;
 import nl.inl.blacklab.search.textpattern.TextPatternDefaultValue;
 import nl.inl.blacklab.search.textpattern.TextPatternValue;
-import nl.inl.blacklab.search.textpattern.TextPatternWildcard;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
@@ -50,7 +49,7 @@ public class TestBlsUtils {
 
     @Test
     public void testParsePattContextQL() throws BlsException {
-        TextPattern pattThe = new TextPatternWildcard("the", "word", null);
+        TextPattern pattThe = TextPattern.wildcard("the", "word", null);
         Assert.assertEquals(pattThe, BlsUtils.parsePatt(index, "\"the\"", "contextql"));
     }
 

@@ -9,6 +9,7 @@ import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
+import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
@@ -17,6 +18,7 @@ import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.util.StringUtil;
 
 /**
  * Describes some pattern of words in a content field. The point of this
@@ -29,43 +31,33 @@ public abstract class TextPattern implements TextPatternStruct {
     /** Value meaning "no maximum" (actually just the largest integer) */
     public static final int MAX_UNLIMITED = BLSpanQuery.MAX_UNLIMITED;
 
-    // Node types
-    public static final String NT_AND = "and";
-    public static final String NT_ANYTOKEN = "anytoken";
-    public static final String NT_CAPTURE = "capture";
-    public static final String NT_COMPARE = "compare";
-    public static final String NT_CONSTRAINED = "constrained";
-    public static final String NT_DEFVAL = "defval";
-    public static final String NT_LOOK = "look";
-    public static final String NT_EXPANSION = "expansion";
-    public static final String NT_FILTERNGRAMS = "filterngrams";
-    public static final String NT_FIXEDSPAN = "fixedspan";
-    public static final String NT_FUZZY = "fuzzy";
-    public static final String NT_IMPLICATION = "implication";
-    public static final String NT_INT_RANGE = "intrange";
-    public static final String NT_NOT = "not";
-    public static final String NT_OR = "or";
-    public static final String NT_POSFILTER = "posfilter";
-    public static final String NT_OVERLAPPING = "overlapping";
-    public static final String NT_PREFIX = "prefix";
-    public static final String NT_CALL_FUNC = "callfunc";
-    public static final String NT_REGEX = "regex";
-    public static final String NT_RELATION_MATCH = "relmatch";
-    public static final String NT_RELATION_TARGET = "reltarget";
-    public static final String NT_REPEAT = "repeat";
-    public static final String NT_SENSITIVITY = "sensitivity";
-    public static final String NT_SEQUENCE = "sequence";
-    public static final String NT_SETTINGS = "settings";
-    public static final String NT_TAGS = "tags";
-    public static final String NT_TERM = "term";
-    public static final String NT_PROP_SELECT = "prop-selector";
-    public static final String NT_VALUE_STRING = "string";
-    public static final String NT_VALUE_BOOLEAN = "boolean";
-    public static final String NT_VALUE_INTEGER = "integer";
-    public static final String NT_VALUE_INT_RANGE = "int-range";
-    public static final String NT_VALUE_SYMBOL = "symbol";
-    public static final String NT_VALUE_UNDEFINED = "undefined";
-    public static final String NT_WILDCARD = "wildcard";
+    public static TextPattern regex(String value, String annotation, MatchSensitivity sensitivity) {
+        return new TextPatternRegex(value, annotation, sensitivity);
+    }
+
+    public static TextPattern term(String value, String annotation, MatchSensitivity sensitivity) {
+        return new TextPatternTerm(value, annotation, sensitivity);
+    }
+
+    public static TextPattern regex(String value) {
+        return regex(value, null, null);
+    }
+
+    public static TextPattern term(String value) {
+        return term(value, null, null);
+    }
+
+    protected static TextPattern prefix(String prefix) {
+        String regex = StringUtil.escapeLuceneRegexCharacters(prefix) + ".*";
+        return regex(regex, null, null);
+    }
+
+    public static TextPattern wildcard(String wildcardExpr, String annotation, MatchSensitivity sensitivity) {
+        String regex = StringUtil.escapeLuceneRegexCharacters(wildcardExpr)
+                .replace("\\*", ".*")
+                .replace("\\?", ".");
+        return regex(regex, annotation, sensitivity);
+    }
 
     /**
      * Make sure the query is within the specified tag, and capture relations within the tag.
@@ -140,7 +132,12 @@ public abstract class TextPattern implements TextPatternStruct {
         return b.toString();
     }
 
+    /** A result of evaluating a TextPattern, e.g. BLSpanQuery, MatchFilter, ConstraintValue, ... */
     public interface EvalResult {
+    }
+
+    TextPattern(int precedence) {
+        this.precedence = precedence;
     }
 
     /**
@@ -153,6 +150,17 @@ public abstract class TextPattern implements TextPatternStruct {
      * @throws InvalidQuery if something's wrong with the query (e.g. error in regex expression)
      */
     public abstract EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery;
+
+    /** Each subclass should set this in the constructor. */
+    protected int precedence = Integer.MAX_VALUE;
+
+    /** Get the precedence of this TextPattern node.
+     *
+     * Used to determine if parentheses are needed when serializing back to BCQL.
+     */
+    public int getPrecedence() {
+        return precedence;
+    }
 
     /**
      * Translate this TextPattern into a BLSpanQuery.
@@ -184,15 +192,6 @@ public abstract class TextPattern implements TextPatternStruct {
             return mf;
         throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
     }
-
-    @Override
-    public abstract String toString();
-
-    @Override
-    public abstract boolean equals(Object obj);
-
-    @Override
-    public abstract int hashCode();
 
     public BLSpanQuery toQuery(QueryInfo queryInfo) throws InvalidQuery {
         return toQuery(queryInfo, null, false, false);
@@ -268,4 +267,13 @@ public abstract class TextPattern implements TextPatternStruct {
     public boolean isRelationsQuery() {
         return false;
     }
+
+    @Override
+    public abstract String toString();
+
+    @Override
+    public abstract boolean equals(Object obj);
+
+    @Override
+    public abstract int hashCode();
 }

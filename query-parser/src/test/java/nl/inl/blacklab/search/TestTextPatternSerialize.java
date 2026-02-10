@@ -8,12 +8,11 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import nl.inl.blacklab.queryParser.corpusql.CorpusQueryLanguageParser;
+import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
 import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
-import nl.inl.blacklab.search.textpattern.TextPatternTerm;
 import nl.inl.util.Json;
 
 public class TestTextPatternSerialize {
@@ -46,7 +45,7 @@ public class TestTextPatternSerialize {
     }
 
     private static void assertRoundtrip(String cqlQuery, boolean checkSerializeToCql) throws IOException {
-        CorpusQueryLanguageParser parser = new CorpusQueryLanguageParser(null, Map.of());
+        BcqlQueryLanguageParser parser = new BcqlQueryLanguageParser(null, Map.of());
         TextPattern pattern;
         pattern = parser.parseQuery(cqlQuery);
         assertRoundtrip(pattern);
@@ -56,7 +55,7 @@ public class TestTextPatternSerialize {
 
     @Test
     public void testSimple() throws IOException {
-        TextPattern pattern = new TextPatternTerm("cow");
+        TextPattern pattern = TextPattern.term("cow");
         String expected = "{\"bcqlFragment\":\"\\\"cow\\\"\",\"type\":\"term\",\"value\":\"cow\"}";
         assertRewritesTo(expected, pattern);
         assertRoundtrip(pattern);
@@ -66,12 +65,12 @@ public class TestTextPatternSerialize {
     public void testSentence() throws IOException {
         TextPattern pattern = new TextPatternSequence(
                 TextPatternRepetition.get(
-                        new TextPatternTerm("lazy"),
+                        TextPattern.term("lazy"),
                         1,
                         TextPattern.MAX_UNLIMITED
                 ),
-                new TextPatternTerm("cow"));
-        String expected = "{\"bcqlFragment\":\"(\\\"lazy\\\"+) \\\"cow\\\"\",\"type\":\"sequence\",\"clauses\":["+
+                TextPattern.term("cow"));
+        String expected = "{\"bcqlFragment\":\"\\\"lazy\\\"+ \\\"cow\\\"\",\"type\":\"sequence\",\"clauses\":["+
                 "{\"bcqlFragment\":\"\\\"lazy\\\"+\",\"type\":\"repeat\",\"clause\":"+
                     "{\"bcqlFragment\":\"\\\"lazy\\\"\",\"type\":\"term\",\"value\":\"lazy\"},"+
                     "\"min\":1},"+

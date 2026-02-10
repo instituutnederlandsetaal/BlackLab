@@ -16,6 +16,8 @@ import nl.inl.blacklab.search.lucene.SpanQueryNot;
  */
 public class TextPatternLook extends TextPattern {
 
+    public static int PRECEDENCE = 0;
+
     private final TextPattern clause;
 
     private final boolean behind;
@@ -23,6 +25,7 @@ public class TextPatternLook extends TextPattern {
     private final boolean negate;
 
     public TextPatternLook(TextPattern clause, boolean behind, boolean negate) {
+        super(PRECEDENCE);
         this.clause = clause;
         this.behind = behind;
         this.negate = negate;

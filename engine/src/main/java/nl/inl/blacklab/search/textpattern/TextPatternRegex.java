@@ -1,7 +1,5 @@
 package nl.inl.blacklab.search.textpattern;
 
-import java.util.regex.Pattern;
-
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.RegexpQuery;
 
@@ -16,11 +14,8 @@ import nl.inl.util.StringUtil;
  * A TextPattern matching a regular expression.
  */
 public class TextPatternRegex extends TextPatternTerm {
-    public TextPatternRegex(String value) {
-        this(value, null, null);
-    }
 
-    public TextPatternRegex(String value, String annotation, MatchSensitivity sensitivity) {
+    protected TextPatternRegex(String value, String annotation, MatchSensitivity sensitivity) {
         super(value, annotation, sensitivity);
     }
 
@@ -32,7 +27,7 @@ public class TextPatternRegex extends TextPatternTerm {
             return rewrittenPseudoAnnot.toQuery(context);
 
         // See if this is really a regex query or just a term query maskerading as one...
-        TextPattern result = rewriteToSimplerTextPattern(annotation, sensitivity, value);
+        TextPattern result = TextPatternCompare.rewriteToSimplerTextPattern(annotation, sensitivity, value);
         if (result != null) {
             // Rewritten into a regular term query; translate that instead
             return result.toQuery(context);
@@ -57,70 +52,6 @@ public class TextPatternRegex extends TextPatternTerm {
             // Lucene's automaton building code and we may end up here.
             throw new RegexpTooLarge();
         }
-    }
-
-    static final Pattern onlyLettersAndDigits = Pattern.compile("[\\w\\d]+", Pattern.UNICODE_CHARACTER_CLASS);
-
-    /**
-     * Rewrite to TextPatternTerm if value only contains letters and numbers.
-     *
-     * Also looks at (?i), (?-i), (?c) at the start of the pattern and converts that
-     * into an appropriate TextPatternSensitive() wrapper.
-     *
-     * In all other cases, we keep TextPatternRegex because Lucene's regex, wildcard
-     * and prefix queries all work in the same basic way (are converted into
-     * AutomatonQuery's), so they are equally fast.
-     *
-     * @return the TextPattern
-     */
-    public static TextPattern rewriteToSimplerTextPattern(String annotation, MatchSensitivity sensitivity, String value) {
-        // Do we want to force an (in)sensitive search?
-        boolean forceSensitive = false;
-        boolean forceInsensitive = false;
-        String newValue = value;
-        if (newValue.startsWith("(?-i)")) {
-            forceSensitive = true;
-            newValue = newValue.substring(5);
-        } else if (newValue.startsWith("(?c)")) {
-            forceSensitive = true;
-            newValue = newValue.substring(4);
-        } else if (newValue.startsWith("(?i)")) {
-            forceInsensitive = true;
-            newValue = newValue.substring(4);
-        }
-
-        // Is it "any token"?
-        if (value.equals(".*")) {
-            return new TextPatternAnyToken(1, 1);
-        }
-
-        // If this contains no funny characters, only (Unicode) letters and digits,
-        // surrounded by ^ and $, turn it into a TermQuery, which might be a little
-        // faster than doing it via RegexpQuery (which has to build an Automaton).
-        TextPatternTerm result = null;
-        if (onlyLettersAndDigits.matcher(newValue).matches()) {
-            // No regex characters, so we can turn it into a term query
-            result = new TextPatternTerm(newValue, annotation, sensitivity);
-        }
-        if (result == null) {
-            // Not a term query. Did we strip off a sensitivity flag above?
-            if (!forceSensitive && !forceInsensitive) {
-                // Nope. Nothing to rewrite.
-                return null;
-            }
-            // Yes. Create new TP from remaining regex, and add TextPatternSensitive below.
-            result = new TextPatternRegex(newValue, annotation, sensitivity);
-        }
-
-        if (forceSensitive) {
-            // Pattern started with (?-i) or (?c) to force it to be sensitive
-            result = result.withAnnotationAndSensitivity(null, MatchSensitivity.SENSITIVE);
-        } else if (forceInsensitive) {
-            // Pattern started with (?i) to force it to be insensitive
-            result = result.withAnnotationAndSensitivity(null, MatchSensitivity.INSENSITIVE);
-        }
-
-        return result;
     }
 
     @Override
