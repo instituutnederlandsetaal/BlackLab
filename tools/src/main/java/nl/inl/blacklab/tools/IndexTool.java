@@ -180,13 +180,11 @@ public class IndexTool {
             usage();
             return;
         }
-        if (formatIdentifier == null) {
+        if (formatIdentifier == null  && addingFiles) {
             System.err.println("No format identifier given.");
             usage();
             return;
         }
-
-        // Check the command
         if (command.isEmpty()) {
             System.err.println("No command specified; specify 'create' or 'add'. (--help for details)");
             usage();
