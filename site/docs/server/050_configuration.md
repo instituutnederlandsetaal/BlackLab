@@ -336,11 +336,6 @@ indexing:
     # (useful if referring to external zip files containing metadata)
     # (default: 10)
     zipFilesMaxOpen: 10
-
-    # Max. number of values to store per metadata field
-    # (DEPRECATED, only applies to the older external index format)
-    # (default: 50)
-    maxMetadataValuesToStore: 100
 ```
 
 :::
