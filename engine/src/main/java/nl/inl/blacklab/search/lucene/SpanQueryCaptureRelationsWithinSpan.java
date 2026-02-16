@@ -56,8 +56,6 @@ public class SpanQueryCaptureRelationsWithinSpan extends BLSpanQueryAbstract {
         this.captureRelsAs = captureRelsAs;
         this.guarantees = query.guarantees();
     }
-
-
     /**
      * Capture all matching relations occurring within a captured span.
      *

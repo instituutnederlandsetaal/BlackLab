@@ -4,10 +4,11 @@ import java.util.Objects;
 import java.util.Optional;
 
 import nl.inl.blacklab.Constants;
-import nl.inl.blacklab.search.indexmetadata.RelationUtil;
+import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
+import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 
 /**
@@ -25,17 +26,17 @@ public class ContextSize {
     public static final ContextSize ZERO = get(0, 0, 0);
 
     /**
-     * Context based on am inline tag containing the hit instead of the hit.
+     * Context based on an inline tag containing the hit instead of the hit.
      *
      * Note that the tag MUST contain the hit, or Bad Things will happen.
      * So this is useful for finding the whole sentence or paragraph a hit occurs in,
      * for example.
      *
-     * @param matchInfoName match info to use for context
+     * @param tagName tag to use for context
      * @return context size object
      */
-    public static ContextSize matchInfo(String matchInfoName, int maxSnippetLength) {
-        return new ContextSize(0, 0, true, matchInfoName, maxSnippetLength);
+    public static ContextSize tag(String tagName, int maxSnippetLength) {
+        return new ContextSize(0, 0, true, tagName, maxSnippetLength);
     }
 
     /**
@@ -44,11 +45,11 @@ public class ContextSize {
      * @param before context size before hit
      * @param after context size after hit
      * @param includeHit should the hit itself be included in the context or not?
-     * @param matchInfoName match info to use for context
+     * @param tagName tag to use for context
      * @return context size object
      */
-    public static ContextSize get(int before, int after, boolean includeHit, String matchInfoName, int maxSnippetLength) {
-        return new ContextSize(before, after, includeHit, matchInfoName, maxSnippetLength);
+    public static ContextSize get(int before, int after, boolean includeHit, String tagName, int maxSnippetLength) {
+        return new ContextSize(before, after, includeHit, tagName, maxSnippetLength);
     }
 
     /**
@@ -104,7 +105,7 @@ public class ContextSize {
         int after = Math.max(a.after, b.after);
         boolean includeHit = a.includeHit || b.includeHit;
         int maxSnippetLength = Math.min(a.maxSnippetLength, b.maxSnippetLength);
-        return new ContextSize(before, after, includeHit, a.matchInfoName, maxSnippetLength);
+        return new ContextSize(before, after, includeHit, a.tagName, maxSnippetLength);
     }
 
     private final int before;
@@ -113,26 +114,24 @@ public class ContextSize {
 
     private final boolean includeHit;
 
-    /**
-     * If set, base the context around this match info instead of the main hit text.
-     */
-    private final String matchInfoName;
+    /** If set, base the context around this tag (e.g. <s/>) instead of the main hit text. */
+    private final String tagName;
 
     /** What is the largest length allowed for our snippets?
      *  (limit the amount of content you can retrieve at once to keep rightsholders happy...)
      */
     private final int maxSnippetLength;
 
-    private ContextSize(int before, int after, boolean includeHit, String matchInfoName, int maxSnippetLength) {
+    private ContextSize(int before, int after, boolean includeHit, String tagName, int maxSnippetLength) {
         super();
         assert before >= 0;
         assert after >= 0;
-        assert matchInfoName == null || !matchInfoName.isEmpty();
+        assert tagName == null || !tagName.isEmpty();
         assert maxSnippetLength >= 0;
         this.before = before;
         this.after = after;
         this.includeHit = includeHit;
-        this.matchInfoName = matchInfoName;
+        this.tagName = tagName;
         this.maxSnippetLength = maxSnippetLength;
     }
 
@@ -154,7 +153,7 @@ public class ContextSize {
      */
     public static ContextSize fromContextDef(String str, int maxSnippetLength) {
         int before = 0, after = 0;
-        String inlineTagName = null;
+        String tagName = null;
         if (str.matches("\\d+")) {
             before = after = Integer.parseInt(str);
         } else if (str.matches("\\d+:\\d+")) {
@@ -162,11 +161,11 @@ public class ContextSize {
             before = Integer.parseInt(parts[0]);
             after = Integer.parseInt(parts[1]);
         } else if (str.matches("\\w+")) {
-            inlineTagName = str;
+            tagName = str;
         } else {
             throw new IllegalArgumentException("Invalid context value: " + str);
         }
-        return get(before, after, true, inlineTagName, maxSnippetLength);
+        return get(before, after, true, tagName, maxSnippetLength);
     }
 
     /**
@@ -195,8 +194,9 @@ public class ContextSize {
             start = hit.start();
             end = hit.end();
         } else {
-            // Use a match info group to determine snippet
-            MatchInfo tag = findTag(hit, inlineTagName(), matchInfoDefs);
+            // Use the context_rels group captured by within rcapture(...) to determine snippet
+            // E.g. for context=s, our query is Q within rcapture(<s/>, 'context_rels').
+            MatchInfo tag = findContextMatchInfo(hit, tagName, matchInfoDefs);
             start = tag == null ? hit.start() : tag.getSpanStart();
             end = tag == null ? hit.start() : tag.getSpanEnd();
         }
@@ -214,27 +214,48 @@ public class ContextSize {
         endArr[endIndex] = end;
     }
 
-    private static MatchInfo findTag(EphemeralHit hit, String matchInfoName, MatchInfoDefs matchInfoDefs) {
+    private static MatchInfo findContextMatchInfo(EphemeralHit hit, String tagName, MatchInfoDefs matchInfoDefs) {
         MatchInfo[] matchInfos = hit.matchInfos();
         if (matchInfos != null) {
-            // Return the match info group with the specified name
-            Optional<MatchInfo.Def> mid = matchInfoDefs.currentListFiltered(d -> d.getName().equals(matchInfoName)).stream().findFirst();
-            if (mid.isPresent()) {
+            // Find the index for the context_rels match info group which contains relations captured
+            // for the context clause (e.g. within rcapture(<s/>, 'context_rels'))
+            // TODO: do this once instead of per hit!
+            Optional<MatchInfo.Def> mid = matchInfoDefs.currentListFiltered(d -> d.getName().equals(
+                    XFRelations.DEFAULT_CONTEXT_REL_NAME)).stream().findFirst();
+            if (mid.isPresent() && mid.get().getType() == MatchInfo.Type.LIST_OF_RELATIONS) {
+                // Find the matching tag names and use their span to determine context boundaries
+                // (e.g. a match could span multiple sentences; the context should then encompass all of them)
                 int index = mid.get().getIndex();
-                return index < matchInfos.length ? matchInfos[mid.get().getIndex()] : null;
+                RelationListInfo l = (RelationListInfo) MatchInfo.get(matchInfos, index);
+                if (l != null) {
+                    int start = Integer.MAX_VALUE, end = Integer.MIN_VALUE;
+                    for (RelationInfo r: l.getRelations()) {
+                        String relType = r.getType() == MatchInfo.Type.INLINE_TAG ? r.getRelationType() : null;
+                        if (relType != null && relType.equals(tagName)) {
+                            if (r.getSpanStart() < start)
+                                start = r.getSpanStart();
+                            if (r.getSpanEnd() > end)
+                                end = r.getSpanEnd();
+                        }
+                    }
+                    if (start != Integer.MAX_VALUE && end != Integer.MIN_VALUE) {
+                        return RelationInfo.createTag(start, end, tagName, mid.get().getField());
+                    }
+                }
+                return null;
             }
 
             // Maybe it's a tag name, not a match info capture name? (REMOVE THIS?)
-            for (int i = matchInfos.length - 1; i >= 0; i--) { // reverse because we expect it to be the last
-                MatchInfo mi = matchInfos[i];
-                if (mi.getType() == MatchInfo.Type.INLINE_TAG) {
-                    String relType = ((RelationInfo) mi).getFullRelationType();
-                    String tagName = RelationUtil.typeFromFullType(relType);
-                    if (tagName.equals(matchInfoName)) {
-                        return mi;
-                    }
-                }
-            }
+//            for (int i = matchInfos.length - 1; i >= 0; i--) { // reverse because we expect it to be the last
+//                MatchInfo mi = matchInfos[i];
+//                if (mi.getType() == MatchInfo.Type.INLINE_TAG) {
+//                    String relType = ((RelationInfo) mi).getFullRelationType();
+//                    String tagName = RelationUtil.typeFromFullType(relType);
+//                    if (tagName.equals(matchInfoName)) {
+//                        return mi;
+//                    }
+//                }
+//            }
         }
         return null;
     }
@@ -266,7 +287,7 @@ public class ContextSize {
      *  @return inline tag name or null if none
      */
     public String inlineTagName() {
-        return matchInfoName;
+        return tagName;
     }
 
     @Override
@@ -276,12 +297,12 @@ public class ContextSize {
         if (!(o instanceof ContextSize that))
             return false;
         return before == that.before && after == that.after && includeHit == that.includeHit
-                && Objects.equals(matchInfoName, that.matchInfoName);
+                && Objects.equals(tagName, that.tagName);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(before, after, includeHit, matchInfoName);
+        return Objects.hash(before, after, includeHit, tagName);
     }
 
     @Override
@@ -290,12 +311,12 @@ public class ContextSize {
                 "before=" + before +
                 ", after=" + after +
                 ", includeHit=" + includeHit +
-                ", inlineTagName='" + matchInfoName + '\'' +
+                ", inlineTagName='" + tagName + '\'' +
                 '}';
     }
 
     public boolean isNone() {
-        return before == 0 && after == 0 && matchInfoName == null;
+        return before == 0 && after == 0 && tagName == null;
     }
 
     /**
@@ -306,11 +327,11 @@ public class ContextSize {
     public ContextSize clampedTo(int max) {
         if (before <= max && after <= max)
             return this;
-        return new ContextSize(Math.min(before, max), Math.min(after, max), includeHit, matchInfoName, maxSnippetLength);
+        return new ContextSize(Math.min(before, max), Math.min(after, max), includeHit, tagName, maxSnippetLength);
     }
 
     public boolean isInlineTag() {
-        return matchInfoName != null;
+        return tagName != null;
     }
 
     public int getMaxSnippetLength() {

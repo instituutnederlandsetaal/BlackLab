@@ -44,6 +44,9 @@ public class XFRelations implements ExtensionFunctionClass {
     /** Default for relations captured using e.g. context=s */
     public static final String DEFAULT_CONTEXT_REL_NAME = "context_rels";
 
+    /** Regex for matching all relations (default for rcapture) */
+    public static final String REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE = RelationUtil.fullTypeRegex(".+", ".+");
+
     /**
      * Find relations matching type and target.
      * <p>
@@ -207,7 +210,7 @@ public class XFRelations implements ExtensionFunctionClass {
         QueryExtensions.register("rfield", ARGS_QS, NO_DEFAULT_VALUES,
                 (queryInfo, context, args) -> rfield(queryInfo, context, args));
         QueryExtensions.registerRelationsFunction(FUNC_RCAPTURE, ARGS_QSS,
-                Arrays.asList(null, DEFAULT_RCAP_NAME, ".+::.+"),
+                Arrays.asList(null, DEFAULT_RCAP_NAME, REGEX_RELATIONS_ALL_CLASSES_ALL_TYPE),
                 (queryInfo, context, args) -> rcapture(queryInfo, context, args));
     }
 

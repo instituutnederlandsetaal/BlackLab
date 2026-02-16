@@ -13,6 +13,7 @@ import org.apache.lucene.queries.spans.FilterSpans;
  *
  * Note that the match info spans we're trying to capture relations in
  * may not overlap! If they do overlap, some relations may be skipped over.
+ * TODO: use SpansInBuckets to fix this.
  */
 class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
 
@@ -83,32 +84,36 @@ class SpansCaptureRelationsWithinSpan extends BLFilterSpans<BLSpans> {
         }
 
         if (start >= 0) {
-            // Capture all relations within the toCapture span
-            capturedRelations.clear();
-            int docId = relations.docID();
-            if (docId < candidate.docID())
-                docId = relations.advance(candidate.docID());
-            if (docId == candidate.docID()) {
-                if (relations.startPosition() < start)
-                    relations.advanceStartPosition(start);
-                while (relations.startPosition() < end) {
-                    RelationInfo relationInfo = relations.getRelationInfo();
-                    // Capture relation if:
-                    // - start is within the to-capture span, and
-                    // - end is within the to-capture span, OR
-                    //   the relation is a cross-field relation (i.e. parallel corpus)
-                    //   (in that case, target is in a different field, so the to-capture span doesn't apply)
-                    if (relationInfo.isCrossFieldRelation() || relations.endPosition() <= end) {
-                        capturedRelations.add(relationInfo.copy());
-                    }
-                    relations.nextStartPosition();
-                }
-            }
-            capturedRelations.sort(RelationInfo::compareTo);
+            captureRelationsWithinSpan(candidate.docID(), start, end, relations, capturedRelations);
             matchInfo[captureAsIndex] = RelationListInfo.create(capturedRelations, getOverriddenField());
         }
 
         return FilterSpans.AcceptStatus.YES;
+    }
+
+    public static void captureRelationsWithinSpan(int docId, int start, int end, BLSpans relations, List<RelationInfo> capturedRelations) throws IOException {
+        // Capture all relations within the toCapture span
+        capturedRelations.clear();
+        int relDocId = relations.docID();
+        if (relDocId < docId)
+            relDocId = relations.advance(docId);
+        if (relDocId == docId) {
+            if (relations.startPosition() < start)
+                relations.advanceStartPosition(start);
+            while (relations.startPosition() < end) {
+                RelationInfo relationInfo = relations.getRelationInfo();
+                // Capture relation if:
+                // - start is within the to-capture span, and
+                // - end is within the to-capture span, OR
+                //   the relation is a cross-field relation (i.e. parallel corpus)
+                //   (in that case, target is in a different field, so the to-capture span doesn't apply)
+                if (relationInfo.isCrossFieldRelation() || relations.endPosition() <= end) {
+                    capturedRelations.add(relationInfo.copy());
+                }
+                relations.nextStartPosition();
+            }
+        }
+        capturedRelations.sort(RelationInfo::compareTo);
     }
 
     @Override

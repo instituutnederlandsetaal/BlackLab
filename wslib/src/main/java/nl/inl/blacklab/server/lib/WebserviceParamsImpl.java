@@ -168,6 +168,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
                 ((TextPatternPositionFilter) pattern).isWithinTag(tagName);
         if (!withinTag) {
             // add "within rcapture(<TAGNAME/>)" to the pattern, so we can produce the requested context later
+            // NOTE: actually, we use a special operation so this works even if the match spans multiple sentences
+            //       (for the example of context=s)
             return TextPattern.createRelationCapturingWithinQuery(pattern, tagName, captureRelsAs);
         }
         return pattern;

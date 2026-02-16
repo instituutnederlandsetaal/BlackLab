@@ -12,7 +12,6 @@ import nl.inl.blacklab.search.extensions.XFSpans;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
@@ -67,18 +66,26 @@ public abstract class TextPattern implements TextPatternStruct {
      *
      * Essentially adds <code>within rcapture(<s/>)</code> to the query if <code>tagNameRegex == "s"</code>.
      *
+     * (actually, we use a special operation so this works even if the match spans multiple sentences,
+     *  for the example of context=s)
+     *
      * @param pattern pattern to filter
      * @param tagNameRegex tag the hits must be within
      * @return the filtered pattern, where relations within the tag will be captured
      */
-    public static TextPatternPositionFilter createRelationCapturingWithinQuery(TextPattern pattern, String tagNameRegex, String captureRelsAs) {
-        TextPattern tags = new TextPatternTags(tagNameRegex, null,
+    public static TextPattern createRelationCapturingWithinQuery(TextPattern pattern, String tagNameRegex, String captureRelsAs) {
+        TextPattern filterUnit = new TextPatternTags(tagNameRegex, null,
                 TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
-        // Also capture any relations that are in the tag
-        TextPatternValue tpCaptureRelsAs = TextPatternValue.fromObject(captureRelsAs);
-        tags = new TextPatternFunctionCall(XFRelations.FUNC_RCAPTURE, List.of(tags, tpCaptureRelsAs));
-        return new TextPatternPositionFilter(pattern, tags,
-                SpanQueryPositionFilter.Operation.WITHIN);
+        return new TextPatternWithinTagContext(pattern, filterUnit, captureRelsAs);
+
+
+//        TextPattern tags = new TextPatternTags(tagNameRegex, null,
+//                TextPatternTags.Adjust.FULL_TAG, tagNameRegex);
+//        // Also capture any relations that are in the tag
+//        TextPatternValue tpCaptureRelsAs = TextPatternValue.fromObject(captureRelsAs);
+//        tags = new TextPatternFunctionCall(XFRelations.FUNC_RCAPTURE, List.of(tags, tpCaptureRelsAs));
+//        return new TextPatternPositionFilter(pattern, tags,
+//                SpanQueryPositionFilter.Operation.WITHIN);
     }
 
     /**

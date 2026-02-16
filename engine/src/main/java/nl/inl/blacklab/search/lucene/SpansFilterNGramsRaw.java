@@ -188,7 +188,8 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
 
         case STARTS_AT:
         case ENDS_AT:
-            throw new UnsupportedOperationException("STARTS_AT and ENDS_AT not implemented for SpansExpandToNGram");
+        case HAS_OVERLAP:
+            throw new UnsupportedOperationException("STARTS_AT, ENDS_AT and OVERLAPS not implemented for SpansExpandToNGram");
         }
         if (atValidNGram)
             return start;
@@ -311,7 +312,8 @@ class SpansFilterNGramsRaw extends BLFilterDocsSpans<BLSpans> {
                 break;
             case STARTS_AT:
             case ENDS_AT:
-                throw new UnsupportedOperationException("STARTS_AT and ENDS_AT not implemented for SpansExpandToNGram");
+            case HAS_OVERLAP:
+                throw new UnsupportedOperationException("STARTS_AT, ENDS_AT and OVERLAPS not implemented for SpansExpandToNGram");
             }
 
             // No, try the next hit, if there is one

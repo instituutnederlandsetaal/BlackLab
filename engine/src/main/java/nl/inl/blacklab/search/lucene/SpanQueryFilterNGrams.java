@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -156,18 +155,8 @@ public class SpanQueryFilterNGrams extends BLSpanQueryAbstract {
             BLSpans spansSource = weight.getSpans(context, requiredPostings);
             if (spansSource == null)
                 return null;
-            BLSpans filtered = new SpansFilterNGramsRaw(context.reader(), clauses.get(0).getField(),
-                    spansSource, op, min, max, leftAdjust, rightAdjust);
-
-            // Re-sort the results if necessary (if we expanded a non-fixed amount to the left)
-            // JN 2023-04-17 no, if our hitsStartPointSorted() method return the correct value,
-            //   we don't need to sort our spans. If another class needs sorted spans, it should
-            //   wrap it.
-            //BLSpanQuery q = (BLSpanQuery) weight.getQuery();
-            //if (q != null && !q.hitsStartPointSorted())
-            //    return BLSpans.ensureStartPointSorted(filtered);
-
-            return filtered;
+            return new SpansFilterNGramsRaw(context.reader(), clauses.get(0).getField(),
+                    spansSource, op, min, max, leftAdjust, rightAdjust); // no explicit sorting! We rely on guarantees like hitsStartPointSorted.
         }
 
     }

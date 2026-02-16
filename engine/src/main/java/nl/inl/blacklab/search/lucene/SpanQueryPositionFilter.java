@@ -2,7 +2,6 @@ package nl.inl.blacklab.search.lucene;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -153,6 +152,12 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         /** Producer hit contains filter hit */
         CONTAINING,
 
+        /** Producer hit contains filter hit, at its end */
+        CONTAINING_AT_START,
+
+        /** Producer hit contains filter hit, at its start */
+        CONTAINING_AT_END,
+
         /** Producer hit contained in filter hit */
         WITHIN,
 
@@ -165,11 +170,8 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
         /** Producer hit exactly matches filter hit */
         MATCHES,
 
-        /** Producer hit contains filter hit, at its end */
-        CONTAINING_AT_START,
-
-        /** Producer hit contains filter hit, at its start */
-        CONTAINING_AT_END;
+        /** Producer hit overlaps filter hit (i.e. they share at least one token) */
+        HAS_OVERLAP;
 
         public static Operation fromStringValue(String s) {
             for (Operation op : values()) {
