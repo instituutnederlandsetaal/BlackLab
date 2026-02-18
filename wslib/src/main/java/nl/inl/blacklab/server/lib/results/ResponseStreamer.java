@@ -1251,7 +1251,7 @@ public class ResponseStreamer {
                 Iterator<CorpusSize> it = result.getCorpusSizes().iterator();
                 List<DocProperty> prop = groups.groupCriteria().propsList();
                 WindowStats ourWindow = result.getOurWindow();
-                for (long i = ourWindow.first(); i <= ourWindow.last(); ++i) {
+                for (long i = 0, j = ourWindow.first(); j <= ourWindow.last(); ++i, ++j) {
                     DocGroup group = groups.get(i);
                     ds.startItem(KEY_DOC_GROUP).startMap();
                     groupStats(prop, group);
