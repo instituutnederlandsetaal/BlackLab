@@ -282,7 +282,7 @@ public class TestIndex {
     }
     
     public List<String> findConc(String query, HitProperty prop, PropertyValue value) {
-        // @@@ TODO: fetch+filter together (HitsFromQuery)
+        // TODO: fetch+filter together (HitsFromQuery)
         HitResults hitResults = find(query, null).filter(prop, value);
         return getConcordances(hitResults.getHits(), word);
     }

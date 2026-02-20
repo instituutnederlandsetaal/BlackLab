@@ -163,7 +163,7 @@ public class TextPatternFunctionCall extends TextPattern {
     protected boolean hasWithSpans() {
         String n = getName();
         if (n.charAt(0) == '_') {
-            // TODO: @@@ no longer needed? (we used to use _with-spans() from the frontend
+            // TODO: no longer needed? (we used to use _with-spans() from the frontend
             //     to strip it out again later, but we now use the JSON structure?)
             n = n.substring(1); // remove leading underscore
         }

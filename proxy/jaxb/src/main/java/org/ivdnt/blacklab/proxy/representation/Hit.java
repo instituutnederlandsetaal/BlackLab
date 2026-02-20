@@ -33,7 +33,7 @@ public class Hit  {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty("matchInfos")
-    public Map<String, MatchInfo> matchInfo; // @@@ why not matchInfos here? for XML serialization..?
+    public Map<String, MatchInfo> matchInfo; // why not matchInfos here? for XML serialization..?
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords left;
@@ -44,7 +44,7 @@ public class Hit  {
     public ContextWords right;
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    public Map<String, Hit> otherFields; // @@@ check XML serialization
+    public Map<String, Hit> otherFields; // TODO: check XML serialization
 
     // required for Jersey
     public Hit() {}
