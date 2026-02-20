@@ -1,7 +1,7 @@
 {
   "apiVersion": "VALUE_REMOVED",
   "blacklabBuildTime": "VALUE_REMOVED",
-  "blacklabScmRevision": "UNKNOWN",
+  "blacklabScmRevision": "VALUE_REMOVED",
   "blacklabVersion": "VALUE_REMOVED",
   "corpora": {
     "test": {

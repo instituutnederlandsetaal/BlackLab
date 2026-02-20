@@ -220,7 +220,7 @@
   "status": "available",
   "versionInfo": {
     "blacklabBuildTime": "VALUE_REMOVED",
-    "blacklabScmRevision": "UNKNOWN",
+    "blacklabScmRevision": "VALUE_REMOVED",
     "blacklabVersion": "VALUE_REMOVED",
     "indexFormat": "VALUE_REMOVED",
     "timeCreated": "VALUE_REMOVED",

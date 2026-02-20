@@ -24,6 +24,7 @@ function sanitizeBlsResponse(response) {
         apiVersion: true, //'DELETE',
         blacklabBuildTime: true,
         blacklabVersion: true,
+        blacklabScmRevision: true,
         corpora: { // API v4/5
             test: {
                 timeModified: true
@@ -40,6 +41,7 @@ function sanitizeBlsResponse(response) {
         versionInfo: {
             blacklabBuildTime: true, // API v4
             blacklabVersion: true,   // API v4
+            blacklabScmRevision: true, // API v4
             blackLabBuildTime: true, // API v3 (inconsistent casing)
             blackLabVersion: true,   // API v3 (inconsistent casing)
             indexFormat: true,
