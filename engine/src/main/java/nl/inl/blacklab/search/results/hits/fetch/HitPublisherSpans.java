@@ -379,17 +379,17 @@ public class HitPublisherSpans implements HitPublisher {
                     prevHit = hit;
                     hit = tmp;
 
-                    // See if we can pause fetching
-                    if (atDocBoundary && !needAllHits.get() && !subscribers.needsMoreHits()) {
-                        // We can pause fetching at this time and resume later, when more hits are needed.
-                        subscribers.flush(lrc, alreadyPublishedHits);
-                        break;
-                    }
-
                 }
 
                 // Position spans for the next hit after this
                 hasPrefetchedHit = advanceSpansToNextHit();
+
+                // See if we can pause fetching
+                if (atDocBoundary && !needAllHits.get() && !subscribers.needsMoreHits()) {
+                    // We can pause fetching at this time and resume later, when more hits are needed.
+                    subscribers.flush(lrc, alreadyPublishedHits);
+                    break;
+                }
 
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states
                 ThreadAborter.checkAbort();

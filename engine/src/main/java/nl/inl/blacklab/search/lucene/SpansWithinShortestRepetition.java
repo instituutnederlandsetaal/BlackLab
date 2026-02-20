@@ -363,11 +363,6 @@ class SpansWithinShortestRepetition extends BLSpans {
             SpansCaptureRelationsWithinSpan.captureRelationsWithinSpan(docId, start, end, relations, capturedRelations);
             RelationListInfo relationListInfo = RelationListInfo.create(capturedRelations, getOverriddenField());
             matchInfo[captureRelsIndex] = relationListInfo;
-            if (relationListInfo.getRelations().isEmpty()) {
-                // Sometimes triggers with bogus duplicate second hit per segment (for which we cannot find relation capture because we've already captured them)
-                // E.g. chn-kranten thuis URL http://localhost:8080/blacklab-server/corpora/chn-kranten/hits?patt=%22tegen%22%20%22te%22%20%22gaan%22%20%5B%5D&context=s&outputformat=json&usecache=no&explain=true
-                System.out.println("ERROR");
-            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
