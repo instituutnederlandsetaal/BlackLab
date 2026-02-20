@@ -159,7 +159,6 @@ public abstract class HitsAbstract implements Hits {
 
     /** Group these hits by the specified property.
      *
-     * @param hits hits to group
      * @param groupBy property to group by
      * @param maxValuesToStorePerGroup maximum number of hits to store per group
      * @return grouped hits
