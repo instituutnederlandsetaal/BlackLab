@@ -20,7 +20,7 @@
 **/.apt_generated/
 **/.apt_generated_tests/
 
-.git
+# .git - needed for buildnumber-maven-plugin to determine SCM revision
 
 # vi temporary files
 **/*.swp
