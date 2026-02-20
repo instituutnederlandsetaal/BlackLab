@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -274,9 +275,13 @@ public class HitsFromPublishers extends HitsAbstract {
 
         // Subscribe to all the publishers
         publishersActive.updateAndGet(c -> c + this.publishers.size());
+
+        // While we're in the process of adding subscribers, don't call hitsStats.setDone() yet,
+        // because even if the current subscribers are all done, we might still be adding more subscribers that aren't
+        // done yet.
+        AtomicBoolean stillAddingSubscribers = new AtomicBoolean(true);
+
         publishers.forEach(publisher -> {
-            // @@@ PROBLEM: if the first publisher stops immediately, publishersActive will be 0, and setDone() will be called
-            //              before we subscribe to the other publishers!
             publisher.subscribe(new HitSubscriber() {
 
                 long nextIndexToAddToGlobal = 0;
@@ -342,7 +347,7 @@ public class HitsFromPublishers extends HitsAbstract {
                         int activePubs = publishersActive.decrementAndGet();
                         if (activePubs < 0)
                             throw new IllegalStateException("Received more 'done' messages than publishers");
-                        if (activePubs == 0)
+                        if (activePubs == 0 && !stillAddingSubscribers.get())
                             hitsStats.setDone();
                         // If we were waiting for more hits: wake up and see that we're done
                         hitsAdded.signalAll();
@@ -363,6 +368,14 @@ public class HitsFromPublishers extends HitsAbstract {
                 }
             });
         });
+
+        // We're done adding subscribers.
+        // We prevented the HitsSubscriber instances from calling hitsStats.setDone() until now,
+        // so we should check if it needs to be called.
+        stillAddingSubscribers.set(false);
+        if (publishersActive.get() == 0)
+            hitsStats.setDone();
+
     }
 
     /** Return publishers per segment (if available) */
