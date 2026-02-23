@@ -64,7 +64,6 @@ It also contains extra information that may be useful for applications using Bla
 - metadata fields containing title, author, date
 - version info
 - text direction, LTR or RTL
-- how missing metadata fields were handled during indexing (`unknownValue`, `unknownCondition`)
 - metadata field values, display values
 - display order for metadata and annotated fields
 - how metadata fields should logically be grouped
