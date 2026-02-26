@@ -85,6 +85,21 @@ metadata:
     type: untokenized
 ```
 
+## Numeric fields
+
+To index a numeric field (currently supports only integer values):
+
+```yaml
+metadata:
+- containerPath: metadata
+  fields:
+  - name: year
+    valuePath: publication/year
+    type: numeric
+```
+
+We may consider adding other specific field types (floating point, date, vector) in the future.
+
 ## Linking to external document metadata
 
 ::: info Old `linkedDocuments` feature
