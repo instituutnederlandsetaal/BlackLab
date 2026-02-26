@@ -58,7 +58,7 @@ public class BLNearSpansOrdered extends BLConjunctionSpans {
 
   public BLNearSpansOrdered(int allowedSlop, List<BLSpans> subSpans) throws IOException {
     super(subSpans, SpanGuarantees.NONE/*TODO @@@*/);
-    this.atFirstInCurrentDoc = true; // -1 startPosition/endPosition also at doc -1
+    this.atFirstInCurrentDoc = true; // -1 startTokenPos/endPosition also at doc -1
     this.allowedSlop = allowedSlop;
   }
 

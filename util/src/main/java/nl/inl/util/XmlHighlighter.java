@@ -57,15 +57,21 @@ public class XmlHighlighter {
          */
         TagType type;
 
-        /** Start position of tag in original content */
+        /** Start character position of tag in original content */
         final int start;
 
         /**
-         * End position of tag in original content. NOTE: this only differs from start
+         * End character position of tag in original content. NOTE: this only differs from start
          * if type == EXISTING_TAG. Highlight tags are not in the original content, so
          * there start always equals end.
          */
         final int end;
+
+        /** Start token position, which we'll put in an attribute of the <hl/> tag for the client. */
+        final int startTokenPos;
+
+        /** End token position, which we'll put in an attribute of the <hl/> tag for the client. */
+        final int endTokenPos;
 
         /**
          * Our matching tag (the close to this open tag, or vice versa) in
@@ -91,8 +97,14 @@ public class XmlHighlighter {
         String name;
 
         public TagLocation(TagType type, int start, int end) {
+            this(type, start, end, -1, -1);
+        }
+
+        public TagLocation(TagType type, int start, int end, int startTokenPos, int endTokenPos) {
             this.type = type;
             this.start = start;
+            this.startTokenPos = startTokenPos;
+            this.endTokenPos = endTokenPos;
             this.end = end;
             matchingTag = null; // unmatched tag (until we find its match)
             objectNum = getNextUniqueId();
@@ -303,8 +315,14 @@ public class XmlHighlighter {
     private void addStartHighlightTag(TagLocation tag) {
         b.append(startHighlightTagStart);
         if (tag != null) {
-            b.append(" n=\"");
+            b.append(" index=\"");
             b.append(tag.hitIndex);
+            if (tag.startTokenPos >= 0) {
+                b.append("\" start=\"");
+                b.append(tag.startTokenPos);
+                b.append("\" end=\"");
+                b.append(tag.endTokenPos);
+            }
             b.append("\"");
         }
         b.append(">");
@@ -362,7 +380,7 @@ public class XmlHighlighter {
         // Now re-open all the suspended highlights in the correct order (outer first)
         for (TagLocation hl: highlightsToSuspend) {
             addStartHighlightTag(hl);
-            TagLocation e = new TagLocation(TagType.HIGHLIGHT_START, hl.end, hl.end);
+            TagLocation e = new TagLocation(TagType.HIGHLIGHT_START, hl.end, hl.end, hl.startTokenPos, hl.endTokenPos);
             e.hitIndex = hl.hitIndex;
             e.matchingTag = hl.matchingTag;
             currentHighlightStarts.add(e);
@@ -370,7 +388,11 @@ public class XmlHighlighter {
     }
 
     /** The start and end character position of a hit, used for highlighting the content. */
-    public record HitCharSpan(int startChar, int endChar) {}
+    public record HitCharSpan(int startChar, int endChar, int startTokenPos, int endTokenPos) {
+        public HitCharSpan(int startChar, int endChar) {
+            this(startChar, endChar, -1, -1);
+        }
+    }
 
     private static void addHitPositionsToTagList(List<TagLocation> tags, List<HitCharSpan> hitSpans, int offset,
             int length) {
@@ -383,7 +405,7 @@ public class XmlHighlighter {
             if (b > length)
                 continue; // outside highlighting range
             assert b >= a;
-            TagLocation start = new TagLocation(TagType.HIGHLIGHT_START, a, a);
+            TagLocation start = new TagLocation(TagType.HIGHLIGHT_START, a, a, hit.startTokenPos, hit.endTokenPos);
             TagLocation end = new TagLocation(TagType.HIGHLIGHT_END, b, b);
             start.hitIndex = hitIndex;
             start.matchingTag = end;

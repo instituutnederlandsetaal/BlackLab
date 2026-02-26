@@ -29,7 +29,7 @@ public class TestXmlHighlighter {
             String xmlContent = "The quick brown fox <b>jumps</b> over the lazy dog.";
 
             List<HitCharSpan> hits = List.of(new HitCharSpan(23, 32), new HitCharSpan(25, 32));
-            Assert.assertEquals("The quick brown fox <b><hl n=\"0\">ju<hl n=\"1\">mps</hl></hl></b> over the lazy dog.",
+            Assert.assertEquals("The quick brown fox <b><hl index=\"0\">ju<hl index=\"1\">mps</hl></hl></b> over the lazy dog.",
                     hl.highlight(xmlContent, hits));
         } finally {
             hl.setRemoveEmptyHlTags(false);
@@ -42,7 +42,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(10, 25));
-        Assert.assertEquals("The quick <hl n=\"0\">brown fox jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
+        Assert.assertEquals("The quick <hl index=\"0\">brown fox jumps</hl> over the lazy dog.", hl.highlight(xmlContent, hits));
     }
 
     @Test
@@ -52,7 +52,7 @@ public class TestXmlHighlighter {
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(4, 49));
         Assert.assertEquals(
-                "<i>The <hl n=\"0\">quick</hl></i><hl n=\"0\"> brown <b>fox</b> jumps over </hl><em><hl n=\"0\">the</hl> lazy dog.</em>",
+                "<i>The <hl index=\"0\">quick</hl></i><hl index=\"0\"> brown <b>fox</b> jumps over </hl><em><hl index=\"0\">the</hl> lazy dog.</em>",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -62,7 +62,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(4, 34));
-        Assert.assertEquals("The <hl n=\"0\">quick <em>brown fox</em> jumps</hl> over the lazy dog.",
+        Assert.assertEquals("The <hl index=\"0\">quick <em>brown fox</em> jumps</hl> over the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -72,7 +72,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(10, 28));
-        Assert.assertEquals("The quick <hl n=\"0\"><em>brown fox</em></hl> jumps over the lazy dog.",
+        Assert.assertEquals("The quick <hl index=\"0\"><em>brown fox</em></hl> jumps over the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -82,7 +82,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(10, 23));
-        Assert.assertEquals("The quick <hl n=\"0\"></hl><em><hl n=\"0\">brown fox</hl></em> jumps over the lazy dog.",
+        Assert.assertEquals("The quick <hl index=\"0\"></hl><em><hl index=\"0\">brown fox</hl></em> jumps over the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -92,7 +92,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(14, 28));
-        Assert.assertEquals("The quick <em><hl n=\"0\">brown fox</hl></em><hl n=\"0\"></hl> jumps over the lazy dog.",
+        Assert.assertEquals("The quick <em><hl index=\"0\">brown fox</hl></em><hl index=\"0\"></hl> jumps over the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -102,7 +102,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(20, 34));
-        Assert.assertEquals("The quick <em>brown <hl n=\"0\">fox</hl></em><hl n=\"0\"> jumps</hl> over the lazy dog.",
+        Assert.assertEquals("The quick <em>brown <hl index=\"0\">fox</hl></em><hl index=\"0\"> jumps</hl> over the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -113,7 +113,7 @@ public class TestXmlHighlighter {
         List<HitCharSpan> hits = List.of(
             new HitCharSpan(16, 25),
             new HitCharSpan(20, 30));
-        Assert.assertEquals("The quick brown <hl n=\"0\">fox <hl n=\"1\">jumps</hl></hl><hl n=\"1\"> over</hl> the lazy dog.",
+        Assert.assertEquals("The quick brown <hl index=\"0\">fox <hl index=\"1\">jumps</hl></hl><hl index=\"1\"> over</hl> the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 
@@ -123,7 +123,7 @@ public class TestXmlHighlighter {
 
         List<HitCharSpan> hits = new ArrayList<>();
         hits.add(new HitCharSpan(10, 45));
-        Assert.assertEquals("The quick <hl n=\"0\">brown <word content='fox' / > jumps</hl> over the lazy dog.",
+        Assert.assertEquals("The quick <hl index=\"0\">brown <word content='fox' / > jumps</hl> over the lazy dog.",
                 hl.highlight(xmlContent, hits));
     }
 

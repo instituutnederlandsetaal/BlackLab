@@ -2,6 +2,7 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -170,12 +171,14 @@ public class DocUtil {
             ends[i] = hit.end() - 1; // end actually points to the first word not in the hit, so
                                    // subtract one
         }
+        int[] startPos = Arrays.copyOf(starts, starts.length);
+        int[] endPos = Arrays.copyOf(ends, ends.length);
 
         characterOffsets(index, docId, hits.field(), starts, ends, true);
 
         List<HitCharSpan> hitSpans = new ArrayList<>(starts.length);
         for (int i = 0; i < starts.length; i++) {
-            hitSpans.add(new HitCharSpan(starts[i], ends[i]));
+            hitSpans.add(new HitCharSpan(starts[i], ends[i], startPos[i], endPos[i] + 1));
         }
         return hitSpans;
     }
