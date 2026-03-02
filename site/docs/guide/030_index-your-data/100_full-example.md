@@ -57,8 +57,13 @@ annotatedFields:
 
     # What are our word tags? (relative to container)
     wordPath: .//w
+    
+    # Punctuation between word tags (relative to container)
+    # (this assumes your corpora only see the actual words as token positions;
+    #  some corpora see punctuation as tokens in their own right, in which case this is not needed)
+    punctPath: .//text()[not(ancestor::w)]   # = "all text nodes (under containerPath) not inside a <w/> element"
 
-    # If specified, a mapping from this id to token position will be saved, so we 
+      # If specified, a mapping from this id to token position will be saved, so we 
     # can refer back to it for standoff annotations later. (relative to wordPath)
     tokenIdPath: "@xml:id"
 
