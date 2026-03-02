@@ -31,7 +31,7 @@ Make sure your `.blf.yaml` file starts with `processor: saxon` to ensure modern 
 inlineTags:
     # Sentence tags
     - path: .//s
-    - attributes:
+      attributes:
         # Don't index unique ids unless you need them; 
         # they slow down indexing and searching and increase index size
         - name: "xml:id"

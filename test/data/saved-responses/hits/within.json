@@ -94,16 +94,16 @@
     "params": {
       "indexname": "test",
       "op": "hits",
-      "patt": "\"very\" \"good\" within <u/>",
+      "patt": "[word=\"very\"] [word=\"good\"] within <u/>",
       "sort": "field:pid,hitposition",
       "waitfortotal": "true",
       "wordsaroundhit": "1"
     },
     "pattern": {
-      "bcql": "\"very\" \"good\" within <u/>",
+      "bcql": "[word = \"very\"] [word = \"good\"] within <u/>",
       "fieldName": "contents",
       "json": {
-        "bcqlFragment": "\"very\" \"good\" within <u/>",
+        "bcqlFragment": "[word = \"very\"] [word = \"good\"] within <u/>",
         "filter": {
           "bcqlFragment": "<u/>",
           "name": "u",
@@ -111,14 +111,15 @@
         },
         "operation": "within",
         "producer": {
-          "bcqlFragment": "\"very\" \"good\"",
+          "bcqlFragment": "[word = \"very\"] [word = \"good\"]",
           "clauses": [
             {
-              "bcqlFragment": "\"very\"",
+              "bcqlFragment": "[word = \"very\"]",
               "clauses": [
                 {
-                  "bcqlFragment": "_",
-                  "type": "defval"
+                  "bcqlFragment": "word",
+                  "type": "symbol",
+                  "value": "word"
                 },
                 {
                   "bcqlFragment": "\"very\"",
@@ -130,11 +131,12 @@
               "type": "compare"
             },
             {
-              "bcqlFragment": "\"good\"",
+              "bcqlFragment": "[word = \"good\"]",
               "clauses": [
                 {
-                  "bcqlFragment": "_",
-                  "type": "defval"
+                  "bcqlFragment": "word",
+                  "type": "symbol",
+                  "value": "word"
                 },
                 {
                   "bcqlFragment": "\"good\"",

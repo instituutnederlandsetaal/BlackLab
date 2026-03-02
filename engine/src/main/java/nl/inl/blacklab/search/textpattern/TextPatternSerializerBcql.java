@@ -450,14 +450,15 @@ public class TextPatternSerializerBcql {
 
             // never add [brackets] to the constraint on the right side of ::
             boolean isConstraint = isConstrainOperator && !first;
+            boolean br = insideTokenBrackets;
             if (isConstraint)
-                insideTokenBrackets = true; // don't add token brackets in constraints
+                br = true; // don't add token brackets in constraints
 
-            BracketType bt = bracketType(precedence, clause, insideTokenBrackets);
+            BracketType bt = bracketType(precedence, clause, br);
             b.append(bt.start);
             if (bt == BracketType.SQUARE_BRACKETS)
-                insideTokenBrackets = true; // don't add token brackets inside square brackets
-            serialize(clause, b, insideTokenBrackets);
+                br = true; // don't add token brackets inside square brackets
+            serialize(clause, b, br);
             b.append(bt.end);
             first = false;
         }

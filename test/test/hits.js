@@ -66,7 +66,7 @@ expectHitsUnchanged("two-four-separate", '"two"|"four"');
 expectHitsUnchanged("token level AND", '[lemma="be" & word="are"]');
 expectHitsUnchanged("token level AND NOT", '[lemma="be" & word!="are"]');
 expectHitsUnchanged("containing", '<u/> containing "good"');
-expectHitsUnchanged("within", '"very" "good" within <u/>');
+expectHitsUnchanged("within", '[word="very"] [word="good"] within <u/>');
 
 // View a single group from grouped hits
 expectHitsUnchanged('view single group', {
