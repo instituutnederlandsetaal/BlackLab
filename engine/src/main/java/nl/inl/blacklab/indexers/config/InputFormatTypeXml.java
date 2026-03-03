@@ -17,7 +17,7 @@ import javax.xml.stream.XMLStreamException;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.util.BytesRef;
-import net.sf.saxon.Configuration;
+
 import net.sf.saxon.om.NodeInfo;
 import net.sf.saxon.s9api.Axis;
 import net.sf.saxon.s9api.XdmItem;
@@ -31,6 +31,7 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.indexers.config.process.ProcessingStep;
 import nl.inl.blacklab.indexers.config.saxon.SaxonDocumentWithElementOffsets;
 import nl.inl.blacklab.indexers.config.saxon.SaxonHelper;
 import nl.inl.blacklab.indexers.config.saxon.XPathFinder;
@@ -409,15 +410,18 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     for (ConfigAttribute attribute: currentInline.config.getAttributes().values()) {
                         if (attribute.isExclude())
                             continue;
-                        String value;
+                        List<String> values = new ArrayList<>();
+                        ProcessingStep processSteps = attribute.getCompiledProcessSteps();
                         if (atts.containsKey(attribute.getName())) {
                             // Actual attribute on tag. Apply any processing steps now.
-                            value = atts.get(attribute.getName()).get(0);
+                            String attributeValue = atts.get(attribute.getName()).get(0);
+                            values.addAll(processStringMultipleValues(attributeValue, processSteps));
                         } else {
                             // Extra attribute, not on tag. Evaluate XPath expression.
-                            value = finder.xpathValue(attribute.getValuePath(), nodeInfo);
+                            finder.xpathForEachStringValue(attribute.getValuePath(), nodeInfo, matchedValue -> {
+                                values.addAll(processStringMultipleValues(matchedValue, processSteps));
+                            });
                         }
-                        List<String> values = processStringMultipleValues(value, attribute.getCompiledProcessSteps());
                         if (!values.isEmpty()) {
                             atts.put(attribute.getName(), values);
                         } else {
