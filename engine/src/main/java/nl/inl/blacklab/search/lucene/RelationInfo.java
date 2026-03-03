@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
@@ -360,7 +362,7 @@ public class RelationInfo extends MatchInfo implements RelationLikeInfo {
     }
 
     private String attValue(List<String> values) {
-        return values.size() == 1 ? values.get(0) : values.toString();
+        return values.size() == 1 ? values.get(0) : StringUtils.join(values, "; ");
     }
 
     @Override
