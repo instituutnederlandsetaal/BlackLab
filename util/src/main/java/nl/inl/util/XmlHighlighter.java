@@ -123,7 +123,7 @@ public class XmlHighlighter {
                     // and end tags always follow their start tags
                     // Note reverse sort for end tags, or we won't encounter them in the right order,
                     // messing with our ability to eliminate empty <hl> tags.
-                    return type == TagType.HIGHLIGHT_END || type == TagType.FIX_END ?
+                    return type == TagType.HIGHLIGHT_END ?
                             (int) (o.objectNum - objectNum) : (int) (objectNum - o.objectNum);
                 }
             }
