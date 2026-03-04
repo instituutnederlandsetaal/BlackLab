@@ -40,8 +40,8 @@ fragment DEP_TARGET: ([a-z_\-0-9])*;
 fragment ALIGNMENT_TARGET: DEP_TARGET;
 
 ROOT_DEP_OP : '^-' DEP_NAME? '->' DEP_TARGET;
-DEP_OP : ('!')? '-' DEP_NAME? '->' DEP_TARGET;
-ALIGNMENT_OP : '=' ALIGNMENT_NAME? '=>' ALIGNMENT_TARGET;
+DEP_OP : '!'? '-' DEP_NAME? '->' DEP_TARGET;
+ALIGNMENT_OP : '=' ALIGNMENT_NAME? '=>' ALIGNMENT_TARGET '?'?;
 
 LOOKAHEAD_OP: '?' ('<')? ('=' | '!');
 
