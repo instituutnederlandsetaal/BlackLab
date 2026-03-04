@@ -769,7 +769,6 @@ public class WebserviceOperations {
     }
 
     public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
-        logger.info("        " + fieldDesc.name());
         MetadataFieldValues values = fieldDesc.values(limitValues);
         Map<String, Long> fieldValues = getFieldValuesInOrder(fieldDesc, values);
         return new ResultMetadataField(indexName, fieldDesc, true, fieldValues,
@@ -799,30 +798,25 @@ public class WebserviceOperations {
     }
 
     public static ResultCorpusInfo corpusInfo(RequestCorpusInfo req) {
-        logger.info("START indexMetadata");
         Index index = BlsMain.get().getSearchManager().getIndexManager().getIndex(req.corpusName());
         if (index == null)
             throw new IllegalArgumentException("Corpus '" + req.corpusName() + "' not found.");
         ResultIndexStatus progress = resultIndexStatus(index, req.user());
         IndexMetadata metadata = progress.getMetadata();
 
-        logger.info("    get annotated fields");
         List<ResultAnnotatedField> afs = new ArrayList<>();
         for (AnnotatedField field: metadata.annotatedFields()) {
             ResultRelations relations = new ResultRelations(req.relations().withAnnotatedField(field.name()));
             afs.add(annotatedField(index.blIndex(), field, req.listValuesFor(), req.limitValues(), false, relations));
         }
         afs.sort(ResultAnnotatedField::compare);
-        logger.info("    get metadata fields");
         List<ResultMetadataField> mfs = new ArrayList<>();
         for (MetadataField f: metadata.metadataFields()) {
             mfs.add(metadataField(req.limitValues(), f, null));
         }
 
-        logger.info("    get metadata field groups");
         Map<String, List<String>> metadataFieldGroups = getMetadataFieldGroupsWithRest(index.blIndex());
 
-        logger.info("    construct response object");
         AnnotatedField mainAnnotatedField = metadata.mainAnnotatedField();
         String mainAnnotatedFieldName = mainAnnotatedField == null ? null : mainAnnotatedField.name();
 
