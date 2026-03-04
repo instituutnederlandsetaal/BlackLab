@@ -214,6 +214,12 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             // Look up the correct field for the _relation annotation (depending on whether it
             // was indexed sensitively or insensitively)
             Annotation annotation = annotation(AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME);
+            if (annotation == null) {
+                // No _relation annotation, so no relation info.
+                // Normally doesn't happen, but does with old linkedDocuments that stored linked document in a
+                // special "annotated field".
+                return results;
+            }
             AnnotationSensitivity annotationSensitivity = annotation.hasSensitivity(MatchSensitivity.SENSITIVE) ?
                     annotation.sensitivity(MatchSensitivity.SENSITIVE) :
                     annotation.sensitivity(MatchSensitivity.INSENSITIVE);
