@@ -158,11 +158,17 @@ public abstract class RequestHandler {
         boolean resourceOrPathGiven = !urlResource.isEmpty() || !urlPathInfo.isEmpty();
         boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
         boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
-        if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi)
+        if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi) {
             throw new BadRequest("API_URL_MISMATCH", "You're using an old URL (/CORPUSNAME/...), " +
                     "but the API is set to 5 (the default for this BlackLab version). Either update the URL to " +
                     "/corpora/CORPUSNAME/... or, to keep using the old URL for now, add api=4 to enable backward " +
                     "compatibility. Please plan your migration to API v5; BlackLab 6 will no longer support API v4.");
+        }
+        if (isNewEndpoint && !indexName.isEmpty() && !isNewApi) {
+            throw new BadRequest("API_URL_MISMATCH", "You're using a new URL (/corpora/CORPUSNAME/...), " +
+                    "but the API is set to 4. This endpoint was not available in version 4. Remove /corpora from your URL, " +
+                    "or change your API version to 5. See https://blacklab.ivdnt.org/server/rest-api/miscellaneous/api-versions.html");
+        }
         String method = request.getMethod();
         boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
