@@ -128,20 +128,26 @@ public class HitPropertySpanAttribute extends HitProperty {
                 // Look for the first full-type match in the list
                 for (RelationInfo namedGroup: relList.getRelations()) {
                     if (namedGroup.getFullRelationType().equals(relNameInList)) {
-                        if (!b.isEmpty())
-                            b.append(SEPARATOR_MULTIPLE_VALUES);
-                        b.append(listIfMultiple(namedGroup.getAttributes().get(attributeName)));
-                        found = true;
+                        List<String> values = namedGroup.getAttributes().get(attributeName);
+                        if (values != null && !values.isEmpty()) {
+                            if (!b.isEmpty())
+                                b.append(SEPARATOR_MULTIPLE_VALUES);
+                            b.append(listIfMultiple(values));
+                            found = true;
+                        }
                     }
                 }
             } else {
                 // Look for the first type match in the list
                 for (RelationInfo namedGroup: relList.getRelations()) {
                     if (namedGroup.getRelationType().equals(relNameInList)) {
-                        if (!b.isEmpty())
-                            b.append(SEPARATOR_MULTIPLE_VALUES);
-                        b.append(listIfMultiple(namedGroup.getAttributes().get(attributeName)));
-                        found = true;
+                        List<String> values = namedGroup.getAttributes().get(attributeName);
+                        if (values != null && !values.isEmpty()) {
+                            if (!b.isEmpty())
+                                b.append(SEPARATOR_MULTIPLE_VALUES);
+                            b.append(listIfMultiple(values));
+                            found = true;
+                        }
                     }
                 }
             }
