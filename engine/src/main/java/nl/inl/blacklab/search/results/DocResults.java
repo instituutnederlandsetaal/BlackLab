@@ -599,9 +599,9 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                                             String fieldName = entry.getKey();
                                             NumericDocValues tokenLengthValuesForField = entry.getValue();
                                             if (tokenLengthValuesForField != null) {
-                                                tokenLengthValuesForField.advanceExact(docId);
-                                                long tokens = tokenLengthValuesForField.longValue()
-                                                        - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
+                                                long tokens = tokenLengthValuesForField.advanceExact(docId) ?
+                                                    tokenLengthValuesForField.longValue()
+                                                            - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN : 0;
                                                 if (tokens > 0) {
                                                     numberOfTokens += tokens;
                                                     tokensPerField.compute(fieldName, (k, v) -> {
