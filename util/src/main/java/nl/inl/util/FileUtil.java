@@ -12,6 +12,8 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -189,6 +191,16 @@ public class FileUtil {
         if (!file.createNewFile())
             throw new IOException("Could not create temp file: " + file.getName());
         return file;
+    }
+
+    /** Is this file a broken symlink? */
+    public static boolean isBrokenLink(File file) throws IOException {
+        Path maybeLink = file.toPath();
+        if (Files.isSymbolicLink(maybeLink)) {
+            Path maybeTarget = maybeLink.toRealPath();
+            return !Files.exists(maybeTarget);
+        }
+        return false;
     }
 
     /**

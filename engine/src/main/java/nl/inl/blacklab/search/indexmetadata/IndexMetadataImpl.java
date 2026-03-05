@@ -28,6 +28,7 @@ import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.exceptions.BlackLabException;
+import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.FieldForwardIndex;
@@ -397,7 +398,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         // Also (recursively) add metadata and annotated field config from any linked
         // documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormat()).orElse(null);
+            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormat()).orElseThrow(() ->
+                    new DocumentFormatNotFound("Unknown input format " + ld.getInputFormat() + " for linked document " + ld.getName()));
             if (inputFormat.isConfigurationBased()) {
                 addFieldInfoFromConfig(inputFormat.getConfig());
             }
@@ -443,7 +445,8 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
 
         // Also (recursively) add groups config from any linked documents
         for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormat()).orElse(null);
+            InputFormatInfo inputFormat = DocumentFormats.getFormat(ld.getInputFormat()).orElseThrow(() ->
+                    new DocumentFormatNotFound("Unknown input format " + ld.getInputFormat() + " for linked document " + ld.getName()));
             if (inputFormat.isConfigurationBased())
                 addGroupsInfoFromConfig(inputFormat.getConfig());
         }

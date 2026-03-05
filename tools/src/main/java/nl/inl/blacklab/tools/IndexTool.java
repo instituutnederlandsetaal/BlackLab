@@ -31,6 +31,7 @@ import nl.inl.blacklab.plugins.IndexSourceType;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.util.FileUtil;
 import nl.inl.util.LogUtil;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.fileprocessor.FileIterator;
@@ -258,7 +259,13 @@ public class IndexTool {
         // First check if the format is a file: if so, load it before continuing.
         if (!DocumentFormats.isSupported(formatIdentifier)) {
             File maybeFormatFile = new File(formatIdentifier);
+
             if (maybeFormatFile.isFile() && maybeFormatFile.canRead()) {
+                if (FileUtil.isBrokenLink(maybeFormatFile)) {
+                    System.err.println("Format file " + maybeFormatFile + " is a broken symlink.");
+                    usage();
+                    return;
+                }
                 try {
                     ConfigInputFormat format = ConfigInputFormat.read(maybeFormatFile);
                     DocumentFormats.add(format);
