@@ -15,10 +15,8 @@
 - BLS: upgraded to Tomcat 10.
 - trying to use the old URLs like `/blacklab-server/CORPUSNAME/hits?...` will return an API mismatch error unless you set the API to v4 explicitly. Use the new URLs instead, e.g. `/blacklab-server/corpora/CORPUSNAME/hits?...`.
 - ICU4j is now used for collation instead of Java's internal collators. These are more up to date and faster.
-- The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins 
-  directory. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
-- `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or
-  a scheme associated with your custom plugin, e.g. `mydb:`.
+- The plugin system was overhauled. Adding a plugin is as easy as creating a Groovy script (text file) in the plugins directory, but a `.jar` file can also be used of course. Quite a few new plugin types were added. See https://blacklab.ivdnt.org/development/customization/
+- `IndexTool` can index by URI now by prefixing the input argument with a scheme, e.g. `file:` (the default), `http:` or a scheme associated with your custom plugin, e.g. `mydb:`.
 - You can use `doc(...)` from XPath to link to external documents, e.g. to retrieve metadata from a web service. This uses the same URI processing code as `IndexTool` arguments, so you can use a custom plugin to retrieve a document as well. This supersedes the now-deprecated `linkedDocuments` system.
 - I you've configured a persistent identifier field (`pidField`), you are no longer allowed to add documents that don't have this field.
 - By using Saxon to process XML, BlackLab is now stricter about namespaces. However, if you don't declare any namespaces in your `.blf.yaml` configuration file, namespaces will be ignored. This makes it easier to index 'messy' datasets where some of 
@@ -50,6 +48,53 @@ Too much to list, but most importantly:
 - the `captureValuePaths` option (use XPath 3 instead)
 - legacy DocIndexers. All DocIndexers should be based on `DocIndexerConfig` or `DocIndexerBase`.
 - many deprecated and unused methods.
+
+
+## v4.1.0
+
+### New
+
+- BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
+
+### Changed
+
+- If no namespaces are specified in `.blf.yaml`, ignore namespaces altogether. VTD did this by default, but Saxon is more strict. This change allows easier processing of inconsistent datasets where some documents have namespaces declared while others do not.
+- FrequencyTool was completely overhauled. It is now much faster and includes a database output format, which produces several TSVs that refer to each other and can easily be loaded into a database. Also adds cutoff options and better compression (lz4).
+- Improved error message when trying to open an index with a newer Lucene version.
+- Allow more advanced xpaths in annotations and metadata
+
+### Fixed
+
+- Finding DocIndexer classes could crash because of incorrect usage of the Reflections library.
+- Fix NPE when requestion corpus info for a corpus with linked documents.
+- Fix NPE in BLSConfig.java.
+- Fix viewing group after grouping on a numeric field.
+- Fix rewrite bug in SpanQueryFiltered.
+- Fix bug in SingleDocIdFilter.
+- Update proxy with various BLS changes.
+- Update Solr version.
+- Fix forEach "annotations" showing up in corpus info.
+- Fix defaultUnknownCondition/value not working on for-each metadata
+- Fix concurrency issue in metadata fields
+- Replace sun/oracle stax parser with Woodstox; fixes random character offset
+  bugs
+- HitPropertSpanAttribute: not all matches may have attribute.
+- Fix DocValues iteration error.
+- Legacy linked docs: don't overwrite metadata/annotation groups info.
+
+### Performance
+
+- Update several places from polling to wait/notify for faster responses
+- More aggressively cache xpaths to speed up indexing
+- Global collationkey cache
+- Speed up file walking by using Files.walkTree
+- Featureflag/speedup: defer segment merges during indexing
+- Faster charpostracking implementation using StAX
+- Cache canonical paths in FileReferenceFile for performance
+- Use iterators in XPathFinder; avoids XdmValue wrapping
+- Improve XPath caching: static compilerCache + per-thread selector cache
+- Increase file read buffer size; hint file size on full read operation
+- Reduce memory usage of element offset tracking code
 
 
 ## v4.0.0
