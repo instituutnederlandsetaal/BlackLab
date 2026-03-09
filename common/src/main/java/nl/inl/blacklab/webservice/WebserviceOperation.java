@@ -49,6 +49,8 @@ public enum WebserviceOperation {
     CREATE_CORPUS("create-corpus", HttpMethod.POST, BlsPath.EMPTY),
     DELETE_CORPUS("delete-corpus", HttpMethod.DELETE, BlsPath.EMPTY),
 
+    SCHEMA("schema", BlsPath.SCHEMA),
+
     STATIC_RESPONSE("static-response", BlsPath.EMPTY), // internal, used by BLS
     NONE("none", BlsPath.EMPTY);
 

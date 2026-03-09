@@ -66,6 +66,7 @@ public abstract class RequestHandler {
     public static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
     public static final String ENDPOINT_PARSE_PATTERN    = BlsPath.PARSE_PATTERN.path();
     public static final String ENDPOINT_RELATIONS        = BlsPath.RELATIONS.path();
+    public static final String ENDPOINT_SCHEMA           = BlsPath.SCHEMA.path();
     public static final String ENDPOINT_SHARED_WITH_ME   = BlsPath.SHARED_WITH_ME.path();
     public static final String ENDPOINT_SHARING          = BlsPath.SHARING.path();
     public static final String ENDPOINT_STATUS           = BlsPath.STATUS.path();
@@ -74,7 +75,8 @@ public abstract class RequestHandler {
     public static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
             WebserviceOperation.CACHE_CLEAR.path(),
             WebserviceOperation.CACHE_INFO.path(),
-            WebserviceOperation.LIST_INPUT_FORMATS.path()
+            WebserviceOperation.LIST_INPUT_FORMATS.path(),
+            WebserviceOperation.SCHEMA.path()
     );
 
     /** The available request handlers by name */
@@ -258,6 +260,9 @@ public abstract class RequestHandler {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");
                     requestHandler = new RequestHandlerSharedWithMe(userRequest);
+                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_SCHEMA)) {
+                    // Request JSON schema for e.g. .blf.yaml input format files
+                    requestHandler = new RequestHandlerSchema(userRequest);
                 } else if (indexName.isEmpty()) {
                     // No index or operation given; server info
                     requestHandler = new RequestHandlerServerInfo(userRequest);

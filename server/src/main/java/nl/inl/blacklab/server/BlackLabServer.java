@@ -27,6 +27,7 @@ import nl.inl.blacklab.instrumentation.impl.PrometheusMetricsProvider;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.datastream.DataStreamAbstract;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.lib.Response;
@@ -198,8 +199,10 @@ public class BlackLabServer extends HttpServlet {
         int errorBufLengthBefore = es.length();
         try {
             requestHandler = RequestHandler.create(userRequest, outputType);
-            if (outputType == null)
-                outputType = requestHandler.getOverrideType();
+            if (requestHandler.getOverrideType() != null && outputType != null && requestHandler.getOverrideType() != outputType) {
+                // Requested output type is not supported for this request
+                throw new BadRequest("OUTPUT_TYPE_NOT_SUPPORTED", "This request doesn't support requested type " + outputType.getContentType() + ", only " + requestHandler.getOverrideType().getContentType());
+            }
             if (outputType == null)
                 outputType = blsMain.getDefaultOutputType();
 

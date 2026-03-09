@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -24,6 +25,7 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
 import nl.inl.blacklab.server.lib.requests.RequestRelations;
 import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.util.JsonSchemaUtil;
 
 /**
  * Handle all the different webservice requests, given the requested operation,
@@ -331,4 +333,29 @@ public class WebserviceRequestHandler {
         rs.relations(result);
     }
 
+    final static List<String> AVAILABLE_SCHEMAS = List.of(
+            "input-format",
+            "bcql"
+    );
+
+    public static void opListSchemas(ResponseStreamer rs) {
+        DataStream ds = rs.getDataStream();
+        ds.startList();
+        for (String schema: AVAILABLE_SCHEMAS)
+            ds.startItem("schema").value(schema).endItem();
+        ds.endList();
+    }
+
+    public static void opSchema(String urlResource, ResponseStreamer rs) {
+        switch (urlResource) {
+        case "input-format":
+            rs.getDataStream().plain(JsonSchemaUtil.getJsonSchema(ConfigInputFormat.class));
+            break;
+        case "bcql":
+            // TODO
+            break;
+        default:
+            throw new BadRequest("UNKNOWN_SCHEMA", "Unknown schema '" + urlResource + "'.");
+        }
+    }
 }
