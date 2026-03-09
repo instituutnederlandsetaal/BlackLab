@@ -437,12 +437,8 @@ public class IndexMetadataIntegrated implements IndexMetadataWriter {
             this.annotatedFields.putAnnotationGroups(fieldName, new AnnotationGroups(fieldName, annotGroups));
         }
 
-        // Also (recursively) add groups config from any linked documents
-        for (ConfigLinkedDocument ld: config.getLinkedDocuments().values()) {
-            InputFormat inputFormat = DocumentFormats.getFormat(ld.getInputFormatIdentifier()).orElse(null);
-            if (inputFormat.isConfigurationBased())
-                addGroupsInfoFromConfig(inputFormat.getConfig());
-        }
+        // NOTE: We don't process linkedDocuments here, as that would just override the main config's groups!
+        // linkedDocuments is a legacy feature, superseded by using doc() from XPath.
     }
 
     private void populateWithDefaults(BlackLabIndex index) {
