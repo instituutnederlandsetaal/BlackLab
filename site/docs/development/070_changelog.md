@@ -11,6 +11,7 @@
 - If no namespaces are specified in `.blf.yaml`, ignore namespaces altogether. VTD did this by default, but Saxon is more strict. This change allows easier processing of inconsistent datasets where some documents have namespaces declared while others do not.
 - FrequencyTool was completely overhauled. It is now much faster and includes a database output format, which produces several TSVs that refer to each other and can easily be loaded into a database. Also adds cutoff options and better compression (lz4).
 - Improved error message when trying to open an index with a newer Lucene version.
+- Allow more advanced xpaths in annotations and metadata
 
 ### Fixed
 
@@ -22,6 +23,28 @@
 - Fix bug in SingleDocIdFilter.
 - Update proxy with various BLS changes.
 - Update Solr version.
+- Fix forEach "annotations" showing up in corpus info.
+- Fix defaultUnknownCondition/value not working on for-each metadata
+- Fix concurrency issue in metadata fields
+- Replace sun/oracle stax parser with Woodstox; fixes random character offset
+  bugs
+- HitPropertSpanAttribute: not all matches may have attribute.
+- Fix DocValues iteration error.
+- Legacy linked docs: don't overwrite metadata/annotation groups info.
+
+### Performance
+
+- Update several places from polling to wait/notify for faster responses
+- More aggressively cache xpaths to speed up indexing
+- Global collationkey cache
+- Speed up file walking by using Files.walkTree
+- Featureflag/speedup: defer segment merges during indexing
+- Faster charpostracking implementation using StAX
+- Cache canonical paths in FileReferenceFile for performance
+- Use iterators in XPathFinder; avoids XdmValue wrapping
+- Improve XPath caching: static compilerCache + per-thread selector cache
+- Increase file read buffer size; hint file size on full read operation
+- Reduce memory usage of element offset tracking code
 
 ## v4.0.0
 
