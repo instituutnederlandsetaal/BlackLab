@@ -36,7 +36,7 @@ Return the corpus metadata, including size, document format, annotated and metad
   "documentCount": 2349,
   "versionInfo": {
     "blacklabBuildTime": "2025-03-20T12:32:20Z",
-    "blacklabVersion": "4.0.0-SNAPSHOT",
+    "blacklabVersion": "4.0.0",
     "blacklabScmRevision": "7efeb8d",
     "indexFormat": "4",
     "timeCreated": "2025-04-29 11:44:20",
@@ -196,7 +196,7 @@ Return the corpus metadata, including size, document format, annotated and metad
   },
   "versionInfo": {
     "blacklabBuildTime": "2025-03-20T12:32:20Z",
-    "blacklabVersion": "4.0.0-SNAPSHOT",
+    "blacklabVersion": "4.0.0",
     "blacklabScmRevision": "7efeb8d",
     "indexFormat": "4",
     "timeCreated": "2025-04-29 11:44:20",

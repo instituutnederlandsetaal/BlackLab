@@ -23,7 +23,7 @@ A server with one corpus named *BaB* and no logged-in user might show this resul
 {
   "apiVersion": "4.0",
   "blacklabBuildTime": 2025-06-16T09:06:31Z",
-  "blacklabVersion": "4.0.0-SNAPSHOT",
+  "blacklabVersion": "4.0.0",
   "blacklabScmRevision": "7e15de7",
   "corpora": {
     "BaB": {
@@ -57,7 +57,7 @@ A server with one corpus named *BaB* and no logged-in user might show this resul
 {
   "apiVersion": "5.0",
   "blacklabBuildTime": 2025-06-16T09:06:31Z",
-  "blacklabVersion": "4.0.0-SNAPSHOT",
+  "blacklabVersion": "4.0.0",
   "blacklabScmRevision": "7e15de7",
   "corpora": {
     "BaB": {
