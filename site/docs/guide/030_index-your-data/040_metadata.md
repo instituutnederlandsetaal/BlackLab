@@ -44,7 +44,7 @@ It's also possible to process metadata values before they are indexed (see [Proc
 often preferable to do as much processing as possible in XPath.
 
 As you can see, `metadata` is a list, so you can define several metadata blocks, each with their own containerPath.
-Actually, you can even nest metadata blocks, so you can use multiple levels of containerPaths:
+Actually, starting from `dev`/`5.x` you can even nest metadata blocks, so you can use multiple levels of containerPaths:
 
 ```yaml
 metadata:
@@ -104,9 +104,9 @@ We may consider adding other specific field types (floating point, date, vector)
 
 ::: info Old `linkedDocuments` feature
 
-Previously, external metadata could be indexed using the complex `linkedDocuments` feature. This was removed after BlackLab 4.0.
+Previously, external metadata could be indexed using the complex `linkedDocuments` feature. This was removed after 4.x.
 
-The `doc()` approach here is a standard XPath technique and is significantly easier to use.
+The `doc()` approach here is a standard XPath technique and is significantly easier to use. It is available from `dev`/`5.x` but may not work properly in older versions.
 
 :::
 
@@ -169,6 +169,8 @@ containerPath: doc(concat('archive:metadata.zip/', ./@id, '.xml'))
 
 You can even add your own schemes. For example, `my-db:12345` might load a document from a database. Each scheme such as `archive` refers to a `IndexSourceType` plugin, and [adding one](/development/customization/) isn't difficult.
 
+(`archive` and custom schemes using plugin available from `dev`/`5.x`)
+
 ### Using the original input file path
 
 You can use `$inputFilePath` from XPath if you need. For example, if your input file is `content/doc0123.xml` and you 
@@ -177,6 +179,8 @@ want to link to `metadata/meta0123.xml`, you could use this XPath:
 ```yaml
 containerPath: doc(concat('metadata/meta', replace($inputFilePath, '^.*doc(\d+)\.xml$', '$1'), '.xml'))
 ```
+
+(available from `dev`/`5.x`)
 
 ### Store (part of) a linked document
 

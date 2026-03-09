@@ -15,6 +15,10 @@ description: The file format used by OpenSonar for document contents.
 ## (optional; not used by BlackLab; could be used in user interface)
 type: content
 
+## What XML processor to use
+## (only needed for BlackLab 4.x; 5.x always uses Saxon)
+processor: saxon
+
 ## Each file type may have options associated with it (for now, only "tabular" does)
 ## We've shown the options for tabular he're but commented them out as we're describing
 ## an xml format here.
@@ -166,7 +170,7 @@ metadata:
     # valuePath for each)
   - forEachPath: meta    # (relative to containerPath)
     namePath: "@id"      # (relative to forEachPath)
-    nameProcess:
+    nameProcess:  # supported from dev/5.x
     - action: append
       value: "_meta"   # append "_meta" to the name found at namePath
     valuePath: .         # (relative to forEachPath)

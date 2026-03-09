@@ -1,4 +1,4 @@
-# Blacklab webservice API evolution
+# BlackLab webservice API evolution
 
 ::: warning OLDER CONTENT
 This page contains ideas that are partially obsolete.
@@ -89,12 +89,12 @@ DONE IN /corpora ENDPOINTS (e.g. v5):
   (makes more sense for RTL languages)
 - XML: same concordance structure as in JSON
 - Handle custom information better. <br>
-  Custom information, ignored by Blacklab but useful for e.g. the frontend,
+  Custom information, ignored by BlackLab but useful for e.g. the frontend,
   like displayName, uiType, etc. is polluting the response structure.
   We should isolate it (e.g. in a `custom` section for each field, annotation, etc.),
   just pass it along unchecked, and include it only if requested.<br>
   This includes the so-called "special fields" except for `pidField` (so author, title, date).
-  (Blacklab uses the `pidField` to refer to documents)
+  (BlackLab uses the `pidField` to refer to documents)
 - Change confusing names.<br>
   (e.g. the name `stoppedRetrievingHits` prompts the question "why did you stop?".
   `limitReached` might be easier to understand, especially if it's directly

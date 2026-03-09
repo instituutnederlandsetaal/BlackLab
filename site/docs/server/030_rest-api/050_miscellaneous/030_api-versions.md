@@ -3,7 +3,7 @@
 We're evolving the BlackLab web service API over time, using versioning.
 
 There's currently two supported versions:
-- `4.0`: API used by BlackLab 4.x. Still supported on `dev` branch and (future) Blacklab 5.x.
+- `4.0`: API used by BlackLab 4.x. Still supported on `dev` branch and (future) BlackLab 5.x.
 - `5.0`: Stricter, cleaner API. Should be considered experimental until BlackLab 5.0 is released.
 
 To know which API version your BLS defaults to, check the server info page (`/`). Look for the key `blacklabResponse.apiVersion`. If this doesn't exist, BLS is using API v3 or lower. If it exists and has the value `4.0` or `5.0`, BLS is using that API version.

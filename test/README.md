@@ -74,7 +74,7 @@ If you want to run the tests manually outside of Docker, you should:
 - run the tests using `npm run test` from the `test` directory
 
 ### Custom test configuration
-Blacklab allows to configure the shape of the responses, to allow for the tests to account for different 
+BlackLab allows to configure the shape of the responses, to allow for the tests to account for different 
 server configurations, the tests can also be configured via enviroment variables matching the server
 configurations. Consult the [constants.js](test/constants.js) for the list of supported environment variables.
 

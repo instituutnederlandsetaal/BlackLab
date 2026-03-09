@@ -4,7 +4,6 @@
 
 ### New
 
-- BLS: added `DELETE /docs/PID` to delete a document by its persistent identifier.
 - You can now request span attributes (e.g. sentence id) to be included in a CSV export. See https://blacklab.ivdnt.org/server/rest-api/
 - `IndexTool` will now default to `upsert` when adding a document with a persistent identifier that's already present.
 

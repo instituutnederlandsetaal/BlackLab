@@ -9,5 +9,5 @@ Can only be used in debug mode.
 
 ## Other resources
 
-* An (incomplete) list of [response codes](errors) Blacklab Server will return.
+* An (incomplete) list of [response codes](errors) BlackLab Server will return.
 * An overview of the different [API versions](api-versions.md)

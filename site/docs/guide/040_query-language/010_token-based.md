@@ -431,6 +431,8 @@ A:[] ("and" B:[] :: A.word = B.word) "again"   # BAD
 
 ## Functions
 
+(following applies only to `dev`/`5.x`)
+
 BCQL supports a number of useful functions. Some functions produce queries as output, which you can use as part of a larger query; others produce values that you can pass to other functions.
 
 Some of these functions exist in some form in other dialects of Corpus Query Language.

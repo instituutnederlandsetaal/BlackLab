@@ -19,6 +19,12 @@ This setting can also be changed for individual documents by setting a metadat f
 
 BlackLab uses the Saxon library to process XML.
 
+::: warning Saxon on BlackLab 4.x
+
+BlackLab v4.x used either VTD or Saxon as an XML processor. It is recommended to use Saxon there as well. Place `processor: saxon` in your `.blf.yaml` file to ensure you're using Saxon in that version.
+
+:::
+
 Saxon supports XPath 3.1, which is very powerful and can help when writing complex indexing configurations.
 
 Certain complex indexing features can be avoided when using Saxon; many things can be done in XPath directly. See [XPath examples](xpath-examples.md) to get an idea of the wide range of possibilities.
@@ -29,7 +35,7 @@ Certain complex indexing features can be avoided when using Saxon; many things c
 ## Namespaces
 
 If your XML documents use namespaces, you must declare these in the `namespaces` section of your format config file
-so your XPath expressions work correctly. Note that the `xml` namespace is implicit and does not need to be declared (since `dev`/future `v5`).
+so your XPath expressions work correctly. Note that the `xml` namespace is implicit and does not need to be declared (since `dev`/`5.x`).
 
 Example:
 
@@ -49,8 +55,7 @@ namespaces:
 documentPath: //TEI
 ```
 
-Note that if you do not declare namespaces in your `.blf.yaml` file, namespaces will be ignored during indexing. This can
-help to index 'messy' datasets where some documents have schema declarations and other do not.
+Note that if you do not declare namespaces in your `.blf.yaml` file, namespaces will be ignored during indexing. This can help to index 'messy' datasets where some documents have schema declarations and other do not.
 
 
 ## Unicode normalization
@@ -87,7 +92,7 @@ If you forget to declare some or all of these namespaces, the document might ind
 
 ## Configuration versions 1 and 2
 
-BlackLab 4 introduced a version 2 of the `.blf.yaml` format. On the development branch (future BlackLab 5), this will be the default, and the `version: 2` declaration at the top of the format file is no longer necessary.
+BlackLab 4 introduced a version 2 of the `.blf.yaml` format. On `dev`/`5.x`, this version is the default, and the `version: 2` declaration at the top of the format file is no longer necessary.
 
 Version 2 of the format file introduced a few breaking changes to be aware of:
 

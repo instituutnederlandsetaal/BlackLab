@@ -3,11 +3,11 @@ title: "Introduction"
 order: -1
 ---
 
-::: tip BlackLab 4 now available!
+::: tip BlackLab present and future
 
-Major new features include [dependency relations](https://blacklab.ivdnt.org/guide/query-language/relations.html) and [parallel corpora](https://blacklab.ivdnt.org/guide/query-language/parallel.html).
+BlackLab 4 shipped with major new features, including [dependency relations](https://blacklab.ivdnt.org/guide/query-language/relations.html) and [parallel corpora](https://blacklab.ivdnt.org/guide/query-language/parallel.html). See the [release notes](https://github.com/instituutnederlandsetaal/BlackLab/releases/tag/v4.0.0) and the [full changelog](https://blacklab.ivdnt.org/development/changelog.html).
 
-See the [release notes](https://github.com/instituutnederlandsetaal/BlackLab/releases/tag/v4.0.0) and the [full changelog](https://blacklab.ivdnt.org/development/changelog.html).
+Try the `dev` branch for better performance, expanded plugin support, and many other improvements that will land in BlackLab 5.
 
 :::
 

@@ -59,6 +59,11 @@ What alternatives are indexed determines how specifically you can specify the de
 
 If you don't configure an annotation's `sensitivity` parameter, it will default to `insensitive`.
 
+::: warning 4.x annotation sensitivity
+
+BlackLab versions up to and including `4.x` had one exception: annotations named `word` or `lemma` defaulted to `sensitive_insensitive`. This special behaviour has been dropped on `dev`.
+
+:::
 
 ## Standoff annotations
 
@@ -302,7 +307,7 @@ An annotation can optionally capture the raw xml content:
       valuePath: serialize(./node())
 ```
 
-(the old `captureXml: true` option did the same thing, but this is deprecated and will be removed in a future version)
+(this works with `processor: saxon`, which after v4.x is the only XML processor we use. For older versions, the old `captureXml: true` option did the same thing, but this is now deprecated and will eventually be removed)
 
 # Custom properties
 
