@@ -9,6 +9,7 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.util.StreamReaderDelegate;
 import javax.xml.transform.stax.StAXSource;
+import javax.xml.transform.stream.StreamSource;
 
 import com.ctc.wstx.stax.WstxInputFactory;
 
@@ -222,6 +223,14 @@ public class SaxonDocumentWithElementOffsets {
         // in character offset reporting when elements are directly nested without
         // whitespace between them (e.g., <parent><child>).
         XMLInputFactory fac = new WstxInputFactory();
-        return fac.createXMLStreamReader(source);
+        // Disable loading of external entities: documents are often read from ZIP archives
+        // or other sources where relative SYSTEM paths cannot be resolved.
+        fac.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
+        // Provide a placeholder system ID via StreamSource so that external entity
+        // declarations in a DOCTYPE (e.g. <!ENTITY % foo SYSTEM "foo.xml">) get a
+        // non-null base URL context (EntityDecl.mContext). Without this, Saxon's
+        // StaxBridge.getUnparsedEntities() throws a NullPointerException when it calls
+        // EntityDecl.getBaseURI() on those declarations.
+        return fac.createXMLStreamReader(new StreamSource(source, "file:///unknown"));
     }
 }
