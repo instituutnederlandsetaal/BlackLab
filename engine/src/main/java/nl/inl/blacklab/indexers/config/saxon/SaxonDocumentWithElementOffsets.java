@@ -1,10 +1,13 @@
 package nl.inl.blacklab.indexers.config.saxon;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.Reader;
 
 import javax.xml.stream.Location;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLResolver;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.util.StreamReaderDelegate;
@@ -223,14 +226,35 @@ public class SaxonDocumentWithElementOffsets {
         // in character offset reporting when elements are directly nested without
         // whitespace between them (e.g., <parent><child>).
         XMLInputFactory fac = new WstxInputFactory();
-        // Disable loading of external entities: documents are often read from ZIP archives
-        // or other sources where relative SYSTEM paths cannot be resolved.
-        fac.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.FALSE);
-        // Provide a placeholder system ID via StreamSource so that external entity
-        // declarations in a DOCTYPE (e.g. <!ENTITY % foo SYSTEM "foo.xml">) get a
-        // non-null base URL context (EntityDecl.mContext). Without this, Saxon's
-        // StaxBridge.getUnparsedEntities() throws a NullPointerException when it calls
-        // EntityDecl.getBaseURI() on those declarations.
+
+        fac.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, Boolean.TRUE);
+
+        /**
+         *
+         * new XMLResolver() {
+         *             @Override
+         *             public Object resolveEntity(String publicID, String systemID, String baseURI, String namespace)
+         *                     throws XMLStreamException {
+         *                 // Example: Redirect a specific DTD request to a local stream
+         *                 if (systemID != null && systemID.contains("example.dtd")) {
+         *                     return new ByteArrayInputStream("<!ENTITY test 'resolved'>".getBytes());
+         *                 }
+         *                 return null; // Let the parser handle it normally
+         *             }
+         *         }*/
+
+        XMLResolver dummyResolver = (publicID, systemID, baseURI, namespace) -> {
+            if (systemID != null) {
+                  try {
+                      return new ByteArrayInputStream(new FileInputStream(systemID).readAllBytes());
+                  } catch (IOException e) {
+                      throw new RuntimeException(e);
+                  }
+              }
+              return null; // Let the parser handle it normally
+        };
+        fac.setProperty(XMLInputFactory.RESOLVER, dummyResolver);
+
         return fac.createXMLStreamReader(new StreamSource(source, "file:///unknown"));
     }
 }
