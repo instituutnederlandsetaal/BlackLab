@@ -229,6 +229,42 @@ public class TestCharPosTracking {
     }
 
     /**
+     * Test that parsing XML with a DOCTYPE containing external entity declarations (SYSTEM ids)
+     * does not throw a NullPointerException. This is a regression test for the bug where
+     * Saxon's StaxBridge.getUnparsedEntities() called EntityDecl.getBaseURI() on entity
+     * declarations that had a null base URL context (mContext == null) because the
+     * XMLStreamReader was created from a Reader without a system ID.
+     *
+     * The IMDI metadata files used by CGN have DOCTYPE declarations like:
+     * {@code <!DOCTYPE METATRANSCRIPT [<!ENTITY % cgn-config SYSTEM "cgn-config.xml">...]>}
+     */
+    @Test
+    public void testParsingXmlWithDocTypeSystemEntitiesDoesNotThrowNPE() throws Exception {
+        // XML similar to the IMDI file that triggered the NPE.
+        // The external SYSTEM entity ("ext.xml") cannot be resolved (we're reading from a
+        // Reader, not a file), but with IS_SUPPORTING_EXTERNAL_ENTITIES=false and a
+        // placeholder system ID, parsing should succeed without NPE.
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                + "<!DOCTYPE root [\n"
+                + "  <!ENTITY % ext SYSTEM \"ext.xml\">\n"
+                + "  <!ENTITY intl \"internal-value\">\n"
+                + "]>\n"
+                + "<root><child>text</child></root>";
+
+        // Should not throw NullPointerException
+        SaxonDocumentWithElementOffsets doc = new SaxonDocumentWithElementOffsets(
+                new StringReader(xml),
+                SaxonHelper.getProcessor().getUnderlyingConfiguration()
+        );
+        assertNotNull("Document should be parsed successfully", doc.getDocument());
+
+        // Element offsets should still be tracked correctly
+        NodeInfo root = doc.getDocument().getRootNode();
+        List<NodeInfo> elements = collectAllElements(root);
+        assertEquals("Should find 2 elements (root and child)", 2, elements.size());
+    }
+
+    /**
      * Test that element offsets are correct even after the parser's internal buffer refills.
      * The bug was that after ~8K of data, the StAX parser's getCharacterOffset() would be
      * off by 1, causing extracted element content to include trailing newlines.
