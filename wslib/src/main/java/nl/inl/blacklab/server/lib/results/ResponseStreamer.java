@@ -993,7 +993,8 @@ public class ResponseStreamer {
         ds.entry("hasContentStore", fieldDesc.hasContentStore());
         if (!isNewApi)
             ds.entry("hasXmlTags", fieldDesc.hasRelationAnnotation());
-        ds.entry("mainAnnotation", annotations.main().name());
+        if (annotations.main() != null) // legacy linkedDocument sometimes created annotated field without annotations...
+            ds.entry("mainAnnotation", annotations.main().name());
         if (!isNewApi) {
             // Moved to custom
             ds.startEntry("displayOrder").startList();

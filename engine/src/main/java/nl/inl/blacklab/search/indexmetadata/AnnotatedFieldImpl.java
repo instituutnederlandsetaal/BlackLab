@@ -177,6 +177,10 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
     
     @Override
     public String offsetsField() {
+        if (annotations.main() == null) {
+            // legacy linkedDocument sometimes created annotated field without annotations...
+            return null;
+        }
         AnnotationSensitivity offsetsSensitivity = annotations.main().offsetsSensitivity();
         return offsetsSensitivity == null ? null : offsetsSensitivity.luceneField();
     }
