@@ -250,8 +250,8 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 processAnnotation(annotation, word, positionSpanStartOrRelSource, null, this::indexAnnotationValues);
             }
 
-            protected void processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
-                    Map<String, Span> tokenPositionsMap) {
+            protected int processAnnotatedFieldContainer(NodeInfo container, ConfigAnnotatedField annotatedField,
+                    Map<String, Span> tokenPositionsMap, int firstTokenPosition) {
 
                 // Is this a parallel corpus annotated field?
                 docVersionStartPos = 0;
@@ -281,7 +281,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 Map<Span, List<NodeInfo>> inlinesToClose = new HashMap<>();
 
                 // For each word...
-                Span tokenPosition = Span.token(0);
+                Span tokenPosition = Span.token(firstTokenPosition);
                 List<NodeInfo> words = finder.findNodes(annotatedField.getWordPath(), container);
                 words.sort(NodeInfo::compareOrder); // (or does Saxon guarantee that matching nodes are already in order? maybe check)
                 for (NodeInfo word: words) {
@@ -338,6 +338,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                     handlePunct(currentPunct);
                     currentPunct = punctIt.hasNext() ? punctIt.next() : null;
                 }
+                return tokenPosition.start();
             }
 
             private List<NodeInfo> collectPunctuation(NodeInfo container, ConfigAnnotatedField annotatedField) {
@@ -874,8 +875,12 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
                 setCurrentAnnotatedFieldName(annotatedField.getName());
 
                 // For each container (e.g. "text" or "body" element) ...
+                int[] firstTokenPosition = new int[] { 0 };
                 finder.xpathForEach(annotatedField.getContainerPath(), document,
-                        (container) -> processAnnotatedFieldContainer(container, annotatedField, tokenPositionsMap));
+                        (container) -> {
+                            firstTokenPosition[0] = processAnnotatedFieldContainer(container, annotatedField,
+                                    tokenPositionsMap, firstTokenPosition[0]);
+                        });
             }
 
             protected void processAnnotatedFieldStandoff(NodeInfo document, ConfigAnnotatedField annotatedField, Map<String, Span> tokenPositionsMap) {
