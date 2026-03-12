@@ -1,18 +1,24 @@
 package nl.inl.blacklab.testutil;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
@@ -32,8 +38,22 @@ import nl.inl.util.LogUtil;
 /** Export the metadata of all documents from a BlackLab index. */
 public class ExportMetadata implements AutoCloseable {
 
-    private static String escapeTabs(String str) {
-        return str.replace("\t", "\\t");
+    // TODO: make SKIP_FIELDS and PID_FIELD configurable
+
+    /**
+     * Fields to skip exporting (e.g. large fields,
+     * fromInputFile which varies depending on indexing setup).
+     */
+    private static final Set<String> SKIP_FIELDS = Set.of("contents", "metadata", "fromInputFile");
+
+    /** pid first for easy sorting by document. */
+    private static final String PID_FIELD = "pid";
+
+    private static String escapeProblemChars(String str) {
+        // Escape problematic characters in the export
+        return str
+            .replaceAll("\t", "\\\\t")
+            .replaceAll("\n", "\\\\n");
     }
 
     public static void main(String[] args) {
@@ -89,19 +109,46 @@ public class ExportMetadata implements AutoCloseable {
             System.out.println("Done exporting metadata.");
             System.out.flush();
         }
+
+        // Determine final export field order
+        List<String> listFieldNames = new ArrayList<>();
+        Set<String> left = new TreeSet<>(fieldNames); // TreeSet sorts fields alphabetically
+        if (left.contains(PID_FIELD)) {
+            // Make sure pid is exported first (for easy sorting)
+            listFieldNames.add(PID_FIELD);
+            left.remove(PID_FIELD);
+        }
+        listFieldNames.addAll(left); // add rest (in sorted order)
+
+        // Write final export file with header
         try (FileOutputStream out = new FileOutputStream(exportFile);
-                OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8)) {
+                OutputStreamWriter writer = new OutputStreamWriter(out, StandardCharsets.UTF_8);
+                CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.TDF)) {
             // Write header
-            writer.append(StringUtils.join(fieldNames, "\t") + "\r\n");
-            // Copy data from tmp file
-            try (java.io.FileInputStream in = new java.io.FileInputStream(tmpFile);
-                    java.io.InputStreamReader reader = new java.io.InputStreamReader(in, StandardCharsets.UTF_8)) {
-                char[] buffer = new char[8192];
-                int len;
-                while ((len = reader.read(buffer)) != -1) {
-                    writer.write(buffer, 0, len);
-                }
+            csvPrinter.printRecord(listFieldNames);
+            // Copy data from tmp tsv file
+
+            try (FileInputStream in = new FileInputStream(tmpFile);
+                InputStreamReader reader = new InputStreamReader(in, StandardCharsets.UTF_8);
+                CSVParser csvParser = new CSVParser(reader, CSVFormat.TDF)) {
+                csvParser.forEach(record -> {
+                    try {
+                        Map<String, String> recordMap = new HashMap<>();
+                        int i = 0;
+                        for (String fieldName: fieldNames) {
+                            recordMap.put(fieldName, record.get(i));
+                            i++;
+                            if (i >= record.size())
+                                break;
+                        }
+                        Stream<String> rec = listFieldNames.stream().map(f -> recordMap.getOrDefault(f, ""));
+                        csvPrinter.printRecord(rec);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
             }
+
             if (!tmpFile.delete())
                 throw new IOException("Failed to delete temporary file: " + tmpFile);
         }
@@ -126,12 +173,9 @@ public class ExportMetadata implements AutoCloseable {
                 Map<String, String> metadata = new HashMap<>();
                 Document luceneDoc = index.luceneDoc(docId);
                 for (IndexableField f: luceneDoc.getFields()) {
-                    // If this is a regular metadata field, not a control field
-                    if (f.name().equals("contents") || f.name().equals("metadata")) {
-                        // HACK: skip common original document contents fields
-                        continue;
-                    }
-                    if (!f.name().contains("#")) {
+                    // If this is a regular metadata field, not a control field or contents field
+                    // (bit of a hack)
+                    if (!f.name().contains("#") && !SKIP_FIELDS.contains(f.name())) {
                         synchronized (fieldNames) {
                             fieldNames.add(f.name());
                         }
@@ -139,10 +183,9 @@ public class ExportMetadata implements AutoCloseable {
                         if (value != null) {
                             if (value.length() > 255)
                                 value = StringUtils.abbreviate(value, 255);
-                            metadata.put(f.name(), value);
-                        }
-                        else if (f.numericValue() != null)
-                            metadata.put(f.name(), f.numericValue().toString());
+                            metadata.put(f.name(), escapeProblemChars(value));
+                        } else if (f.numericValue() != null)
+                            metadata.put(f.name(), escapeProblemChars(f.numericValue().toString()));
                     }
                 }
                 try {
