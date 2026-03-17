@@ -1,5 +1,15 @@
 # Change Log
 
+## v4.1.1
+
+### Fixed
+
+- Fix NPE in SaxonDocumentWithElementOffsets with DOCTYPE SYSTEM entity declarations.
+- Try to load external entity from file.
+- Guard against annotated field without annotations.
+- Fix off-by-one when reading document contents.
+
+
 ## v4.1.0
 
 ### New
