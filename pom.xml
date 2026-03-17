@@ -4,7 +4,7 @@
     <groupId>nl.inl.blacklab</groupId>
     <artifactId>blacklab-all</artifactId>
     <packaging>pom</packaging>
-    <version>4.1.1</version>
+    <version>4.2.0-SNAPSHOT</version>
     <name>BlackLab Corpus Search</name>
     <description>The parent project for BlackLab Core and BlackLab Server.</description>
     <url>https://github.com/instituutnederlandsetaal/BlackLab</url>
