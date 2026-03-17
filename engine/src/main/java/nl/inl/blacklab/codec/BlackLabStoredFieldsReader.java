@@ -406,7 +406,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
 
                     // Determine what blocks we'll need
                     int firstBlockNeeded = startChar / blockSizeChars;
-                    int lastBlockNeeded = endChar / blockSizeChars;
+                    int lastBlockNeeded = (endChar - 1) / blockSizeChars;
                     int numBlocksNeeded = lastBlockNeeded - firstBlockNeeded + 1;
 
                     // Determine where our first block starts, and position blockindex file
