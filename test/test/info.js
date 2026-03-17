@@ -34,6 +34,9 @@ expectUrlUnchanged('info', 'input formats', '/input-formats');
 expectUrlUnchanged('info', 'corpus', constants.URL_PREFIX + '/');
 expectUrlUnchanged('info', 'corpus status', constants.URL_PREFIX + '/status');
 
+// Relations
+expectUrlUnchanged('info', 'relations', constants.URL_PREFIX + '/relations');
+
 // Field info with list of values
 expectUrlUnchanged('info', 'annotated field info with values',
         constants.URL_PREFIX + '/fields/contents?listvalues=lemma');

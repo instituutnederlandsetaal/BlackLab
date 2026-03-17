@@ -158,21 +158,21 @@ public abstract class RequestHandler {
         String urlResource = userRequest.getUrlResource();
         String urlPathInfo = userRequest.getUrlPathInfo();
         boolean resourceOrPathGiven = !urlResource.isEmpty() || !urlPathInfo.isEmpty();
-        boolean isNewEndpoint = userRequest.isNewEndpoint(); // /corpora/... in API v4+
-        boolean isNewApi = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
-        if (!isNewEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isNewApi) {
+        boolean isNewCorporaEndpoint = userRequest.isNewCorporaEndpoint(); // /corpora/... in API v4+
+        boolean isApiV5 = userRequest.apiVersion().getMajor() >= 5; // Enforce using only the new API?
+        if (!isNewCorporaEndpoint && !indexName.isEmpty() && !TOP_LEVEL_ENDPOINTS.contains(indexName) && isApiV5) {
             throw new BadRequest("API_URL_MISMATCH", "You're using an old URL (/CORPUSNAME/...), " +
                     "but the API is set to 5 (the default for this BlackLab version). Either update the URL to " +
                     "/corpora/CORPUSNAME/... or, to keep using the old URL for now, add api=4 to enable backward " +
                     "compatibility. Please plan your migration to API v5; BlackLab 6 will no longer support API v4.");
         }
-        if (isNewEndpoint && !indexName.isEmpty() && !isNewApi) {
+        if (isNewCorporaEndpoint && !indexName.isEmpty() && !isApiV5) {
             throw new BadRequest("API_URL_MISMATCH", "You're using a new URL (/corpora/CORPUSNAME/...), " +
                     "but the API is set to 4. This endpoint was not available in version 4. Remove /corpora from your URL, " +
                     "or change your API version to 5. See https://blacklab.ivdnt.org/server/rest-api/miscellaneous/api-versions.html");
         }
         String method = request.getMethod();
-        boolean isInputFormatsRequest = !isNewEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
+        boolean isInputFormatsRequest = !isNewCorporaEndpoint && indexName.equals(ENDPOINT_INPUT_FORMATS);
         if (method.equals("DELETE")) {
             if (isInputFormatsRequest) {
                 // Delete input format
@@ -206,7 +206,7 @@ public abstract class RequestHandler {
                 if (indexName.isEmpty() && !resourceOrPathGiven) {
                     // POST to /blacklab-server/ : create private index
                     requestHandler = new RequestHandlerCreateIndex(userRequest);
-                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
+                } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_CACHE_CLEAR)) {
                     // Clear the cache
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
@@ -245,7 +245,7 @@ public abstract class RequestHandler {
                 }
             }
             if (method.equals("GET") || (method.equals("POST") && postAsGet)) {
-                if (!isNewEndpoint && indexName.equals(ENDPOINT_CACHE_INFO)) {
+                if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_CACHE_INFO)) {
                     if (resourceOrPathGiven) {
                         return errorObj.unknownOperation(indexName);
                     }
@@ -256,11 +256,11 @@ public abstract class RequestHandler {
                     requestHandler = new RequestHandlerCacheInfo(userRequest);
                 } else if (isInputFormatsRequest) {
                     requestHandler = new RequestHandlerListInputFormats(userRequest);
-                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
+                } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_SHARED_WITH_ME)) {
                     if (!user.isLoggedIn())
                         return errorObj.unauthorized("You are not logged in. Log in to see corpora shared with you.");
                     requestHandler = new RequestHandlerSharedWithMe(userRequest);
-                } else if (!isNewEndpoint && indexName.equals(ENDPOINT_SCHEMA)) {
+                } else if (!isNewCorporaEndpoint && indexName.equals(ENDPOINT_SCHEMA)) {
                     // Request JSON schema for e.g. .blf.yaml input format files
                     requestHandler = new RequestHandlerSchema(userRequest);
                 } else if (indexName.isEmpty()) {
@@ -345,30 +345,8 @@ public abstract class RequestHandler {
             return errorObj.internalError("RequestHandler.create called with wrong method: " + method, debugMode,
                     "INTERR_WRONG_HTTP_METHOD");
         }
-        requestHandler.setIsNewEndpoint(isNewEndpoint);
+        requestHandler.newCorporaEndpoint = isNewCorporaEndpoint;
         return requestHandler;
-    }
-
-    /**
-     * Is this a /corpora/... request?
-     *
-     * @param b true if this is a /corpora/... request
-     */
-    private void setIsNewEndpoint(boolean b) {
-        this.newEndpoint = b;
-    }
-
-    /**
-     * Is this a /corpora/... request?
-     *
-     * These endpoints were added in API v4+ and use a new version of the API.
-     * They replace the old index-related endpoints in API v5.
-     * You can test this already, using api=exp (or set in config file).
-     *
-     * @return true if this is a /corpora/... request
-     */
-    private boolean isNewEndpoint() {
-        return this.newEndpoint;
     }
 
     private static boolean doDebugSleep(HttpServletRequest request) {
@@ -396,7 +374,7 @@ public abstract class RequestHandler {
      * They replace the old index-related endpoints in API v5.
      * You can test this already, using api=exp (or set in config file)
      */
-    private boolean newEndpoint = false;
+    private boolean newCorporaEndpoint = false;
 
 //    /** The servlet object */
 //    protected BlackLabServer servlet;
@@ -539,9 +517,10 @@ public abstract class RequestHandler {
 
     public ApiVersion apiCompatibility() {
         ApiVersion api = params.apiCompatibility();
-        if (isNewEndpoint() && api.getMajor() <= 4) {
+        boolean alwaysRespondWithApiV5 = newCorporaEndpoint || this instanceof RequestHandlerRelations;
+        if (alwaysRespondWithApiV5 && api.getMajor() <= 4) {
             // The new /corpora/... endpoints always use the new version of the API.
-            return ApiVersion.EXPERIMENTAL;
+            return ApiVersion.V5_0;
         }
         return api;
     }

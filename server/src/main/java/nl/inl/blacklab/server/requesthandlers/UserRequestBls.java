@@ -28,7 +28,7 @@ public class UserRequestBls implements UserRequest {
     private final HttpServletRequest request;
 
     /** Newly added encdpoint that always uses v5 conventions for response, etc.? */
-    private boolean newEndpoint = false;
+    private boolean isNewCorporaEndpoint = false;
 
     /** Corpus name from the URL path */
     private String corpusName;
@@ -52,17 +52,14 @@ public class UserRequestBls implements UserRequest {
         String servletPath = StringUtils.strip(StringUtils.trimToEmpty(request.getPathInfo()), "/");
         if (servletPath.equals("corpora")) {
             servletPath = "";
-            this.newEndpoint = true;
+            this.isNewCorporaEndpoint = true;
         }
         if (servletPath.startsWith("corpora/")) {
             // Strip "corpora/" prefix, but remember it (new API)
             servletPath = servletPath.substring("corpora/".length());
-            this.newEndpoint = true;
+            this.isNewCorporaEndpoint = true;
         }
         String[] parts = servletPath.split("/", 3);
-        if (parts.length > 1 && parts[1].equals("relations")) {
-            this.newEndpoint = true;
-        }
         corpusName = parts.length >= 1 ? parts[0] : "";
         if (corpusName.startsWith(":")) {
             // Private index. Prefix with user id.
@@ -72,8 +69,8 @@ public class UserRequestBls implements UserRequest {
         urlPathInfo = parts.length >= 3 ? parts[2] : "";
     }
 
-    public boolean isNewEndpoint() {
-        return newEndpoint;
+    public boolean isNewCorporaEndpoint() {
+        return isNewCorporaEndpoint;
     }
 
     @Override
