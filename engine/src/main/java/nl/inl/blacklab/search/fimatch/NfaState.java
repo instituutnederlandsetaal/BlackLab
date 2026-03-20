@@ -38,7 +38,7 @@ public abstract class NfaState {
      * Build a token state.
      *
      * @param luceneField what annotation to match
-     * @param inputTokens what tokens to match
+     * @param inputTokens what tokens to match, or null for any token
      * @param nextState what state to go to after a succesful match
      * @return the state object
      */

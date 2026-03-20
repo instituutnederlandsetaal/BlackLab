@@ -702,6 +702,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         boolean canBeTokenState = getNfaTokenStateTerms(terms);
         if (canBeTokenState) {
             // Yep. Rewrite to a large NfaStateToken.
+            assert !terms.isEmpty() : "No matching terms for OR query: " + this;
             NfaState tokenState = NfaState.token(luceneField, terms, null);
             return new Nfa(tokenState, List.of(tokenState));
         }
@@ -727,7 +728,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      *            interested in the terms)
      * @return true if this node can be converted into a single NFA token state
      */
-    protected boolean getNfaTokenStateTerms(Set<String> terms) {
+    private boolean getNfaTokenStateTerms(Set<String> terms) {
         boolean canBeTokenState = false;
         if (guarantees().hitsAllSameLength() && guarantees().hitsLengthMax() == 1) {
             canBeTokenState = true;

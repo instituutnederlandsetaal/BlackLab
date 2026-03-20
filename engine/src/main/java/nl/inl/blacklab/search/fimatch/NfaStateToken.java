@@ -63,8 +63,10 @@ public class NfaStateToken extends NfaState {
         if (inputTokens == null) {
             inputTokenStrings = Set.of();
             acceptAnyToken = true;
-        } else
+        } else {
+            assert !inputTokens.isEmpty() : "No input tokens for NfaStateToken";
             inputTokenStrings = new HashSet<>(inputTokens);
+        }
         this.nextState = nextState;
     }
 

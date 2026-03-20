@@ -298,9 +298,10 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                 }
 
                 // Now, find the first term equal to this one.
-                int sortPos = indexOfTerm - 1;
                 Collator collator = collators.get(sensitivity);
-                while (sortPos > 0) {
+                assert collator.compare(get(sortPosToTermId[indexOfTerm]), term) == 0 : "Found non-matching term";
+                int sortPos = indexOfTerm - 1;
+                while (sortPos >= 0) {
                     String term1 = get(sortPosToTermId[sortPos]);
                     if (collator.compare(term1, term) != 0)
                         break;
