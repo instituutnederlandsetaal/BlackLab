@@ -108,7 +108,9 @@ public class TermsGlobal implements Terms {
         if (termId < 0 || termId >= numberOfTerms)
             return Constants.NO_TERM;
         int[] idToSortPos = sensitivity.isCaseSensitive() ? termId2SensitivePosition : termId2InsensitivePosition;
-        return idToSortPos[termId];
+        int sortPos = idToSortPos[termId];
+        assert sortPos != -1 : "Sort position not found for term id " + termId + " (sensitivity " + sensitivity + ")";
+        return sortPos;
     }
 
     @Override
@@ -164,7 +166,9 @@ public class TermsGlobal implements Terms {
 
     @Override
     public int termToSortPosition(String term, MatchSensitivity sensitivity) {
-        return idToSortPosition(indexOf(term, sensitivity), sensitivity);
+        int termId = indexOf(term, sensitivity);
+        assert termId != Constants.NO_TERM : "No term id found for term '" + term + "'";
+        return idToSortPosition(termId, sensitivity);
     }
 
     @Override

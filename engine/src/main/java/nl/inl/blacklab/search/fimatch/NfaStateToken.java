@@ -169,6 +169,7 @@ public class NfaStateToken extends NfaState {
         inputTokensSortPositions = new IntHashSet();
         for (String token: inputTokenStrings) {
             int sortPosition = terms.termToSortPosition(token, sensitivity);
+            assert sortPosition >= 0 : "Invalid sort position " + sortPosition + " for token: " + token;
             inputTokensSortPositions.add(sortPosition);
         }
     }
