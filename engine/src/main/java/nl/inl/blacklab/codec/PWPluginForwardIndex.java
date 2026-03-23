@@ -173,7 +173,7 @@ class PWPluginForwardIndex implements PWPlugin {
      *
      * Essentially inverts sortedTermIds so the values become the indexes and vice versa.
      * Also makes sure that if multiple terms are considered equal (insensitive comparison),
-     * they all get the same sort value.
+     * they all get the same sort value. This MUST be the lowest sort value, for consistency.
      *
      * @param terms the sortedTermIds array refers to
      * @param sortedTermIds array of term ids sorted by term string

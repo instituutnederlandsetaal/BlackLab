@@ -164,7 +164,9 @@ public abstract class RequestHandler {
             throw new BadRequest("API_URL_MISMATCH", "You're using an old URL (/CORPUSNAME/...), " +
                     "but the API is set to 5 (the default for this BlackLab version). Either update the URL to " +
                     "/corpora/CORPUSNAME/... or, to keep using the old URL for now, add api=4 to enable backward " +
-                    "compatibility. Please plan your migration to API v5; BlackLab 6 will no longer support API v4.");
+                    "compatibility (or configure blacklab-server.yaml). Please plan your migration to API v5; " +
+                    "BlackLab 6 will no longer support API v4. See " +
+                    "https://blacklab.ivdnt.org/server/rest-api/miscellaneous/api-versions.html");
         }
         if (isNewCorporaEndpoint && !indexName.isEmpty() && !isApiV5) {
             throw new BadRequest("API_URL_MISMATCH", "You're using a new URL (/corpora/CORPUSNAME/...), " +
