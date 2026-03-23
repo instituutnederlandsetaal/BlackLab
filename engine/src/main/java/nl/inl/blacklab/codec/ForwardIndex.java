@@ -140,7 +140,7 @@ public class ForwardIndex implements AutoCloseable {
         @Override
         public int[] retrievePart(ForwardIndexField field, int docId, int start, int end) {
             // ensure both inputs available
-            getDocOffsetAndLength(field, docId);
+
             // We don't exclude the closing token here because we didn't do that with the external index format either.
             // And you might want to fetch the extra closing token.
             //docLength -= BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
