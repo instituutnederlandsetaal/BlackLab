@@ -148,24 +148,46 @@ class PWPluginForwardIndex implements PWPlugin {
         return tokensInDoc;
     }
 
+    interface TermAccessor {
+        String get(int i);
+
+        int size();
+    }
+
+    static class TermAccessorList implements TermAccessor {
+        List<String> terms;
+
+        public TermAccessorList(List<String> terms) {
+            this.terms = terms;
+        }
+
+        public String get(int i) {
+            return terms.get(i);
+        }
+
+        public int size() {
+            return terms.size();
+        }
+    }
+
     /**
-     * Given a list of terms, return the indices to sort them.
+     * Given a list of terms, determine the indices to sort them.
      *
      * The first item in the array is the index of the first term in a sorted list, etc.
      *
      * Example: getTermSortOrder(['b','c','a']) --> [2, 0, 1]
+     *
+     * @param result array to be sorted (must already be populated with all the term ids!)
+     * @param terms interface to access term string by term id (and get number of terms)
+     * @param collator collator to use to compare terms
      */
-    static int[] getTermSortOrder(List<String> terms, Collator collator) {
-        int[] ret = new int[terms.size()];
-        for (int i = 0; i < ret.length; ++i) ret[i] = i;
-
+    static void getTermSortOrder(int[] result, TermAccessor terms, Collator collator) {
         // Collator.compare() is synchronized, so precomputing the collation keys speeds things up
         CollationKey[] ck = new CollationKey[terms.size()];
         for (int i = 0; i < ck.length; ++i)
             ck[i] = collator.getCollationKey(terms.get(i));
 
-        IntArrays.parallelQuickSort(ret, (a, b) -> ck[a].compareTo(ck[b]));
-        return ret;
+        IntArrays.parallelQuickSort(result, (a, b) -> ck[a].compareTo(ck[b]));
     }
 
     /**
@@ -175,13 +197,13 @@ class PWPluginForwardIndex implements PWPlugin {
      * Also makes sure that if multiple terms are considered equal (insensitive comparison),
      * they all get the same sort value. This MUST be the lowest sort value, for consistency.
      *
-     * @param terms the sortedTermIds array refers to
+     * @param result output array; will be filled with the correct sort value for each term id
+     * @param terms interface to access terms by id
      * @param sortedTermIds array of term ids sorted by term string
      * @param collator collator to use for comparing terms
      * @return an array of sort values in order of term ids (i.e. first item is the sort value for term id 0, etc.)
      */
-    static int[] getTermIdToSortValueArray(List<String> terms, int[] sortedTermIds, Collator collator) {
-        int[] result = new int[sortedTermIds.length];
+    static void getTermIdToSortValueArray(int[] result, TermAccessor terms, int[] sortedTermIds, Collator collator) {
         int prevSortPosition = -1;
         int prevTermId = -1;
         for (int i = 0; i < sortedTermIds.length; i++) {
@@ -197,7 +219,6 @@ class PWPluginForwardIndex implements PWPlugin {
             result[termId] = sortPosition;
             prevTermId = termId;
         }
-        return result;
     }
 
     /**
@@ -291,8 +312,11 @@ class PWPluginForwardIndex implements PWPlugin {
     }
 
     private void writeTermIdsAndSortOrders(Collator collator) throws IOException {
-        int[] sortPositionToTermId = getTermSortOrder(termsList, collator);
-        int[] termIdToSortPosition = getTermIdToSortValueArray(termsList, sortPositionToTermId, collator);
+        int[] sortPositionToTermId = new int[termsList.size()];
+        for (int i = 0; i < sortPositionToTermId.length; ++i) sortPositionToTermId[i] = i;
+        getTermSortOrder(sortPositionToTermId, new TermAccessorList(termsList), collator);
+        int[] termIdToSortPosition = new int[sortPositionToTermId.length];
+        getTermIdToSortValueArray(termIdToSortPosition, new TermAccessorList(termsList), sortPositionToTermId, collator);
         for (int i: termIdToSortPosition)
             termsOrderFile.writeInt(i);
         for (int i: sortPositionToTermId)
