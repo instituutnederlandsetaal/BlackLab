@@ -314,9 +314,10 @@ class PWPluginForwardIndex implements PWPlugin {
     private void writeTermIdsAndSortOrders(Collator collator) throws IOException {
         int[] sortPositionToTermId = new int[termsList.size()];
         for (int i = 0; i < sortPositionToTermId.length; ++i) sortPositionToTermId[i] = i;
-        getTermSortOrder(sortPositionToTermId, new TermAccessorList(termsList), collator);
+        TermAccessorList terms = new TermAccessorList(termsList);
+        getTermSortOrder(sortPositionToTermId, terms, collator);
         int[] termIdToSortPosition = new int[sortPositionToTermId.length];
-        getTermIdToSortValueArray(termIdToSortPosition, new TermAccessorList(termsList), sortPositionToTermId, collator);
+        getTermIdToSortValueArray(termIdToSortPosition, terms, sortPositionToTermId, collator);
         for (int i: termIdToSortPosition)
             termsOrderFile.writeInt(i);
         for (int i: sortPositionToTermId)

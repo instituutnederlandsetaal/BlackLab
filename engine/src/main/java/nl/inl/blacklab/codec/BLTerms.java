@@ -195,7 +195,6 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
                     // Get random access to the sort order arrays for this field
                     int numberOfTerms = forwardIndexField.numberOfTerms;
-                    boolean fixTermOrder = false; // re-sort terms because of BL4/5 collator difference?
                     if (termIdToInsensitivePos == null) {
                         IndexInput termOrderFile = _termOrderFile.clone();
                         long offset = forwardIndexField.getTermOrderOffset();
@@ -228,8 +227,9 @@ public class BLTerms extends org.apache.lucene.index.Terms {
                             fixTermSortOrder = false; // do this only once
                             // Re-sort terms because of BL4/5 collator difference
                             // (BL4 uses built-in Java collators; BL5 uses ICU4J's, which are better but subtly incompatible)
-                            fixTermSortArrays(termIdToInsensitivePos, insensitivePosToTermId, collators.get(MatchSensitivity.INSENSITIVE));
-                            fixTermSortArrays(termIdToSensitivePos, sensitivePosToTermId, collators.get(MatchSensitivity.SENSITIVE));
+                            TermAccessorTerms termAccessor = new TermAccessorTerms(this);
+                            fixTermSortArrays(termIdToInsensitivePos, insensitivePosToTermId, termAccessor, collators.get(MatchSensitivity.INSENSITIVE));
+                            fixTermSortArrays(termIdToSensitivePos, sensitivePosToTermId, termAccessor, collators.get(MatchSensitivity.SENSITIVE));
                         }
                         if (KEEP_TERM_STRINGS_IN_MEMORY) {
                             // We don't need to access the files anymore
@@ -267,17 +267,17 @@ public class BLTerms extends org.apache.lucene.index.Terms {
 
             /**
              * Re-sort nearly-sorted termIdToPos and reverse it to get posToTermId.
-             *
              * Necessary because BL4 and 5 use different collators, causing issues when
              * accessing a BL4-indexed corpus using BL5.
              *
              * @param termIdToPos term id to sort position array
              * @param posToTermId sort position to term id array
-             * @param collator collator to use
+             * @param collator    collator to use
              */
-            private void fixTermSortArrays(int[] termIdToPos, int[] posToTermId, Collator collator) {
-                PWPluginForwardIndex.getTermSortOrder(termIdToPos, new TermAccessorTerms(this), collator);
-                PWPluginForwardIndex.getTermIdToSortValueArray(posToTermId, new TermAccessorTerms(this), termIdToPos, collator);
+            private void fixTermSortArrays(int[] termIdToPos, int[] posToTermId, PWPluginForwardIndex.TermAccessor termAccessor,
+                    Collator collator) {
+                PWPluginForwardIndex.getTermSortOrder(posToTermId, termAccessor, collator);
+                PWPluginForwardIndex.getTermIdToSortValueArray(termIdToPos, termAccessor, posToTermId, collator);
             }
 
             private int[] readTermOrderIntArray(IndexInput termOrderFile, long offset) {
