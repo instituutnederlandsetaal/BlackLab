@@ -81,5 +81,5 @@ public interface HitSubscriber {
      * @param lrc the segment we were processing when the error occurred, or null if global
      * @param exception the exception thrown
      */
-    void error(LeafReaderContext lrc, Exception exception);
+    void error(LeafReaderContext lrc, Throwable exception);
 }

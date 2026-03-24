@@ -249,7 +249,7 @@ public abstract class HitsAbstract implements Hits {
 
         HitSubscriber wrapped;
 
-        private final Exception[] thrownException;
+        private final Throwable[] thrownException;
 
         public LatchingHitSubscriber(HitSubscriber wrapped, CountDownLatch segmentDoneLatch, Exception[] thrownException) {
             this.segmentDoneLatch = segmentDoneLatch;
@@ -300,7 +300,7 @@ public abstract class HitsAbstract implements Hits {
         }
 
         @Override
-        public void error(LeafReaderContext lrc, Exception exception) {
+        public void error(LeafReaderContext lrc, Throwable exception) {
             wrapped.error(lrc, exception);
             thrownException[0] = exception;
             signalDone();
@@ -370,7 +370,7 @@ public abstract class HitsAbstract implements Hits {
         }
 
         @Override
-        public void error(LeafReaderContext lrc, Exception exception) {
+        public void error(LeafReaderContext lrc, Throwable exception) {
         }
     }
 

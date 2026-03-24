@@ -78,8 +78,10 @@ public class HitsFromPublishers extends HitsAbstract {
      */
     private static final int STRETCH_SIZE_DIVIDER = 10;
 
-    /** If one of the publishers threw an exception, we save it here */
-    private final Map<LeafReaderContext, Exception> exceptionThrown = new HashMap<>();
+    /** If one of the publishers threw an exception, we save it here
+     * (Throwable because we catch Exception and AssertionError)
+     */
+    private final Map<LeafReaderContext, Throwable> exceptionThrown = new HashMap<>();
 
     /** A stretch of hits from a segment.
      * <p>
@@ -357,7 +359,7 @@ public class HitsFromPublishers extends HitsAbstract {
                 }
 
                 @Override
-                public void error(LeafReaderContext lrc, Exception exception) {
+                public void error(LeafReaderContext lrc, Throwable exception) {
                     exceptionThrown.put(lrc, exception);
                     lock.writeLock().lock();
                     try {

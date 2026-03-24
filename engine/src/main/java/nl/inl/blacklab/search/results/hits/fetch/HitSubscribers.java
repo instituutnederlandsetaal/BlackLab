@@ -103,7 +103,7 @@ public class HitSubscribers implements HitSubscriber {
     }
 
     @Override
-    public void error(LeafReaderContext lrc, Exception exception) {
+    public void error(LeafReaderContext lrc, Throwable exception) {
         updateNewSubscribers();
         for (HitSubscriber s: subscribers) {
             s.error(lrc, exception);

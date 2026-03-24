@@ -123,7 +123,7 @@ public class HitPublisherFilter implements HitPublisher {
             }
 
             @Override
-            public void error(LeafReaderContext lrc, Exception exception) {
+            public void error(LeafReaderContext lrc, Throwable exception) {
                 subscribers.error(lrc, exception);
             }
         });

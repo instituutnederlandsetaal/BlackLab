@@ -394,6 +394,8 @@ public class HitPublisherSpans implements HitPublisher {
                 // Do this at the end so interruptions don't happen halfway through a loop and lead to invalid states
                 ThreadAborter.checkAbort();
             }
+        } catch (AssertionError e) {
+            subscribers.error(lrc, e);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // preserve interrupted status
             subscribers.error(lrc, e);
