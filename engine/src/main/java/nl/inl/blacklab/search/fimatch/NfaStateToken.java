@@ -83,7 +83,8 @@ public class NfaStateToken extends NfaState {
     public boolean findMatchesInternal(ForwardIndexDocument fiDoc, int pos, int direction, Set<Integer> matchEnds) {
         // Token state. Check if it matches token from token source, and if so, continue.
         int actualTokenSegmentSortPos = fiDoc.getTokenSegmentSortPosition(annotationIndex, pos, sensitivity);
-        if (acceptAnyToken && actualTokenSegmentSortPos >= 0 || inputTokensSortPositions.contains(actualTokenSegmentSortPos)) {
+        if (actualTokenSegmentSortPos >= 0 && (acceptAnyToken ||
+                inputTokensSortPositions.contains(actualTokenSegmentSortPos))) {
             if (nextState == null) {
                 // null stands for the match state
                 if (matchEnds != null)
@@ -171,8 +172,10 @@ public class NfaStateToken extends NfaState {
         inputTokensSortPositions = new IntHashSet();
         for (String token: inputTokenStrings) {
             int sortPosition = terms.termToSortPosition(token, sensitivity);
-            assert sortPosition >= 0 : "Invalid sort position " + sortPosition + " for token: " + token;
-            inputTokensSortPositions.add(sortPosition);
+            if (sortPosition >= 0) {
+                // Yes, this term occurs in this segment.
+                inputTokensSortPositions.add(sortPosition);
+            }
         }
     }
 
