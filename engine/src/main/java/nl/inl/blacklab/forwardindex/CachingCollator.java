@@ -99,7 +99,7 @@ public class CachingCollator extends Collator {
     }
 
     @Override
-    public Object clone() throws CloneNotSupportedException {
+    public Collator clone() throws CloneNotSupportedException {
         return baseCollator.clone();
     }
 

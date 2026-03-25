@@ -13,6 +13,12 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 
+/** Test that terms in an index "round-trip" correctly.
+ *
+ * That is: if you look up the sort position for a term, then look up the term for that sort position,
+ * the results will be equal according to the comparator.
+ * This should work for sensitive and insensitive.
+ */
 public class TermSerialization {
 
     private static int termsDone;
