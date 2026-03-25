@@ -16,24 +16,29 @@ public class BLConfigCollator {
     
     String variant = "";
 
+    private Locale locale = null;
+
     private Collator collator = null;
 
     @SuppressWarnings("unused")
     public synchronized void setLanguage(String language) {
         this.language = language;
         collator = null;
+        locale = null;
     }
 
     @SuppressWarnings("unused")
     public synchronized void setCountry(String country) {
         this.country = country;
         collator = null;
+        locale = null;
     }
 
     @SuppressWarnings("unused")
     public synchronized void setVariant(String variant) {
         this.variant = variant;
         collator = null;
+        locale = null;
     }
 
     public synchronized String getCountry() {
@@ -53,7 +58,7 @@ public class BLConfigCollator {
             if (StringUtils.isEmpty(language))
                 throw new InvalidConfiguration(
                         "If you wish to customize the collator, you must at least set collator.language in blacklab-server.yaml.");
-            collator = Collator.getInstance(new Locale(language, country, variant));
+            collator = Collator.getInstance(getLocale());
             if (collator instanceof RuleBasedCollator r) {
                 try {
                     // Make sure we ignore punctuation
@@ -67,4 +72,9 @@ public class BLConfigCollator {
         return collator;
     }
 
+    public synchronized Locale getLocale() {
+        if (locale == null)
+            locale = new Locale(country, language, variant);
+        return locale;
+    }
 }

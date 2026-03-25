@@ -1,7 +1,10 @@
 package nl.inl.blacklab.forwardindex;
 
+import java.util.Locale;
+
 import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
+import com.ibm.icu.util.ULocale;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLab;
@@ -16,6 +19,8 @@ public class Collators {
     private Collator sensitive;
 
     private Collator insensitive;
+
+    private Locale locale;
 
     public Collators(Collator base) {
         super();
@@ -37,6 +42,13 @@ public class Collators {
         sensitive.freeze();
         insensitive = desensitize(base);
         insensitive.freeze();
+
+        locale = sensitive.getLocale(ULocale.ACTUAL_LOCALE).toLocale();
+    }
+
+    public Collators(Locale locale) {
+        this(Collator.getInstance(locale));
+        this.locale = locale;
     }
 
     public Collator get(MatchSensitivity sensitivity) {
@@ -79,7 +91,7 @@ public class Collators {
 
     public static synchronized Collators getDefault() {
         if (defaultInstance == null) {
-            defaultInstance = new Collators(BlackLab.defaultCollator());
+            defaultInstance = new Collators(BlackLab.config().getSearch().getCollator().getLocale());
         }
         return defaultInstance;
     }

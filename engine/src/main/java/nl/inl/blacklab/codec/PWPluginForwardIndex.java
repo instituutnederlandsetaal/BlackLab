@@ -19,7 +19,6 @@ import org.apache.lucene.store.IndexInput;
 import org.apache.lucene.store.IndexOutput;
 import org.apache.lucene.util.BytesRef;
 
-import com.ibm.icu.text.CollationKey;
 import com.ibm.icu.text.Collator;
 
 import it.unimi.dsi.fastutil.ints.IntArrays;
@@ -182,12 +181,12 @@ class PWPluginForwardIndex implements PWPlugin {
      * @param collator collator to use to compare terms
      */
     static void getTermSortOrder(int[] result, TermAccessor terms, Collator collator) {
-        // Collator.compare() is synchronized, so precomputing the collation keys speeds things up
-        CollationKey[] ck = new CollationKey[terms.size()];
-        for (int i = 0; i < ck.length; ++i)
-            ck[i] = collator.getCollationKey(terms.get(i));
-
-        IntArrays.parallelQuickSort(result, (a, b) -> ck[a].compareTo(ck[b]));
+        // NOTE: We used to calculate CollationKeys for all terms, then sort on those.
+        // This was faster, but didn't produce the same outcomes as Collator.compare() does!
+        // With ICU4j, Collator.compare() slower but more correct; CollationKeys are suitable for sorting, not for
+        // e.g. doing binary search later.
+        // Java's own Collators don't have this difference, but don't handle everything and are slower.
+        IntArrays.parallelQuickSort(result, (a, b) -> collator.compare(terms.get(a), terms.get(b)));
     }
 
     /**

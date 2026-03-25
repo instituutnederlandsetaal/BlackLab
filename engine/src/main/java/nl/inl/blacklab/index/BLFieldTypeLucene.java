@@ -12,8 +12,6 @@ import org.apache.lucene.index.FieldInfo;
 import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableFieldType;
 
-import com.ibm.icu.text.Collator;
-
 import nl.inl.blacklab.config.BLConfigCollator;
 import nl.inl.blacklab.forwardindex.Collators;
 import nl.inl.blacklab.search.BlackLab;
@@ -152,8 +150,7 @@ public class BLFieldTypeLucene implements BLFieldType {
 
         String key = language + ":" + country + ":" + variant;
         return collators.computeIfAbsent(key, k ->
-                new Collators(Collator.getInstance(new Locale(language, country, variant))));
-        //return new Collators(Collator.getInstance(new Locale(language, country, variant)));
+                new Collators(new Locale(language, country, variant)));
     }
 
     @Override
