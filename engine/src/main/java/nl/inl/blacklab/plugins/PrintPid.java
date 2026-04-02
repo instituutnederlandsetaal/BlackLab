@@ -23,8 +23,7 @@ public class PrintPid extends IndexDocTask {
     String pidField;
 
     public void initializeTask(BlackLabIndex index) {
-        BlackLabIndexWriter indexWriter = (BlackLabIndexWriter) index;
-        MetadataField metadataField = indexWriter.metadata().metadataFields().pidField();
+        MetadataField metadataField = ((BlackLabIndexWriter) index).metadata().metadataFields().pidField();
         if (metadataField == null)
             throw new PluginException("Corpus has no configured pid field");
         pidField = metadataField.name();

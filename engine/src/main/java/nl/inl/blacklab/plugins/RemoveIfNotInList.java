@@ -16,6 +16,7 @@ import java.util.Set;
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 
 /** Reads a list of PIDs and removes documents from the index that are not on the list.
@@ -36,11 +37,11 @@ public class RemoveIfNotInList extends IndexDocTask {
     /** Name of this index' PID field. */
     String pidField;
 
-    public void initializeTask(BlackLabIndexWriter index) {
+    public void initializeTask(BlackLabIndex index) {
         // Read PIDs from Duct export file
         File pidsToKeepFile = cfgFile("pidsToKeepFile", "pids-to-keep.txt");
 
-        pidField = index.metadata().metadataFields().pidField().name();
+        pidField = ((BlackLabIndexWriter) index).metadata().metadataFields().pidField().name();
 
         // Make sure our hash table is large enough that it won't reallocate
         long fileSize = pidsToKeepFile.length();
@@ -53,7 +54,9 @@ public class RemoveIfNotInList extends IndexDocTask {
             String line;
             try (BufferedReader br = new BufferedReader(reader)) {
                 while ((line = br.readLine()) != null) {
-                    pidsToKeep.add(line.trim());
+                    line = line.trim();
+                    if (!line.isEmpty())
+                        pidsToKeep.add(line);
                 }
             }
         } catch (Exception e) {
@@ -61,16 +64,17 @@ public class RemoveIfNotInList extends IndexDocTask {
         }
     }
 
-    public void finishTask(BlackLabIndexWriter index) {
+    public void finishTask(BlackLabIndex index) {
         boolean okayToRemoveMany = cfgBool("okayToRemoveMany", false);
-        if (!okayToRemoveMany && pidsToRemove.size() > index.writer().getNumberOfDocs() / 10) {
+        BlackLabIndexWriter indexWriter = (BlackLabIndexWriter) index;
+        if (!okayToRemoveMany && pidsToRemove.size() > indexWriter.writer().getNumberOfDocs() / 10) {
             // Something seems wrong; don't mess up the index
             throw new IllegalStateException("Refusing to remove more than 10% of documents");
         }
 
         System.out.println("Removing " + pidsToRemove.size() + " documents from the index...");
         for (String pid : pidsToRemove) {
-            index.deleteDocumentByPid(pid);
+            indexWriter.deleteDocumentByPid(pid);
         }
 
         // If pidsToAddFile configured: write list of PIDs-to-keep that aren't already in the index
