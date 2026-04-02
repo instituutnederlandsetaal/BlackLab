@@ -50,7 +50,7 @@ public class PluginsOfType<T extends Plugin> {
             try {
                 plugin = it.next();
                 if (plugin.getId() == null)
-                    plugin.setId(pluginClass.getSimpleName());
+                    plugin.setId(plugin.getClass().getSimpleName());
                 //logger.info("Loading plugin {}", plugin);
                 register(plugin, pluginConfig, null);
             } catch (ServiceConfigurationError e) {

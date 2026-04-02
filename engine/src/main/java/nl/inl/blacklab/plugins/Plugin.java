@@ -261,7 +261,7 @@ public abstract class Plugin {
      * @throws PluginException if value not found, not a string, or not readable
      */
     public Optional<File> cfgFile(String name) throws PluginException {
-        String path = cfgString(name);
+        String path = cfgString(name, null);
         if (path == null)
             return Optional.empty();
         return Optional.of(new File(path));
