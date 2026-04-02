@@ -31,7 +31,7 @@ import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.DocTask;
+import nl.inl.blacklab.search.ParallelDocTask;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.util.LogUtil;
 
@@ -163,7 +163,7 @@ public class ExportMetadata implements AutoCloseable {
         final IndexReader reader = index.reader();
 
         System.out.println("Calling forEachDocument()...");
-        index.forEachDocument(true, new DocTask() {
+        index.forEachDocument(new ParallelDocTask() {
 
             final AtomicInteger docsDone = new AtomicInteger(0);
 

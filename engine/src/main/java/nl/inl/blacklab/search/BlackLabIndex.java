@@ -153,8 +153,20 @@ public interface BlackLabIndex extends AutoCloseable {
      *
      * @param parallel if true, process index segments in parallel
      * @param task task to perform
+     * @deprecated use {@link #forEachDocument(DocTask)} instead, which will run in parallel for tasks that implement
+     *    ParallelDocTask (or docTask.isThreadSafe() returns true).
      */
+    @Deprecated
     void forEachDocument(boolean parallel, DocTask task);
+
+    /**
+     * Perform a task on each (non-deleted) Lucene Document.
+     *
+     * Will be run in parallel if the task implements ParallelDocTask (or docTask.isThreadSafe() returns true)
+     *
+     * @param task task to perform
+     */
+    void forEachDocument(DocTask task);
 
 
     // Search the index

@@ -162,6 +162,11 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
+    public void forEachDocument(DocTask task) {
+        forEachDocument(task.isThreadSafe(), task);
+    }
+
+    @Override
     public void forEachDocument(boolean parallel, DocTask task) {
         throw new UnsupportedOperationException();
     }

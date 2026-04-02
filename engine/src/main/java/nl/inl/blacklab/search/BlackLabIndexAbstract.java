@@ -333,20 +333,27 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         return indexMetadata;
     }
 
+    @Override
     public LeafReaderLookup getLeafReaderLookup() {
         return leafReaderLookup;
     }
 
     @Override
+    public void forEachDocument(DocTask task) {
+        forEachDocument(task.isThreadSafe(), task);
+    }
+
+    @Override
     public void forEachDocument(boolean parallel, DocTask task) {
+        task.initializeTask(this);
         List<LeafReaderContext> leaves = reader.leaves();
         Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
         int metadataDocId = metadata().metadataDocId();
         stream.forEach(lrc -> {
+            task.startSegment(lrc);
             LeafReader reader1 = lrc.reader();
             Bits liveDocs = reader1.getLiveDocs();
             int maxDoc = reader1.maxDoc();
-            task.startSegment(lrc);
             for (int docId = 0; docId < maxDoc; docId++) {
                 boolean isMetadataDoc = lrc.docBase + docId == metadataDocId;
                 boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
@@ -355,6 +362,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 }
             }
         });
+        task.finishTask(this);
     }
 
     @Override

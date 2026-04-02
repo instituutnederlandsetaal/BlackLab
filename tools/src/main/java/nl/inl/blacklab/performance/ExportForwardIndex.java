@@ -99,7 +99,7 @@ public class ExportForwardIndex {
         // Export tokens in each doc
         System.out.println("\nDOCS");
         AtomicInteger n = new AtomicInteger(0);
-        index.forEachDocument(false, (segment, segmentDocId) -> {
+        index.forEachDocument((segment, segmentDocId) -> {
             int docId = segment.docBase + segmentDocId;
             if (n.incrementAndGet() > MAX_DOCS)
                 return;

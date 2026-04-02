@@ -153,4 +153,13 @@ public interface BlackLabIndexWriter extends AutoCloseable {
 
     /** Get the strategy to use for indexing relations. */
     RelationsStrategy getRelationsStrategy();
+
+    /**
+     * Perform a task on each (non-deleted) Lucene Document.
+     *
+     * Will be run in parallel if the task implements ParallelDocTask (or docTask.isThreadSafe() returns true)
+     *
+     * @param task task to perform
+     */
+    void forEachDocument(DocTask task);
 }

@@ -14,7 +14,6 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -49,7 +48,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
@@ -753,31 +751,28 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     if (field.mainAnnotation() != null) // can happen if we e.g. store linked metadata XML
                         countPerField.put(field.name(), fieldCount);
                 }
-                index.forEachDocument(false, new DocTask() {
-                    @Override
-                    public void document(LeafReaderContext segment, int segmentDocId) {
-                        boolean firstField = true;
-                        for (AnnotatedField field: annotatedFields()) {
-                            Annotation annot = field.mainAnnotation();
-                            if (annot == null) // can happen if we e.g. store linked metadata XML
-                                continue;
-                            CorpusSize.Count fieldCount = countPerField.get(field.name());
-                            // Add up token counts for all the documents
-                            String luceneField = annot.forwardIndexSensitivity().luceneField();
-                            AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
-                            int docLength = (int) fi.docLength(segmentDocId);
-                            if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
-                                // Positive docLength means that this document has a value for this annotated field
-                                // (e.g. the index metadata document does not and returns 0)
-                                fieldCount.add(1,
-                                        (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
-                                documentVersionCount++;
-                                if (firstField) {
-                                    documentCount++;
-                                }
+                index.forEachDocument((segment, segmentDocId) -> {
+                    boolean firstField = true;
+                    for (AnnotatedField field: annotatedFields()) {
+                        Annotation annot = field.mainAnnotation();
+                        if (annot == null) // can happen if we e.g. store linked metadata XML
+                            continue;
+                        CorpusSize.Count fieldCount = countPerField.get(field.name());
+                        // Add up token counts for all the documents
+                        String luceneField = annot.forwardIndexSensitivity().luceneField();
+                        AnnotationForwardIndex fi = FieldForwardIndex.get(segment, luceneField);
+                        int docLength = (int) fi.docLength(segmentDocId);
+                        if (docLength > BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN) {
+                            // Positive docLength means that this document has a value for this annotated field
+                            // (e.g. the index metadata document does not and returns 0)
+                            fieldCount.add(1,
+                                    (long) docLength - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN);
+                            documentVersionCount++;
+                            if (firstField) {
+                                documentCount++;
                             }
-                            firstField = false;
                         }
+                        firstField = false;
                     }
                 });
                 tokenCount = countPerField.values().stream().mapToLong(CorpusSize.Count::getTokens).sum();

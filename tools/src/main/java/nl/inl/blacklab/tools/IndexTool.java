@@ -12,6 +12,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.WordUtils;
 import org.apache.lucene.queryparser.classic.ParseException;
 
@@ -27,7 +28,9 @@ import nl.inl.blacklab.index.IndexSource;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.plugins.IndexDocTask;
 import nl.inl.blacklab.plugins.IndexSourceType;
+import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -56,9 +59,10 @@ public class IndexTool {
         String formatIdentifier = null;
         boolean forceCreateNew = false;
         String command = "";
-        Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete", "indexinfo", "import-indexinfo"));
+        Set<String> commands = new HashSet<>(Arrays.asList("add", "create", "delete", "doctask", "indexinfo", "import-indexinfo"));
         boolean addingFiles = true;
         String deleteQuery = null;
+        String docTaskPluginName = null;
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
         boolean createEmptyIndex = false;
@@ -138,10 +142,6 @@ public class IndexTool {
                             return;
                         }
                     }
-                    case "create" -> {
-                        System.err.println("Option --create is deprecated; use create command (--help for details)");
-                        forceCreateNew = true;
-                    }
                     case "help" -> {
                         usage();
                         return;
@@ -169,6 +169,8 @@ public class IndexTool {
                     formatIdentifier = arg;
                 } else if (command.equals("delete") && deleteQuery == null) {
                     deleteQuery = arg;
+                } else if (command.equals("doctask")) {
+                    docTaskPluginName = arg;
                 } else {
                     System.err.println("Too many arguments!");
                     usage();
@@ -192,20 +194,23 @@ public class IndexTool {
             return;
         }
         switch (command) {
+        case "add":
+            break;
+        case "create":
+            forceCreateNew = true;
+            break;
+        case "delete":
+            deleteDocuments(indexDir, deleteQuery);
+            return;
+        case "doctask":
+            runDocTask(indexDir, docTaskPluginName);
+            return;
         case "indexinfo":
             exportIndexInfo(indexDir);
             return;
         case "import-indexinfo":
             importIndexInfo(indexDir);
             return;
-        case "delete":
-            commandDelete(indexDir, deleteQuery);
-            return;
-        case "create":
-            forceCreateNew = true;
-            break;
-        case "add":
-            break;
         default:
             System.err.println("Unknown command: " + command + ". (--help for details)");
             usage();
@@ -355,7 +360,7 @@ public class IndexTool {
         }
     }
 
-    private static void commandDelete(File indexDir, String deleteQuery) throws ErrorOpeningIndex, ParseException {
+    private static void deleteDocuments(File indexDir, String deleteQuery) throws ErrorOpeningIndex, ParseException {
         if (deleteQuery == null) {
             System.err.println("No delete query given.");
             usage();
@@ -364,6 +369,18 @@ public class IndexTool {
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             System.out.println("Doing delete: " + deleteQuery);
             indexWriter.delete(LuceneUtil.parseLuceneQuery(null, deleteQuery, indexWriter.analyzer(), "nonExistentDefaultField"));
+        }
+    }
+
+    private static void runDocTask(File indexDir, String docTaskPluginName) {
+        if (StringUtils.isEmpty(docTaskPluginName)) {
+            System.err.println("No doc task plugin name given.");
+            usage();
+            return;
+        }
+        try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
+            IndexDocTask docTask = PluginManager.type(IndexDocTask.class).get(docTaskPluginName);
+            indexWriter.forEachDocument(docTask);
         }
     }
 

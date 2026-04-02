@@ -10,7 +10,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.DocTask;
+import nl.inl.blacklab.search.ParallelDocTask;
 import nl.inl.util.LogUtil;
 
 /**
@@ -19,14 +19,11 @@ import nl.inl.util.LogUtil;
  */
 public class CountTokens {
 
-    private final class CountTask implements DocTask {
+    private final class CountTask implements ParallelDocTask {
 
         AtomicInteger totalDocs = new AtomicInteger(0);
 
         public AtomicLong totalTokens = new AtomicLong(0);
-
-        CountTask() {
-        }
 
         public void document(LeafReaderContext segment, int segmentDocId) {
             totalDocs.incrementAndGet();
@@ -78,8 +75,7 @@ public class CountTokens {
     private void count() {
         System.out.println("Getting IndexReader...");
         System.out.println("Calling forEachDocument()...");
-        CountTask task = new CountTask();
-        index.forEachDocument(true, task);
-        System.out.println("TOTAL TOKENS: " + task.totalTokens);
+        index.forEachDocument(new CountTask());
+        System.out.println("TOTAL TOKENS: " + new CountTask().totalTokens);
     }
 }

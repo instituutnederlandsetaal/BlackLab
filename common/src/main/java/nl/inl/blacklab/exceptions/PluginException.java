@@ -1,7 +1,7 @@
 package nl.inl.blacklab.exceptions;
 
 /** Thrown if an error occurs with a plugin. */
-public class PluginException extends BlackLabException {
+public class PluginException extends RuntimeException {
     public PluginException() {
         super();
     }

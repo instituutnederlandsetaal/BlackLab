@@ -3,6 +3,7 @@ package nl.inl.blacklab.plugins;
 import java.io.File;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 
 import nl.inl.blacklab.exceptions.PluginException;
 
@@ -224,13 +225,11 @@ public abstract class Plugin {
      * @param defaultFileName if setting not present, use this file name (relative to pluginDir)
      * @return a file reference, never null (although it may not exist)
      * @throws PluginException if value not found or not a string value
+     * @deprecated renamed to {@link #cfgFile(String, String)}
      */
+    @Deprecated
     public File cfgFileOptional(String name, String defaultFileName) throws PluginException {
-        String path = cfgString(name, defaultFileName);
-        File file = new File(path);
-        if (!file.exists())
-            file = new File(pluginDir, path);
-        return file;
+        return cfgFile(name, defaultFileName);
     }
 
     /**
@@ -244,12 +243,28 @@ public abstract class Plugin {
      * @throws PluginException if value not found, not a string, or not readable
      */
     public File cfgFile(String name, String defaultFileName) throws PluginException {
-        File file = cfgFileOptional(name, defaultFileName);
+        String path = cfgString(name, defaultFileName);
+        File file = new File(path);
         if (!file.exists())
-            throw new PluginException("File not found: " + file);
-        if (!file.canRead())
-            throw new PluginException("File not readable: " + file);
+            file = new File(pluginDir, path);
         return file;
+    }
+
+    /**
+     * If specified in our config, find the file, either absolute or relative to the pluginDir.
+     *
+     * If specified, the file must exist and be readable.
+     *
+     * @param name setting name
+     * @param mustExistIfSpecified check if the file exists?
+     * @return file found (although it may not exist)
+     * @throws PluginException if value not found, not a string, or not readable
+     */
+    public Optional<File> cfgFile(String name) throws PluginException {
+        String path = cfgString(name);
+        if (path == null)
+            return Optional.empty();
+        return Optional.of(new File(path));
     }
 
 }

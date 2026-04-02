@@ -74,7 +74,7 @@ public class ExportCorpus implements AutoCloseable {
         final IndexReader reader = index.reader();
 
         System.out.println("Calling forEachDocument()...");
-        index.forEachDocument(false, new DocTask() {
+        index.forEachDocument(new DocTask() {
 
             AtomicInteger docsDone = new AtomicInteger(0);
 
