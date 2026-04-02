@@ -178,7 +178,7 @@ public abstract class BlackLabStoredFieldsReader extends StoredFieldsReader {
             switch (storedFieldVisitor.needsField(fieldInfo)) {
             case YES:
                 // Visit this field.
-                if (BLFieldTypeLucene.isContentStoreField(fieldInfo)) {
+                if (BLFieldTypeLucene.isContentStoreField(fieldInfo) && this.contentStoreFieldIndexes.containsKey(fieldInfo.name)) {
                     visitContentStoreDocument(docId, fieldInfo, storedFieldVisitor);
                 }
                 break;
