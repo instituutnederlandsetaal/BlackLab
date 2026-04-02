@@ -13,6 +13,7 @@ import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
+import nl.inl.util.StringUtil;
 
 public interface BlackLabIndexWriter extends AutoCloseable {
 
@@ -84,7 +85,7 @@ public interface BlackLabIndexWriter extends AutoCloseable {
         MetadataField pidField = metadata().metadataFields().pidField();
         if (pidField == null)
             throw new RuntimeException("Cannot delete document, index has no pid field");
-        delete(new TermQuery(new Term(pidField.name(), docPid)));
+        delete(new TermQuery(new Term(pidField.name(), StringUtil.desensitize(docPid))));
     }
 
     /**
