@@ -6,23 +6,12 @@ import org.apache.lucene.index.LeafReaderContext;
 public interface DocTask {
 
     /** Called before any documents have been processed.
-     * @param index index we're processing
      */
-    default void initializeTask(BlackLabIndex index) {}
+    default void initializeTask() {}
 
     /** Called after all documents have been processed.
-     * @param index index we're processing
      */
-    default void finishTask(BlackLabIndex index) {}
-
-    /**
-     * Called before starting a new segment.
-     *
-     * Could be used to e.g. retrieve DocValues.
-     *
-     * @param segment segment we're going to process
-     */
-    default void startSegment(LeafReaderContext segment) {}
+    default void finishTask() {}
 
     /** Is this DocTask thread-safe?
      *
@@ -31,16 +20,27 @@ public interface DocTask {
      */
     default boolean isThreadSafe() { return false; }
 
-    /**
-     * Process a document.
-     * <p>
-     * Document is guaranteed to be live (not deleted).
-     * <p>
-     * To convert the segment-local document ID to a global document ID,
-     * just add the segment's docBase to it.
+    /** Instantiate segment doc task */
+    SegmentTask segmentDocTask(LeafReaderContext segment);
+
+    /** Runs doc task on a single segment.
      *
-     * @param segment segment we're processing
-     * @param segmentDocId the document ID within the current segment.
+     * This allows us to keep segment-specific information (e.g. DocValues)
+     * in the object without having to do a lookup for each document.
      */
-    void document(LeafReaderContext segment, int segmentDocId);
+    interface SegmentTask {
+
+        /**
+         * Process a document.
+         * <p>
+         * Document is guaranteed to be live (not deleted).
+         * <p>
+         * To convert the segment-local document ID to a global document ID,
+         * just add the segment's docBase to it.
+         *
+         * @param segment segment we're processing
+         * @param segmentDocId the document ID within the current segment.
+         */
+        void document(int segmentDocId);
+    }
 }

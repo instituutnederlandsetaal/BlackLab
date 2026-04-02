@@ -345,12 +345,12 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public void forEachDocument(boolean parallel, DocTask task) {
-        task.initializeTask(this);
+        task.initializeTask();
         List<LeafReaderContext> leaves = reader.leaves();
         Stream<LeafReaderContext> stream = parallel ? leaves.parallelStream() : leaves.stream();
         int metadataDocId = metadata().metadataDocId();
         stream.forEach(lrc -> {
-            task.startSegment(lrc);
+            DocTask.SegmentTask segTask = task.segmentDocTask(lrc);
             LeafReader reader1 = lrc.reader();
             Bits liveDocs = reader1.getLiveDocs();
             int maxDoc = reader1.maxDoc();
@@ -358,11 +358,11 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
                 boolean isMetadataDoc = lrc.docBase + docId == metadataDocId;
                 boolean isLiveDoc = liveDocs == null || liveDocs.get(docId);
                 if (!isMetadataDoc && isLiveDoc) { // Only count live documents
-                    task.document(lrc, docId);
+                    segTask.document(docId);
                 }
             }
         });
-        task.finishTask(this);
+        task.finishTask();
     }
 
     @Override

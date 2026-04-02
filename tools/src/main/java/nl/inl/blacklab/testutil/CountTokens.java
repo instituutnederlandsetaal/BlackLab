@@ -25,13 +25,16 @@ public class CountTokens {
 
         public AtomicLong totalTokens = new AtomicLong(0);
 
-        public void document(LeafReaderContext segment, int segmentDocId) {
-            totalDocs.incrementAndGet();
-            int globalDocId = segment.docBase + segmentDocId;
-            totalTokens.getAndUpdate(n -> n + Long.parseLong(index.luceneDoc(globalDocId).get(tokenLengthField)));
-            if (totalDocs.get() % 100 == 0) {
-                System.out.println(totalDocs + " docs exported...");
-            }
+        @Override
+        public SegmentTask segmentDocTask(LeafReaderContext segment) {
+            return segmentDocId -> {
+                totalDocs.incrementAndGet();
+                int globalDocId = segment.docBase + segmentDocId;
+                totalTokens.getAndUpdate(n -> n + Long.parseLong(index.luceneDoc(globalDocId).get(tokenLengthField)));
+                if (totalDocs.get() % 100 == 0) {
+                    System.out.println(totalDocs + " docs exported...");
+                }
+            };
         }
     }
 

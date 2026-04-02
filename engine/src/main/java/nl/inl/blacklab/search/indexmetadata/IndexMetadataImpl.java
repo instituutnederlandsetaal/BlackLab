@@ -14,6 +14,7 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -48,6 +49,7 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
+import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
@@ -751,7 +753,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
                     if (field.mainAnnotation() != null) // can happen if we e.g. store linked metadata XML
                         countPerField.put(field.name(), fieldCount);
                 }
-                index.forEachDocument((segment, segmentDocId) -> {
+                index.forEachDocument(segment -> segmentDocId -> {
                     boolean firstField = true;
                     for (AnnotatedField field: annotatedFields()) {
                         Annotation annot = field.mainAnnotation();

@@ -42,7 +42,7 @@ public class PluginManager {
     /** Types of plugins */
     private static final List<Class<? extends Plugin>> pluginTypes = new ArrayList<>(Arrays.asList(
             FileConverter.class,
-            IndexDocTask.class,
+            DocTaskType.class,
             IndexSourceType.class,
             InputFormatType.class,
             ProcessingInstruction.class,

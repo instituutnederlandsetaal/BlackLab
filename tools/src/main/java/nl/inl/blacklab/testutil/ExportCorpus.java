@@ -74,12 +74,9 @@ public class ExportCorpus implements AutoCloseable {
         final IndexReader reader = index.reader();
 
         System.out.println("Calling forEachDocument()...");
-        index.forEachDocument(new DocTask() {
-
+        index.forEachDocument(lrc -> {
             AtomicInteger docsDone = new AtomicInteger(0);
-
-            @Override
-            public void document(LeafReaderContext lrc, int segmentDocId) {
+            return segmentDocId -> {
                 int docId = lrc.docBase + segmentDocId;
                 Document doc = index.luceneDoc(docId);
                 String fromInputFile = doc.get("fromInputFile");
@@ -117,7 +114,7 @@ public class ExportCorpus implements AutoCloseable {
                 if (n % 100 == 0) {
                     System.out.println(docsDone + " docs exported...");
                 }
-            }
+            };
         });
     }
 

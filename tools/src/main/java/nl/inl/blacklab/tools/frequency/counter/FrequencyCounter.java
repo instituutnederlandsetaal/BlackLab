@@ -50,7 +50,7 @@ public abstract class FrequencyCounter {
             }
         } else {
             // No filter: include all documents.
-            index.forEachDocument(false, (segment, id) -> docIds.add(segment.docBase + id));
+            index.forEachDocument(segment -> id -> docIds.add(segment.docBase + id));
         }
         System.out.println("  Retrieved " + docIds.size() + " documents IDs with filter='" + cfg.filter() + "' in "
                 + t.elapsedDescription(true));

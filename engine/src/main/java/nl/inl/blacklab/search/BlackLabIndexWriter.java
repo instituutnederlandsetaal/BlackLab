@@ -15,7 +15,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategy;
 import nl.inl.util.StringUtil;
 
-public interface BlackLabIndexWriter extends AutoCloseable {
+public interface BlackLabIndexWriter extends AutoCloseable, BlackLabIndex {
 
     /** What to do if a document with the same persistent identifier (pidField) already exists in the index? */
     enum IfDocumentExists {

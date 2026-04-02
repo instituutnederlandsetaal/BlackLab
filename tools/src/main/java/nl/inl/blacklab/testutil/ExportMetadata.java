@@ -164,42 +164,43 @@ public class ExportMetadata implements AutoCloseable {
 
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(new ParallelDocTask() {
-
             final AtomicInteger docsDone = new AtomicInteger(0);
 
             @Override
-            public void document(LeafReaderContext segment, int segmentDocId) {
-                int docId = segment.docBase + segmentDocId;
-                Map<String, String> metadata = new HashMap<>();
-                Document luceneDoc = index.luceneDoc(docId);
-                for (IndexableField f: luceneDoc.getFields()) {
-                    // If this is a regular metadata field, not a control field or contents field
-                    // (bit of a hack)
-                    if (!f.name().contains("#") && !SKIP_FIELDS.contains(f.name())) {
-                        synchronized (fieldNames) {
-                            fieldNames.add(f.name());
+            public SegmentTask segmentDocTask(LeafReaderContext segment) {
+                return segmentDocId -> {
+                    int docId = segment.docBase + segmentDocId;
+                    Map<String, String> metadata = new HashMap<>();
+                    Document luceneDoc = index.luceneDoc(docId);
+                    for (IndexableField f: luceneDoc.getFields()) {
+                        // If this is a regular metadata field, not a control field or contents field
+                        // (bit of a hack)
+                        if (!f.name().contains("#") && !SKIP_FIELDS.contains(f.name())) {
+                            synchronized (fieldNames) {
+                                fieldNames.add(f.name());
+                            }
+                            String value = f.stringValue();
+                            if (value != null) {
+                                if (value.length() > 255)
+                                    value = StringUtils.abbreviate(value, 255);
+                                metadata.put(f.name(), escapeProblemChars(value));
+                            } else if (f.numericValue() != null)
+                                metadata.put(f.name(), escapeProblemChars(f.numericValue().toString()));
                         }
-                        String value = f.stringValue();
-                        if (value != null) {
-                            if (value.length() > 255)
-                                value = StringUtils.abbreviate(value, 255);
-                            metadata.put(f.name(), escapeProblemChars(value));
-                        } else if (f.numericValue() != null)
-                            metadata.put(f.name(), escapeProblemChars(f.numericValue().toString()));
                     }
-                }
-                try {
-                    synchronized (fieldNames) {
-                        Stream<String> rec = fieldNames.stream().map(f -> metadata.getOrDefault(f, ""));
-                        csvPrinter.printRecord(rec);
+                    try {
+                        synchronized (fieldNames) {
+                            Stream<String> rec = fieldNames.stream().map(f -> metadata.getOrDefault(f, ""));
+                            csvPrinter.printRecord(rec);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-                int n = docsDone.incrementAndGet();
-                if (n % 100 == 0) {
-                    System.out.println(docsDone + " docs exported...");
-                }
+                    int n = docsDone.incrementAndGet();
+                    if (n % 100 == 0) {
+                        System.out.println(docsDone + " docs exported...");
+                    }
+                };
             }
         });
     }

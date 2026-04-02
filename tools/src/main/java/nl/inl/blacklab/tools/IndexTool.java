@@ -5,9 +5,11 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -28,7 +30,7 @@ import nl.inl.blacklab.index.IndexSource;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.plugins.IndexDocTask;
+import nl.inl.blacklab.plugins.DocTaskType;
 import nl.inl.blacklab.plugins.IndexSourceType;
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.search.BlackLab;
@@ -63,6 +65,7 @@ public class IndexTool {
         boolean addingFiles = true;
         String deleteQuery = null;
         String docTaskPluginName = null;
+        Map<String, String> docTaskArgs = new HashMap<>();
         int numberOfThreadsToUse = BlackLab.config().getIndexing().getNumberOfThreads();
         List<File> linkedFileDirs = new ArrayList<>();
         boolean createEmptyIndex = false;
@@ -170,7 +173,16 @@ public class IndexTool {
                 } else if (command.equals("delete") && deleteQuery == null) {
                     deleteQuery = arg;
                 } else if (command.equals("doctask")) {
-                    docTaskPluginName = arg;
+                    if (docTaskPluginName == null)
+                        docTaskPluginName = arg;
+                    else {
+                        if (!arg.contains("=")) {
+                            System.err.println("Argument to doctask must have the form KEY=VALUE");
+                            return;
+                        }
+                        String[] parts = arg.split("=", 2);
+                        docTaskArgs.put(parts[0], parts[1]);
+                    }
                 } else {
                     System.err.println("Too many arguments!");
                     usage();
@@ -203,7 +215,7 @@ public class IndexTool {
             deleteDocuments(indexDir, deleteQuery);
             return;
         case "doctask":
-            runDocTask(indexDir, docTaskPluginName);
+            runDocTask(indexDir, docTaskPluginName, docTaskArgs);
             return;
         case "indexinfo":
             exportIndexInfo(indexDir);
@@ -372,15 +384,15 @@ public class IndexTool {
         }
     }
 
-    private static void runDocTask(File indexDir, String docTaskPluginName) {
+    private static void runDocTask(File indexDir, String docTaskPluginName, Map<String, String> args) {
         if (StringUtils.isEmpty(docTaskPluginName)) {
             System.err.println("No doc task plugin name given.");
             usage();
             return;
         }
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
-            IndexDocTask docTask = PluginManager.type(IndexDocTask.class).get(docTaskPluginName);
-            indexWriter.forEachDocument(docTask);
+            DocTaskType docTaskType = PluginManager.type(DocTaskType.class).get(docTaskPluginName);
+            indexWriter.forEachDocument(docTaskType.docTask(indexWriter, args));
         }
     }
 
