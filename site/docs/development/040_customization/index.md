@@ -16,6 +16,7 @@ Plugins can be used to customize various aspects of BlackLab:
 - an `InputFormatType` defines a new document format for indexing (formerly called `DocIndexer`)
 - a `ProcessingInstruction` provides additional processing during indexing (e.g. apply stemming, look up a value by id, etc.)
 - a `QueryFunction` adds a new function to BCQL. You could use this to expand a simple function call to a complex, frequently-used BCQL query.
+- a `DocTaskType` represents a task that can be performed on all documents in the index, e.g. to export metadata or determine a set of documents to remove
 - a `QueryParserProvider` adds support for a query language
 - an `AuthMethodProvider` interfaces with your authentication setup so BlackLab can determine the currently logged-in user
 
@@ -77,7 +78,6 @@ We'll now discuss examples for many of the plugin types. Most are implemented as
 For a simple `FileConverter` that adds a comment to the end of a TEI document, create a text file `$BLACKLAB_CONFIG_DIR/plugins/add-message.groovy` with the following content:
 
 ```groovy
-import nl.inl.blacklab.exceptions.PluginException
 import nl.inl.blacklab.plugins.FileConverter
 import nl.inl.util.StringUtil
 import nl.inl.util.fileprocessor.FileReference
@@ -86,7 +86,7 @@ import org.apache.commons.io.IOUtils
 return new FileConverter() {
     String message
 
-    FileReference perform(FileReference input, String format) throws PluginException {
+    FileReference perform(FileReference input, String format) {
         try (def reader = input.getSinglePassReader()) {
             String str = IOUtils.toString(reader)
             System.err.println("Adding message to " + input.getPath())
@@ -95,7 +95,7 @@ return new FileConverter() {
         }
     }
 
-    void initialize() throws PluginException {
+    void initialize() {
         // Get the message from our YAML config file (or use default)
         message = cfgString("message", "Default groovy-plugin message")
         // If a message file exists in our config dir (plugins/, read the message from there instead
@@ -227,6 +227,45 @@ Note that `QueryFunction.applyFunc()` is declared to return `TextPattern.EvalRes
 - `QueryFunction` to return another function
 
 The same types can be used for the parameters as well, declared in the constructor.
+
+### DocTaskType example
+
+For a simple `DocTaskType` that prints a document's persistent identifier (PID), create a text file `$BLACKLAB_CONFIG_DIR/plugins/printPid.groovy` with the following content:
+
+```groovy
+import nl.inl.blacklab.exceptions.PluginException
+import nl.inl.blacklab.search.BlackLabIndex
+import nl.inl.blacklab.search.BlackLabIndexWriter
+import nl.inl.blacklab.search.DocTask
+import nl.inl.blacklab.search.indexmetadata.MetadataField
+import nl.inl.blacklab.plugins.DocTaskType
+import org.apache.lucene.index.LeafReaderContext
+
+// Prints the PID of each document in the index.
+return new DocTaskType() {
+    DocTask docTask(BlackLabIndex index, Map<String, String> args) {
+        MetadataField metadataField = ((BlackLabIndexWriter) index).metadata().metadataFields().pidField()
+        if (metadataField == null)
+            throw new PluginException("Corpus has no configured pid field")
+        String pidField = metadataField.name() // Name of this index' PID field.
+        String prefix = args.getOrDefault("prefix", "PID: ")
+        return (segment) -> (segmentDocId) -> {
+            try {
+                String pid = segment.reader().storedFields().document(segmentDocId, Set.of(pidField)).get(pidField)
+                System.out.println(prefix + pid)
+            } catch (IOException e) {
+                throw new RuntimeException(e)
+            }
+        } as DocTask.SegmentTask
+    }
+}
+```
+
+Now, you can run this task on all documents in the index like this:
+
+```bash
+java nl.inl.blacklab.tools.IndexTool doctask ./my-index-dir printPid "prefix=Document PID: "
+```
 
 ### ProcessingInstruction
 

@@ -1,7 +1,6 @@
 package nl.inl.blacklab.plugins;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -14,7 +13,7 @@ import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 
 /** Reads a list of PIDs and removes documents from the index that are not on the list.
- *
+ * <p>
  * Useful to propagate removals while synchronizing a BlackLab index with e.g. a
  * document database.
  * (a separate synchronization step would detect new and updated documents and upsert
