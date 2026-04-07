@@ -81,11 +81,13 @@ public class PluginsOfType<T extends Plugin> {
         PluginData<T> data = new PluginData<>((T) plugin, configs, alternateId);
         if (id != null)
             add(id, data);
-        if (!StringUtils.isEmpty(alternateId))
+        if (!StringUtils.isEmpty(alternateId) && !alternateId.equals(id))
             add(alternateId, data); // e.g. groovy script name without extension
         if (!plugin.getClass().isAnonymousClass()) {
-            add(plugin.getClass().getName(), data);
-            add(plugin.getClass().getSimpleName(), data);
+            if (!plugin.getClass().getName().contains("$")) // skip e.g. "Script1$1"
+                add(plugin.getClass().getName(), data);
+            if (!plugin.getClass().getSimpleName().matches("\\d+")) // skip e.g. "1"
+                add(plugin.getClass().getSimpleName(), data);
         }
     }
 
@@ -94,6 +96,7 @@ public class PluginsOfType<T extends Plugin> {
     }
 
     public Collection<T> getAll() {
+        PluginManager.loadAllGroovyScripts();
         List<T> result = new ArrayList<>();
         for (PluginData<T> data: pluginsById.values()) {
             T plugin = data.getPlugin();
@@ -125,6 +128,10 @@ public class PluginsOfType<T extends Plugin> {
      */
     public T get(String id) throws PluginException {
         Optional<T> plugin = getIfExists(id);
+        if (plugin.isEmpty()) {
+            // Could be a groovy script that was found, but hasn't been loaded yet. Load it now.
+            plugin = PluginManager.getUnloaded(id, pluginClass);
+        }
         return plugin.orElseThrow(() -> new IllegalArgumentException("Plugin id " + id + " not found."));
     }
 

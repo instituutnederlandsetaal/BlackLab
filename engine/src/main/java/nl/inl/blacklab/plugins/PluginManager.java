@@ -8,8 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 
@@ -19,6 +21,7 @@ import org.apache.logging.log4j.Logger;
 
 import groovy.lang.GroovyShell;
 import nl.inl.blacklab.config.BLConfigPlugins;
+import nl.inl.blacklab.exceptions.PluginException;
 
 /**
  * Responsible for loading file conversion and tagging plugins.
@@ -62,6 +65,12 @@ public class PluginManager {
     private static boolean isInitialized = false;
 
     private static final Map<Class<? extends Plugin>, PluginsOfType<? extends Plugin>> pluginsByType = new HashMap<>();
+
+    /** Groovy plugin script we've found but not loaded yet. We don't yet know its plugin type. */
+    record UnloadedGroovyPlugin(File scriptFile, BLConfigPlugins pluginConfig) {}
+
+    /** Groovy plugin scripts we've found but not loaded yet. We don't yet know their plugin type. */
+    private static final Map<String, UnloadedGroovyPlugin> unloadedGroovyScripts = new LinkedHashMap<>();
 
     // Nothing to do; initialization happens when the blacklab config is loaded.
     // The blacklab Config is automatically loaded when the first BlackLabIndex is
@@ -108,7 +117,7 @@ public class PluginManager {
         } catch (IOException e) {
             logger.error("Error closing plugin classloader: " + e.getMessage(), e);
         }
-        loadGroovyScripts(pluginConfig);
+        findGroovyScripts(pluginConfig);
 
         // Some plugins take a LONG time to init, if we block, we block the loading of the config
         // Which in turn blocks the whole of blacklab(-server), so don't do that
@@ -144,28 +153,64 @@ public class PluginManager {
         return new URLClassLoader(urls, parent);
     }
 
-    private synchronized static void loadGroovyScripts(BLConfigPlugins pluginConfig) {
+    private synchronized static void findGroovyScripts(BLConfigPlugins pluginConfig) {
         File[] scriptFiles = pluginsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".groovy"));
         if (scriptFiles != null) {
-            GroovyShell shell = new GroovyShell();
             for (File scriptFile: scriptFiles) {
                 if (scriptFile.isFile() && scriptFile.canRead()) {
-                    try {
-                        Object result = shell.evaluate(FileUtils.readFileToString(scriptFile, StandardCharsets.UTF_8));
-                        if (result instanceof Plugin plugin) {
-                            String scriptFileName = scriptFile.getName().replaceAll("\\.groovy$", "");
-                            if (plugin.getId() == null) {
-                                plugin.setId(scriptFileName);
-                            }
-                            register(plugin, pluginConfig, scriptFileName);
-                        } else {
-                            logger.warn("Groovy script " + scriptFile + " does not evaluate to a Plugin instance; ignoring.");
-                        }
-                    } catch (Exception e) {
-                        logger.error("Error loading groovy plugin " + scriptFile + ": " + e.getMessage(), e);
-                    }
+                    String scriptFileName = scriptFile.getName().replaceAll("\\.groovy$", "");
+                    unloadedGroovyScripts.put(scriptFileName, new UnloadedGroovyPlugin(scriptFile, pluginConfig));
                 }
             }
+        }
+    }
+
+    /**
+     * Make sure all groovy scripts have been loaded, so we know we have all plugins (of a certain type).
+     *
+     * We don't know the type of an unloaded groovy plugin, so for PluginsOfType.getAll(), all scripts need
+     * to be loaded first.
+     */
+    static void loadAllGroovyScripts() {
+        ArrayList<String> ids = new ArrayList<>(unloadedGroovyScripts.keySet());
+        for (String id: ids) {
+            getUnloaded(id, Plugin.class);
+        }
+    }
+
+    /**
+     * See if there's a groovy script with this name we can load.
+     *
+     * @param id plugin id (groovy script name)
+     * @return plugin instance, if this script was found and could be read and compiled
+     * @param <T> plugin type
+     */
+    static <T extends Plugin> Optional<T> getUnloaded(String id, Class<T> pluginType) {
+        UnloadedGroovyPlugin unloaded;
+        synchronized (unloadedGroovyScripts) {
+            unloaded = unloadedGroovyScripts.remove(id);
+        }
+        if (unloaded == null)
+            return Optional.empty();
+        GroovyShell shell = new GroovyShell();
+        try {
+            Object result = shell.evaluate(FileUtils.readFileToString(unloaded.scriptFile, StandardCharsets.UTF_8));
+            if (result instanceof Plugin plugin) {
+                if (plugin.getId() == null) {
+                    plugin.setId(id);
+                } else if (!plugin.getId().equals(id)) {
+                    throw new PluginException("Groovy plugin overrides getId(): script file is " + unloaded.scriptFile +
+                            ", getId() returns " + plugin.getId());
+                }
+                register(plugin, unloaded.pluginConfig, id);
+                return Optional.of(pluginType.cast(plugin));
+            } else {
+                logger.warn("Groovy script " + unloaded.scriptFile + " does not evaluate to a Plugin instance; ignoring.");
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            logger.error("Error loading groovy plugin " + unloaded.scriptFile, e);
+            return Optional.empty();
         }
     }
 
