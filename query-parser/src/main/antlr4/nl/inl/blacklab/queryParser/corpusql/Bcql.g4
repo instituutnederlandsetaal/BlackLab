@@ -49,7 +49,7 @@ QUOTED_STRING   : 'l'? '"' (~["\\] | '\\' . )* '"';
 SINGLE_QUOTED_STRING: 'l'? '\'' (~['\\] | '\\' . )* '\'';
 
 NAME            : [a-z_] [a-z_\-0-9]*;
-INTEGER         : [0-9]+;
+INTEGER         : '-'? [0-9]+;
 SETTINGS_OP     : '@' NAME '=' NAME (',' NAME '=' NAME)*;
 
 // we need to match anything we want to use in syntax highlighting

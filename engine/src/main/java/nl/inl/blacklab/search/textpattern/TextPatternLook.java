@@ -4,10 +4,7 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryAdjustHits;
 import nl.inl.blacklab.search.lucene.SpanQueryEdge;
-import nl.inl.blacklab.search.lucene.SpanQueryNot;
 
 /**
  * Performs (negative) lookahead/lookbehind.
@@ -33,16 +30,7 @@ public class TextPatternLook extends TextPattern {
 
     @Override
     public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
-        BLSpanQuery result = new SpanQueryEdge(clause.toQuery(context), behind);
-        if (negate) {
-            // Expand edges to single tokens (in the correct direction)
-            int startAdjust = behind ? -1 : 0;
-            int endAdjust = behind ? 0 : 1;
-            SpanQueryAdjustHits singleTokens = new SpanQueryAdjustHits(result, startAdjust, endAdjust);
-            // Get all non-matching tokens instead, then go back to only the edges
-            result = new SpanQueryEdge(new SpanQueryNot(singleTokens), behind);
-        }
-        return result;
+        return SpanQueryEdge.lookAheadBehindQuery(clause.toQuery(context), behind, negate);
     }
 
     @Override

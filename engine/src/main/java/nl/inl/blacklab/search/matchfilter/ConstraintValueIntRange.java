@@ -13,6 +13,8 @@ public class ConstraintValueIntRange extends ConstraintValue {
     public ConstraintValueIntRange(int min, int max) {
         this.min = min;
         this.max = max;
+        if (min > max)
+            throw new IllegalArgumentException("min > max");
     }
 
     public Integer[] getValue() {

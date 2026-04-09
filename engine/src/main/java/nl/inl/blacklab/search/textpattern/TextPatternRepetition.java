@@ -31,11 +31,11 @@ public class TextPatternRepetition extends TextPattern {
         this.clause = clause;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;
-        if (min > this.max)
+        if (this.min > this.max)
             throw new IllegalArgumentException("min > max");
-        if (min < 0)
+        if (this.min < 0)
             throw new IllegalArgumentException("min or max can't be negative");
-        if (min == max && (min == 0 || min == 1))
+        if (this.min == this.max && (this.min == 0 || this.min == 1))
             throw new IllegalArgumentException("not really a repetition (min == max == " + min + ")");
     }
 

@@ -10,6 +10,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TermStates;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.ScoreMode;
+import org.jspecify.annotations.NonNull;
 
 /**
  * Returns either the leading edge or trailing edge of the specified query.
@@ -78,6 +79,19 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
         super(query);
         this.trailingEdge = trailingEdge;
         this.guarantees = createGuarantees(query.guarantees(), trailingEdge);
+    }
+
+    public static @NonNull BLSpanQuery lookAheadBehindQuery(BLSpanQuery clause, boolean behind, boolean negate) {
+        BLSpanQuery result = new SpanQueryEdge(clause, behind);
+        if (negate) {
+            // Expand edges to single tokens (in the correct direction)
+            int startAdjust = behind ? -1 : 0;
+            int endAdjust = behind ? 0 : 1;
+            SpanQueryAdjustHits singleTokens = new SpanQueryAdjustHits(result, startAdjust, endAdjust);
+            // Get all non-matching tokens instead, then go back to only the edges
+            result = new SpanQueryEdge(new SpanQueryNot(singleTokens), behind);
+        }
+        return result;
     }
 
     @Override

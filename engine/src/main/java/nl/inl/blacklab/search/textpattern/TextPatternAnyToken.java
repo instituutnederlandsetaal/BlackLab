@@ -26,6 +26,10 @@ public class TextPatternAnyToken extends TextPattern {
 
     public TextPatternAnyToken(int min, int max) {
         super(PRECEDENCE);
+        if (min < 0)
+            throw new IllegalArgumentException("min < 0");
+        if (max < 0)
+            throw new IllegalArgumentException("max < 0");
         this.min = min;
         this.max = max;
     }

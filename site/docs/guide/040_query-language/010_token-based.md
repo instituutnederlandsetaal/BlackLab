@@ -459,6 +459,12 @@ To find occurrences of the word _fish_ with the phrase _in water_ occurring betw
 meet("fish", "in" "water", 2, 5)
 ```
 
+To find occurrences of `platypus` where `weird` does NOT occur within 5 tokens:
+
+```
+meet("platypus", !("weird"), -5, 5)
+```
+
 ::: details How `meet` works
 
 The `meet` function was inspired by the function with the same name in the [Sketch Engine](https://www.sketchengine.eu/documentation/cql-meet-union/).
@@ -466,10 +472,10 @@ The `meet` function was inspired by the function with the same name in the [Sket
 Note that the `meet` function is just syntactic sugar for a "regular" BCQL query. For example, the last example is equivalent to:
 
 ```
-"fish" (?= [] ([]{4,4} containing "in" "water") )
+"fish" (?= []{1,4} "in" "water" )
 ```
 
-(read as: find those occurrences of _fish_ that are followed by any token, followed by exactly 4 tokens that contain the phrase _in water_)
+(read as: find those occurrences of _fish_ that are followed by 1-4 tokens, followed by the phrase _in water_)
 
 :::
 
