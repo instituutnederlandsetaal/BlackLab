@@ -396,7 +396,7 @@ This would match _day by day_, _step by step_, etc.
 Unfortunately, capture constraints can only access the first value indexed for an annotation. If you need this kind of
 functionality in combination with multi-values annotations, you'll have to find a way around this limitation.
 
-If rewriting your query to avoid these constraints is now an option, you might be able to add extra annotations or use spans ("inline tags") to get around this limitation.
+If rewriting your query to avoid these constraints is not an option, you might be able to add extra annotations or use spans ("inline tags") to get around this limitation.
 
 :::
 
