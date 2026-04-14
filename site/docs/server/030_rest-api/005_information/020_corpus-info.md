@@ -3,15 +3,15 @@
 Return the corpus metadata, including size, document format, annotated and metadata fields, status and more.
 
 **URL**
-- `/blacklab-server/<corpus-name>` (API v4)
-- `/blacklab-server/corpora/<corpus-name>` (future API v5)
+- `/blacklab-server/<corpus-name>` (API `v4`)
+- `/blacklab-server/corpora/<corpus-name>` (future API `v5`)
 
 **Method** : `GET`
 
 | Parameter     | Description                                                                                                |
 |---------------|------------------------------------------------------------------------------------------------------------|
 | `limitvalues` | Maximum number of values to return for fields. Default: `200`                                              |
-| `custom`      | **(API v5)** Whether to include custom properties like `displayName`, `description`, etc. Default: `false` |
+| `custom`      | **(API `v5`)** Whether to include custom properties like `displayName`, `description`, etc. Default: `false` |
 
 ## Success Response
 
@@ -20,7 +20,7 @@ Return the corpus metadata, including size, document format, annotated and metad
 ### Content examples
 
 ::: tabs
-=== API v4
+=== API `v4`
 
 ```jsonc
 // API v4: /blacklab-server/parlamint/
@@ -181,7 +181,7 @@ Return the corpus metadata, including size, document format, annotated and metad
 }
 ```
 
-=== API v5
+=== API `v5`
 
 ```jsonc
 // API v5: /blacklab-server/corpora/parlamint/
@@ -277,10 +277,10 @@ Return the corpus metadata, including size, document format, annotated and metad
 
 ### API version differences
 
-The major differences between API v4 and v5 are:
+The major differences between API `v4` and `v5` are:
 
-- API v5 omits custom properties like `displayName`, `description` and `fieldInfo` unless you specify `custom=true`. These properties are not used by BlackLab itself, but may be useful to some clients.
-- API v5 has a `count` object with `tokens` and `documents`, while API v4 has `tokenCount` and no document count.
+- API `v5` omits custom properties like `displayName`, `description` and `fieldInfo` unless you specify `custom=true`. These properties are not used by BlackLab itself, but may be useful to some clients.
+- API `v5` has a `count` object with `tokens` and `documents`, while API `v4` has `tokenCount` and no document count.
 
 ### Notes
 

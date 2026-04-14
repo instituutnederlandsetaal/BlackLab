@@ -101,15 +101,15 @@ To match a pattern sensitively, prefix it with `(?-i)`:
 
 ### Simple sequences
 
-You can search for sequences of words as well (i.e. phrase searches, but with many more possibilities). To search for the phrase _the tall man_, use this query:
+You can search for sequences of words as well (i.e. phrase searches, but with many more possibilities). To search for the phrase _the young man_, use this query:
 
 ```
-"the" "tall" "man"
+"the" "young" "man"
 ```
 
 It might seem a bit clunky to separately quote each word, but this allows us the flexibility to specify exactly what kinds of words we're looking for.
 
-For example, if you want to know all single adjectives used with man (not just _tall_), use this:
+For example, if you want to know all single adjectives used with man (not just _young_), use this:
 
 ```
 "an?|the" [pos="ADJ"] "man"
@@ -153,13 +153,11 @@ You can group sequences of tokens with parentheses and apply operators to the wh
 ("an?|the"? [pos="NOU"])+
 ```
 
-This would, for example, match the well-known palindrome _a man, a plan, a canal: Panama!_ (provided the punctuation marks were not indexed as separate tokens)
+This would, for example, match _an apple a pear the banana_.
 
 ### Lookahead/lookbehind
 
-::: tip Supported from v4.0
-This feature is supported from BlackLab 4.0.
-:::
+<!-- @include: ../../_from_v4.md -->
 
 Just like most regular expressions engines, BlackLab supports lookahead and lookbehind assertions. These match a position in the text but do not consume any tokens. They are useful for matching a token only if it is followed or preceded by other token(s).
 
@@ -189,36 +187,45 @@ And negative lookbehind:
 
 ### Finding punctuation
 
-(The following applies to corpora that index punctuation as the `punct` property of the next word, not to corpora that index punctuation as a separate token)
+Some corpora index punctuation as separate positions, while others index it at the position of the preceding or following word, e.g. in a `punct` annotation.
 
-Often in BlackLab, the punctuation and spaces between words will be indexed as a property named `punct`. This property always contains the spaces and interpunction that occurs before the word where it is indexed.
+If punctuation tokens are indexed as separate positions, you can simply search for them as you would any other token, e.g. `"dog" "," "cat"` to find `dog, cat`. If this is true for your corpus, disregard the rest of this section.
 
-Because of where it is indexed, it can be tricky to find specific punctuation _after_ a certain word. To find the word `dog` followed by a comma, you'd need to do something like this:
-
-```
-"dog" [punct=", *"]
-```
-
-Because spaces are also indexed with the `punct` annotation, you need to include them in the regex as well.
-
-Starting with BlackLab 4.0.0, there are _pseudo-annotations_ that can help with this. You can pretend that 
-every corpus has a `punctBefore` and `punctAfter` annotation. So you can write the above query as:
+If any punctuation and spaces between two words are indexed in the `punct` annotation of the following word (i.e. if your indexing configuration defines `punctPath`), the easiest way to search for specific punctuation is to use the `punctBefore` and `punctAfter` pseudo-annotations (available since BlackLab 4.0):
 
 ```
-[word="dog" & punctAfter=","]
+[word="cat" & punctBefore="\("]  # opening parenthesis before cat
+[word="dog" & punctAfter=","]   # comma after dog
 ```
 
-Note that in special cases where more than one punctuation mark is indexed with a word, you may still need to tweak your regular expression. For example, if your input data contained the fragment "(white) dog, (black) cat", the above query would not work because the `punct` annotation for the word after `dog` would have the value `, (`. You'd have to use a more general regular expression:
+`punctBefore` and `punctAfter` don't really exist as annotations; they translate into a query that uses the `punct` annotation.
+
+::: details Find complex punctuation
+
+If there's more than one punctuation character between words, you may still need to tweak your regular expression. For example, if your input data contained the fragment "(white) dog, (black) cat", the above query would not work because the `punct` annotation for the word after `dog` would have the value `, (`. You'd have to use a more general regular expression:
 
 ```
 [word="dog" & punctAfter=",.*"]
 ```
+:::
 
-Note that `punctBefore` and `punctAfter` look like annotations when used in the query, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index.
+::: details How do punctBefore and punctAfter work?
 
-::: tip Pseudo-annotations are actually functions
+Here's how the above example queries are translated:
 
-The query
+```
+[word="cat" & punctBefore="\("]
+  # translates to
+[word="cat" & punct="\s*\(\s*"]
+
+[word="dog" & punctAfter=","]
+  # translates to
+[word="dog"] (?= [punct="\s*,\s*"] )
+```
+
+As you can see, the pseudo-annotations extend your regular expression with optional whitespace. The `punctAfter` pseudo-annotation also uses a lookahead to account for the fact that the punctuation is indexed at the position of the following word.
+
+Like noted abovem `punctBefore` and `punctAfter` look like annotations, but are not; they will not be in the results and you cannot group on them. You can group on the `punct` annotation they are based on, because that is actually a part of the index. `punctBefore` and `punctAfter` are actually _query functions_. The query:
 
 ```
 [punctAfter=","]
@@ -333,10 +340,10 @@ Only the first parameter for `with-spans` is required. The second parameter defa
 As you might have guessed, you can use `within` and `containing` with any other query as well. For example:
 
 ```
-([pos="ADJ"]+ containing "tall") "man"
+([pos="ADJ"]+ containing "young") "man"
 ```
 
-will find adjectives applied to man, where one of those adjectives is _tall_.
+will find adjectives applied to man, where one of those adjectives is _young_.
 
 ## Captures
 
@@ -387,14 +394,9 @@ This would match _day by day_, _step by step_, etc.
 ::: details Multiple-value annotations and constraints
 
 Unfortunately, capture constraints can only access the first value indexed for an annotation. If you need this kind of
-functionality in combination with multi-values constraints, you'll have to find a way around this limitation.
+functionality in combination with multi-values annotations, you'll have to find a way around this limitation.
 
-Some queries can be rewritten so they don't need a capture constraint. For example,
-`A:[word="some"] B:[word="queries"] :: A.lemma="some" & B.lemma="query"` can also be written as
-`A:[word="some" & lemma="some"] B:[word="queries" & lemma="query"]`, which does work with multiple annotation values.
-But this is rare.
-
-In other cases, you might be able to add extra annotations or use spans ("inline tags") to get around this limitation.
+If rewriting your query to avoid these constraints is now an option, you might be able to add extra annotations or use spans ("inline tags") to get around this limitation.
 
 :::
 
@@ -408,8 +410,7 @@ You can also use a few special functions in capture constraints. For example, en
 
 Here we find sentences containing both _cat_ and _fluffy_ (in some order), but then require that _fluffy_ occurs before _cat_.
 
-Of course this particular query would be better expressed as `<s/> containing "fluffy" []* "cat"`. As a general rule, 
-capture constraints can be a bit slower, so only use them when you need to.
+Of course, a simpler way to express this particular query would be `<s/> containing "fluffy" []* "cat"`. As a general rule, capture constraints can be a bit slower, so only use them when you need to.
 
 ### Local capture constraints
 
@@ -431,7 +432,7 @@ A:[] ("and" B:[] :: A.word = B.word) "again"   # BAD
 
 ## Functions
 
-(following applies only to `dev`/`5.x`)
+<!-- @include: ../../_from_v5.md -->
 
 BCQL supports a number of useful functions. Some functions produce queries as output, which you can use as part of a larger query; others produce values that you can pass to other functions.
 
@@ -440,6 +441,8 @@ Some of these functions exist in some form in other dialects of Corpus Query Lan
 Functions to do with relations search are described [there](./relations.html).
 
 ### meet: nearby words
+
+<!-- @include: ../../_from_v5.md -->
 
 You can use the `meet` function to filter matches based on the presence of other words nearby. For example, to find all occurrences of the word _cat_ that are within 5 tokens of the word _fluffy_ (before or after), you can use:
 
@@ -481,6 +484,8 @@ Note that the `meet` function is just syntactic sugar for a "regular" BCQL query
 
 ### union: combine matches
 
+<!-- @include: ../../_from_v5.md -->
+
 The `union` function allows you to combine matches from a list of queries into a single result set. For example, to find all occurrences of either _fluffy cat_ or _good dog_, use:
 
 ```
@@ -497,6 +502,8 @@ The function is provided for those familiar with it from other corpus query lang
 
 ### list: list of values
 
+<!-- @include: ../../_from_v5.md -->
+
 Some functions take a list of values as input. You can create such a list using the `list` function. For example, to pass multiple clauses to the `union` function, you could use:
 
 ```
@@ -511,6 +518,8 @@ union("one", "two", "three")  # same as union(list("one", "two", "three"))
 
 
 ### str: interpret as string
+
+<!-- @include: ../../_from_v5.md -->
 
 A quoted string in BCQL can be interpreted as either a string or a token query, depending on the context. For example, `"duck"` might mean `[word="duck"]` (a query), or it might just mean the simple string value. When building a list of strings, BlackLab doesn't know which one you mean, so you need to explicitly tell it. For example, to create a list of strings _cat_ and _dog_, use:
 
@@ -527,6 +536,8 @@ list("cat", "dog")
 which will create a list of token queries.
 
 ### symbol: interpret as a symbol
+
+<!-- @include: ../../_from_v5.md -->
 
 To specify a symbol (e.g. an annotation) using a string:
 

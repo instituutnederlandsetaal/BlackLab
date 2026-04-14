@@ -2,10 +2,10 @@
 
 You can extend BlackLab's functionality by creating plugins. The goal is to keep the core engine as generic as possible, while allowing users to customize it to their needs.
 
-::: tip Supported from `5.x` (and current `dev` branch)
+<!-- @include: ../../_from_v5.md -->
+
 The plugin system got a major overhaul after `4.x`. This page describes the new system.
 The previous plugin system was more limited and likely did not have many users.
-:::
 
 ## Plugin types
 

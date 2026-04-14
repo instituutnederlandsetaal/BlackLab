@@ -41,11 +41,11 @@ BlackLab Server only consists of a WAR file that includes everything. You could 
 
 If you want the very latest version (the "dev" branch) of BlackLab, you can easily build it from source code.
 
-First, you need to download the source code from GitHub. You can download it from there in a .zip file (be sure to select the dev branch before doing so), but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
+First, you need to download the source code from GitHub. You can download it from there in a .zip file (be sure to select the `dev` branch before doing so), but a better way to get it is by cloning it using Git. [Install a Git client](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git) (we'll give command line examples here, but it should translate easily to GUI clients like TortoiseGit), change to a directory where you keep your projects, and clone BlackLab:
 
 	git clone git://github.com/instituutnederlandsetaal/BlackLab.git
 
-Git will download the project and place it in a subdirectory "BlackLab". Now switch to the dev branch:
+Git will download the project and place it in a subdirectory "BlackLab". Now switch to the `dev` branch:
 
     git checkout dev
     

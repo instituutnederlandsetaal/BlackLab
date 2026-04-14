@@ -16,7 +16,7 @@ List available corpora and general information about the server environment, suc
 A server with one corpus named *BaB* and no logged-in user might show this result:
 
 :::tabs
-=== API v4
+=== API `v4`
 
 ```jsonc
 {
@@ -50,7 +50,7 @@ A server with one corpus named *BaB* and no logged-in user might show this resul
 }
 ```
 
-=== API v5
+=== API `v5`
 
 ```jsonc
 {
@@ -81,7 +81,7 @@ A server with one corpus named *BaB* and no logged-in user might show this resul
 
 ### API version differences
 
-The major differences between API v4 and v5 are:
+The major differences between API `v4` and `v5` are:
 
-- API v4 includes both `corpora` and `indices`. API v5 only has `corpora`, which doesn't include custom properties like `displayName` and `description` unless you specify `custom=true`.
-- API v5 has a `count` object with `tokens` and `documents`, while API v4 has `tokenCount` and no document count.
+- API `v4` includes both `corpora` and `indices`. API `v5` only has `corpora`, which doesn't include custom properties like `displayName` and `description` unless you specify `custom=true`.
+- API `v5` has a `count` object with `tokens` and `documents`, while API `v4` has `tokenCount` and no document count.

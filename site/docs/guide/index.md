@@ -44,8 +44,8 @@ BlackLab's features include:
 - **Index your data** using a built-in format or by writing a configuration file.
 - **Search for complex patterns** using the powerful [BlackLab Corpus Query Language](query-language/)
 - **Search within spans** to e.g. find named entities containing _tower_ at the end of a sentence.
-- **Search (dependency) relations**, to find specific (tree) structures in your text. **(NEW in v4)**
-- **Search parallel corpora**, so you can find alignments between different languages or historical versions. **(NEW in v4)**
+- **Search (dependency) relations**, to find specific (tree) structures in your text. **(NEW in `v4`)**
+- **Search parallel corpora**, so you can find alignments between different languages or historical versions. **(NEW in `v4`)**
 - **Capture** parts of matches.
 - **Group and sort** result sets on many criteria, such as the text preceding the match.
 - **Highlight** hits in a document and keyword-in-context (KWIC) view of hits.

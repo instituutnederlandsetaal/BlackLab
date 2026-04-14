@@ -1,7 +1,7 @@
 // https://vitepress.dev/guide/custom-theme
-import { type Theme, inBrowser } from 'vitepress'
+import {inBrowser, type Theme} from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
-import { enhanceAppWithTabs } from 'vitepress-plugin-tabs/client'
+import {enhanceAppWithTabs} from 'vitepress-plugin-tabs/client'
 import RedirectingLayout from './Redirect.vue'
 
 import FileTree from './FileTree.vue'
@@ -15,7 +15,7 @@ const linkTitles = {
 };
 
 export default {
-  ...DefaultTheme,
+  extends: DefaultTheme,
   Layout: RedirectingLayout,
   enhanceApp({ app, router, siteData }) {
     app.component('FileTree', FileTree)

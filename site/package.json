@@ -6,11 +6,11 @@
     "start": "vitepress dev ."
   },
   "dependencies": {
-    "markdown-it": "^14.1.0",
-    "sass-embedded": "^1.89.0",
-    "vitepress": "^1.6.3",
-    "vitepress-plugin-tabs": "^0.7.1",
-    "vitepress-sidebar": "^1.31.1",
-    "vue": "^3.5.13"
+    "markdown-it": "^14.1.1",
+    "sass-embedded": "^1.97.3",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-tabs": "^0.7.3",
+    "vitepress-sidebar": "^1.33.1",
+    "vue": "^3.5.28"
   }
 }

@@ -1,8 +1,6 @@
 # Parallel corpora
 
-::: tip Supported from v4.0
-Indexing and searching parallel corpora is supported from BlackLab 4.0.
-:::
+<!-- @include: ../../_from_v4.md -->
 
 A parallel corpus contains multiple versions of the same document. These might be translations to different languages, historical versions, etc.
 

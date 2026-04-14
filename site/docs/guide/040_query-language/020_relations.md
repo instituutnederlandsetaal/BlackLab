@@ -1,8 +1,6 @@
 # Relations querying
 
-::: tip Supported from v4.0
-Indexing and searching relations is supported from BlackLab 4.0.
-:::
+<!-- @include: ../../_from_v4.md -->
 
 Relations show how (groups of) words are related to one another. One of the most common types of relations is the dependency relation, which shows grammatical dependency between words.
 
@@ -21,20 +19,26 @@ treebank system, which is primarily designed for this style of search. Links to 
 
 ## An example dependency tree
 
-Let's use an example to illustrate the various querying options. Here's a simple dependency tree for the phrase _I have a fluffy cat_:
+Let's use an example to illustrate the various querying options. Here's a simple dependency tree for the phrase _I have a good cat_:
 
 ```
       |
      have
     /    \
- (subj)   (obj)
+ (nsubj)   (obj)
  /          \
 I            cat
            /   |
         (det)(amod)
         /      |
-       a     fluffy 
+       a     good 
 ```
+
+::: tip Relation types
+
+On this page, we give examples that use [Universal Dependencies (UD) relation types](https://universaldependencies.org/en/dep/) (`nsubj`, `obj`, `det`, `amod`, etc.), but you're not limited to these. If your data uses different relation types, just replace these with the relation types in your data when following the examples below.
+
+:::
 
 ## Finding specific relation types
 
@@ -44,7 +48,7 @@ We might want to find object relations in our data. We can do this as follows:
 _ -obj-> _
 ```
 
-This will find _have a fluffy cat_ (the span of text covering the two ends of the relation), with a match info group named for the relation type (_obj_) containing the relation details between _have_ and _cat_.
+This will find _have a good cat_ (the span of text covering the two ends of the relation), with a match info group named for the relation type (_obj_) containing the relation details between _have_ and _cat_.
 
 The two `_` marks in the query simply means we only care about the relation type, not the source or target of the relation. If we specifically want to find instances where _cat_ is the object of the sentence, we can use this instead:
 
@@ -79,7 +83,7 @@ When talking about tree structures, we will also use _parent_ and _child_.
 We can specify the relation type as a regular expression as well. To find both subject and object relations, we could use:
 
 ```
-_ -subj|obj-> _
+_ -nsubj|obj-> _
 ```
 
 or:
@@ -91,7 +95,7 @@ _ -.*bj-> _
 If you find it clearer, you can use parentheses around the regular expression:
 
 ```
-_ -(subj|obj)-> _
+_ -(nsubj|obj)-> _
 ```
 
 With our example tree, the above queries will find all subject relations and all object relations. Each hit will have one relation in the match info. To find multiple relations per hit, read on.
@@ -129,13 +133,13 @@ This will only find root relations pointing to the word _have_.
 What if we want to find the subject and object relations of a sentence, both linked to the same source (the verb in the sentence)? We can do that using a semicolon to separate the two _target constraints_ (or _child constraints_):
 
 ```
-_ -subj-> _ ;
+_ -nsubj-> _ ;
   -obj-> _
 ```
 
-As you can see, the source or parent is specified only once at the beginning. Then you may specify one or more target constraints (a relation type plus target, e.g. `-subj-> _`), separated by semicolons.
+As you can see, the source or parent is specified only once at the beginning. Then you may specify one or more target constraints (a relation type plus target, e.g. `-nsubj-> _`), separated by semicolons.
 
-The above query will find hits covering the words involved in both relations, with details for the two relations in the match info of each hit. In our example, it would find the entire sentence _I have a fluffy cat_.
+The above query will find hits covering the words involved in both relations, with details for the two relations in the match info of each hit. In our example, it would find the entire sentence _I have a good cat_.
 
 ::: details Target constraint uniqueness
 
@@ -148,14 +152,14 @@ Note that when matching multiple relations with the same source this way, BlackL
 You may want to have negative constraints, such as making sure that _dog_ is not the object of the sentence. This can be done by prefixing the relation operator with `!`:
 
 ```
-_  -subj-> _ ;
+_  -nsubj-> _ ;
   !-obj-> "dog"
 ```
 
 Note that this is different from :
 
 ```
-_  -subj-> _ ;
+_  -nsubj-> _ ;
    -obj-> [word != "dog"]
 ```
 
@@ -163,20 +167,20 @@ The second query requires an object relation where the target is a word other th
 
 ## Searching over multiple levels in the tree
 
-What if we want to query over multiple levels of the tree? For example, we want to find sentences where the target of the `subj` relation is the source of an `amod` relation pointing to _fluffy_, such as in our example tree.
+What if we want to query over multiple levels of the tree? For example, we want to find sentences where the target of the `nsubj` relation is the source of an `amod` relation pointing to _good_, such as in our example tree.
 
 ```
-_ -subj-> _ -amod-> "fluffy"
+_ -nsubj-> _ -amod-> "good"
 ```
 
 We can combine the techniques as well, for example if we also want to find the object of the sentence like before:
 
 ```
-_ -subj-> (_ -amod-> _) ;
+_ -nsubj-> (_ -amod-> _) ;
   -obj-> _
 ```
 
-As you can see, the value of the expression `(_ -amod-> _)` is actually the _source_ of the `amod` relation, so we can easily use it as the target of the `subj` relation.
+As you can see, the value of the expression `(_ -amod-> _)` is actually the _source_ of the `amod` relation, so we can easily use it as the target of the `nsubj` relation.
 
 The `-..->` operator is right-associative (as you can see from the first example), but we do need parentheses here, or the parent of the `-obj->` relation would be ambiguous.
 
@@ -185,16 +189,16 @@ The `-..->` operator is right-associative (as you can see from the first example
 One current limitation compared to dedicated treebank systems is the lack
 of support for finding descendants that are not direct children.
 
-For example, if we want to look for sentences with the verb _have_ and the word _fluffy_ somewhere as an adjectival modifier in that sentence, we can't query something like this:
+For example, if we want to look for sentences with the verb _have_ and the word _good_ somewhere as an adjectival modifier in that sentence, we can't query something like this:
 
 ```
-^--> "have" -->> -amod-> "fluffy"   # DOES NOT WORK
+^--> "have" -->> -amod-> "good"   # DOES NOT WORK
 ```
 
-Instead, we have to know how many nodes are between _have_ and _fluffy_, e.g. this does work:
+Instead, we have to know how many nodes are between _have_ and _good_, e.g. this does work:
 
 ```
-^--> "have" --> _ -amod-> "fluffy"
+^--> "have" --> _ -amod-> "good"
 ```
 
 Supporting arbitrary descendant search with decent performance is a challenge that we may try to tackle in the future.
@@ -202,7 +206,7 @@ Supporting arbitrary descendant search with decent performance is a challenge th
 For now, you might be able to work around this limitation using a hybrid between token-based and relations querying, e.g.:
 
 ```
-(<s/> containing (^--> "have")) containing (_ -amod-> "fluffy")
+(<s/> containing (^--> "have")) containing (_ -amod-> "good")
 ```
 
 ## Advanced relations querying features
@@ -234,7 +238,7 @@ rspan(_ -amod-> _)
 `rspan` supports another option: _all_ will return a span covering all of the relations matched by your query.
 
 ```
-rspan(_ -subj-> (_ -amod-> _) ; -obj-> _, "all")
+rspan(_ -nsubj-> (_ -amod-> _) ; -obj-> _, "all")
 ```
 
 Because this is pretty useful when searching relations, there's an easy way to apply this `rspan` operation: just add a parameter `adjusthits=true` to your BlackLab Server URL. Note that if your query already starts with a call to `rspan`, `adjusthits=true` won't do anything.

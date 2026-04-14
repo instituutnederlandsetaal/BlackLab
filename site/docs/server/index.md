@@ -57,7 +57,7 @@ Install a JRE (Java runtime environment). BlackLab requires at least version 17,
 
 BlackLab Server needs a Java application server to run. We will use Apache Tomcat.
 
-Install Tomcat 9 (for v4) or 10 (for future v5 and current dev branch) on your machine. See the [official docs](https://tomcat.apache.org/tomcat-9.0-doc/setup.html) or an OS-specific guide like [this one for Ubuntu](https://linuxize.com/post/how-to-install-tomcat-9-on-ubuntu-20-04/).
+Install Tomcat 9 (for `v4`) or 10 (for future `v5` and current `dev` branch) on your machine. See the [official docs](https://tomcat.apache.org/tomcat-9.0-doc/setup.html) or an OS-specific guide like [this one for Ubuntu](https://linuxize.com/post/how-to-install-tomcat-9-on-ubuntu-20-04/).
 
 
 ### Configuration file

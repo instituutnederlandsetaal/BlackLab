@@ -16,8 +16,8 @@ Let's go over these one by one.
 
 The web service, BlackLab Server, can be used from any programming language and offers a simple REST API (web service).
 
-You will need a JVM version of 17 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9 (for v4) 
-or 10 (for future v5 and current dev branch). For example, on Ubuntu:
+You will need a JVM version of 17 or higher to use the latest BlackLab versions. Also install Apache Tomcat 9 (for `v4`) 
+or 10 (for future `v5` and current `dev` branch). For example, on Ubuntu:
 
 ```bash
 sudo apt install openjdk-17-jdk tomcat9
@@ -83,7 +83,7 @@ BlackLab supports a number of input formats, but the most well-known are [TEI](h
 ::: warning PLEASE NOTE
 BlackLab needs *tokenized* data files as input. That means the word boundaries have already been determined and BlackLab can just index each word as it parses the input file.
 
-It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see [Convert/Tag plugins](/development/customization/).
+It is possible to configure BlackLab to perform the necessary tokenizing and tagging; see `FileProcessor` [plugins](/development/customization/).
 :::
 
 

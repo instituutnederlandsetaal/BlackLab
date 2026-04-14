@@ -21,7 +21,7 @@ BlackLab uses the Saxon library to process XML.
 
 ::: warning Saxon on BlackLab 4.x
 
-BlackLab v4.x used either VTD or Saxon as an XML processor. It is recommended to use Saxon there as well. Place `processor: saxon` in your `.blf.yaml` file to ensure you're using Saxon in that version.
+BlackLab `v4.x` used either VTD or Saxon as an XML processor. It is recommended to use Saxon there as well. Place `processor: saxon` in your `.blf.yaml` file to ensure you're using Saxon in that version.
 
 :::
 

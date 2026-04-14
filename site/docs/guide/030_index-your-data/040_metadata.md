@@ -44,7 +44,12 @@ It's also possible to process metadata values before they are indexed (see [Proc
 often preferable to do as much processing as possible in XPath.
 
 As you can see, `metadata` is a list, so you can define several metadata blocks, each with their own containerPath.
-Actually, starting from `dev`/`5.x` you can even nest metadata blocks, so you can use multiple levels of containerPaths:
+
+## Nested metadata blocks
+
+<!-- @include: ../../_from_v5.md -->
+
+You can even nest metadata blocks, so you can use multiple levels of containerPaths:
 
 ```yaml
 metadata:
@@ -161,17 +166,25 @@ By default, `doc()` looks for files on the local filesystem.
 
 However, you can prefix the path with a scheme to load files from other sources. For example, use `https://example.com/some/path.xml` to load from a web server.
 
+#### archive scheme
+
+<!-- @include: ../../_from_v5.md -->
+
 You can also use `archive:` to load a file from an archive, for example:
 
 ```yaml
 containerPath: doc(concat('archive:metadata.zip/', ./@id, '.xml'))
 ```
 
+#### Custom schemes
+
+<!-- @include: ../../_from_v5.md -->
+
 You can even add your own schemes. For example, `my-db:12345` might load a document from a database. Each scheme such as `archive` refers to a `IndexSourceType` plugin, and [adding one](/development/customization/) isn't difficult.
 
-(`archive` and custom schemes using plugin available from `dev`/`5.x`)
-
 ### Using the original input file path
+
+<!-- @include: ../../_from_v5.md -->
 
 You can use `$inputFilePath` from XPath if you need. For example, if your input file is `content/doc0123.xml` and you 
 want to link to `metadata/meta0123.xml`, you could use this XPath:
@@ -179,8 +192,6 @@ want to link to `metadata/meta0123.xml`, you could use this XPath:
 ```yaml
 containerPath: doc(concat('metadata/meta', replace($inputFilePath, '^.*doc(\d+)\.xml$', '$1'), '.xml'))
 ```
-
-(available from `dev`/`5.x`)
 
 ### Store (part of) a linked document
 

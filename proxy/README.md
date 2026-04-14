@@ -14,9 +14,9 @@ This is a work in progress. Still to do:
 - `/cache-info`
 - ensure proxying to BlackLab Server works as well
 
-## API versions (v3 / v4)
+## API versions (`v3` / `v4`)
 
-The Solr component and this proxy introduce version 4.0 of the BlackLab webservice API, with a few minor improvements. Pass `api=3` to get the old behaviour.
+The Solr component and this proxy introduce version `4.0` of the BlackLab webservice API, with a few minor improvements. Pass `api=3` to get the old behaviour.
 
 See [API versions](https://blacklab.ivdnt.org/server/rest-api/miscellaneous/api-versions.html) for details.
 

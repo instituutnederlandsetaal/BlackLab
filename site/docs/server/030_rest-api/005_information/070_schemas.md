@@ -1,8 +1,6 @@
 # JSON schemas
 
-(new in `dev`/`5.x`)
-
-
+<!-- @include: ../../../_from_v5.md -->
 
 Return a JSON schema for a (file) format related to BlackLab.
 

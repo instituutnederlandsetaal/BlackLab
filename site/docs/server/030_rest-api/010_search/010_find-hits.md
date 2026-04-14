@@ -7,8 +7,8 @@ This endpoint can also group hits (returning a list of groups), or show the cont
 This is generally the most-used endpoint for BlackLab Server, and includes the most features.  For a more gentle introduction, see the [overview](/server/overview.md).
 
 **URL**
-- `/blacklab-server/<corpus-name>/hits` (API v4)
-- `/blacklab-server/corpora/<corpus-name>/hits` (future API v5)
+- `/blacklab-server/<corpus-name>/hits` (API `v4`)
+- `/blacklab-server/corpora/<corpus-name>/hits` (future API `v5`)
 
 **Method** : `GET`
 
@@ -136,7 +136,7 @@ Some less commonly used parameters for advanced use cases.
 | `maxretrieve`        | Maximum number of hits to retrieve. `-1` means "no limit". Also affects documents-containing-pattern queries and grouped-hits queries. Default and maximum allowed value configurable. Very large values (millions, or unlimited) may cause server problems.                                                                                                                                                                                                                                     |
 | `maxcount`           | Maximum number of hits to count. `-1` means "no limit". Default and maximum allowed value configurable. Even when BlackLab stops retrieving hits, it still keeps counting them. For large results sets this may take a long time.                                                                                                                                                                                                                                                                |
 | `usecontent`         | `fi` or `orig`. `fi` (default) uses the forward index to reconstruct document content (for snippets and concordances; inline tags are lost in the process), `orig` uses the original XML from the content store (slower but more accurate).<br/>**NOTE:** using the original content may cause problems with well-formedness; these are fixed automatically, but the fix may result in inline tags in strange places (e.g. a start-sentence tag that is not at the start of the sentence anymore) |
-| `escapexmlfragment`  | when using `usecontent=orig` and XML response, should fragments be escaped as CDATA or not? Default: `false` for API v4 and older, `true` for v5+.                                                                                                                                                                                                                                                                                                                                               |
+| `escapexmlfragment`  | when using `usecontent=orig` and XML response, should fragments be escaped as CDATA or not? Default: `false` for API `v4` and older, `true` for `v5+`.                                                                                                                                                                                                                                                                                                                                               |
 | `calc`               | specify the value `colloc` to calculate collocations (frequency lists of words near hits). Experimental feature.                                                                                                                                                                                                                                                                                                                                                                                 |
 | `omitemptycaptures`  | if true, will omit capture groups of length 0 (default `false`, configurable in blacklab-server.yaml)                                                                                                                                                                                                                                                                                                                                                                                            |
 | `withspans`          | capture a list (named `with-spans`) of all spans overlapping each hit (e.g. this might contain the relevant sentence, paragraph and chapter spans if you've indexed those)                                                                                                                                                                                                                                                                                                                       |
@@ -154,7 +154,7 @@ You may leave 'gaps' in the double-quoted strings in your BCQL query that can be
 ### Content examples
 
 ::: tabs
-=== API v4
+=== API `v4`
 
 ::: warn Aborted queries
 
@@ -302,7 +302,7 @@ BlackLab will abort queries that run for too long. This can be configured, but t
 
 
 
-=== API v5
+=== API `v5`
 
 ::: warn Aborted queries
 
@@ -405,8 +405,8 @@ BlackLab will abort queries that run for too long. This can be configured, but t
 
 ### API version differences
 
-The major differences between API v4 and v5 are:
+The major differences between API `v4` and `v5` are:
 
-- The `summary` object became more structured in API v5, with separate `params`, `pattern`, `resultWindow` and `resultsStats` objects.
-- API v5's `docInfos` separates properties like `mayView` and the number of tokens in the document from the actual document metadata such as author, title, etc. by putting the latter in a separate `metadata` object.
-- API v5 drops `lengthInTokens` because it's already available in `tokenCounts`. The latter specifies length per annotated field, providing better support for corpora with multiple annotated fields, such as parallel corpora.
+- The `summary` object became more structured in API `v5`, with separate `params`, `pattern`, `resultWindow` and `resultsStats` objects.
+- API `v5`'s `docInfos` separates properties like `mayView` and the number of tokens in the document from the actual document metadata such as author, title, etc. by putting the latter in a separate `metadata` object.
+- API `v5` drops `lengthInTokens` because it's already available in `tokenCounts`. The latter specifies length per annotated field, providing better support for corpora with multiple annotated fields, such as parallel corpora.

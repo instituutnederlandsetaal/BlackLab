@@ -456,9 +456,14 @@ performance:
 
 ### Plugins
 
-Plugins allow you to automatically convert files (e.g. .html, .docx) or apply linguistic tagging before indexing via BLS (experimental functionality).
+Plugins allow you to customize BlackLab in several ways, such as adding query functions or converting files before 
+indexing. You can configure a plugin using a separate configuration file or alternatively in the main configuration file.
 
-For more information about plugins, see [Plugins for converting/tagging](/development/customization/).
+::: TIP per-plugin configuration files
+Prefer placing a separate configuration file per plugin in the plugins directory. See [plugins](/development/customization/).
+:::
+
+Example of plugin configuration in the main configuration file (`blacklab-server.yaml` or `blacklab.yaml`):
 
 ```yaml
 plugins:
@@ -484,7 +489,7 @@ plugins:
             lexiconFile: "/home/jan/projects/openconvert_en_tagger/tagger-data/spelling.tab"
 ```
 
-(this section can also occur in `blacklab.yaml`, to apply to IndexTool; see [Configuring other tools](#configuring-other-tools))
+(place in `blacklab.yaml` to apply to e.g. IndexTool; see [Configuring other tools](#configuring-other-tools))
 
 ### Debug
 

@@ -41,7 +41,7 @@ We strive towards practicing Continuous Delivery.
 
 Our intention is to:
 - continuously improve both unit and integration tests (during development and whenever bugs are discovered)
-- avoid long-lived feature branches but frequently merge to the dev branch
+- avoid long-lived feature branches but frequently merge to the `dev` branch
 - create meaningful commits that fix a bug or add (part of) a feature
 - use temporary feature flags to prevent issues with unfinished code
 - deploy to our servers frequently

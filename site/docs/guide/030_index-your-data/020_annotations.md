@@ -307,7 +307,7 @@ An annotation can optionally capture the raw xml content:
       valuePath: serialize(./node())
 ```
 
-(this works with `processor: saxon`, which after v4.x is the only XML processor we use. For older versions, the old `captureXml: true` option did the same thing, but this is now deprecated and will eventually be removed)
+(this works with `processor: saxon`, which after `v4.x` is the only XML processor we use. For older versions, the old `captureXml: true` option did the same thing, but this is now deprecated and will eventually be removed)
 
 # Custom properties
 

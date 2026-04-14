@@ -1,6 +1,6 @@
 # Processing values
 
-It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc. Or you might want to map a whole collection of values to different values. Both are possible. You can even define your own operations using plugins (from `dev`/`5.x`).
+It is often useful to do some simple processing on a value just before it's added to the index. This could be a simple search and replace, or combining two fields into one for easier searching, etc. Or you might want to map a whole collection of values to different values. Both are possible. You can even define your own operations using [plugins](/development/customization/).
 
 ::: tip Processing steps, or everything in XPath?
 
@@ -82,7 +82,9 @@ You can also add new processing steps by creating a simple [plugin](/development
 
 ## Advanced: forEach and name processing
 
-You can use `forEachPath` and `namePath` to process multiple metadata fields or subannotations. In this case, `valuePath` and `process` work as normal. But what if you want to apply processing steps to the name of the field or subannotation itself, for example to apply a mapping from element name to desired field name? Here, `nameProcess` comes in handy (available from `dev`/`v5.x`):
+<!-- @include: ../../_from_v5.md -->
+
+You can use `forEachPath` and `namePath` to process multiple metadata fields or subannotations. In this case, `valuePath` and `process` work as normal. But what if you want to apply processing steps to the name of the field or subannotation itself, for example to apply a mapping from element name to desired field name? Here, `nameProcess` comes in handy:
 
 ```yaml
 metadata:
