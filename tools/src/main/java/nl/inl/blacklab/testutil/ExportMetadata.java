@@ -23,7 +23,6 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.Level;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.LeafReaderContext;
 
@@ -159,9 +158,6 @@ public class ExportMetadata implements AutoCloseable {
      */
     private void collect(CSVPrinter csvPrinter) throws IOException {
 
-        System.out.println("Getting IndexReader...");
-        final IndexReader reader = index.reader();
-
         System.out.println("Calling forEachDocument()...");
         index.forEachDocument(new ParallelDocTask() {
             final AtomicInteger docsDone = new AtomicInteger(0);
@@ -181,8 +177,8 @@ public class ExportMetadata implements AutoCloseable {
                             }
                             String value = f.stringValue();
                             if (value != null) {
-                                if (value.length() > 255)
-                                    value = StringUtils.abbreviate(value, 255);
+                                if (value.length() > 400)
+                                    value = StringUtils.abbreviate(value, 300);
                                 metadata.put(f.name(), escapeProblemChars(value));
                             } else if (f.numericValue() != null)
                                 metadata.put(f.name(), escapeProblemChars(f.numericValue().toString()));
