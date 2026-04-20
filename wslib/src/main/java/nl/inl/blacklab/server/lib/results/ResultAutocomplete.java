@@ -21,14 +21,12 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
-import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.util.StringUtil;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 public class ResultAutocomplete {
 
@@ -68,7 +66,6 @@ public class ResultAutocomplete {
          */
         boolean sensitiveMatching = true;
         String luceneField;
-        boolean metadataFieldTokenized = false;
         if (!StringUtils.isEmpty(annotationName)) {
             // Annotation on annotated field
             if (!indexMetadata.annotatedFields().exists(fieldName))
@@ -90,15 +87,13 @@ public class ResultAutocomplete {
                 luceneField = s.luceneField();
             }
         } else {
+            // Must be a metadata field. These are always insensitive.
             luceneField = fieldName;
-            if (indexMetadata.metadataFields().exists(fieldName)) {
-                MetadataField metadataField = indexMetadata.metadataFields().get(fieldName);
-                metadataFieldTokenized = metadataField.type() == FieldType.TOKENIZED;
-            }
+            sensitiveMatching = false;
         }
         IndexReader reader = index.reader();
 
-        if (metadataFieldTokenized && !params.getAutocompleteTokenized()) {
+        if (!params.getAutocompleteType().equalsIgnoreCase("term")) {
             terms = findMetadataFieldValuesByToken(reader, index, luceneField, term);
         } else {
             terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);

@@ -809,8 +809,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public boolean getAutocompleteTokenized() {
-        return params.getAutocompleteTokenized();
+    public String getAutocompleteType() {
+        return params.getAutocompleteType();
     }
 
     @Override

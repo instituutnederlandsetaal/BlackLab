@@ -42,10 +42,8 @@ public class TestResultAutocomplete {
 
     @Test
     public void testTokenizedAutocompleteParameterParsing() {
-        TestQueryParams paramsTrue = new TestQueryParams(Map.of(WebserviceParameter.TOKENIZED, "true"));
-        TestQueryParams paramsFalse = new TestQueryParams(Map.of());
-        Assert.assertTrue(paramsTrue.getAutocompleteTokenized());
-        Assert.assertFalse(paramsFalse.getAutocompleteTokenized());
+        TestQueryParams paramsDefault = new TestQueryParams(Map.of());
+        Assert.assertEquals("term", paramsDefault.getAutocompleteType());
     }
 
     private static DirectoryReader createReader(Directory directory) throws IOException {

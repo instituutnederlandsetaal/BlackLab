@@ -392,7 +392,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public String getAutocompleteTerm() { return get(WebserviceParameter.TERM); }
 
     @Override
-    public boolean getAutocompleteTokenized() { return getBool(WebserviceParameter.TOKENIZED); }
+    public String getAutocompleteType() { return get(WebserviceParameter.AUTOCOMPLETE_TYPE); }
 
     @Override
     public String getRelClasses() { return get(WebserviceParameter.REL_CLASSES); }

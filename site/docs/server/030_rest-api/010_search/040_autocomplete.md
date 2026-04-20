@@ -11,10 +11,10 @@ Return terms with the specified prefix that occur in a (metadata or annotated) f
 
 #### Parameters
 
-| Parameter   | Description |
-|-------------|-------------|
-| `term`      | Prefix to find matches for. |
-| `tokenized` | Metadata fields only. For tokenized metadata fields, return matching tokens (`true`) or original full field values (`false`, default). |
+| Parameter  | Description                                                                                                                                                                                  |
+|------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `term`     | Prefix to find matches for.                                                                                                                                                                  |
+| `complete` | (`dev`/`5.x`; applies to metadata fields only) `full` returns the original field values; `term` returns indexed terms (lowercased, accents removed, individual words if field is tokenized). |
 
 ## Success Response
 
@@ -62,6 +62,4 @@ Return terms with the specified prefix that occur in a (metadata or annotated) f
 
 ## Notes
 
-For a metadata field, if the field is tokenized, it will by default return whole field values containing matching tokens. Set `tokenized=true` to return matching tokens instead (the old behavior). For untokenized fields, whole field values are returned.
-
-Currently, there's no way to specify case-/accent-sensitivity. Insensitive matching will be used for an annotation if it was indexed insensitively, otherwise it will fall back to sensitive matching.
+Currently, there's no way to specify case-/accent-sensitivity. Insensitive matching will be used for an annotation if it was indexed insensitively, otherwise it will fall back to sensitive matching. Metadata fields will always return insensitive (lowercased, no accents) unless `complete=full` is specified, in which case the unchanged original value is returned.

@@ -139,7 +139,7 @@ public interface QueryParams {
 
     String getAutocompleteTerm();
     
-    boolean getAutocompleteTokenized();
+    String getAutocompleteType();
 
     String getRelClasses();
 
