@@ -90,6 +90,7 @@ public enum WebserviceParameter {
     // How to execute request
     WAIT_FOR_TOTAL_COUNT("waitfortotal"), // wait until total number of results known?
     TERM("term"), // term for autocomplete
+    TOKENIZED("tokenized"), // for autocomplete on tokenized metadata fields, return tokens or full values?
 
     // CSV options
     CSV_INCLUDE_SUMMARY("csvsummary"), // include summary of search in the CSV output? [no]

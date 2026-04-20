@@ -1,19 +1,31 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.Annotations;
+import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.util.StringUtil;
 import nl.inl.util.LuceneUtil;
 
 public class ResultAutocomplete {
@@ -54,6 +66,7 @@ public class ResultAutocomplete {
          */
         boolean sensitiveMatching = true;
         String luceneField;
+        boolean metadataFieldTokenized = false;
         if (!StringUtils.isEmpty(annotationName)) {
             // Annotation on annotated field
             if (!indexMetadata.annotatedFields().exists(fieldName))
@@ -76,11 +89,50 @@ public class ResultAutocomplete {
             }
         } else {
             luceneField = fieldName;
+            if (indexMetadata.metadataFields().exists(fieldName)) {
+                MetadataField metadataField = indexMetadata.metadataFields().get(fieldName);
+                metadataFieldTokenized = metadataField.type() == FieldType.TOKENIZED;
+            }
         }
         IndexReader reader = index.reader();
 
-        terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);
+        if (metadataFieldTokenized && !params.getAutocompleteTokenized()) {
+            terms = findMetadataFieldValuesByToken(reader, index, luceneField, term);
+        } else {
+            terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);
+        }
+    }
 
+    private static List<String> findMetadataFieldValuesByToken(IndexReader reader, BlackLabIndex index, String fieldName,
+            String term) {
+        List<String> matchingTokens = LuceneUtil.findTermsByPrefix(reader, fieldName, term, true, MAX_VALUES * 10L);
+        return findMetadataFieldValuesByMatchingTokens(reader, index, fieldName, matchingTokens);
+    }
+
+    static List<String> findMetadataFieldValuesByMatchingTokens(IndexReader reader, BlackLabIndex index, String fieldName,
+            List<String> matchingTokens) {
+        if (matchingTokens.isEmpty())
+            return List.of();
+
+        Set<String> values = new TreeSet<>();
+        IndexSearcher searcher = new IndexSearcher(reader);
+        try {
+            for (String matchingToken: matchingTokens) {
+                TopDocs docs = searcher.search(new TermQuery(new Term(fieldName, matchingToken)), MAX_VALUES * 20);
+                for (ScoreDoc scoreDoc: docs.scoreDocs) {
+                    for (String value: index.luceneDoc(scoreDoc.doc).getValues(fieldName)) {
+                        String normalizedValue = StringUtil.stripAccents(value).toLowerCase();
+                        if (normalizedValue.contains(matchingToken))
+                            values.add(value);
+                        if (values.size() >= MAX_VALUES)
+                            return values.stream().limit(MAX_VALUES).toList();
+                    }
+                }
+            }
+            return values.stream().limit(MAX_VALUES).toList();
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
     public List<String> getTerms() {

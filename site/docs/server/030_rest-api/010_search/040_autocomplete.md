@@ -11,9 +11,10 @@ Return terms with the specified prefix that occur in a (metadata or annotated) f
 
 #### Parameters
 
-| Parameter   | Description                 |
-|-------------|-----------------------------|
+| Parameter   | Description |
+|-------------|-------------|
 | `term`      | Prefix to find matches for. |
+| `tokenized` | Metadata fields only. For tokenized metadata fields, return matching tokens (`true`) or original full field values (`false`, default). |
 
 ## Success Response
 
@@ -61,6 +62,6 @@ Return terms with the specified prefix that occur in a (metadata or annotated) f
 
 ## Notes
 
-For a metadata field, if the field is tokenized, it will find individual words. If the field is untokenized, whole field values will be returned.
+For a metadata field, if the field is tokenized, it will by default return whole field values containing matching tokens. Set `tokenized=true` to return matching tokens instead (the old behavior). For untokenized fields, whole field values are returned.
 
 Currently, there's no way to specify case-/accent-sensitivity. Insensitive matching will be used for an annotation if it was indexed insensitively, otherwise it will fall back to sensitive matching.

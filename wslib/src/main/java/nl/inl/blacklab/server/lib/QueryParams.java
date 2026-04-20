@@ -138,6 +138,8 @@ public interface QueryParams {
     int getHitEnd();
 
     String getAutocompleteTerm();
+    
+    boolean getAutocompleteTokenized();
 
     String getRelClasses();
 
