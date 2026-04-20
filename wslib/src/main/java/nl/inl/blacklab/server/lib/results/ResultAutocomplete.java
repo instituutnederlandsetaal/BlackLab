@@ -1,10 +1,21 @@
 package nl.inl.blacklab.server.lib.results;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.Term;
+import org.apache.lucene.search.IndexSearcher;
+import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TopDocs;
 
+import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -15,6 +26,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.StringUtil;
 
 public class ResultAutocomplete {
 
@@ -75,12 +87,60 @@ public class ResultAutocomplete {
                 luceneField = s.luceneField();
             }
         } else {
+            // Must be a metadata field. These are always insensitive.
             luceneField = fieldName;
+            sensitiveMatching = false;
         }
         IndexReader reader = index.reader();
 
-        terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);
+        if (!params.getAutocompleteType().equalsIgnoreCase("term")) {
+            terms = findMetadataFieldValuesByToken(reader, index, luceneField, term);
+        } else {
+            terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);
+        }
+    }
 
+    private static List<String> findMetadataFieldValuesByToken(IndexReader reader, BlackLabIndex index, String fieldName,
+            String term) {
+        List<String> matchingTokens = LuceneUtil.findTermsByPrefix(reader, fieldName, term, true, MAX_VALUES * 10L);
+        return findMetadataFieldValuesByMatchingTokens(reader, index, fieldName, matchingTokens);
+    }
+
+    static List<String> findMetadataFieldValuesByMatchingTokens(IndexReader reader, BlackLabIndex index, String fieldName,
+            List<String> matchingTokens) {
+        if (matchingTokens.isEmpty())
+            return List.of();
+
+        Set<String> values = new TreeSet<>();
+        Map<String, String> normalizedValueCache = new HashMap<>();
+        IndexSearcher searcher = new IndexSearcher(reader);
+        int docsProcessed = 0;
+        final int maxDocsToProcess = MAX_VALUES * 20;
+        try {
+            for (String matchingToken: matchingTokens) {
+                if (docsProcessed >= maxDocsToProcess)
+                    break;
+                int docsToRetrieve = Math.max(MAX_VALUES, (MAX_VALUES - values.size()) * 5);
+                TopDocs docs = searcher.search(new TermQuery(new Term(fieldName, matchingToken)), docsToRetrieve);
+                String normalizedToken = matchingToken.toLowerCase();
+                for (ScoreDoc scoreDoc: docs.scoreDocs) {
+                    docsProcessed++;
+                    if (docsProcessed > maxDocsToProcess)
+                        break;
+                    for (String value: index.luceneDoc(scoreDoc.doc).getValues(fieldName)) {
+                        String normalizedValue = normalizedValueCache.computeIfAbsent(value,
+                                v -> StringUtil.stripAccents(v).toLowerCase());
+                        if (normalizedValue.contains(normalizedToken))
+                            values.add(value);
+                        if (values.size() >= MAX_VALUES)
+                            return values.stream().limit(MAX_VALUES).toList();
+                    }
+                }
+            }
+            return values.stream().limit(MAX_VALUES).toList();
+        } catch (IOException e) {
+            throw new InvalidIndex(e);
+        }
     }
 
     public List<String> getTerms() {

@@ -809,6 +809,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
+    public String getAutocompleteType() {
+        return params.getAutocompleteType();
+    }
+
+    @Override
     public String getRelClasses() { return params.getRelClasses(); }
 
     @Override

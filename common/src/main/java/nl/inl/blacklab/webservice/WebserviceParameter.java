@@ -90,6 +90,7 @@ public enum WebserviceParameter {
     // How to execute request
     WAIT_FOR_TOTAL_COUNT("waitfortotal"), // wait until total number of results known?
     TERM("term"), // term for autocomplete
+    AUTOCOMPLETE_TYPE("complete"), // for autocomplete on metadata fields, return the original value or an indexed term?
 
     // CSV options
     CSV_INCLUDE_SUMMARY("csvsummary"), // include summary of search in the CSV output? [no]
@@ -162,6 +163,7 @@ public enum WebserviceParameter {
         defaultValues.put(PROPERTY, "word"); // deprecated, use "annotation" now
         defaultValues.put(REL_SEPARATE_SPANS, "yes");
         defaultValues.put(SENSITIVE, "no");
+        defaultValues.put(AUTOCOMPLETE_TYPE, "term");
         defaultValues.put(LIMIT_VALUES, "" + DEF_VAL_LIMIT_VALUES);
         defaultValues.put(USE_CACHE, "yes");
         defaultValues.put(WAIT_FOR_TOTAL_COUNT, "no");
