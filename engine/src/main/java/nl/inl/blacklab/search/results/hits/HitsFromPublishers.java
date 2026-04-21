@@ -623,6 +623,7 @@ public class HitsFromPublishers extends HitsAbstract {
         }
     }
 
+    @SuppressWarnings("java:S899") // we don't check hitsAdded.await() return value, see below
     private boolean ensureResultsRead(long number) {
         checkException();
         if (number == 0)

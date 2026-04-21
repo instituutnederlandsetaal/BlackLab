@@ -268,7 +268,7 @@ public class ConfigMetadataField {
         return processSteps;
     }
 
-    public synchronized void setProcess(List<ConfigProcessStep> process) {
+    public void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
         processSteps = ProcessingInstruction.fromConfig(process);
@@ -285,7 +285,7 @@ public class ConfigMetadataField {
         return nameProcessSteps;
     }
 
-    public synchronized void setNameProcess(List<ConfigProcessStep> nameProcess) {
+    public void setNameProcess(List<ConfigProcessStep> nameProcess) {
         this.nameProcess.clear();
         this.nameProcess.addAll(nameProcess);
         nameProcessSteps = ProcessingInstruction.fromConfig(nameProcess);

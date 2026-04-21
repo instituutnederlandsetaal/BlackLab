@@ -390,6 +390,7 @@ public class FileProcessor implements AutoCloseable {
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // preserve interrupted status
                 throw new RuntimeException(e);
             }
         }

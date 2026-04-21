@@ -71,7 +71,7 @@ public class ConfigAttribute {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public List<ConfigProcessStep> getProcess() {
+    public synchronized List<ConfigProcessStep> getProcess() {
         return Collections.unmodifiableList(process);
     }
 
@@ -81,7 +81,7 @@ public class ConfigAttribute {
         return processSteps;
     }
 
-    public synchronized void setProcess(List<ConfigProcessStep> process) {
+    public void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
         processSteps = ProcessingInstruction.fromConfig(process);

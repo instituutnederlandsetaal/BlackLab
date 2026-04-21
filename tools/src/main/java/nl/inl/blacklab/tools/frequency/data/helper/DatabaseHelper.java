@@ -1,5 +1,9 @@
 package nl.inl.blacklab.tools.frequency.data.helper;
 
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
 import nl.inl.blacklab.tools.frequency.config.frequency.MetadataConfig;
@@ -7,9 +11,6 @@ import nl.inl.blacklab.tools.frequency.counter.index.DocumentFrequencyCounter;
 import nl.inl.blacklab.tools.frequency.data.IdMap;
 import nl.inl.blacklab.tools.frequency.data.MetadataTerms;
 import nl.inl.util.Timer;
-
-import java.io.IOException;
-import java.util.stream.Collectors;
 
 public record DatabaseHelper(
         IdMap metaToId,
@@ -54,5 +55,16 @@ public record DatabaseHelper(
         System.out.println("  " + metaToId.getMap().size() + " unique metadata value combinations in "
                 + t.elapsedDescription(true));
         return metaToId;
+    }
+
+    @Override
+    public String toString() {
+        return "DatabaseHelper{" +
+                "metaToId=" + metaToId +
+                ", wordToId=" + wordToId +
+                ", metadataTerms=" + metadataTerms +
+                ", groupedMetadata=" + Arrays.toString(groupedMetadata) +
+                ", ungroupedMetadata=" + Arrays.toString(ungroupedMetadata) +
+                '}';
     }
 }

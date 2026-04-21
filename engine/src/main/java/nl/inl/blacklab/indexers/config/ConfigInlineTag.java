@@ -94,7 +94,7 @@ public class ConfigInlineTag {
         return "ConfigInlineTag [displayAs=" + displayAs + "]";
     }
 
-    public synchronized void setAttributes(List<ConfigAttribute> attributes) {
+    public void setAttributes(List<ConfigAttribute> attributes) {
         // Is there a "default exclude" rule?
         Optional<ConfigAttribute> ex = attributes.stream().filter(ConfigAttribute::isDefaultExclude).findFirst();
         if (ex.isPresent())

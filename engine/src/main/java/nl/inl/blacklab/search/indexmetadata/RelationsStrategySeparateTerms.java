@@ -83,7 +83,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
                 .collect(Collectors.joining(ATTR_SEPARATOR));
         String riTerm = RELATION_INFO_TERM_PREFIX + fullRelationType + ATTR_SEPARATOR + attrPart;
 
-        if (attrPart.isEmpty())
+        if (attributes == null || attrPart.isEmpty())
             return List.of(fullRelationType, riTerm);
 
         List<String> terms = new ArrayList<>();

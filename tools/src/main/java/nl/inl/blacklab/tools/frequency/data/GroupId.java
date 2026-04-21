@@ -16,6 +16,16 @@ public record GroupId(int[] tokens, int[] sorting, int[] metadata, int hash)
     }
 
     @Override
+    public String toString() {
+        return "GroupId{" +
+                "tokens=" + Arrays.toString(tokens) +
+                ", sorting=" + Arrays.toString(sorting) +
+                ", metadata=" + Arrays.toString(metadata) +
+                ", hash=" + hash +
+                '}';
+    }
+
+    @Override
     public int hashCode() {
         return hash;
     }

@@ -34,6 +34,7 @@ import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.TwoPhaseIterator;
 import org.apache.lucene.search.Weight;
+import org.jspecify.annotations.Nullable;
 
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.Nfa;
@@ -159,7 +160,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
      * @param clauses clauses to OR together
      */
     public BLSpanOrQuery(BLSpanQuery... clauses) {
-        super(clauses.length > 0 && clauses[0] != null ? clauses[0].queryInfo() : null);
+        super(queryInfoFromClauses(clauses));
         if (clauses.length == 0)
             throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
         inner = new SpanOrQuery(clauses);
@@ -168,6 +169,12 @@ public final class BLSpanOrQuery extends BLSpanQuery {
 
         List<SpanGuarantees> clauseGuarantees = SpanGuarantees.from(clauses);
         this.guarantees = createGuarantees(clauseGuarantees);
+    }
+
+    private static @Nullable QueryInfo queryInfoFromClauses(BLSpanQuery[] clauses) {
+        if (clauses.length == 0 || clauses[0] == null)
+            throw new IllegalArgumentException("Can't create SpanOrQuery without clauses");
+        return clauses[0].queryInfo();
     }
 
     public static BLSpanQuery from(QueryInfo queryInfo, SpanOrQuery in) {

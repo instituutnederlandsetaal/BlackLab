@@ -306,7 +306,6 @@ public class ConfigAnnotation {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<ConfigProcessStep> getProcess() {
-        // We don't synchronize reads, as processSteps is only set once when config is read
         return process;
     }
 
@@ -318,7 +317,6 @@ public class ConfigAnnotation {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public List<ConfigProcessStep> getNameProcess() {
-        // We don't synchronize reads, as processSteps is only set once when config is read
         return nameProcess;
     }
 
@@ -328,7 +326,7 @@ public class ConfigAnnotation {
         return nameProcessSteps;
     }
 
-    public synchronized void setProcess(List<ConfigProcessStep> process) {
+    public void setProcess(List<ConfigProcessStep> process) {
         this.process.clear();
         this.process.addAll(process);
 
@@ -340,7 +338,7 @@ public class ConfigAnnotation {
         processSteps = ProcessingStep.combine(processSteps, new ProcessingInstructionUnique().get());
     }
 
-    public synchronized void setNameProcess(List<ConfigProcessStep> nameProcess) {
+    public void setNameProcess(List<ConfigProcessStep> nameProcess) {
         this.nameProcess.clear();
         this.nameProcess.addAll(nameProcess);
         nameProcessSteps = ProcessingInstruction.fromConfig(this.nameProcess); // "compile"

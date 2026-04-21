@@ -81,7 +81,7 @@ public class ConfigLinkValue {
         return processSteps;
     }
 
-    public synchronized void setProcess(List<ConfigProcessStep> p) {
+    public void setProcess(List<ConfigProcessStep> p) {
         process.clear();
         process.addAll(p);
         processSteps = ProcessingInstruction.fromConfig(process);
