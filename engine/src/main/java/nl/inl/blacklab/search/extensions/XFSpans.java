@@ -37,7 +37,7 @@ public class XFSpans implements ExtensionFunctionClass {
     @Override
     public void register() {
         QueryExtensions.register(FUNC_WITH_SPANS, ARGS_QQS,
-                Arrays.asList(null, QueryFunction.VALUE_ANY_SPAN, "with-spans"),
+                Arrays.asList(null, QueryFunction.VALUE_ANY_SPAN, FUNC_WITH_SPANS),
                 (queryInfo, context, args) -> withSpans(queryInfo, context, args));
     }
 

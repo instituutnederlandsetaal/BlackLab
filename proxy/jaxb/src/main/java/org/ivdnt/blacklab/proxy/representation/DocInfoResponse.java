@@ -3,13 +3,6 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.util.List;
 import java.util.Map;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-import jakarta.xml.bind.annotation.XmlElement;
-import jakarta.xml.bind.annotation.XmlElementWrapper;
-import jakarta.xml.bind.annotation.XmlRootElement;
-import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-
 import org.ivdnt.blacklab.proxy.helper.MapAdapter;
 import org.ivdnt.blacklab.proxy.helper.SerializationUtil;
 
@@ -18,6 +11,13 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
+import jakarta.xml.bind.annotation.XmlElement;
+import jakarta.xml.bind.annotation.XmlElementWrapper;
+import jakarta.xml.bind.annotation.XmlRootElement;
+import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 @XmlRootElement(name="blacklabResponse")
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -42,7 +42,10 @@ public class DocInfoResponse {
     @JsonInclude(Include.NON_NULL)
     public Map<String, String> metadataFieldDisplayNames;
 
-    public DocInfoResponse() {}
+    @SuppressWarnings("unused")
+    public DocInfoResponse() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override public String toString() {
         return "DocOverview{" +

@@ -180,7 +180,7 @@ public class DocPropertyStoredField extends DocProperty {
         if (value.toString().isEmpty())
             return null; // Cannot search for empty string (to avoid this problem, configure an "Unknown value")
         if (!value.toString().isEmpty() && metadataField.type() == FieldType.TOKENIZED) {
-            String strValue = "\"" + value.toString().replaceAll("\"", "\\\\\"") + "\"";
+            String strValue = "\"" + value.toString().replace("\"", "\\\"") + "\"";
             try {
                 Analyzer analyzer = BuiltinAnalyzers.fromString(metadataField.analyzerName()).getAnalyzer();
                 return LuceneUtil.parseLuceneQuery(index, strValue, analyzer, fieldName);

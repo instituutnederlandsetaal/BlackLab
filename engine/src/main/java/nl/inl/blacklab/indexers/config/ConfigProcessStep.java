@@ -17,6 +17,8 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 @JsonDeserialize(using = ConfigProcessStep.ConfigProcessStepDeserializer.class)
 public class ConfigProcessStep {
 
+    public static final String KEY_ACTION = "action";
+
     // Custom Jackson serializer
     static class ConfigProcessStepSerializer extends StdSerializer<ConfigProcessStep> {
 
@@ -31,7 +33,7 @@ public class ConfigProcessStep {
         @Override
         public void serialize(ConfigProcessStep value, JsonGenerator gen, SerializerProvider provider) throws java.io.IOException {
             gen.writeStartObject();
-            gen.writeStringField("action", value.getAction());
+            gen.writeStringField(KEY_ACTION, value.getAction());
             for (Map.Entry<String, Object> entry : value.getParam().entrySet()) {
                 gen.writeObjectField(entry.getKey(), entry.getValue());
             }
@@ -51,13 +53,13 @@ public class ConfigProcessStep {
         public ConfigProcessStep deserialize(com.fasterxml.jackson.core.JsonParser jp, DeserializationContext ctxt) throws java.io.IOException {
             JsonNode node = jp.getCodec().readTree(jp);
             ConfigProcessStep step = new ConfigProcessStep();
-            JsonNode actionNode = node.get("action");
+            JsonNode actionNode = node.get(KEY_ACTION);
             if (actionNode != null && !actionNode.isNull()) {
                 step.setAction(actionNode.asText());
             }
             // Add all other fields to param, using default deserialization for values
             node.fields().forEachRemaining(entry -> {
-                if (!"action".equals(entry.getKey())) {
+                if (!KEY_ACTION.equals(entry.getKey())) {
                     try {
                         Object value = jp.getCodec().treeToValue(entry.getValue(), Object.class);
                         step.addParam(entry.getKey(), value);

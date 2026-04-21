@@ -2,10 +2,10 @@ package org.ivdnt.blacklab.proxy.representation;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.xml.bind.annotation.XmlAccessType;
 import jakarta.xml.bind.annotation.XmlAccessorType;
-
-import com.fasterxml.jackson.annotation.JsonInclude;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Doc {
@@ -20,8 +20,10 @@ public class Doc {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public List<DocResultsHitContext> snippets;
 
-    // required for Jersey
-    public Doc() {}
+    @SuppressWarnings("unused")
+    public Doc() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

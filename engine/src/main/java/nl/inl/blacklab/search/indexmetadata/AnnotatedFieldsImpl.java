@@ -123,7 +123,8 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     }
 
     private Map<String, AnnotationGroups> annotationGroupsPerField() {
-        Map<String, List<Map<String, Object>>> serialized = (Map<String, List<Map<String, Object>>>)topLevelCustom.get("annotationGroups");
+        Map<String, List<Map<String, Object>>> serialized = (Map<String, List<Map<String, Object>>>)topLevelCustom.get(
+                IndexMetadataImpl.KEY_CUSTOM_ANNOTATION_GROUPS);
         Map<String, AnnotationGroups> map = new HashMap<>();
         if (serialized != null) {
             for (Map.Entry<String, List<Map<String, Object>>> e: serialized.entrySet()) {
@@ -136,11 +137,11 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
     }
 
     public void clearAnnotationGroups() {
-        topLevelCustom.put("annotationGroups", new LinkedHashMap<>());
+        topLevelCustom.put(IndexMetadataImpl.KEY_CUSTOM_ANNOTATION_GROUPS, new LinkedHashMap<>());
     }
 
     public void putAnnotationGroups(String fieldName, AnnotationGroups annotationGroups) {
-        Map<String, List<Map<String, Object>>> groups = topLevelCustom.computeIfAbsent("annotationGroups",
+        Map<String, List<Map<String, Object>>> groups = topLevelCustom.computeIfAbsent(IndexMetadataImpl.KEY_CUSTOM_ANNOTATION_GROUPS,
                 __ -> new LinkedHashMap<>());
         groups.put(fieldName, annotationGroups.toCustom());
     }

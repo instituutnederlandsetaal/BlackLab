@@ -29,9 +29,6 @@ public class ConfigLinkValue {
     @JsonIgnore
     ProcessingStep processSteps = ProcessingInstruction.identity();
 
-    public ConfigLinkValue() {
-    }
-
     void validate(InputFormatMessages messages) {
         if (valuePath == null && valueField == null)
             messages.error("Link value must have either valuePath or valueField");

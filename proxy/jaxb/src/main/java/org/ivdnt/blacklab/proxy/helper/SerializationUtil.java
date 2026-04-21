@@ -29,7 +29,7 @@ public class SerializationUtil {
      * @return sanitized version
      */
     public static String getCleanLabel(String attributeLabel) {
-        attributeLabel = attributeLabel.replaceAll("[()]", "").replaceAll("[^\\w\\s]", "_").replaceAll(" ", "_");
+        attributeLabel = attributeLabel.replaceAll("[()]", "").replaceAll("[^\\w\\s]", "_").replace(" ", "_");
         return attributeLabel.isEmpty() ? "EMPTY_VALUE" : attributeLabel;
     }
 

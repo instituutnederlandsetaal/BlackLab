@@ -161,9 +161,10 @@ public class HitsResults implements EntityWithSummary {
     @JsonDeserialize(using = SerializationUtil.FacetDeserializer.class)
     public Map<String, ArrayList<FacetValue>> facets; // ArrayList because JAXB cannot handle interfaces
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    public HitsResults() {}
+    public HitsResults() {
+        // no-arg ctor required by Jersey
+    }
 
     public HitsResults(SearchSummary summary, BigList<Hit> hits,
             List<DocInfo> docInfos) {

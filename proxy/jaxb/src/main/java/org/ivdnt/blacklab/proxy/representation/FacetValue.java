@@ -10,7 +10,10 @@ public class FacetValue {
 
     public long size;
 
-    public FacetValue() {}
+    @SuppressWarnings("unused")
+    public FacetValue() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

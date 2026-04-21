@@ -134,7 +134,7 @@ class HitsListNoLock32 extends HitsListAbstract {
         starts.addAll(hil.starts);
         ends.addAll(hil.ends);
         matchInfos.addAll(hil.matchInfos);
-        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
+        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : ERR_WRONG_NUMBER_OF_MATCH_INFOS;
     }
 
     private void addAllNoLockSource(HitsListNoLock32 hil) {
@@ -143,7 +143,7 @@ class HitsListNoLock32 extends HitsListAbstract {
         starts.addAll(hil.starts);
         ends.addAll(hil.ends);
         matchInfos.addAll(hil.matchInfos);
-        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
+        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : ERR_WRONG_NUMBER_OF_MATCH_INFOS;
     }
 
     /**
@@ -263,7 +263,7 @@ class HitsListNoLock32 extends HitsListAbstract {
         starts.addAll(hil.starts);
         ends.addAll(hil.ends);
         matchInfos.addAll(hil.matchInfos);
-        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
+        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : ERR_WRONG_NUMBER_OF_MATCH_INFOS;
     }
 
     private void addAllConvertDocBaseNoLock32(HitsListNoLock32 hil) {
@@ -275,7 +275,7 @@ class HitsListNoLock32 extends HitsListAbstract {
         starts.addAll(hil.starts);
         ends.addAll(hil.ends);
         matchInfos.addAll(hil.matchInfos);
-        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : "Wrong number of matchInfos";
+        assert matchInfos.isEmpty() || matchInfos.size() == docs.size() : ERR_WRONG_NUMBER_OF_MATCH_INFOS;
     }
 
     public void fillWindow(HitsMutable window, long start, long end) {

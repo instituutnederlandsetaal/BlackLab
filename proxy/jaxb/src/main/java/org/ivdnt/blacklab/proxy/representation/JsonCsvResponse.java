@@ -10,8 +10,10 @@ public class JsonCsvResponse {
 
     public String csv;
 
-    // required for Jersey
-    public JsonCsvResponse() {}
+    @SuppressWarnings("unused")
+    public JsonCsvResponse() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

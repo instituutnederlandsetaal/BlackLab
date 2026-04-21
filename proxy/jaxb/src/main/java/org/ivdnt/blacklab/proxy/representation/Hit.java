@@ -46,8 +46,10 @@ public class Hit  {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Map<String, Hit> otherFields; // TODO: check XML serialization
 
-    // required for Jersey
-    public Hit() {}
+    @SuppressWarnings("unused")
+    public Hit() {
+        // no-arg ctor required by Jersey
+    }
 
     public Hit(String docPid, long start, long end) {
         this.docPid = docPid;

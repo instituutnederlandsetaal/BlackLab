@@ -77,7 +77,7 @@ public class DutchTagger extends FileConverter {
         converterProps.setProperty("word2vecFile", cfgString(PROP_VECTORS, "sonar.vectors.bin"));
         converterProps.setProperty("taggingModel", cfgString(PROP_MODEL, "withMoreVectorrs"));
         converterProps.setProperty("lexiconPath", cfgString(PROP_LEXICON, "spelling.tab"));
-        converterProps.setProperty("tokenize", "" + cfgBool(PROP_TOKENIZE, true));
+        converterProps.setProperty(PROP_TOKENIZE, "" + cfgBool(PROP_TOKENIZE, true));
         return converterProps;
     }
 

@@ -10,8 +10,10 @@ public class DocContentsResults {
 
     public String contents;
 
-    // required for Jersey
-    public DocContentsResults() {}
+    @SuppressWarnings("unused")
+    public DocContentsResults() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

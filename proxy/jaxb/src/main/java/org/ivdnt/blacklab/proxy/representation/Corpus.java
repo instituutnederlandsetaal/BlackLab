@@ -299,9 +299,10 @@ public class Corpus {
     @JsonDeserialize(using = ListAnnotatedFieldAnnotationGroupsDeserializer.class)
     public List<AnnotatedFieldAnnotationGroups> annotationGroups;
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    private Corpus() {}
+    private Corpus() {
+        // no-arg ctor required by Jersey
+    }
 
     @SuppressWarnings("unused")
     public Corpus(String name, SpecialFieldInfo fieldInfo,

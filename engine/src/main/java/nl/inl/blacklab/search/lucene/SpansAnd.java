@@ -4,10 +4,10 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
 
 /**
  * Combines two Spans using AND. Note that this means that only matches with the
@@ -40,7 +40,7 @@ class SpansAnd extends BLSpans {
      * @param second second clause
      */
     public SpansAnd(BLSpans first, BLSpans second) {
-        super(SpanQueryAnd.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
+        super(SpanQueryAndNot.createGuarantees(List.of(first.guarantees(), second.guarantees()), false));
         if (!first.guarantees().hitsStartPointSorted())
             throw new IllegalArgumentException("First clause is not start-point sorted");
         if (!second.guarantees().hitsStartPointSorted())

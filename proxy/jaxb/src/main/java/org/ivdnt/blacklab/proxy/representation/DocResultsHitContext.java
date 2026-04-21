@@ -15,8 +15,10 @@ public class DocResultsHitContext {
 
     public ContextWords right;
 
-    // required for Jersey
-    public DocResultsHitContext() {}
+    @SuppressWarnings("unused")
+    public DocResultsHitContext() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

@@ -37,6 +37,10 @@ import jakarta.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 @JsonDeserialize(using=DocInfo.Deserializer.class)
 public class DocInfo {
 
+    private static final String KEY_LENGTH_IN_TOKENS = "lengthInTokens";
+    private static final String KEY_MAY_VIEW = "mayView";
+    private static final String KEY_TOKEN_COUNTS = "tokenCounts";
+
     /** Use this to serialize this class to JSON */
     public static class Serializer extends JsonSerializer<Object> {
         @Override
@@ -54,11 +58,11 @@ public class DocInfo {
                     jgen.writeEndArray();
                 }
                 if (el.lengthInTokens != null)
-                    jgen.writeNumberField("lengthInTokens", el.lengthInTokens);
+                    jgen.writeNumberField(KEY_LENGTH_IN_TOKENS, el.lengthInTokens);
                 if (el.mayView != null)
-                    jgen.writeBooleanField("mayView", el.mayView);
+                    jgen.writeBooleanField(KEY_MAY_VIEW, el.mayView);
                 if (el.tokenCounts != null) {
-                    jgen.writeFieldName("tokenCounts");
+                    jgen.writeFieldName(KEY_TOKEN_COUNTS);
                     provider.defaultSerializeValue(el.tokenCounts, jgen);
                 }
                 jgen.writeEndObject();
@@ -69,10 +73,10 @@ public class DocInfo {
                 List<FieldTokenCount> tokenCounts = null;
                 for (JAXBElement jaxbe: el.elements) {
                     String name = jaxbe.getName().getLocalPart();
-                    if (name.equals("lengthInTokens") || name.equals("mayView") || name.equals("tokenCounts")) {
-                        if (name.equals("lengthInTokens"))
+                    if (name.equals(KEY_LENGTH_IN_TOKENS) || name.equals(KEY_MAY_VIEW) || name.equals(KEY_TOKEN_COUNTS)) {
+                        if (name.equals(KEY_LENGTH_IN_TOKENS))
                             lengthInTokens = (Long) jaxbe.getValue();
-                        else if (name.equals("tokenCounts"))
+                        else if (name.equals(KEY_TOKEN_COUNTS))
                             tokenCounts = (List<FieldTokenCount>) jaxbe.getValue();
                         else
                             mayView = (Boolean) jaxbe.getValue();
@@ -86,11 +90,11 @@ public class DocInfo {
                     jgen.writeEndArray();
                 }
                 if (lengthInTokens != null)
-                    jgen.writeNumberField("lengthInTokens", lengthInTokens);
+                    jgen.writeNumberField(KEY_LENGTH_IN_TOKENS, lengthInTokens);
                 if (mayView != null)
-                    jgen.writeBooleanField("mayView", mayView);
+                    jgen.writeBooleanField(KEY_MAY_VIEW, mayView);
                 if (tokenCounts != null) {
-                    jgen.writeFieldName("tokenCounts");
+                    jgen.writeFieldName(KEY_TOKEN_COUNTS);
                     provider.defaultSerializeValue(tokenCounts, jgen);
                 }
                 jgen.writeEndObject();
@@ -123,16 +127,16 @@ public class DocInfo {
                 token = parser.nextToken();
                 if (token == JsonToken.VALUE_NUMBER_INT) {
                     // Special lengthInTokens setting?
-                    if (!fieldName.equals("lengthInTokens"))
+                    if (!fieldName.equals(KEY_LENGTH_IN_TOKENS))
                         throw new ErrorReadingResponse("Unexpected int in metadata");
                     docInfo.lengthInTokens = parser.getValueAsLong();
                 } else if (token == JsonToken.VALUE_TRUE || token == JsonToken.VALUE_FALSE) {
                     // Special mayView setting?
-                    if (!fieldName.equals("mayView"))
+                    if (!fieldName.equals(KEY_MAY_VIEW))
                         throw new ErrorReadingResponse("Unexpected boolean in metadata");
                     docInfo.mayView = parser.getValueAsBoolean();
                 } else if (token == JsonToken.START_ARRAY) {
-                    if (fieldName.equals("tokenCounts")) {
+                    if (fieldName.equals(KEY_TOKEN_COUNTS)) {
                         // Token count per field
                         docInfo.tokenCounts = deserializationContext.readValue(parser, typeListOfString);
                     } else {

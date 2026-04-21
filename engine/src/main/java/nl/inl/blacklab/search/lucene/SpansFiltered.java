@@ -3,11 +3,11 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.queries.spans.FilterSpans;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.Scorer;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.FilterSpans;
 
 /**
  * Apply a document Filter to a Spans.
@@ -117,6 +117,8 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
     @Override
     public TwoPhaseIterator asTwoPhaseIterator() {
+        final String TWO_PHASE_TOSTRING = "BLFilterSpans@asTwoPhaseIterator(approx=";
+
         float matchCost;
         DocIdSetIterator approximation;
         TwoPhaseIterator inner = in.asTwoPhaseIterator();
@@ -136,7 +138,7 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
                 @Override
                 public String toString() {
-                    return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+                    return TWO_PHASE_TOSTRING + approximation + ")";
                 }
             };
         } else {
@@ -156,7 +158,7 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
                     @Override
                     public String toString() {
-                        return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+                        return TWO_PHASE_TOSTRING + approximation + ")";
                     }
                 };
             } else {
@@ -176,7 +178,7 @@ class SpansFiltered extends BLFilterSpans<BLSpans> {
 
                     @Override
                     public String toString() {
-                        return "BLFilterSpans@asTwoPhaseIterator(approx=" + approximation + ")";
+                        return TWO_PHASE_TOSTRING + approximation + ")";
                     }
                 };
             }

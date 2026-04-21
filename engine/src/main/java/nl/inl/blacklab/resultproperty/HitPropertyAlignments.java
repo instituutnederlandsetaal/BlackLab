@@ -90,12 +90,12 @@ public class HitPropertyAlignments extends HitProperty {
 
     @Override
     public String name() {
-        return "alignments";
+        return ID;
     }
 
     @Override
     public String serialize() {
-        return "alignments";
+        return ID;
     }
 
     @Override

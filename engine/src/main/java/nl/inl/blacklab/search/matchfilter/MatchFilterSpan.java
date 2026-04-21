@@ -49,6 +49,7 @@ public class MatchFilterSpan extends MatchFilter {
 
     @Override
     public void lookupAnnotationIndices(ForwardIndexAccessor fiAccessor) {
+        // nothing to do here
     }
 
     @Override

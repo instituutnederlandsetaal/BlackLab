@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.apache.logging.log4j.LogManager;
@@ -155,7 +154,7 @@ public class XPathFinder {
 
     public List<NodeInfo> findNodes(String wordsPath, NodeInfo container) {
         List<NodeInfo> results = new ArrayList<>();
-        for (XdmItem item: find(wordsPath, XdmItem.wrap(container))) {
+        for (XdmItem item: find(wordsPath, XdmValue.wrap(container))) {
             if (item.isNode())
                 results.add(((XdmNode) item).getUnderlyingNode());
             else
@@ -234,7 +233,7 @@ public class XPathFinder {
     }
 
     public String xpathValue(String xPath, NodeInfo context) {
-        return xpathValue(xPath, XdmItem.wrap(context));
+        return xpathValue(xPath, XdmValue.wrap(context));
     }
 
     /**

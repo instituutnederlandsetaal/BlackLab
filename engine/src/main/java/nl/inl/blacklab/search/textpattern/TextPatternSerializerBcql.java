@@ -183,19 +183,11 @@ public class TextPatternSerializerBcql {
             TextPatternFunctionCall tp = (TextPatternFunctionCall) pattern;
             b.append(tp.getName()).append("(");
             boolean first = true;
-            for (Object arg: tp.getArgs()) {
+            for (TextPattern arg: tp.getArgs()) {
                 if (!first)
                     b.append(", ");
                 first = false;
-                if (arg instanceof TextPattern) {
-                    serialize((TextPattern) arg, b, insideTokenBrackets);
-                } else if (arg instanceof String) {
-                    serializeToQuotedString(b, (String) arg);
-                } else if (arg instanceof Integer) {
-                    b.append((int) arg);
-                } else {
-                    b.append(arg);
-                }
+                serialize(arg, b, insideTokenBrackets);
             }
             b.append(")");
         });

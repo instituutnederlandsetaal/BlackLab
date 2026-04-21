@@ -90,7 +90,7 @@ public class SpansAndUniqueRelationsOld extends BLConjunctionSpansInBuckets {
 
     public SpansAndUniqueRelationsOld(List<BLSpans> subSpans) {
         super(bucketizeSameStartEnd(subSpans),
-                SpanQueryAnd.createGuarantees(SpanGuarantees.from(subSpans), false));
+                SpanQueryAndNot.createGuarantees(SpanGuarantees.from(subSpans), false));
 
         this.spanWindow = new SpanTotalLengthEndPositionWindow();
         this.atFirstInCurrentDoc = true; // ensure for doc -1 that start/end positions are -1

@@ -17,9 +17,10 @@ public class User {
 
     public boolean debugMode = false;
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    public User() {}
+    public User() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

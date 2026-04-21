@@ -985,7 +985,7 @@ public class InputFormatTypeChat extends InputFormatTypeConfig {
                 result = BARE_ZERO.matcher(result).replaceAll(SPACE);
 
                 // remove underscore
-                result = result.replaceAll("_", EMPTY_STRING);
+                result = result.replace("_", EMPTY_STRING);
 
                 // remove +..  p. 63
                 result = PLUS_DOT_DOT.matcher(result).replaceAll(EMPTY_STRING);

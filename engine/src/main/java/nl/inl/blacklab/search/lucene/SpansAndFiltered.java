@@ -92,7 +92,7 @@ public class SpansAndFiltered extends BLConjunctionSpansInBuckets {
 
     public SpansAndFiltered(List<BLSpans> subSpans, SpansAndFilterFactory factory) {
         super(bucketizeSameStartEnd(subSpans, factory),
-                SpanQueryAnd.createGuarantees(SpanGuarantees.from(subSpans), false));
+                SpanQueryAndNot.createGuarantees(SpanGuarantees.from(subSpans), false));
 
         this.filter = factory.create(this, this.subSpans, indexInBucket);
         this.filterName = factory.name();

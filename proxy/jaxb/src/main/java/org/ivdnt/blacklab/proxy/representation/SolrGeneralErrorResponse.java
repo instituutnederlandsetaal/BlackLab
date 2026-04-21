@@ -15,9 +15,10 @@ public class SolrGeneralErrorResponse {
 
     private String status;
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    private SolrGeneralErrorResponse() {}
+    private SolrGeneralErrorResponse() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

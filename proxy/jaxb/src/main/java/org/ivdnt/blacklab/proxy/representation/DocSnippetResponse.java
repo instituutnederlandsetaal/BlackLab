@@ -31,7 +31,10 @@ public class DocSnippetResponse {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public ContextWords right;
 
-    public DocSnippetResponse() {}
+    @SuppressWarnings("unused")
+    public DocSnippetResponse() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

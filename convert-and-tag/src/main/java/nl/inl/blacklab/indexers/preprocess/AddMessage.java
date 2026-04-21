@@ -30,7 +30,7 @@ public class AddMessage extends FileConverter {
     public synchronized FileReference perform(FileReference input, String inputFormat) throws PluginException {
         try (Reader reader = input.getSinglePassReader()) {
             String str = IOUtils.toString(reader);
-            str = str.replaceAll("</TEI>", "<!-- " + StringUtil.escapeQuote(message, "'") + " --></TEI>");
+            str = str.replace("</TEI>", "<!-- " + StringUtil.escapeQuote(message, "'") + " --></TEI>");
             logger.warn("perform: appended message {}", message);
             return FileReference.fromCharArray(input.getPath(), str.toCharArray(), input.getAssociatedFile());
         } catch (IOException e) {

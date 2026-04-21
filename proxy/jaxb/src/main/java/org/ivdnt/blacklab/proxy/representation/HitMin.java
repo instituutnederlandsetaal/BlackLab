@@ -3,11 +3,11 @@ package org.ivdnt.blacklab.proxy.representation;
 import java.util.Arrays;
 import java.util.Objects;
 
-import jakarta.xml.bind.annotation.XmlAccessType;
-import jakarta.xml.bind.annotation.XmlAccessorType;
-
 import org.ivdnt.blacklab.proxy.helper.SortValueUtil;
 import org.ivdnt.blacklab.proxy.helper.Util;
+
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 
 /** Hit with minimal information for aggregator */
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -25,8 +25,10 @@ public class HitMin implements Comparable<HitMin> {
     /** What is/are the value(s) these hits are sorted by? (used for merging) */
     public String[] sortValues;
 
-    // required for Jersey
-    public HitMin() {}
+    @SuppressWarnings("unused")
+    public HitMin() {
+        // no-arg ctor required by Jersey
+    }
 
     public HitMin(int nodeId, long indexOnNode, int docIdOnNode, String[] sortValues) {
         this.nodeId = nodeId;

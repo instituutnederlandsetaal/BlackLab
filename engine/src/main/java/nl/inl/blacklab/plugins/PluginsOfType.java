@@ -56,9 +56,9 @@ public class PluginsOfType<T extends Plugin> {
             } catch (ServiceConfigurationError e) {
                 logger.error("Plugin failed to load: " + e.getMessage(), e);
             } catch (Exception e) {
-                logger.error("Plugin " + (plugin == null ? "(unknown)" : plugin.getId()) + " failed to load: "
-                                + e.getMessage(),
-                        e);
+                logger.error("Plugin {} failed to load: {}", (plugin == null ? "(unknown)" : plugin.getId()),
+                                e.getMessage());
+                logger.error(e);
             }
         }
     }
@@ -106,7 +106,7 @@ public class PluginsOfType<T extends Plugin> {
                     result.add(pluginClass.cast(plugin));
                 } catch (PluginException e) {
                     // exception already cached in plugindata, no need to throw.
-                    logger.error("Plugin " + plugin.getId() + " failed to initialize: " + e.getMessage());
+                    logger.error("Plugin {} failed to initialize: {}", plugin.getId(), e.getMessage());
                     logger.debug(e);
                 }
             }
@@ -158,10 +158,9 @@ public class PluginsOfType<T extends Plugin> {
                 pluginData.initializePlugin();
             } catch (PluginException e) {
                 // exception already cached in plugindata, no need to throw.
-                logger.error("Plugin " + pluginData.getPlugin().getId() + " failed to initialize: " + e.getMessage());
+                logger.error("Plugin {} failed to initialize: {}", pluginData.getPlugin().getId(), e.getMessage());
                 logger.debug(e);
             }
         });
     }
-
 }

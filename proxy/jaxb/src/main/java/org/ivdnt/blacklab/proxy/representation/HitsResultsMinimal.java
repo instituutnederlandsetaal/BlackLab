@@ -85,9 +85,10 @@ public class HitsResultsMinimal implements EntityWithSummary {
     @JsonInclude(Include.NON_NULL)
     public BigList<List<Object>> hits;
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    public HitsResultsMinimal() {}
+    public HitsResultsMinimal() {
+        // no-arg ctor required by Jersey
+    }
 
     public HitsResultsMinimal(SearchSummary summary, BigList<HitMin> hits) {
         this.summary = summary;

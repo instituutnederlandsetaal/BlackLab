@@ -14,7 +14,6 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
@@ -49,7 +48,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexAbstract;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
-import nl.inl.blacklab.search.DocTask;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
@@ -75,6 +73,15 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
      *  (no is for older pre-release versions of relations indexes; this flag will be removed in the future)
      */
     public static final String IFL_INDEX_RELATIONS_TWICE = "index_relations_twice";
+
+    // Constants for various comon bits of custom information. BlackLab doesn't use these, it just passes them on.
+    public static final String KEY_CUSTOM_DISPLAY_NAME = "displayName";
+    public static final String KEY_CUSTOM_DESCRIPTION = "description";
+    public static final String KEY_CUSTOM_TEXT_DIRECTION = "textDirection";
+    public static final String KEY_CUSTOM_UNKNOWN_CONDITION = "unknownCondition";
+    public static final String KEY_CUSTOM_UNKNOWN_VALUE = "unknownValue";
+    public static final String KEY_CUSTOM_ANNOTATION_GROUPS = "annotationGroups";
+    public static final String KEY_CUSTOM_METADATA_FIELD_GROUPS = "metadataFieldGroups";
 
     public static IndexMetadataImpl deserializeFromJsonJaxb(BlackLabIndex index) {
         try {
@@ -359,15 +366,15 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         String displayName = corpusConfig.getDisplayName();
         if (StringUtils.isEmpty(displayName))
             displayName = IndexMetadata.indexNameFromDirectory(indexDirectory);
-        custom.put("displayName", displayName);
-        custom.put("description", corpusConfig.getDescription());
-        custom.put("textDirection", corpusConfig.getTextDirection().getCode());
+        custom.put(KEY_CUSTOM_DISPLAY_NAME, displayName);
+        custom.put(KEY_CUSTOM_DESCRIPTION, corpusConfig.getDescription());
+        custom.put(KEY_CUSTOM_TEXT_DIRECTION, corpusConfig.getTextDirection().getCode());
         for (Map.Entry<String, String> e: corpusConfig.getSpecialFields().entrySet()) {
             if (!e.getKey().equals(MetadataFields.SPECIAL_FIELD_SETTING_PID))
                 custom.put(e.getKey(), e.getValue());
         }
-        custom.put("unknownCondition", config.getMetadataDefaultUnknownCondition().stringValue());
-        custom.put("unknownValue", config.getMetadataDefaultUnknownValue());
+        custom.put(KEY_CUSTOM_UNKNOWN_CONDITION, config.getMetadataDefaultUnknownCondition().stringValue());
+        custom.put(KEY_CUSTOM_UNKNOWN_VALUE, config.getMetadataDefaultUnknownValue());
         // Also set on metadataFields so dynamically registered fields get the right defaults
         metadataFields.setDefaultUnknownCondition(config.getMetadataDefaultUnknownCondition().stringValue());
         metadataFields.setDefaultUnknownValue(config.getMetadataDefaultUnknownValue());
@@ -430,7 +437,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         metadataFields.setMetadataGroups(metaGroups);
 
         // Annotation groups
-        custom.put("annotationGroups", new LinkedHashMap<>());
+        custom.put(KEY_CUSTOM_ANNOTATION_GROUPS, new LinkedHashMap<>());
         for (Map.Entry<String, List<ConfigAnnotationGroup>> entry: corpusConfig.getAnnotationGroups().entrySet()) {
             String fieldName = entry.getKey();
             List<AnnotationGroup> annotGroups = new ArrayList<>();
@@ -451,16 +458,16 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ensureNotFrozen();
         File dir = index.indexDirectory();
         if (dir != null)
-            custom.put("displayName", IndexMetadata.indexNameFromDirectory(dir));
-        custom.put("description", "");
-        custom.put("textDirection", "ltr");
+            custom.put(KEY_CUSTOM_DISPLAY_NAME, IndexMetadata.indexNameFromDirectory(dir));
+        custom.put(KEY_CUSTOM_DESCRIPTION, "");
+        custom.put(KEY_CUSTOM_TEXT_DIRECTION, "ltr");
         // Store default unknown condition/value (NEVER/unknown) in custom for consistency
-        custom.put("unknownCondition", UnknownCondition.NEVER.stringValue());
-        custom.put("unknownValue", "unknown");
+        custom.put(KEY_CUSTOM_UNKNOWN_CONDITION, UnknownCondition.NEVER.stringValue());
+        custom.put(KEY_CUSTOM_UNKNOWN_VALUE, "unknown");
         versionInfo.populateWithDefaults();
         metadataFields.clearSpecialFields();
-        custom.put("annotationGroups", new LinkedHashMap<>());
-        custom.put("metadataFieldGroups", new LinkedHashMap<>());
+        custom.put(KEY_CUSTOM_ANNOTATION_GROUPS, new LinkedHashMap<>());
+        custom.put(KEY_CUSTOM_METADATA_FIELD_GROUPS, new LinkedHashMap<>());
     }
 
     @Override
@@ -646,12 +653,12 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         ensureNotFrozen();
         if (displayName.length() > 80)
             displayName = StringUtils.abbreviate(displayName, 75);
-        custom.put("displayName", displayName);
+        custom.put(KEY_CUSTOM_DISPLAY_NAME, displayName);
     }
 
     public void setDescription(String description) {
         ensureNotFrozen();
-        custom.put("description", description);
+        custom.put(KEY_CUSTOM_DESCRIPTION, description);
     }
 
     /**

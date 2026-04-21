@@ -8,10 +8,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.search.ConjunctionUtils;
 import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.TwoPhaseIterator;
-import org.apache.lucene.queries.spans.SpanCollector;
 import org.apache.lucene.store.ByteArrayDataInput;
 
 import nl.inl.blacklab.search.indexmetadata.RelationsStrategySeparateTerms;
@@ -43,7 +43,7 @@ class SpansAndSameRelationIdOld extends BLSpans {
      * @param clauses clauses
      */
     public SpansAndSameRelationIdOld(List<BLSpans> clauses) {
-        super(SpanQueryAnd.createGuarantees(
+        super(SpanQueryAndNot.createGuarantees(
                 clauses.stream().map(BLSpans::guarantees).toList(),
                 false));
         subSpans = new ArrayList<>(clauses.size());

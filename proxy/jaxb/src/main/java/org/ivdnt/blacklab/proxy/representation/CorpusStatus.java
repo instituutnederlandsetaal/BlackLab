@@ -41,8 +41,10 @@ public class CorpusStatus {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Long docVersions;
 
-    // required for Jersey
-    CorpusStatus() {}
+    @SuppressWarnings("unused")
+    CorpusStatus() {
+        // no-arg ctor required by Jersey
+    }
 
     public CorpusStatus(String name, String displayName, String documentFormat) {
         this.indexName = name;

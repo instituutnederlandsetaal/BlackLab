@@ -36,8 +36,10 @@ public class CorpusSummary {
     @JsonInclude(Include.NON_NULL)
     public Long documentCount;
 
-    // required for Jersey
-    CorpusSummary() {}
+    @SuppressWarnings("unused")
+    CorpusSummary() {
+        // no-arg ctor required by Jersey
+    }
 
     public CorpusSummary(String name, String displayName, String documentFormat) {
         this.name = name;

@@ -4,6 +4,7 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.Consumer;
 
 import org.apache.lucene.queries.spans.Spans;
+import org.apache.lucene.search.DocIdSetIterator;
 
 import com.ibm.icu.text.CollationKey;
 
@@ -15,6 +16,8 @@ import nl.inl.blacklab.resultproperty.PropertyValueString;
 
 /** Abstract base class for the HitsList* classes. Takes care of (some) optional locking. */
 public abstract class HitsListAbstract extends HitsAbstract implements HitsMutable {
+
+    protected static final String ERR_WRONG_NUMBER_OF_MATCH_INFOS = "Wrong number of matchInfos";
 
     static boolean debugCheckAllReasonable(Hits hits) {
         for (EphemeralHit hit: hits) {
@@ -29,7 +32,7 @@ public abstract class HitsListAbstract extends HitsAbstract implements HitsMutab
 
     static boolean debugCheckReasonableHit(int doc, int start, int end) {
         assert doc >= 0 : "Hit doc id must be non-negative, is " + doc;
-        assert doc != Spans.NO_MORE_DOCS : "Hit doc id must not equal NO_MORE_DOCS";
+        assert doc != DocIdSetIterator.NO_MORE_DOCS : "Hit doc id must not equal NO_MORE_DOCS";
         assert start >= 0 : "Hit start must be non-negative, is " + start;
         assert end >= 0 : "Hit end must be non-negative, is " + start;
         assert start <= end : "Hit start " + start + " > end " + end;

@@ -332,6 +332,7 @@ public abstract class HitsAbstract implements Hits {
 
         @Override
         public void start(LeafReaderContext lrc, Hits results) {
+            // nothing to do here
         }
 
         @Override
@@ -371,6 +372,7 @@ public abstract class HitsAbstract implements Hits {
 
         @Override
         public void error(LeafReaderContext lrc, Throwable exception) {
+            // no need to handle here because this will be wrapped in LatchingHitSubscriber, which handles errors
         }
     }
 

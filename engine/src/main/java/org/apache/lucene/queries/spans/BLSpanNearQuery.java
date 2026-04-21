@@ -75,7 +75,7 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
          * Add a new clause
          */
         public Builder addClause(BLSpanQuery clause) {
-            if (Objects.equals(clause.getField(), field) == false)
+            if (!Objects.equals(clause.getField(), field))
                 throw new IllegalArgumentException(
                         "Cannot add clause " + clause + " to SpanNearQuery for field " + field);
             this.clauses.add(clause);
@@ -153,6 +153,11 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
         }
         this.slop = slop;
         this.inOrder = inOrder;
+    }
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return new BLSpanNearQuery(clauses.toArray(new BLSpanQuery[0]), slop, inOrder);
     }
 
     /**
@@ -398,6 +403,7 @@ public class BLSpanNearQuery extends BLSpanQuery implements Cloneable {
 
             @Override
             public void extractTermStates(Map<Term, TermStates> contexts) {
+                // no terms to extract
             }
 
             @Override

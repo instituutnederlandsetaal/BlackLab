@@ -20,8 +20,10 @@ public class SpecialFieldInfo {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String dateField;
 
-    // required for Jersey
-    public SpecialFieldInfo() {}
+    @SuppressWarnings("unused")
+    public SpecialFieldInfo() {
+        // no-arg ctor required by Jersey
+    }
 
     public SpecialFieldInfo(String pidField, String titleField) {
         this.pidField = pidField;

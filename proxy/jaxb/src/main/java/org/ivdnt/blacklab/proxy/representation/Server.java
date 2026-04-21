@@ -121,9 +121,10 @@ public class Server {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public Object cacheStatus;
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    private Server() {}
+    private Server() {
+        // no-arg ctor required by Jersey
+    }
 
     public Server(String blacklabBuildTime, String blacklabVersion,
             List<CorpusSummary> indices, User user) {

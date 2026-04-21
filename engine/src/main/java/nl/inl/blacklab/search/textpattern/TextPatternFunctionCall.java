@@ -141,7 +141,7 @@ public class TextPatternFunctionCall extends TextPattern {
         return func.getName();
     }
 
-    public List<?> getArgs() {
+    public List<TextPattern> getArgs() {
         return args;
     }
 
@@ -149,11 +149,9 @@ public class TextPatternFunctionCall extends TextPattern {
     public boolean isRelationsQuery() {
         if (func.isRelationsFunction())
             return true;
-        for (Object arg : args) {
-            if (arg instanceof TextPattern) {
-                if (((TextPattern) arg).isRelationsQuery())
-                    return true;
-            }
+        for (TextPattern arg : args) {
+            if (arg.isRelationsQuery())
+                return true;
         }
         return false;
     }

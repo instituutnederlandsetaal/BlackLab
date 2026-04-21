@@ -45,11 +45,9 @@ public class TestHitsFromFetcher {
 
         HitPublisher publisher = new HitPublisher() {
 
-            private Throwable thrownException = null;
-
             @Override
             public void subscribe(HitSubscriber subscriber) {
-
+                // nothing to do here
             }
 
             @Override
@@ -64,7 +62,7 @@ public class TestHitsFromFetcher {
                         waitForSpansReaderToBeInterrupted.countDown(); // we got it! signal main thread again.
                     }
                 });
-                thread.setUncaughtExceptionHandler((thread1, throwable) -> thrownException = throwable);
+                thread.setUncaughtExceptionHandler((thread1, throwable) -> {});
                 thread.start();
             }
 

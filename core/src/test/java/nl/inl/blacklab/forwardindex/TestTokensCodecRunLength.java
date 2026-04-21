@@ -92,6 +92,7 @@ public class TestTokensCodecRunLength {
 
         @Override
         public void close() {
+            // nothing to do here
         }
 
         @Override
@@ -126,6 +127,7 @@ public class TestTokensCodecRunLength {
 
         @Override
         public void close() {
+            // nothing to do here
         }
 
         @Override

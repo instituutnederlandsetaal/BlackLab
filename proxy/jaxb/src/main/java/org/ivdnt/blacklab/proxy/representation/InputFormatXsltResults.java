@@ -10,8 +10,10 @@ public class InputFormatXsltResults {
 
     public String xslt;
 
-    // required for Jersey
-    public InputFormatXsltResults() {}
+    @SuppressWarnings("unused")
+    public InputFormatXsltResults() {
+        // no-arg ctor required by Jersey
+    }
 
     @Override
     public String toString() {

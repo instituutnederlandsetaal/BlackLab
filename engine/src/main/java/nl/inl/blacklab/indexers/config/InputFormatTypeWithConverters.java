@@ -65,6 +65,7 @@ public class InputFormatTypeWithConverters extends InputFormatTypeBase {
 
             @Override
             public void close() throws RuntimeException {
+                // nothing to do here
             }
 
             @Override

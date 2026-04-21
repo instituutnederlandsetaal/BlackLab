@@ -45,7 +45,10 @@ public class ErrorResponse {
 
     Desc error;
 
-    private ErrorResponse() {}
+    @SuppressWarnings("unused")
+    private ErrorResponse() {
+        // no-arg ctor required by Jersey
+    }
 
     public ErrorResponse(Desc error) {
         this.error = error;

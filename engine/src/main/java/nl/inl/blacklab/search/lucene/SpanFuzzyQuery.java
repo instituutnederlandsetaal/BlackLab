@@ -38,9 +38,9 @@ public class SpanFuzzyQuery extends BLSpanQuery {
         return SpanGuarantees.TERM;
     }
 
-    public static final int defaultMaxEdits = 2;
+    public static final int DEFAULT_MAX_EDITS = 2;
 
-    public static final int defaultPrefixLength = 0;
+    public static final int DEFAULT_PREFIX_LENGTH = 0;
 
     private final Term term;
 
@@ -49,7 +49,7 @@ public class SpanFuzzyQuery extends BLSpanQuery {
     private final int prefixLength;
 
     public SpanFuzzyQuery(QueryInfo queryInfo, Term term) {
-        this(queryInfo, term, defaultMaxEdits, defaultPrefixLength);
+        this(queryInfo, term, DEFAULT_MAX_EDITS, DEFAULT_PREFIX_LENGTH);
     }
 
     public SpanFuzzyQuery(QueryInfo queryInfo, Term term, int maxEdits, int prefixLength) {

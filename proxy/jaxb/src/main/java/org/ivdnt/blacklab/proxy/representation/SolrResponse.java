@@ -9,9 +9,10 @@ public class SolrResponse {
 
     private JsonNode blacklab;
 
-    // required for Jersey
     @SuppressWarnings("unused")
-    private SolrResponse() {}
+    private SolrResponse() {
+        // no-arg ctor required by Jersey
+    }
 
     public JsonNode getResponseHeader() {
         return responseHeader;
