@@ -17,7 +17,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterTokenAnnotation;
  */
 public class TextPatternPropertySelect extends TextPattern {
 
-    public static int PRECEDENCE = 2;
+    public static int TP_PRECEDENCE = 2;
 
     private final TextPattern tpLabel;
 
@@ -30,7 +30,7 @@ public class TextPatternPropertySelect extends TextPattern {
      * @param annotation the annotation name
      */
     public TextPatternPropertySelect(TextPattern label, TextPattern annotation) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.tpLabel = label;
         this.tpAnnotation = annotation;
     }

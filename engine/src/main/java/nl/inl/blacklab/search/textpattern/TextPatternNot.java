@@ -14,12 +14,12 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterNot;
  */
 public class TextPatternNot extends TextPattern {
 
-    public static int PRECEDENCE = 1;
+    public static int TP_PRECEDENCE = 1;
 
     TextPattern clause;
 
     public TextPatternNot(TextPattern clause) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.clause = clause;
     }
 

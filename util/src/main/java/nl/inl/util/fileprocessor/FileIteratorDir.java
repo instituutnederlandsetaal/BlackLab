@@ -9,6 +9,7 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -27,6 +28,8 @@ import nl.inl.util.FileUtil;
  * Will also descend into archives (zip, tar, tar.gz, tgz) if so configured.
  */
 public class FileIteratorDir extends FileIteratorAbstract {
+
+    protected Iterator<FileReference> iterator;
 
     public FileIteratorDir(File directory, String globFileInThisDir, FileIteratorSettings settings) {
         super(settings);

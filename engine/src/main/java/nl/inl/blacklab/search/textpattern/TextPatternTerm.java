@@ -18,7 +18,7 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternTerm extends TextPattern {
 
-    public static int PRECEDENCE = 5;
+    public static int TP_PRECEDENCE = 5;
 
     /** Annotation to match, or null for default (usually "word"). */
     protected final String annotation;
@@ -33,7 +33,7 @@ public class TextPatternTerm extends TextPattern {
     }
 
     protected TextPatternTerm(String value, String annotation, MatchSensitivity sensitivity) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.annotation = annotation;
         this.sensitivity = sensitivity;
         this.value = value;

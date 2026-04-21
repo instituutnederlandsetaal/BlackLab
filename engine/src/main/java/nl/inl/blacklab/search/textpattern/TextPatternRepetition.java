@@ -10,7 +10,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryRepetition;
  */
 public class TextPatternRepetition extends TextPattern {
 
-    public static int PRECEDENCE = 3;
+    public static int TP_PRECEDENCE = 3;
 
     public static TextPattern get(TextPattern clause, int min, int max) {
         if (min == 0 && max == 0)
@@ -27,7 +27,7 @@ public class TextPatternRepetition extends TextPattern {
     private final int max;
 
     public TextPatternRepetition(TextPattern clause, int min, int max) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.clause = clause;
         this.min = min;
         this.max = max == -1 ? MAX_UNLIMITED : max;

@@ -15,14 +15,14 @@ import nl.inl.blacklab.search.QueryExecutionContext;
  */
 public class TextPatternSettings extends TextPattern {
 
-    public static int PRECEDENCE = 12;
+    public static int TP_PRECEDENCE = 12;
 
     final TextPattern clause;
 
     final Map<String, String> settings = new LinkedHashMap<>();
 
     public TextPatternSettings(Map<String, String> settings, TextPattern clause) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.clause = clause;
         this.settings.putAll(settings);
     }

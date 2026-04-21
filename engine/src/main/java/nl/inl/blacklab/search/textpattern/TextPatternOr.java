@@ -18,7 +18,7 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
  */
 public class TextPatternOr extends TextPattern {
 
-    public static int PRECEDENCE = 8;
+    public static int TP_PRECEDENCE = 8;
 
     List<TextPattern> clauses = new ArrayList<>();
 
@@ -27,7 +27,7 @@ public class TextPatternOr extends TextPattern {
     }
 
     public TextPatternOr(List<TextPattern> clauses) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         if (clauses.isEmpty())
             throw new IllegalArgumentException("Must have at least one clause");
         for (TextPattern clause: clauses) {

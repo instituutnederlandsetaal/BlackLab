@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryOverlapping;
  */
 public class TextPatternOverlapping extends TextPattern {
 
-    public static int PRECEDENCE = 10;
+    public static int TP_PRECEDENCE = 10;
 
     /** The hits we're (possibly) looking for */
     private final TextPattern left;
@@ -25,7 +25,7 @@ public class TextPatternOverlapping extends TextPattern {
     private final String operation;
 
     public TextPatternOverlapping(TextPattern left, TextPattern right, String operation) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.left = left;
         this.right = right;
         this.operation = operation;

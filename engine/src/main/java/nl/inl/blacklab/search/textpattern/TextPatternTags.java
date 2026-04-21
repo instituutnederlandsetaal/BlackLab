@@ -17,7 +17,7 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternTags extends TextPattern {
 
-    public static int PRECEDENCE = 6;
+    public static int TP_PRECEDENCE = 6;
 
     public enum Adjust {
         FULL_TAG,
@@ -54,7 +54,7 @@ public class TextPatternTags extends TextPattern {
     }
 
     public TextPatternTags(String elementNameRegex, Map<String, TextPattern> attributes, Adjust adjust, String captureAs) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.elementNameRegex = elementNameRegex;
         this.attributes = attributes == null ? Collections.emptyMap() : attributes;
         this.adjust = adjust == null ? Adjust.FULL_TAG : adjust;

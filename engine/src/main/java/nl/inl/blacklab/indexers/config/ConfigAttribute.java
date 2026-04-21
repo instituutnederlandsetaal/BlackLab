@@ -71,7 +71,7 @@ public class ConfigAttribute {
     }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public synchronized List<ConfigProcessStep> getProcess() {
+    public List<ConfigProcessStep> getProcess() {
         return Collections.unmodifiableList(process);
     }
 

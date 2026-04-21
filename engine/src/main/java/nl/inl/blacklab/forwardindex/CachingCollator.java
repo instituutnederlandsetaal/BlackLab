@@ -19,6 +19,7 @@ import com.ibm.icu.util.VersionInfo;
  * A collator that caches collation keys to improve performance if
  * there's many duplicate strings.
  */
+@SuppressWarnings("java:S2975")  // clone is required by the base class from ICU4j
 public class CachingCollator extends Collator {
 
     private final Collator baseCollator;

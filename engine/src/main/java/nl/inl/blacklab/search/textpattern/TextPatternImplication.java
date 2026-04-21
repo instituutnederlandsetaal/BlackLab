@@ -18,14 +18,14 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterOr;
  */
 public class TextPatternImplication extends TextPattern {
 
-    public static int PRECEDENCE = 8;
+    public static int TP_PRECEDENCE = 8;
 
     TextPattern antecedent;
 
     TextPattern consequent;
 
     public TextPatternImplication(TextPattern antecedent, TextPattern consequent) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.antecedent = antecedent;
         this.consequent = consequent;
     }

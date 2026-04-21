@@ -21,14 +21,14 @@ import nl.inl.blacklab.search.lucene.SpansAndFilterFactoryUniqueRelations;
  */
 public class TextPatternRelationMatch extends TextPattern {
 
-    public static int PRECEDENCE = 9;
+    public static int TP_PRECEDENCE = 9;
 
     private final TextPattern parent;
 
     private final List<RelationTarget> children;
 
     public TextPatternRelationMatch(TextPattern parent, List<RelationTarget> children) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.parent = parent;
         assert !children.isEmpty();
         this.children = new ArrayList<>(children);

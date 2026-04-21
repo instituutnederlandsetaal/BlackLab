@@ -14,8 +14,6 @@ public abstract class FileIteratorAbstract implements FileIterator {
      */
     protected final Pattern pattFileNameGlobGlobal;
 
-    protected Iterator<FileReference> iterator;
-
     public FileIteratorAbstract(FileIteratorSettings settings) {
         this.settings = settings;
         pattFileNameGlobGlobal = settings.pattFileNameGlobGlobal();

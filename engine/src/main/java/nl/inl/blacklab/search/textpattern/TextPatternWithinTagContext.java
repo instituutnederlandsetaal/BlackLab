@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.matchfilter.ConstraintValueList;
  */
 public class TextPatternWithinTagContext extends TextPattern {
 
-    public static int PRECEDENCE = 10;
+    public static int TP_PRECEDENCE = 10;
 
     /** The hits we're (possibly) looking for */
     private final TextPattern producer;
@@ -33,7 +33,7 @@ public class TextPatternWithinTagContext extends TextPattern {
     private final String captureAs;
 
     public TextPatternWithinTagContext(TextPattern producer, TextPattern filterUnit, String captureAs) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.producer = producer;
         this.filterUnit = filterUnit;
         this.captureAs = captureAs;

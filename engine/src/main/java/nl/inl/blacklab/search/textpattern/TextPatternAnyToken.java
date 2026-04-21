@@ -12,7 +12,7 @@ import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
  */
 public class TextPatternAnyToken extends TextPattern {
 
-    public static int PRECEDENCE = 0;
+    public static int TP_PRECEDENCE = 0;
 
     /*
      * The minimum number of tokens in this stretch.
@@ -25,7 +25,7 @@ public class TextPatternAnyToken extends TextPattern {
     protected final int max;
 
     public TextPatternAnyToken(int min, int max) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         if (min < 0)
             throw new IllegalArgumentException("min < 0");
         if (max < 0)

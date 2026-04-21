@@ -17,14 +17,14 @@ import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
  */
 public class TextPatternDefaultValue extends TextPattern {
 
-    public static int PRECEDENCE = 0;
+    public static int TP_PRECEDENCE = 0;
 
     private static final TextPatternDefaultValue instance = new TextPatternDefaultValue();
 
     public static TextPatternDefaultValue get() { return instance; }
 
     private TextPatternDefaultValue() {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
     }
 
     /**

@@ -2,6 +2,7 @@ package nl.inl.blacklab.tools.frequency.data.helper;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -66,5 +67,20 @@ public record DatabaseHelper(
                 ", groupedMetadata=" + Arrays.toString(groupedMetadata) +
                 ", ungroupedMetadata=" + Arrays.toString(ungroupedMetadata) +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof DatabaseHelper that))
+            return false;
+        return Objects.equals(metaToId, that.metaToId) && Objects.equals(wordToId, that.wordToId)
+                && Objects.deepEquals(groupedMetadata, that.groupedMetadata) && Objects.deepEquals(
+                ungroupedMetadata, that.ungroupedMetadata) && Objects.equals(metadataTerms, that.metadataTerms);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(metaToId, wordToId, metadataTerms, Arrays.hashCode(groupedMetadata),
+                Arrays.hashCode(ungroupedMetadata));
     }
 }

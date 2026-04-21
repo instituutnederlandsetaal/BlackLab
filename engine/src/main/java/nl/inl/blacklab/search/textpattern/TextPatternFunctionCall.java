@@ -25,14 +25,14 @@ import nl.inl.blacklab.search.matchfilter.MatchFilterValue;
  */
 public class TextPatternFunctionCall extends TextPattern {
 
-    public static int PRECEDENCE = 2;
+    public static int TP_PRECEDENCE = 2;
 
     private final QueryFunction func;
 
     private final List<TextPattern> args;
 
     public TextPatternFunctionCall(String funcName, List<TextPattern> args) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         if (!QueryExtensions.exists(funcName))
             throw new InvalidQuery("Function not found: " + funcName);
         this.func = QueryExtensions.get(funcName);

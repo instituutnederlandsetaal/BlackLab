@@ -29,8 +29,9 @@ import nl.inl.util.StringUtil;
  */
 public class TextPatternCompare extends TextPattern {
 
+    public static int TP_PRECEDENCE = 5;
+
     static final Pattern onlyLettersAndDigits = Pattern.compile("[\\w\\d]+", Pattern.UNICODE_CHARACTER_CLASS);
-    public static int PRECEDENCE = 5;
 
     /** Left operand, often annotation name */
     protected final TextPattern left;
@@ -42,7 +43,7 @@ public class TextPatternCompare extends TextPattern {
     protected final MatchFilterCompare.Operator operator;
 
     public TextPatternCompare(TextPattern left, TextPattern right, MatchFilterCompare.Operator operator) {
-        super(PRECEDENCE);
+        super(TP_PRECEDENCE);
         this.left = left;
         this.right = right;
         this.operator = operator;
