@@ -90,7 +90,7 @@ public final class TsvWriter extends FreqListWriter {
 
     private void addAnnotationsToRecord(final GroupId groupId, final List<String> record) {
         final int[] sorting = groupId.sorting();
-        if (cfg.runConfig().compressed() && sorting.length != 0) {
+        if (cfg.runConfig().databaseFormat() && sorting.length != 0) {
             // When writing database format, simply register to get an ID and write that.
             final int wordID = helper.database().wordToId().putOrGet(sorting);
             record.add(Integer.toString(wordID));
