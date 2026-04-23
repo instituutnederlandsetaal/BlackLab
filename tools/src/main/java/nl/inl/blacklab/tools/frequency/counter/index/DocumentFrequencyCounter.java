@@ -156,7 +156,7 @@ final public class DocumentFrequencyCounter {
         // We can't get an ngram for the last ngramSize-1 tokens
         for (int tokenIndex = 0; tokenIndex < docLength - (ngramSize - 1); ++tokenIndex) {
             final int[] tokenIds = new int[numAnnotations * ngramSize];
-            final int[] sortPositions = new int[numAnnotations * ngramSize];
+            int[] sortPositions = new int[numAnnotations * ngramSize];
 
             // Unfortunate fact: token ids are case-sensitive, and in order to group on a token's values case and diacritics insensitively,
             // we need to actually group by their "sort positions" - which is just the index the term would have if all terms would have been sorted
@@ -168,8 +168,15 @@ final public class DocumentFrequencyCounter {
                 // get array slices of ngramSize
                 final int[] tokenValues = doc.tokens()[annotationIndex];
                 System.arraycopy(tokenValues, tokenIndex, tokenIds, arrIndex, ngramSize);
-                final int[] sortValues = doc.sorting()[annotationIndex];
-                System.arraycopy(sortValues, tokenIndex, sortPositions, arrIndex, ngramSize);
+                // Choose sort positions based on sensitivity
+                final var sensitivity = helper.annotations().sensitivities().get(annotationIndex);
+                if (sensitivity == MatchSensitivity.INSENSITIVE) {
+                    final int[] sortValues = doc.sorting()[annotationIndex];
+                    System.arraycopy(sortValues, tokenIndex, sortPositions, arrIndex, ngramSize);
+                } else {
+                    // Use raw token ids if sensitive
+                    sortPositions = tokenIds;
+                }
             }
             final var groupId = new GroupId(tokenIds, sortPositions, meta);
 

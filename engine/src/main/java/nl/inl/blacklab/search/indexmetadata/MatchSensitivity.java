@@ -1,5 +1,6 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import nl.inl.util.StringUtil;
 
 /**
@@ -37,6 +38,7 @@ public enum MatchSensitivity {
         };
     }
 
+    @JsonCreator
     public static MatchSensitivity fromName(String value) {
         if (value.equalsIgnoreCase("sensitive"))
             return SENSITIVE;

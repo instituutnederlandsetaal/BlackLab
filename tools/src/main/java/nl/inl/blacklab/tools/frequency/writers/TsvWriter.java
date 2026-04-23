@@ -28,11 +28,11 @@ public final class TsvWriter extends FreqListWriter {
     }
 
     private static String writeStringRecord(final int ngramSize, final int[] tokenIds, final int tokenArrIndex,
-            final Terms terms) {
+            final Terms terms, final MatchSensitivity sensitivity) {
         // map token int ids to their string values
         final String[] tokenList = new String[ngramSize];
         for (int j = 0; j < ngramSize; j++) {
-            tokenList[j] = MatchSensitivity.INSENSITIVE.desensitize(terms.get(tokenIds[tokenArrIndex + j]));
+            tokenList[j] = sensitivity.desensitize(terms.get(tokenIds[tokenArrIndex + j]));
         }
         // join with a space
         return String.join(" ", tokenList);
@@ -97,11 +97,13 @@ public final class TsvWriter extends FreqListWriter {
         } else {
             // for each annotation construct a string for the ngram
             final int ngramSize = cfg.ngramSize();
-            for (int i = 0, tokenArrIndex = 0, len = sorting.length;
+            final int[] tokens = groupId.tokens();
+            for (int i = 0, tokenArrIndex = 0, len = tokens.length;
                  tokenArrIndex < len; i++, tokenArrIndex += ngramSize) {
                 // get term index for the annotation
                 final var terms = helper.annotations().forwardIndices().get(i).terms(); // contains id to string mapping
-                final String token = writeStringRecord(ngramSize, sorting, tokenArrIndex, terms);
+                final var sensitivity = helper.annotations().sensitivities().get(i);
+                final String token = writeStringRecord(ngramSize, tokens, tokenArrIndex, terms, sensitivity);
                 record.add(token);
             }
         }

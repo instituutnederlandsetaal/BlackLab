@@ -68,9 +68,12 @@ public record FrequencyListConfig(
             throw new IllegalArgumentException("Annotated field not found: " + annotatedField);
         final var field = index.annotatedField(annotatedField);
         // Verify annotations
-        for (final var a: annotations)
+        for (final var a: annotations) {
             if (!field.annotations().exists(a.name()))
-                throw new IllegalArgumentException("Annotation not found: " + annotatedField + "." + a.name());
+                throw new IllegalArgumentException("Annotation not found: " + annotatedField + "@" + a.name());
+            if (!field.annotation(a.name()).hasSensitivity(a.sensitivity()))
+                throw new IllegalArgumentException("Annotation " + annotatedField + "@" + a.name() + " has no sensitivity: " + a.sensitivity());
+        }
         // Verify metadata
         for (final var m: metadata)
             if (!index.metadataFields().exists(m.name()))

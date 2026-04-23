@@ -34,6 +34,11 @@ frequencyLists:
     # annotations is the only required field
     -   annotations:
             - word
+  
+    # case-sensitive word frequencies
+    -   annotations:
+          - name: word
+            sensitivity: sensitive # case-sensitive (default is case-insensitive)
 
     # word bigram frequencies per year
     -   name: "bigrams-per-year" # custom name
