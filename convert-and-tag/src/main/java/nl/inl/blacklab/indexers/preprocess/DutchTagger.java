@@ -26,6 +26,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.FileConverter;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.util.fileprocessor.FileReference;
 
 public class DutchTagger extends FileConverter {
@@ -82,7 +83,7 @@ public class DutchTagger extends FileConverter {
     }
 
     @Override
-    public synchronized FileReference perform(FileReference input, String format) throws PluginException {
+    public synchronized FileReference perform(FileReference input, String format, PluginParams params) throws PluginException {
         // Set the ContextClassLoader to use the UrlClassLoader we pointed at the OpenConvert jar.
         // This is required because OpenConvert implicitly loads some dependencies through locators/providers (such as its xml transformers)
         // and these locators/providers sometimes prefer to use the ContextClassLoader, which may have been set by a servlet container or the like.
@@ -148,5 +149,10 @@ public class DutchTagger extends FileConverter {
         } catch (IOException e) {
             throw new PluginException("Could not read manifest: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

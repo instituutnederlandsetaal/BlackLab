@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Multiple processing steps (a script).
@@ -19,7 +20,7 @@ public class ProcessingInstructionMultiple extends ProcessingInstruction {
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
+    public ProcessingStep get(PluginParams param) {
         throw new UnsupportedOperationException();
     }
 
@@ -68,5 +69,10 @@ public class ProcessingInstructionMultiple extends ProcessingInstruction {
         public String toString() {
             return "SCRIPT{" + steps.stream().map(ProcessingStep::toString).collect(Collectors.joining("; ")) + "}";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

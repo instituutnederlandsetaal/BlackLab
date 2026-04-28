@@ -91,7 +91,7 @@ public class InputFormatTypeTabular extends InputFormatTypeTabularBase {
         return new InputFormatTabular(config);
     }
 
-    public class InputFormatTabular extends InputFormatTabularBase {
+    public static class InputFormatTabular extends InputFormatTabularBase {
 
         private CSVFormat tabularFormat;
 

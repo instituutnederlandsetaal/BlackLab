@@ -18,6 +18,7 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.config.BLConfigPlugins;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.search.BlackLab;
 
 /**
  * Manages plugins of one type.
@@ -31,12 +32,12 @@ public class PluginsOfType<T extends Plugin> {
      */
     private static final Pattern PLUGIN_ID_PATTERN = Pattern.compile("[\\p{L}\\p{N}\\-._]+");
 
-    final Class<T> pluginClass;
+    private final Class<T> pluginClass;
 
     /**
      * Plugins by their id
      */
-    final Map<String, PluginData<T>> pluginsById = new HashMap<>();
+    private final Map<String, PluginData<T>> pluginsById = new HashMap<>();
 
     PluginsOfType(Class<T> pluginClass, BLConfigPlugins pluginConfig, URLClassLoader cl) {
         this.pluginClass = pluginClass;
@@ -92,13 +93,22 @@ public class PluginsOfType<T extends Plugin> {
     }
 
     private void add(String id, PluginData<T> data) {
-        pluginsById.putIfAbsent(id.toLowerCase(), data);
+        if (BlackLab.isPluginAllowed(id) || data.getPlugin().isWebSafe()) {
+            synchronized (pluginsById) {
+                pluginsById.putIfAbsent(id.toLowerCase(), data);
+            }
+        } else
+            logger.warn("Skipping plugin '" + id + "'; isWebSafe() returned false and it's not on the plugins.allowed whitelist)");
     }
 
     public Collection<T> getAll() {
         PluginManager.loadAllGroovyScripts();
         List<T> result = new ArrayList<>();
-        for (PluginData<T> data: pluginsById.values()) {
+        Collection<PluginData<T>> pluginDatas;
+        synchronized (pluginsById) {
+            pluginDatas = pluginsById.values();
+        }
+        for (PluginData<T> data: pluginDatas) {
             T plugin = data.getPlugin();
             if (pluginClass.isInstance(plugin)) {
                 try {
@@ -127,22 +137,31 @@ public class PluginsOfType<T extends Plugin> {
      * @throws PluginException when the plugin fails to initialize
      */
     public T get(String id) throws PluginException {
-        Optional<T> plugin = getIfExists(id);
-        if (plugin.isEmpty()) {
-            // Could be a groovy script that was found, but hasn't been loaded yet. Load it now.
-            plugin = PluginManager.getUnloaded(id, pluginClass);
-        }
-        return plugin.orElseThrow(() -> new IllegalArgumentException("Plugin id " + id + " not found."));
+        return getIfExists(id)
+                .orElseThrow(() -> {
+                    return new IllegalArgumentException("Plugin id " + id + " not found.");
+                });
     }
 
     public boolean exists(String id) {
-        return pluginsById.containsKey(id.toLowerCase());
+        return getIfExists(id).isPresent();
     }
 
     public Optional<T> getIfExists(String id) throws PluginException {
-        PluginData<T> pluginData = pluginsById.get(id.toLowerCase());
-        if (pluginData == null)
+        PluginData<T> pluginData;
+        synchronized (pluginsById) {
+            pluginData = pluginsById.get(id.toLowerCase());
+        }
+        if (pluginData == null) {
+            // Maybe this is a groovy script we haven't loaded yet.
+            PluginManager.getUnloaded(id);
+            synchronized (pluginsById) {
+                pluginData = pluginsById.get(id.toLowerCase());
+            }
+        }
+        if (pluginData == null) {
             return Optional.empty();
+        }
         pluginData.initializePlugin();
         return Optional.of(pluginClass.cast(pluginData.getPlugin()));
     }
@@ -153,7 +172,11 @@ public class PluginsOfType<T extends Plugin> {
      * Whether or not this is done depends on PluginManager config.
      */
     void initializePlugins() {
-        pluginsById.values().forEach(pluginData -> {
+        Collection<PluginData<T>> pluginDatas;
+        synchronized (pluginsById) {
+            pluginDatas = pluginsById.values();
+        }
+        pluginDatas.forEach(pluginData -> {
             try {
                 pluginData.initializePlugin();
             } catch (PluginException e) {

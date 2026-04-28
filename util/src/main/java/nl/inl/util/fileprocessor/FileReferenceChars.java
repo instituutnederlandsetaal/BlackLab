@@ -71,4 +71,9 @@ public class FileReferenceChars implements FileReference {
             endOffset = contents.length;
         return TextContent.from(contents, (int)startOffset, (int)(endOffset - startOffset));
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[" + getPath() + "]";
+    }
 }

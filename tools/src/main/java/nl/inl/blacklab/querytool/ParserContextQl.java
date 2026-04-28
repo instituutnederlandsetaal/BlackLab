@@ -1,10 +1,9 @@
 package nl.inl.blacklab.querytool;
 
-import java.util.Map;
-
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -37,7 +36,7 @@ class ParserContextQl extends Parser {
     @Override
     public TextPattern parse(BlackLabIndex index, String query) throws InvalidQuery {
         //outprintln("WARNING: SRU CQL SUPPORT IS EXPERIMENTAL, MAY NOT WORK AS INTENDED");
-        CompleteQuery q = ContextualQueryLanguageParser.parse(index, Map.of(), query);
+        CompleteQuery q = ContextualQueryLanguageParser.parse(index, PluginParams.NONE, query);
         includedFilterQuery = q.filter();
         return q.pattern();
     }

@@ -48,7 +48,7 @@ public class InputFormatTypeCoNLLU extends InputFormatTypeTabularBase {
         return new InputFormatCoNLLU(config);
     }
 
-    public class InputFormatCoNLLU extends InputFormatTabularBase {
+    public static class InputFormatCoNLLU extends InputFormatTabularBase {
 
         public InputFormatCoNLLU(ConfigInputFormat config) {
             super(config, "\\|");

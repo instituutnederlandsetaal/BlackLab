@@ -4,6 +4,8 @@ import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.MalformedInputFile;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.indexers.config.InputFormatTypeWithConverters;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.util.fileprocessor.FileHandler;
 import nl.inl.util.fileprocessor.FileReference;
 
@@ -17,9 +19,9 @@ class FileHandlerDocIndexer implements FileHandler {
 
     private final InputFormat docIndexer;
 
-    public FileHandlerDocIndexer(Indexer indexer) {
+    public FileHandlerDocIndexer(Indexer indexer, FileConverter.ExtraConverters extraConverters) {
         this.indexer = indexer;
-        docIndexer = indexer.getDocIndexer();
+        docIndexer = InputFormatTypeWithConverters.wrap(indexer.getDocIndexer(), extraConverters);
     }
 
     @Override

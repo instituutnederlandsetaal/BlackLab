@@ -22,6 +22,7 @@ import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.IndexSourceType;
 import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.util.ObjectCache;
 import nl.inl.util.fileprocessor.FileIterator;
 import nl.inl.util.fileprocessor.FileReference;
@@ -66,7 +67,7 @@ public class SaxonHelper {
                 return null;
             }
             String restOfUri = uri.substring(scheme.length() + 1);
-            FileIterator fileIt = indexSourceType.get().get(restOfUri).filesToIndex();
+            FileIterator fileIt = indexSourceType.get().get(restOfUri, PluginParams.NONE).filesToIndex();
             FileReference file = fileIt.next();
             if (file == FileReference.DUMMY)
                 throw new IllegalArgumentException("doc() URI resolves to FileReference.DUMMY: " + uri);

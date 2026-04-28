@@ -1,8 +1,6 @@
 package nl.inl.blacklab.plugins;
 
-import java.util.List;
-import java.util.Map;
-
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.DocTask;
 
@@ -16,5 +14,5 @@ public abstract class DocTaskType extends Plugin {
      * @param args arguments for the doc task
      * @return doc task
      */
-    public abstract DocTask docTask(BlackLabIndex index, Map<String, String> args);
+    public abstract DocTask docTask(BlackLabIndex index, PluginParams args);
 }

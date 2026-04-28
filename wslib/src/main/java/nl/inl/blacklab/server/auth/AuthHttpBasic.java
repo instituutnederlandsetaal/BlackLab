@@ -3,12 +3,12 @@ package nl.inl.blacklab.server.auth;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Base64.Decoder;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.server.lib.User;
 
 /**
@@ -21,10 +21,7 @@ public class AuthHttpBasic extends AuthMethodProvider {
     static final Logger logger = LogManager.getLogger(AuthHttpBasic.class);
 
     @Override
-    public AuthMethod get(Map<String, Object> config) {
-        // doesn't take any parameters
-        if (!config.isEmpty())
-            logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
+    public AuthMethod get(PluginParams config) {
         Decoder base64Decoder = Base64.getDecoder();
         return request -> {
             String userId = null;
@@ -43,6 +40,11 @@ public class AuthHttpBasic extends AuthMethodProvider {
             }
             return User.fromIdAndSessionId(userId, sessionId);
         };
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 
 }

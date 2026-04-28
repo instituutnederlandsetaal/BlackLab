@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Optional;
 
 import nl.inl.blacklab.plugins.IndexSourceType;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.util.fileprocessor.FileIterator;
 import nl.inl.util.fileprocessor.FileReference;
 
@@ -16,7 +17,7 @@ public class IndexSourceTypeFileInArchive extends IndexSourceType {
     }
 
     @Override
-    public IndexSource get(String path) {
+    public IndexSource get(String path, PluginParams params) {
         return new IndexSourceFileInArchive(path);
     }
 

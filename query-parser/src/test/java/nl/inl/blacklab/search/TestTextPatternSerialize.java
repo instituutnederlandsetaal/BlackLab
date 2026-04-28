@@ -2,12 +2,12 @@ package nl.inl.blacklab.search;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternRepetition;
@@ -45,7 +45,7 @@ public class TestTextPatternSerialize {
     }
 
     private static void assertRoundtrip(String cqlQuery, boolean checkSerializeToCql) throws IOException {
-        BcqlQueryLanguageParser parser = new BcqlQueryLanguageParser(null, Map.of());
+        BcqlQueryLanguageParser parser = new BcqlQueryLanguageParser(null, PluginParams.NONE);
         TextPattern pattern;
         pattern = parser.parseQuery(cqlQuery);
         assertRoundtrip(pattern);

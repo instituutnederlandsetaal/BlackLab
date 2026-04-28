@@ -13,6 +13,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -59,7 +60,8 @@ public class TestStandoffSpans {
                 }
             });
             try {
-                indexer.index(getFile("standoff/test.xml"));
+                File file = getFile("standoff/test.xml");
+                indexer.index(new IndexSourceTypeFile.IndexSourceFile(file), FileConverter.ExtraConverters.NONE);
             } finally {
                 // Finalize and close the index.
                 indexer.close();

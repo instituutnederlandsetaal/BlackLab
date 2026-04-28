@@ -5,12 +5,18 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Strip certain characters from the start and end of the value(s)
  */
 public class ProcessingInstructionStrip extends ProcessingInstruction {
+
+    private PluginParam parChars;
 
     @Override
     public synchronized String getId() {
@@ -18,8 +24,13 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        return ProcessingStepStrip.fromConfig(param);
+    public void initialize() throws PluginException {
+        parChars = addParam(PString.matching("chars", ".+"));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
+        return new ProcessingStepStrip(param.getString(parChars, " "));
     }
 
     public static class ProcessingStepStrip implements ProcessingStep {
@@ -31,11 +42,6 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
 
         public ProcessingStepStrip(String stripChars) {
             this.stripChars = stripChars;
-        }
-
-        public static ProcessingStepStrip fromConfig(Map<String, Object> param) {
-            String stripChars = ProcessingStep.par(param, "chars", " ");
-            return new ProcessingStepStrip(stripChars);
         }
 
         @Override
@@ -52,6 +58,11 @@ public class ProcessingInstructionStrip extends ProcessingInstruction {
         public String toString() {
             return "strip(chars=" + stripChars + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 
 }

@@ -1,12 +1,12 @@
 package nl.inl.blacklab.search;
 
 import java.io.IOException;
-import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueString;
@@ -20,7 +20,7 @@ public class TestBcqlParser {
     @Test
     public void testEscapedQuote() throws InvalidQuery {
         String pattern = "[lemma=\"\\\"\"]";
-        TextPattern tp = BcqlQueryLanguageParser.parse(null, Map.of(), pattern);
+        TextPattern tp = BcqlQueryLanguageParser.parse(null, PluginParams.NONE, pattern);
         Assert.assertTrue(tp instanceof TextPatternCompare);
         TextPattern rightClause = ((TextPatternCompare) tp).getRightClause();
         Assert.assertTrue(rightClause instanceof TextPatternValue);
@@ -32,7 +32,7 @@ public class TestBcqlParser {
     @Test
     public void testParseAlignmentQuery() throws IOException, InvalidQuery {
         String pattern = "[word='the'] =verse-alignment=>nl [word='het']";
-        TextPattern tp = BcqlQueryLanguageParser.parse(null, Map.of(), pattern);
+        TextPattern tp = BcqlQueryLanguageParser.parse(null, PluginParams.NONE, pattern);
         Assert.assertEquals(TextPatternRelationMatch.class, tp.getClass());
     }
 }

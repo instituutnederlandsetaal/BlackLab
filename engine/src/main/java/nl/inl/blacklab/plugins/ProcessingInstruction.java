@@ -1,7 +1,6 @@
 package nl.inl.blacklab.plugins;
 
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.exceptions.PluginException;
@@ -9,6 +8,7 @@ import nl.inl.blacklab.indexers.config.ConfigProcessStep;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionIdentity;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionMultiple;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /** An operation on one or more values during the indexing process.
  *
@@ -40,12 +40,12 @@ public abstract class ProcessingInstruction extends Plugin {
             action = "ifEmpty";
         try {
             ProcessingInstruction pt = PluginManager.type(ProcessingInstruction.class).get(action);
-            return pt.get(configProcessStep.getParam());
+            return pt.get(pt.descriptor().validate(configProcessStep.getParam()));
         } catch (PluginException e){
             throw new IllegalArgumentException("Unknown action: " + action);
         }
     }
 
-    public abstract ProcessingStep get(Map<String, Object> param);
+    public abstract ProcessingStep get(PluginParams param);
 
 }

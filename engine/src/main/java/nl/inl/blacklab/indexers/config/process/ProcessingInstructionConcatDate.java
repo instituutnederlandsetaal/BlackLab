@@ -2,11 +2,17 @@ package nl.inl.blacklab.indexers.config.process;
 
 import java.time.YearMonth;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PEnum;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Concatenate 3 separate date fields into one.
@@ -19,18 +25,34 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
  */
 public class ProcessingInstructionConcatDate extends ProcessingInstruction {
 
+    private PluginParam parYearField;
+
+    private PluginParam parMonthField;
+
+    private PluginParam parDayField;
+
+    private PluginParam parAutofill;
+
     @Override
     public synchronized String getId() {
         return "concatDate";
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
+    public void initialize() throws PluginException {
+        parYearField = addParam(PString.identifier("yearField", true));
+        parMonthField = addParam(PString.identifier("monthField", true));
+        parDayField = addParam(PString.identifier("dayField", true));
+        parAutofill = addParam(PEnum.of("autofill", List.of("start", "end")));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
         return new ProcessingStepConcatDate(
-                ProcessingStep.par(param, "yearField"),
-                ProcessingStep.par(param, "monthField"),
-                ProcessingStep.par(param, "dayField"),
-                ProcessingStep.par(param, "autofill", "end"));
+                param.getString(parYearField).orElseThrow(),
+                param.getString(parMonthField).orElseThrow(),
+                param.getString(parDayField).orElseThrow(),
+                param.getString(parAutofill, "end"));
     }
 
     public static class ProcessingStepConcatDate implements ProcessingStep {
@@ -49,7 +71,7 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
             this.autoFillStart = autofillMode.equalsIgnoreCase("start");
             if (this.yearField == null || this.monthField == null || this.dayField == null)
                 throw new IllegalArgumentException(
-                        "concatDate needs parameters yearField, monthField, dayField, and autofill ('start' or 'end')");
+                        "concatDate requires parameters yearField, monthField and dayField");
         }
 
         @Override
@@ -92,5 +114,10 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
             return "concatDate(yearField=" + yearField + ", monthField=" + monthField + ", dayField=" + dayField
                     + ", autofillMode=" + (autoFillStart ? "start" : "end") + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

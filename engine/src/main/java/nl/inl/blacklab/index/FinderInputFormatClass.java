@@ -1,12 +1,12 @@
 package nl.inl.blacklab.index;
 
-import java.util.Collections;
 import java.util.Optional;
 
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.InputFormatType;
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.PluginsOfType;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Supports creation of several types of DocIndexers implemented directly in
@@ -21,7 +21,7 @@ public class FinderInputFormatClass implements FinderInputFormat {
         Optional<InputFormatType> inputFormatType = inputFormatPlugins.getIfExists(formatIdentifier);
         if (inputFormatType.isEmpty())
             return null;
-        InputFormat inputFormat = inputFormatType.get().createInputFormat(Collections.emptyMap());
+        InputFormat inputFormat = inputFormatType.get().createInputFormat(null, PluginParams.NONE);
         return DocumentFormats.add(formatIdentifier, inputFormat);
     }
 

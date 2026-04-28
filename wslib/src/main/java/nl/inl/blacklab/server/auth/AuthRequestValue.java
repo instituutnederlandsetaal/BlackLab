@@ -1,11 +1,16 @@
 package nl.inl.blacklab.server.auth;
 
-import java.util.Map;
+import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.param.PEnum;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -20,6 +25,11 @@ import nl.inl.blacklab.server.search.UserRequest;
 public class AuthRequestValue extends AuthMethodProvider {
     static final Logger logger = LogManager.getLogger(AuthRequestValue.class);
 
+    private PluginParam parType;
+    private PluginParam parName;
+    private PluginParam parAttributeType; // deprecated, use "type"
+    private PluginParam parAttributeName; // deprecated, use "name"
+
     enum AttributeType {
         ATTRIBUTE,
         HEADER,
@@ -27,23 +37,27 @@ public class AuthRequestValue extends AuthMethodProvider {
     }
 
     @Override
-    public AuthMethod get(Map<String, Object> config) {
-        Object typeName = config.get("attributeType"); // deprecated, use "type"
-        if (typeName == null)
-            typeName = config.get("type");
-        if (typeName == null)
-            typeName = "attribute";
-        Object parName = config.get("attributeName"); // deprecated, use "name"
-        if (parName == null) parName = config.get("name");
-        if (parName == null)
-            logger.error("AuthRequestAttribute: name parameter missing in blacklab-server.yaml");
+    public void initialize() throws PluginException {
+        List<String> typeOptions = List.of("attribute", "header", "parameter");
+        parAttributeType = addParam(PEnum.of("attributeType", typeOptions)); // deprecated, use "type"
+        parType = addParam(PEnum.of("type", typeOptions));
+        parAttributeName = addParam(PString.identifier("attributeName")); // deprecated, use "name"
+        parName = addParam(PString.identifier("name"));
+    }
 
+    @Override
+    public AuthMethod get(PluginParams config) {
+        String type = config.getString(parAttributeType, null); // deprecated, use "type"
+        if (type == null)
+            type = config.getString(parType, "attribute");
+        AttributeType attType = AttributeType.valueOf(type.toUpperCase());
         // Name of the attribute/parameter/header to read
-        String valueKey = parName == null ? null : parName.toString();
-        AttributeType type = AttributeType.valueOf(typeName.toString().toUpperCase());
-        if (config.size() > 2)
-            logger.warn("AuthRequestAttribute only takes two parameters " +
-                    "(type [attribute, header, parameter] and name), but others were passed.");
+        String name = config.getString(parAttributeName, null); // deprecated, use "name"
+        if (name == null)
+            name = config.getString(parName, null);
+        if (name == null)
+            logger.error("AuthRequestAttribute: name parameter missing in blacklab-server.yaml");
+        String valueKey = name.isEmpty() ? null : name;
 
         return new AuthMethod() {
             @Override
@@ -77,7 +91,7 @@ public class AuthRequestValue extends AuthMethodProvider {
                 }
 
                 if (userId == null) {
-                    userId = switch (type) {
+                    userId = switch (attType) {
                         case ATTRIBUTE -> request.getAttribute(valueKey).toString();
                         case HEADER -> request.getHeader(valueKey);
                         case PARAMETER -> request.getParameter(valueKey);
@@ -87,6 +101,11 @@ public class AuthRequestValue extends AuthMethodProvider {
                 return userId;
             }
         };
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 
 }

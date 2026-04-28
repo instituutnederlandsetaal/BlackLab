@@ -1,7 +1,7 @@
 package nl.inl.blacklab.indexers.config;
 
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Stream;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -11,8 +11,7 @@ import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.plugins.FileConverter;
-import nl.inl.blacklab.plugins.PluginManager;
-import nl.inl.blacklab.plugins.PluginsOfType;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.util.fileprocessor.FileReference;
 
 /**
@@ -23,25 +22,46 @@ import nl.inl.util.fileprocessor.FileReference;
  */
 public class InputFormatTypeWithConverters extends InputFormatTypeBase {
 
+    public static InputFormat wrap(InputFormat inputFormat, FileConverter.ExtraConverters extraConverters) {
+        if (extraConverters.isEmpty())
+            return inputFormat;
+        List<FileConverter.Parameterized> alreadyConfiguredConverters = List.of();
+        if (inputFormat instanceof InputFormatConvertAndTag withConv) {
+            // There were already converters. Unwrap and rewrap.
+            alreadyConfiguredConverters = withConv.getConverters();
+            inputFormat = withConv.getWrappedInputFormat();
+        }
+        // Concatenate first, existing and last converters.
+        Stream<FileConverter.Parameterized> firstAndExisting = Stream.concat(
+                extraConverters.applyFirst().stream(), alreadyConfiguredConverters.stream());
+        List<FileConverter.Parameterized> allConverters = Stream.concat(
+                firstAndExisting, extraConverters.applyLast().stream()).toList();
+        return new InputFormatConvertAndTag(inputFormat, allConverters);
+    }
+
     @Override
-    public InputFormat createInputFormat(Map<String, Object> configuration) {
+    public InputFormat createInputFormat(ConfigInputFormat config, PluginParams params) {
         throw new UnsupportedOperationException("Must be instantiated with an InputFormat to be wrapped");
     }
 
-    public InputFormat createInputFormat(InputFormat wrapped, List<String> fileConverters) {
-        return new InputFormatConvertAndTag(wrapped, fileConverters);
+    public InputFormat createInputFormat(InputFormat wrapped, List<FileConverter.Parameterized> converters) {
+        return new InputFormatConvertAndTag(wrapped, converters);
     }
 
-    public class InputFormatConvertAndTag extends InputFormatBase {
+    public static class InputFormatConvertAndTag extends InputFormatBase {
 
         private final InputFormat outputIndexer;
 
-        private final List<String> converterIds;
+        private final List<FileConverter.Parameterized> converters;
 
-        public InputFormatConvertAndTag(InputFormat actualIndexer, List<String> converterIds) {
+        public List<FileConverter.Parameterized> getConverters() {
+            return converters;
+        }
+
+        public InputFormatConvertAndTag(InputFormat actualIndexer, List<FileConverter.Parameterized> converters) {
             this.outputIndexer = actualIndexer;
-            assert converterIds != null;
-            this.converterIds = converterIds;
+            assert converters != null && !converters.isEmpty();
+            this.converters = converters;
         }
 
         @Override
@@ -53,6 +73,10 @@ public class InputFormatTypeWithConverters extends InputFormatTypeBase {
         public void indexSpecificDocument(DocWriter docWriter, FileReference file, String documentExpr, Doc linkingDoc,
                 String storeWithName) {
             outputIndexer.indexSpecificDocument(docWriter, file, documentExpr, linkingDoc, storeWithName);
+        }
+
+        public InputFormat getWrappedInputFormat() {
+            return outputIndexer;
         }
 
         protected class DocConvertAndTag extends DocBase {
@@ -79,11 +103,10 @@ public class InputFormatTypeWithConverters extends InputFormatTypeBase {
                 // If the converter can't handle the file, an exception will be thrown.
                 try {
                     FileReference result = file;
-                    PluginsOfType<FileConverter> fileConverters = PluginManager.type(FileConverter.class);
-                    for (String converterId: converterIds) {
+                    for (FileConverter.Parameterized converter: converters) {
                         // convertplugin always outputs in the input charset if provided, utf8 otherwise
                         String inputFormat = FilenameUtils.getExtension(this.documentName).toLowerCase();
-                        result = fileConverters.get(converterId).perform(result, inputFormat);
+                        result = converter.perform(result, inputFormat);
                     }
                     return outputIndexer.index(getDocWriter(), result);
                 } catch (PluginException e) {
@@ -111,5 +134,10 @@ public class InputFormatTypeWithConverters extends InputFormatTypeBase {
                 throw new UnsupportedOperationException();
             }
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

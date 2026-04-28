@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLab;
 
 /**
@@ -20,7 +21,7 @@ public class ProcessingInstructionSort extends ProcessingInstruction {
     private static final ProcessingStepSort INSTANCE = new ProcessingStepSort();
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
+    public ProcessingStep get(PluginParams param) {
         return INSTANCE;
     }
 
@@ -49,6 +50,11 @@ public class ProcessingInstructionSort extends ProcessingInstruction {
         public String toString() {
             return "sort()";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 
 }

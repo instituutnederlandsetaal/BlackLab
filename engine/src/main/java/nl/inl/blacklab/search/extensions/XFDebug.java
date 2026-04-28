@@ -3,7 +3,11 @@ package nl.inl.blacklab.search.extensions;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.plugins.ExprType;
+import nl.inl.blacklab.plugins.param.PBoolean;
+import nl.inl.blacklab.plugins.param.PEnum;
+import nl.inl.blacklab.plugins.param.PInteger;
+import nl.inl.blacklab.plugins.param.PQuery;
+import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.fimatch.NfaTwoWay;
@@ -25,9 +29,9 @@ public class XFDebug implements ExtensionFunctionClass {
 
         // Adjust hits
         QueryExtensions.register("_adjust", List.of(
-                ExprType.QUERY,
-                        ExprType.INTEGER,
-                        ExprType.INTEGER),
+                        PQuery.required("query"),
+                        PInteger.any("before"),
+                        PInteger.any("after")),
                 Arrays.asList(null, 0, 0),
                 (queryInfo, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
@@ -37,7 +41,10 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Get the leading or trailing edge of the query
-        QueryExtensions.register("_edge", ARGS_QS, Arrays.asList(null, "leading"),
+        QueryExtensions.register("_edge", List.of(
+                PQuery.required("query"),
+                PString.matching("whichEdge", "l(eading)?|b(efore)?|t(railing)?|a(after)?")
+                ), Arrays.asList(null, "leading"),
                 (queryInfo, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
                     String whichEdge = ((String) args.get(1)).toLowerCase();
@@ -47,9 +54,9 @@ public class XFDebug implements ExtensionFunctionClass {
 
         // Resolve the first query using the forward index and the second using the inverted index
         QueryExtensions.register("_fimatch", List.of(
-                    ExprType.QUERY,
-                    ExprType.QUERY,
-                    ExprType.INTEGER),
+                    PQuery.required("first"),
+                    PQuery.required("second"),
+                    PInteger.range("fiClause", 0, 1)),
                     Arrays.asList(null, null, 0),
                 (queryInfo, context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
@@ -73,7 +80,7 @@ public class XFDebug implements ExtensionFunctionClass {
                     }
                 });
         // Resolve the first query using the forward index and the second using the inverted index
-        QueryExtensions.register("_FI1", ARGS_QQ, NO_DEFAULT_VALUES,
+        QueryExtensions.register("_FI1", List.of(PQuery.required("first"), PQuery.required("second")), List.of(),
                 (queryInfo, context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
                     BLSpanQuery b = (BLSpanQuery) args.get(1);
@@ -83,7 +90,7 @@ public class XFDebug implements ExtensionFunctionClass {
                             fiAccessor);
                 });
         // Resolve the second query using the forward index and the first using the inverted index
-        QueryExtensions.register("_FI2", ARGS_QQ, NO_DEFAULT_VALUES,
+        QueryExtensions.register("_FI2", List.of(PQuery.required("first"), PQuery.required("second")), List.of(),
                 (queryInfo, context, args) -> {
                     BLSpanQuery a = (BLSpanQuery) args.get(0);
                     BLSpanQuery b = (BLSpanQuery) args.get(1);
@@ -94,22 +101,27 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Return the argument unchanged
-        QueryExtensions.register("_ident", ARGS_Q, NO_DEFAULT_VALUES,
+        QueryExtensions.register("_ident", List.of(PQuery.required("query")), List.of(),
                 (queryInfo, context, args) -> (BLSpanQuery) args.get(0));
 
         // Search within a single docId, e.g. _indoc("water", "3") to find "water" in docId 3 only
-        QueryExtensions.register("_indoc",
-                List.of(ExprType.QUERY, ExprType.INTEGER),
-                NO_DEFAULT_VALUES,
-                (queryInfo, context, args) -> {
-                    BLSpanQuery query = (BLSpanQuery) args.get(0);
-                    int docId = (Integer) args.get(1);
-                    return new SpanQueryFiltered(query, new SingleDocIdFilter(docId));
-                });
+        QueryExtensions.register("_indoc", List.of(
+            PQuery.required("query"),
+            PInteger.nonnegative("docId", true)
+            ),
+            List.of(),
+            (queryInfo, context, args) -> {
+                BLSpanQuery query = (BLSpanQuery) args.get(0);
+                int docId = (Integer) args.get(1);
+                return new SpanQueryFiltered(query, new SingleDocIdFilter(docId));
+            }
+        );
 
         // Filter by hit length; min and max are inclusive.
         QueryExtensions.register("_lenfilter", List.of(
-                ExprType.QUERY, ExprType.INTEGER, ExprType.INTEGER),
+                PQuery.required("query"),
+                PInteger.nonnegative("minLength", true),
+                PInteger.nonnegative("maxLength", true)),
                 Arrays.asList(null, 0, 0),
                 (queryInfo, context, args) -> {
                     BLSpanQuery query = (BLSpanQuery) args.get(0);
@@ -119,9 +131,13 @@ public class XFDebug implements ExtensionFunctionClass {
                 });
 
         // Filter producer hits by filter query using the specified operation (optionally inverted)
+        List<String> posFilterOps = Arrays.asList(SpanQueryPositionFilter.Operation.values()).stream()
+                .map(v -> v.toString()).toList();
         QueryExtensions.register("_posfilter", List.of(
-                        ExprType.QUERY, ExprType.QUERY,
-                        ExprType.STRING, ExprType.BOOLEAN),
+                PQuery.required("producer"),
+                PQuery.required("filter"),
+                PEnum.of("operation", SpanQueryPositionFilter.Operation.class, true),
+                PBoolean.required("inverted")),
                 Arrays.asList(null, null, "matches", false),
                 (queryInfo, context, args) -> {
                     BLSpanQuery producer = (BLSpanQuery) args.get(0);

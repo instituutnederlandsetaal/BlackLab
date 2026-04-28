@@ -5,7 +5,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.util.StringUtil;
 
 /**
@@ -13,14 +17,22 @@ import nl.inl.util.StringUtil;
  */
 public class ProcessingInstructionParsePos extends ProcessingInstruction {
 
+    private PluginParam parField;
+
     @Override
     public synchronized String getId() {
         return "parsePos";
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        return ProcessingStepParsePos.fromConfig(param);
+    public void initialize() throws PluginException {
+        parField = addParam(PString.identifier("field"));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
+        String field = param.getString( parField, "_");
+        return new ProcessingStepParsePos(field);
     }
 
     public static class ProcessingStepParsePos implements ProcessingStep {
@@ -40,11 +52,6 @@ public class ProcessingInstructionParsePos extends ProcessingInstruction {
 
         public ProcessingStepParsePos(String featureName) {
             this.featureName = featureName;
-        }
-
-        public static ProcessingStepParsePos fromConfig(Map<String, Object> param) {
-            String featureName = ProcessingStep.par(param, "field", "_");
-            return new ProcessingStepParsePos(featureName);
         }
 
         @Override
@@ -75,5 +82,10 @@ public class ProcessingInstructionParsePos extends ProcessingInstruction {
         public String toString() {
             return "parsePos(field=" + featureName + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

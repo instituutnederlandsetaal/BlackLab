@@ -100,4 +100,9 @@ public class FileReferenceFile implements FileReference {
         }
         return charSet;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[" + getPath() + "]";
+    }
 }

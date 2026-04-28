@@ -88,6 +88,7 @@ class PluginData<T extends Plugin> {
                 logger.debug("Initializing plugin " + plugin.getId());
                 plugin.configure(config, findPluginDir());
                 plugin.initialize();
+                plugin.descriptor().freeze();
                 logger.debug("Initialized plugin " + plugin.getId());
             } catch (PluginException e) {
                 initializationException = e;

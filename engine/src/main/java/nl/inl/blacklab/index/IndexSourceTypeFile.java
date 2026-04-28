@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Optional;
 
 import nl.inl.blacklab.plugins.IndexSourceType;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.util.fileprocessor.FileIterator;
 import nl.inl.util.fileprocessor.FileReference;
 
@@ -16,19 +17,22 @@ public class IndexSourceTypeFile extends IndexSourceType {
     }
 
     @Override
-    public IndexSource get(String path) {
+    public IndexSource get(String path, PluginParams params) {
         return new IndexSourceFile(path);
     }
 
-    protected static class IndexSourceFile extends IndexSource {
+    public static class IndexSourceFile extends IndexSource {
 
         private final File inputDir;
 
         private final String globFilesInThisDir;
 
         public IndexSourceFile(String path) {
-            super(path);
-            File file = new File(path);
+            this(new File(path));
+        }
+
+        public IndexSourceFile(File file) {
+            super(file.getPath());
             if (file.isDirectory()) {
                 this.inputDir = file;
                 this.globFilesInThisDir = "*";

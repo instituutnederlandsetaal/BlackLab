@@ -1,12 +1,11 @@
 package nl.inl.blacklab.search;
 
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerBcql;
@@ -19,7 +18,7 @@ public class TestTextPatternToCorpusQL {
     }
 
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
-        TextPattern p = BcqlQueryLanguageParser.parse(null, Map.of(), input);
+        TextPattern p = BcqlQueryLanguageParser.parse(null, PluginParams.NONE, input);
         String cql = TextPatternSerializerBcql.serialize(p);
         Assert.assertEquals(expected, cql);
     }

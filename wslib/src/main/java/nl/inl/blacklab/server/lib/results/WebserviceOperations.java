@@ -13,6 +13,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -26,6 +27,7 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.ibm.icu.text.Collator;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
@@ -34,6 +36,7 @@ import nl.inl.blacklab.exceptions.MatchInfoNotFound;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.IndexListenerReportConsole;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
@@ -80,7 +83,9 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
+import nl.inl.util.fileprocessor.FileReference;
 
 public class WebserviceOperations {
 
@@ -662,6 +667,24 @@ public class WebserviceOperations {
         Index index = params.getIndexManager().getIndex(params.getCorpusName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
+        record ExtraConverterConfigs(List<Map<String, Object>> first, List<Map<String, Object>> last) {}
+        List<FileConverter.Parameterized> convFirst = List.of();
+        List<FileConverter.Parameterized> convLast = List.of();
+        Optional<String> jsonConverters = params.getConverters();
+        if (jsonConverters.isPresent()) {
+            ExtraConverterConfigs extraConverterIds;
+            try {
+                extraConverterIds = Json.getJsonObjectMapper().readValue(jsonConverters.get(),
+                        ExtraConverterConfigs.class);
+            } catch (JsonProcessingException e) {
+                throw new BadRequest("INVALID_CONVERTERS",
+                        "The converters parameter does not have the correct JSON structure, please consult the documentation: "
+                                + e.getMessage(), e);
+            }
+            convFirst = extraConverterIds.first().stream().map(FileConverter::fromConfig).toList();
+            convLast = extraConverterIds.last().stream().map(FileConverter::fromConfig).toList();
+        }
+
         User user = params.getUser();
         if (!index.userMayAddData(user))
             throw new NotAuthorized("You (" + user.getId() + ") may not add data to " + params.getCorpusName() + "; you are not the owner.");
@@ -689,7 +712,11 @@ public class WebserviceOperations {
         try {
             while (dataFiles.hasNext()) {
                 UploadedFile df = dataFiles.next();
-                indexer.index(df.getName(), df.getData());
+                String fileName = df.getName();
+                byte[] contents = df.getData();
+                FileConverter.ExtraConverters extraConverters = new FileConverter.ExtraConverters(convFirst, convLast);
+                FileReference fileRef = FileReference.fromBytes(fileName, contents, null);
+                indexer.index(fileRef, null, extraConverters);
             }
         } finally {
             if (indexError == null) {

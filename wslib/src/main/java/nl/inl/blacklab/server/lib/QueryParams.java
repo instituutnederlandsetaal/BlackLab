@@ -172,6 +172,8 @@ public interface QueryParams {
 
     default Optional<String> getInputFormat() { return Optional.empty(); }
 
+    Optional<String> getConverters();
+
     /**
      * Should the responses include deprecated field information?
      * <p>

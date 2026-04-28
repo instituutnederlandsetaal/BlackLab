@@ -27,6 +27,7 @@ import nl.inl.blacklab.forwardindex.AnnotationForwardIndex;
 import nl.inl.blacklab.forwardindex.ForwardIndex;
 import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.QueryParserProvider;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.fimatch.ForwardIndexAccessor;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
@@ -531,7 +532,7 @@ public interface BlackLabIndex extends AutoCloseable {
             id = "corpusql";
         try {
             QueryParserProvider qpp = PluginManager.type(QueryParserProvider.class).get(id);
-            return qpp.get(this, Map.of());
+            return qpp.get(this, PluginParams.NONE);
         } catch (PluginException e) {
             throw new IllegalStateException(e);
         }

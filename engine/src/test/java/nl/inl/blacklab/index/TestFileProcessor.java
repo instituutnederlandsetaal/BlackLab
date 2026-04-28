@@ -1,6 +1,4 @@
-package nl.inl.util;
-
-import static org.junit.Assert.assertEquals;
+package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.net.URISyntaxException;
@@ -10,6 +8,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
+import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -19,7 +18,6 @@ import org.junit.runners.Parameterized.Parameters;
 import nl.inl.util.fileprocessor.ErrorHandler;
 import nl.inl.util.fileprocessor.FileHandler;
 import nl.inl.util.fileprocessor.FileIterator;
-import nl.inl.util.fileprocessor.FileProcessor;
 import nl.inl.util.fileprocessor.FileReference;
 
 @RunWith(Parameterized.class)
@@ -240,11 +238,11 @@ public class TestFileProcessor {
 
         if (!shouldTriggerException) {
             // Deterministic results
-            assertEquals(expectedFiles, fileHandler.filesReceived.size());
+            Assert.assertEquals(expectedFiles, fileHandler.filesReceived.size());
         } else if (!useThreads) {
-            assertEquals(1, fileHandler.filesReceived.size());
+            Assert.assertEquals(1, fileHandler.filesReceived.size());
         } // else both throwing and using threads, results are nondeterministic
 
-        assertEquals(shouldTriggerException, errorHandler.caughtException instanceof TestException);
+        Assert.assertEquals(shouldTriggerException, errorHandler.caughtException instanceof TestException);
     }
 }

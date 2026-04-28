@@ -5,7 +5,11 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Optionally replace an empty result with a constant value, or the value of a metadata field.
@@ -18,18 +22,31 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
  */
 public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
 
+    private PluginParam parField;
+
+    private PluginParam parValue;
+
+    private PluginParam parSeparator;
+
     @Override
     public synchronized String getId() {
         return "ifEmpty"; // "default" as well (old name)
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        String field = ProcessingStep.par(param, "field");
-        String fixedValue = null;
-        if (field == null)
-            fixedValue = ProcessingStep.par(param, "value");
-        String separator = ProcessingStep.par(param, "separator", ";");
+    public void initialize() throws PluginException {
+        parField = addParam(PString.identifier("field"));
+        parValue = addParam(PString.any("value"));
+        parSeparator = addParam(PString.any("separator"));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
+        String field = param.getString(parField, "");
+        String fixedValue = "";
+        if (field.isEmpty())
+            fixedValue = param.getString(parValue, "");
+        String separator = param.getString(parSeparator, ";");
         return new ProcessingStepIfEmpty(separator, field, fixedValue);
     }
 
@@ -41,21 +58,20 @@ public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
         String fixedValue;
 
         public ProcessingStepIfEmpty(String separator, String field, String fixedValue) {
-            this.field = field;
+            this.field = field == null ? "" : field;
             this.separator = separator;
-            this.fixedValue = fixedValue;
+            this.fixedValue = fixedValue == null ? "" : fixedValue;
+            if (this.field.isEmpty() && this.fixedValue.isEmpty())
+                throw new PluginException("Either field or fixedValue must be set");
         }
 
         @Override
         public String performSingle(String value, Map<String, Collection<String>> metadata) {
             if (value.isEmpty()) {
-                String defaultValue;
-                if (field != null)
-                    defaultValue = StringUtils.join(metadata.get(field), separator);
-                else
-                    defaultValue = fixedValue;
-                if (defaultValue != null)
-                    value = defaultValue;
+                value = field.isEmpty() ? fixedValue :
+                    StringUtils.join(metadata.get(field), separator);
+                if (value == null)
+                    value = "";
             }
             return value;
         }
@@ -72,5 +88,10 @@ public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
                     "value=" + fixedValue)
                     + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

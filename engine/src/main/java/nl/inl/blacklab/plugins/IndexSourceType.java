@@ -3,6 +3,7 @@ package nl.inl.blacklab.plugins;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.index.IndexSource;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /** A source for documents to index, such as the file system,
  * a database, or a web service. */
@@ -54,10 +55,10 @@ public abstract class IndexSourceType extends Plugin {
             throw new IllegalArgumentException("Unknown input URI scheme: " + uri);
         }
         // Create an instance of the appropriate IndexSource subclass
-        return indexSourceType.get(path);
+        return indexSourceType.get(path, PluginParams.NONE);
     }
 
     /** Get the resources indicated by the path from our source. */
-    public abstract IndexSource get(String path);
+    public abstract IndexSource get(String path, PluginParams params);
 
 }

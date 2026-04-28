@@ -199,7 +199,7 @@ public class ConfigInputFormat {
     /** Ids of FileConverter plugins to be applied in order before indexing the file. */
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     @JsonPropertyDescription("Converter plugins to apply before indexing (optional)")
-    private List<String> converters = new ArrayList<>();
+    private List<Map<String, Object>> converters = new ArrayList<>();
 
     /** id of a {@link FileConverter} to run files through prior to indexing */
     @JsonPropertyDescription("Deprecated; use converters list instead")
@@ -456,7 +456,7 @@ public class ConfigInputFormat {
         this.annotatedFields.put(f.getName(), f);
     }
 
-    public void setConverters(List<String> converters) {
+    public void setConverters(List<Map<String, Object>> converters) {
         this.converters.clear();
         this.converters.addAll(converters);
     }
@@ -471,14 +471,16 @@ public class ConfigInputFormat {
         this.tagPluginId = id;
     }
 
-    public List<String> getConverters() {
-        List<String> converters = new ArrayList<>(this.converters);
+    String KEY_CONVERTER_ID = "id";
+
+    public List<Map<String, Object>> getConverters() {
+        List<Map<String, Object>> converters = new ArrayList<>(this.converters);
 
         // Older style: single convert and/or tag plugin
         if (convertPluginId != null && !convertPluginId.isEmpty())
-            converters.add(convertPluginId);
+            converters.add(Map.of(KEY_CONVERTER_ID, convertPluginId));
         if (tagPluginId != null && !tagPluginId.isEmpty())
-            converters.add(tagPluginId);
+            converters.add(Map.of(KEY_CONVERTER_ID, tagPluginId));
 
         return converters;
     }

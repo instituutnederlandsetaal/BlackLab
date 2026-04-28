@@ -1,16 +1,21 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PStringStringMap;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Map values according to a mapping table.
  */
 public class ProcessingInstructionMapValues extends ProcessingInstruction {
+
+    private PluginParam parTable;
 
     @Override
     public synchronized String getId() {
@@ -18,8 +23,13 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        return ProcessingStepMapValues.fromConfig(param);
+    public void initialize() throws PluginException {
+        parTable = addParam(PStringStringMap.required("table", PStringStringMap.Validator.REASONABLE_LENGTHS));
+    }
+
+    @Override
+    public ProcessingStepMapValues get(PluginParams param) {
+        return new ProcessingStepMapValues(param.getStringStringMap(parTable).orElseThrow());
     }
 
     public static class ProcessingStepMapValues implements ProcessingStep {
@@ -28,13 +38,6 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
 
         public ProcessingStepMapValues(Map<String, String> mapping) {
             this.mapping = mapping;
-        }
-
-        public static ProcessingStepMapValues fromConfig(Map<String, Object> param) {
-            Map<String, String> mapping = param.containsKey("table") ?
-                    (Map<String, String>) param.get("table") :
-                    Collections.emptyMap();
-            return new ProcessingStepMapValues(mapping);
         }
 
         @Override
@@ -56,5 +59,10 @@ public class ProcessingInstructionMapValues extends ProcessingInstruction {
         public String toString() {
             return "map(<mapping with " + mapping.size() + " entries>)";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

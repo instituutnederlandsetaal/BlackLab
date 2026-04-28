@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Eliminate any duplicate values.
@@ -19,7 +20,7 @@ public class ProcessingInstructionUnique extends ProcessingInstruction {
     private static final ProcessingStepUnique INSTANCE = new ProcessingStepUnique();
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
+    public ProcessingStep get(PluginParams param) {
         return INSTANCE;
     }
 
@@ -48,6 +49,11 @@ public class ProcessingInstructionUnique extends ProcessingInstruction {
         public String toString() {
             return "unique()";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 
 }

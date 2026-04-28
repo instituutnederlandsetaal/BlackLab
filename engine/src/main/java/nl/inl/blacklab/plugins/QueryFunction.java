@@ -6,10 +6,16 @@ import java.util.List;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.param.InvalidPluginParameters;
+import nl.inl.blacklab.plugins.param.PAny;
+import nl.inl.blacklab.plugins.param.PBoolean;
+import nl.inl.blacklab.plugins.param.PEnum;
+import nl.inl.blacklab.plugins.param.PInteger;
+import nl.inl.blacklab.plugins.param.PList;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.RelationUtil;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.lucene.SpanQueryDefaultValue;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -28,7 +34,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     private final String name;
 
     /** Parameter types */
-    private final List<ExprType> argTypes;
+    private final List<PluginParam> argTypes;
 
     /** Parameter default values, if any */
     private final List<Object> defaultValues;
@@ -36,16 +42,16 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     /** Is this a function that operates specifically on relations queries? */
     private final boolean relationsFunction;
 
-    public QueryFunction(String name, List<ExprType> argTypes) {
+    public QueryFunction(String name, List<PluginParam> argTypes) {
         this(name, argTypes, null, false);
     }
 
-    public QueryFunction(String name, List<ExprType> argTypes,
+    public QueryFunction(String name, List<PluginParam> argTypes,
             List<Object> defaultValues) {
         this(name, argTypes, defaultValues, false);
     }
 
-    public QueryFunction(String name, List<ExprType> argTypes,
+    public QueryFunction(String name, List<PluginParam> argTypes,
             List<Object> defaultValues, boolean relationsFunction) {
         this.name = name;
         this.argTypes = argTypes;
@@ -55,35 +61,31 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
 
     public List<Object> preprocessArgs(QueryExecutionContext context, List<TextPattern> args) {
         // Make sure argument are interpreted as the correct type
-        // (the parser interprets all strings as queries, so we sometimes need to convert them back...)
+        // (the parser interprets all values as queries, so we sometimes need to convert them back...)
         List<Object> newArgs = new ArrayList<>(args);
         for (int i = 0; i < args.size(); i++) {
             TextPattern arg = args.get(i);
             if (i >= argTypes.size())
                 continue; // either vararg or too many param (will be caught later)
-            ExprType type = getExpectedParameterType(i);
+            PluginParam type = getExpectedParameterType(i);
             Objects.requireNonNull(type);
-            if (type == ExprType.ANY || type == ExprType.STRING || type == ExprType.INTEGER ||
-                    type == ExprType.BOOLEAN) {
+            if (type instanceof PAny || type instanceof PString || type instanceof PEnum || type instanceof PInteger ||
+                    type instanceof PBoolean) {
                 String strValue = TextPattern.getSimpleStringValue(context, arg);
                 if (strValue != null) {
-                    switch (type) {
-                    case INTEGER -> {
-                        // Try to convert to number
+                    if (type instanceof PInteger) { // Try to convert to number
                         try {
                             newArgs.set(i, Integer.parseInt(strValue));
                         } catch (NumberFormatException e) {
                             // Ignore, will be caught later as wrong type
                         }
-                    }
-                    case BOOLEAN -> {
-                        // Convert to boolean
+                    } else if (type instanceof PBoolean) { // Convert to boolean
                         if (strValue.equalsIgnoreCase("true"))
                             newArgs.set(i, true);
                         else
                             newArgs.set(i, false);
-                    }
-                    default -> newArgs.set(i, strValue);
+                    } else {
+                        newArgs.set(i, strValue);
                     }
                 }
             }
@@ -96,7 +98,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         List<Object> newArgs = new ArrayList<>(args);
         int n = Math.max(newArgs.size(), requiredNumberOfArguments());
         for (int i = 0; i < n; i++) {
-            ExprType expectedType = getExpectedParameterType(i);
+            PluginParam expectedType = getExpectedParameterType(i);
             // Fill in default value for argument if missing
             if (i < defaultValues.size()) {
                 Object defVal = getDefaultParameterValue(i);
@@ -127,7 +129,7 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
             // See if last argument should be a list type, but was passed another value (with possibly additional
             // values after that). If this is the case, treat it as a vararg and wrap the remaining arguments in a list.
             if (i == argTypes.size() - 1 &&
-                    (expectedType == ExprType.LIST || expectedType == ExprType.ANY || expectedType == ExprType.ANY_INCLUDING_QUERY) &&
+                    (expectedType instanceof PList  || expectedType instanceof PAny) &&
                     !(newArgs.get(i) instanceof List) && newArgs.size() > argTypes.size()) {
                 List<Object> varArgList = new ArrayList<>();
                 for (int j = i; j < newArgs.size(); j++) {
@@ -139,24 +141,17 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
             }
 
             // Check argument type
-            boolean wrongType = switch (expectedType) {
-                case ANY_INCLUDING_QUERY -> false;
-                case ANY -> newArgs.get(i) instanceof BLSpanQuery; // does not allow query
-                case UNDEFINED -> newArgs.get(i) != null;
-                case QUERY -> !(newArgs.get(i) instanceof BLSpanQuery);
-                case STRING -> !(newArgs.get(i) instanceof String);
-                case INTEGER -> !(newArgs.get(i) instanceof Integer);
-                case INT_RANGE -> !(newArgs.get(i) instanceof Integer[] arr && arr.length == 2);
-                case BOOLEAN -> !(newArgs.get(i) instanceof Boolean);
-                case LIST -> !(newArgs.get(i) instanceof List);
-                case SYMBOL -> throw new InvalidQuery("Function argument value cannot be of type SYMBOL");
-                case MATCH_INFO -> !(newArgs.get(i) instanceof MatchInfo);
-            };
-            if (wrongType)
+            try {
+                Object value = newArgs.get(i);
+                // e.g. captureAs defaults to empty string, which doesn't match identifier regex but is fine if the parameter is optional
+                // TODO improve how we deal with optional parameters, shouldn't default to a non-validating value like empty string
+                boolean hasValue = !value.equals("");
+                if (expectedType.isRequired() || hasValue)
+                    expectedType.validate(value); // also validates the value, not just the type
+            } catch (InvalidPluginParameters e) {
                 throw new InvalidQuery(
-                        "Argument " + (i + 1) + " for function " + getName() + " has the wrong type: expected "
-                                + expectedType
-                                + ", got " + ExprType.of(newArgs.get(i)));
+                        "Argument " + (i + 1) + " for function " + getName() + " type validation failed: " + e.getMessage());
+            }
         }
 
         if (newArgs.size() != argTypes.size())
@@ -176,9 +171,9 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         return defaultValues.get(i);
     }
 
-    public ExprType getExpectedParameterType(int i) {
+    public PluginParam getExpectedParameterType(int i) {
         if (i >= argTypes.size())
-            return ExprType.ANY_INCLUDING_QUERY; // vararg of any type
+            return PAny.optional("[vararg]", (o) -> {}); // vararg of any type
         return argTypes.get(i);
     }
 
@@ -206,4 +201,5 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
     public String toString() {
         return name + "(" + argTypes + ")";
     }
+
 }

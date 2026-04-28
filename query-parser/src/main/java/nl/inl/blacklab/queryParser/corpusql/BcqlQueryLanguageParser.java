@@ -2,7 +2,6 @@ package nl.inl.blacklab.queryParser.corpusql;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.antlr.v4.runtime.BaseErrorListener;
 import org.antlr.v4.runtime.CharStream;
@@ -12,6 +11,7 @@ import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.lucene.RelationInfo;
@@ -31,12 +31,11 @@ public class BcqlQueryLanguageParser implements BLQueryParser {
      * @return the parsed query
      * @throws InvalidQuery on parse error
      */
-    public static TextPattern parse(BlackLabIndex index, Map<String, Object> config, String query) throws InvalidQuery {
-        BcqlQueryLanguageParser parser = new BcqlQueryLanguageParser(index, config);
-        return parser.parseQuery(query);
+    public static TextPattern parse(BlackLabIndex index, PluginParams config, String query) throws InvalidQuery {
+        return parseQuery(query);
     }
 
-    public BcqlQueryLanguageParser(BlackLabIndex index, Map<String, Object> config) {
+    public BcqlQueryLanguageParser(BlackLabIndex index, PluginParams config) {
     }
 
     @Override

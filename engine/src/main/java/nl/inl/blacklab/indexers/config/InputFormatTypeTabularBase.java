@@ -11,7 +11,7 @@ import nl.inl.util.fileprocessor.FileReference;
 
 public abstract class InputFormatTypeTabularBase extends InputFormatTypeConfig {
 
-    public abstract class InputFormatTabularBase extends InputFormatConfig {
+    public static abstract class InputFormatTabularBase extends InputFormatConfig {
 
         protected String multipleValuesSeparatorRegex;
 

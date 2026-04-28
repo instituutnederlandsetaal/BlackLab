@@ -2,7 +2,6 @@ package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -11,9 +10,10 @@ import java.util.function.Function;
 import org.apache.lucene.index.Term;
 
 import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.util.fileprocessor.FileHandler;
-import nl.inl.util.fileprocessor.FileProcessor;
+import nl.inl.util.fileprocessor.FileReference;
 
 public interface Indexer extends DocWriter {
 
@@ -127,67 +127,24 @@ public interface Indexer extends DocWriter {
      */
     void update(Term term, BLInputDocument document) throws IOException;
 
-    void index(IndexSource indexSource);
+    /**
+     * Index files from a source.
+     *
+     * @param indexSource source of the files to index
+     * @param extraConverters extra converters to apply before/after any from the input format
+     */
+    void index(IndexSource indexSource, FileConverter.ExtraConverters extraConverters);
 
     /**
-     * Index a document or archive from an InputStream.
-     *
-     * @param documentName name for the InputStream (e.g. name of the file)
-     * @param input the stream
-     */
-    void index(String documentName, InputStream input);
-
-    /**
-     * Index a document (or archive if enabled by
-     * {@link #setProcessArchivesAsDirectories(boolean)}
-     * 
-     * Catches and reports any errors that occur to the IndexListener.  
-     *
-     * @param fileNameGlob
-     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
-     */
-    void index(String fileName, InputStream input, String fileNameGlob);
-
-    /**
-     * Index the file or directory specified.
-     *
-     * Indexes all files in a directory or archive (previously only indexed *.xml;
-     * specify a glob if you want this behaviour back, see
-     * {@link #index(File, String)}.
-     *
-     * Recurses into subdirs only if that setting is enabled.
-     *
-     * @param file the input file or directory
-     */
-    default void index(File file) { index(file, null); }
-
-    /**
-     * Index a document, archive (if enabled by
-     * {@link #setProcessArchivesAsDirectories(boolean)}, or directory, optionally
-     * recursively if set by {@link #setRecurseSubdirs(boolean)}
-     *
-     * @param fileNameGlob
-     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.
-     */
-    void index(File file, String fileNameGlob);
-    
-    /** 
      * Index a file or archive of files from memory.
      * Encoding is guessed based on file contents.
-     * 
-     * @param fileName name of the file including extension. Used to detect archives/file types.
-     * @param contents file contents
-     * @param fileNameGlob 
-     * Only used if this file is a directory or is determined to be an archive. Only process files matching the glob.     */
-    void index(String fileName, byte[] contents, String fileNameGlob);
-    
-    /** 
-     * Index a file or archive of files from memory.
-     * 
-     * @param fileName name of the file including extension. Used to detect archives/file types.
-     * @param contents file contents 
+     *
+     * @param fileRef reference to a file to index
+     * @param fileNameGlob Only process files matching the glob, or all files if null.
+     *     Only used if this file is an archive.
+     * @param extraConverters extra converters to apply before/after any from the input format
      */
-    default void index(String fileName, byte[] contents) { index(fileName, contents, null); }
+    void index(FileReference fileRef, String fileNameGlob, FileConverter.ExtraConverters extraConverters);
 
     /**
      * The index we're writing to.

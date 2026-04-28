@@ -3,7 +3,6 @@ package nl.inl.blacklab.queryParser.contextql;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.PhraseQuery;
@@ -11,6 +10,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.WildcardQuery;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
@@ -30,7 +30,7 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
      * @return the parsed query
      * @throws InvalidQuery on parse error
      */
-    public static CompleteQuery parse(BlackLabIndex index, Map<String, Object> config, String query) throws InvalidQuery {
+    public static CompleteQuery parse(BlackLabIndex index, PluginParams config, String query) throws InvalidQuery {
         ContextualQueryLanguageParser parser = new ContextualQueryLanguageParser(index, config);
         return parser.parse(query);
     }
@@ -134,7 +134,7 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
 
     private String defaultProperty = "contents.word";
 
-    public ContextualQueryLanguageParser(BlackLabIndex index, Map<String, Object> config) {
+    public ContextualQueryLanguageParser(BlackLabIndex index, PluginParams config) {
         this.index = index;
     }
     

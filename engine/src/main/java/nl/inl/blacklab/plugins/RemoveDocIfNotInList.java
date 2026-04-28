@@ -10,13 +10,17 @@ import java.io.Reader;
 import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.StoredFields;
 
+import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.plugins.param.PBoolean;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.DocTask;
@@ -30,19 +34,29 @@ import nl.inl.blacklab.search.DocTask;
  */
 public class RemoveDocIfNotInList extends DocTaskType {
 
+    private PluginParam parToKeepFile;
+    private PluginParam parToAddFile;
+    private PluginParam parOkayToRemoveMany;
+
     @Override
-    public DocTask docTask(BlackLabIndex index, Map<String, String> args) {
+    public void initialize() throws PluginException {
+        parToKeepFile = addParam(PString.matching("toKeepFile", ".+", true));
+        parToAddFile = addParam(PString.matching("toAddFile", ".+"));
+        parOkayToRemoveMany = addParam(PBoolean.optional("okayToRemoveMany"));
+    }
+
+    @Override
+    public DocTask docTask(BlackLabIndex index, PluginParams args) {
         BlackLabIndexWriter indexWriter = (BlackLabIndexWriter) index;
 
-        if (!args.containsKey("toKeepFile"))
-            throw new IllegalArgumentException("Required argument: toKeepFile (file with list of PIDs to keep, one per line)");
-        File toKeepFile = new File(args.get("toKeepFile"));
+        File toKeepFile = new File(args.getString(parToKeepFile).orElseThrow());
         if (!toKeepFile.exists())
             throw new IllegalArgumentException("To-keep file " + toKeepFile + " does not exist.");
         if (!toKeepFile.canRead())
             throw new IllegalArgumentException("To-keep file " + toKeepFile + " is not readable.");
-        File toAddFile = args.containsKey("toAddFile") ? new File(args.get("toAddFile")) : null;
-        boolean okayToRemoveMany = Boolean.parseBoolean(args.getOrDefault("okayToRemoveMany", "false"));
+        File toAddFile = args.containsParam(parToAddFile) ?
+                new File(args.getString(parToAddFile).orElseThrow()) : null;
+        boolean okayToRemoveMany = args.getBoolean(parOkayToRemoveMany, false);
 
         return new DocTask() {
             /** All PIDs to keep */

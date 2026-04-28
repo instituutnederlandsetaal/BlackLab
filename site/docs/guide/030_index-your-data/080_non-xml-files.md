@@ -170,7 +170,7 @@ linkedDocuments:
 ## Indexing other files
 
 For some types of files it is possible to automatically convert them to another file type that can be indexed.   
-Support for this feature works through `FileProcessor` [plugins](/development/customization/).
+Support for this feature works through `FileConverter` [plugins](/development/customization/).
 
 Add the following lines to your configuration file to convert your files before indexing them according to the rest of the configuration.
 

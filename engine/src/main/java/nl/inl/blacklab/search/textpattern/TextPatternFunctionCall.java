@@ -50,7 +50,7 @@ public class TextPatternFunctionCall extends TextPattern {
         List<Object> translated = evaluateArgs(context, preprocessedArgs);
 
         if (context.isInConstraint()) {
-            List<MatchFilter> matchFilters = translated.stream().map(t -> toMatchFilter(t)).toList();
+            List<MatchFilter> matchFilters = translated.stream().map(this::toMatchFilter).toList();
             return new MatchFilterFunctionCall(func, matchFilters);
         } else {
             List<Object> unpacked = getConstraintValues(translated);

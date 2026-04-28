@@ -116,6 +116,7 @@ public enum WebserviceParameter {
     FIELD("field"), // (annotated) field to use for operation
     SEARCH_FIELD("searchfield"), // annotated field to search (parallel, if different from field)
     INPUT_FORMAT("inputformat"),
+    CONVERTERS("converters"),     // extra FileConverts to apply to uploaded file(s)
     API_VERSION("api");
 
     public static Optional<WebserviceParameter> fromValue(String str) {

@@ -73,4 +73,10 @@ public class FileReferenceBytes implements FileReference {
         }
         return charset;
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[" + getPath() + "]";
+    }
+
 }

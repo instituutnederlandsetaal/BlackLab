@@ -47,7 +47,7 @@ public class InputFormatTypeChat extends InputFormatTypeConfig {
         return new InputFormatChat(config);
     }
 
-    public class InputFormatChat extends InputFormatConfig {
+    public static class InputFormatChat extends InputFormatConfig {
 
         public InputFormatChat(ConfigInputFormat config) {
             super(config);

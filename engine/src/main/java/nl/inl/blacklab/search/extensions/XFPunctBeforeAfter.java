@@ -2,6 +2,7 @@ package nl.inl.blacklab.search.extensions;
 
 import java.util.List;
 
+import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
@@ -15,21 +16,23 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 public class XFPunctBeforeAfter implements ExtensionFunctionClass {
 
     /** Lucene regex for one or more non-whitespace characters (Lucene v8 doesn't support \S yet; v9+ does) */
-    public static final String ANY_NON_WS = "[^ \t\r\n]+";
+    public static final String REGEX_ANY_NON_WS = "[^ \t\r\n]+";
 
     /** Lucene regex for zero or more whitespace characters (Lucene v8 doesn't support \s yet; v9+ does) */
-    public static final String OPT_WS = "[ \t\r\n]*";
+    public static final String REGEX_OPT_WS = "[ \t\r\n]*";
 
     /** Register the punctBefore and punctAfter functions to simplify finding punctuation. */
     @Override
     public void register() {
-        QueryExtensions.register("punctBefore", ARGS_S, List.of(ANY_NON_WS),
-            (queryInfo, context, args) -> getPunctQuery(context, OPT_WS + args.get(0) + OPT_WS)
+        QueryExtensions.register("punctBefore", List.of(PString.any("regex")),
+                List.of(REGEX_ANY_NON_WS),
+            (queryInfo, context, args) ->
+                    getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS)
         );
-        QueryExtensions.register("punctAfter", ARGS_S,
-            List.of(ANY_NON_WS),
+        QueryExtensions.register("punctAfter", List.of(PString.any("regex")),
+            List.of(REGEX_ANY_NON_WS),
             (queryInfo, context, args) -> {
-                BLSpanQuery punctQuery = getPunctQuery(context, OPT_WS + args.get(0) + OPT_WS);
+                BLSpanQuery punctQuery = getPunctQuery(context, REGEX_OPT_WS + args.get(0) + REGEX_OPT_WS);
                 return new SpanQueryAdjustHits(punctQuery, -1, -1);
             }
         );

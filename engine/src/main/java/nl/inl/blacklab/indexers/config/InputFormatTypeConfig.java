@@ -20,8 +20,10 @@ import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
 import nl.inl.blacklab.indexers.config.process.ProcessingInstructionIdentity;
 import nl.inl.blacklab.indexers.config.process.ProcessingStep;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.plugins.InputFormatType;
 import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.util.StringUtil;
@@ -31,10 +33,6 @@ import nl.inl.util.fileprocessor.FileReference;
  * Input formats configured using a ConfigInputFormat structure.
  */
 public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
-
-    private static List<String> collectionToList(Collection<String> c) {
-        return c == null ? null : c instanceof List ? (List<String>) c : new ArrayList<>(c);
-    }
 
     protected static String replaceDollarRefs(String pattern, List<String> replacements) {
         if (pattern != null) {
@@ -48,8 +46,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
     }
 
     @Override
-    public InputFormat createInputFormat(Map<String, Object> configuration) {
-        ConfigInputFormat config = (ConfigInputFormat) configuration.get("config");
+    public InputFormat createInputFormat(ConfigInputFormat config, PluginParams params) {
         if (config == null)
             throw new IllegalArgumentException("No config provided for input format");
         return createInputFormat(config);
@@ -59,11 +56,13 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
 
     public static InputFormat fromConfig(ConfigInputFormat config) {
         InputFormatType inputFormatType = getInputFormatType(config);
-        InputFormat inputFormat = inputFormatType.createInputFormat(Map.of("config", config));
+        InputFormat inputFormat = inputFormatType.createInputFormat(config, PluginParams.NONE);
         if (config.hasFileConverters()) {
             try {
                 InputFormatTypeWithConverters docIndexerConvertAndTag = new InputFormatTypeWithConverters();
-                return docIndexerConvertAndTag.createInputFormat(inputFormat, config.getConverters());
+                List<FileConverter.Parameterized> converters = config.getConverters().stream()
+                        .map(FileConverter::fromConfig).toList();
+                return docIndexerConvertAndTag.createInputFormat(inputFormat, converters);
             } catch (Exception e) {
                 throw BlackLabException.wrapRuntime(e);
             }
@@ -101,7 +100,7 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
         return inputFormatType;
     }
 
-    protected abstract class InputFormatConfig extends InputFormatBase {
+    protected static abstract class InputFormatConfig extends InputFormatBase {
         /**
          * Our input format
          */
@@ -396,5 +395,10 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                 linkingDoc = null; // help GC
             }
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

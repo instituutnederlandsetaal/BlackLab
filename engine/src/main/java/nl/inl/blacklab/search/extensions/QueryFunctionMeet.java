@@ -5,8 +5,9 @@ import java.util.List;
 import org.apache.lucene.queries.spans.BLSpanOrQuery;
 import org.jspecify.annotations.NonNull;
 
-import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
+import nl.inl.blacklab.plugins.param.PInteger;
+import nl.inl.blacklab.plugins.param.PQuery;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryAnd;
@@ -21,7 +22,11 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  */
 public class QueryFunctionMeet extends QueryFunction {
     public QueryFunctionMeet() {
-        super("meet", List.of(ExprType.QUERY, ExprType.QUERY, ExprType.INTEGER, ExprType.INTEGER),
+        super("meet", List.of(
+                PQuery.required("first"),
+                        PQuery.required("second"),
+                        PInteger.any("rangeStart"),
+                        PInteger.any("rangeEnd")),
                 null, false);
     }
 
@@ -87,5 +92,10 @@ public class QueryFunctionMeet extends QueryFunction {
         BLSpanQuery lookaheadEdge = SpanQueryEdge.lookAheadBehindQuery(after, false, negateNear);
         // Find the findClause hits where the lookahead clause occurs direct after it
         return new SpanQuerySequence(findClause, lookaheadEdge);
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

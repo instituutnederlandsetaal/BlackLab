@@ -1,7 +1,6 @@
 package nl.inl.blacklab.plugins;
 
-import java.util.Map;
-
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 
@@ -13,6 +12,6 @@ import nl.inl.blacklab.search.BlackLabIndex;
 public abstract class QueryParserProvider extends Plugin {
 
     /** Create a parser, given an index and configuration options. */
-    public abstract BLQueryParser get(BlackLabIndex index, Map<String, Object> config);
+    public abstract BLQueryParser get(BlackLabIndex index, PluginParams params);
 
 }

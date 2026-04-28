@@ -1,12 +1,12 @@
 package nl.inl.blacklab.plugins;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.index.LeafReaderContext;
 
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.DocTask;
@@ -21,7 +21,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
  */
 public class PrintPid extends DocTaskType {
     @Override
-    public DocTask docTask(BlackLabIndex index, Map<String, String> args) {
+    public DocTask docTask(BlackLabIndex index, PluginParams args) {
         return new DocTask() {
             /** Name of this index' PID field. */
             String pidField;

@@ -48,6 +48,11 @@ public interface FileReference {
         public Charset getCharSet() {
             throw new UnsupportedOperationException();
         }
+
+        @Override
+        public String toString() {
+            return "DUMMY-FILE-REF";
+        }
     };
 
     /** When we have a choice, should we prefer a byte array (true) or a char array (false)?

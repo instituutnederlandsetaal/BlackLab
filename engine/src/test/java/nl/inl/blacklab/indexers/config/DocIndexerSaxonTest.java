@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -21,6 +22,7 @@ import nl.inl.blacklab.search.lucene.BLSpanTermQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.util.UtilsForTesting;
+import nl.inl.util.fileprocessor.FileReference;
 
 public class DocIndexerSaxonTest {
 
@@ -86,7 +88,8 @@ public class DocIndexerSaxonTest {
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, true, "saxon-test")) {
             Indexer indexer = Indexer.create(indexWriter);
             String xml = "<doc><w pos='ADP(type=pre)+PD(type=d-p,subtype=art,position=prenom)'>word</w></doc>";
-            indexer.index("doc1", xml.getBytes());
+            FileReference fileRef = FileReference.fromBytes("doc1", xml.getBytes(), null);
+            indexer.index(fileRef, null, FileConverter.ExtraConverters.NONE);
             indexer.close();
         }
 

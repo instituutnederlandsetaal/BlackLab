@@ -2,8 +2,8 @@ package nl.inl.blacklab.search.extensions;
 
 import java.util.List;
 
-import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
+import nl.inl.blacklab.plugins.param.PAny;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
@@ -13,7 +13,7 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Ensures its argument is interpreted as a string. */
 public class QueryFunctionStr extends QueryFunction {
     public QueryFunctionStr() {
-        super("str", List.of(ExprType.ANY),
+        super("str", List.of(PAny.required("value")),
                 null, false);
     }
 
@@ -33,5 +33,10 @@ public class QueryFunctionStr extends QueryFunction {
             return ConstraintValue.get(sb.toString());
         }
         return ConstraintValue.get(o.toString());
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

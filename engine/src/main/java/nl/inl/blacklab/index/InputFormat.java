@@ -2,6 +2,7 @@ package nl.inl.blacklab.index;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
 import nl.inl.blacklab.indexers.config.InputFormatTypeBase;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.util.fileprocessor.FileReference;
 
 /**
@@ -10,6 +11,7 @@ import nl.inl.util.fileprocessor.FileReference;
  * Implementations are thread-safe and reusable.
  */
 public interface InputFormat {
+
     /**
      * Index documents contained in a file.
      *

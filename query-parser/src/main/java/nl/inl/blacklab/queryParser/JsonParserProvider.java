@@ -1,10 +1,10 @@
 package nl.inl.blacklab.queryParser;
 
 import java.io.IOException;
-import java.util.Map;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.QueryParserProvider;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
@@ -19,7 +19,7 @@ public class JsonParserProvider extends QueryParserProvider {
     }
 
     @Override
-    public BLQueryParser get(BlackLabIndex index, Map<String, Object> config) {
+    public BLQueryParser get(BlackLabIndex index, PluginParams config) {
         return query -> {
             try {
                 TextPattern tp = Json.getJaxbReader().readValue(query, TextPattern.class);
@@ -28,5 +28,10 @@ public class JsonParserProvider extends QueryParserProvider {
                 throw new InvalidQuery(e);
             }
         };
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

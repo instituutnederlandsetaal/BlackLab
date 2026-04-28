@@ -41,7 +41,7 @@ public class AuthManager {
             AuthMethodProvider authMethodProvider;
             try {
                 authMethodProvider = PluginManager.type(AuthMethodProvider.class).get(authClass);
-                authObj = authMethodProvider.get(authParam);
+                authObj = authMethodProvider.get(authMethodProvider.descriptor().validate(authParam));
 //                if (!authClass.contains(".")) {
 //                    // Allows us to abbreviate the built-in auth classes
 //                    authClass = "nl.inl.blacklab.server.auth." + authClass;

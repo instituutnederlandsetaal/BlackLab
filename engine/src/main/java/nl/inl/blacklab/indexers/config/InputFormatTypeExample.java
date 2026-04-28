@@ -21,6 +21,7 @@ import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.annotated.AnnotatedFieldWriter;
 import nl.inl.blacklab.index.annotated.AnnotationSensitivities;
 import nl.inl.blacklab.index.annotated.AnnotationWriter;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.util.StringUtil;
@@ -80,11 +81,11 @@ import nl.inl.util.fileprocessor.FileReference;
 public class InputFormatTypeExample extends InputFormatTypeBase {
 
     @Override
-    public InputFormat createInputFormat(Map<String, Object> configuration) {
+    public InputFormat createInputFormat(ConfigInputFormat config, PluginParams params) {
         return new InputFormatExample();
     }
 
-    public class InputFormatExample extends InputFormatBase {
+    public static class InputFormatExample extends InputFormatBase {
 
         @Override
         protected Doc createDoc(DocWriter docWriter, FileReference file) {

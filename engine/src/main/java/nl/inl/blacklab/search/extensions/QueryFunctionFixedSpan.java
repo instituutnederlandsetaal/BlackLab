@@ -3,8 +3,8 @@ package nl.inl.blacklab.search.extensions;
 import java.util.Arrays;
 import java.util.List;
 
-import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
+import nl.inl.blacklab.plugins.param.PInteger;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.SpanQueryFixedSpan;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -16,7 +16,10 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
  */
 public class QueryFunctionFixedSpan extends QueryFunction {
     public QueryFunctionFixedSpan() {
-        super("_fixed", List.of(ExprType.INTEGER, ExprType.INTEGER), Arrays.asList(null, null), false);
+        super("_fixed", List.of(
+                PInteger.nonnegative("start", true),
+                PInteger.nonnegative("end", true)), Arrays.asList(null, null),
+                false);
     }
 
     public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
@@ -27,5 +30,10 @@ public class QueryFunctionFixedSpan extends QueryFunction {
         if (end < start)
             throw new IllegalArgumentException("_end must be greater than or equal to _start in _fixed()");
         return new SpanQueryFixedSpan(context.queryInfo(), context.luceneField(), start, end);
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

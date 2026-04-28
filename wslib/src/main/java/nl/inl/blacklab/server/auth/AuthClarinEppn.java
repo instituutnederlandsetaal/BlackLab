@@ -2,10 +2,8 @@ package nl.inl.blacklab.server.auth;
 
 import java.util.Map;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.server.lib.User;
 
 /**
@@ -16,17 +14,14 @@ import nl.inl.blacklab.server.lib.User;
  */
 public class AuthClarinEppn extends AuthMethodProvider {
 
-    private static final Logger logger = LogManager.getLogger(AuthClarinEppn.class);
-
     @Override
-    public AuthMethod get(Map<String, Object> param) {
-        if (!param.isEmpty())
-            logger.warn("Parameters were passed to " + this.getClass().getName() + ", but it takes no parameters.");
-
+    public AuthMethod get(PluginParams param) {
         // Use a regular AuthRequestValue that looks at the eppn attribute.
         // We'll check and optionally fix the user id, see below.
-        Map<String, Object> config = Map.of("type", "attribute", "name", "eppn");
-        AuthMethod wrapped = new AuthRequestValue().get(config);
+        AuthRequestValue authRequestValue = new AuthRequestValue();
+        PluginParams config = authRequestValue.descriptor().validate(
+                Map.of("type", "attribute", "name", "eppn"));
+        AuthMethod wrapped = authRequestValue.get(config);
 
         return request -> {
             User user = wrapped.determineCurrentUser(request);
@@ -41,5 +36,10 @@ public class AuthClarinEppn extends AuthMethodProvider {
             }
             return user;
         };
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

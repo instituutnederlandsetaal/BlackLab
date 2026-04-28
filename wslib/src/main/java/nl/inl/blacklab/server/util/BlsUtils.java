@@ -5,7 +5,6 @@ import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,7 +18,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.queryParser.contextql.ContextQLParserProvider;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -96,7 +95,7 @@ public class BlsUtils {
             }
         } else if (filterLang.equals("contextql")) {
             try {
-                CompleteQuery q = ContextualQueryLanguageParser.parse(index, Map.of(), filter);
+                CompleteQuery q = ContextualQueryLanguageParser.parse(index, PluginParams.NONE, filter);
                 return q.filter();
             } catch (InvalidQuery e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",

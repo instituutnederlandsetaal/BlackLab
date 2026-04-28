@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Strip certain characters from the start and end of the value(s)
@@ -21,7 +22,7 @@ public class ProcessingInstructionIdentity extends ProcessingInstruction {
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
+    public ProcessingStep get(PluginParams param) {
         return ProcessingStepIdentity.INSTANCE;
     }
 
@@ -54,5 +55,10 @@ public class ProcessingInstructionIdentity extends ProcessingInstruction {
         public String toString() {
             return "ident()";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

@@ -31,8 +31,10 @@ import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.plugins.DocTaskType;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.plugins.IndexSourceType;
 import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
@@ -317,7 +319,7 @@ public class IndexTool {
         indexer.setLinkedFileDirs(linkedFileDirs);
         try {
             if (!createEmptyIndex) {
-                indexer.index(indexSource);
+                indexer.index(indexSource, FileConverter.ExtraConverters.NONE);
             }
         } catch (Exception e) {
             System.err.println(
@@ -392,7 +394,8 @@ public class IndexTool {
         }
         try (BlackLabIndexWriter indexWriter = BlackLab.openForWriting(indexDir, false)) {
             DocTaskType docTaskType = PluginManager.type(DocTaskType.class).get(docTaskPluginName);
-            indexWriter.forEachDocument(docTaskType.docTask(indexWriter, args));
+            PluginParams validated = docTaskType.descriptor().validate(args);
+            indexWriter.forEachDocument(docTaskType.docTask(indexWriter, validated));
         }
     }
 

@@ -460,6 +460,11 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<String> getInputFormat() { return opt(WebserviceParameter.INPUT_FORMAT); }
 
     @Override
+    public Optional<String> getConverters() {
+        return opt(WebserviceParameter.CONVERTERS);
+    }
+
+    @Override
     public ApiVersion apiCompatibility() {
         ApiVersion apiVersion = ApiVersion.fromValue(get(WebserviceParameter.API_VERSION));
         if (apiVersion.getMajor() < 3)

@@ -6,12 +6,22 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * A regular expression replace operation.
  */
 public class ProcessingInstructionSplit extends ProcessingInstruction {
+
+    private PluginParam parSeparator;
+
+    private PluginParam parFlags;
+
+    private PluginParam parKeep;
 
     @Override
     public synchronized String getId() {
@@ -19,8 +29,17 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        return ProcessingStepSplit.fromConfig(param);
+    public void initialize() throws PluginException {
+        parSeparator = addParam(PString.matching("separator", ".+"));
+        parFlags = addParam(PString.any("flags"));
+        parKeep = addParam(PString.matching("keep", "\\d+|both|all"));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
+        return new ProcessingStepSplit(param.getString(parSeparator, ";"),
+                param.getString(parFlags, ""),
+                param.getString(parKeep, "all"));
     }
 
     public static class ProcessingStepSplit implements ProcessingStep {
@@ -45,12 +64,6 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
             if (separator == null)
                 throw new IllegalArgumentException("split needs separator");
             this.pattern = ProcessingStep.getPattern(separator, flags);
-        }
-
-        public static ProcessingStepSplit fromConfig(Map<String, Object> param) {
-            return new ProcessingStepSplit(ProcessingStep.par(param, "separator", ";"),
-                    ProcessingStep.par(param, "flags", ""),
-                    ProcessingStep.par(param, "keep", "all").toLowerCase());
         }
 
         private void interpretKeep() {
@@ -116,5 +129,10 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
         public String toString() {
             return "split(separator=" + separator + ", flags=" + flags + ", keep=" + strKeep + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

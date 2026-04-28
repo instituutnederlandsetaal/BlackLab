@@ -25,7 +25,7 @@ public class InputFormatTypePlainText extends InputFormatTypeConfig {
         return new InputFormatPlainText(config);
     }
 
-    public class InputFormatPlainText extends InputFormatConfig {
+    public static class InputFormatPlainText extends InputFormatConfig {
 
         public InputFormatPlainText(ConfigInputFormat config) {
             super(config);

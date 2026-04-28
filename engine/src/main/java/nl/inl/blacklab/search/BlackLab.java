@@ -462,4 +462,7 @@ public final class BlackLab {
         return fieldValueSortCollator;
     }
 
+    public static boolean isPluginAllowed(String pluginId) {
+        return config().getPlugins().isAllowed(pluginId);
+    }
 }

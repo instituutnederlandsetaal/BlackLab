@@ -5,8 +5,9 @@ import java.util.List;
 
 import org.apache.lucene.index.Term;
 
-import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
+import nl.inl.blacklab.plugins.param.PInteger;
+import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.SpanFuzzyQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -14,8 +15,13 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 /** Does fuzzy matching. */
 public class QueryFunctionFuzzy extends QueryFunction {
     public QueryFunctionFuzzy() {
-        super("_fuzzy", List.of(ExprType.STRING, ExprType.INTEGER, ExprType.INTEGER),
-                Arrays.asList(null, 2, 0), false);
+        super("_fuzzy", List.of(
+                PString.any("find", true),
+                PInteger.nonnegative("maxEdits", true),
+                PInteger.nonnegative("prefixLength", true)
+            ),
+            Arrays.asList(null, 2, 0), false
+        );
     }
 
     public TextPattern.EvalResult applyFunc(QueryExecutionContext context, List<Object> parameters) {
@@ -26,5 +32,10 @@ public class QueryFunctionFuzzy extends QueryFunction {
             throw new IllegalArgumentException("fuzzy(word, maxEdits=2, prefixLength=0) takes non-negative integers as its last two args");
         Term term = new Term(context.luceneField(), context.optDesensitize(word));
         return new SpanFuzzyQuery(context.queryInfo(), term, maxEdits, prefixLength);
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

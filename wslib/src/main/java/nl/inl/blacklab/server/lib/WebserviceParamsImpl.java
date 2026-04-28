@@ -831,6 +831,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
+    public Optional<String> getConverters() {
+        return params.getConverters();
+    }
+
+    @Override
     public String getAnnotationName() {
         if (overrideAnnotationName != null)
             return overrideAnnotationName;

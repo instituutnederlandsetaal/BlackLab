@@ -5,7 +5,11 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * Appends a constant value, or the value of a metadata field to the result string.
@@ -18,19 +22,33 @@ import nl.inl.blacklab.plugins.ProcessingInstruction;
  */
 public class ProcessingInstructionAppend extends ProcessingInstruction {
 
+    private PluginParam parSeparator;
+
+    private PluginParam parPrefix;
+
+    private PluginParam parField;
+
+    private PluginParam parValue;
+
     @Override
     public synchronized String getId() {
         return "append";
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        String separator = ProcessingStep.par(param, "separator", " ");
-        String prefix = ProcessingStep.par(param, "prefix", "");
-        String field = ProcessingStep.par(param, "field");
-        String fixedValue = null;
-        if (field == null)
-            fixedValue = ProcessingStep.par(param, "value");
+    public void initialize() throws PluginException {
+        parSeparator = addParam(PString.any("separator"));
+        parPrefix = addParam(PString.any("prefix"));
+        parField = addParam(PString.identifier("field"));
+        parValue = addParam(PString.any("value"));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
+        String separator = param.getString(parSeparator, " ");
+        String prefix = param.getString(parPrefix, "");
+        String field = param.getString(parField, "");
+        String fixedValue = param.getString(parValue, "");
         return new ProcessingStepAppend(separator, prefix, field, fixedValue);
     }
 
@@ -62,14 +80,16 @@ public class ProcessingInstructionAppend extends ProcessingInstruction {
         public ProcessingStepAppend(String separator, String prefix, String field, String fixedValue) {
             this.separator = separator == null ? " " : separator;
             this.prefix = prefix == null ? "" : prefix;
-            this.field = field;
+            this.field = field == null ? "" : field;
             this.fixedValue = fixedValue == null ? "" : fixedValue;
+            if (this.field.isEmpty() && this.fixedValue.isEmpty())
+                throw new PluginException("Either field or fixedValue must be set");
         }
 
         @Override
         public String performSingle(String value, Map<String, Collection<String>> metadata) {
             String appendValue;
-            if (field != null) {
+            if (!field.isEmpty()) {
                 // Append value of field
                 Collection<String> metadataField = metadata.get(field);
                 appendValue = metadataField == null ? "" : StringUtils.join(metadataField, separator);
@@ -92,8 +112,13 @@ public class ProcessingInstructionAppend extends ProcessingInstruction {
 
         @Override
         public String toString() {
-            return "append(separator='" + separator + "', " + (field != null ? "field=" + field : "value=" + fixedValue)
+            return "append(separator='" + separator + "', " + (!field.isEmpty() ? "field=" + field : "value=" + fixedValue)
                     + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

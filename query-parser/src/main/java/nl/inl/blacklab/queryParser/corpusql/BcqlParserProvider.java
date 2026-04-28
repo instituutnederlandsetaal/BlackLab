@@ -1,8 +1,7 @@
 package nl.inl.blacklab.queryParser.corpusql;
 
-import java.util.Map;
-
 import nl.inl.blacklab.plugins.QueryParserProvider;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 
@@ -15,7 +14,13 @@ public class BcqlParserProvider extends QueryParserProvider {
     }
 
     @Override
-    public BLQueryParser get(BlackLabIndex index, Map<String, Object> config) {
+    public BLQueryParser get(BlackLabIndex index, PluginParams config) {
         return new BcqlQueryLanguageParser(index, config);
     }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
+    }
+
 }

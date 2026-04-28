@@ -1,16 +1,30 @@
 package nl.inl.blacklab.indexers.config.process;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import nl.inl.blacklab.exceptions.PluginException;
 import nl.inl.blacklab.plugins.ProcessingInstruction;
+import nl.inl.blacklab.plugins.param.PEnum;
+import nl.inl.blacklab.plugins.param.PString;
+import nl.inl.blacklab.plugins.param.PluginParam;
+import nl.inl.blacklab.plugins.param.PluginParams;
 
 /**
  * A regular expression replace operation.
  */
 public class ProcessingInstructionReplace extends ProcessingInstruction {
+
+    private PluginParam parFind;
+
+    private PluginParam parReplace;
+
+    private PluginParam parFlags;
+
+    private PluginParam parKeep;
 
     @Override
     public synchronized String getId() {
@@ -18,8 +32,19 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
     }
 
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
-        return ProcessingStepReplace.fromConfig(param);
+    public void initialize() throws PluginException {
+        parFind = addParam(PString.matching("find", ".+", true));
+        parReplace = addParam(PString.any("replace", true));
+        parFlags = addParam(PString.any("flags"));
+        parKeep = addParam(PEnum.of("keep", List.of("replaced", "both")));
+    }
+
+    @Override
+    public ProcessingStep get(PluginParams param) {
+        return new ProcessingStepReplace(param.getString(parFind).orElseThrow(),
+                param.getString(parReplace).orElseThrow(),
+                param.getString(parFlags, ""),
+                param.getString(parKeep, "replaced"));
     }
 
     public static class ProcessingStepReplace implements ProcessingStep {
@@ -44,13 +69,6 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
             if (replacement == null)
                 throw new IllegalArgumentException("replace needs replacement");
             this.pattern = ProcessingStep.getPattern(regex, flags);
-        }
-
-        public static ProcessingStepReplace fromConfig(Map<String, Object> param) {
-            return new ProcessingStepReplace(ProcessingStep.par(param, "find"),
-                    ProcessingStep.par(param, "replace"),
-                    ProcessingStep.par(param, "flags", ""),
-                    ProcessingStep.par(param, "keep", "replaced"));
         }
 
         @Override
@@ -79,5 +97,10 @@ public class ProcessingInstructionReplace extends ProcessingInstruction {
                             "all" :
                             "replaced") + ")";
         }
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

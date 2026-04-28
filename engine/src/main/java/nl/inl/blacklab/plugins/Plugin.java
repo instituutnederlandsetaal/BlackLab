@@ -6,6 +6,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.plugins.param.PluginDescriptor;
+import nl.inl.blacklab.plugins.param.PluginParam;
 
 /**
  * Interface of converting a plugin (including using external services) Only a
@@ -33,6 +35,19 @@ public abstract class Plugin {
     public void configure(Map<String, Object> config, File pluginDir) {
         this.config = config;
         this.pluginDir = pluginDir;
+    }
+
+    private PluginDescriptor descriptor = new PluginDescriptor();
+
+    public PluginParam addParam(PluginParam spec) {
+        return descriptor.addParam(spec);
+    }
+
+    /** What parameters, if any, does this plugin take, and what are their types?
+     * @return descriptor of the parameters this plugin takes
+     */
+    public PluginDescriptor descriptor() {
+        return descriptor;
     }
 
     /**
@@ -265,6 +280,23 @@ public abstract class Plugin {
         if (path == null)
             return Optional.empty();
         return Optional.of(new File(path));
+    }
+
+    /**
+     * May this plugin safely be called by a BlackLab Server client?
+     *
+     * This method should return false, unless the plugin validates its input
+     * to prevent any misuse, particularly if the plugin can access resources
+     * on the filesystem or network.
+     *
+     * Plugins that don't declare themselves as web-safe may still be explicitly
+     * whitelisted in blacklab-server.yaml, although doing so comes with
+     * potential risks.
+     *
+     * @return true if the plugin may be called by a REST API client, false if not
+     */
+    public boolean isWebSafe() {
+        return false;
     }
 
 }

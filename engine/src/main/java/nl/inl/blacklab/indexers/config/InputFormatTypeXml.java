@@ -87,7 +87,7 @@ public class InputFormatTypeXml extends InputFormatTypeConfig {
         return new InputFormatXPath(config);
     }
 
-    public class InputFormatXPath extends InputFormatConfig {
+    public static class InputFormatXPath extends InputFormatConfig {
 
         public InputFormatXPath(ConfigInputFormat config) {
             super(config);

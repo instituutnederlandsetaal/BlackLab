@@ -3,8 +3,8 @@ package nl.inl.blacklab.search.extensions;
 import java.util.List;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.plugins.QueryFunction;
+import nl.inl.blacklab.plugins.param.PAny;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
@@ -15,7 +15,7 @@ public class QueryFunctionLen extends QueryFunction {
     public QueryFunctionLen() {
         // Takes a single argument of type LIST and just returns it
         // (this works because LIST is automatically interpreted as a variable number of arguments)
-        super("len", List.of(ExprType.ANY),
+        super("len", List.of(PAny.required("value")),
                 null, false);
     }
 
@@ -36,5 +36,10 @@ public class QueryFunctionLen extends QueryFunction {
             throw new InvalidQuery("Argument to len() must be a list or string, got: " + o);
         }
         return ConstraintValue.get(result);
+    }
+
+    @Override
+    public boolean isWebSafe() {
+        return true;
     }
 }

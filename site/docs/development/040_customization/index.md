@@ -25,11 +25,20 @@ We may add more plugin types in the future, e.g. a `DocumentHighlighter` to high
 Note that BlackLab already provides many implementations of these plugin types; check if your use case isn't supported by an existing plugin before creating your own.
 
 
-## How to create a plugin
+## Creating a plugin
 
 There's two ways to implement a plugin: via a script or a `.jar` file. The simplest option is a script written in [Groovy](https://groovy-lang.org/) (a JVM language very similar to Java). This is just a text file that doesn't need to be compiled.
 
 The other option is a `.jar` file containing one or more Java classes. This is a bit more complex, but allows you to use any JVM language (Java, Kotlin, Scala, etc.), use third-party libraries, etc.
+
+
+## Installing/configuring a plugin
+
+Place your plugin script or `.jar` file in the `$BLACKLAB_CONFIG_DIR/plugins/` directory. Let's assume your plugin id (class name or script file name) is `AmazingPlugin`.
+
+If your plugin needs configuration, create a file named `AmazingPlugin.yaml` in the same `plugins/` directory. BlackLab will automatically read it an pass it to your plugin as a `Map<String, Object>`. From the `initialize()` method, you can access the configuration using either method like `cfgString(key, defaultValue)` or `fullConfig()` to get the full map.
+
+If your plugin needs to read additional files, create a directory named `AmazingPlugin/` in the same `plugins/` directory. BlackLab will pass this directory to your plugin automatically. Call `pluginsDir()` from your plugin to get the path to this directory. This method will always return a `File` object, but the directory may not exist.
 
 
 ## Referring to plugins
@@ -51,14 +60,53 @@ Places where you refer to a plugin include:
 - in Java code, via `PluginManager.type(ThePluginType.class).get("AmazingPlugin")`
 
 
-## Configuring a plugin
+## Plugin parameters
 
-Place your plugin script or `.jar` file in the `$BLACKLAB_CONFIG_DIR/plugins/` directory. Let's assume your plugin id (class name or script file name) is `AmazingPlugin`.
+Some plugins may need additional parameter(s). This is in addition to their expected inputs: a `FileConverter` _always_ gets a file as input, but _may_ need an additional parameter to control some aspect of the conversion.
 
-If your plugin needs configuration, create a file named `AmazingPlugin.yaml` in the same `plugins/` directory. BlackLab will automatically read it an pass it to your plugin as a `Map<String, Object>`. From the `initialize()` method, you can access the configuration using either method like `cfgString(key, defaultValue)` or `fullConfig()` to get the full map.
+For example, if a `FileConverter` performs part of speech tagging, it may need to know the language of the text to be tagged. It would take one additional parameter named `language`, which could be set to e.g. `English` or `Dutch`.
 
-If your plugin needs to read files, create a directory named `AmazingPlugin/` in the same `plugins/` directory. BlackLab will pass this directory to your plugin automatically. Call `pluginsDir()` from your plugin to get the path to this directory. This method will always return a `File` object, but the directory may not exist.
+For security reasons, such parameters must always be declared in the plugin's `initialize` method, not only with the basic type (i.e. string, integer, etc.), but ideally with extra validation rules (string must not be too long and match a specific regular expression; integer must fall within a range; etc.). The stricter the rules, the less likely your plugin can be exploited by a malicious user.
 
+```java
+    private PluginParam parLanguage;
+
+    public void initialize() {
+        // Declare that we take an optional parameter named "language", which must be either "English" or "Dutch"
+        parLanguage = addParam(PEnum.of("language", List.of("English", "Dutch")));
+    }
+```
+
+then in the plugin's code (e.g. `FileConverter.perform()`), you can access the parameter value via e.g. `params.getString(parLanguage[, defaultLanguage])`:
+
+```java
+    public FileReference perform(FileReference input, String inputFormat, PluginParams params) {
+        String language = params.getString(parLanguage, "English");
+        //...
+    }
+```
+
+These are the available parameter types and their creation methods:
+
+- `PString`: a string
+  - `any(name, isRequired=false, maxLength=256)`: any string
+  - `identifier(name, isRequired=false, maxLength=256)`: a string consisting of letters, digits and underscore, where the first character must be a letter or underscore (regex `[\p{L}_][\p{L}0-9_\-]*`)
+  - `matching(name, regex, isRequired=false, maxLength=256)`: a string matching the given regular expression
+- `PEnum`: a string that must be one of a predefined set of values
+  - `of(name, allowedValues, isRequired=false)`: a string that must be one of the given allowed values (allowedValues may be a list of strings or a Java enum class)
+- `PBoolean`: a boolean value (`true` or `false`)
+  - `optional()`: optional boolean
+  - `required()`: required boolean
+- `PInteger`/`PFloat`: a long integer value / floating point value
+  - `any(name, isRequired=false)`: any integer
+  - `nonnegative(name, isRequired=false)`: a non-negative integer (0 or higher)
+  - `range(name, min, max, isRequired=false)`: an integer within the given range (inclusive)
+- `PList` / `PIntegerRange` / `PStringStringMap`: a list of values / a range of integers / string-to-string map:
+  - `optional(name, validator)`: optional integer range with a custom validator
+  - `required(name, validator)`: required integer range with a custom validator
+- `PQuery`/`PMatchInfo`: a query / match info object (only for `QueryFunction` plugins)
+  - `optional(name)`: optional match info
+  - `required(name)`: required match info
 
 ## Troubleshooting common issues
 
@@ -67,6 +115,27 @@ If your plugin needs to read files, create a directory named `AmazingPlugin/` in
 In Groovy, if you don't declare variables with `def`, Groovy will try to access a property of the same name instead. This can lead to infinite recursion and a stack overflow if you're inside a closure.
 
 Always declare variables inside Groovy closures with `def` to avoid accidental property access and recursion.
+
+
+## Server security and plugins
+
+A carelessly written plugin could introduce a security vulnerability, e.g. by allowing users to read arbitrary files on the server or execute arbitrary code.
+
+For this reason, BlackLab Server only allows some built-in plugins to run by default. The commandline tools like `IndexTool`, by contrast, will allow any plugin to run. If you want to use your own plugins with BlackLab Server, you need to explicitly allow them.
+
+There two ways to allow a plugin to run from BlackLab Server:
+- override the `isWebSafe()` method and have it return `true`, OR
+- add the plugin id to the `plugins.allowed` list in `blacklab-server.yaml`
+
+Especially if your plugin takes parameters (or other arbitrary user input such as files to be indexed), you should be extra careful to validate and sanitize this input to avoid vulnerabilities like code injection, path traversal, etc.
+
+::: warning Security is your responsibility
+
+Even if you're familiar with best practices for writing secure code, it's easy to introduce a vulnerability that may compromise your server. BlackLab itself probably has such vulnerabilities, even though we do our best to avoid them. Any plugins you create or use may have them as well.
+
+It is up to you to mitigate the risks to your own satisfaction, e.g. by running your server in a secure environment, keeping your software up to date, validating plugin parameters, etc.
+
+:::
 
 
 ## Examples
@@ -79,6 +148,7 @@ For a simple `FileConverter` that adds a comment to the end of a TEI document, c
 
 ```groovy
 import nl.inl.blacklab.plugins.FileConverter
+import nl.inl.blacklab.plugins.param.PluginParams
 import nl.inl.util.StringUtil
 import nl.inl.util.fileprocessor.FileReference
 import org.apache.commons.io.IOUtils
@@ -86,7 +156,7 @@ import org.apache.commons.io.IOUtils
 return new FileConverter() {
     String message
 
-    FileReference perform(FileReference input, String format) {
+    FileReference perform(FileReference input, String format, PluginParams params) {
         try (def reader = input.getSinglePassReader()) {
             String str = IOUtils.toString(reader)
             System.err.println("Adding message to " + input.getPath())
@@ -111,7 +181,9 @@ This plugin can be used by adding the following to an import format (`.blf.yaml`
 ```yaml
 # Apply conversion(s) before indexing
 converters:
-- add-message
+- id: add-message
+  param1: value1   # (some plugins take parameters)
+  param2: value2
 ```
 
 Without configuration, a default message will be used. To customize it, create a file `$BLACKLAB_CONFIG_DIR/plugins/add-message.yaml` with the following content:
@@ -142,7 +214,7 @@ import nl.inl.util.fileprocessor.FileReference
 import java.util.stream.Collectors
 
 return new IndexSourceType() {
-    IndexSource get(String path) {
+    IndexSource get(String path, PluginParams params) {
         // A test "file" to index, with each word from path wrapped in <w> tags
         def content = "<TEI><text>" + Arrays.stream(path.split("\\s+", -1))
                 .map(word -> "<w>" + word + "</w>")
@@ -189,7 +261,7 @@ import org.apache.lucene.queries.spans.SpanTermQuery
 
 class QueryFunctionWordOrReverse extends QueryFunction {
     QueryFunctionWordOrReverse() {
-        super("wordOrReverse", List.of(ExprType.STRING));
+        super("wordOrReverse", List.of(PString.any("value", true)));
     }
 
     BLSpanQuery term(QueryExecutionContext context, String field, String value) {
@@ -243,12 +315,19 @@ import org.apache.lucene.index.LeafReaderContext
 
 // Prints the PID of each document in the index.
 return new DocTaskType() {
-    DocTask docTask(BlackLabIndex index, Map<String, String> args) {
+    
+    PluginParam parPrefix;
+    
+    void initialize() {
+        parPrefix = addParam(PString.any("prefix"));
+    }
+    
+    DocTask docTask(BlackLabIndex index, PluginParams params) {
         MetadataField metadataField = ((BlackLabIndexWriter) index).metadata().metadataFields().pidField()
         if (metadataField == null)
             throw new PluginException("Corpus has no configured pid field")
         String pidField = metadataField.name() // Name of this index' PID field.
-        String prefix = args.getOrDefault("prefix", "PID: ")
+        String prefix = params.getString(parPrefix, "PID: ")
         return (segment) -> (segmentDocId) -> {
             try {
                 String pid = segment.reader().storedFields().document(segmentDocId, Set.of(pidField)).get(pidField)
@@ -298,7 +377,7 @@ public class ProcessingInstructionReverse extends ProcessingInstruction {
     }
     
     @Override
-    public ProcessingStep get(Map<String, Object> param) {
+    public ProcessingStep get(PluginParams params) {
         return new ProcessingStep() {
             @Override
             public String performSingle(String value, Map<String, List<String>> metadata) {

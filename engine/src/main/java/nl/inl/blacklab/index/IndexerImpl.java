@@ -2,7 +2,6 @@ package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -18,6 +17,7 @@ import nl.inl.blacklab.exceptions.DocumentFormatNotFound;
 import nl.inl.blacklab.exceptions.InvalidInputFormatConfig;
 import nl.inl.blacklab.exceptions.MaxDocsReached;
 import nl.inl.blacklab.indexers.config.WarnOnce;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldsImpl;
@@ -27,7 +27,6 @@ import nl.inl.util.FileUtil;
 import nl.inl.util.TextContent;
 import nl.inl.util.fileprocessor.FileHandler;
 import nl.inl.util.fileprocessor.FileIterator;
-import nl.inl.util.fileprocessor.FileProcessor;
 import nl.inl.util.fileprocessor.FileReference;
 
 /**
@@ -323,20 +322,6 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void index(IndexSource indexSource) {
-        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), null)) {
-            proc.process(indexSource.filesToIndex());
-        } catch (MaxDocsReached e) {
-            logger.warn("Maximum number of documents reached, stopping");
-        }
-    }
-
-    @Override
-    public void index(String documentName, InputStream input) {
-        index(documentName, input, null);
-    }
-
-    @Override
     public FileProcessor createFileProcessor(FileHandler handler, String fileNameGlob) {
         FileIterator.FileIteratorSettings settings = new FileIterator.FileIteratorSettings(defaultRecurseSubdirs,
                 processArchivesAsDirectories, fileNameGlob);
@@ -344,26 +329,21 @@ class IndexerImpl implements DocWriter, Indexer {
     }
 
     @Override
-    public void index(String fileName, InputStream input, String fileNameGlob) {
-        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), fileNameGlob)) {
-            proc.processFile(FileReference.fromInputStream(fileName, input, null));
+    public void index(IndexSource indexSource, FileConverter.ExtraConverters extraConverters) {
+        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this, extraConverters), null)) {
+            proc.process(indexSource.filesToIndex());
+        } catch (MaxDocsReached e) {
+            logger.warn("Maximum number of documents reached, stopping");
         }
     }
 
     @Override
-    public void index(File file, String fileNameGlob) {
-        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), fileNameGlob)) {
-            proc.processFileOrDirectory(file);
+    public void index(FileReference fileRef, String fileNameGlob, FileConverter.ExtraConverters extraConverters) {
+        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this, extraConverters), fileNameGlob)) {
+            proc.processFile(fileRef);
         }
     }
-    
-    @Override
-    public void index(String fileName, byte[] contents, String fileNameGlob) {
-        try (FileProcessor proc = createFileProcessor(new FileHandlerDocIndexer(this), fileNameGlob)) {
-            proc.processFile(FileReference.fromBytes(fileName, contents, null));
-        }
-    }
-    
+
     /**
      * Should we continue indexing or stop?
      *

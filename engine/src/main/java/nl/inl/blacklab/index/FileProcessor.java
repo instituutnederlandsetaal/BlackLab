@@ -1,4 +1,4 @@
-package nl.inl.util.fileprocessor;
+package nl.inl.blacklab.index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,8 +21,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.ErrorIndexingFile;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.util.CurrentThreadExecutorService;
 import nl.inl.util.ZipHandleManager;
+import nl.inl.util.fileprocessor.ErrorHandler;
+import nl.inl.util.fileprocessor.FileHandler;
+import nl.inl.util.fileprocessor.FileIterator;
+import nl.inl.util.fileprocessor.FileReference;
+import nl.inl.util.fileprocessor.SimpleErrorHandler;
 
 /**
  * Process (trees of) files.

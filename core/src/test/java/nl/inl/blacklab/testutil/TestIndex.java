@@ -20,6 +20,7 @@ import nl.inl.blacklab.forwardindex.Terms;
 import nl.inl.blacklab.index.IndexListener;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyDoc;
 import nl.inl.blacklab.resultproperty.HitPropertyHitPosition;
@@ -42,6 +43,7 @@ import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.util.UtilsForTesting;
+import nl.inl.util.fileprocessor.FileReference;
 
 public class TestIndex {
 
@@ -195,7 +197,8 @@ public class TestIndex {
                         indexer = Indexer.create(indexWriter);
                         indexer.setListener(new IndexListenerAbortOnError()); // throw on error
                     }
-                    indexer.index("test" + (i + 1), TEST_DATA[i].getBytes());
+                    FileReference fileRef = FileReference.fromBytes("test" + (i + 1), TEST_DATA[i].getBytes(), null);
+                    indexer.index(fileRef, null, FileConverter.ExtraConverters.NONE);
                 }
                 if (testDelete) {
                     // Delete the first doc, to test deletion.

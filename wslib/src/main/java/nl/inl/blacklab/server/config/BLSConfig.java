@@ -65,6 +65,10 @@ public class BLSConfig {
     
     private BLConfigPlugins plugins = new BLConfigPlugins();
 
+    {
+        plugins.setAllowAll(false); // plugins must be whitelisted (setting plugins.allowed) for BLS!
+    }
+
     /** The BlackLab parts of the config together in a bundle, for easy retrieval. */
     private BlackLabConfig blackLabConfig;
 
@@ -190,6 +194,7 @@ public class BLSConfig {
     public void setPlugins(BLConfigPlugins plugins) {
         if (plugins == null)
             plugins = new BLConfigPlugins();
+        plugins.setAllowAll(false); // plugins must be whitelisted (setting plugins.allowed) for BLS!
         this.plugins = plugins;
     }
     

@@ -29,6 +29,7 @@ import nl.inl.blacklab.index.BLFieldType;
 import nl.inl.blacklab.index.BLInputDocument;
 import nl.inl.blacklab.index.DocWriter;
 import nl.inl.blacklab.index.DocumentFormats;
+import nl.inl.blacklab.index.FileProcessor;
 import nl.inl.blacklab.index.IndexerStats;
 import nl.inl.blacklab.index.InputFormat;
 import nl.inl.blacklab.index.InputFormatInfo;
@@ -45,7 +46,6 @@ import nl.inl.blacklab.search.indexmetadata.UnknownCondition;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.StringUtil;
 import nl.inl.util.TextContent;
-import nl.inl.util.fileprocessor.FileProcessor;
 import nl.inl.util.fileprocessor.FileReference;
 
 public abstract class InputFormatTypeBase extends InputFormatType {
@@ -65,7 +65,7 @@ public abstract class InputFormatTypeBase extends InputFormatType {
         BLInputDocument getCurrentDoc();
     }
 
-    protected abstract class InputFormatBase implements InputFormat {
+    protected abstract static class InputFormatBase implements InputFormat {
 
         protected abstract class DocBase implements Doc {
 

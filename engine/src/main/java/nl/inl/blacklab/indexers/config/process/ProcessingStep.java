@@ -40,10 +40,10 @@ public interface ProcessingStep {
         }
     }
 
-    static String par(Map<String, Object> param, String key) {
-        Object v = param.getOrDefault(key, null);
-        return v == null ? null : v.toString();
-    }
+//    static String par(Map<String, Object> param, String key) {
+//        Object v = param.getOrDefault(key, null);
+//        return v == null ? null : v.toString();
+//    }
 
     static Pattern getPattern(String regex, String strFlags) {
         int flags = 0;
@@ -54,9 +54,9 @@ public interface ProcessingStep {
         return Pattern.compile(regex, flags);
     }
 
-    static String par(Map<String, Object> param, String key, String defaultValue) {
-        return param.getOrDefault(key, defaultValue).toString();
-    }
+//    static String par(PluginParams param, String key, String defaultValue) {
+//        return param.getString(key, defaultValue);
+//    }
 
     default Stream<String> perform(Stream<String> values, Map<String, Collection<String>> metadata) {
         return values.map(v -> performSingle(v, metadata));

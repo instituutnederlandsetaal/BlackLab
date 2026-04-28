@@ -1,6 +1,7 @@
 package nl.inl.blacklab.config;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -8,8 +9,17 @@ import org.apache.commons.lang3.StringUtils;
 import nl.inl.blacklab.plugins.Plugin;
 
 public class BLConfigPlugins {
+
     boolean delayInitialization = false;
 
+    /** Allow all plugins, regardless of allowedPlugins list?
+     *  (NOTE: BLS will force this to false; IndexTool, QueryTool won't) */
+    private boolean allowAll = true;
+
+    /** Whitelist of plugins that may be use if allPluginsAllowed is false. */
+    private List<String> allowed = Collections.emptyList();
+
+    /** Plugin configurations (but recommendation is to place these in per-plugin config files) */
     Map<String, Map<String, Object>> plugins = Collections.emptyMap();
 
     /**
@@ -56,5 +66,25 @@ public class BLConfigPlugins {
         if (plugins != null) {
             this.plugins = plugins;
         }
+    }
+
+    public boolean isAllowAll() {
+        return allowAll;
+    }
+
+    public void setAllowAll(boolean allowAll) {
+        this.allowAll = allowAll;
+    }
+
+    public List<String> getAllowed() {
+        return allowed;
+    }
+
+    public void setAllowed(List<String> allowed) {
+        this.allowed = allowed;
+    }
+
+    public boolean isAllowed(String pluginId) {
+        return allowAll || allowed.contains(pluginId);
     }
 }

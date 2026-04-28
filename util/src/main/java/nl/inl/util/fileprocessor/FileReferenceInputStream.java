@@ -47,4 +47,9 @@ public class FileReferenceInputStream implements FileReference {
     public Charset getCharSet() {
         return UnicodeStream.getCharset(is);
     }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "[" + getPath() + "]";
+    }
 }

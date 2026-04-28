@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.concurrent.CompletableFuture;
 
@@ -174,24 +173,23 @@ public class PluginManager {
     static void loadAllGroovyScripts() {
         ArrayList<String> ids = new ArrayList<>(unloadedGroovyScripts.keySet());
         for (String id: ids) {
-            getUnloaded(id, Plugin.class);
+            getUnloaded(id);
         }
     }
 
     /**
      * See if there's a groovy script with this name we can load.
      *
-     * @param id plugin id (groovy script name)
-     * @return plugin instance, if this script was found and could be read and compiled
+     * @param id  plugin id (groovy script name)
      * @param <T> plugin type
      */
-    static <T extends Plugin> Optional<T> getUnloaded(String id, Class<T> pluginType) {
+    synchronized static <T extends Plugin> void getUnloaded(String id) {
         UnloadedGroovyPlugin unloaded;
         synchronized (unloadedGroovyScripts) {
             unloaded = unloadedGroovyScripts.remove(id);
         }
         if (unloaded == null)
-            return Optional.empty();
+            return;
         GroovyShell shell = new GroovyShell();
         try {
             Object result = shell.evaluate(FileUtils.readFileToString(unloaded.scriptFile, StandardCharsets.UTF_8));
@@ -203,14 +201,11 @@ public class PluginManager {
                             ", getId() returns " + plugin.getId());
                 }
                 register(plugin, unloaded.pluginConfig, id);
-                return Optional.of(pluginType.cast(plugin));
             } else {
                 logger.warn("Groovy script " + unloaded.scriptFile + " does not evaluate to a Plugin instance; ignoring.");
-                return Optional.empty();
             }
         } catch (Exception e) {
             logger.error("Error loading groovy plugin " + unloaded.scriptFile, e);
-            return Optional.empty();
         }
     }
 

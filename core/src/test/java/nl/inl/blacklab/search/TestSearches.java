@@ -5,7 +5,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -22,6 +21,7 @@ import org.junit.runners.Parameterized;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.forwardindex.Terms;
+import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyBeforeHit;
@@ -729,7 +729,7 @@ public class TestSearches {
     }
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
-        TextPattern tp = BcqlQueryLanguageParser.parse(testIndex.index(), Map.of(), "\"" + bcqlPattern + "\"");
+        TextPattern tp = BcqlQueryLanguageParser.parse(testIndex.index(), PluginParams.NONE, "\"" + bcqlPattern + "\"");
         BLSpanQuery q = tp.toQuery(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
@@ -750,7 +750,7 @@ public class TestSearches {
     }
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
-        TextPattern patt = BcqlQueryLanguageParser.parse(testIndex.index(), Map.of(), query);
+        TextPattern patt = BcqlQueryLanguageParser.parse(testIndex.index(), PluginParams.NONE, query);
         BLSpanQuery blQuery = patt.toQuery(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));
