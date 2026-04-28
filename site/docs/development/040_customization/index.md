@@ -94,19 +94,19 @@ These are the available parameter types and their creation methods:
   - `matching(name, regex, isRequired=false, maxLength=256)`: a string matching the given regular expression
 - `PEnum`: a string that must be one of a predefined set of values
   - `of(name, allowedValues, isRequired=false)`: a string that must be one of the given allowed values (allowedValues may be a list of strings or a Java enum class)
-- `PBoolean`: a boolean value (`true` or `false`)
-  - `optional()`: optional boolean
-  - `required()`: required boolean
 - `PInteger`/`PFloat`: a long integer value / floating point value
-  - `any(name, isRequired=false)`: any integer
-  - `nonnegative(name, isRequired=false)`: a non-negative integer (0 or higher)
-  - `range(name, min, max, isRequired=false)`: an integer within the given range (inclusive)
-- `PList` / `PIntegerRange` / `PStringStringMap`: a list of values / a range of integers / string-to-string map:
-  - `optional(name, validator)`: optional integer range with a custom validator
-  - `required(name, validator)`: required integer range with a custom validator
+  - `any(name, isRequired=false)`: any number
+  - `nonnegative(name, isRequired=false)`: a non-negative number (0 or higher)
+  - `range(name, min, max, isRequired=false)`: a number within the given range (inclusive)
+- `PBoolean`: a boolean value (`true` or `false`)
+    - `optional()`: optional boolean
+    - `required()`: required boolean
+- `PList` / `PStringStringMap`: a list of values / string-to-string map:
+  - `optional(name, validator)`: optional parameter with a custom validator
+  - `required(name, validator)`: required parameter with a custom validator
 - `PQuery`/`PMatchInfo`: a query / match info object (only for `QueryFunction` plugins)
-  - `optional(name)`: optional match info
-  - `required(name)`: required match info
+  - `optional(name)`: optional parameter
+  - `required(name)`: required parameter
 
 ## Troubleshooting common issues
 
