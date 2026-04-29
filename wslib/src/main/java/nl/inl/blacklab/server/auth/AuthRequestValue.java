@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.auth;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -57,7 +58,7 @@ public class AuthRequestValue extends AuthMethodProvider {
             name = config.getString(parName, null);
         if (name == null)
             logger.error("AuthRequestAttribute: name parameter missing in blacklab-server.yaml");
-        String valueKey = name.isEmpty() ? null : name;
+        String valueKey = StringUtils.isEmpty(name) ? null : name;
 
         return new AuthMethod() {
             @Override
