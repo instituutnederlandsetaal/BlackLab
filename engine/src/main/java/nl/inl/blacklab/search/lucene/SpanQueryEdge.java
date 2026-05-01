@@ -168,6 +168,76 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
     }
 
     @Override
+    public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean addAtEnd) {
+        boolean atLeastOneConstantLength = guarantees().hitsAllSameLength() || clause.guarantees().hitsAllSameLength();
+        return atLeastOneConstantLength && isTrailingEdge() == addAtEnd;
+    }
+
+    @Override
+    public BLSpanQuery internalizeNeighbour(BLSpanQuery clauseToInternalize, boolean addAtEnd) {
+        if (!canInternalizeNeighbour(clauseToInternalize, addAtEnd))
+            throw new IllegalStateException("Trying to internalize, but there's no constant-length clause");
+
+        SpanQuerySequence internalizedSequence = SpanQuerySequence.sequenceInternalize(getClause(),
+                clauseToInternalize, addAtEnd);
+        if (clauseToInternalize.guarantees().hitsAllSameLength()) {
+            // We're trying to internalize a fixed-length clause.
+            if (isTrailingEdge()) {
+                // We need the trailing edge of our clause.
+                if (addAtEnd) {
+                    // Internalize the fixed-length clause to the leading side, adjusting the trailing edge of the result hit
+                    // e.g. (?<= "the" []{1,3} ) "dog"  --> _adjust(_edge("the" []{1,3} "dog", "trailing"), -1, 0)
+                    return new SpanQueryAdjustHits(new SpanQueryEdge(internalizedSequence, true), -1, 0);
+                } else {
+                    // Internalize the fixed-length clause by ANDing it to the trailing side of our clause.
+                    // e.g. "dog" (?<= "the" []{1,3} )  --> _adjust(_edge("the" []{0,2} "dog", "trailing"), -1, 0)
+                    // (this case may be too complex as we have to "and" sequences of different lengths together)
+                    throw new UnsupportedOperationException("TOO COMPLEX");
+                }
+            } else {
+                // We need the leading edge of our clause.
+                if (addAtEnd) {
+                    // Internalize the fixed-length clause by ANDing it to the leading side of our clause.
+                    // e.g. (?= "the" []{1,3} ) "dog"  --> _adjust(_edge([word="the" & word="dog"] []{1,3}, "leading"), 0, 1)
+                    // (this case may be too complex as we have to "and" sequences of different lengths together)
+                    throw new UnsupportedOperationException("TOO COMPLEX");
+                } else {
+                    // Internalize the fixed-length clause to the leading side, adjusting the leading edge of the result hit
+                    // e.g. "dog" (?= "the" []{1,3} )  --> _adjust(_edge("dog" "the" []{1,3}, "leading"), 0, 1)
+                    return new SpanQueryAdjustHits(new SpanQueryEdge(internalizedSequence, false), 0, 1);
+                }
+            }
+        } else {
+            // Our clause is fixed-length, the clause we're internalizing is not.
+            if (isTrailingEdge()) {
+                // We need the trailing edge of our clause.
+                if (addAtEnd) {
+                    // Internalize the clause to the trailing side, adjusting the result hit
+                    // e.g. (?<= "the" ) []{1,3} "dog"  --> _adjust("the" []{1,3} "dog", 1, 0)
+                    return new SpanQueryAdjustHits(internalizedSequence, 1, 0);
+                } else {
+                    // Internalize the clause by ANDing it to the trailing side of our clause.
+                    // e.g. "dog" []{1,3} (?<= "the" )  --> _adjust("dog" []{0, 2} "the", 0, -1)
+                    // (this case may be too complex as we have to "and" sequences of different lengths together)
+                    throw new UnsupportedOperationException("TOO COMPLEX");
+                }
+            } else {
+                // We need the leading edge of our clause.
+                if (addAtEnd) {
+                    // Internalize the clause by ANDing it to the leading side of our clause.
+                    // e.g. (?= "the" ) []{1,3} "dog"  --> "the" []{0,2} "dog"
+                    // (this case may be too complex as we have to "and" sequences of different lengths together)
+                    throw new UnsupportedOperationException("TOO COMPLEX");
+                } else {
+                    // Internalize the clause to the leading side, adjusting the result hit
+                    // e.g. "dog" []{1,3} (?= "the" )  --> _adjust("dog" []{1,3} "the", 0, -1)
+                    return new SpanQueryAdjustHits(internalizedSequence, 0, -1);
+                }
+            }
+        }
+    }
+
+    @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();

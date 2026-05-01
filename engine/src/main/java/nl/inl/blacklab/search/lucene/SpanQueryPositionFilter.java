@@ -58,6 +58,12 @@ public class SpanQueryPositionFilter extends BLSpanQueryAbstract {
     /**
      * Produce hits that match filter hits.
      *
+     * Note that the two adjustments only apply (to the producer hits) while matching.
+     * If a match is found, the original (unadjusted) producer hit is produced.
+     *
+     * This allows us to easily internalize fixed-length neighbouring clauses into the producer
+     * clause.
+     *
      * @param producer hits we may be interested in
      * @param filter how we determine what producer hits we're interested in
      * @param operation operation used to determine what producer hits we're interested in

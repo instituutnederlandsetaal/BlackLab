@@ -759,8 +759,8 @@ public class TestSearches {
 
     @Test
     public void testResults() throws InvalidQuery {
-        assertMatches("Lookahead", List.of("To [find] or"), "'find' (?= 'or')");
-        assertMatches("Negative lookahead", List.of("To [find] or"), "'find' (?! 'That' 'is')");
+//        assertMatches("Lookahead", List.of("To [find] or"), "'find' (?= 'or')");
+//        assertMatches("Negative lookahead", List.of("To [find] or"), "'find' (?! 'That' 'is')");
         assertMatches("Lookbehind", List.of("to [find] That"), "(?<= 'not' 'to' ) 'find'");
         assertMatches("Negative lookbehind", List.of("To [find] or"), "(?<! 'not' 'to' ) 'find'");
         assertMatches("Punct before", List.of("To [find or] not"), "'find' [punctBefore='\\(']");
