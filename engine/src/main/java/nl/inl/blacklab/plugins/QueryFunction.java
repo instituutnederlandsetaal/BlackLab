@@ -59,6 +59,11 @@ public abstract class QueryFunction extends Plugin implements TextPattern.EvalRe
         this.relationsFunction = relationsFunction;
     }
 
+    @Override
+    public String getId() {
+        return name;
+    }
+
     public List<Object> preprocessArgs(QueryExecutionContext context, List<TextPattern> args) {
         // Make sure argument are interpreted as the correct type
         // (the parser interprets all values as queries, so we sometimes need to convert them back...)

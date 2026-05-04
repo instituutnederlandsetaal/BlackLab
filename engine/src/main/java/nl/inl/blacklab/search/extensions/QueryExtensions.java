@@ -25,7 +25,6 @@ public class QueryExtensions {
         register(XFRelations.class);  // Functions for working with relations
         register(XFPunctBeforeAfter.class);  // Pseudo-annotations punctBefore/punctAfter
         register(XFSpans.class);      // Functions for working with spans
-        registerClasses(); // plugins and builtin QueryFunction subclasses
     }
 
     public static void register(Class<? extends ExtensionFunctionClass> extClass) {
@@ -62,10 +61,6 @@ public class QueryExtensions {
         register(new QueryFunctionLambda(name, func, argTypes, defaultValues, relationsFunction));
     }
 
-    private static void registerClasses() {
-        PluginManager.type(QueryFunction.class).getAll().forEach(QueryExtensions::register);
-    }
-
     public static void register(QueryFunction func) {
         functions.put(func.getName(), func);
     }
@@ -76,19 +71,31 @@ public class QueryExtensions {
     }
 
     /**
+     * Get query function
+     * @param name function name
+     * @return query function
+     */
+    public static QueryFunction get(String name) {
+        QueryFunction queryFunction = getInternal(name);
+        if (queryFunction == null)
+            throw new UnsupportedOperationException("Unknown function: " + name);
+        return queryFunction;
+    }
+
+    /**
      * Check if a query function exists.
      * @param name name of the query function
      * @return true if it exists, false if not
      */
     public static boolean exists(String name) {
-        return functions.containsKey(name);
+        return getInternal(name) != null;
     }
 
-    public static QueryFunction get(String name) {
+    private static QueryFunction getInternal(String name) {
         QueryFunction queryFunction = functions.get(name);
-        if (queryFunction == null)
-            throw new UnsupportedOperationException("Unknown function: " + name);
-        return queryFunction;
+        return queryFunction == null ?
+                PluginManager.type(QueryFunction.class).getIfExists(name).orElse(null) :
+                queryFunction;
     }
 
 }
