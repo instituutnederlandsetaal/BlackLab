@@ -181,7 +181,7 @@ public class TextPatternSerializerBcql {
         // QUERYFUNCTION
         cqlSerializers.put(TextPatternFunctionCall.class, (pattern, b, insideTokenBrackets) -> {
             TextPatternFunctionCall tp = (TextPatternFunctionCall) pattern;
-            b.append(tp.getName()).append("(");
+            b.append(tp.getFunctionName()).append("(");
             boolean first = true;
             for (TextPattern arg: tp.getArgs()) {
                 if (!first)

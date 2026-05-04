@@ -58,7 +58,7 @@ public class WebserviceParamsUtils {
         Query result;
         if (!StringUtils.isEmpty(docPid)) {
             // Only hits in 1 doc (for highlighting)
-            int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
+            int luceneDocId = index.getDocIdFromPid(docPid);
             if (luceneDocId < 0)
                 throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
             result = new SingleDocIdFilter(luceneDocId);

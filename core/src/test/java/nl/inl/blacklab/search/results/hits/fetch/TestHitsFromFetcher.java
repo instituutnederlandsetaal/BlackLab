@@ -180,7 +180,7 @@ public class TestHitsFromFetcher {
         ResultsStatsPassive hitsStats = new ResultsStatsPassive();
         ResultsStatsPassive docsStats = new ResultsStatsPassive();
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats));
+            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats, true));
         }
         return publishers;
     }

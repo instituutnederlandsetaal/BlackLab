@@ -119,4 +119,9 @@ public class TextPatternTerm extends TextPattern {
         // There must be an annotation; CorpusQL can use a default annotation, but only outside brackets.
         return annotation != null;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitTerm(this);
+    }
 }

@@ -10,12 +10,11 @@ import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryNot;
-import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 
 /**
  * Relations operator plus an optional target clause.
  */
-public class RelationTarget implements TextPatternStruct {
+public class RelationTarget extends TextPattern {
 
     /** How to find relations (type filter, negation, alignment, etc.) */
     private final RelationOperatorInfo opInfo;
@@ -31,6 +30,7 @@ public class RelationTarget implements TextPatternStruct {
 
     public RelationTarget(RelationOperatorInfo relOpInfo, TextPattern target, RelationInfo.SpanMode spanMode,
             String captureAs) {
+        super(Integer.MAX_VALUE);
         this.opInfo = relOpInfo;
         this.target = target;
         this.spanMode = spanMode;
@@ -57,6 +57,11 @@ public class RelationTarget implements TextPatternStruct {
     @Override
     public int hashCode() {
         return Objects.hash(opInfo, target, spanMode, captureAs);
+    }
+
+    @Override
+    public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
+        return targetQuery(context);
     }
 
     public BLSpanQuery targetQuery(QueryExecutionContext context) throws InvalidQuery {
@@ -109,5 +114,10 @@ public class RelationTarget implements TextPatternStruct {
 
     public RelationInfo.SpanMode getSpanMode() {
         return spanMode;
+    }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitRelationTarget(this);
     }
 }

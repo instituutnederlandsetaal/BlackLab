@@ -1,0 +1,127 @@
+{
+  "hitGroups": [
+    {
+      "identity": "cws:contents%word:i:much",
+      "identityDisplay": "much",
+      "numberOfDocs": 2,
+      "properties": [
+        {
+          "name": "ctx:contents%word:i:A1",
+          "value": "much"
+        }
+      ],
+      "size": 2
+    },
+    {
+      "identity": "cws:contents%word:i:a",
+      "identityDisplay": "a",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "ctx:contents%word:i:A1",
+          "value": "a"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:briefly",
+      "identityDisplay": "briefly",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "ctx:contents%word:i:A1",
+          "value": "briefly"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:famous",
+      "identityDisplay": "famous",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "ctx:contents%word:i:A1",
+          "value": "famous"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:fresh",
+      "identityDisplay": "fresh",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "ctx:contents%word:i:A1",
+          "value": "fresh"
+        }
+      ],
+      "size": 1
+    },
+    {
+      "identity": "cws:contents%word:i:good",
+      "identityDisplay": "good",
+      "numberOfDocs": 1,
+      "properties": [
+        {
+          "name": "ctx:contents%word:i:A1",
+          "value": "good"
+        }
+      ],
+      "size": 1
+    }
+  ],
+  "summary": {
+    "params": {
+      "group": "context:word:i:A1",
+      "indexname": "test",
+      "number": "30",
+      "op": "hits-grouped",
+      "patt": "\"very\"",
+      "sort": "size,identity",
+      "wordsaroundhit": "1"
+    },
+    "pattern": {
+      "bcql": "\"very\"",
+      "fieldName": "contents",
+      "json": {
+        "bcqlFragment": "\"very\"",
+        "clauses": [
+          {
+            "bcqlFragment": "_",
+            "type": "defval"
+          },
+          {
+            "bcqlFragment": "\"very\"",
+            "type": "string",
+            "value": "very"
+          }
+        ],
+        "operation": "=",
+        "type": "compare"
+      }
+    },
+    "resultWindow": {
+      "actualSize": 6,
+      "firstResult": 0,
+      "hasNext": false,
+      "hasPrevious": false,
+      "requestedSize": 30
+    },
+    "resultsStats": {
+      "documents": 2,
+      "hits": 7,
+      "largestGroupSize": 2,
+      "numberOfGroups": 6,
+      "status": "finished",
+      "stoppedBecauseTooMany": false,
+      "subcorpusSize": {
+        "documents": 3,
+        "tokens": 766
+      },
+      "timeMs": "VALUE_REMOVED"
+    }
+  }
+}

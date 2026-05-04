@@ -65,10 +65,10 @@ public class HitSubscribers implements HitSubscriber {
     }
 
     @Override
-    public synchronized void flush(LeafReaderContext lrc, Hits segmentHits) {
+    public synchronized void flush(LeafReaderContext lrc, long numPublished) {
         updateNewSubscribers();
         for (HitSubscriber s: subscribers) {
-            s.flush(lrc, segmentHits);
+            s.flush(lrc, numPublished);
         }
     }
 

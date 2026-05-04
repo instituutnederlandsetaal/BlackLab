@@ -8,7 +8,6 @@ import org.apache.lucene.document.Document;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
@@ -22,8 +21,6 @@ import nl.inl.blacklab.server.lib.WebserviceParams;
 public class ResultHitGroup {
 
     HitGroup group;
-
-    private final Map<ResultProperty, PropertyValue> properties;
 
     private CorpusSize subcorpusSize = null;
 
@@ -47,27 +44,19 @@ public class ResultHitGroup {
                     docPropValues);
         }
 
-        numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
-
-        properties = group.getGroupProperties(prop);
+        numberOfDocsInGroup = group.docsStats().countedTotal();
 
         if (params.getIncludeGroupContents()) {
-            Hits hitsInGroup = group.storedResults().getHits();
+            HitResults groupResults = group.storedResults();
+            Hits hitsInGroup = groupResults.getHits();
             ContextSettings contextSettings = params.contextSettings();
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
                     contextSettings.size());
             docIdToPid = WebserviceOperations.collectDocsAndPids(params.blIndex(), hitsInGroup, luceneDocs);
-        }
 
-        if (params.getIncludeGroupContents()) {
-            HitResults hitsInGroup = getGroup().storedResults();
-            listOfHits = WebserviceOperations.listOfHits(params, hitsInGroup, getConcordanceContext(),
+            listOfHits = WebserviceOperations.listOfHits(params, groupResults, getConcordanceContext(),
                     getDocIdToPid());
         }
-    }
-
-    public Map<ResultProperty, PropertyValue> getProperties() {
-        return properties;
     }
 
     public CorpusSize getSubcorpusSize() {

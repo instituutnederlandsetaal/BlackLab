@@ -13,32 +13,21 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InterruptedSearch;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.HitProperty;
-import nl.inl.blacklab.resultproperty.HitPropertyDoc;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentId;
-import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
-import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.Group;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.HitOrDocGroup;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.docs.DocResults;
@@ -48,15 +37,10 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
-import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCount;
-import nl.inl.blacklab.searches.SearchEmpty;
-import nl.inl.blacklab.searches.SearchHitGroupsFromHits;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
@@ -64,7 +48,6 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultHits {
     private static final Logger logger = LogManager.getLogger(ResultHits.class);
@@ -75,13 +58,13 @@ public class ResultHits {
 
     private List<? extends ResultProperty> groupCriteria = null;
 
-    private Group group = null;
+    private HitOrDocGroup group = null;
 
     private ResultsStats hitsStats = null;
 
     private ResultsStats docsStats = null;
 
-    private final DocResults subcorpusResults;
+    private DocResults subcorpusResults = null;
 
     private final boolean isViewGroup;
 
@@ -89,33 +72,33 @@ public class ResultHits {
 
     private SearchCacheEntry<HitResults> cacheEntryWindow;
 
-    private long kwicTimeMs;
+    private final long kwicTimeMs;
 
-    private HitResults window;
+    private final HitResults window;
 
     private long totalTokens;
 
-    private ConcordanceContext concordanceContext;
+    private final ConcordanceContext concordanceContext;
 
     Map<String, List<Pair<String, Long>>> facetInfo;
 
-    private Map<Integer, String> docIdToPid;
+    private final Map<Integer, String> docIdToPid;
 
-    private Map<String, ResultDocInfo> docInfos;
+    private final Map<String, ResultDocInfo> docInfos;
 
-    private Map<String, String> docFields;
+    private final Map<String, String> docFields;
 
-    private Map<String, String> metaDisplayNames;
+    private final Map<String, String> metaDisplayNames;
 
     private final List<Annotation> annotationsToWrite;
 
     private Index.IndexStatus indexStatus;
 
-    private ResultSummaryCommonFields summaryCommonFields;
+    private final ResultSummaryCommonFields summaryCommonFields;
 
-    private ResultSummaryNumHits summaryNumHits;
+    private final ResultSummaryNumHits summaryNumHits;
 
-    private ResultListOfHits listOfHits;
+    private final ResultListOfHits listOfHits;
 
     /**
      * Get the hits (and the groups from which they were extracted - if applicable)
@@ -138,9 +121,6 @@ public class ResultHits {
 
         isViewGroup = groupBy.isPresent() && viewGroup.isPresent();
         boolean waitForTotal = params.getWaitForTotal();
-        String sortBy = params.getSortProps().orElse(null);
-
-        subcorpusResults = params.subcorpus().execute();
 
         try {
             if (isViewGroup) {
@@ -263,86 +243,7 @@ public class ResultHits {
                 getDocIdToPid());
     }
 
-    /**
-     * Translate the normal Hits query in the searchparams object into a query yielding only those Hits in the group with the specified PropertyValue
-     *
-     * @param viewGroupVal identity of group to view
-     * @param hitsGrouped  grouped hits
-     * @return the SearchHits that will yield the hits, or null if the search could not be reconstructed.
-     */
-    private static SearchHits getQueryForHitsInSpecificGroupOnly(WebserviceParams params, PropertyValue viewGroupVal,
-            HitGroups hitsGrouped) throws BlsException, InvalidQuery {
-        // see if we can enhance this query
-        if (hitsGrouped.sampleParameters() != null)
-            return null;
-
-        HitProperty groupByProp = hitsGrouped.groupCriteria();
-
-        // see if this query matches only singular tokens
-        // (we can't enhance multi-token queries such as ngrams yet)
-        TextPattern tp = params.patternWithinContextTag().orElseThrow();
-        BlackLabIndex index = params.blIndex();
-        if (!tp.toQuery(QueryInfo.create(index, params.getAnnotatedField())).guarantees().producesSingleTokens())
-            return null;
-
-        // Alright, the original query for the Hits lends itself to enhancement.
-        // Create the Query that will do the metadata filtering portion. (Token filtering is done through the TextPattern above)
-        BooleanQuery.Builder fqb = new BooleanQuery.Builder();
-        boolean usedFilter = false;
-        if (params.filterQuery() != null) {
-            fqb.add(params.filterQuery(), Occur.FILTER);
-            usedFilter = true;
-        }
-
-        // Decode the grouping properties, and the values for those properties in the requested group.
-        // So we can enhance the BooleanQuery and TextPattern with these  criteria
-        List<PropertyValue> vals = viewGroupVal.valuesList();
-        List<HitProperty> props = groupByProp.propsList();
-
-        int i = 0;
-        for (HitProperty p: props) {
-            if (p instanceof HitPropertyHitText prop) {
-                String valueForAnnotation = vals.get(i).toString();
-                Annotation annot = prop.getAnnotation();
-                MatchSensitivity sensitivity = prop.getSensitivity();
-
-                tp = new TextPatternAnd(tp, TextPattern.term(valueForAnnotation, annot.name(), sensitivity));
-            } else if (p instanceof HitPropertyDoc || p instanceof HitPropertyDocumentId) {
-                Object value = vals.get(i).value();
-                int luceneDocId = value instanceof Integer ?
-                        ((int) value) :
-                        BlsUtils.getDocIdFromPid(index, (String) value);
-                fqb.add(new SingleDocIdFilter(luceneDocId), Occur.FILTER);
-                usedFilter = true;
-            } else if (p instanceof HitPropertyDocumentStoredField fieldProp) {
-                Query query = fieldProp.termQuery(index, vals.get(i).value().toString());
-                fqb.add(query, Occur.FILTER);
-                usedFilter = true;
-            } else {
-                logger.debug("Cannot merge group specifier into query: {} with value {}", p,
-                        vals.get(i));
-                return null;
-            }
-
-            ++i;
-        }
-
-        // All specifiers merged!
-        // Construct the query that will get us our hits.
-        SearchEmpty search = index.search(params.getAnnotatedField(), params.useCache());
-        Query filter = usedFilter ? fqb.build() : null;
-        BLSpanQuery query = tp.toQuery(search.queryInfo(), filter, params.getAdjustRelationHits(), params.getWithSpans());
-        SearchHits hits = search.find(query, params.searchSettings());
-        if (params.hitsSortSettings() != null) {
-            hits = hits.sort(params.hitsSortSettings().sortBy());
-        }
-        if (params.sampleSettings() != null) {
-            hits = hits.sample(params.sampleSettings());
-        }
-        return hits;
-    }
-
-    record HitsFromGroup(SearchCacheEntry<?> cacheEntry, HitResults hitResults, Group group,
+    record HitsFromGroup(SearchCacheEntry<?> cacheEntry, HitResults hitResults, HitOrDocGroup group,
                          List<? extends ResultProperty> criteria) {}
 
     private static HitsFromGroup getHitsFromGroup(WebserviceParams params, String viewGroup)
@@ -352,49 +253,18 @@ public class ResultHits {
             throw new BadRequest("ERROR_IN_GROUP_VALUE", "Cannot deserialize group value: " + viewGroup);
         SearchCacheEntry<HitGroups> jobHitGroups = params.hitsGroupedStats().executeAsync();
         HitGroups hitGroups = jobHitGroups.get();
-        List<HitProperty> groupCriteria = hitGroups.groupCriteria().propsList();
         HitGroup group = hitGroups.get(viewGroupVal);
         if (group == null)
             throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
 
-        HitResults hitResults;
-        // Groups don't always store their backing hits (see HitGroupsTokenFrequencies for example)
-        // When the group has some hits available, show those (the rest may have been culled on purpose due to maximum result limitations)
-        // Only launch a separate search when there are ZERO hits stored in the group
-        if (group.storedResults().size() > 0) {
-            // Some hits available: return those.
-            hitResults = group.storedResults();
-        } else {
-            // No results were actually stored. Fire a separate query to retrieve them.
-            SearchHits findHitsFromOnlyRequestedGroup = getQueryForHitsInSpecificGroupOnly(params, viewGroupVal,
-                    hitGroups);
-            if (findHitsFromOnlyRequestedGroup != null) {
-                // place the group-contents query in the cache and return the results.
-                SearchCacheEntry<ResultsStats> cacheEntry = findHitsFromOnlyRequestedGroup.count().executeAsync();
-                hitResults = (findHitsFromOnlyRequestedGroup.executeAsync()).get();
-                return new HitsFromGroup(cacheEntry, hitResults, group, groupCriteria);
-            }
-
-            // This is a special case:
-            // Since the group we got from the cached results didn't contain the hits, we need to get the hits from their original query
-            // and then group them here (using a different code path, since the normal code path  doesn't always store the hits due to performance).
-            // And, since retrieving just the hits for one group couldn't be done (findHitsFromOnlyRequestedGroup == null), we need to unfortunately get all hits.
-            SearchHitGroupsFromHits searchGroups = (SearchHitGroupsFromHits) params.hitsSample()
-                    .groupWithStoredHits(hitGroups.groupCriteria(), Results.NO_LIMIT);
-            // now run the separate grouping search, making sure not to actually store the hits.
-            // Sorting of the resultant groups is not applied, but is also not required because the groups aren't shown, only their contents.
-            // If a later query requests the groups in a sorted order, the cache will ensure these results become the input to that query anyway, so worst case we just deferred the work.
-            jobHitGroups = searchGroups.executeAsync(); // place groups with hits in search cache
-            hitResults = jobHitGroups
-                    .get() //get grouped results
-                    .get(viewGroupVal) // get group
-                    .storedResults(); // get results in group
-        }
+        List<HitProperty> groupCriteria = hitGroups.groupCriteria().propsList();
+        HitResults hitResults = group.storedResults();
 
         // NOTE: sortBy is automatically applied to regular results, but not to results within groups
         // See ResultsGrouper::init (uses hits.getByOriginalOrder(i)) and DocResults::constructor
         // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
-        // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more testing to see if everything is correct if we change this
+        // There is probably no reason why we can't just sort/use the sort of the input results, but we need some more
+        // testing to see if everything is correct if we change this
         HitProperty sortBy = params.hitsSortSettings() == null ? null : params.hitsSortSettings().sortBy();
         if (sortBy != null)
             hitResults = hitResults.sorted(sortBy);
@@ -465,7 +335,10 @@ public class ResultHits {
         return metaDisplayNames;
     }
 
-    public DocResults getSubcorpusResults() {
+    public synchronized DocResults getSubcorpusResults() {
+        if (subcorpusResults == null) {
+            subcorpusResults = params.subcorpus().execute();
+        }
         return subcorpusResults;
     }
 
@@ -477,7 +350,7 @@ public class ResultHits {
         return groupCriteria;
     }
 
-    public Group getGroup() {
+    public HitOrDocGroup getGroup() {
         return group;
     }
 

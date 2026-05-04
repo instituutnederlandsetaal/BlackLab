@@ -98,14 +98,14 @@ public class WriteCsv {
             for (HitGroup group : groups) {
                 row.clear();
                 row.addAll(group.identity().propValues());
-                row.add(Long.toString(group.storedResults().resultsStats().countedSoFar())); // count
+                row.add(Long.toString(group.resultsStats().countedSoFar())); // count
 
                 if (metadataGroupProperties != null) {
                     // Find size of corresponding subcorpus group
                     PropertyValue docPropValues = groups.groupCriteria().docPropValues(group.identity());
                     CorpusSize groupSubcorpusSize = WebserviceOperations.findSubcorpusSize(params,
                             resultHitsCsv.getSubcorpusQuery(), metadataGroupProperties, docPropValues);
-                    long numberOfDocsInGroup = group.storedResults().docsStats().countedTotal();
+                    long numberOfDocsInGroup = group.docsStats().countedTotal();
 
                     row.add(Long.toString(numberOfDocsInGroup));
                     CorpusSize.Count totalCount = groupSubcorpusSize.getTotalCount();

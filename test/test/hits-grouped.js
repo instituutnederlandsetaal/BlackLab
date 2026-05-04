@@ -44,6 +44,12 @@ function expectHitsGroupedUnchanged(testName, params) {
 // Single word
 expectHitsGroupedUnchanged('very grouped by word after',
         { patt: '"very"', group: 'after:word:i:1' });
+expectHitsGroupedUnchanged('very grouped by word after (using context:)',
+        { patt: '"very"', group: 'context:word:i:A1' });
+expectHitsGroupedUnchanged('very grouped by word before',
+        { patt: '"very"', group: 'before:word:i:1' });
+expectHitsGroupedUnchanged('very grouped by word before (using context:)',
+        { patt: '"very"', group: 'context:word:i:B1' });
 expectHitsGroupedUnchanged('a grouped by title',
         { patt: '"a"', group: 'field:title' });
 

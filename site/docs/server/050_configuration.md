@@ -409,8 +409,8 @@ cache:
     # The cache implementation to use.
     # (fully-qualified class name or simple class name (if in package nl.inl.blacklab.server.search) 
     # of SearchCache subclass to instantiate)
-    # The default is BlsCache. An alternative is ResultsCache, which is more
-    # efficient if you have a large number of small, short-lived corpora.
+    # The default is BlsCache. An alternative is SimpleFastPerRequestCache, which is more
+    # efficient if you have a large number of small corpora with a relatively high query frequency.
     implementation: BlsCache
 ```
 

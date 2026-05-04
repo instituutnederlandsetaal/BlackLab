@@ -2,6 +2,9 @@ package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -13,6 +16,10 @@ import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnd;
+import nl.inl.blacklab.search.textpattern.TextPatternCaptureGroup;
+import nl.inl.blacklab.search.textpattern.TextPatternRewriterBase;
 
 /**
  * A hit property for grouping on a matched group.
@@ -40,10 +47,11 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
 
     private int groupIndex = -1;
     
-    /** If set: use the first tag/relation with this name in the match info list */
+    /** If set: groupName refers to a list of captured match info. Use the first tag/relation with this name
+     *  in the match info list as the property value. */
     private String relNameInList = null;
 
-    /** If set: use the first tag/relation with this name in the match info list */
+    /** Is relNameInList is a full relation type, i.e. does it include relation class? */
     private boolean relNameIsFullRelType = false;
 
     HitPropertyCaptureGroup(HitPropertyCaptureGroup prop, PropContext context, boolean invert) {
@@ -88,6 +96,21 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
         return hits.matchInfoDefs().currentListFiltered(d -> d.getName().equals(groupName)).stream()
                 .map(d -> spanMode == RelationInfo.SpanMode.TARGET && d.getTargetField() != null ? d.getTargetField() : d.getField())
                 .findFirst().orElse(null);
+    }
+
+    @Override
+    public boolean canRefineQuery() {
+        return !isRelFromList();
+    }
+
+    @Override
+    @NonNull RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
+        if (isRelFromList()) // cannot rewrite this
+            throw new UnsupportedOperationException();
+        // Add the context clause to the actual capture parts of the query
+        TextPattern tp = original.pattern().accept(
+                new TextPatternRewriterRefineWithCapture(getGroupName(), propTextPattern));
+        return original.withPattern(tp);
     }
 
     @Override
@@ -156,5 +179,39 @@ public class HitPropertyCaptureGroup extends HitPropertyContextBase {
     @Override
     public int hashCode() {
         return Objects.hash(super.hashCode(), groupName, spanMode, relNameInList);
+    }
+
+    public boolean isRelFromList() {
+        return relNameInList != null;
+    }
+
+    public String getGroupName() {
+        return groupName;
+    }
+
+    /**
+     * Rewrite a TextPattern, adding a requirement for a capture to match a pattern.
+     */
+    private static class TextPatternRewriterRefineWithCapture extends TextPatternRewriterBase {
+
+        /** Name of the capture */
+        private final String groupName;
+
+        /** Pattern the capture must also match */
+        private final TextPattern refinement;
+
+        public TextPatternRewriterRefineWithCapture(String groupName, TextPattern refinement) {
+            this.groupName = groupName;
+            this.refinement = refinement;
+        }
+
+        @Override
+        public TextPattern visitCaptureGroup(TextPatternCaptureGroup textPattern) {
+            if (textPattern.getCaptureName().equals(groupName)) {
+                TextPatternAnd andClause = new TextPatternAnd(textPattern.getClause(), refinement);
+                return new TextPatternCaptureGroup(andClause, groupName);
+            }
+            return textPattern;
+        }
     }
 }

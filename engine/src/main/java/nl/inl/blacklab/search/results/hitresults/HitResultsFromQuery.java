@@ -54,7 +54,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         hits = new HitsFromPublishers(publishers, searchSettings);
     }
 
-    private static List<HitPublisher> getHitPublishers(QueryInfo queryInfo, BLSpanQuery sourceQuery,
+    public static List<HitPublisher> getHitPublishers(QueryInfo queryInfo, BLSpanQuery sourceQuery,
             SearchSettings searchSettings, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
         List<HitPublisher> publishers = new ArrayList<>();
         BlackLabIndex index = queryInfo.index();
@@ -64,7 +64,7 @@ public class HitResultsFromQuery extends HitResultsAbstract {
         ExecutorService service = new SearchPool(index.blackLab().searchExecutorService(), nThreads);
         HitQueryContext hitQueryContext = new HitQueryContext(index, null, queryInfo.field());
         for (LeafReaderContext lrc: index.reader().leaves()) {
-            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats));
+            publishers.add(new HitPublisherSpans(lrc, weight, hitQueryContext, service, hitsStats, docsStats, true));
         }
         return publishers;
     }

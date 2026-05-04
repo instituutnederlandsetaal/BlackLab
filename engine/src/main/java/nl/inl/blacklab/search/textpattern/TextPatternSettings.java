@@ -77,4 +77,9 @@ public class TextPatternSettings extends TextPattern {
     public boolean isRelationsQuery() {
         return clause.isRelationsQuery();
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitSettings(this);
+    }
 }

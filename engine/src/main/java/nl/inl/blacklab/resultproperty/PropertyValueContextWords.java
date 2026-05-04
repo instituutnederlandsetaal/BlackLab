@@ -122,12 +122,17 @@ public class PropertyValueContextWords extends PropertyValueContext {
     }
 
     @Override
-    public Object value() {
+    public int[] value() {
         return valueTokenId;
     }
 
-    boolean isGlobal() {
-        return lrc == null;
+    public List<String> terms() {
+        int length = valueTokenId.length;
+        List<String> parts = new ArrayList<>(length);
+        for (int j: valueTokenId) {
+            parts.add(serializeTerm(terms, j));
+        }
+        return parts;
     }
 
 }

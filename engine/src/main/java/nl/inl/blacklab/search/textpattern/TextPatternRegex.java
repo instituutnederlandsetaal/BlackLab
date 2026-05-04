@@ -76,4 +76,9 @@ public class TextPatternRegex extends TextPatternTerm {
             sensitivity = this.sensitivity;
         return new TextPatternRegex(value, annotation, sensitivity);
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitRegex(this);
+    }
 }

@@ -9,6 +9,7 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.param.PluginParams;
@@ -31,7 +32,7 @@ public class BcqlQueryLanguageParser implements BLQueryParser {
      * @return the parsed query
      * @throws InvalidQuery on parse error
      */
-    public static TextPattern parse(BlackLabIndex index, PluginParams config, String query) throws InvalidQuery {
+    public static TextPattern parseToTextPattern(PluginParams config, String query) throws InvalidQuery {
         return parseQuery(query);
     }
 

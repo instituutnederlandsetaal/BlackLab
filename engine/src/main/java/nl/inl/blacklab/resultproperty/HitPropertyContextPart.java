@@ -4,13 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.jspecify.annotations.NonNull;
+
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.SpanQueryPositionFilter;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
+import nl.inl.blacklab.search.textpattern.TextPatternLook;
+import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 
 /**
  * A hit property for sorting on a number of tokens before a hit.
@@ -55,6 +63,63 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
         return new HitPropertyMultiple(parts);
     }
 
+    @Override
+    public boolean canRefineQuery() {
+        return true;
+    }
+
+    @Override
+    @NonNull RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
+        ContextPart contextPart = getContextPart();
+        int skipTokens = contextPart.first();
+        TextPattern tp;
+        if (contextPart.direction() < 0) {
+            // for forward direction, first=0 is the first possible token to look at (i.e. first token in hit)
+            // for backwards direction, first=1 is the first possible token to look at (i.e. firt token before the hit)
+            // We decrement skipTokens to account for this.
+            skipTokens -= 1;
+            if (skipTokens > 0)
+                propTextPattern = new TextPatternSequence(propTextPattern, new TextPatternAnyToken(skipTokens));
+            if (contextPart.fromHitEnd()) {
+                // From hit end backwards (confined to hit)
+                tp = new TextPatternPositionFilter(original.pattern(),
+                        propTextPattern, SpanQueryPositionFilter.Operation.CONTAINING_AT_END);
+            } else {
+                // From hit start backwards (using lookbehind)
+                TextPatternLook lookbehind = new TextPatternLook(propTextPattern, true, false);
+                tp = new TextPatternSequence(lookbehind, original.pattern());
+            }
+        } else {
+            propTextPattern = new TextPatternSequence(new TextPatternAnyToken(skipTokens), propTextPattern);
+            if (contextPart.fromHitEnd()) {
+                // From hit end forwards (using lookahead)
+                TextPatternLook lookahead = new TextPatternLook(propTextPattern, false, false);
+                tp = new TextPatternSequence(original.pattern(), lookahead);
+            } else {
+                // From hit start forwards (confined to hit)
+                tp = new TextPatternPositionFilter(original.pattern(),
+                        propTextPattern, SpanQueryPositionFilter.Operation.CONTAINING_AT_START);
+            }
+        }
+        return original.withPattern(tp);
+    }
+
+    public ContextPart getContextPart() {
+        return part;
+    }
+
+    public boolean isHitText() {
+        if (!part.fromHitEnd && part.direction > 0 || part.fromHitEnd && part.direction < 0) {
+            if (part.first == 0 && part.last == ContextSize.MAX_HIT_SIZE)
+                return true;
+        }
+        return false;
+    }
+
+    public HitProperty asHitText() {
+        return isHitText() ? new HitPropertyHitText(index, annotation, sensitivity) : null;
+    }
+
     /**
      * A stretch of words from the (surroundings of) the matched text.
      *
@@ -64,9 +129,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
      * @param direction    Direction: 1 = forward, -1 = backward.
      * @param first        What's the first token we're interested in?
      * @param last         What's the last token we're interested in?
-     * @param confineToHit Can we only take context from the hit itself, or outside of it as well?
      */
-    public record ContextPart(boolean fromHitEnd, int direction, int first, int last, boolean confineToHit) {
+    public record ContextPart(boolean fromHitEnd, int direction, int first, int last) {
 
         public ContextPart {
             assert Math.abs(direction) == 1;
@@ -77,7 +141,6 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
         public static ContextPart forString(String param, ContextSize defaultContextSize) {
             boolean fromHitEnd = false;
             int direction = 1;
-            boolean confineToHit = false;
             int lastWord;
             switch (param.charAt(0)) {
             case PART_BEFORE:
@@ -88,7 +151,6 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
             case PART_MATCH_FROM_END:
                 fromHitEnd = true;
                 direction = -1;
-                confineToHit = true;
                 lastWord = defaultContextSize.maxSnippetHitLength();
                 break;
             case PART_AFTER:
@@ -98,7 +160,6 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 break;
             case PART_MATCH:
             default:
-                confineToHit = true;
                 lastWord = defaultContextSize.maxSnippetHitLength();
                 break;
             }
@@ -124,7 +185,7 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 firstWord++;
                 lastWord++;
             }
-            return new ContextPart(fromHitEnd, direction, firstWord, lastWord, confineToHit);
+            return new ContextPart(fromHitEnd, direction, firstWord, lastWord);
         }
 
         @Override
@@ -145,8 +206,8 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
          * @return true if we need to start comparing from the end of the context fragment, false otherwise
          */
         public boolean compareInReverse() {
-                return direction == 1 ? first > last : first < last;
-            }
+            return direction == 1 ? first > last : first < last;
+        }
     }
 
     /** Description of the context to use (starting point, direction, start/end index) */
@@ -206,33 +267,20 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 };
             } else {
                 // From hit end backwards.
-                if (part.confineToHit) {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
-                        starts[j] = Math.max(h.start(), h.end() - larger);
-                        ends[j] = Math.max(h.start(), h.end() - smaller + 1);
-                    };
-                } else {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
-                        starts[j] = Math.max(0, h.end() - larger);
-                        ends[j] = Math.max(0, h.end() - smaller + 1);
-                    };
-                }
+                func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
+                    starts[j] = Math.max(h.start(), h.end() - larger);
+                    ends[j] = Math.max(h.start(), h.end() - smaller + 1);
+                };
             }
         } else {
             if (part.direction == 1) {
                 // From hit start forwards.
-                if (part.confineToHit) {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
-                        starts[j] = Math.min(h.end(), h.start() + smaller);
-                        ends[j] = Math.min(h.end(), h.start() + larger + 1);
-                    };
-                } else {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
-                        starts[j] = h.start() + smaller;
-                        ends[j] = h.start() + larger + 1;
-                    };
-                }
+                func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
+                    starts[j] = Math.min(h.end(), h.start() + smaller);
+                    ends[j] = Math.min(h.end(), h.start() + larger + 1);
+                };
             } else {
+                // From hit start backwards.
                 func = (int[] starts, int[] ends, int j, EphemeralHit h) -> {
                     starts[j] = Math.max(0, h.start() - larger);
                     ends[j] = Math.max(0, h.start() - smaller + 1);
@@ -255,43 +303,26 @@ public class HitPropertyContextPart extends HitPropertyContextBase {
                 };
             } else {
                 // From hit end backwards.
-                if (part.confineToHit) {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
-                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
-                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
-                        starts[j] = Math.max(start, end - larger);
-                        ends[j] = Math.max(start, end - smaller + 1);
-                    };
-                } else {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
-                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
-                        starts[j] = Math.max(0, end - larger);
-                        ends[j] = Math.max(0, end - smaller + 1);
-                    };
-                }
+                func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                    int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                    int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                    starts[j] = Math.max(start, end - larger);
+                    ends[j] = Math.max(start, end - smaller + 1);
+                };
             }
         } else {
             if (part.direction == 1) {
                 // From hit start forwards.
-                if (part.confineToHit) {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
-                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
-                        int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
-                        starts[j] = Math.min(end, start + smaller);
-                        ends[j] = Math.min(end, start + larger + 1);
-                    };
-                } else {
-                    func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
-                        int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
-                        int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
-                        starts[j] = start + smaller;
-                        ends[j] = start + larger + 1;
-                    };
-                }
+                func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
+                    int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
+                    int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];
+                    int end = startEnd[1] == Integer.MIN_VALUE ? hit.end() : startEnd[1];
+                    starts[j] = Math.min(end, start + smaller);
+                    ends[j] = Math.min(end, start + larger + 1);
+                };
             } else {
+                // From hit start backwards.
                 func = (int[] starts, int[] ends, int j, EphemeralHit hit) -> {
                     int[] startEnd = getForeignHitStartEnd(hit, annotation.field());
                     int start = startEnd[0] == Integer.MAX_VALUE ? hit.start() : startEnd[0];

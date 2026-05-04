@@ -18,7 +18,7 @@ public class TestTextPatternToCorpusQL {
     }
 
     private static void assertCanonicalized(String expected, String input) throws InvalidQuery {
-        TextPattern p = BcqlQueryLanguageParser.parse(null, PluginParams.NONE, input);
+        TextPattern p = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, input);
         String cql = TextPatternSerializerBcql.serialize(p);
         Assert.assertEquals(expected, cql);
     }

@@ -12,19 +12,16 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
  */
 public class DocResult extends HitGroup {
     
-    public static DocResult fromDoc(QueryInfo queryInfo, PropertyValueDoc doc, float score, long totalNumberOfHits) {
-        return new DocResult(queryInfo, doc, score, totalNumberOfHits);
+    public static DocResult fromDoc(QueryInfo queryInfo, PropertyValueDoc doc, long totalNumberOfHits) {
+        return new DocResult(queryInfo, doc, totalNumberOfHits);
     }
     
     public static DocResult fromHits(PropertyValueDoc doc, HitResults storedHits, long totalNumberOfHits) {
         return new DocResult(doc, storedHits, totalNumberOfHits);
     }
-    
-    private final float score;
 
-    protected DocResult(QueryInfo queryInfo, PropertyValueDoc doc, float score, long numberOfHits) {
-        super(queryInfo, doc, numberOfHits);
-        this.score = score;
+    protected DocResult(QueryInfo queryInfo, PropertyValueDoc doc, long numberOfHits) {
+        super(doc, HitResults.empty(queryInfo), numberOfHits, 1, null);
     }
 
     /**
@@ -35,12 +32,7 @@ public class DocResult extends HitGroup {
      * @param totalNumberOfHits total number of hits in this document
      */
     protected DocResult(PropertyValue doc, HitResults storedHits, long totalNumberOfHits) {
-        super(doc, storedHits, totalNumberOfHits);
-        this.score = 0.0f;
-    }
-
-    public float score() {
-        return score;
+        super(doc, storedHits, totalNumberOfHits, 1, null);
     }
     
     @Override

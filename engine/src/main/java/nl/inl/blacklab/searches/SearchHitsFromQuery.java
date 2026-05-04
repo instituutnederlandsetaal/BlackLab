@@ -5,25 +5,25 @@ import java.util.Objects;
 import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 
 /** A search that yields hits. */
 public class SearchHitsFromQuery extends SearchHits {
 
-    private final BLSpanQuery spanQuery;
+    private final CompleteQuery completeQuery;
 
     private final SearchSettings searchSettings;
 
-    public SearchHitsFromQuery(QueryInfo queryInfo, BLSpanQuery spanQuery,
-            SearchSettings searchSettings) {
+    public SearchHitsFromQuery(QueryInfo queryInfo, CompleteQuery completeQuery, SearchSettings searchSettings) {
         super(queryInfo);
-        if (spanQuery == null)
+        if (completeQuery == null)
             throw new IllegalArgumentException("Must specify a query");
-        this.spanQuery = spanQuery;
+        this.completeQuery = completeQuery;
         this.searchSettings = searchSettings;
     }
 
@@ -36,7 +36,7 @@ public class SearchHitsFromQuery extends SearchHits {
     public HitResults executeInternal(ActiveSearch<HitResults> activeSearch) {
         QueryTimings timings = queryInfo().timings().start();
         try {
-            return queryInfo().index().find(queryInfo(), spanQuery, searchSettings);
+            return queryInfo().index().find(queryInfo(), getCombinedSpanFilterQuery(), searchSettings);
         } finally {
             timings.record("fetch");
         }
@@ -48,29 +48,37 @@ public class SearchHitsFromQuery extends SearchHits {
             return false;
         if (!super.equals(o))
             return false;
-        return Objects.equals(spanQuery, that.spanQuery) && Objects.equals(searchSettings,
+        return Objects.equals(completeQuery, that.completeQuery) && Objects.equals(searchSettings,
                 that.searchSettings);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), spanQuery, searchSettings);
+        return Objects.hash(super.hashCode(), completeQuery, searchSettings);
     }
 
     @Override
     public String toString() {
-        return toString("hits", spanQuery);
+        return toString("hits", completeQuery);
     }
 
     @Override
-    public boolean isAnyTokenQuery() {
-        return spanQuery instanceof SpanQueryAnyToken &&
-                spanQuery.guarantees().producesSingleTokens();
+    public boolean isSingleAnyTokenQuery() {
+        return completeQuery.pattern() instanceof TextPatternAnyToken any && any.getMin() == 1 && any.getMax() == 1;
+    }
+
+    @Override
+    public BLSpanQuery getCombinedSpanFilterQuery() {
+        return completeQuery.pattern().toQuery(queryInfo(), completeQuery.filter());
     }
 
     @Override
     public Query getFilterQuery() {
-        return spanQuery;
+        return completeQuery.filter();
+    }
+
+    public CompleteQuery getCompleteQuery() {
+        return completeQuery;
     }
 
     @Override

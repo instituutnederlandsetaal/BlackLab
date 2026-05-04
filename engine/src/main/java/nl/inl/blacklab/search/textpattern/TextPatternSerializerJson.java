@@ -205,7 +205,7 @@ public class TextPatternSerializerJson extends JsonSerializer<TextPatternStruct>
         // QueryFunction
         jsonSerializers.put(TextPatternFunctionCall.class, (pattern, writer) -> {
             TextPatternFunctionCall tp = (TextPatternFunctionCall) pattern;
-            writer.write(NT_CALL_FUNC,KEY_NAME, tp.getName(), KEY_ARGS, tp.getArgs());
+            writer.write(NT_CALL_FUNC,KEY_NAME, tp.getFunctionName(), KEY_ARGS, tp.getArgs());
         });
 
         // Regex

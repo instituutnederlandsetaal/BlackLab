@@ -312,7 +312,7 @@ public class TestIndex {
         try {
             BLQueryParser parser = index.getQueryParser("bcql");
             BLSpanQuery query = parser.parse(pattern).pattern()
-                    .toQuery(QueryInfo.create(index), filter, false, false);
+                    .toQuery(QueryInfo.create(index), filter);
             return index.find(query, null)
                     .sorted(new HitPropertyMultiple(new HitPropertyDoc(index), new HitPropertyHitPosition()));
         } catch (InvalidQuery e) {

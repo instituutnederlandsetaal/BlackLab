@@ -24,6 +24,10 @@ public class TextPatternAnyToken extends TextPattern {
      */
     protected final int max;
 
+    public TextPatternAnyToken(int n) {
+        this(n, n);
+    }
+
     public TextPatternAnyToken(int min, int max) {
         super(TP_PRECEDENCE);
         if (min < 0)
@@ -74,4 +78,10 @@ public class TextPatternAnyToken extends TextPattern {
     public int getMax() {
         return max;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitAnyToken(this);
+    }
+
 }

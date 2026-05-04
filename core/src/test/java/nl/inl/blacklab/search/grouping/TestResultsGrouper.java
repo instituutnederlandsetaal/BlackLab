@@ -15,6 +15,7 @@ import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.results.hits.Hits;
 
 public class TestResultsGrouper {
     final int[] doc   = { 1, 2, 1, 3, 2, 1 };
@@ -38,9 +39,10 @@ public class TestResultsGrouper {
         HitGroup group1 = grouper.get(one);
         Assert.assertEquals(one, group1.identity());
         Assert.assertEquals(3, group1.size());
-        Assert.assertEquals(1, group1.storedResults().getHits().get(0).doc());
-        Assert.assertEquals(1, group1.storedResults().getHits().get(1).doc());
-        Assert.assertEquals(1, group1.storedResults().getHits().get(2).doc());
+        Hits hits = group1.storedResults().getHits();
+        Assert.assertEquals(1, hits.get(0).doc());
+        Assert.assertEquals(1, hits.get(1).doc());
+        Assert.assertEquals(1, hits.get(2).doc());
         PropertyValueInt two = new PropertyValueInt(2);
         Assert.assertEquals(2, grouper.get(two).size());
         PropertyValueInt three = new PropertyValueInt(3);

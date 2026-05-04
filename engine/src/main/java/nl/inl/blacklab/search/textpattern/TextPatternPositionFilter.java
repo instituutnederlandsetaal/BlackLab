@@ -144,4 +144,9 @@ public class TextPatternPositionFilter extends TextPattern {
     public boolean isRelationsQuery() {
         return producer.isRelationsQuery() || filter.isRelationsQuery() && !invert;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitPositionFilter(this);
+    }
 }

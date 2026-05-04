@@ -43,6 +43,8 @@ import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.BlockTimer;
 
@@ -128,7 +130,8 @@ public class HitGroupsTokenFrequencies {
      * @return true if this path can be used
      */
     public static boolean canUse(boolean mustStoreHits, SearchHits hitsSearch, HitProperty property) {
-        return !mustStoreHits && hitsSearch.isAnyTokenQuery() && property.isDocPropOrHitText();
+        return !mustStoreHits && hitsSearch.isSingleAnyTokenQuery() && property.isDocPropOrHitText() &&
+                hitsSearch.getCombinedSpanFilterQuery() != null;
     }
 
     /** Counts of hits and docs while grouping. */
@@ -192,7 +195,7 @@ public class HitGroupsTokenFrequencies {
     public static HitGroups get(SearchHits source, HitProperty requestedGroupingProperty) {
 
         QueryInfo queryInfo = source.queryInfo();
-        Query filterQuery = source.getFilterQuery();
+        Query combinedFilterQuery = source.getCombinedSpanFilterQuery();
         SearchSettings searchSettings = source.searchSettings();
 
         try {
@@ -256,7 +259,7 @@ public class HitGroupsTokenFrequencies {
                 // Collect all doc ids that match the given filter (or all docs if no filter specified)
                 final Map<LeafReaderContext, List<Integer>> docIds = new HashMap<>();
                 try (BlockTimer ignored = c.child("Gathering documents")) {
-                    index.searcher().search(filterQuery == null ? index.getAllRealDocsQuery() : filterQuery, new SimpleCollector() {
+                    index.searcher().search(combinedFilterQuery == null ? index.getAllRealDocsQuery() : combinedFilterQuery, new SimpleCollector() {
                         private LeafReaderContext context;
 
                         @Override
@@ -301,7 +304,7 @@ public class HitGroupsTokenFrequencies {
                                 int globalDocId = docId + lrc.docBase;
                                 final int docLength = (int) fieldLength.get(globalDocId); // excludes dummy closing token!
                                 final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
-                                        new PropertyValueDoc(globalDocId), 0, docLength);
+                                        new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = new PropertyValue[docProperties.size()];
                                 for (int i = 0; i < docProperties.size(); ++i) {
                                     metadataValuesForGroup[i] = docProperties.get(i).get(synthesizedDocResult);
@@ -411,7 +414,7 @@ public class HitGroupsTokenFrequencies {
                                 int docLength = Integer.parseInt(doc.get(lengthTokensFieldName))
                                         - BlackLabIndexAbstract.IGNORE_EXTRA_CLOSING_TOKEN;
                                 final DocResult synthesizedDocResult = DocResult.fromDoc(queryInfo,
-                                        new PropertyValueDoc(globalDocId), 0, docLength);
+                                        new PropertyValueDoc(globalDocId), docLength);
                                 final PropertyValue[] metadataValuesForGroup = !docProperties.isEmpty() ?
                                         new PropertyValue[docProperties.size()] :
                                         null;
@@ -546,9 +549,13 @@ public class HitGroupsTokenFrequencies {
 
                     PropertyValue groupId = groupIdAsList.length > 1 ? new PropertyValueMultiple(groupIdAsList) : groupIdAsList[0];
 
+                    CompleteQuery completeQuery = new CompleteQuery(new TextPatternAnyToken(1), source.getFilterQuery());
+                    if (!requestedGroupingProperty.canRefineQuery())
+                        throw new IllegalArgumentException("Group without hits must be able to find them by refining query!");
+                    CompleteQuery hitsInGroupQuery = requestedGroupingProperty.refine(queryInfo.index(), completeQuery, groupId).orElseThrow();
                     return HitGroup.withoutResults(queryInfo, groupId, groupSizeHits,
-                            groupSizeDocs, MaxStats.NOT_EXCEEDED);
-                }).map(g -> (HitGroup)g).toList();
+                            groupSizeDocs, MaxStats.NOT_EXCEEDED, hitsInGroupQuery);
+                }).toList();
             }
             logger.debug("fast path used for grouping");
 

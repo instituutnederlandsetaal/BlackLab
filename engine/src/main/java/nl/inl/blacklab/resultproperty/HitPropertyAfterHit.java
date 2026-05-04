@@ -3,6 +3,9 @@ package nl.inl.blacklab.resultproperty;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
@@ -10,6 +13,9 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternLook;
+import nl.inl.blacklab.search.textpattern.TextPatternSequence;
 
 /**
  * A hit property for sorting on a number of tokens after a hit.
@@ -54,6 +60,18 @@ public class HitPropertyAfterHit extends HitPropertyContextBase {
     HitPropertyAfterHit(BlackLabIndex index, Annotation annotation, MatchSensitivity sensitivity, int numberOfTokens, String serializeName) {
         super("context after", serializeName, index, annotation, sensitivity, false);
         this.numberOfTokens = numberOfTokens >= 1 ? numberOfTokens : index.defaultContextSize().after();
+    }
+
+    @Override
+    public boolean canRefineQuery() {
+        return true;
+    }
+
+    @Override
+    @NonNull RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
+        TextPatternLook lookahead = new TextPatternLook(propTextPattern, false, false);
+        TextPattern tp = new TextPatternSequence(original.pattern(), lookahead);
+        return original.withPattern(tp);
     }
 
     @Override

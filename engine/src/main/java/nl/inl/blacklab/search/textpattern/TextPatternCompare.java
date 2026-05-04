@@ -243,4 +243,9 @@ public class TextPatternCompare extends TextPattern {
     public boolean isBracketQuery() {
         return left != TextPatternDefaultValue.get();
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitCompare(this);
+    }
 }

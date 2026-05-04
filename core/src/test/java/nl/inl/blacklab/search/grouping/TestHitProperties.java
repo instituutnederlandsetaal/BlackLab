@@ -96,7 +96,7 @@ public class TestHitProperties {
     @Test
     public void testHitPropContextWords() {
         HitResults hitResults = testIndex.find(" 'the' ");
-        HitProperty p = HitPropertyContextPart.contextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "L1-1;H1-2");
+        HitProperty p = HitPropertyContextPart.contextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "B1-1;H1-2");
         HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         Assert.assertEquals(4, g.size());
         HitGroup group;
@@ -113,7 +113,7 @@ public class TestHitProperties {
     @Test
     public void testHitPropContextWordsReverse() {
         HitResults hitResults = testIndex.find(" 'the' 'lazy' ");
-        HitProperty p = HitPropertyContextPart.contextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "L1;H2-1;R1");
+        HitProperty p = HitPropertyContextPart.contextWords(index, wordAnnotation, MatchSensitivity.SENSITIVE, "B1;H2-1;A1");
         HitGroups g = hitResults.group(p, Results.NO_LIMIT);
         Assert.assertEquals(1, g.size());
         HitGroup group;

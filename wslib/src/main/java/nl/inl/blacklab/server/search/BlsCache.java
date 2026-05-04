@@ -173,6 +173,11 @@ public class BlsCache implements SearchCache {
         traceInfo("Cache cleared.");
     }
 
+    @Override
+    public <R extends SearchResult> boolean containsKey(Search<R> source) {
+        return searches.containsKey(source);
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public synchronized <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {

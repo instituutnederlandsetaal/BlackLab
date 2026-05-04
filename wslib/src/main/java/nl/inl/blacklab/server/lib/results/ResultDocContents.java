@@ -21,7 +21,6 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.util.BlsUtils;
 
 /**
  * Get (part of) the original contents of a document.
@@ -113,7 +112,7 @@ public class ResultDocContents {
         }
 
         BlackLabIndex index = params.blIndex();
-        int docId = BlsUtils.getDocIdFromPid(index, docPid);
+        int docId = index.getDocIdFromPid(docPid);
         if (!index.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
         Document document = index.luceneDoc(docId);

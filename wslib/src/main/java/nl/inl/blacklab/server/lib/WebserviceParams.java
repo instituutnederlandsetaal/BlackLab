@@ -36,20 +36,34 @@ public interface WebserviceParams extends QueryParams {
 
     boolean hasPattern() throws BlsException;
 
-    Optional<TextPattern> pattern() throws BlsException;
-
     /**
-     * The pattern, optionally with added within clause for context.
+     * The pattern as passed by the user.
+     *
+     * This excludes the (optionally added) within clause for context.
      *
      * E.g. if the user has passed context=s, we add within &lt;s/&gt; to the
      * query so we can capture the relevant sentence span for the requested
      * context. This is a separate method because we don't want to report
      * this query with the additional clause in the response.
      *
-     * @return query with optional within clause added
+     * @return original query without the optionally added within clause
      * @throws BlsException
      */
-    Optional<TextPattern> patternWithinContextTag() throws BlsException;
+    Optional<TextPattern> patternNoWithinContextTag() throws BlsException;
+
+    /**
+     * The pattern to find in the corpus.
+     *
+     * This includes the (optionally added) within clause for context.
+     * E.g. if the user has passed context=s, we add within &lt;s/&gt; to the
+     * query so we can capture the relevant sentence span for the requested
+     * context. This is a separate method because we don't want to report
+     * this query with the additional clause in the response.
+     *
+     * @return query with optionally added within clause
+     * @throws BlsException
+     */
+    Optional<TextPattern> pattern() throws BlsException;
 
     @Override
     String getDocPid();

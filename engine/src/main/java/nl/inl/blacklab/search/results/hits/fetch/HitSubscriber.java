@@ -17,6 +17,21 @@ import nl.inl.blacklab.search.results.hits.Hits;
  */
 public interface HitSubscriber {
 
+    /**
+     * Called directly after subscribing.
+     *
+     * In HitsFromPublishers, the results object is stored permanently so we can use these objects
+     * from several publishers to provide a global view on the combined hits.
+     *
+     * NOTE: some publishers (such as for grouping without storing hits) don't save their hits, to
+     * save time and memory. These publishers will pass null for the results parameter. You should ensure
+     * that publishers and subscribers are matched, so a subscriber needing access to all published hits
+     * isn't subscribing to a publisher that doesn't save its hits.
+     *
+     * @param lrc our segment
+     * @param results a persistent, locking Hits object containing all the hits published so far;
+     *                whenever hits() is being called, that batch of hits is already included in this object.
+     */
     void start(LeafReaderContext lrc, Hits results);
 
     /**
@@ -35,20 +50,20 @@ public interface HitSubscriber {
      * but not including, batchEnd.
      *
      * Note that batchHits is not necessarily the full set of hits that have been
-     * collected, but may just be a small batchHits. batchOffsetInTotal indicates
+     * collected, but may just be a small batch of hits. batchOffsetInTotal indicates
      * what the index of batchStart in batchHits is in the full set of hits. So
      * if 100 hits have been published before, and this method gets called with
-     * batchStart=0, batchEnd=10, batchOffsetInTotal=100, thes batchHits 0 to 10 correspond to
-     * hits 100 through 109 (inclusive) in the full set of hits. This ensures
-     * that we can pass nonlocking hit batchHits objects instead of the locking full
-     * set of hits.
+     * batchStart=0, batchEnd=10, batchOffsetInTotal=100, the batchHits 0 to 10 correspond to
+     * hits 100 through 109 (inclusive) in the full set of hits from the publisher.
+     * This ensures that we can pass nonlocking hit batchHits objects instead of the
+     * locking full set of hits.
      *
      * @param lrc          segment these hits are from, or null if global
      * @param batchHits    where to consume hits from
      * @param batchStart   first hit to consume from batchHits
      * @param batchEnd     one past the last hit to consume from batchHits
-     * @param batchNumDocs number of documents in this batch of hits
-     * @param batchOffsetInTotal offset of batchStart in this publisher's total set of hits
+     * @param batchNumDocs number of documents in the hits from batchStart to batchEnd
+     * @param batchOffsetInTotal offset of batchStart[0] in this publisher's total set of hits
      */
     void hits(LeafReaderContext lrc, Hits batchHits, long batchStart, long batchEnd, int batchNumDocs, long batchOffsetInTotal);
 
@@ -68,8 +83,11 @@ public interface HitSubscriber {
      * <p>
      * Implementations should make sure all hits published so far
      * have been processed.
+     *
+     * @param lrc          our segment
+     * @param numPublished how many hits have been published by this publisher
      */
-    void flush(LeafReaderContext lrc, Hits results);
+    void flush(LeafReaderContext lrc, long numPublished);
 
     /**
      * Called when all the hits have been collected.

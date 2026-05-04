@@ -3,11 +3,13 @@ package nl.inl.blacklab.resultproperty;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.lucene.index.LeafReaderContext;
+import org.jspecify.annotations.NonNull;
 
 import it.unimi.dsi.fastutil.BigList;
 import it.unimi.dsi.fastutil.objects.ObjectBigArrayBigList;
@@ -23,6 +25,7 @@ import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.util.ThreadAborter;
 
@@ -52,7 +55,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
 
     protected Annotation annotation;
 
-    private final MatchSensitivity sensitivity;
+    protected final MatchSensitivity sensitivity;
 
     private final String name;
 
@@ -235,16 +238,6 @@ public abstract class HitPropertyContextBase extends HitProperty {
         return serializeReverse() + PropertySerializeUtil.combineParts(serializeParts());
     }
 
-    @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((annotation == null) ? 0 : annotation.hashCode());
-        result = prime * result + ((index == null) ? 0 : index.hashCode());
-        result = prime * result + ((sensitivity == null) ? 0 : sensitivity.hashCode());
-        return result;
-    }
-
     protected synchronized void fetchContext(StartEndSetter setStartEnd) {
         final long size = context.hits().size();
         contextTermId = new ObjectBigArrayBigList<>(size);
@@ -367,26 +360,38 @@ public abstract class HitPropertyContextBase extends HitProperty {
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
+    public boolean equals(Object o) {
+        if (!(o instanceof HitPropertyContextBase that))
             return false;
-        if (getClass() != obj.getClass())
+        if (!super.equals(o))
             return false;
-        HitPropertyContextBase other = (HitPropertyContextBase) obj;
-        if (annotation == null) {
-            if (other.annotation != null)
-                return false;
-        } else if (!annotation.equals(other.annotation))
-            return false;
-        if (index == null) {
-            if (other.index != null)
-                return false;
-        } else if (!index.equals(other.index))
-            return false;
-        if (sensitivity != other.sensitivity)
-            return false;
-        return true;
+        return Objects.equals(annotation, that.annotation) && sensitivity == that.sensitivity
+                && Objects.equals(index, that.index);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), annotation, sensitivity, index);
+    }
+
+    RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    protected @NonNull RefiningQuery refineQuery(RefiningQuery original, PropertyValue value) {
+        if (!(value instanceof PropertyValueContextWords contextWords))
+            throw new IllegalArgumentException();
+        // Get a sequence of terms pattern from the value.
+        List<String> terms = contextWords.terms();
+        if (this instanceof HitPropertyBeforeHit ||
+                (this instanceof HitPropertyContextPart hpcp && hpcp.getContextPart().direction() < 0)) {
+            // These values are reversed because that's how they are compared.
+            // Reverse them again so they match the order in the document again.
+            Collections.reverse(terms);
+        }
+        TextPattern propTextPattern = TextPattern.sequenceOfTerms(terms, getAnnotation(), getSensitivity());
+        return refineQuery(original, propTextPattern);
+    }
+
 }

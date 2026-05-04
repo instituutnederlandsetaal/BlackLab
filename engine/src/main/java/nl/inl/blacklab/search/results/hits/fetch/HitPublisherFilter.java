@@ -16,17 +16,17 @@ public class HitPublisherFilter implements HitPublisher {
     /** Publishes the hits we filter */
     private final HitPublisher source;
 
-    /** Filtered hits already published. LOCKING. */
-    private final HitsMutable alreadyPublishedHits;
-
-    /** How many docs we've counted in the hits published so far */
-    private int numberOfDocs = 0;
-
-    /** The current batch of hits (not yet published). NONLOCKING. */
-    private final HitsMutable currentBatchOfHits;
+    /** How many distinct documents are in alreadyPublishedHits */
+    private int docsProcessed = 0;
 
     /** Have all hits been filtered? */
     private final AtomicBoolean isDone = new AtomicBoolean(false);
+
+    /** Hits we've already published. LOCKING. */
+    private final HitsMutable alreadyPublishedHits;
+
+    /** The current batch of hits (not yet published). NONLOCKING. */
+    private final HitsMutable currentBatchOfHits;
 
     /** Our subscribers, that we will publish our hits to. */
     private final HitSubscribers subscribers;
@@ -39,23 +39,23 @@ public class HitPublisherFilter implements HitPublisher {
 
     public HitPublisherFilter(HitPublisher source, HitFilter filter) {
         this.source = source;
-        alreadyPublishedHits = HitsMutable.create(source.context(), -1, true, true);
-        currentBatchOfHits = HitsMutable.create(source.context(), -1, true, false);
+        Hits.HitsContext context = source.context();
+        LeafReaderContext lrc = context.leafReaderContext();
+        alreadyPublishedHits = HitsMutable.create(context, -1, true, true);
+        currentBatchOfHits = HitsMutable.create(context, -1, true, false);
 
-        // Keep track of our subscribers
-        subscribers = new HitSubscribers(hs -> {
+        subscribers = new HitSubscribers(sub -> {
             // Send all hits so far to the new subscriber
-            LeafReaderContext lrc = source.context().leafReaderContext();
-            hs.start(lrc, alreadyPublishedHits);
+            sub.start(lrc, alreadyPublishedHits);
             if (!alreadyPublishedHits.isEmpty()) {
                 // This method is called when the batch has already been added to alreadyPublishedHits,
                 // but not yet reported to subscribers. Take this into account.
                 long howManyActuallyPublished = alreadyPublishedHits.size() - currentBatchOfHits.size();
-                hs.hits(lrc, alreadyPublishedHits, 0, howManyActuallyPublished, numberOfDocs, 0);
+                sub.hits(lrc, alreadyPublishedHits, 0, howManyActuallyPublished, docsProcessed, 0);
             }
             if (isDone.get()) {
-                hs.flush(lrc, alreadyPublishedHits);
-                hs.done(lrc);
+                sub.flush(lrc, alreadyPublishedHits.size());
+                sub.done(lrc);
             }
         });
 
@@ -107,12 +107,12 @@ public class HitPublisherFilter implements HitPublisher {
                     subscribers.hits(lrc, currentBatchOfHits, 0, currentBatchOfHits.size(), numberOfDocsBatch, filteredStart);
                     alreadyPublishedHits.addAll(currentBatchOfHits);
                 }
-                HitPublisherFilter.this.numberOfDocs += numberOfDocsBatch;
+                HitPublisherFilter.this.docsProcessed += numberOfDocsBatch;
             }
 
             @Override
-            public void flush(LeafReaderContext lrc, Hits results) {
-                subscribers.flush(lrc, results);
+            public void flush(LeafReaderContext lrc, long numPublished) {
+                subscribers.flush(lrc, numPublished);
             }
 
             @Override
@@ -134,12 +134,6 @@ public class HitPublisherFilter implements HitPublisher {
     }
 
     @Override
-    public void subscribe(HitSubscriber subscriber) {
-        subscribers.add(subscriber);
-        activate();
-    }
-
-    @Override
     public void activate() {
         source.activate();
     }
@@ -153,7 +147,7 @@ public class HitPublisherFilter implements HitPublisher {
     public Hits getStatic() {
         // Indicate that we need all hits and start fetch thread if needed
         needAllHits.set(true);
-        source.activate(); // make sure the fetch thread is running
+        source.activate();
 
         // Wait for all hits to be fetched
         try {
@@ -164,4 +158,11 @@ public class HitPublisherFilter implements HitPublisher {
         }
         return alreadyPublishedHits.getStatic();
     }
+
+    @Override
+    public void subscribe(HitSubscriber subscriber) {
+        subscribers.add(subscriber);
+        activate();
+    }
+
 }

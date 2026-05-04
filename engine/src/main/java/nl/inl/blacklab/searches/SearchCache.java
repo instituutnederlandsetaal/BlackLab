@@ -35,6 +35,15 @@ public interface SearchCache {
     <R extends SearchResult> SearchCacheEntry<R> getAsync(Search<R> search, boolean allowQueue);
 
     /**
+     * Is the specified search in the cache?
+     *
+     * @param source search to check for
+     * @return true if in the cache, false if not
+     * @param <R> type of SearchResult
+     */
+    <R extends SearchResult> boolean containsKey(Search<R> source);
+
+    /**
      * Remove a search from the cache.
      *
      * @param <R> type of SearchResult

@@ -89,4 +89,9 @@ public class TextPatternValue extends TextPattern {
     public ConstraintValue getValue() {
         return value;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitValue(this);
+    }
 }

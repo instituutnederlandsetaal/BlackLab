@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -36,6 +35,14 @@ public class SpanQueryFiltered extends BLSpanQueryAbstract {
         super(source);
         this.filter = filter;
         this.guarantees = source.guarantees();
+    }
+
+    public BLSpanQuery getClause() {
+        return clauses.get(0);
+    }
+
+    public Query getFilter() {
+        return filter;
     }
 
     @Override

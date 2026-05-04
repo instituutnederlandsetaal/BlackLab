@@ -141,8 +141,8 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         if (groupBy == null)
             throw new IllegalArgumentException("Must have criteria to group on");
 
-        Map<PropertyValue, Group> groupedHits = getHits().grouped(groupBy,
-                maxResultsToStorePerGroup);
+        // Find the hits and group them, storing the hits with each group.
+        Map<PropertyValue, Group> groupedHits = getHits().grouped(groupBy, maxResultsToStorePerGroup);
 
         // (We make a copy of the stats so we don't keep any references to the source hits)
         List<HitGroup> hitGroups = HitGroups.fromBasicGroup(queryInfo(), groupedHits);

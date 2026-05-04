@@ -1,6 +1,12 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Objects;
+import java.util.Optional;
+
+import org.jspecify.annotations.NonNull;
+
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.SingleDocIdFilter;
 
 /**
  * A hit property for grouping per document.
@@ -19,6 +25,18 @@ public class HitPropertyDoc extends HitProperty {
     public HitPropertyDoc(BlackLabIndex index) {
         super();
         this.index = index;
+    }
+
+    @Override
+    public boolean canRefineQuery() {
+        return true;
+    }
+
+    @Override
+    @NonNull protected RefiningQuery refineQuery(RefiningQuery original, PropertyValue val) {
+        int luceneDocId = val.value() instanceof Integer ? ((int) val.value()) :
+                original.index().getDocIdFromPid(val.value().toString());
+        return original.withAddedFilter(new SingleDocIdFilter(luceneDocId));
     }
 
     @Override
@@ -55,28 +73,18 @@ public class HitPropertyDoc extends HitProperty {
     }
 
     @Override
-    public int hashCode() {
-        final int prime = 31;
-        int result = super.hashCode();
-        result = prime * result + ((index == null) ? 0 : index.hashCode());
-        return result;
+    public boolean equals(Object o) {
+        if (!(o instanceof HitPropertyDoc))
+            return false;
+        if (!super.equals(o))
+            return false;
+        HitPropertyDoc that = (HitPropertyDoc) o;
+        return Objects.equals(index, that.index);
     }
 
     @Override
-    public boolean equals(Object obj) {
-        if (this == obj)
-            return true;
-        if (!super.equals(obj))
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        HitPropertyDoc other = (HitPropertyDoc) obj;
-        if (index == null) {
-            if (other.index != null)
-                return false;
-        } else if (!index.equals(other.index))
-            return false;
-        return true;
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), index);
     }
 
     @Override

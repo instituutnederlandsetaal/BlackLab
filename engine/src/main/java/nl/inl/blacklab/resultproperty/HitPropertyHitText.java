@@ -1,12 +1,17 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
+import java.util.Optional;
+
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternAnd;
 
 /**
  * A hit property for grouping on the text actually matched.
@@ -38,6 +43,16 @@ public class HitPropertyHitText extends HitPropertyContextBase {
 
     public HitPropertyHitText(BlackLabIndex index) {
         this(index, null, null);
+    }
+
+    @Override
+    public boolean canRefineQuery() {
+        return true;
+    }
+
+    @Override
+    @NonNull RefiningQuery refineQuery(RefiningQuery original, TextPattern propTextPattern) {
+        return original.withPattern(new TextPatternAnd(original.pattern(), propTextPattern));
     }
 
     @Override

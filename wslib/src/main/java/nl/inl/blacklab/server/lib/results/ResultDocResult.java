@@ -39,7 +39,7 @@ public class ResultDocResult {
         docInfo = WebserviceOperations.docInfo(index, pid, document, metadataFieldsToList);
         // Snippets
         HitResults hitResults = dr.storedResults().window(0, 5);
-        numberOfHits = dr.storedResults().size();
+        numberOfHits = dr.resultsStats().processedTotal();
 
         concordancesToShow = new ArrayList<>();
         kwicsToShow = new ArrayList<>();

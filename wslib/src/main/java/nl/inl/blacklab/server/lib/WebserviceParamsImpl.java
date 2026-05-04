@@ -28,6 +28,7 @@ import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.searches.SearchCount;
@@ -125,11 +126,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     @Override
     public boolean hasPattern() throws BlsException {
-        return pattern().isPresent();
+        return patternNoWithinContextTag().isPresent();
     }
 
     @Override
-    public Optional<TextPattern> pattern() throws BlsException {
+    public Optional<TextPattern> patternNoWithinContextTag() throws BlsException {
         if (pattern == null) {
             pattern = WebserviceParamsUtils.parsePattern(blIndex(), getPattern(), getPattLanguage(), getPattGapData());
         }
@@ -150,9 +151,9 @@ public class WebserviceParamsImpl implements WebserviceParams {
     TextPattern patternWithin;
 
     @Override
-    public Optional<TextPattern> patternWithinContextTag() throws BlsException {
+    public Optional<TextPattern> pattern() throws BlsException {
         if (patternWithin == null) {
-            if (!pattern().isPresent())
+            if (!patternNoWithinContextTag().isPresent())
                 return Optional.empty();
             patternWithin = pattern;
             String tagName = getContext().inlineTagName();
@@ -450,13 +451,16 @@ public class WebserviceParamsImpl implements WebserviceParams {
         SearchEmpty search = blIndex().search(getSearchField(), useCache());
         try {
             Query filter = filterQuery();
-            Optional<TextPattern> pattern = patternWithinContextTag();
+            Optional<TextPattern> pattern = pattern();
             if (pattern.isEmpty())
                 throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
 
             SearchSettings searchSettings = searchSettings();
-            return search.find(pattern.get().toQuery(search.queryInfo(), filter,
-                    params.getAdjustRelationHits(), params.getWithSpans()), searchSettings);
+            boolean adjustHits = params.getAdjustRelationHits();
+            boolean withSpans = params.getWithSpans();
+            TextPattern tp = adjustHits || withSpans ? pattern.get().adjustTextPattern(adjustHits, withSpans) : pattern.get();
+            CompleteQuery cp = new CompleteQuery(tp, filter);
+            return search.find(cp, searchSettings);
         } catch (InvalidQuery e) {
             throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
         }

@@ -26,8 +26,15 @@ import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchCacheEntryFromFuture;
 import nl.inl.blacklab.server.config.BLSConfig;
 
-public class ResultsCache implements SearchCache {
-    private static final Logger logger = LogManager.getLogger(ResultsCache.class);
+/**
+ * Alternative, simpler cache implementation that isolates cached searches per request id.
+ *
+ * Uses caffeine. Caches according to a simple LRU algorithm as opposed to the complex scoring
+ * system the default cache uses.
+ * May be preferable to the default cache for many requests on relatively small indexes.
+ */
+public class SimpleFastPerRequestCache implements SearchCache {
+    private static final Logger logger = LogManager.getLogger(SimpleFastPerRequestCache.class);
     private static final String CACHE_NAME_FOR_METRICS = "blacklab-results-cache";
     private final ExecutorService threadPool;
     private final AsyncLoadingCache<SearchInfoWrapper, SearchResult> searchCache;
@@ -114,13 +121,13 @@ public class ResultsCache implements SearchCache {
         }
     }
 
-    public ResultsCache(BLSConfig config, ExecutorService threadPool)  {
+    public SimpleFastPerRequestCache(BLSConfig config, ExecutorService threadPool)  {
         this.threadPool = threadPool;
 
         CacheLoader<SearchInfoWrapper, SearchResult> cacheLoader = searchWrapper -> {
             final String requestId = searchWrapper.requestId();
             ThreadContext.put("requestId", requestId);
-            Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.search(), (search) -> ResultsCache.this.threadPool.submit(() -> {
+            Future<CacheEntryWithResults<? extends SearchResult>> job = runningJobs.computeIfAbsent(searchWrapper.search(), (search) -> SimpleFastPerRequestCache.this.threadPool.submit(() -> {
                 ThreadContext.put("requestId", requestId);
                 final long startTime = System.currentTimeMillis();
                 SearchResult results = search.executeInternal(null);
@@ -146,6 +153,7 @@ public class ResultsCache implements SearchCache {
         CaffeineCacheMetrics.monitor(Metrics.globalRegistry, searchCache, CACHE_NAME_FOR_METRICS);
         Metrics.globalRegistry.gaugeMapSize("blacklab-job-queue", Tags.empty(), runningJobs);
     }
+
     @Override
     public <T extends SearchResult> SearchCacheEntry<T> getAsync(final Search<T> search, final boolean allowQueue) {
         try {
@@ -154,6 +162,11 @@ public class ResultsCache implements SearchCache {
         } catch (Exception ex) {
             throw BlackLabException.wrapRuntime(ex);
         }
+    }
+
+    @Override
+    public <R extends SearchResult> boolean containsKey(Search<R> search) {
+        return searchCache.asMap().containsKey(new SearchInfoWrapper(search, ThreadContext.get("requestId")));
     }
 
     @Override

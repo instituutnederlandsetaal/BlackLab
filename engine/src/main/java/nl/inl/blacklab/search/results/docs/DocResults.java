@@ -104,7 +104,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 throw new UnsupportedOperationException("Cannot handle more than " + Constants.JAVA_MAX_ARRAY_SIZE + " doc results");
             }
             stats.increment(true);
-            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(globalDocId), 0.0f, 0));
+            results.add(DocResult.fromDoc(queryInfo, new PropertyValueDoc(globalDocId), 0));
         }
 
         @Override

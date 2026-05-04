@@ -4,10 +4,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.eclipse.collections.api.set.primitive.MutableIntSet;
-import org.eclipse.collections.impl.set.mutable.primitive.IntHashSet;
+
+import com.ibm.icu.text.CollationKey;
 
 import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.resultproperty.HitGroupProperty;
@@ -17,12 +18,18 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.ResultsList;
 import nl.inl.blacklab.search.results.SampleParameters;
+import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.WindowStats;
-import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Group;
+import nl.inl.blacklab.search.results.hits.HitsAbstract;
+import nl.inl.blacklab.search.results.hits.fetch.HitPublisher;
+import nl.inl.blacklab.search.results.hits.fetch.HitSubscriberGrouper;
 import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
+import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.searches.SearchHits;
 
 /**
  * Groups results on the basis of a list of criteria.
@@ -49,6 +56,34 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
             SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
         return new HitGroups(queryInfo, results, groupCriteria, sampleParameters, windowStats, hitsStats, docsStats);
     }
+
+    public static List<HitGroup> fromBasicGroup(QueryInfo queryInfo, Map<PropertyValue, Group> groupings) {
+        List<HitGroup> groups = new ArrayList<>(groupings.size());
+        for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
+            PropertyValue groupId = e.getKey();
+            Group grouped = e.getValue();
+            HitGroup group = HitGroup.fromList(queryInfo, groupId, grouped.getStoredHits(), grouped.getTotalNumberOfHits(), grouped.getHitsInGroupQuery());
+            groups.add(group);
+        }
+        return groups;
+    }
+
+    public static List<HitGroup> fromBasicGroupNoResults(QueryInfo queryInfo, Map<PropertyValue, Group> groupings,
+            CompleteQuery query, HitProperty groupedBy) {
+        List<HitGroup> groups = new ArrayList<>(groupings.size());
+        for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
+            PropertyValue groupId = e.getKey();
+            Group grouped = e.getValue();
+            CompleteQuery hitsInGroupQuery = groupedBy.refine(queryInfo.index(), query, groupId)
+                    .orElseThrow();
+            HitGroup group = HitGroup.withoutResults(queryInfo, groupId, grouped.getTotalNumberOfHits(),
+                    grouped.getTotalNumberOfDocs(), MaxStats.NOT_EXCEEDED, hitsInGroupQuery);
+
+            groups.add(group);
+        }
+        return groups;
+    }
+
 
     private final HitProperty groupBy;
 
@@ -86,42 +121,58 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
      */
     private long largestGroupSize = 0;
 
-    private WindowStats windowStats;
+    private final WindowStats windowStats;
 
-    private SampleParameters sampleParameters;
+    private final SampleParameters sampleParameters;
 
+    /** How many hits are stored in this object. Used to determine what to keep in the cache
+     *  (bigger resultsets won't be kept for as long as smaller resultsets) */
     private long resultObjects;
-
-    public static List<HitGroup> fromBasicGroup(QueryInfo queryInfo, Map<PropertyValue, Group> groupings) {
-        List<HitGroup> groups = new ArrayList<>(groupings.size());
-        for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
-            PropertyValue groupId = e.getKey();
-            Group grouped = e.getValue();
-            HitGroup group = HitGroup.fromList(queryInfo, groupId, grouped.getStoredHits(), grouped.getTotalNumberOfHits());
-            groups.add(group);
-        }
-        return groups;
-    }
 
     protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
         super(queryInfo);
         this.groupBy = groupCriteria;
         this.windowStats = windowStats;
         this.sampleParameters = sampleParameters;
-        resultObjects = 0;
         this.groups = new HashMap<>();
         for (HitGroup group: groups) {
             if (group.size() > largestGroupSize)
                 largestGroupSize = group.size();
             results.add(group);
             this.groups.put(group.identity(), group);
-            resultObjects += group.numberOfStoredResults() + 1;
+        }
+        for (HitGroup group: groups) {
+            if (group.numberOfStoredResults() == 0 && group.size() > 0) {
+                // Not yet loaded. Count these for half, because they may eventually be loaded.
+                // TODO: improve this! Needs to update if group loads hits, without being slow
+                //   (i.e. don't recalculate every time cache checks this search), but group cannot
+                //    easily notify us because the same group may be part of multiple grouping (i.e. sorted, ...)
+                resultObjects += group.size() / 2;
+            } else {
+                resultObjects += group.numberOfStoredResults() + 1;
+            }
         }
 
         // Make a copy so we don't keep any references to the source hits
         resultsStats = new ResultsStatsSaved(groups.size(), groups.size(), hitsStats.maxStats());
         this.hitsStats = hitsStats.save();
         this.docsStats = docsStats.save();
+    }
+
+    public static HitGroups withoutStoredHits(SearchHits source, HitProperty groupBy) {
+        SearchSettings searchSettings = source.searchSettings();
+        ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
+        ResultsStatsPassive docsStats = new ResultsStatsPassive();
+        QueryInfo queryInfo = source.queryInfo();
+        List<HitPublisher> publishers = HitResultsFromQuery.getHitPublishers(queryInfo,
+                source.getCombinedSpanFilterQuery(), searchSettings, hitsStats, docsStats);
+        Map<PropertyValue, Group> groups = new ConcurrentHashMap<>();
+        Map<String, CollationKey> collationCache = new ConcurrentHashMap<>();
+        HitsAbstract.performPerPublisher(publishers,
+                () -> new HitSubscriberGrouper(collationCache, groupBy, 0, groups, source.getCompleteQuery()), false);
+        List<HitGroup> hitGroups = fromBasicGroupNoResults(queryInfo, groups, source.getCompleteQuery(), groupBy);
+        return new HitGroups(queryInfo, hitGroups, groupBy, null, null,
+                hitsStats.save(), docsStats.save());
     }
 
     @Override
@@ -237,15 +288,11 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         long hitsCounted = 0;
         long hitsRetrieved = 0;
         long docsRetrieved = 0;
-        
-        MutableIntSet docs = new IntHashSet();
+
         for (HitGroup h: sample) {
             hitsCounted += h.size();
-            for (EphemeralHit hh: h.storedResults().getHits()) {
-                ++hitsRetrieved;
-                if (docs.add(hh.doc()))
-                    ++docsRetrieved;
-            }
+            hitsRetrieved += h.resultsStats().processedTotal();
+            docsRetrieved += h.docsStats().processedTotal();
         }
         boolean allHitsRetrieved = hitsRetrieved == hitsCounted;
         return Pair.of(new ResultsStatsSaved(hitsRetrieved, hitsCounted, maxHitsStatsOfSource), new ResultsStatsSaved(docsRetrieved, allHitsRetrieved ? docsRetrieved : -1, maxDocsStatsOfSource));

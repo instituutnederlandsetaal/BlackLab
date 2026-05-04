@@ -3,9 +3,9 @@ package nl.inl.blacklab.searches;
 import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
-import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /** A search that yields hits. */
 public class SearchHitsWindow extends SearchHits {
@@ -61,4 +61,5 @@ public class SearchHitsWindow extends SearchHits {
     public SearchSettings searchSettings() {
         return source.searchSettings();
     }
+
 }

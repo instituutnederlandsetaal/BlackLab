@@ -93,7 +93,7 @@ public class TextPatternRelationMatch extends TextPattern {
                 null, null);
     }
 
-    private BLSpanQuery createRelMatchQuery(QueryExecutionContext context, TextPattern parent, List<RelationTarget> children) throws InvalidQuery {
+    private static BLSpanQuery createRelMatchQuery(QueryExecutionContext context, TextPattern parent, List<RelationTarget> children) throws InvalidQuery {
         List<BLSpanQuery> clauses = new ArrayList<>();
         if (parent != null) { // might be a root relation operator, which has no parent
             BLSpanQuery translatedParent = TextPatternDefaultValue.replaceWithAnyToken(parent)
@@ -209,5 +209,10 @@ public class TextPatternRelationMatch extends TextPattern {
 
     private boolean isParallelAlignmentQuery() {
         return children.stream().anyMatch(ch -> ch.getOperatorInfo().isAlignment());
+    }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitRelationMatch(this);
     }
 }

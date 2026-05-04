@@ -23,7 +23,7 @@ public class JsonParserProvider extends QueryParserProvider {
         return query -> {
             try {
                 TextPattern tp = Json.getJaxbReader().readValue(query, TextPattern.class);
-                return new CompleteQuery(tp, null);
+                return new CompleteQuery(tp);
             } catch (IOException e) {
                 throw new InvalidQuery(e);
             }

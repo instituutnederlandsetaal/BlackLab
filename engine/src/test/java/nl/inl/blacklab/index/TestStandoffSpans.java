@@ -22,9 +22,12 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.UtilsForTesting;
 
@@ -89,8 +92,10 @@ public class TestStandoffSpans {
         AnnotationSensitivity annotationSensitivity = relAnnotation.hasSensitivity(MatchSensitivity.SENSITIVE) ?
                 relAnnotation.sensitivity(MatchSensitivity.SENSITIVE) :
                 relAnnotation.sensitivity(MatchSensitivity.INSENSITIVE);
-        BLSpanQuery query = testIndex.tagQuery(s.queryInfo(), annotationSensitivity, "character", null, null);
-        HitResults results = s.find(query).execute();
+
+        RelationInfo.SpanMode spanMode = RelationInfo.SpanMode.FULL_SPAN;
+        TextPattern tp = new TextPatternTags("character", null);
+        HitResults results = s.find(new CompleteQuery(tp)).execute();
         Assert.assertEquals(2, results.size());
         Hits hitsList = results.getHits();
         Assert.assertEquals(0, hitsList.get(0).start());

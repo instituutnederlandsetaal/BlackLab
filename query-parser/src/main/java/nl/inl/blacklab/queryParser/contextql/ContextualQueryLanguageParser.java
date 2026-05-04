@@ -59,7 +59,7 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
         } else if (op.equalsIgnoreCase("or")) {
             return a.or(b);
         } else if (op.equalsIgnoreCase("not")) {
-            return a.not(b);
+            return a.andNot(b);
         } else if (op.equalsIgnoreCase("prox")) {
             throw new UnsupportedOperationException("prox is not yet supported!");
         }
@@ -126,8 +126,8 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
         }
 
         if (isContentsSearch)
-            return new CompleteQuery(tp, null);
-        return new CompleteQuery(null, q);
+            return new CompleteQuery(tp);
+        return new CompleteQuery(q);
     }
 
     private final BlackLabIndex index;

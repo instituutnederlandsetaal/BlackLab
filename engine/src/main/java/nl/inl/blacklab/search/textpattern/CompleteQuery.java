@@ -14,6 +14,14 @@ import org.apache.lucene.search.Query;
  */
 public record CompleteQuery(TextPattern pattern, Query filter) {
 
+    public CompleteQuery(TextPattern pattern) {
+        this(pattern, null);
+    }
+
+    public CompleteQuery(Query filter) {
+        this(null, filter);
+    }
+
     /**
      * Get the query to find a structure in the contents
      *
@@ -43,27 +51,21 @@ public record CompleteQuery(TextPattern pattern, Query filter) {
      * @return the resulting query
      */
     public CompleteQuery and(CompleteQuery other) {
-        TextPattern a, b, c;
-        Query d, e, f;
 
-        a = pattern;
-        b = other.pattern;
-        if (a != null && b != null)
-            c = new TextPatternAnd(a, b); // NOTE: token-level and!
-        else
-            c = a == null ? b : a;
+        TextPattern p = pattern == null ?
+                other.pattern : (other.pattern == null ? pattern : new TextPatternAnd(pattern, other.pattern));
 
-        d = filter;
-        e = other.filter;
-        if (d != null && e != null) {
+        Query f = null;
+        if (filter != null || other.filter != null) {
             BooleanQuery.Builder bb = new BooleanQuery.Builder();
-            bb.add(d, Occur.MUST);
-            bb.add(e, Occur.MUST);
+            if (filter != null)
+                bb.add(filter, Occur.MUST);
+            if (other.filter != null)
+                bb.add(other.filter, Occur.MUST);
             f = bb.build();
-        } else
-            f = d == null ? e : d;
+        }
 
-        return new CompleteQuery(c, f);
+        return new CompleteQuery(p, f);
     }
 
     /**
@@ -75,34 +77,27 @@ public record CompleteQuery(TextPattern pattern, Query filter) {
      * @return the resulting query
      */
     public CompleteQuery or(CompleteQuery other) {
-        TextPattern a = pattern;
-        TextPattern b = other.pattern;
-        Query d = filter;
-        Query e = other.filter;
 
-        if (a == null && b != null || a != null && b == null ||
-                d == null && e != null || d != null && e == null) {
+        if (!  (pattern == null && other.pattern == null || filter == null && other.filter == null) ) {
             throw new UnsupportedOperationException(
                     "or can only be used to combine contents clauses or metadata clauses; " +
                             "you can't combine the two with eachother with or");
         }
 
-        TextPattern c;
-        if (a != null && b != null)
-            c = new TextPatternOr(a, b);
-        else
-            c = a == null ? b : a;
+        TextPattern p = pattern == null ? other.pattern :
+                (other.pattern == null ? pattern : new TextPatternOr(pattern, other.pattern));
 
-        Query f;
-        if (d != null && e != null) {
+        Query f = null;
+        if (filter != null || other.filter != null) {
             BooleanQuery.Builder bb = new BooleanQuery.Builder();
-            bb.add(d, Occur.SHOULD);
-            bb.add(e, Occur.SHOULD);
+            if (filter != null)
+                bb.add(filter, Occur.SHOULD);
+            if (other.filter != null)
+                bb.add(other.filter, Occur.SHOULD);
             f = bb.build();
-        } else
-            f = d == null ? e : d;
+        }
 
-        return new CompleteQuery(c, f);
+        return new CompleteQuery(p, f);
     }
 
     /**
@@ -113,30 +108,27 @@ public record CompleteQuery(TextPattern pattern, Query filter) {
      * @param other the query to combine this query with
      * @return the resulting query
      */
-    public CompleteQuery not(CompleteQuery other) {
-        TextPattern a, b, c;
-        Query d, e, f;
+    public CompleteQuery andNot(CompleteQuery other) {
 
-        a = pattern;
-        b = other.pattern;
-        if (a != null && b != null)
-            c = new TextPatternAnd(a, new TextPatternNot(b));
+        TextPattern p;
+        if (pattern != null && other.pattern != null)
+            p = new TextPatternAnd(pattern, new TextPatternNot(other.pattern));
         else
-            c = a == null ? new TextPatternNot(b) : a;
+            p = pattern == null ? new TextPatternNot(other.pattern) : pattern;
 
-        d = filter;
-        e = other.filter;
-        if (d != null && e != null) {
+        Query f;
+        if (filter != null && other.filter != null) {
             BooleanQuery.Builder bb = new BooleanQuery.Builder();
-            bb.add(d, Occur.MUST);
-            bb.add(e, Occur.MUST_NOT);
+            bb.add(filter, Occur.MUST);
+            bb.add(other.filter, Occur.MUST_NOT);
             f = bb.build();
         } else {
-            if (e != null && d == null)
+            if (other.filter != null)
                 throw new UnsupportedOperationException("Cannot have not without positive clause first!");
-            f = d;
+            f = filter;
         }
 
-        return new CompleteQuery(c, f);
+        return new CompleteQuery(p, f);
     }
+
 }

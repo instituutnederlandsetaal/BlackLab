@@ -20,7 +20,7 @@ public class TestBcqlParser {
     @Test
     public void testEscapedQuote() throws InvalidQuery {
         String pattern = "[lemma=\"\\\"\"]";
-        TextPattern tp = BcqlQueryLanguageParser.parse(null, PluginParams.NONE, pattern);
+        TextPattern tp = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, pattern);
         Assert.assertTrue(tp instanceof TextPatternCompare);
         TextPattern rightClause = ((TextPatternCompare) tp).getRightClause();
         Assert.assertTrue(rightClause instanceof TextPatternValue);
@@ -32,7 +32,7 @@ public class TestBcqlParser {
     @Test
     public void testParseAlignmentQuery() throws IOException, InvalidQuery {
         String pattern = "[word='the'] =verse-alignment=>nl [word='het']";
-        TextPattern tp = BcqlQueryLanguageParser.parse(null, PluginParams.NONE, pattern);
+        TextPattern tp = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, pattern);
         Assert.assertEquals(TextPatternRelationMatch.class, tp.getClass());
     }
 }

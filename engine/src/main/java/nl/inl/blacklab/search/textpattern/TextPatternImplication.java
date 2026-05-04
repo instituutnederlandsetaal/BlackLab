@@ -85,4 +85,9 @@ public class TextPatternImplication extends TextPattern {
     public TextPattern getConsequent() {
         return consequent;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitImplication(this);
+    }
 }

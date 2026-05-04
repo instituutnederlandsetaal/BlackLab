@@ -1,5 +1,11 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.Optional;
+
+import org.jspecify.annotations.NonNull;
+
+import nl.inl.blacklab.search.SingleDocIdFilter;
+
 /**
  * A hit property for grouping per document id.
  * 
@@ -19,13 +25,13 @@ public class HitPropertyDocumentId extends HitProperty {
     }
 
     @Override
-    public Class<? extends PropertyValue> getValueType() {
-        return PropertyValueInt.class;
+    public HitProperty copyWith(PropContext context, boolean invert) {
+        return new HitPropertyDocumentId(this, context, invert);
     }
 
     @Override
-    public HitProperty copyWith(PropContext context, boolean invert) {
-        return new HitPropertyDocumentId(this, context, invert);
+    public Class<? extends PropertyValue> getValueType() {
+        return PropertyValueInt.class;
     }
 
     @Override
@@ -65,5 +71,18 @@ public class HitPropertyDocumentId extends HitProperty {
     @Override
     public boolean isDocPropOrHitText() {
         return true;
+    }
+
+    @Override
+    public boolean canRefineQuery() {
+        return true;
+    }
+
+    @Override
+    @NonNull
+    protected RefiningQuery refineQuery(RefiningQuery original, PropertyValue val) {
+        int luceneDocId = val.value() instanceof Integer ? ((int) val.value()) :
+                original.index().getDocIdFromPid(val.value().toString());
+        return original.withAddedFilter(new SingleDocIdFilter(luceneDocId));
     }
 }

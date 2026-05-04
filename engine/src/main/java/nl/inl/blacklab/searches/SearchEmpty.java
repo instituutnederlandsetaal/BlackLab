@@ -2,10 +2,10 @@ package nl.inl.blacklab.searches;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SearchResult;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 
 /** 
  * Empty search that just knows about its index and annotated field to search,
@@ -22,7 +22,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
         throw new UnsupportedOperationException();
     }
 
-    public SearchHits find(BLSpanQuery query, SearchSettings searchSettings) {
+    public SearchHits find(CompleteQuery query, SearchSettings searchSettings) {
         if (searchSettings == null) {
             // If no settings given, use the default
             searchSettings = queryInfo().index().searchSettings();
@@ -30,7 +30,7 @@ public class SearchEmpty extends AbstractSearch<SearchResult> {
         return new SearchHitsFromQuery(queryInfo(), query, searchSettings);
     }
 
-    public SearchHits find(BLSpanQuery query) {
+    public SearchHits find(CompleteQuery query) {
         return find(query, null);
     }
     

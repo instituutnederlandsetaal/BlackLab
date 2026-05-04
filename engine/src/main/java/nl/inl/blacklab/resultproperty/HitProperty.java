@@ -1,11 +1,16 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Query;
 
 import com.ibm.icu.text.CollationKey;
 
@@ -15,6 +20,8 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hits.Hits;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 
 /**
@@ -142,7 +149,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     /**
      * Make sure we have a numeric context size for determining default context property size.
-     *
+     * <p>
      * If the specified context size is null, or based on an inline tag,
      * we'll use the default context size for the index.
      *
@@ -176,12 +183,12 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      */
     HitProperty(HitProperty prop, PropContext context, boolean invert) {
         this.context = prop.context.adjustedWith(context);
-        this.reverse = invert ? !prop.reverse : prop.reverse;
+        this.reverse = invert != prop.reverse;
     }
 
     /**
      * Is the default for this property to sort descending?
-     *
+     * <p>
      * This is usually a good default for "group size" or "number of hits".
      *
      * @return whether to sort descending by default
@@ -308,12 +315,12 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     /**
      * Return only the DocProperty portion (if any) of this HitProperty, if any.
-     *
+     * <p>
      * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
      * return the latter as a DocPropertyStoredField.
-     *
+     * <p>
      * This is used for calculating the relative frequency when grouping on a metadata field.
-     *
+     * <p>
      * It is also used in HitGroupsTokenFrequencies to speed up large frequency list requests.
      *
      * @return metadata portion of this property, or null if there is none
@@ -324,10 +331,10 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     /**
      * Return only the values corresponding to DocProperty's of the given PropertyValue, if any.
-     *
+     * <p>
      * E.g. if this is a HitPropertyMultiple of HitPropertyContextWords and HitPropertyDocumentStoredField,
      * return the latter of the two values in the supplied PropertyValue.
-     *
+     * <p>
      * This is used for calculating the relative frequency when grouping on a metadata field.
      *
      * @param value value to extract the values corresponding to DocProperty's from
@@ -347,5 +354,81 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
 
     public PropContext getContext() {
         return context;
+    }
+
+    /**
+     * Refine the given query with the given property/value criterium.
+     * <p>
+     * This can be used to find the hits that would end up in a specific group if grouped.
+     * For example: refine the query <code>"dog"</code> with
+     * {@link HitPropertyBeforeHit} (1)
+     * and {@link PropertyValueContextWords} "good".
+     * <p>
+     * This should produce a query equivalent to <code>(?< "good" ) "dog"</code>.
+     *
+     * @param property      hit property to refine with
+     * @param index         index to search
+     * @param propertyValue property value to refine with
+     * @return refined query, or null if query couldn't be refined this way
+     */
+    public Optional<CompleteQuery> refine(BlackLabIndex index, CompleteQuery original, PropertyValue propertyValue) {
+        if (canRefineQuery()) {
+            RefiningQuery rq = refineQuery(new RefiningQuery(index, original), propertyValue);
+            return Optional.of(rq.toCompleteQuery());
+        }
+        return Optional.empty();
+    }
+
+    public boolean canRefineQuery() {
+        // Subclasses should override if they can refine a query
+        return false;
+    }
+
+    protected RefiningQuery refineQuery(RefiningQuery query, PropertyValue value) {
+        // Subclasses should override if they can refine a query
+        throw new UnsupportedOperationException();
+    }
+
+    /** Helper structure for refining a query with a property/value pair.
+     * <p>
+     * Necessary because the refinement can modify the pattern or add filters.
+     */
+    protected record RefiningQuery(TextPattern pattern, List<Query> filters, BlackLabIndex index) {
+        public RefiningQuery(TextPattern pattern, List<Query> filters, BlackLabIndex index) {
+            this.pattern = pattern;
+            this.filters = new ArrayList<>(filters);
+            this.index = index;
+        }
+
+        public RefiningQuery(BlackLabIndex index, CompleteQuery query) {
+            this(query.pattern(), query.filter() == null ? List.of() : List.of(query.filter()), index);
+        }
+
+        protected RefiningQuery withAddedFilter(Query query) {
+            List<Query> newFilters = new ArrayList<>(this.filters);
+            newFilters.add(query);
+            return new RefiningQuery(pattern, newFilters, index);
+        }
+
+        public RefiningQuery withPattern(TextPattern tp) {
+            return new RefiningQuery(tp, filters, index);
+        }
+
+        private Query getFilterQuery() {
+            Query filterQuery = null;
+            if (filters().size() > 1) {
+                BooleanQuery.Builder builder = new BooleanQuery.Builder();
+                for (Query q: filters())
+                    builder.add(q, BooleanClause.Occur.FILTER);
+                filterQuery = builder.build();
+            } else if (filters().size() == 1) {
+                filterQuery = filters().get(0);
+            }
+            return filterQuery;
+        }
+
+        public CompleteQuery toCompleteQuery() {
+            return new CompleteQuery(pattern, getFilterQuery());
+        }
     }
 }

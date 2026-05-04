@@ -729,7 +729,7 @@ public class TestSearches {
     }
 
     private void testEscaping(String expectedLuceneRegex, String bcqlPattern) throws InvalidQuery {
-        TextPattern tp = BcqlQueryLanguageParser.parse(testIndex.index(), PluginParams.NONE, "\"" + bcqlPattern + "\"");
+        TextPattern tp = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, "\"" + bcqlPattern + "\"");
         BLSpanQuery q = tp.toQuery(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertTrue(q instanceof BLSpanMultiTermQueryWrapper);
@@ -750,7 +750,7 @@ public class TestSearches {
     }
 
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
-        TextPattern patt = BcqlQueryLanguageParser.parse(testIndex.index(), PluginParams.NONE, query);
+        TextPattern patt = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, query);
         BLSpanQuery blQuery = patt.toQuery(QueryExecutionContext.get(testIndex.index(),
                 testIndex.index().mainAnnotatedField().mainAnnotation(), MatchSensitivity.INSENSITIVE));
         Assert.assertEquals(message, expected, testIndex.findConc(blQuery));

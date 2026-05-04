@@ -1,6 +1,5 @@
 package nl.inl.blacklab.search.results.hits;
 
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -21,10 +20,11 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
-import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.fetch.HitPublisher;
 import nl.inl.blacklab.search.results.hits.fetch.HitSubscriber;
+import nl.inl.blacklab.search.results.hits.fetch.HitSubscriberGrouper;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 
 public abstract class HitsAbstract implements Hits {
 
@@ -167,48 +167,9 @@ public abstract class HitsAbstract implements Hits {
     public Map<PropertyValue, Group> grouped(HitProperty groupBy, long maxValuesToStorePerGroup) {
         Map<PropertyValue, Group> groups = new ConcurrentHashMap<>();
         Map<String, CollationKey> collationCache = new ConcurrentHashMap<>();
-        performPerSegment(() -> new SegmentGrouper(collationCache, groupBy, maxValuesToStorePerGroup, groups),
-                groupAfterFetching);
-        return groups;
-    }
-
-    /** Add a batch of hits to a grouping */
-    static Map<PropertyValue, Group> groupHits(Hits hits, long startIndex, long endIndex, HitProperty groupBy,
-            long maxResultsToStorePerGroup, Map<PropertyValue, Group> groups, LeafReaderContext lrc,
-            Map<String, CollationKey> collationCache) {
-        // temporary copy used in grouping (don't keep reference to hits)
-        // NOTE: we pass toGlobal = true because segment hits must be grouped by global identity (so we can merge them)
-        groupBy = groupBy.copyWith(PropContext.segmentToGlobal(hits, lrc, collationCache));
-
-        EphemeralHit hit = new EphemeralHit();
-        for (long hitIndex = startIndex; hitIndex < endIndex; hitIndex++) {
-
-            // Determine group indentity
-            PropertyValue identity = groupBy.get(hitIndex);
-
-            // Get hit and convert to global if necessary
-            hits.getEphemeral(hitIndex, hit);
-            if (lrc != null) {
-                // This is a segment hit. Convert doc id to global.
-                hit.convertDocIdToGlobal(lrc.docBase);
-            }
-
-            // Add to correct group
-            Group group = groups.get(identity);
-            if (group == null) {
-                if (groups.size() >= HitGroups.MAX_NUMBER_OF_GROUPS)
-                    throw new UnsupportedOperationException(
-                            "Cannot handle more than " + HitGroups.MAX_NUMBER_OF_GROUPS + " groups");
-                HitsMutable hitsInGroup = HitsMutable.create(
-                        hits.context(), -1, hits.size(), false);
-                group = new Group(hitsInGroup, 0);
-                groups.put(identity, group);
-            }
-            if (maxResultsToStorePerGroup < 0 || group.storedHits.size() < maxResultsToStorePerGroup) {
-                group.storedHits.add(hit);
-            }
-            group.totalNumberOfHits++;
-        }
+        CompleteQuery originalQuery = null; // OPT: if we knew this, we could optimize memory for groupings better
+        performPerSegment(() -> new HitSubscriberGrouper(collationCache, groupBy,
+                        maxValuesToStorePerGroup, groups, originalQuery), groupAfterFetching);
         return groups;
     }
 
@@ -219,21 +180,27 @@ public abstract class HitsAbstract implements Hits {
             // We don't have per-segment hits, so we can't do this in parallel.
             publishers = List.of(publisher());
         }
+        performPerPublisher(publishers, subscriberSupplier, prefetchAll);
+    }
+
+    public static void performPerPublisher(List<HitPublisher> publishers, Supplier<HitSubscriber> subscriberSupplier,
+            boolean prefetchAll) {
         final Exception[] thrownException = { null };
         CountDownLatch segmentDoneLatch = new CountDownLatch(publishers.size());
-        publishers.forEach(publisher -> {
+        publishers.parallelStream().forEach(publisher -> {
             if (prefetchAll) {
                 // Fetch all hits for this segment first
                 publisher = publisher.getStatic().publisher();
             }
-            publisher.subscribe(new LatchingHitSubscriber(subscriberSupplier.get(), segmentDoneLatch, thrownException));
+            publisher.subscribe(new LatchingHitSubscriber(subscriberSupplier.get(), segmentDoneLatch,
+                    thrownException));
         });
-        if (thrownException[0] != null)
-            throw new RuntimeException(thrownException[0]);
 
         // Wait for all segments to be done grouping
         try {
             segmentDoneLatch.await();
+            if (thrownException[0] != null)
+                throw new RuntimeException(thrownException[0]);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(e);
@@ -280,8 +247,8 @@ public abstract class HitsAbstract implements Hits {
         }
 
         @Override
-        public void flush(LeafReaderContext lrc, Hits results) {
-            wrapped.flush(lrc, results);
+        public void flush(LeafReaderContext lrc, long numPublished) {
+            wrapped.flush(lrc, numPublished);
         }
 
         @Override
@@ -304,75 +271,6 @@ public abstract class HitsAbstract implements Hits {
             wrapped.error(lrc, exception);
             thrownException[0] = exception;
             signalDone();
-        }
-    }
-
-    /** Performs a grouping operation on a segment.
-     *
-     * If per-segment publishers aren't available, this can also be used
-     * to perform grouping on a global Hits object (just call hits.publisher()).
-     */
-    private static class SegmentGrouper implements HitSubscriber {
-
-        final Map<PropertyValue, Group> segmentGroups;
-        private final Map<String, CollationKey> collationCache;
-        private final HitProperty groupBy;
-        private final long maxValuesToStorePerGroup;
-        private final Map<PropertyValue, Group> groups;
-
-        public SegmentGrouper(Map<String, CollationKey> collationCache, HitProperty groupBy,
-                long maxValuesToStorePerGroup,
-                Map<PropertyValue, Group> groups) {
-            this.collationCache = collationCache;
-            this.groupBy = groupBy;
-            this.maxValuesToStorePerGroup = maxValuesToStorePerGroup;
-            this.groups = groups;
-            segmentGroups = new HashMap<>();
-        }
-
-        @Override
-        public void start(LeafReaderContext lrc, Hits results) {
-            // nothing to do here
-        }
-
-        @Override
-        public boolean needsMoreHits() {
-            return true; // we need all hits
-        }
-
-        @Override
-        public void hits(LeafReaderContext lrc, Hits batchHits, long batchStart, long batchEnd,
-                int batchNumDocs,
-                long batchOffsetInTotal) {
-            Hits toGroup = batchHits.sublist(batchStart, batchEnd - batchStart);
-            groupHits(toGroup, 0, toGroup.size(), groupBy,
-                    maxValuesToStorePerGroup, segmentGroups, lrc, collationCache);
-        }
-
-        @Override
-        public void counted(long hitsCounted, int docsCounted) {
-            // ignore
-        }
-
-        @Override
-        public void flush(LeafReaderContext lrc, Hits results) {
-            // nothing to do
-        }
-
-        @Override
-        public void done(LeafReaderContext lrc) {
-            // Merge to global groups
-            for (Map.Entry<PropertyValue, Group> entry: segmentGroups.entrySet()) {
-                PropertyValue groupId = entry.getKey();
-                Group segmentGroup = entry.getValue();
-                groups.compute(groupId, (PropertyValue k, Group v) ->
-                        v == null ? segmentGroup : v.merge(segmentGroup, maxValuesToStorePerGroup));
-            }
-        }
-
-        @Override
-        public void error(LeafReaderContext lrc, Throwable exception) {
-            // no need to handle here because this will be wrapped in LatchingHitSubscriber, which handles errors
         }
     }
 

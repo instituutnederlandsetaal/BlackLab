@@ -53,7 +53,7 @@ import nl.inl.blacklab.search.lucene.RelationLikeInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.Group;
+import nl.inl.blacklab.search.results.HitOrDocGroup;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -1128,7 +1128,7 @@ public class ResponseStreamer {
 
             // Include explanation of how the query was executed?
             if (params.getExplain()) {
-                TextPattern tp = params.patternWithinContextTag().orElseThrow();
+                TextPattern tp = params.pattern().orElseThrow();
                 try {
                     BLSpanQuery q = tp.toQuery(QueryInfo.create(index, params.getAnnotatedField()));
                     QueryExplanation explanation = index.explain(q);
@@ -1203,7 +1203,7 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    private void groupStats(List<? extends ResultProperty> criteria, Group group) {
+    private void groupStats(List<? extends ResultProperty> criteria, HitOrDocGroup group) {
         ds
                 .entry("identity", group.identity().serialize())
                 .entry("identityDisplay", group.identity().toString());

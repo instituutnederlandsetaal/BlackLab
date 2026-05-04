@@ -12,8 +12,10 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.FSDirectory;
 
@@ -46,6 +48,7 @@ import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchEmpty;
@@ -56,13 +59,8 @@ public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
 
-    default BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex, Map<String, String> attributes,
-            String captureAs) {
-        return tagQuery(queryInfo, luceneField, tagNameRegex, attributes, TextPatternTags.Adjust.FULL_TAG, captureAs);
-    }
-
-    BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex, Map<String, String> attributes,
-            TextPatternTags.Adjust adjust, String captureAs);
+    BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
+            Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs);
 
     /** Get our index type (always integrated now). */
     IndexType getType();
@@ -172,7 +170,13 @@ public interface BlackLabIndex extends AutoCloseable {
 
     // Search the index
     //---------------------------------------------------------------------------
-    
+
+    default HitResults find(AnnotatedField field, CompleteQuery query) {
+        QueryInfo queryInfo = QueryInfo.create(this, field);
+        BLSpanQuery spanQuery = query.pattern().toQuery(queryInfo, query.filter());
+        return find(spanQuery);
+    }
+
     /**
      * Find hits for a pattern in a field.
      * 
@@ -536,5 +540,48 @@ public interface BlackLabIndex extends AutoCloseable {
         } catch (PluginException e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /**
+     * Get the Lucene Document id given the pid
+     *
+     * @param pid the pid string (or Lucene doc id if we don't use a pid)
+     * @return the document id, or -1 if it doesn't exist
+     */
+    default int getDocIdFromPid(String pid) {
+        MetadataField pidField = metadataFields().pidField();
+        if (pidField == null) {
+            int luceneDocId;
+            try {
+                luceneDocId = Integer.parseInt(pid);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(
+                        "Index has no declared pidField, so pid must be a Lucene doc id, but it's not a number: " + pid);
+            }
+            return luceneDocId;
+        }
+        boolean lowerCase = false; // HACK in case pid field is incorrectly
+        // lowercased
+        DocResults docResults;
+        while (true) {
+            String p = lowerCase ? pid.toLowerCase() : pid;
+            TermQuery documentFilterQuery = new TermQuery(new Term(pidField.name(), p));
+            docResults = queryDocuments(documentFilterQuery);
+            if (docResults.size() > 1) {
+                // Shouldn't be possible, there are guards against adding the same pid twice
+                throw new IllegalArgumentException(
+                        "Pid must uniquely identify a document, but it has " + docResults.size() + " hits: " + pid);
+            }
+            if (docResults.size() == 0) {
+                if (lowerCase)
+                    return -1; // tried with and without lowercasing; doesn't
+                // exist
+                lowerCase = true; // try lowercase now
+            } else {
+                // size == 1, found!
+                break;
+            }
+        }
+        return docResults.get(0).identity().value();
     }
 }

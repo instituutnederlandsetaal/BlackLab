@@ -72,4 +72,9 @@ public class TextPatternConstrained extends TextPattern {
     public boolean isRelationsQuery() {
         return clause.isRelationsQuery();
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitConstrained(this);
+    }
 }

@@ -9,26 +9,20 @@ import java.util.List;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.document.IntPoint;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
-import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.queryparser.classic.TokenMgrError;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.queryParser.contextql.ContextualQueryLanguageParser;
 import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.FieldType;
-import nl.inl.blacklab.search.indexmetadata.MetadataField;
-import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.util.LuceneUtil;
 
 /**
  * Various utility methods for parsing filters and patterns, and other stuff
@@ -57,37 +51,7 @@ public class BlsUtils {
         Analyzer analyzer = index.analyzer();
         if (filterLang.equals("luceneql")) {
             try {
-                // We need to override a couple of query implementations to allow searching on numeric fields
-                // By default lucene will interpret everything as text, and thus not return any matches when
-                // a query touches a field that is actually numeric.
-                QueryParser parser = new QueryParser("", analyzer) {
-                    @Override
-                    protected org.apache.lucene.search.Query newRangeQuery(String field, String part1, String part2, boolean startInclusive, boolean endInclusive) {
-
-                        MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
-                        if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
-                            try {
-                                return IntPoint.newRangeQuery(field, Integer.parseInt(part1), Integer.parseInt(part2)/*, startInclusive, endInclusive*/);// both include start and end default
-                            } catch (NumberFormatException e) {
-                                // there is nothing we can do here, just return the default implementation, which will likely return no results
-                                logger.warn("BlsUtil.parseFilter: range value '" + part1 + "' or " + part2 + " is not a valid integer.");
-                            }
-                        }
-                        return super.newRangeQuery(field, part1, part2, startInclusive, endInclusive);
-                    }
-
-                    @Override
-                    protected org.apache.lucene.search.Query newFieldQuery(Analyzer analyzer, String field, String queryText, boolean quoted) throws ParseException {
-                        MetadataField mf = index.metadata() != null ? index.metadataFields() != null ? index.metadataField(field) : null : null;
-                        if (mf != null && FieldType.NUMERIC.equals(mf.type())) {
-                            return newRangeQuery(field, queryText, queryText, true, true);
-                        }
-
-                        return super.newFieldQuery(analyzer, field, queryText, quoted);
-                    }
-                };
-                parser.setAllowLeadingWildcard(true);
-                return parser.parse(filter);
+                return LuceneUtil.parseLuceneQuery(index, filter, analyzer, "");
             } catch (ParseException | TokenMgrError e) {
                 throw new BadRequest("FILTER_SYNTAX_ERROR",
                         "Error parsing LuceneQL filter query: "
@@ -158,53 +122,6 @@ public class BlsUtils {
         throw new BadRequest("UNKNOWN_PATT_LANG",
                 "Unknown pattern language '" + language
                         + "'. Supported: corpusql, contextql, luceneql.");
-    }
-
-    /**
-     * Get the Lucene Document id given the pid
-     *
-     * @param index our index
-     * @param pid the pid string (or Lucene doc id if we don't use a pid)
-     * @return the document id, or -1 if it doesn't exist
-     */
-    public static int getDocIdFromPid(BlackLabIndex index, String pid) {
-        MetadataField pidField = index.metadataFields().pidField();
-        if (pidField == null) {
-            int luceneDocId;
-            try {
-                luceneDocId = Integer.parseInt(pid);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException(
-                        "Pid must be a Lucene doc id, but it's not a number: "
-                                + pid);
-            }
-            return luceneDocId;
-        }
-        boolean lowerCase = false; // HACK in case pid field is incorrectly
-                                   // lowercased
-        DocResults docResults;
-        while (true) {
-            String p = lowerCase ? pid.toLowerCase() : pid;
-            TermQuery documentFilterQuery = new TermQuery(new Term(pidField.name(), p));
-            docResults = index.queryDocuments(documentFilterQuery);
-            if (docResults.size() > 1) {
-                // Should probably throw a fatal exception, but sometimes
-                // documents accidentally occur twice in a dataset...
-                // Make configurable whether or not a fatal exception is thrown
-                logger.error(
-                        "Pid must uniquely identify a document, but it has " + docResults.size() + " hits: " + pid);
-            }
-            if (docResults.size() == 0) {
-                if (lowerCase)
-                    return -1; // tried with and without lowercasing; doesn't
-                               // exist
-                lowerCase = true; // try lowercase now
-            } else {
-                // size == 1, found!
-                break;
-            }
-        }
-        return docResults.get(0).identity().value();
     }
 
     /**

@@ -1,20 +1,24 @@
 package nl.inl.blacklab.search.textpattern;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.lucene.search.Query;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.ExprType;
 import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.extensions.XFRelations;
 import nl.inl.blacklab.search.extensions.XFSpans;
+import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
 import nl.inl.blacklab.search.matchfilter.ConstraintValue;
 import nl.inl.blacklab.search.matchfilter.ConstraintValueSymbol;
 import nl.inl.blacklab.search.matchfilter.MatchFilter;
+import nl.inl.blacklab.search.matchfilter.MatchFilterCompare;
 import nl.inl.blacklab.search.matchfilter.TextPatternStruct;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.util.StringUtil;
@@ -56,6 +60,32 @@ public abstract class TextPattern implements TextPatternStruct {
                 .replace("\\*", ".*")
                 .replace("\\?", ".");
         return regex(regex, annotation, sensitivity);
+    }
+
+    public static TextPattern sequenceOfTerms(List<String> terms, Annotation annotation, MatchSensitivity sensitivity) {
+        List<TextPattern> patterns = new ArrayList<>();
+        String regexSensitivityPrefix = getRegexSensitivityPrefix(sensitivity, annotation.field().index().defaultMatchSensitivity());
+        for (String term: terms) {
+            TextPattern annot = new TextPatternValue(ConstraintValue.symbol(annotation.name()));
+            TextPattern value = new TextPatternValue(ConstraintValue.get(regexSensitivityPrefix + term));
+            TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL);
+            patterns.add(compare);
+        }
+        return patterns.size() == 1 ? patterns.get(0) : new TextPatternSequence(patterns);
+    }
+
+    private static @NonNull String getRegexSensitivityPrefix(MatchSensitivity sensitivity, MatchSensitivity defaultSensitivity) {
+        String regexSensitivityPrefix = "";
+        if (sensitivity != defaultSensitivity) {
+            // We need a regex prefix to indicate that we want a different sensitivity than the default for the index.
+            if (sensitivity == MatchSensitivity.INSENSITIVE)
+                regexSensitivityPrefix = "(?i)";
+            else if (sensitivity == MatchSensitivity.SENSITIVE)
+                regexSensitivityPrefix = "(?-i)";
+            else
+                throw new UnsupportedOperationException("Unsupported sensitivity: " + sensitivity);
+        }
+        return regexSensitivityPrefix;
     }
 
     /**
@@ -158,6 +188,13 @@ public abstract class TextPattern implements TextPatternStruct {
      */
     public abstract EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery;
 
+    /**
+     * Visit this TextPattern, calculating some result value.
+     *
+     * @param visitor the visitor to call, which will handle each TextPattern subclass
+     */
+    public abstract <T> T accept(TextPatternVisitor<T> visitor);
+
     /** Each subclass should set this in the constructor. */
     protected int precedence = Integer.MAX_VALUE;
 
@@ -167,6 +204,21 @@ public abstract class TextPattern implements TextPatternStruct {
      */
     public int getPrecedence() {
         return precedence;
+    }
+
+    /**
+     * Translate this TextPattern into a MatchFilter.
+     *
+     * This should be called when only a MatchFilter is acceptable as a result.
+     *
+     * @param context query execution context to use
+     * @return resulting MatchFilter
+     */
+    public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
+        EvalResult result = evaluate(context);
+        if (result instanceof MatchFilter mf)
+            return mf;
+        throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
     }
 
     /**
@@ -185,26 +237,23 @@ public abstract class TextPattern implements TextPatternStruct {
         throw new InvalidQuery("Expected a BLSpanQuery evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
     }
 
-    /**
-     * Translate this TextPattern into a MatchFilter.
-     *
-     * This should be called when only a MatchFilter is acceptable as a result.
-     *
-     * @param context query execution context to use
-     * @return resulting MatchFilter
-     */
-    public MatchFilter toMatchFilter(QueryExecutionContext context) throws InvalidQuery {
-        EvalResult result = evaluate(context);
-        if (result instanceof MatchFilter mf)
-            return mf;
-        throw new InvalidQuery("Expected a MatchFilter evaluating " + getClass().getName() + ", got a " + result.getClass().getName());
-    }
-
     public BLSpanQuery toQuery(QueryInfo queryInfo) throws InvalidQuery {
-        return toQuery(queryInfo, null, false, false);
+        return toQuery(queryInfo, null);
     }
 
-    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter, boolean adjustHits, boolean withSpans) throws InvalidQuery {
+    public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
+        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(queryInfo.field()));
+        if (result == null)
+            throw new InvalidQuery("Pattern evaluated to null");
+        if (result instanceof BLSpanQuery spanQuery) {
+            if (filter != null)
+                spanQuery = new SpanQueryFiltered(spanQuery, filter);
+            return spanQuery;
+        }
+        throw new InvalidQuery("Expected a query, but pattern evaluated to a " + ExprType.of(result));
+    }
+
+    public TextPattern adjustTextPattern(boolean adjustHits, boolean withSpans) {
         TextPattern tp = this;
         if (adjustHits) {
             // Add rspan(..., 'all') so hit encompasses all matched relations
@@ -214,16 +263,7 @@ public abstract class TextPattern implements TextPatternStruct {
             // Make sure we capture all overlapping spans
             tp = tp.applyWithSpans();
         }
-        QueryExecutionContext context = queryInfo.index().defaultExecutionContext(queryInfo.field());
-        EvalResult result = tp.evaluate(context);
-        if (result == null)
-            throw new InvalidQuery("Pattern evaluated to null");
-        if (result instanceof BLSpanQuery spanQuery) {
-            if (filter != null)
-                spanQuery = new SpanQueryFiltered(spanQuery, filter);
-            return spanQuery;
-        }
-        throw new InvalidQuery("Expected a query, but pattern evaluated to a " + ExprType.of(result));
+        return tp;
     }
 
     /** Has with-spans() been applied to this query? (so we will capture all overlapping spans) */

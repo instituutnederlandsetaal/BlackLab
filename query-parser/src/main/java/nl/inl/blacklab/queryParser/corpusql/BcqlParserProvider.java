@@ -1,5 +1,7 @@
 package nl.inl.blacklab.queryParser.corpusql;
 
+import java.util.Map;
+
 import nl.inl.blacklab.plugins.QueryParserProvider;
 import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.search.BLQueryParser;

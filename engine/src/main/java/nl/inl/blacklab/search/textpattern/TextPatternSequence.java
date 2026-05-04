@@ -72,4 +72,9 @@ public class TextPatternSequence extends TextPattern {
     public boolean isRelationsQuery() {
         return clauses.stream().anyMatch(TextPattern::isRelationsQuery);
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitSequence(this);
+    }
 }

@@ -73,4 +73,9 @@ public class TextPatternOverlapping extends TextPattern {
     public boolean isRelationsQuery() {
         return left.isRelationsQuery() || right.isRelationsQuery();
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitOverlapping(this);
+    }
 }

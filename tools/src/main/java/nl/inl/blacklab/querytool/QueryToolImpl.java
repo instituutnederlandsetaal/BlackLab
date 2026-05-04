@@ -49,7 +49,6 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SearchSettings;
@@ -63,6 +62,7 @@ import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
 import nl.inl.blacklab.search.results.hits.Hit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.hits.HitsAbstract;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.util.FileUtil;
@@ -743,15 +743,15 @@ public class QueryToolImpl {
                 filter = filterQuery;
 
             // Execute search
-            BLSpanQuery spanQuery = pattern.toQuery(QueryInfo.create(index, contentsField), filter, false, false);
+            CompleteQuery completeQuery = new CompleteQuery(pattern, filter);
+            SearchHits search = index.search(contentsField).find(completeQuery);
+            BLSpanQuery spanQuery = search.getCombinedSpanFilterQuery();
             output.verbose("SpanQuery: " + spanQuery.toString(contentsField.name()));
             try {
                 output.verbose("Rewritten: " + spanQuery.rewrite(index.reader()).toString(contentsField.name()));
             } catch (IOException e) {
                 throw new InvalidIndex(e);
             }
-            AnnotatedField field = index.annotatedField(spanQuery.getField()); // query may override field, e.g. rfield(...)
-            SearchHits search = index.search(field).find(spanQuery);
             timings = search.queryInfo().timings();
 
             if (alwaysSortBy != null) {

@@ -250,6 +250,7 @@ public class HitsFromPublishers extends HitsAbstract {
             @Override
             public boolean processedAtLeast(long lowerBound) {
                 // There's no ensureDocsRead() method, so loop until the requested number of docs have been read
+                // TODO: avoid busy-waiting, use lock/latch?
                 while (!hitsStats.done() && docsStats.processedSoFar() < lowerBound) {
                     hitsStats.processedAtLeast(hitsStats.processedSoFar() + 1);
                 }
@@ -286,12 +287,20 @@ public class HitsFromPublishers extends HitsAbstract {
         publishers.forEach(publisher -> {
             publisher.subscribe(new HitSubscriber() {
 
+                /** Next hit index (from this publisher, i.e. index segment) that still needs to be added to the
+                 *  global view. */
                 long nextIndexToAddToGlobal = 0;
 
                 @Override
                 public void start(LeafReaderContext lrc, Hits results) {
                     // Save persistent hits object for this segment.
                     // We'll refer to this from the stretches that make up our global view.
+                    if (results == null) {
+                        // Some publishers (such as for grouping without storing hits) don't save their hits.
+                        // This saves time and memory, but such publishers cannot be used with this class.
+                        throw new IllegalStateException("start() called without a persistent Hits object! " +
+                                "We need a publisher that saves its hits!");
+                    }
                     hitsObjPerSegment.put(lrc == null ? -1 : lrc.docBase, results);
                 }
 
@@ -320,25 +329,34 @@ public class HitsFromPublishers extends HitsAbstract {
                     //  out of date (i.e. too small) value here)
                     long addHitsToGlobalThreshold = Math.max(STRETCH_THRESHOLD_MINIMUM,
                             Math.min(STRETCH_THRESHOLD_MAXIMUM, numHitsGlobalView / STRETCH_SIZE_DIVIDER));
-                    addStretchIfLargeEnough(lrc, batchEnd, addHitsToGlobalThreshold);
+                    long stretchEndIndex = batchOffsetInTotal + batchEnd;
+                    addStretchIfLargeEnough(lrc, stretchEndIndex, addHitsToGlobalThreshold);
                     if (batchEnd > batchStart) {
                         docsStats.add(batchNumDocs, batchNumDocs);
                     }
                 }
 
                 @Override
-                public void flush(LeafReaderContext lrc, Hits results) {
+                public void flush(LeafReaderContext lrc, long numPublished) {
                     // Add the final batch of hits to the segment results.
-                    addStretchIfLargeEnough(lrc, results.size(), 0);
+                    addStretchIfLargeEnough(lrc, numPublished, 0);
                 }
 
-                /** If we have enough, add the latest stretch of hits we've found to the global view. */
-                private void addStretchIfLargeEnough(LeafReaderContext lrc, long to, long threshold) {
-                    if (to - nextIndexToAddToGlobal > threshold) {
-                        addStretchFromSegment(lrc, nextIndexToAddToGlobal, to);
-                        long number = to - nextIndexToAddToGlobal;
-                        hitsStats.add(number, number);
-                        nextIndexToAddToGlobal = to;
+                /** If we have enough, add the latest stretch of hits we've found to the global view.
+                 *
+                 * @param lrc index segment our hits are from
+                 * @param stretchEndIndex end of the current stretch of hits (exclusive) we may want to add to the global view.
+                 *           Note that this is an index for the current publisher's hits, i.e. the segment index, not
+                 *           the global index.
+                 * @param stretchLengthTreshold if the stretch we have is larger than this, add it to the global view.
+                 */
+                private void addStretchIfLargeEnough(LeafReaderContext lrc, long stretchEndIndex, long stretchLengthTreshold) {
+                    long stretchStartIndex = nextIndexToAddToGlobal;
+                    long stretchLength = stretchEndIndex - stretchStartIndex;
+                    if (stretchLength > stretchLengthTreshold) {
+                        addStretchFromSegment(lrc, stretchStartIndex, stretchEndIndex);
+                        hitsStats.add(stretchLength, stretchLength);
+                        nextIndexToAddToGlobal = stretchEndIndex;
                     }
                 }
 

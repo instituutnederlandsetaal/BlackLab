@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import nl.inl.blacklab.search.textpattern.TextPatternDeserializer;
 import nl.inl.blacklab.search.textpattern.TextPatternSerializerJson;
+import nl.inl.blacklab.search.textpattern.TextPatternVisitor;
 
 @JsonSerialize(using = TextPatternSerializerJson.class)
 @JsonDeserialize(using = TextPatternDeserializer.class)
@@ -21,4 +22,11 @@ public interface TextPatternStruct {
     }
 
     int getPrecedence();
+
+    /**
+     * Visit this TextPattern, calculating some result value.
+     *
+     * @param visitor the visitor to call, which will handle each TextPattern subclass
+     */
+    <T> T accept(TextPatternVisitor<T> visitor);
 }

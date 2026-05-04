@@ -85,4 +85,9 @@ public class TextPatternDefaultValue extends TextPattern {
         // rspan([]+, 'all') would match way too much, and the rspan() call won't do anything useful; just skip it.
         return this;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitDefaultValue(this);
+    }
 }

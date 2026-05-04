@@ -138,4 +138,9 @@ public class TextPatternTags extends TextPattern {
     public Adjust getAdjust() {
         return adjust;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitTags(this);
+    }
 }

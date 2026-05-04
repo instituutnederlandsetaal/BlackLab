@@ -76,4 +76,9 @@ public class TextPatternPropertySelect extends TextPattern {
     public TextPattern getAnnotation() {
         return tpAnnotation;
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitPropertySelect(this);
+    }
 }

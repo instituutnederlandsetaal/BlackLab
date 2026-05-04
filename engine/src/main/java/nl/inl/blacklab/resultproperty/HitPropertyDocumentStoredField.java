@@ -1,11 +1,13 @@
 package nl.inl.blacklab.resultproperty;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
@@ -39,6 +41,17 @@ public class HitPropertyDocumentStoredField extends HitProperty {
 
     public HitPropertyDocumentStoredField(BlackLabIndex index, String fieldName) {
         this(index, fieldName, fieldName);
+    }
+
+    @Override
+    public boolean canRefineQuery() {
+        return true;
+    }
+
+    @Override
+    @NonNull protected RefiningQuery refineQuery(RefiningQuery original, PropertyValue val) {
+        MetadataField metadataField = original.index().metadataField(fieldName());
+        return original.withAddedFilter(termQuery(metadataField, val.value().toString()));
     }
 
     @Override
@@ -130,8 +143,7 @@ public class HitPropertyDocumentStoredField extends HitProperty {
         return fieldName;
     }
 
-    public Query termQuery(BlackLabIndex index, String value) {
-        MetadataField metadataField = index.metadataField(fieldName);
+    public Query termQuery(MetadataField metadataField, String value) {
         if (metadataField.type() == FieldType.NUMERIC) {
             return IntPoint.newSetQuery(fieldName, List.of(Integer.parseInt(value)));
         } else {

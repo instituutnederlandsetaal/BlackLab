@@ -4,9 +4,10 @@ import java.util.Objects;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
+import nl.inl.blacklab.resultproperty.HitPropertyContextPart;
+import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitGroupsTokenFrequencies;
-import nl.inl.blacklab.search.results.QueryInfo;
 
 /**
  * A search operation that yields groups of hits.
@@ -51,13 +52,30 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      */
     @Override
     public HitGroups executeInternal(ActiveSearch<HitGroups> activeSearch) throws InvalidQuery {
-        if (HitGroupsTokenFrequencies.canUse(mustStoreHits, source, property)) {
+        HitProperty prop = property;
+        if (prop instanceof HitPropertyContextPart hpcp) {
+            // fast path expects HitText. ContextPart can mean the same as HitText; if so, transform to HitText.
+            if (hpcp.isHitText())
+                prop = hpcp.asHitText();
+        }
+        if (HitGroupsTokenFrequencies.canUse(mustStoreHits, source, prop)) {
             // Any token query, group by hit text or doc metadata! Choose faster path that just "looks up"
             // token frequencies in the forward index(es).
-            return HitGroupsTokenFrequencies.get(source, property);
+            return HitGroupsTokenFrequencies.get(source, prop);
         } else {
-            // Just find all the hits and group them.
-            return executeChildSearch(activeSearch, source).group(property, maxResultsToStorePerGroup);
+            // Do we need to store the hits per group, or can we find them later using a group-specific query?
+            boolean storeHits = !mustStoreHits && prop.canRefineQuery() || source.getCombinedSpanFilterQuery() == null;
+            boolean hitsInCache = queryInfo().index().cache().containsKey(source);
+            if (storeHits || hitsInCache) {
+                // We need to store the hits, or the hits are already cached.
+                // Just find all the hits and group them.
+                return executeChildSearch(activeSearch, source).group(property, maxResultsToStorePerGroup);
+            } else {
+                // We don't need to store the hits. Group directly from the query and only keep the stats and the
+                // queries needed to get hits in each group.
+                // Calculate the grouping results by iterating over the hits without storing them.
+                return HitGroups.withoutStoredHits(source, prop);
+            }
         }
     }
 

@@ -29,16 +29,16 @@ import nl.inl.util.ThreadAborter;
 public class HitPublisherSpans implements HitPublisher {
 
     /** Set until initialized (needed to get spans); null afterwards */
-    BLSpanWeight weight;
+    private BLSpanWeight weight;
 
     /** Set until initialized (needed to construct own hitQueryContext); null afterwards */
-    HitQueryContext sourceHitQueryContext;
+    private HitQueryContext sourceHitQueryContext;
 
     /** Has initialize() been called? */
-    boolean isInitialized = false;
+    private boolean isInitialized = false;
 
     /** Our own hit query context */
-    HitQueryContext hitQueryContext;
+    private HitQueryContext hitQueryContext;
 
     /** How many match infos there are in the hitQueryContext */
     private int numMatchInfos;
@@ -48,7 +48,7 @@ public class HitPublisherSpans implements HitPublisher {
      * fetch a hit from it.
      * After we finish, this is set to null.
      */
-    BLSpans spans;
+    private BLSpans spans;
 
     /** Allows us to more efficiently step to the next potentially matching document */
     private DocIdSetIterator twoPhaseApproximation;
@@ -68,12 +68,6 @@ public class HitPublisherSpans implements HitPublisher {
     /** The first hit index we haven't published to our subscribers yet. */
     private long unpublishedIndex = 0;
 
-    /** The hits we've fetched so far. LOCKING. */
-    private final HitsMutable alreadyPublishedHits;
-
-    /** The hits in the current (not yet published) batch. NONLOCKING. */
-    private final HitsMutable currentBatchOfHits;
-
     /** The previous hit we've looked at. */
     private EphemeralHit prevHit = new EphemeralHit();
 
@@ -84,30 +78,30 @@ public class HitPublisherSpans implements HitPublisher {
     private long hitsProcessed = 0;
 
     /** How many distinct documents are in alreadyPublishedHits */
-    int docsProcessed = 0;
+    private int docsProcessed = 0;
 
     /** How many distinct documents are in the current (unpublished) batch */
-    int docsProcessedThisBatch = 0;
+    private int docsProcessedThisBatch = 0;
 
     /** Hits we've only counted (so this excludes the processed hits) */
-    long hitsCounted = 0;
+    private long hitsCounted = 0;
 
     /** Docs we've only counted (so this excludes the processed hits) */
-    int docsCounted = 0;
+    private int docsCounted = 0;
 
     /** Up to where we've reported the count to subscribers.
      * Next time we'll report counted - countedPrev. */
-    long hitsCountedPrev = 0;
+    private long hitsCountedPrev = 0;
 
     /** Up to where we've reported the count to subscribers.
      * Next time we'll report counted - countedPrev. */
-    int docsCountedPrev = 0;
+    private int docsCountedPrev = 0;
 
     /** At what point should we stop storing hits and just count them? */
-    final long maxToProcess;
+    private final long maxToProcess;
 
     /** At what point should we give up even just counting the hits? */
-    final long maxToCount;
+    private final long maxToCount;
 
     /** The hits processed/counted across HitPublisherSpans instances */
     private final ResultsStatsPassive hitsStats;
@@ -121,11 +115,23 @@ public class HitPublisherSpans implements HitPublisher {
     /** If set and not isDone(), the thread fetching hits is running. */
     private Future<?> fetchThread;
 
-    /** Our subscribers, that we will publish our hits to. */
-    HitSubscribers subscribers;
-
     /** Field, match info defs and segment. */
     private final Hits.HitsContext context;
+
+    /** Do we save all published hits in alreadyPublishedHits? */
+    private final boolean saveAllPublishedHits;
+
+    /** Hits we've already published (LOCKING), or null if we're not saving hits. */
+    private final HitsMutable alreadyPublishedHits;
+
+    /** Number of hits we've already published. */
+    private long alreadyPublishedHitsSize;
+
+    /** The current batch of hits (not yet published). NONLOCKING. */
+    private final HitsMutable currentBatchOfHits;
+
+    /** Our subscribers, that we will publish our hits to. */
+    private final HitSubscribers subscribers;
 
     /** Will count down when all hits have been found. Used by getStatic(). */
     private final CountDownLatch allHitsFound = new CountDownLatch(1);
@@ -135,7 +141,8 @@ public class HitPublisherSpans implements HitPublisher {
 
     /** Lazy Hits interface to a single Spans object. */
     public HitPublisherSpans(LeafReaderContext lrc, BLSpanWeight weight, HitQueryContext sourceHitQueryContext,
-            ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats) {
+            ExecutorService executorService, ResultsStatsPassive hitsStats, ResultsStatsPassive docsStats,
+            boolean saveAllPublishedHits) {
         this.weight = weight;
         this.sourceHitQueryContext = sourceHitQueryContext;
         this.spans = null;
@@ -145,22 +152,27 @@ public class HitPublisherSpans implements HitPublisher {
         maxToCount = hitsStats.getMaxHitsToCount();
         this.docsStats = docsStats;
         this.context = new Hits.HitsContext(sourceHitQueryContext.getField(), sourceHitQueryContext.getMatchInfoDefs(), lrc);
-        alreadyPublishedHits = HitsMutable.create(context, -1, true, true);
+        this.saveAllPublishedHits = saveAllPublishedHits;
+        alreadyPublishedHits = saveAllPublishedHits ?
+                HitsMutable.create(context, -1, true, true) : null;
+        alreadyPublishedHitsSize = 0;
         currentBatchOfHits = HitsMutable.create(context, -1, true, false);
 
         subscribers = new HitSubscribers(sub -> {
             // Send all hits so far to the new subscriber
             sub.start(lrc, alreadyPublishedHits);
-            if (!alreadyPublishedHits.isEmpty()) {
+            if (alreadyPublishedHitsSize > 0) {
+                if (!saveAllPublishedHits)
+                    throw new IllegalStateException("Cannot catch up late subscriber, published hits were not saved");
                 // This method is called when the batch has already been added to alreadyPublishedHits,
                 // but not yet reported to subscribers. Take this into account.
-                long howManyActuallyPublished = alreadyPublishedHits.size() - currentBatchOfHits.size();
+                long howManyActuallyPublished = alreadyPublishedHitsSize - currentBatchOfHits.size();
                 sub.hits(lrc, alreadyPublishedHits, 0, howManyActuallyPublished, docsProcessed, 0);
             }
             if (hitsCounted > 0)
                 sub.counted(hitsCounted, docsCounted);
             if (isDone.get()) {
-                sub.flush(lrc, alreadyPublishedHits);
+                sub.flush(lrc, alreadyPublishedHitsSize);
                 sub.done(lrc);
             }
         });
@@ -339,7 +351,7 @@ public class HitPublisherSpans implements HitPublisher {
                                 hitsCountedPrev = hitsCounted;
                                 docsCountedPrev = docsCounted;
                             }
-                            unpublishedIndex = alreadyPublishedHits.size();
+                            unpublishedIndex = alreadyPublishedHitsSize;
                         } else {
                             // We've collected some hits. Publish them to our subscribers.
                             publishBatch(lrc);
@@ -387,7 +399,7 @@ public class HitPublisherSpans implements HitPublisher {
                 // See if we can pause fetching
                 if (atDocBoundary && !needAllHits.get() && !subscribers.needsMoreHits()) {
                     // We can pause fetching at this time and resume later, when more hits are needed.
-                    subscribers.flush(lrc, alreadyPublishedHits);
+                    subscribers.flush(lrc, alreadyPublishedHitsSize);
                     break;
                 }
 
@@ -407,20 +419,22 @@ public class HitPublisherSpans implements HitPublisher {
     private void publishBatch(LeafReaderContext lrc) {
         subscribers.hits(lrc, currentBatchOfHits, 0, currentBatchOfHits.size(),
                 docsProcessedThisBatch, unpublishedIndex);
-        alreadyPublishedHits.addAll(currentBatchOfHits);
+        if (saveAllPublishedHits)
+            alreadyPublishedHits.addAll(currentBatchOfHits);
+        alreadyPublishedHitsSize += currentBatchOfHits.size();
         currentBatchOfHits.clear();
-        long n = alreadyPublishedHits.size() - unpublishedIndex;
+        long n = alreadyPublishedHitsSize - unpublishedIndex;
         hitsStats.add(n, n);
         docsStats.add(docsProcessedThisBatch, docsProcessedThisBatch);
         docsProcessed += docsProcessedThisBatch;
         docsProcessedThisBatch = 0;
-        unpublishedIndex = alreadyPublishedHits.size();
+        unpublishedIndex = alreadyPublishedHitsSize;
     }
 
     private void setDone() {
         LeafReaderContext lrc = context().leafReaderContext();
         publishBatch(lrc);
-        subscribers.flush(lrc, alreadyPublishedHits);
+        subscribers.flush(lrc, alreadyPublishedHitsSize);
         subscribers.done(lrc);
         assert !isDone.get() : "Already done";
         isDone.set(true); // do this last, or we get problems if a new subscriber is in the queue
@@ -429,6 +443,8 @@ public class HitPublisherSpans implements HitPublisher {
 
     @Override
     public Hits getStatic() {
+        if (!saveAllPublishedHits)
+            throw new IllegalStateException("This publisher doesn't save its hits, cannot get static view");
         // Indicate that we need all hits and start fetch thread if needed
         needAllHits.set(true);
         activate();

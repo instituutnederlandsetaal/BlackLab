@@ -301,7 +301,7 @@ public class WebserviceRequestHandler {
             ds.startEntry("parsed").startMap();
             {
                 try {
-                    TextPattern tp = params.pattern().orElse(null);
+                    TextPattern tp = params.patternNoWithinContextTag().orElse(null);
                     try {
                         ds.entry(ResponseStreamer.KEY_BCQL, TextPatternSerializerBcql.serialize(tp));
                     } catch (Exception e) {

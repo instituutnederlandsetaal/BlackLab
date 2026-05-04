@@ -27,7 +27,7 @@ public class ResultSummaryCommonFields {
             ResultGroups groups, WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
         this.searchParam = searchParam;
         if (searchParam.hasPattern())
-            this.textPattern = searchParam.pattern().orElse(null);
+            this.textPattern = searchParam.patternNoWithinContextTag().orElse(null);
         this.indexStatus = indexStatus;
         this.timings = timings;
         this.matchInfoDefs = matchInfoDefs == null ? MatchInfoDefs.EMPTY : matchInfoDefs;

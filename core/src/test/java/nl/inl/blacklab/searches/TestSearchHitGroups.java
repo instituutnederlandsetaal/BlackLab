@@ -19,11 +19,9 @@ import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryFiltered;
-import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.testutil.TestIndex;
@@ -62,11 +60,9 @@ public class TestSearchHitGroups {
     private void testGroup(boolean fastPath, Query filter) throws InvalidQuery {
         String title = fastPath ? "group fast path" : "group slow path";
         TextPattern tp = new TextPatternAnyToken(1, 1);
-        BLSpanQuery query = tp.toQuery(QueryInfo.create(index));
-        if (filter != null)
-            query = new SpanQueryFiltered(query, filter);
+        CompleteQuery completeQuery = new CompleteQuery(tp, filter);
         HitProperty groupBy = new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE);
-        SearchHits searchHits = index.search(contents, false).find(query);
+        SearchHits searchHits = index.search(contents, false).find(completeQuery);
         SearchHitGroups searchHitGroups = fastPath ? searchHits.groupStats(groupBy, 0) :
                 searchHits.groupWithStoredHits(groupBy, 1);
         SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupPropertyIdentity.get());
@@ -84,9 +80,9 @@ public class TestSearchHitGroups {
     @Test
     public void testHitGroupsTitle() throws InvalidQuery {
         TextPattern tp = new TextPatternAnyToken(1, 1);
-        BLSpanQuery query = tp.toQuery(QueryInfo.create(index));
+        CompleteQuery completeQuery = new CompleteQuery(tp);
         HitProperty groupBy = new HitPropertyDocumentStoredField(index, "title", "Title");
-        SearchHits searchHits = index.search(contents, false).find(query);
+        SearchHits searchHits = index.search(contents, false).find(completeQuery);
         SearchHitGroups searchHitGroups = searchHits.groupWithStoredHits(groupBy, 1);
         SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupPropertyIdentity.get());
         HitGroups groups = sortedGroups.execute();

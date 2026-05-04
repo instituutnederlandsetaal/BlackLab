@@ -90,4 +90,9 @@ public class TextPatternAnd extends TextPattern {
     public boolean isRelationsQuery() {
         return clauses.stream().anyMatch(TextPattern::isRelationsQuery);
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitAnd(this);
+    }
 }

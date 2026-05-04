@@ -91,8 +91,17 @@ public class TextPatternWithinTagContext extends TextPattern {
         return filterUnit;
     }
 
+    public String getCaptureAs() {
+        return captureAs;
+    }
+
     @Override
     public boolean isRelationsQuery() {
         return producer.isRelationsQuery() || filterUnit.isRelationsQuery();
+    }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitWithinTagContext(this);
     }
 }

@@ -16,7 +16,6 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.util.BlsUtils;
 
 public class ResultDocInfo {
 
@@ -49,7 +48,7 @@ public class ResultDocInfo {
             this.docPid = docPid;
             if (docPid.isEmpty())
                 throw new BadRequest("NO_DOC_ID", "Specify document pid.");
-            int luceneDocId = BlsUtils.getDocIdFromPid(index, docPid);
+            int luceneDocId = index.getDocIdFromPid(docPid);
             if (luceneDocId < 0 || luceneDocId >= index.reader().maxDoc())
                 throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
             this.document = index.luceneDoc(luceneDocId);

@@ -60,4 +60,9 @@ public class TextPatternNot extends TextPattern {
     public boolean isBracketQuery() {
         return clause.isBracketQuery();
     }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitNot(this);
+    }
 }

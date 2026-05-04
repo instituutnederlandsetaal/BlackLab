@@ -54,6 +54,10 @@ public final class LuceneUtil {
 
     /**
      * Query parser that will correctly produce numeric range queries for numeric fields.
+     * <p>
+     * We need to override a couple of query implementations to allow searching on numeric fields
+     * By default lucene will interpret everything as text, and thus not return any matches when
+     * a query touches a field that is actually numeric.
      */
     private static class FieldTypeAwareQueryParser extends QueryParser {
         private final MetadataFields metadataFields;
@@ -61,6 +65,13 @@ public final class LuceneUtil {
         public FieldTypeAwareQueryParser(MetadataFields metadataFields, String defaultField, Analyzer analyzer) {
             super(defaultField, analyzer);
             this.metadataFields = metadataFields;
+        }
+
+        @Override
+        protected Query newFieldQuery(Analyzer analyzer, String fieldName, String queryText, boolean quoted) throws ParseException {
+            if (isNumericField(fieldName))
+                return newRangeQuery(fieldName, queryText, queryText, true, true);
+            return super.newFieldQuery(analyzer, fieldName, queryText, quoted);
         }
 
         private boolean isNumericField(String fieldName) {
@@ -94,8 +105,10 @@ public final class LuceneUtil {
     }
 
     /**
-     * Parse a query in the Lucene query language format (QueryParser supplied with
-     * Lucene).
+     * Parse a query in the Lucene query language format (QueryParser supplied with Lucene).
+     *
+     * We actually use a customized parser that is aware of our metadata field types and
+     * generates the appropriate query type per field.
      *
      * @param index our index, so we know the field types, or null to always produce term queries
      * @param luceneQuery the query string

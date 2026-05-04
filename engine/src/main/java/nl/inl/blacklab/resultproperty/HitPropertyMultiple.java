@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -229,4 +230,24 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         return true;
     }
 
+    @Override
+    public boolean canRefineQuery() {
+        for (HitProperty p: properties) {
+            if (!p.canRefineQuery())
+                return false;
+        }
+        return true;
+    }
+
+    @Override
+    protected RefiningQuery refineQuery(RefiningQuery query, PropertyValue value) {
+        List<PropertyValue> values = value.valuesList();
+        int i = 0;
+        for (HitProperty prop: properties) {
+            PropertyValue v = values.get(i);
+            query = prop.refineQuery(query, v);
+            i++;
+        }
+        return query;
+    }
 }

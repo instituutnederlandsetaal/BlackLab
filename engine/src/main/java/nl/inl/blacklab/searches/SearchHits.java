@@ -6,11 +6,13 @@ import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
+import nl.inl.blacklab.search.lucene.BLSpanQuery;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
 
 /** A search that yields hits. */
 public abstract class SearchHits extends SearchForResults<HitResults> {
@@ -120,12 +122,14 @@ public abstract class SearchHits extends SearchForResults<HitResults> {
      * 
      * If so, we can often optimize subsequent operations by resolving them more intelligently.
      */
-    public boolean isAnyTokenQuery() {
+    public boolean isSingleAnyTokenQuery() {
         return false;
     }
 
     /**
-     * Get a query that can be used for filtering.
+     * Get the spanQuery that includes the filter query.
+     *
+     * This query can be used for filtering documents.
      *
      * Note that this may be the full span query, or just a document filter query,
      * or null for all documents. Not all documents that match this query may have
@@ -133,9 +137,17 @@ public abstract class SearchHits extends SearchForResults<HitResults> {
      *
      * Used in HitGroupsTokenFrequencies optimization.
      *
-     * @return filter query
+     * @return filter query, or null if not available
      */
+    public BLSpanQuery getCombinedSpanFilterQuery() {
+        return null;
+    }
+
     public Query getFilterQuery() {
+        return null;
+    }
+
+    public CompleteQuery getCompleteQuery() {
         return null;
     }
 

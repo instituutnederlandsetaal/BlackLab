@@ -410,7 +410,7 @@ public interface Hits extends Iterable<EphemeralHit> {
                 if (size() > 0)
                     subscriber.hits(lrc, Hits.this.getStatic(), 0, size(),
                             countDocs(), 0);
-                subscriber.flush(lrc, Hits.this);
+                subscriber.flush(lrc, Hits.this.size());
                 subscriber.done(lrc);
             }
 

@@ -134,10 +134,10 @@ public class TextPatternFunctionCall extends TextPattern {
 
     @Override
     public String toString() {
-        return "QFUNC(" + getName() + ", " + StringUtils.join(args, ", ") + ")";
+        return "QFUNC(" + getFunctionName() + ", " + StringUtils.join(args, ", ") + ")";
     }
 
-    public String getName() {
+    public String getFunctionName() {
         return func.getName();
     }
 
@@ -159,7 +159,7 @@ public class TextPatternFunctionCall extends TextPattern {
     /** Is this a call to with-spans()? */
     @Override
     protected boolean hasWithSpans() {
-        String n = getName();
+        String n = getFunctionName();
         if (n.charAt(0) == '_') {
             // TODO: no longer needed? (we used to use _with-spans() from the frontend
             //     to strip it out again later, but we now use the JSON structure?)
@@ -173,6 +173,11 @@ public class TextPatternFunctionCall extends TextPattern {
     protected boolean hasRspanAll() {
         // See if we're already doing explicit rspan or rel call (if so, don't add rspan(..., 'all'),
         // even if adjusthits=true)
-        return getName().equals(XFRelations.FUNC_RSPAN) || getName().equals(XFRelations.FUNC_REL);
+        return getFunctionName().equals(XFRelations.FUNC_RSPAN) || getFunctionName().equals(XFRelations.FUNC_REL);
+    }
+
+    @Override
+    public <T> T accept(TextPatternVisitor<T> visitor) {
+        return visitor.visitFunctionCall(this);
     }
 }

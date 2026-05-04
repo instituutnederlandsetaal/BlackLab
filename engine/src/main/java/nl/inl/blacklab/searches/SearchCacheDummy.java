@@ -20,6 +20,11 @@ public final class SearchCacheDummy implements SearchCache {
     }
 
     @Override
+    public <R extends SearchResult> boolean containsKey(Search<R> source) {
+        return false;
+    }
+
+    @Override
     public <R extends SearchResult> SearchCacheEntry<R> remove(Search<R> search) {
         // Do nothing.
         return null;

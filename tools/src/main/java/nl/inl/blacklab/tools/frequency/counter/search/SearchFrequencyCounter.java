@@ -9,10 +9,8 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.lucene.BLSpanQuery;
-import nl.inl.blacklab.search.lucene.SpanQueryAnyToken;
-//import nl.inl.blacklab.search.results.HitGroups;
-import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.textpattern.CompleteQuery;
+import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.searches.SearchCacheDummy;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.tools.frequency.config.frequency.FrequencyListConfig;
@@ -46,13 +44,9 @@ public final class SearchFrequencyCounter extends FrequencyCounter {
     }
 
     private SearchHitGroups getSearch() {
-        final var queryInfo = QueryInfo.create(index);
-        final BLSpanQuery anyToken = new SpanQueryAnyToken(queryInfo, 1, 1,
-                helper.annotations().annotatedField().name());
-        final var groupBy = getGroupBy();
-        return index.search()
-                .find(anyToken)
-                .groupStats(groupBy, 0)
+        return index.search(helper.annotations().annotatedField())
+                .find(new CompleteQuery(new TextPatternAnyToken(1)))
+                .groupStats(getGroupBy(), 0)
                 .sort(new HitGroupPropertyIdentity());
     }
 
