@@ -125,7 +125,7 @@ sequencePartNoCapture:
     (
         tag |
         position |
-        queryFuctionCall |
+        queryFunctionCall |
         '(' LOOKAHEAD_OP? constrainedQuery ')'
     ) repetitionAmount* |
 
@@ -147,7 +147,7 @@ position:
 positionWord: quotedString;
 
 // Call to a query function from a constraint expression
-queryFuctionCall: functionName '(' commaSeparatedParamList ')';
+queryFunctionCall: functionName '(' commaSeparatedParamList ')';
 
 commaSeparatedParamList: functionParam (',' functionParam)*;
 

@@ -362,8 +362,8 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
                 boolean negative = op.contains("!");
                 result = new TextPatternLook(result, behind, negative);
             }
-        } else if (ctx.queryFuctionCall() != null) {
-            result = visit(ctx.queryFuctionCall());
+        } else if (ctx.queryFunctionCall() != null) {
+            result = visit(ctx.queryFunctionCall());
         } else
             throw new IllegalArgumentException("Invalid sequence part no capture: " + ctx.getText());
 
@@ -400,7 +400,7 @@ public class BcqlAstVisitor extends BcqlBaseVisitor<TextPattern> {
     }
 
     @Override
-    public TextPattern visitQueryFuctionCall(BcqlParser.QueryFuctionCallContext ctx) {
+    public TextPattern visitQueryFunctionCall(BcqlParser.QueryFunctionCallContext ctx) {
         String name = ctx.functionName().getText();
         List<TextPattern> params = commaSeparatedParamList(ctx.commaSeparatedParamList());
         return new TextPatternFunctionCall(name, params);
