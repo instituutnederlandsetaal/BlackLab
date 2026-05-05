@@ -572,7 +572,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
 
                 // Rewrite query (we store the original query, not the rewritten one)
                 try {
-                    query = query.rewrite(queryInfo().index().reader());
+                    query = query.rewrite(queryInfo().index().searcher());
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
