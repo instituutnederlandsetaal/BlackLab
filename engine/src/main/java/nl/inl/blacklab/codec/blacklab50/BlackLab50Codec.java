@@ -1,6 +1,6 @@
 package nl.inl.blacklab.codec.blacklab50;
 
-import org.apache.lucene.codecs.lucene99.Lucene99Codec;
+import org.apache.lucene.codecs.lucene104.Lucene104Codec;
 
 import nl.inl.blacklab.codec.BlackLabCodec;
 import nl.inl.blacklab.codec.BlackLabPostingsFormat;
@@ -41,7 +41,7 @@ public class BlackLab50Codec extends BlackLabCodec {
     private BlackLabStoredFieldsFormat storedFieldsFormat;
 
     public BlackLab50Codec() {
-        super(NAME, Lucene99Codec.class, "Lucene99");
+        super(NAME, Lucene104Codec.class, "Lucene104");
     }
 
     @Override

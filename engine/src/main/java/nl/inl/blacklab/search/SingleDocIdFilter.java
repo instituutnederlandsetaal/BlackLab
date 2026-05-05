@@ -12,6 +12,7 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.QueryVisitor;
 import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScorerSupplier;
 import org.apache.lucene.search.Weight;
 
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -49,48 +50,53 @@ public class SingleDocIdFilter extends Query {
             }*/
 
             @Override
-            public Scorer scorer(final LeafReaderContext ctx) {
-                return new Scorer(this) {
+            public ScorerSupplier scorerSupplier(final LeafReaderContext ctx) {
+                return new ScorerSupplier() {
                     @Override
-                    public int docID() {
-                        return luceneDocId;
-                    }
-
-                    @Override
-                    public float score() {
-                        return 1.0f;
-                    }
-
-                    /*zyw @Override
-                    public int freq() throws IOException {
-                        return 1;
-                    }*/
-
-                    @Override
-                    public DocIdSetIterator iterator() {
-                        // Check that id could be in this segment, and bits allows this doc id
-                        if (luceneDocId >= ctx.docBase) {
-
-                            // Check that the id is really in this segment by looking at the next segment
-                            Optional<LeafReaderContext> nextSegment = ctx.parent.leaves().stream()
-                                    .filter(l -> l.docBase > ctx.docBase)
-                                    .findFirst();
-                            if (nextSegment.isEmpty() || nextSegment.get().docBase > luceneDocId) {
-                                // Doc occurs in this segment.
-                                return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
+                    public Scorer get(long leadCost) {
+                        return new Scorer() {
+                            @Override
+                            public int docID() {
+                                return luceneDocId;
                             }
-                        }
-                        // We're in the wrong segment. Return empty set.
-                        try {
-                            return DocIdSet.EMPTY.iterator();
-                        } catch (IOException e) {
-                            throw BlackLabException.wrapRuntime(e);
-                        }
+
+                            @Override
+                            public float score() {
+                                return 1.0f;
+                            }
+
+                            @Override
+                            public DocIdSetIterator iterator() {
+                                // Check that id could be in this segment, and bits allows this doc id
+                                if (luceneDocId >= ctx.docBase) {
+
+                                    // Check that the id is really in this segment by looking at the next segment
+                                    Optional<LeafReaderContext> nextSegment = ctx.parent.leaves().stream()
+                                            .filter(l -> l.docBase > ctx.docBase)
+                                            .findFirst();
+                                    if (nextSegment.isEmpty() || nextSegment.get().docBase > luceneDocId) {
+                                        // Doc occurs in this segment.
+                                        return new SingleDocIdSet(luceneDocId - ctx.docBase).iterator();
+                                    }
+                                }
+                                // We're in the wrong segment. Return empty set.
+                                try {
+                                    return DocIdSet.EMPTY.iterator();
+                                } catch (IOException e) {
+                                    throw BlackLabException.wrapRuntime(e);
+                                }
+                            }
+
+                            @Override
+                            public float getMaxScore(int upTo) {
+                                return 0;
+                            }
+                        };
                     }
 
                     @Override
-                    public float getMaxScore(int upTo) {
-                        return 0;
+                    public long cost() {
+                        return 1;
                     }
                 };
             }

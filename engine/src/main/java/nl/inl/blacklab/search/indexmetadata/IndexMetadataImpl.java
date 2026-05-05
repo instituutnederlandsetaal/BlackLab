@@ -135,7 +135,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         private static final TermQuery METADATA_DOC_QUERY = new TermQuery(new Term(METADATA_MARKER, METADATA_MARKER));
 
         public static String getMetadataJson(IndexReader reader, int docId) throws IOException {
-            return reader.document(docId).get(METADATA_FIELD_NAME);
+            return reader.storedFields().document(docId).get(METADATA_FIELD_NAME);
         }
 
         public static Integer getMetadataDocId(IndexReader reader) throws IOException {

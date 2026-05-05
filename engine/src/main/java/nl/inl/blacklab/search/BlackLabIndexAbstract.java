@@ -27,7 +27,6 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.NoMergePolicy;
 import org.apache.lucene.index.TieredMergePolicy;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.store.Directory;
@@ -533,7 +532,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
         // Make sure large wildcard/regex expansions succeed
         if (traceIndexOpening())
             logger.debug("  Setting maxClauseCount...");
-        BooleanQuery.setMaxClauseCount(100_000);
+        IndexSearcher.setMaxClauseCount(100_000);
 
         // Open the forward indices
         if (!createNewIndex) {

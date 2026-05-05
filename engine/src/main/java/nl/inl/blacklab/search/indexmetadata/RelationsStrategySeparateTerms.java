@@ -232,7 +232,7 @@ public class RelationsStrategySeparateTerms implements RelationsStrategy {
         assert regexes.size() == (attributes == null ? 0 : attributes.size()) + 1;
         List<BLSpanQuery> queries = new ArrayList<>();
         for (String regex: regexes) {
-            RegexpQuery regexpQuery = new RegexpQuery(new Term(relationField.luceneField(), regex), RegExp.COMPLEMENT);
+            RegexpQuery regexpQuery = new RegexpQuery(new Term(relationField.luceneField(), regex), RegExp.DEPRECATED_COMPLEMENT);
             queries.add(new BLSpanMultiTermQueryWrapper<>(queryInfo, regexpQuery));
         }
         SpanQueryAnd q =  new SpanQueryAnd(queries);
