@@ -20,7 +20,7 @@ import org.apache.lucene.search.Query;
 
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.codec.BlackLabCodec;
-import nl.inl.blacklab.codec.blacklab50.BlackLab50Codec;
+import nl.inl.blacklab.codec.blacklab60.BlackLab60Codec;
 import nl.inl.blacklab.contentstore.ContentStore;
 import nl.inl.blacklab.contentstore.ContentStoreIntegrated;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
@@ -174,7 +174,7 @@ public class BlackLabIndexImpl extends BlackLabIndexAbstract {
     @Override
     protected void customizeIndexWriterConfig(IndexWriterConfig config) {
         if (!(config.getCodec() instanceof BlackLabCodec))
-            config.setCodec(new BlackLab50Codec()); // our own custom codec (extended from Lucene)
+            config.setCodec(new BlackLab60Codec()); // our own custom codec (extended from Lucene)
 
         // disabling this can speed up indexing a bit but also uses a lot of file descriptors;
         // it can be useful to see individual files during development. maybe make this configurable?

@@ -1,3 +1,4 @@
 # List of postingformats
 nl.inl.blacklab.codec.BlackLab40PostingsFormat
 nl.inl.blacklab.codec.blacklab50.BlackLab50PostingsFormat
+nl.inl.blacklab.codec.blacklab60.BlackLab60PostingsFormat
