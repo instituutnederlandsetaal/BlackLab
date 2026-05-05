@@ -52,7 +52,7 @@
         <jaxb.version>4.0.4</jaxb.version>
 
         <!-- Java version -->
-        <maven.compiler.release>17</maven.compiler.release>
+        <maven.compiler.release>21</maven.compiler.release>
 
         <!-- Plugin versions -->
         <checkstyle.version>3.1.2</checkstyle.version>
