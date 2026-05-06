@@ -60,7 +60,7 @@ public class TextPatternValue extends TextPattern {
                     }
                 }
                 if (annotation == null) {
-                    throw new InvalidQuery("Annotation not found: " + name);
+                    throw new InvalidQuery("Annotated field '" + context.field().name() + " has no annotation '" + name + "'.");
                 }
                 return annotation;
             }

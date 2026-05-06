@@ -50,4 +50,9 @@ public interface AnnotatedField extends Field {
     default ForwardIndexAccessor forwardIndexAccessor() {
         return new ForwardIndexAccessorIntegrated(index(), this);
     }
+
+    default AnnotatedField withParallelFieldVersion(String version) {
+        String name = AnnotatedFieldNameUtil.changeParallelFieldVersion(name(), version);
+        return index().annotatedField(name);
+    }
 }

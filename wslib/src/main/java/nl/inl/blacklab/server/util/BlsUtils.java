@@ -89,8 +89,7 @@ public class BlsUtils {
                     BLQueryParser parser = index.getQueryParser("json-bql");
                     return parser.parse(pattern).pattern();
                 } catch (InvalidQuery e2) {
-                    throw new BadRequest("PATT_SYNTAX_ERROR",
-                            "Syntax error in CorpusQL pattern (JSON parse failed as well): " + e1.getMessage());
+                    throw BadRequest.pattSyntaxError(e1);
                 }
             }
         } else if (language.equals("json")) {
@@ -106,8 +105,7 @@ public class BlsUtils {
                 BLQueryParser parser = index.getQueryParser("bcql");
                 return parser.parse(pattern).pattern();
             } catch (InvalidQuery e) {
-                throw new BadRequest("PATT_SYNTAX_ERROR",
-                        "Syntax error in CorpusQL pattern: " + e.getMessage());
+                throw BadRequest.pattSyntaxError(e);
             }
         } else if (language.equals("contextql")) {
             try {

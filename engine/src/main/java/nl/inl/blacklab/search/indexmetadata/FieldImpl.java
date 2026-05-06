@@ -100,7 +100,7 @@ public abstract class FieldImpl implements Field, Freezable {
     
     @Override
     public String toString() {
-        return fieldName;
+        return name();
     }
 
     public void fixAfterDeserialization(BlackLabIndex index, String fieldName) {

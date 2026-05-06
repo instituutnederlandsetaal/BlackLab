@@ -47,8 +47,10 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
             return future.get();
         } catch (ExecutionException e) {
             // If underlying cause is an InvalidQuery, rethrow that.
-            if (e.getCause() instanceof CompletionException && e.getCause().getCause() instanceof InvalidQuery e2)
-                throw e2;
+            if (e.getCause() instanceof InvalidQuery invalidQuery)
+                throw invalidQuery;
+            if (e.getCause() instanceof CompletionException && e.getCause().getCause() instanceof InvalidQuery invalidQuery)
+                throw invalidQuery;
             throw BlackLabException.wrapRuntime(e.getCause() == null ? e : e.getCause());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // preserve interrupted status

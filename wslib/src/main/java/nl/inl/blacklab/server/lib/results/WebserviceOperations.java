@@ -470,6 +470,7 @@ public class WebserviceOperations {
                         "Reference to unknown match info (i.e. capture group) '" + e2.getMatchInfoName() + "'",
                         Map.of("name", e2.getMatchInfoName()));
             }
+            return new BadRequest("INVALID_QUERY", e.getMessage());
         } else if (e instanceof ExecutionException) {
             // See if we recognize the cause of this exception
             if (e.getCause() instanceof BlsException e2) {

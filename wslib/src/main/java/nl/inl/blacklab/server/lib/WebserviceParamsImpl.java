@@ -462,7 +462,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
             CompleteQuery cp = new CompleteQuery(tp, filter);
             return search.find(cp, searchSettings);
         } catch (InvalidQuery e) {
-            throw new BadRequest("PATT_SYNTAX_ERROR", "Syntax error in CorpusQL pattern: " + e.getMessage());
+            throw BadRequest.pattSyntaxError(e);
         }
     }
 

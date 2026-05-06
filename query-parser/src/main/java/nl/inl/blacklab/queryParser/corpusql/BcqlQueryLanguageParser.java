@@ -9,7 +9,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.RecognitionException;
 import org.antlr.v4.runtime.Recognizer;
-import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.plugins.param.PluginParams;
@@ -65,9 +64,8 @@ public class BcqlQueryLanguageParser implements BLQueryParser {
                 public void syntaxError(Recognizer<?, ?> recognizer,
                         Object offendingSymbol,
                         int line, int charPositionInLine,
-                        String msg, RecognitionException e)
-                {
-                    syntaxErrors.add("Syntax error at position " + charPositionInLine + ": " + msg);
+                        String msg, RecognitionException e) {
+                    syntaxErrors.add("position " + charPositionInLine + ": " + msg);
                 }
             });
 
@@ -76,13 +74,15 @@ public class BcqlQueryLanguageParser implements BLQueryParser {
 
             // Detect syntax errors
             if (!syntaxErrors.isEmpty()) {
-                throw new InvalidQuery("Syntax error(s) in query: " + query + "\n" + String.join("\n", syntaxErrors));
+                throw new InvalidQuery("Syntax error(s) in query: " + query + "\n" + String.join("; ", syntaxErrors));
             }
 
             BcqlAstVisitor visitor = new BcqlAstVisitor();
 
             return visitor.visit(tree);
 
+        } catch (InvalidQuery e) {
+            throw e;
         } catch (Exception e) {
             throw new InvalidQuery("Error parsing query: " + e.getMessage(), e);
         }

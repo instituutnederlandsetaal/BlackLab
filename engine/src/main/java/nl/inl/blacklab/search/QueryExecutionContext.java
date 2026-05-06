@@ -28,7 +28,7 @@ public class QueryExecutionContext {
 
     public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation,
             MatchSensitivity matchSensitivity) {
-        return new QueryExecutionContext(index, annotation.field().name(), null, annotation.name(),
+        return new QueryExecutionContext(index, annotation.field(), null, annotation.name(),
                 matchSensitivity, null, null, false);
     }
 
@@ -38,14 +38,8 @@ public class QueryExecutionContext {
     /** Our query info object */
     private final QueryInfo queryInfo;
 
-    /**
-     * Name of the annotated field we're searching.
-     * Stored as a string because we might want to jump between versions
-     * (e.g. different languages), and this name might not include a version and
-     * therefore not be an existing field. (e.g. this might be "contents"
-     * when the actual fields for different versions are named "contents__en" and "contents__nl")
-     */
-    private final String fieldName;
+    /** Name of the annotated field we're searching. */
+    private final AnnotatedField field;
 
     /** Version of the document we're searching, or null if this is not a parallel corpus. */
     private final String version;
@@ -75,26 +69,24 @@ public class QueryExecutionContext {
      * Construct a query execution context object.
      *
      * @param index the index object
-     * @param fieldName the annotated field to search
+     * @param field the annotated field to search
      * @param version the version to search (if this is a parallel corpus; otherwise null)
      * @param annotationName the annotation to search
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
      * @param defaultRelationClass default relation class to search (or null to use global default)
      * @param captures unique capture names assigned so far
      */
-    private QueryExecutionContext(BlackLabIndex index, String fieldName, String version, String annotationName,
+    private QueryExecutionContext(BlackLabIndex index, AnnotatedField field, String version, String annotationName,
             MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint) {
         this.index = index;
-        this.fieldName = version == null ? fieldName :
-                AnnotatedFieldNameUtil.changeParallelFieldVersion(fieldName, version);
+        if (field == null)
+            throw new IllegalArgumentException("field == null");
+        this.field = version == null ? field : field.withParallelFieldVersion(version);
         this.version = version;
         this.annotationName = annotationName;
-        AnnotatedField field = index.annotatedField(this.fieldName);
-        if (field == null)
-            throw new IllegalArgumentException("Annotated field doesn't exist: " + this.fieldName);
         Annotation annotation = field.annotation(annotationName);
         if (annotation == null)
-            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName + " on field " + fieldName);
+            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName + " on field " + field);
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
         this.defaultRelationClass = defaultRelationClass;
@@ -108,7 +100,7 @@ public class QueryExecutionContext {
             annotation = sensitivity.annotation();
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
-        return new QueryExecutionContext(index, fieldName, version, annotation.name(), matchSensitivity,
+        return new QueryExecutionContext(index, field, version, annotation.name(), matchSensitivity,
                 defaultRelationClass, captures, inConstraint);
     }
 
@@ -116,7 +108,7 @@ public class QueryExecutionContext {
             throws InvalidQuery {
         Annotation annotation = annotationName == null ? null : field().annotation(annotationName);
         if (annotationName != null && annotation == null)
-            throw new InvalidQuery("Annotation doesn't exist: " + annotationName + " on field " + fieldName);
+            throw new InvalidQuery("Annotation doesn't exist: " + annotationName + " on field " + field);
         return withAnnotationAndSensitivity(annotation, matchSensitivity);
     }
 
@@ -138,7 +130,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withDocVersion(String version) {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
-        return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
+        return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
                 defaultRelationClass, captures, inConstraint);
     }
 
@@ -151,7 +143,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withDefaultRelationClass(String relClass) {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
-        return new QueryExecutionContext(index, fieldName, version, annotationName, requestedSensitivity,
+        return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
                 relClass, captures, inConstraint);
     }
 
@@ -270,7 +262,7 @@ public class QueryExecutionContext {
     public QueryExecutionContext withInConstraint() {
         if (inConstraint)
             return this;
-        return new QueryExecutionContext(index, fieldName, version, annotationName,
+        return new QueryExecutionContext(index, field, version, annotationName,
                 requestedSensitivity, defaultRelationClass, captures, true);
     }
 }
