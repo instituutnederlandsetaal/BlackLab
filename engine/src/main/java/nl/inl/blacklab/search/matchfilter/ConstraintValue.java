@@ -33,7 +33,7 @@ public abstract class ConstraintValue implements Comparable<ConstraintValue>, Te
             return get(mi);
         if (o instanceof List<?> l)
             return get((List<Object>)l);
-        throw new InvalidQuery("Cannot convert object of type " + o.getClass() + " to ConstraintValue");
+        throw new IllegalArgumentException("Cannot convert object of type " + o.getClass() + " to ConstraintValue");
     }
 
     public static ConstraintValueInt get(int i) {
@@ -81,7 +81,7 @@ public abstract class ConstraintValue implements Comparable<ConstraintValue>, Te
     }
 
     public ConstraintValueString asString() {
-        throw new InvalidQuery("Cannot convert ConstraintValue of type " + getType() + " to string");
+        throw new IllegalArgumentException("Cannot convert ConstraintValue of type " + getType() + " to string");
     }
 
     @Override

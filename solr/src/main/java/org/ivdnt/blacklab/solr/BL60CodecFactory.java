@@ -9,7 +9,6 @@ public class BL60CodecFactory extends CodecFactory {
 
     @Override
     public Codec getCodec() {
-        System.out.println("creating codec");
         return new BlackLab60Codec();
     }
 }

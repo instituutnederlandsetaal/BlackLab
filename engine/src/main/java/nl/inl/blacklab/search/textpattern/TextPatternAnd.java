@@ -45,7 +45,7 @@ public class TextPatternAnd extends TextPattern {
         if (context.isInConstraint()) {
             // We're in the constraint part of the query; create MatchFilter
             if (clauses.size() != 2)
-                throw new InvalidQuery("AND in constraint context requires exactly two clauses");
+                throw new IllegalStateException("AND in constraint context requires exactly two clauses");
             MatchFilter a = clauses.get(0).toMatchFilter(context);
             MatchFilter b = clauses.get(1).toMatchFilter(context);
             return new MatchFilterAnd(a, b);
