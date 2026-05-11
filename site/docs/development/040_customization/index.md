@@ -181,11 +181,7 @@ This plugin can be used by adding the following to an import format (`.blf.yaml`
 ```yaml
 # Apply conversion(s) before indexing
 converters:
-  # Apply these converters before additional converters supplied with the file (if any)
-  first:
   - id: add-message
-  # Apply these converters after additional converters supplied with the file (if any)
-  last:
   - id: some-other-plugin
     param: value   # (some plugins take parameters)
 ```

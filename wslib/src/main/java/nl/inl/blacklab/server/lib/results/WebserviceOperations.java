@@ -668,7 +668,10 @@ public class WebserviceOperations {
         Index index = params.getIndexManager().getIndex(params.getCorpusName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
+        // Structure of the "converters" URL parameter, with lists of converter(s) to apply before and after
+        // the ones declared in .blf.yaml.
         record ExtraConverterConfigs(List<Map<String, Object>> first, List<Map<String, Object>> last) {}
+
         List<FileConverter.Parameterized> convFirst = List.of();
         List<FileConverter.Parameterized> convLast = List.of();
         Optional<String> jsonConverters = params.getConverters();
