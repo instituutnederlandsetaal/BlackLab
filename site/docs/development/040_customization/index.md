@@ -184,13 +184,10 @@ converters:
   # Apply these converters before additional converters supplied with the file (if any)
   first:
   - id: add-message
-    param1: value1   # (some plugins take parameters)
-    param2: value2
-    # Apply these converters after additional converters supplied with the file (if any)
+  # Apply these converters after additional converters supplied with the file (if any)
   last:
-  - id: add-message
-  param1: value1   # (some plugins take parameters)
-  param2: value2
+  - id: some-other-plugin
+    param: value   # (some plugins take parameters)
 ```
 
 Without configuration, a default message will be used. To customize it, create a file `$BLACKLAB_CONFIG_DIR/plugins/add-message.yaml` with the following content:
