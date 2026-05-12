@@ -23,6 +23,7 @@ import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestHitsGrouped;
 import nl.inl.blacklab.server.lib.requests.RequestRelations;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.JsonSchemaUtil;
@@ -132,7 +133,8 @@ public class WebserviceRequestHandler {
             // Hits request
             if (shouldReturnListOfGroups(params)) {
                 // We're returning a list of groups
-                ResultHitsGrouped hitsGrouped = WebserviceOperations.hitsGrouped(params, isCsv);
+                RequestHitsGrouped reqGroup = RequestHitsGrouped.fromParams(params, isCsv);
+                ResultHitsGrouped hitsGrouped = new ResultHitsGrouped(reqGroup);
                 rs.hitsGroupedResponse(hitsGrouped, isCsv);
             } else {
                 // We're returning a list of results (ungrouped, or viewing single group)
@@ -140,6 +142,18 @@ public class WebserviceRequestHandler {
                 rs.hitsResponse(resultHits, isCsv);
             }
         }
+    }
+
+    /**
+     * Find collocations, which is a type of grouped hits. This endpoint exists for convenience.
+     *
+     * @param params parameters
+     * @param rs output stream
+     */
+    public static void opCollocations(WebserviceParams params, ResponseStreamer rs, boolean isCsv) throws InvalidQuery {
+        RequestHitsGrouped reqGroup = RequestHitsGrouped.fromParamsCollocations(params, isCsv);
+        ResultHitsGrouped hitsGrouped = new ResultHitsGrouped(reqGroup);
+        rs.hitsGroupedResponse(hitsGrouped, isCsv);
     }
 
     /**

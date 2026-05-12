@@ -292,8 +292,12 @@ public final class StringUtil {
     private static final Pattern ANY_BACKSLASH_ESCAPED_CHAR = Pattern.compile("\\\\(.)");
 
     /** Unescape backslash-escaped single or double quote.
+     *
+     * In BCQL, quotes need to be escaped because they also indicate where the string ends.
+     * Lucene regex queries expect unescaped quotes, but other escapes need to be untouched
+     * (e.g. unicode escapes, escaped backslash, etc.).
      */
-    public static String unescapeQuote(String input, String quoteToUnescape) {
+    public static String unescapeQuoteForLuceneRegex(String input, String quoteToUnescape) {
         assert quoteToUnescape.equals("'") || quoteToUnescape.equals("\"") : "only meant for quotes";
         StringBuilder result = new StringBuilder();
         Matcher matcher = ANY_BACKSLASH_ESCAPED_CHAR.matcher(input);
@@ -311,8 +315,11 @@ public final class StringUtil {
     private static final Pattern REGULAR_OR_ESCAPED_CHAR = Pattern.compile("(\\\\?)(.)");
 
     /** Backslash-escape single or double quote.
+     *
+     * In BCQL, unlike in Lucene regexes, quotes need to be escaped because they also indicate where the string ends.
+     * See {@link #unescapeQuoteForLuceneRegex(String, String)}.
      */
-    public static String escapeQuote(String input, String quoteToEscape) {
+    public static String escapeQuoteForBcql(String input, String quoteToEscape) {
         assert quoteToEscape.equals("'") || quoteToEscape.equals("\"") : "only meant for quotes";
         StringBuilder result = new StringBuilder();
         Matcher matcher = REGULAR_OR_ESCAPED_CHAR.matcher(input);

@@ -14,9 +14,8 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
-import nl.inl.blacklab.searches.SearchHitGroups;
-import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
@@ -32,6 +31,15 @@ import nl.inl.blacklab.server.jobs.WindowSettings;
  * just the parameters relevant to that operation.
  */
 public interface WebserviceParams extends QueryParams {
+
+    static SearchDocs getSubcorpusSearch(WebserviceParams params) {
+        Query docFilterQuery = params.filterQuery();
+        if (docFilterQuery == null) {
+            docFilterQuery = params.blIndex().getAllRealDocsQuery();
+        }
+        SearchEmpty search = params.blIndex().search(params.getAnnotatedField(), params.useCache());
+        return search.findDocuments(docFilterQuery);
+    }
 
     BlackLabIndex blIndex();
 
@@ -71,14 +79,7 @@ public interface WebserviceParams extends QueryParams {
 
     Query filterQuery() throws BlsException;
 
-    /**
-     * @return hits - filtered then sorted then sampled then windowed
-     */
-    SearchHits hitsWindow() throws BlsException;
-
-    WindowSettings windowSettings();
-
-    WindowSettings windowSettings(long clampMaxSize);
+    WindowSettings windowSettings(boolean isCsv);
 
     HitSortSettings hitsSortSettings();
 
@@ -92,20 +93,22 @@ public interface WebserviceParams extends QueryParams {
 
     boolean useCache();
 
-    /**
-     * @return hits - filtered then sorted then sampled
-     */
-    SearchHits hitsSample() throws BlsException;
-
     AnnotatedField getAnnotatedField();
 
-    SearchDocs docsWindow() throws BlsException;
+//    /**
+//     * @return hits - filtered then sorted then sampled
+//     */
+//    SearchHits hitsSample() throws BlsException;
 
     SearchDocs docsSorted() throws BlsException;
 
     SearchCount docsCount() throws BlsException;
 
     SearchDocs docs() throws BlsException;
+
+//    SearchHitGroups hitsGroupedStats() throws BlsException;
+
+    SearchDocGroups docsGrouped() throws BlsException;
 
     /**
      * Return our subcorpus.
@@ -116,15 +119,9 @@ public interface WebserviceParams extends QueryParams {
      */
     SearchDocs subcorpus() throws BlsException;
 
-    HitGroupScorer getHitGroupScorer();
-
-    SearchHitGroups hitsGroupedStats() throws BlsException;
-
-    SearchHitGroups hitsGroupedWithStoredHits() throws BlsException;
-
-    SearchDocGroups docsGrouped() throws BlsException;
-
     SearchFacets facets() throws BlsException;
+
+    HitGroupScorer getHitGroupScorer();
 
     @Override
     Optional<String> getInputFormat();

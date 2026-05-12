@@ -6,17 +6,14 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import jakarta.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
+import nl.inl.blacklab.server.lib.QueryParamsMap;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
-import nl.inl.util.Json;
 
 /** BLS API-specific implementation of WebserviceParams.
  *
@@ -37,7 +34,7 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
                 if (value.isEmpty())
                     continue;
                 map.put(par, value);
-                typedMap.put(par, toAppropriateType(par, value));
+                typedMap.put(par, QueryParamsMap.toAppropriateType(par, value));
             }
         }
         map.put(WebserviceParameter.CORPUS_NAME, corpusName);
@@ -45,46 +42,6 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
         if (operation != null && operation != WebserviceOperation.NONE) {
             map.put(WebserviceParameter.OPERATION, operation.value());
             typedMap.put(WebserviceParameter.OPERATION, operation.value());
-        }
-    }
-
-    public static Object toAppropriateType(WebserviceParameter par, String value) {
-        switch (par.type()) {
-            case PATTERN -> {
-                if (value.trim().charAt(0) == '{') {
-                    // Likely a JSON value.
-                    // (better detection would look at pattlang parameter and/or
-                    //  try to parse as BCQL first if pattlang == default)
-                    return toJsonValue(value);
-                } else {
-                    // Interpret as string (query in some query language, e.g. BCQL)
-                    return value;
-                }
-            }
-            case FLOAT -> {
-                return parseDouble(value);
-            }
-            case INTEGER -> {
-                return parseLong(value);
-            }
-            case BOOLEAN -> {
-                return parseBoolean(value);
-            }
-            case JSON -> {
-                return toJsonValue(value);
-            }
-            default -> {
-                return value;
-            }
-        }
-    }
-
-    private static Map<String, Object> toJsonValue(String value) {
-        ObjectMapper jsonMapper = Json.getJsonObjectMapper();
-        try {
-            return (Map<String, Object>) jsonMapper.readValue(value, Map.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
         }
     }
 

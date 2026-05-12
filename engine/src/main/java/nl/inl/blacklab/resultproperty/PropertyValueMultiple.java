@@ -50,7 +50,7 @@ public class PropertyValueMultiple extends PropertyValue {
         PropertyValue[] values = new PropertyValue[strValues.length];
         int i = 0;
         for (String strValue : strValues) {
-            values[i] = PropertyValue.deserialize(index, field, strValue);
+            values[i] = PropertyValue.deserialize(field, strValue);
             i++;
         }
         return new PropertyValueMultiple(values);

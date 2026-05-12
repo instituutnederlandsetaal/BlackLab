@@ -139,7 +139,7 @@ public interface QueryParams {
 
     int getHitEnd();
 
-    String getAutocompleteTerm();
+    String getTerm();
     
     String getAutocompleteType();
 

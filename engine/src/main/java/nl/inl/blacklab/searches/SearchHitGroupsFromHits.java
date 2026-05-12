@@ -86,16 +86,19 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        if (!super.equals(o)) return false;
+        if (o == null || getClass() != o.getClass())
+            return false;
+        if (!super.equals(o))
+            return false;
         SearchHitGroupsFromHits that = (SearchHitGroupsFromHits) o;
-        return maxResultsToStorePerGroup == that.maxResultsToStorePerGroup && mustStoreHits == that.mustStoreHits && source.equals(that.source) && property.equals(that.property);
+        return maxResultsToStorePerGroup == that.maxResultsToStorePerGroup && mustStoreHits == that.mustStoreHits
+                && Objects.equals(source, that.source) && Objects.equals(property, that.property)
+                && Objects.equals(scorer, that.scorer);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), source, property, maxResultsToStorePerGroup, mustStoreHits);
+        return Objects.hash(super.hashCode(), source, property, scorer, maxResultsToStorePerGroup, mustStoreHits);
     }
 
     @Override

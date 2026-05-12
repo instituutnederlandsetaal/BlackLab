@@ -67,7 +67,7 @@ public abstract class TextPattern implements TextPatternStruct {
         String regexSensitivityPrefix = getRegexSensitivityPrefix(sensitivity, annotation.field().index().defaultMatchSensitivity());
         for (String term: terms) {
             TextPattern annot = new TextPatternValue(ConstraintValue.symbol(annotation.name()));
-            TextPattern value = new TextPatternValue(ConstraintValue.get(regexSensitivityPrefix + term));
+            TextPattern value = new TextPatternValue(ConstraintValue.get(regexSensitivityPrefix + StringUtil.escapeLuceneRegexCharacters(term)));
             TextPattern compare = new TextPatternCompare(annot, value, MatchFilterCompare.Operator.EQUAL);
             patterns.add(compare);
         }

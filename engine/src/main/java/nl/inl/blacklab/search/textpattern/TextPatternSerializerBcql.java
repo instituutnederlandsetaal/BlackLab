@@ -74,6 +74,9 @@ public class TextPatternSerializerBcql {
 
     private static final Map<Class<? extends TextPatternStruct>, NodeSerializer> cqlSerializers = new LinkedHashMap<>();
 
+    /** Use double quotes for CQL */
+    private static final String USE_QUOTE = "\"";
+
     static {
         // For each node type, add a CQL serializer to the map.
 
@@ -295,12 +298,16 @@ public class TextPatternSerializerBcql {
             TextPatternTags.Adjust adjust = tp.getAdjust();
             String slashBefore = adjust == TextPatternTags.Adjust.TRAILING_EDGE ? "/" : "";
             String slashAfter = adjust == TextPatternTags.Adjust.FULL_TAG ? "/" : "";
+            b.append(optCapture).append("<").append(slashBefore);
             String tagName = tp.getElementNameRegex();
             if (StringUtil.containsRegexCharacters(tagName)) {
                 // Put in double quotes to signify it's a regex, and escape double quotes if needed
-                tagName = "\"" + StringUtil.escapeQuote(tagName, "\"") + "\"";
+                serializeToQuotedString(b, tagName);
+            } else {
+                // No quotes needed
+                b.append(tagName);
             }
-            b.append(optCapture).append("<").append(slashBefore).append(tagName).append(optAttr).append(slashAfter).append(">");
+            b.append(optAttr).append(slashAfter).append(">");
         });
 
         // REGEX
@@ -406,9 +413,6 @@ public class TextPatternSerializerBcql {
         }
     }
 
-    /** Use double quotes for CQL */
-    private static final String USE_QUOTE = "\"";
-
     private static void serializeConstraintValue(StringBuilder b, ConstraintValue cv) {
         if (cv instanceof ConstraintValueString s)
             serializeToQuotedString(b, s.getValue());
@@ -421,7 +425,7 @@ public class TextPatternSerializerBcql {
     }
 
     private static void serializeToQuotedString(StringBuilder b, String value) {
-        b.append(USE_QUOTE).append(StringUtil.escapeQuote(value, USE_QUOTE)).append(USE_QUOTE);
+        b.append(USE_QUOTE).append(StringUtil.escapeQuoteForBcql(value, USE_QUOTE)).append(USE_QUOTE);
     }
 
     private static String serializeAttributes(Map<String, TextPattern> attr) {

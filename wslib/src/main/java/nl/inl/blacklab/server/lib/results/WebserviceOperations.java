@@ -66,6 +66,7 @@ import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.server.BlsMain;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -75,6 +76,7 @@ import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.User;
@@ -498,12 +500,12 @@ public class WebserviceOperations {
      * @param value value the document property must have to be included
      * @return
      */
-    public static CorpusSize findSubcorpusSize(WebserviceParams params, Query metadataFilterQuery,
+    public static CorpusSize findSubcorpusSize(BlackLabIndex index, Query metadataFilterQuery,
             DocProperty property, PropertyValue value) {
-        if (!property.canConstructQuery(params.blIndex(), value))
+        if (!property.canConstructQuery(index, value))
             return CorpusSize.EMPTY; // cannot determine subcorpus size of empty value
         // Construct a query that matches this propery value
-        Query query = property.query(params.blIndex(), value); // analyzer....!
+        Query query = property.query(index, value); // analyzer....!
         if (query == null) {
             query = metadataFilterQuery;
         } else {
@@ -514,7 +516,7 @@ public class WebserviceOperations {
             query = builder.build();
         }
         // Determine number of tokens in this subcorpus
-        return params.blIndex().queryDocuments(query).subcorpusSize(true);
+        return index.queryDocuments(query).subcorpusSize(true);
     }
 
     public static TermFrequencyList getTermFrequencies(WebserviceParams params) {
@@ -616,28 +618,22 @@ public class WebserviceOperations {
     }
 
     static ResultDocs docs(WebserviceParams params, boolean isCsv) throws InvalidQuery {
-        long maxWindowSize = isCsv ?
-                params.getSearchManager().config().getSearch().getMaxHitsToRetrieve() :
-                params.getSearchManager().config().getParameters().getPageSize().getMax();
+        long maxWindowSize = getMaxWindowSize(params.getSearchManager(), isCsv);
         long defaultWindowSize = isCsv ?
                 maxWindowSize :
                 WebserviceParameter.defaultLong(WebserviceParameter.NUMBER_OF_RESULTS);
         return ResultDocs.docsResponse(params, maxWindowSize, defaultWindowSize);
     }
 
-    public static ResultHitsGrouped hitsGrouped(WebserviceParams params, boolean isCsv)
-            throws InvalidQuery {
-        long maxWindowSize = isCsv ?
-                params.getSearchManager().config().getSearch().getMaxHitsToRetrieve() :
-                params.getSearchManager().config().getParameters().getPageSize().getMax();
-        return new ResultHitsGrouped(params, maxWindowSize);
+    public static ResultHits hits(WebserviceParams params, boolean isCsv) throws InvalidQuery {
+        return new ResultHits(params, true, isCsv);
     }
 
-    public static ResultHits hits(WebserviceParams params, boolean isCsv) throws InvalidQuery {
-        long maxWindowSize = isCsv ?
-                params.getSearchManager().config().getSearch().getMaxHitsToRetrieve() :
-                params.getSearchManager().config().getParameters().getPageSize().getMax();
-        return new ResultHits(params, true, maxWindowSize);
+    public static long getMaxWindowSize(SearchManager searchManager, boolean isCsv) {
+        BLSConfig config = searchManager.config();
+        return isCsv ?
+                config.getSearch().getMaxHitsToRetrieve() :
+                config.getParameters().getPageSize().getMax();
     }
 
     public static TermFrequencyList calculateCollocations(WebserviceParams params) {
@@ -790,9 +786,11 @@ public class WebserviceOperations {
         return new ResultDocSnippet(params);
     }
 
-    public static ResultListOfHits listOfHits(WebserviceParams params, HitResults window, ConcordanceContext concordanceContext,
+    public static ResultListOfHits listOfHits(Collection<Annotation> annotationsToList, ContextSettings contextSettings,
+            boolean omitEmptyCaptures, HitResults window, ConcordanceContext concordanceContext,
             Map<Integer, String> docIdToPid) {
-        return new ResultListOfHits(params, window, concordanceContext, docIdToPid);
+        return new ResultListOfHits(window, concordanceContext, docIdToPid, contextSettings, annotationsToList,
+                omitEmptyCaptures);
     }
 
     public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
@@ -812,10 +810,10 @@ public class WebserviceOperations {
         return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, timings, subcorpusSize);
     }
 
-    public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params, Index.IndexStatus indexStatus,
+    public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params,
             SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups, WindowStats window,
             AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
-        return new ResultSummaryCommonFields(params, indexStatus, timings, matchInfoDefs,groups, window,
+        return new ResultSummaryCommonFields(params, timings, matchInfoDefs,groups, window,
                 searchField, otherFields);
     }
 

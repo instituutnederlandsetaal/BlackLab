@@ -113,7 +113,7 @@ public class BcqlQueryLanguageParser implements BLQueryParser {
 
         // Unescape ONLY the quotes found around this string
         // Leave other escaped characters as-is for Lucene's regex engine
-        String quotedUnescaped = StringUtil.unescapeQuote(input, quoteUsed);
+        String quotedUnescaped = StringUtil.unescapeQuoteForLuceneRegex(input, quoteUsed);
         if (isLiteral) {
             // We want to find this string as-is; create a regex that will match this
             return StringUtil.escapeLuceneRegexCharacters(quotedUnescaped);

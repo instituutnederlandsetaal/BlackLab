@@ -1,6 +1,9 @@
 package nl.inl.blacklab.search.indexmetadata;
 
+import java.util.Locale;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
+
 import nl.inl.util.StringUtil;
 
 /**
@@ -78,12 +81,13 @@ public enum MatchSensitivity {
     }
 
     public String desensitize(String input) {
+        // TODO: instead of Locale.ROOT we should probably use the configured locale here!
         return switch (this) {
-            case CASE_INSENSITIVE -> input.toLowerCase();
+            case CASE_INSENSITIVE -> input.toLowerCase(Locale.ROOT);
             case DIACRITICS_INSENSITIVE ->
                     StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input));
             case INSENSITIVE ->
-                    StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase());
+                    StringUtil.removeCharsIgnoredByInsensitiveCollator(StringUtil.stripAccents(input).toLowerCase(Locale.ROOT));
             case SENSITIVE -> input;
         };
     }

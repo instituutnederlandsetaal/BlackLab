@@ -46,7 +46,7 @@ public class ResultAutocomplete {
         BlackLabIndex index = params.blIndex();
         IndexMetadata indexMetadata = index.metadata();
 
-        String term = params.getAutocompleteTerm();
+        String term = params.getTerm();
         if (StringUtils.isEmpty(term))
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 

@@ -389,7 +389,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public int getHitEnd() { return getInt(WebserviceParameter.HIT_END); }
 
     @Override
-    public String getAutocompleteTerm() { return get(WebserviceParameter.TERM); }
+    public String getTerm() { return get(WebserviceParameter.TERM); }
 
     @Override
     public String getAutocompleteType() { return get(WebserviceParameter.AUTOCOMPLETE_TYPE); }
@@ -417,10 +417,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
 
     @Override
     public String getAnnotationName() {
-        String annotName = get(WebserviceParameter.ANNOTATION);
-        if (annotName.isEmpty() && has(WebserviceParameter.PROPERTY))
-            annotName = get(WebserviceParameter.PROPERTY); // old parameter name, deprecated
-        return annotName;
+        return get(WebserviceParameter.ANNOTATION);
     }
 
     @Override

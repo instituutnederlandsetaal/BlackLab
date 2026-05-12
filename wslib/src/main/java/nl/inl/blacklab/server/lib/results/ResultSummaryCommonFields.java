@@ -7,14 +7,12 @@ import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
-import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultSummaryCommonFields {
     private final WebserviceParams searchParam;
     private TextPattern textPattern = null;
-    private final Index.IndexStatus indexStatus;
     private final SearchTimings timings;
     private final MatchInfoDefs matchInfoDefs;
     private final ResultGroups groups;
@@ -22,13 +20,12 @@ public class ResultSummaryCommonFields {
     private final AnnotatedField searchField;
     private final Collection<AnnotatedField> otherFields;
 
-    public ResultSummaryCommonFields(WebserviceParams searchParam, Index.IndexStatus indexStatus,
-            SearchTimings timings, MatchInfoDefs matchInfoDefs,
-            ResultGroups groups, WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
+    public ResultSummaryCommonFields(WebserviceParams searchParam, SearchTimings timings, MatchInfoDefs matchInfoDefs,
+            ResultGroups groups, WindowStats window, AnnotatedField searchField,
+            Collection<AnnotatedField> otherFields) {
         this.searchParam = searchParam;
         if (searchParam.hasPattern())
             this.textPattern = searchParam.patternNoWithinContextTag().orElse(null);
-        this.indexStatus = indexStatus;
         this.timings = timings;
         this.matchInfoDefs = matchInfoDefs == null ? MatchInfoDefs.EMPTY : matchInfoDefs;
         this.groups = groups;
@@ -43,10 +40,6 @@ public class ResultSummaryCommonFields {
 
     public TextPattern getTextPattern() {
         return textPattern;
-    }
-
-    public Index.IndexStatus getIndexStatus() {
-        return indexStatus;
     }
 
     public SearchTimings getTimings() {

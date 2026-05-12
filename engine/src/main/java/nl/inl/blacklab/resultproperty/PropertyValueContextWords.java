@@ -98,7 +98,8 @@ public class PropertyValueContextWords extends PropertyValueContext {
         int n = valueTokenId.length;
         for (int i = 0; i < n; i++) {
             int v = valueTokenId[i];
-            String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(terms.get(v));
+            String original = terms.get(v);
+            String word = v < 0 ? NO_VALUE_STR : sensitivity.desensitize(original);
             if (!word.isEmpty())
                 parts.add(word);
         }
@@ -135,4 +136,7 @@ public class PropertyValueContextWords extends PropertyValueContext {
         return parts;
     }
 
+    public MatchSensitivity getSensitivity() {
+        return sensitivity;
+    }
 }

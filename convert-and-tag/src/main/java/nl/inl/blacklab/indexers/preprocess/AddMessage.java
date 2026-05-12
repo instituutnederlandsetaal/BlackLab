@@ -12,7 +12,6 @@ import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.plugins.param.PString;
 import nl.inl.blacklab.plugins.param.PluginParam;
 import nl.inl.blacklab.plugins.param.PluginParams;
-import nl.inl.util.StringUtil;
 import nl.inl.util.fileprocessor.FileReference;
 
 /** Test plugin that adds an XML comment at the end of the file. */
@@ -36,7 +35,7 @@ public class AddMessage extends FileConverter {
         String message = params.getString(parMessage, defaultMessage);
         try (Reader reader = input.getSinglePassReader()) {
             String str = IOUtils.toString(reader);
-            str = str.replace("</TEI>", "<!-- " + StringUtil.escapeQuote(message, "'") + " --></TEI>");
+            str = str.replace("</TEI>", "<!-- " + message + " --></TEI>");
             logger.warn("perform: appended message {}", message);
             return FileReference.fromCharArray(input.getPath(), str.toCharArray(), input.getAssociatedFile());
         } catch (IOException e) {

@@ -13,10 +13,10 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 public interface HitGroupScorer {
 
-    /**
-     * Pass if no scoring needed
-     */
+    /** Pass if no scoring needed */
     HitGroupScorer NONE = null;
+
+    String DEFAULT_TYPE_ID = "coll-dice";
 
     static HitGroupScorer fromConfig(AnnotatedField field, Map<String, Object> config) {
         String scorerId = config.get("id").toString();

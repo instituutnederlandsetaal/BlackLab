@@ -5,6 +5,7 @@ public enum BlsPath {
     AUTOCOMPLETE("autocomplete"),
     CACHE_CLEAR("cache-clear"),
     CACHE_INFO("cache-info"),
+    COLLOCATIONS("collocations"),
     DOCS("docs"),
     FIELDS("fields"),
     HITS("hits"),

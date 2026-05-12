@@ -21,6 +21,8 @@ import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.requests.RequestHits;
 
 /**
  * Get (part of) the original contents of a document.
@@ -125,7 +127,7 @@ public class ResultDocContents {
 
         HitResults hitResults = null;
         if (params.hasPattern()) {
-            hitResults = params.hitsSample().execute();
+            hitResults = WebserviceParamsImpl.determineHitsSearch(RequestHits.fromParams(params)).execute();
         }
 
         // Note: we use the highlighter regardless of whether there's hits because

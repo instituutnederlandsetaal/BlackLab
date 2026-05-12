@@ -34,7 +34,7 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
     protected final PropContext context;
 
     public static HitProperty deserialize(Hits hits, String serialized, ContextSize contextSize) {
-        return deserialize(hits.index(), hits.field(), serialized, contextSize);
+        return deserialize(hits.field(), serialized, contextSize);
     }
 
     /**
@@ -45,13 +45,14 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
      * @param serialized the serialized object
      * @return the HitProperty object, or null if it could not be deserialized
      */
-    public static HitProperty deserialize(BlackLabIndex index, AnnotatedField field, String serialized, ContextSize contextSize) {
+    public static HitProperty deserialize(AnnotatedField field, String serialized, ContextSize contextSize) {
+        BlackLabIndex index = field.index();
         if (serialized == null || serialized.isEmpty())
             return null;
         contextSize = ensureNumeric(index, contextSize);
 
         if (PropertySerializeUtil.isMultiple(serialized))
-            return deserializeMultiple(index, field, serialized, contextSize);
+            return deserializeMultiple(field, serialized, contextSize);
 
         List<String> parts = PropertySerializeUtil.splitPartsList(serialized);
         String type = parts.get(0).toLowerCase();
@@ -133,8 +134,9 @@ public abstract class HitProperty implements ResultProperty, LongComparator {
         return result;
     }
 
-    static HitProperty deserializeMultiple(BlackLabIndex index, AnnotatedField field, String serialized,
+    static HitProperty deserializeMultiple(AnnotatedField field, String serialized,
             ContextSize contextSize) {
+        BlackLabIndex index = field.index();
         boolean reverse = false;
         if (serialized.startsWith("-(") && serialized.endsWith(")")) {
             reverse = true;

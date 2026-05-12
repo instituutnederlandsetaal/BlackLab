@@ -43,7 +43,7 @@ public class TestQueryRewrite {
 
     TextPattern getPatternFromCql(String cqlQuery) {
         try {
-            cqlQuery = cqlQuery.replaceAll("'", "\""); // makes queries more readable in tests
+            cqlQuery = cqlQuery.replaceAll("'", "\""); // single quotes for more readable test queries
             return index.getQueryParser("bcql").parse(cqlQuery).pattern();
         } catch (InvalidQuery e) {
             throw BlackLabException.wrapRuntime(e);

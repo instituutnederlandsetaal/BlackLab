@@ -46,38 +46,51 @@ public abstract class RequestHandler {
 
     static final Logger logger = LogManager.getLogger(RequestHandler.class);
 
-    public static final int HTTP_OK = HttpServletResponse.SC_OK;
+    protected static final int HTTP_OK = HttpServletResponse.SC_OK;
 
-    public static final String ENDPOINT_AUTOCOMPLETE     = BlsPath.AUTOCOMPLETE.path();
-    public static final String ENDPOINT_CACHE_CLEAR      = BlsPath.CACHE_CLEAR.path();
-    public static final String ENDPOINT_CACHE_INFO       = BlsPath.CACHE_INFO.path();
-    public static final String ENDPOINT_DOCS             = BlsPath.DOCS.path();
-    public static final String ENDPOINT_DOCS_CSV         = BlsPath.DOCS.path() + "-csv";
-    public static final String ENDPOINT_DOCS_GROUPED     = BlsPath.DOCS.path() + "-grouped";
-    public static final String ENDPOINT_DOCS_GROUPED_CSV = BlsPath.DOCS.path() + "-grouped-csv";
-    public static final String ENDPOINT_DOC_CONTENTS     = "doc-contents";
-    public static final String ENDPOINT_DOC_INFO         = "doc-info";
-    public static final String ENDPOINT_DOC_SNIPPET      = "doc-snippet";
-    public static final String ENDPOINT_FIELDS           = BlsPath.FIELDS.path();
-    public static final String ENDPOINT_HITS             = BlsPath.HITS.path();
-    public static final String ENDPOINT_HITS_CSV         = BlsPath.HITS.path() + "-csv";
-    public static final String ENDPOINT_HITS_GROUPED     = BlsPath.HITS.path() + "-grouped";
-    public static final String ENDPOINT_HITS_GROUPED_CSV = BlsPath.HITS.path() + "-grouped-csv";
-    public static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
-    public static final String ENDPOINT_PARSE_PATTERN    = BlsPath.PARSE_PATTERN.path();
-    public static final String ENDPOINT_RELATIONS        = BlsPath.RELATIONS.path();
-    public static final String ENDPOINT_SCHEMA           = BlsPath.SCHEMA.path();
-    public static final String ENDPOINT_SHARED_WITH_ME   = BlsPath.SHARED_WITH_ME.path();
-    public static final String ENDPOINT_SHARING          = BlsPath.SHARING.path();
-    public static final String ENDPOINT_STATUS           = BlsPath.STATUS.path();
-    public static final String ENDPOINT_TERMFREQ         = BlsPath.TERMFREQ.path();
+    // Top-level endpoints, e.g. /blacklab-server/input-formats
+    private static final String ENDPOINT_CACHE_CLEAR      = BlsPath.CACHE_CLEAR.path();
+    private static final String ENDPOINT_CACHE_INFO       = BlsPath.CACHE_INFO.path();
+    private static final String ENDPOINT_INPUT_FORMATS    = BlsPath.INPUT_FORMATS.path();
+    private static final String ENDPOINT_SCHEMA           = BlsPath.SCHEMA.path();
+    private static final String ENDPOINT_SHARED_WITH_ME   = BlsPath.SHARED_WITH_ME.path();
 
-    public static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
-            WebserviceOperation.CACHE_CLEAR.path(),
-            WebserviceOperation.CACHE_INFO.path(),
-            WebserviceOperation.LIST_INPUT_FORMATS.path(),
-            WebserviceOperation.SCHEMA.path()
+    private static final List<String> TOP_LEVEL_ENDPOINTS = Arrays.asList(
+            ENDPOINT_CACHE_CLEAR,
+            ENDPOINT_CACHE_INFO,
+            ENDPOINT_INPUT_FORMATS,
+            ENDPOINT_SCHEMA,
+            ENDPOINT_SHARED_WITH_ME
     );
+
+    // Corpus-level endpoints e.g. /blacklab-server/corpora/CORPUS_NAME/hits
+    private static final String ENDPOINT_HITS             = BlsPath.HITS.path();
+    private static final String ENDPOINT_HITS_CSV         = BlsPath.HITS.path() + "-csv";
+    private static final String ENDPOINT_HITS_GROUPED     = BlsPath.HITS.path() + "-grouped";
+    private static final String ENDPOINT_HITS_GROUPED_CSV = BlsPath.HITS.path() + "-grouped-csv";
+    private static final String ENDPOINT_COLLOCATIONS     = BlsPath.COLLOCATIONS.path();
+    private static final String ENDPOINT_DOCS             = BlsPath.DOCS.path();
+    private static final String ENDPOINT_DOCS_CSV         = BlsPath.DOCS.path() + "-csv";
+    private static final String ENDPOINT_DOCS_GROUPED     = BlsPath.DOCS.path() + "-grouped";
+    private static final String ENDPOINT_DOCS_GROUPED_CSV = BlsPath.DOCS.path() + "-grouped-csv";
+    private static final String ENDPOINT_PARSE_PATTERN    = BlsPath.PARSE_PATTERN.path();
+    private static final String ENDPOINT_RELATIONS        = BlsPath.RELATIONS.path();
+    private static final String ENDPOINT_FIELDS           = BlsPath.FIELDS.path();
+    private static final String ENDPOINT_TERMFREQ         = BlsPath.TERMFREQ.path();
+    private static final String ENDPOINT_AUTOCOMPLETE     = BlsPath.AUTOCOMPLETE.path();
+    private static final String ENDPOINT_SHARING          = BlsPath.SHARING.path();
+    private static final String ENDPOINT_STATUS           = BlsPath.STATUS.path();
+
+    private static final List<String> CORPUS_LEVEL_ENDPOINTS = Arrays.asList(
+            ENDPOINT_HITS, ENDPOINT_HITS_CSV, ENDPOINT_HITS_GROUPED, ENDPOINT_HITS_GROUPED_CSV, ENDPOINT_COLLOCATIONS,
+            ENDPOINT_DOCS, ENDPOINT_DOCS_CSV, ENDPOINT_DOCS_GROUPED, ENDPOINT_DOCS_GROUPED_CSV,
+            ENDPOINT_PARSE_PATTERN, ENDPOINT_RELATIONS, ENDPOINT_FIELDS, ENDPOINT_TERMFREQ,
+            ENDPOINT_STATUS, ENDPOINT_AUTOCOMPLETE, ENDPOINT_SHARING);
+
+    // Doc-level endpoints, e.g. /blacklab-server/corpora/CORPUS_NAME/docs/DOC_PID/contents
+    private static final String ENDPOINT_DOC_CONTENTS     = "doc-contents";
+    private static final String ENDPOINT_DOC_INFO         = "doc-info";
+    private static final String ENDPOINT_DOC_SNIPPET      = "doc-snippet";
 
     /** The available request handlers by name */
     static final Map<String, Class<? extends RequestHandler>> availableHandlers;
@@ -87,6 +100,7 @@ public abstract class RequestHandler {
         availableHandlers = new HashMap<>();
         availableHandlers.put("", RequestHandlerIndexMetadata.class); // empty path after index = show index metadata
         availableHandlers.put(ENDPOINT_AUTOCOMPLETE,     RequestHandlerAutocomplete.class);
+        availableHandlers.put(ENDPOINT_COLLOCATIONS,     RequestHandlerCollocations.class);
         availableHandlers.put(ENDPOINT_DOCS,             RequestHandlerDocs.class);
         availableHandlers.put(ENDPOINT_DOCS_CSV,         RequestHandlerDocsCsv.class);
         availableHandlers.put(ENDPOINT_DOCS_GROUPED,     RequestHandlerDocsGrouped.class);
@@ -282,11 +296,7 @@ public abstract class RequestHandler {
                         }
 
                         if (debugMode && !handlerName.isEmpty()
-                                && !Arrays.asList(
-                                ENDPOINT_HITS, ENDPOINT_HITS_CSV, ENDPOINT_HITS_GROUPED_CSV,
-                                ENDPOINT_DOCS, ENDPOINT_DOCS_CSV, ENDPOINT_DOCS_GROUPED_CSV,
-                                ENDPOINT_PARSE_PATTERN, ENDPOINT_RELATIONS, ENDPOINT_FIELDS, ENDPOINT_TERMFREQ,
-                                ENDPOINT_STATUS, ENDPOINT_AUTOCOMPLETE, ENDPOINT_SHARING).contains(handlerName)) {
+                                && !CORPUS_LEVEL_ENDPOINTS.contains(handlerName)) {
                             handlerName = "debug";
                         }
 

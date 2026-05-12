@@ -18,7 +18,7 @@ import java.util.Optional;
 public enum WebserviceParameter {
 
     // Hits to search
-    PATTERN("patt", Type.PATTERN),
+    PATTERN("patt", Type.STRING_OR_JSON_OBJECT),
     PATTERN_LANGUAGE("pattlang"),
     PATTERN_GAP_DATA("pattgapdata"),
 
@@ -82,14 +82,13 @@ public enum WebserviceParameter {
     INCLUDE_GROUP_CONTENTS("includegroupcontents", Type.BOOLEAN), // include hits with the group response? (false)
 
     // for term frequency
-    PROPERTY("property"), // DEPRECATED, now called "annotation",
     ANNOTATION("annotation"),
     SENSITIVE("sensitive", Type.BOOLEAN),
     TERMS("terms"),
 
     // How to execute request
     WAIT_FOR_TOTAL_COUNT("waitfortotal", Type.BOOLEAN), // wait until total number of results known?
-    TERM("term"), // term for autocomplete
+    TERM("term"), // term (for autocomplete, collocations)
     AUTOCOMPLETE_TYPE("complete"), // for autocomplete on metadata fields, return the original value or an indexed term?
 
     // CSV options
@@ -117,15 +116,16 @@ public enum WebserviceParameter {
     SEARCH_FIELD("searchfield"), // annotated field to search (parallel, if different from field)
     INPUT_FORMAT("inputformat"),
     CONVERTERS("converters", Type.JSON), // extra FileConverts to apply to uploaded file(s)
-    SCORER("scorer", Type.JSON), // scorer to apply (to grouped results for now, maybe also hits in the future)
+    SCORER("scorer", Type.STRING_OR_JSON_OBJECT), // scorer to apply (to grouped results for now, maybe also hits in the future)
     API_VERSION("api");
 
     /** Parameter type */
     public enum Type {
         /** string value (default) */
         STRING,
-        /** a query pattern, e.g. query string or JSON structure ("patt" only) */
-        PATTERN,
+        /** a JSON object (if it starts with '{'}) or a string.
+         *  e.g. used for "patt" */
+        STRING_OR_JSON_OBJECT,
         /** boolean value */
         BOOLEAN,
         /** long integer value */
@@ -178,7 +178,6 @@ public enum WebserviceParameter {
         defaultValues.put(NUMBER_OF_RESULTS, "50");
         defaultValues.put(OMIT_EMPTY_CAPTURES, "no");
         defaultValues.put(PATTERN_LANGUAGE, "default");
-        defaultValues.put(PROPERTY, "word"); // deprecated, use "annotation" now
         defaultValues.put(REL_SEPARATE_SPANS, "yes");
         defaultValues.put(SENSITIVE, "no");
         defaultValues.put(AUTOCOMPLETE_TYPE, "term");

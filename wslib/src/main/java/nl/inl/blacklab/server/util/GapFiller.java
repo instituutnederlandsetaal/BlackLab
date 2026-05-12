@@ -17,6 +17,7 @@ import nl.inl.blacklab.search.BLQueryParser;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternOr;
+import nl.inl.util.StringUtil;
 
 /**
  * Fills gaps in a template string with column values from TSV data.
@@ -50,12 +51,12 @@ public class GapFiller {
     private GapFiller() {
     }
 
-    public static TextPattern parseGapQuery(BlackLabIndex index, String queryTemplate, String tsvValues) throws InvalidQuery {
+    public static TextPattern parseBcqlGapQuery(BlackLabIndex index, String queryTemplate, String tsvValues) throws InvalidQuery {
         try {
             // Fill in the gaps
             Iterable<CSVRecord> values = parseTsv(new BufferedReader(new StringReader(tsvValues))
             );
-            return parseGapQuery(index, queryTemplate, values);
+            return parseBcqlGapQuery(index, queryTemplate, values);
         } catch (IOException e) {
             throw new InvalidQuery(e);
         }
@@ -83,13 +84,13 @@ public class GapFiller {
     /**
      * Fill the data values in in the template.
      *
-     * @param template the template with gaps to fill in values
+     * @param queryTemplate the template with gaps to fill in values
      * @param values values to fill in, one list of strings per gap
      * @return the filled-in template
      * @throws InvalidQuery if the resulting CQL contains an error
      */
-    private static TextPattern parseGapQuery(BlackLabIndex index, String template, Iterable<CSVRecord> values) throws InvalidQuery {
-        String[] parts = template.split(GapFiller.GAP_REGEX, -1);
+    private static TextPattern parseBcqlGapQuery(BlackLabIndex index, String queryTemplate, Iterable<CSVRecord> values) throws InvalidQuery {
+        String[] parts = queryTemplate.split(GapFiller.GAP_REGEX, -1);
 
         List<TextPattern> results = new ArrayList<>();
         for (CSVRecord valueRow : values) {
@@ -100,9 +101,9 @@ public class GapFiller {
             for (int i = 0; i < parts.length; i++) {
                 result.append(parts[i]);
                 if (i < parts.length - 1) {
+                    // Fill in a value here, taking care to escape quotes
                     String val = valueRow.size() > i ? valueRow.get(i) : "";
-                    String replaced = val.replaceAll("\"", "\\\\\"");
-                    result.append(replaced);
+                    result.append(StringUtil.escapeQuoteForBcql(val, "\""));
                 }
             }
             BLQueryParser parser = index.getQueryParser("bcql");

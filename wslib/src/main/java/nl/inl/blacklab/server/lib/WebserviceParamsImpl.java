@@ -37,7 +37,6 @@ import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
 import nl.inl.blacklab.searches.SearchDocs;
-import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
@@ -51,7 +50,9 @@ import nl.inl.blacklab.server.jobs.HitGroupSettings;
 import nl.inl.blacklab.server.jobs.HitGroupSortSettings;
 import nl.inl.blacklab.server.jobs.HitSortSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
+import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -200,29 +201,21 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return filterQuery;
     }
 
+    /**
+     * Explicitly set a filter query to override any supplied in the "filter" param.
+     *
+     * With Solr, if there's no explicit "filter" parameter set, we use Solr's document results as the filter.
+     *
+     * @param query the filter query to use for this request
+     */
     public void setFilterQuery(Query query) {
         this.filterQuery = query;
     }
 
-    /**
-     * @return hits - filtered then sorted then sampled then windowed
-     */
     @Override
-    public SearchHits hitsWindow() throws BlsException {
-        WindowSettings windowSettings = windowSettings();
-        if (windowSettings == null)
-            return hitsSample();
-        return hitsSample().window(windowSettings.first(), windowSettings.size());
-    }
-
-    @Override
-    public WindowSettings windowSettings() {
-        return windowSettings(configParam().getPageSize().getMax());
-    }
-
-    @Override
-    public WindowSettings windowSettings(long clampMaxSize) {
-        long size = Math.min(Math.max(0, getNumberOfResultsToShow()), clampMaxSize);
+    public WindowSettings windowSettings(boolean isCsv) {
+        long maxSize = WebserviceOperations.getMaxWindowSize(getSearchManager(), isCsv);
+        long size = Math.min(Math.max(0, getNumberOfResultsToShow()), maxSize);
         return new WindowSettings(getFirstResultToShow(), size);
     }
 
@@ -289,10 +282,9 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return new DocSortSettings(sortProp);
     }
 
-    private HitGroupSortSettings hitGroupSortSettings() {
+    public HitGroupSortSettings hitGroupSortSettings(HitGroupProperty defaultSortBy) {
         HitGroupProperty sortProp = null;
         if (!isDocsOperation) {
-            // not grouping, so no group sort
             Optional<String> groupProps = getGroupProps();
             if (groupProps.isPresent()) {
                 Optional<String> sortBy = getSortProps();
@@ -304,7 +296,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         }
         if (sortProp == null) {
             // By default, show largest group first
-            sortProp = HitGroupPropertySize.get();
+            sortProp = defaultSortBy;
         }
         return new HitGroupSortSettings(sortProp);
     }
@@ -331,8 +323,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
         Optional<String> sortBy = getSortProps();
         if (sortBy.isEmpty())
             return null;
-        HitProperty sortProp = HitProperty.deserialize(blIndex(), getAnnotatedField(),
-                sortBy.get(), getContext());
+        HitProperty sortProp = HitProperty.deserialize(getAnnotatedField(), sortBy.get(), getContext());
         return new HitSortSettings(sortProp);
     }
 
@@ -419,55 +410,57 @@ public class WebserviceParamsImpl implements WebserviceParams {
 
     // -------- Create Search instances -----------
 
+    public record RequestPropFilter(HitProperty prop, PropertyValue value) {
+        public static RequestPropFilter fromParams(WebserviceParamsImpl params) {
+            if (!StringUtils.isEmpty(params.getHitFilterCriterium()) && !StringUtils.isEmpty(params.getHitFilterValue())) {
+                String hitFilterCrit = params.getHitFilterCriterium();
+                String hitFilterVal = params.getHitFilterValue();
+                AnnotatedField annotatedField = params.getAnnotatedField();
+                ContextSize context = params.getContext();
+                HitProperty prop = HitProperty.deserialize(annotatedField, hitFilterCrit, context);
+                PropertyValue value = PropertyValue.deserialize(annotatedField, hitFilterVal);
+                return new RequestPropFilter(prop, value);
+            }
+            return null;
+        }
+    }
+
     /**
      * @return hits - filtered then sorted then sampled
      */
-    @Override
-    public SearchHits hitsSample() throws BlsException {
-        SampleParameters sampleSettings = sampleSettings();
-        if (sampleSettings == null)
-            return hitsSorted();
-        return hitsSorted().sample(sampleSettings);
-    }
+    public static SearchHits determineHitsSearch(RequestHits requestHits) throws BlsException {
 
-    /**
-     * @return hits - filtered then sorted
-     */
-    private SearchHits hitsSorted() throws BlsException {
-        HitSortSettings hitsSortSettings = hitsSortSettings();
-        if (hitsSortSettings == null)
-            return hitsFiltered();
-        return hitsFiltered().sort(hitsSortSettings.sortBy());
-    }
-
-    private SearchHits hitsFiltered() throws BlsException {
-        String hitFilterCrit = getHitFilterCriterium();
-        String hitFilterVal = getHitFilterValue();
-        if (StringUtils.isEmpty(hitFilterCrit) || StringUtils.isEmpty(hitFilterVal))
-            return hits();
-        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), hitFilterCrit,
-                getContext());
-        PropertyValue value = PropertyValue.deserialize(blIndex(), getAnnotatedField(), hitFilterVal);
-        return hits().filter(prop, value);
-    }
-
-    private SearchHits hits() throws BlsException {
-        SearchEmpty search = blIndex().search(getSearchField(), useCache());
+        // Find hits
+        TextPattern pattern = requestHits.pattern();
+        if (pattern == null)
+            throw new BadRequest("NO_PATTERN_GIVEN",
+                    "Text search pattern required. Please specify 'patt' parameter.");
+        if (requestHits.adjustHits() || requestHits.withSpans())
+            pattern = pattern.adjustTextPattern(requestHits.adjustHits(), requestHits.withSpans());
+        SearchHits hits;
         try {
-            Query filter = filterQuery();
-            Optional<TextPattern> pattern = pattern();
-            if (pattern.isEmpty())
-                throw new BadRequest("NO_PATTERN_GIVEN", "Text search pattern required. Please specify 'patt' parameter.");
-
-            SearchSettings searchSettings = searchSettings();
-            boolean adjustHits = params.getAdjustRelationHits();
-            boolean withSpans = params.getWithSpans();
-            TextPattern tp = adjustHits || withSpans ? pattern.get().adjustTextPattern(adjustHits, withSpans) : pattern.get();
-            CompleteQuery cp = new CompleteQuery(tp, filter);
-            return search.find(cp, searchSettings);
+            CompleteQuery cp = new CompleteQuery(pattern, requestHits.filterQuery());
+            hits = requestHits.index().search(requestHits.searchField(), requestHits.useCache())
+                    .find(cp, requestHits.searchSettings());
         } catch (InvalidQuery e) {
             throw BadRequest.pattSyntaxError(e);
         }
+
+        // Optionally filter by property and value
+        RequestPropFilter filter = requestHits.propFilter();
+        if (filter != null) {
+            hits = hits.filter(filter.prop(), filter.value());
+        }
+
+        // Optionally sort
+        if (requestHits.sortBy() != null)
+            hits = hits.sort(requestHits.sortBy());
+
+        // Optionally sample
+        if (requestHits.sampleParams() != null)
+            hits = hits.sample(requestHits.sampleParams());
+
+        return hits;
     }
 
     /**
@@ -481,7 +474,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
      *
      * @return the annotated field
      */
-    private AnnotatedField getSearchField() {
+    public AnnotatedField getSearchField() {
         if (params.getSearchFieldName().isPresent())
             return resolveFieldName(params.getSearchFieldName().get()).orElse(getAnnotatedField());
         return getAnnotatedField();
@@ -523,14 +516,6 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public SearchDocs docsWindow() throws BlsException {
-        WindowSettings windowSettings = windowSettings();
-        if (windowSettings == null)
-            return docsSorted();
-        return docsSorted().window(windowSettings.first(), windowSettings.size());
-    }
-
-    @Override
     public SearchDocs docsSorted() throws BlsException {
         DocSortSettings docSortSettings = docSortSettings();
         if (docSortSettings == null)
@@ -541,20 +526,15 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public SearchCount docsCount() throws BlsException {
         if (hasPattern())
-            return hitsSample().docCount();
+            return determineHitsSearch(RequestHits.fromParams(this)).docCount();
         return docs().count();
     }
 
     @Override
     public SearchDocs docs() throws BlsException {
         if (hasPattern())
-            return hitsSample().docs(-1);
-        Query docFilterQuery = filterQuery();
-        if (docFilterQuery == null) {
-            docFilterQuery = blIndex().getAllRealDocsQuery();
-        }
-        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
-        return search.findDocuments(docFilterQuery);
+            return determineHitsSearch(RequestHits.fromParams(this)).docs(-1);
+        return WebserviceParams.getSubcorpusSearch(this);
     }
 
     /**
@@ -567,12 +547,7 @@ public class WebserviceParamsImpl implements WebserviceParams {
      */
     @Override
     public SearchDocs subcorpus() throws BlsException {
-        Query docFilterQuery = filterQuery();
-        if (docFilterQuery == null) {
-            docFilterQuery = blIndex().getAllRealDocsQuery();
-        }
-        SearchEmpty search = blIndex().search(getAnnotatedField(), useCache());
-        return search.findDocuments(docFilterQuery);
+        return WebserviceParams.getSubcorpusSearch(this);
     }
 
     /**
@@ -602,27 +577,18 @@ public class WebserviceParamsImpl implements WebserviceParams {
                 .orElse(HitGroupScorer.NONE);
     }
 
-    @Override
-    public SearchHitGroups hitsGroupedStats() throws BlsException {
-        return hitsSample()
-                .groupStats(getHitGroupProperty(), Results.NO_LIMIT,
-                        getHitGroupScorer())
-                .sort(hitGroupSortSettings().sortBy());
+    public static SearchHitGroups hitsGroupedStats(WebserviceParams params) throws BlsException {
+        return determineHitsSearch(RequestHits.fromParams(params))
+                .groupStats(((WebserviceParamsImpl)params).getHitGroupProperty(), Results.NO_LIMIT,
+                        params.getHitGroupScorer())
+                .sort(((WebserviceParamsImpl)params).hitGroupSortSettings(HitGroupPropertySize.get()).sortBy());
     }
 
-    @Override
-    public SearchHitGroups hitsGroupedWithStoredHits() throws BlsException {
-        return hitsSample().groupWithStoredHits(getHitGroupProperty(),
-                        Results.NO_LIMIT, getHitGroupScorer())
-                .sort(hitGroupSortSettings().sortBy());
-    }
-
-    private HitProperty getHitGroupProperty() {
+    public HitProperty getHitGroupProperty() {
         HitGroupSettings hitGroupSettings = hitGroupSettings();
         assert hitGroupSettings != null;
         String groupProps = hitGroupSettings.groupBy();
-        HitProperty prop = HitProperty.deserialize(blIndex(), getAnnotatedField(), groupProps,
-                getContext());
+        HitProperty prop = HitProperty.deserialize(getAnnotatedField(), groupProps, getContext());
         if (prop == null)
             throw new BadRequest("UNKNOWN_GROUP_PROPERTY", "Unknown group property '" + groupProps + "'.");
         return prop;
@@ -846,8 +812,8 @@ public class WebserviceParamsImpl implements WebserviceParams {
     }
 
     @Override
-    public String getAutocompleteTerm() {
-        return params.getAutocompleteTerm();
+    public String getTerm() {
+        return params.getTerm();
     }
 
     @Override

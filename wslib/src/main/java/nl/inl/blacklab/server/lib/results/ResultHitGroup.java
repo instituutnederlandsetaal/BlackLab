@@ -1,12 +1,10 @@
 package nl.inl.blacklab.server.lib.results;
 
-import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.resultproperty.DocProperty;
-import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.results.CorpusSize;
 import nl.inl.blacklab.search.results.docs.DocResults;
@@ -16,7 +14,7 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.RequestHitsGrouped;
 
 public class ResultHitGroup {
 
@@ -32,29 +30,30 @@ public class ResultHitGroup {
 
     private ResultListOfHits listOfHits = null;
 
-    ResultHitGroup(WebserviceParams params, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
-            DocResults subcorpus, List<HitProperty> prop, Map<Integer, Document> luceneDocs) {
+    ResultHitGroup(RequestHitsGrouped reqGroup, HitGroups groups, HitGroup group, DocProperty metadataGroupProperties,
+            DocResults subcorpus, Map<Integer, Document> luceneDocs) {
         this.group = group;
         PropertyValue id = group.identity();
 
         if (metadataGroupProperties != null) {
             // Find size of corresponding subcorpus group
             PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
-            subcorpusSize = WebserviceOperations.findSubcorpusSize(params, subcorpus.query(), metadataGroupProperties,
+            subcorpusSize = WebserviceOperations.findSubcorpusSize(reqGroup.index(), subcorpus.query(), metadataGroupProperties,
                     docPropValues);
         }
 
         numberOfDocsInGroup = group.docsStats().countedTotal();
 
-        if (params.getIncludeGroupContents()) {
+        if (reqGroup.includeGroupContents()) {
             HitResults groupResults = group.storedResults();
             Hits hitsInGroup = groupResults.getHits();
-            ContextSettings contextSettings = params.contextSettings();
+            ContextSettings contextSettings = reqGroup.contextSettings();
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
                     contextSettings.size());
-            docIdToPid = WebserviceOperations.collectDocsAndPids(params.blIndex(), hitsInGroup, luceneDocs);
-
-            listOfHits = WebserviceOperations.listOfHits(params, groupResults, getConcordanceContext(),
+            docIdToPid = WebserviceOperations.collectDocsAndPids(reqGroup.index(), hitsInGroup, luceneDocs);
+            listOfHits = WebserviceOperations.listOfHits(
+                    reqGroup.hitsReponseSettings().annotationsToWrite(), contextSettings,
+                    reqGroup.hitsReponseSettings().omitEmptyCaptures(), groupResults, getConcordanceContext(),
                     getDocIdToPid());
         }
     }

@@ -59,61 +59,61 @@ public class TestStringUtil {
     public void testEscapeQuote2() {
         String escaped = "\\\\\\\"";  // user entered \\\"
         String unescaped = "\\\\\"";  // only quote is unescaped
-        Assert.assertEquals(unescaped, StringUtil.unescapeQuote(escaped, "\""));
-        Assert.assertEquals(escaped, StringUtil.escapeQuote(unescaped, "\""));
+        Assert.assertEquals(unescaped, StringUtil.unescapeQuoteForLuceneRegex(escaped, "\""));
+        Assert.assertEquals(escaped, StringUtil.escapeQuoteForBcql(unescaped, "\""));
     }
 
     @Test
     public void testEscapeQuote() {
         // Escape the correct quote
-        Assert.assertEquals("test'\\\"test", StringUtil.escapeQuote("test'\"test", "\""));
-        Assert.assertEquals("test\\'\"test", StringUtil.escapeQuote("test'\"test", "'"));
+        Assert.assertEquals("test'\\\"test", StringUtil.escapeQuoteForBcql("test'\"test", "\""));
+        Assert.assertEquals("test\\'\"test", StringUtil.escapeQuoteForBcql("test'\"test", "'"));
 
         // Don't do anything to non-quote and non-backslash, whether they're already escaped or not
-        Assert.assertEquals("test\\s\\n\\test", StringUtil.escapeQuote("test\\s\\n\\test", "\""));
-        Assert.assertEquals("test\\s\\n\\test", StringUtil.escapeQuote("test\\s\\n\\test", "'"));
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.escapeQuoteForBcql("test\\s\\n\\test", "\""));
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.escapeQuoteForBcql("test\\s\\n\\test", "'"));
 
         // Double-escape if you have to
-        Assert.assertEquals("test\\\\\"test", StringUtil.escapeQuote("test\\\"test", "\""));
-        Assert.assertEquals("test\\\\'test", StringUtil.escapeQuote("test\\'test", "'"));
+        Assert.assertEquals("test\\\\\"test", StringUtil.escapeQuoteForBcql("test\\\"test", "\""));
+        Assert.assertEquals("test\\\\'test", StringUtil.escapeQuoteForBcql("test\\'test", "'"));
 
         // Let's combine a bunch of stuff
         String escaped   = "bla\\\\\\\"\\'\\\\\\s\\n\\\"\\'bla\\";
         String unescapedDouble = "bla\\\\\"\\'\\\\\\s\\n\"\\'bla\\";
-        Assert.assertEquals(unescapedDouble, StringUtil.unescapeQuote(escaped, "\""));
-        Assert.assertEquals(escaped, StringUtil.escapeQuote(unescapedDouble, "\""));
+        Assert.assertEquals(unescapedDouble, StringUtil.unescapeQuoteForLuceneRegex(escaped, "\""));
+        Assert.assertEquals(escaped, StringUtil.escapeQuoteForBcql(unescapedDouble, "\""));
         String unescapedSingle = "bla\\\\\\\"'\\\\\\s\\n\\\"'bla\\";
-        Assert.assertEquals(unescapedSingle, StringUtil.unescapeQuote(escaped, "'"));
-        Assert.assertEquals(escaped, StringUtil.escapeQuote(unescapedSingle, "'"));
+        Assert.assertEquals(unescapedSingle, StringUtil.unescapeQuoteForLuceneRegex(escaped, "'"));
+        Assert.assertEquals(escaped, StringUtil.escapeQuoteForBcql(unescapedSingle, "'"));
 
         // Test roundtrip as well
-        Assert.assertEquals(unescapedDouble, StringUtil.unescapeQuote(StringUtil.escapeQuote(unescapedDouble, "\""), "\""));
-        Assert.assertEquals(escaped, StringUtil.escapeQuote(StringUtil.unescapeQuote(escaped, "\""), "\""));
-        Assert.assertEquals(unescapedSingle, StringUtil.unescapeQuote(StringUtil.escapeQuote(unescapedSingle, "'"), "'"));
-        Assert.assertEquals(escaped, StringUtil.escapeQuote(StringUtil.unescapeQuote(escaped, "'"), "'"));
+        Assert.assertEquals(unescapedDouble, StringUtil.unescapeQuoteForLuceneRegex(StringUtil.escapeQuoteForBcql(unescapedDouble, "\""), "\""));
+        Assert.assertEquals(escaped, StringUtil.escapeQuoteForBcql(StringUtil.unescapeQuoteForLuceneRegex(escaped, "\""), "\""));
+        Assert.assertEquals(unescapedSingle, StringUtil.unescapeQuoteForLuceneRegex(StringUtil.escapeQuoteForBcql(unescapedSingle, "'"), "'"));
+        Assert.assertEquals(escaped, StringUtil.escapeQuoteForBcql(StringUtil.unescapeQuoteForLuceneRegex(escaped, "'"), "'"));
     }
 
     @Test
     public void testUnescapeQuote() {
         // Don't trip over quotes that are not escaped
-        Assert.assertEquals("test'\"test", StringUtil.unescapeQuote("test'\"test", "\""));
-        Assert.assertEquals("test'\"test", StringUtil.unescapeQuote("test'\"test", "'"));
+        Assert.assertEquals("test'\"test", StringUtil.unescapeQuoteForLuceneRegex("test'\"test", "\""));
+        Assert.assertEquals("test'\"test", StringUtil.unescapeQuoteForLuceneRegex("test'\"test", "'"));
 
         // Don't unescape non-quote and non-backslash
-        Assert.assertEquals("test\\s\\n\\test", StringUtil.unescapeQuote("test\\s\\n\\test", "\""));
-        Assert.assertEquals("test\\s\\n\\test", StringUtil.unescapeQuote("test\\s\\n\\test", "'"));
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.unescapeQuoteForLuceneRegex("test\\s\\n\\test", "\""));
+        Assert.assertEquals("test\\s\\n\\test", StringUtil.unescapeQuoteForLuceneRegex("test\\s\\n\\test", "'"));
 
         // Do unescape
-        Assert.assertEquals("test\"test", StringUtil.unescapeQuote("test\\\"test", "\""));
-        Assert.assertEquals("test'test", StringUtil.unescapeQuote("test\\'test", "'"));
+        Assert.assertEquals("test\"test", StringUtil.unescapeQuoteForLuceneRegex("test\\\"test", "\""));
+        Assert.assertEquals("test'test", StringUtil.unescapeQuoteForLuceneRegex("test\\'test", "'"));
 
         // Don't unescape other quote type
-        Assert.assertEquals("test\\\"test", StringUtil.unescapeQuote("test\\\"test", "'"));
-        Assert.assertEquals("test\\'test", StringUtil.unescapeQuote("test\\'test", "\""));
+        Assert.assertEquals("test\\\"test", StringUtil.unescapeQuoteForLuceneRegex("test\\\"test", "'"));
+        Assert.assertEquals("test\\'test", StringUtil.unescapeQuoteForLuceneRegex("test\\'test", "\""));
 
         // Don't get confused by multiple backslashes
-        Assert.assertEquals("test\\\\test", StringUtil.unescapeQuote("test\\\\test", "\""));
-        Assert.assertEquals("test\\\\\"test", StringUtil.unescapeQuote("test\\\\\\\"test", "\""));
-        Assert.assertEquals("test\\\\\"test", StringUtil.unescapeQuote("test\\\\\"test", "\""));
+        Assert.assertEquals("test\\\\test", StringUtil.unescapeQuoteForLuceneRegex("test\\\\test", "\""));
+        Assert.assertEquals("test\\\\\"test", StringUtil.unescapeQuoteForLuceneRegex("test\\\\\\\"test", "\""));
+        Assert.assertEquals("test\\\\\"test", StringUtil.unescapeQuoteForLuceneRegex("test\\\\\"test", "\""));
     }
 }

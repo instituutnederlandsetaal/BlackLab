@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import nl.inl.blacklab.search.BlackLabIndex;
@@ -24,7 +23,7 @@ public class HitPropertyMultiple extends HitProperty implements Iterable<HitProp
         List<HitProperty> values = new ArrayList<>();
         for (String strValue: strValues) {
             if (!strValue.isEmpty()) {
-                HitProperty prop = HitProperty.deserialize(index, field, strValue, contextSize);
+                HitProperty prop = HitProperty.deserialize(field, strValue, contextSize);
                 if (prop == null)
                     throw new IllegalArgumentException("Incorrect hit property string: '" + strValue + "'");
                 values.add(prop);

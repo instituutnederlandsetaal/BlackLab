@@ -1,2 +1,3 @@
 nl.inl.blacklab.search.results.hitresults.HitGroupScorerDice
 nl.inl.blacklab.search.results.hitresults.HitGroupScorerSalience
+nl.inl.blacklab.search.results.hitresults.HitGroupScorerSize

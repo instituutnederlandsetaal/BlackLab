@@ -372,11 +372,6 @@ public class ResponseStreamer {
         }
         ds.endMap().endEntry();
 
-        Index.IndexStatus indexStatus = summaryFields.getIndexStatus();
-        if (indexStatus != null && indexStatus != Index.IndexStatus.AVAILABLE) {
-            ds.entry("indexStatus", indexStatus.toString());
-        }
-
         TextPattern textPattern = summaryFields.getTextPattern();
         if (textPattern != null) {
             // Show how pattern was parsed
@@ -613,7 +608,6 @@ public class ResponseStreamer {
     }
 
     public void listOfHits(ResultListOfHits result) throws BlsException {
-        nl.inl.blacklab.server.lib.WebserviceParams params = result.getParams();
         HitResults hitResults = result.getHits();
 
         ds.startEntry("hits").startList();
@@ -624,15 +618,15 @@ public class ResponseStreamer {
                 String docPid = result.getDocIdToPid().get(hit.doc());
                 Map<String, MatchInfo> matchInfos = null;
                 if (hitsList.hasMatchInfo()) {
-                    matchInfos = hitsList.matchInfoDefs().getMap(hit.matchInfos(), params.getOmitEmptyCaptures());
+                    matchInfos = hitsList.matchInfoDefs().getMap(hit.matchInfos(), result.getOmitEmptyCaptures());
                     if (matchInfos == null && logger != null)
                         logger.warn(
-                                "MISSING CAPTURE GROUP: " + docPid + ", query: " + params.getPattern());
+                                "MISSING CAPTURE GROUP: " + docPid);
                 }
 
-                hit(docPid, hit, hitResults.field(), matchInfos, params.contextSettings().size(),
+                hit(docPid, hit, hitResults.field(), matchInfos, result.getContextSettings().size(),
                         result.getConcordanceContext(),
-                        result.getAnnotationsToWrite());
+                        result.getAnnotationsToList());
             }
             ds.endItem();
         }
@@ -1206,7 +1200,7 @@ public class ResponseStreamer {
             }
             ds.endList().endEntry();
 
-            if (hitsGrouped.getParams().getIncludeGroupContents()) {
+            if (hitsGrouped.isIncludeGroupContents()) {
                 documentInfos(hitsGrouped.getDocInfos());
             }
         }

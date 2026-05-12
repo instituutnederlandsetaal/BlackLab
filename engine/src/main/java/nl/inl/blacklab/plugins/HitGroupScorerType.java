@@ -67,6 +67,10 @@ public abstract class HitGroupScorerType extends Plugin {
 
     public static abstract class HitGroupCollocationScorer implements HitGroupScorer {
 
+        public static final String KEY_TERM = "term";
+        public static final String KEY_ANNOTATION = "annotation";
+        public static final String KEY_SENSITIVITY = "sensitivity";
+
         private final BlackLabIndex index;
 
         private final AnnotationSensitivity collocateAnnotation;
@@ -85,16 +89,27 @@ public abstract class HitGroupScorerType extends Plugin {
         public static HitGroupScorer get(AnnotatedField field, HitGroupScorerType type,
                 Map<String, Object> parameters) {
             // Total number of tokens in this field
-            String annotation = parameters.getOrDefault("annotation", "").toString();
+            String annotation = parameters.getOrDefault(KEY_ANNOTATION, "").toString();
             if (annotation.isEmpty())
                 throw new IllegalArgumentException("Collocation scorer needs annotation");
-            MatchSensitivity sensitivity = MatchSensitivity.fromName(parameters.getOrDefault("sensitivity", "i").toString());
+            MatchSensitivity sensitivity = MatchSensitivity.fromName(parameters.getOrDefault(KEY_SENSITIVITY, "i").toString());
             AnnotationSensitivity annotSensitivity = field.annotation(annotation).sensitivity(sensitivity);
             long totalFrequency = field.index().metadata().countPerField().get(field.name()).getTokens();
-            String term = parameters.getOrDefault("term", "").toString();
-            if (term.isEmpty())
+            String term = parameters.getOrDefault(KEY_TERM, "").toString();
+            long termFrequency;
+            // TODO: we don't take a document filter into account here!
+            if (term.isEmpty()) {
                 throw new IllegalArgumentException("Collocation scorer needs term");
-            long termFrequency = LuceneUtil.getTermFrequency(annotSensitivity, term, ACCURATE_TERM_FREQ);
+                // TODO: use pattern, and find number of hits for given pattern?
+//                String pattern = parameters.getOrDefault("patt", "").toString();
+//                if (pattern.isEmpty())
+//                    throw new IllegalArgumentException("Collocation scorer needs term");
+//                CompleteQuery cq = new CompleteQuery(tp);
+//                field.index().find(field, cq);
+//                termFrequency = ;
+            } else {
+                termFrequency = LuceneUtil.getTermFrequency(annotSensitivity, term, ACCURATE_TERM_FREQ);
+            }
             return type.getCollocationScorer(annotSensitivity, totalFrequency, termFrequency);
         }
 
@@ -103,7 +118,8 @@ public abstract class HitGroupScorerType extends Plugin {
                 List<String> terms = pvcw.terms();
                 if (terms.size() == 1) {
                     // Determine the term's frequency
-                    return LuceneUtil.getTermFrequency(collocateAnnotation,identity.toString(), ACCURATE_TERM_FREQ);
+                    String string = pvcw.getSensitivity().desensitize(identity.toString());
+                    return LuceneUtil.getTermFrequency(collocateAnnotation, string, ACCURATE_TERM_FREQ);
                 }
                 throw new UnsupportedOperationException("Only single-term collocates are supported for now");
             }

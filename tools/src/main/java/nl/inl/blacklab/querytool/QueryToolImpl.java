@@ -756,7 +756,7 @@ public class QueryToolImpl {
             timings = search.queryInfo().timings();
 
             if (alwaysSortBy != null) {
-                search = search.sort(HitProperty.deserialize(index, contentsField, alwaysSortBy, contextSize));
+                search = search.sort(HitProperty.deserialize(contentsField, alwaysSortBy, contextSize));
             }
 
             hitResults = search.execute();

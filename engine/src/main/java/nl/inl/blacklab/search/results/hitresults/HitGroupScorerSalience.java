@@ -22,6 +22,8 @@ public class HitGroupScorerSalience extends HitGroupScorerType {
             @Override
             public double score(PropertyValue identity, long size) {
                 long collocateFrequency = getCollocateFrequency(identity);
+                if (collocateFrequency == 0)
+                    collocateFrequency = 1;
                 double temp = (size / (double)wordFrequency) / (double)collocateFrequency;
                 temp *= totalFrequency;
                 return ( StrictMath.log(size) * StrictMath.log(temp) / StrictMath.log(2.0) );

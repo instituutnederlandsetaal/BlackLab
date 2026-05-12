@@ -19,6 +19,7 @@ public enum WebserviceOperation {
     HITS("hits", BlsPath.HITS),
     HITS_CSV("hits-csv", BlsPath.HITS), // not ideal that this is a separate operation, but output is quite different
     HITS_GROUPED("hits-grouped", BlsPath.HITS),  // should -grouped be separate? (triggered by group/viewgroup params)
+    COLLOCATIONS("collocations", BlsPath.COLLOCATIONS),  // convenient URL for collocations (which are a type of grouped hits)
     PARSE_PATTERN("parse-pattern", BlsPath.PARSE_PATTERN),
 
     RELATIONS("relations", BlsPath.RELATIONS),

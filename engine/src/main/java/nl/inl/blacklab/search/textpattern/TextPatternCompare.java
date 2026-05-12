@@ -182,7 +182,7 @@ public class TextPatternCompare extends TextPattern {
 
                     // Lucene's regex engine requires double quotes to be escaped, unlike most others.
                     // Escape double quotes
-                    valueDesensitized = StringUtil.escapeQuote(valueDesensitized, "\"");
+                    valueDesensitized = StringUtil.escapeQuoteForBcql(valueDesensitized, "\"");
 
                     try {
                         Term term = new Term(context.luceneField(), valueDesensitized);

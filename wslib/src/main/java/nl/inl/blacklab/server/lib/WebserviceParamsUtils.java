@@ -33,7 +33,7 @@ public class WebserviceParamsUtils {
             if (pattLang.matches("default|corpusql") && !StringUtils.isBlank(pattGapData) && GapFiller.hasGaps(patt)) {
                 // CQL query with gaps, and TSV data to put in the gaps
                 try {
-                    pattern = GapFiller.parseGapQuery(index, patt, pattGapData);
+                    pattern = GapFiller.parseBcqlGapQuery(index, patt, pattGapData);
                 } catch (InvalidQuery e) {
                     throw new BadRequest("PATT_SYNTAX_ERROR",
                             "Syntax error in gapped CorpusQL pattern: " + e.getMessage());

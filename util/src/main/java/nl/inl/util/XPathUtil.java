@@ -89,6 +89,6 @@ public class XPathUtil {
      * @return XPath expression
      */
     public static String fixedStringToXpath(String s) {
-        return "\"" + s.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\"") + "\"";
+        return "\"" + s.replaceAll("\\\\", "\\\\").replaceAll("\"", "\\\\\"") + "\"";
     }
 }

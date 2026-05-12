@@ -25,9 +25,10 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.util.SearchTimer;
 
 public class ResultDocs {
@@ -103,7 +104,7 @@ public class ResultDocs {
     static ResultDocs docsResponse(WebserviceParams params, long maxWindowSize, long defaultWindowSize) throws InvalidQuery {
         SearchCacheEntry<ResultsStats> originalHitsSearch = null;
         if (params.hasPattern()) {
-            originalHitsSearch = params.hitsSample().hitCount().executeAsync();
+            originalHitsSearch = WebserviceParamsImpl.determineHitsSearch(RequestHits.fromParams(params)).hitCount().executeAsync();
         }
 
         SearchCacheEntry<?> search;
@@ -130,7 +131,7 @@ public class ResultDocs {
             String viewGroup = params.getViewGroup().orElse(null);
             if (viewGroup != null) {
                 isViewGroup = true;
-                PropertyValue viewGroupVal = PropertyValue.deserialize(groups.queryInfo().index(), groups.field(), viewGroup);
+                PropertyValue viewGroupVal = PropertyValue.deserialize(groups.field(), viewGroup);
                 if (viewGroupVal == null)
                     throw new BadRequest("ERROR_IN_GROUP_VALUE",
                             "Parameter 'viewgroup' has an illegal value: " + viewGroup);
@@ -216,10 +217,9 @@ public class ResultDocs {
 
         SearchTimer timer = search.timer();
         SearchTimings timings = new SearchTimings(timer.time(), totalTime);
-        Index.IndexStatus indexStatus = params.getIndexManager().getIndex(params.getCorpusName()).getStatus();
         ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(
                 params,
-                indexStatus, timings, null,
+                timings, null,
                 groups, windowStats, docs == null ? groups.field() : docs.field(),
                 Collections.emptyList());
         ResultSummaryNumDocs numResultDocs = null;
@@ -238,7 +238,7 @@ public class ResultDocs {
             for (long i = windowStats.first(); i <= windowStats.last(); ++i) {
                 DocGroup group = groups.get(i);
                 // Find size of corresponding subcorpus group
-                CorpusSize size = WebserviceOperations.findSubcorpusSize(params, subcorpus.query(),
+                CorpusSize size = WebserviceOperations.findSubcorpusSize(params.blIndex(), subcorpus.query(),
                         metadataGroupProperties, group.identity());
                 corpusSizes.add(size);
             }
