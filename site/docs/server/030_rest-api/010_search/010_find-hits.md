@@ -79,6 +79,7 @@ These are the basic criteria:
 | <code>decade:_name_</code> | Sort/group by the decade of the year given in specified metadata field (rounds the value of the field down to the nearest multiple of 10, so `1976` becomes `1970`). |
 | `identity`                 | (for sorting results of a grouping request) Sort by group identity.                                                                                                  |
 | `size`                     | (for sorting results of a grouping request) Sort by group size, descending by default.                                                                               |
+| `score`                    | (for sorting results of a grouping request) Sort by group score, descending by default. You must pass the `scorer` parameter to be able to use this sort.            |
 
 Any sort criterium can be reversed by prefixing it with a dash, e.g. `-field:year` to sort by the `year` field, descending. If multiple properties are combined with commas, each may be individually reversed or not, e.g. `-prop1,prop2,-prop3` to only reverse `prop1` and `prop3`. It is also possible to reverse all properties together: `-(prop1,prop2,prop3)`.
 
@@ -141,11 +142,32 @@ Some less commonly used parameters for advanced use cases.
 | `omitemptycaptures`  | if true, will omit capture groups of length 0 (default `false`, configurable in blacklab-server.yaml)                                                                                                                                                                                                                                                                                                                                                                                            |
 | `withspans`          | capture a list (named `with-spans`) of all spans overlapping each hit (e.g. this might contain the relevant sentence, paragraph and chapter spans if you've indexed those)                                                                                                                                                                                                                                                                                                                       |
 | `adjusthits`         | (relations queries only) should query hits be adjusted so all matched relations are inside the hit? Default: `no`                                                                                                                                                                                                                                                                                                                                                                                |
+| `scorer`             | Hit group scorer configuration (JSON). Specifies a way to assign a score to each hit group. Detailed explanation below.                                                                                                                                   |
 
 ::: details <b>The <code>pattgapdata</code> parameter explained</b>
 You may leave 'gaps' in the double-quoted strings in your BCQL query that can be filled in from tabular data. The gaps should be denoted by `@@`, e.g. `[lemma="@@"]` or `[word="@@cat"]`. For each row in your TSV data, will fill in the row data in the gaps. The queries resulting from all the rows are combined using OR. For example, if your query is `"The" "@@" "@@"` and your TSV data is `white\tcat\nblack\tdog`, this will execute the query `("The" "white" "cat") | ("The" "black" "dog")`. Please note that if you want to pass a large amount of data, you should use a `POST` request as the amount of data you can pass in a `GET` request is limited.  
 :::
 
+::: details <b>The <code>scorer</code> parameter explained</b>
+
+When grouping hits, pass the `scorer` parameter to calculate a score for each group of hits. This is used for collocation scoring. `scorer` must be a JSON object:
+
+```json
+{
+    "id": "coll-dice",
+    "annotation": "word",
+    "sensitivity": "i",
+    "term": "boot"
+}
+```
+
+The above scorer calculates the _logDice_ formula for two words occurring together, in this case the word _boot_ and the word that represents the group being scored.
+
+So if we've executed the query `meet([], "boot", -3, 3)` to find words that occur near _boot_, then group the hits by the word found, the above would be a reasonable way to score the resulting groups.
+
+The available collocation scorers (the only type of hit group scorer at the moment, although other types may be added in the future) are `coll-dice` and `coll-salience`.
+
+:::
 
 ## Success Response
 

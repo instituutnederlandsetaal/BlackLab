@@ -125,7 +125,7 @@ For this reason, BlackLab Server only allows some built-in plugins to run by def
 
 There two ways to allow a plugin to run from BlackLab Server:
 - override the `isWebSafe()` method and have it return `true`, OR
-- add the plugin id to the `plugins.allowed` list in `blacklab-server.yaml`
+- add the plugin id to the [`plugins.allowed`](/server/configuration#plugins) list in `blacklab-server.yaml`
 
 Especially if your plugin takes parameters (or other arbitrary user input such as files to be indexed), you should be extra careful to validate and sanitize this input to avoid vulnerabilities like code injection, path traversal, etc.
 

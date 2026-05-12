@@ -8,7 +8,7 @@ There are a few things to keep in mind when adding documentation:
 
 Install required libraries/tools, e.g. vitepress:
 
-    npm install
+    npm install --min-release-age 7
 
 Run the development server:
 
