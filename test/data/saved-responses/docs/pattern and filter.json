@@ -409,13 +409,13 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "filter": "pid:PBsve435",
       "indexname": "test",
       "op": "docs",
       "patt": "\"the\"",
       "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"the\"",

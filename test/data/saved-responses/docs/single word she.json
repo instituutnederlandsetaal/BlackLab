@@ -409,12 +409,12 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "indexname": "test",
       "op": "docs",
       "patt": "\"she\"",
       "sort": "field:pid",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"she\"",

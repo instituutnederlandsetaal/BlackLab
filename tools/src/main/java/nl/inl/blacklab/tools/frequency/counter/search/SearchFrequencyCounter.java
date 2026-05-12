@@ -9,6 +9,7 @@ import nl.inl.blacklab.resultproperty.HitPropertyDocumentStoredField;
 import nl.inl.blacklab.resultproperty.HitPropertyHitText;
 import nl.inl.blacklab.resultproperty.HitPropertyMultiple;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPatternAnyToken;
 import nl.inl.blacklab.searches.SearchCacheDummy;
@@ -46,7 +47,7 @@ public final class SearchFrequencyCounter extends FrequencyCounter {
     private SearchHitGroups getSearch() {
         return index.search(helper.annotations().annotatedField())
                 .find(new CompleteQuery(new TextPatternAnyToken(1)))
-                .groupStats(getGroupBy(), 0)
+                .groupStats(getGroupBy(), 0, HitGroupScorer.NONE)
                 .sort(new HitGroupPropertyIdentity());
     }
 

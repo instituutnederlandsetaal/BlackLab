@@ -18,7 +18,7 @@ import java.util.Optional;
 public enum WebserviceParameter {
 
     // Hits to search
-    PATTERN("patt"),
+    PATTERN("patt", Type.PATTERN),
     PATTERN_LANGUAGE("pattlang"),
     PATTERN_GAP_DATA("pattgapdata"),
 
@@ -28,32 +28,32 @@ public enum WebserviceParameter {
     DOC_PID("docpid"),
 
     // What hits to select
-    SAMPLE("sample"),
-    SAMPLE_NUMBER("samplenum"),
-    SAMPLE_SEED("sampleseed"),
+    SAMPLE("sample", Type.FLOAT),
+    SAMPLE_NUMBER("samplenum", Type.FLOAT),
+    SAMPLE_SEED("sampleseed", Type.INTEGER),
     HIT_FILTER_CRITERIUM("hitfiltercrit"),
     HIT_FILTER_VALUE("hitfilterval"),
 
     // How to search (debug)
     FORWARD_INDEX_MATCHING_SETTING("fimatch"),
-    USE_CACHE("usecache"),
+    USE_CACHE("usecache", Type.BOOLEAN),
 
     // How to present results
     SORT_BY("sort"),  // sorting (grouped) hits/docs
-    FIRST_RESULT("first"), // results window
-    NUMBER_OF_RESULTS("number"), // results window
+    FIRST_RESULT("first", Type.INTEGER), // results window
+    NUMBER_OF_RESULTS("number", Type.INTEGER), // results window
     WORDS_AROUND_HIT("wordsaroundhit"), // (DEPRECATED, renamed to "context")
     CONTEXT("context"), // KWIC / concordances: words around hit or
     CREATE_CONCORDANCES_FROM("usecontent"), // create concs from forward index or original content (content store)?
-    OMIT_EMPTY_CAPTURES("omitemptycaptures"),  // omit capture groups of length 0? (false)
+    OMIT_EMPTY_CAPTURES("omitemptycaptures", Type.BOOLEAN),  // omit capture groups of length 0? (false)
 
     // Doc snippets
-    HIT_START("hitstart"),
-    HIT_END("hitend"),
-    WORD_START("wordstart"),
-    WORD_END("wordend"),
+    HIT_START("hitstart", Type.INTEGER),
+    HIT_END("hitend", Type.INTEGER),
+    WORD_START("wordstart", Type.INTEGER),
+    WORD_END("wordend", Type.INTEGER),
 
-    EXPLAIN_QUERY_REWRITE("explain"),
+    EXPLAIN_QUERY_REWRITE("explain", Type.BOOLEAN),
 
     // on field info page, show (non-sub) values for annotation?
     // also controls which annotations' values are sent back with hits
@@ -67,11 +67,11 @@ public enum WebserviceParameter {
     LIST_VALUES_FOR_SPAN_ATTR("listspanattributes"),
 
     // How to process results
-    INCLUDE_FACETS("facets"), // include facet information?
-    SUBCORPUS_SIZE("subcorpussize", "includetokencount"), // include subcorpus size?
-    INCLUDE_CUSTOM_INFO("custom"), // include custom metadata?
-    MAX_HITS_TO_RETRIEVE("maxretrieve"),
-    MAX_HITS_TO_COUNT("maxcount"), // limits to numbers of hits to process
+    FACETS("facets"), // facet(s) to include, if any
+    SUBCORPUS_SIZE("subcorpussize", Type.BOOLEAN, "includetokencount"), // include subcorpus size?
+    INCLUDE_CUSTOM_INFO("custom", Type.BOOLEAN), // include custom metadata?
+    MAX_HITS_TO_RETRIEVE("maxretrieve", Type.INTEGER),
+    MAX_HITS_TO_COUNT("maxcount", Type.INTEGER), // limits to numbers of hits to process
 
     // Alternative views
     CALCULATE_STATS("calc"), // collocations, or other context-based calculations
@@ -79,45 +79,62 @@ public enum WebserviceParameter {
     // Grouping
     GROUP_BY("group"),
     VIEW_GROUP("viewgroup"),
-    INCLUDE_GROUP_CONTENTS("includegroupcontents"), // include hits with the group response? (false)
+    INCLUDE_GROUP_CONTENTS("includegroupcontents", Type.BOOLEAN), // include hits with the group response? (false)
 
     // for term frequency
     PROPERTY("property"), // DEPRECATED, now called "annotation",
     ANNOTATION("annotation"),
-    SENSITIVE("sensitive"),
+    SENSITIVE("sensitive", Type.BOOLEAN),
     TERMS("terms"),
 
     // How to execute request
-    WAIT_FOR_TOTAL_COUNT("waitfortotal"), // wait until total number of results known?
+    WAIT_FOR_TOTAL_COUNT("waitfortotal", Type.BOOLEAN), // wait until total number of results known?
     TERM("term"), // term for autocomplete
     AUTOCOMPLETE_TYPE("complete"), // for autocomplete on metadata fields, return the original value or an indexed term?
 
     // CSV options
-    CSV_INCLUDE_SUMMARY("csvsummary"), // include summary of search in the CSV output? [no]
-    CSV_DECLARE_SEPARATOR("csvsepline"), // include separator declaration for Excel? [no]
+    CSV_INCLUDE_SUMMARY("csvsummary", Type.BOOLEAN), // include summary of search in the CSV output? [no]
+    CSV_DECLARE_SEPARATOR("csvsepline", Type.BOOLEAN), // include separator declaration for Excel? [no]
     CSV_DESCRIPTION("csvdescription"), // description of search operation to include in the CSV file [none]
 
     // list relations options
-    REL_CLASSES("classes"),               // what relation classes to report (default all)
-    REL_ONLY_SPANS("onlyspans", "only-spans"),  // only report spans, not other relations [no]
-    REL_SEPARATE_SPANS("separatespans", "separate-spans"), // report spans separately from other relations [yes]
+    REL_CLASSES("classes"), // what relation classes to report (default all)
+    REL_ONLY_SPANS("onlyspans", Type.BOOLEAN, "only-spans"),  // only report spans, not other relations [no]
+    REL_SEPARATE_SPANS("separatespans", Type.BOOLEAN, "separate-spans"), // report spans separately from other relations [yes]
 
     // for listing values (metadata, annotations, relations, attributes)
-    LIMIT_VALUES("limitvalues"),        // truncate lists/maps of values to this length [200]
+    LIMIT_VALUES("limitvalues", Type.INTEGER), // truncate lists/maps of values to this length [200]
 
     // relations querying options
-    REL_ADJUST_HITS("adjusthits", "adjust-hits"),  // adjust hits to cover all tokens involved in relation [no]
-    WITH_SPANS("withspans", "with-spans"), // include all overlapping spans in the response? [no]
+    REL_ADJUST_HITS("adjusthits", Type.BOOLEAN, "adjust-hits"), // adjust hits to cover all tokens involved in relation [no]
+    WITH_SPANS("withspans", Type.BOOLEAN, "with-spans"), // include all overlapping spans in the response? [no]
 
-    DEBUG("debug"), // include debug info (cache)
+    DEBUG("debug", Type.BOOLEAN), // include debug info (cache)
 
     OPERATION("op"),
     CORPUS_NAME("indexname"),
     FIELD("field"), // (annotated) field to use for operation
     SEARCH_FIELD("searchfield"), // annotated field to search (parallel, if different from field)
     INPUT_FORMAT("inputformat"),
-    CONVERTERS("converters"),     // extra FileConverts to apply to uploaded file(s)
+    CONVERTERS("converters", Type.JSON), // extra FileConverts to apply to uploaded file(s)
+    SCORER("scorer", Type.JSON), // scorer to apply (to grouped results for now, maybe also hits in the future)
     API_VERSION("api");
+
+    /** Parameter type */
+    public enum Type {
+        /** string value (default) */
+        STRING,
+        /** a query pattern, e.g. query string or JSON structure ("patt" only) */
+        PATTERN,
+        /** boolean value */
+        BOOLEAN,
+        /** long integer value */
+        INTEGER,
+        /** double precision float value */
+        FLOAT,
+        /** JSON structure */
+        JSON
+    }
 
     public static Optional<WebserviceParameter> fromValue(String str) {
         WebserviceParameter[] values = values();
@@ -179,15 +196,23 @@ public enum WebserviceParameter {
     /** Canonical parameter name. */
     private final String name;
 
+    /** Parameter type */
+    private final Type type;
+
     /** Any alternative names for this parameter that will also be recognized. */
     private final List<String> synonyms;
 
     WebserviceParameter(String name) {
-        this(name, new String[0]);
+        this(name, Type.STRING, new String[0]);
     }
 
-    WebserviceParameter(String name, String... synonyms) {
+    WebserviceParameter(String name, Type type) {
+        this(name, type, new String[0]);
+    }
+
+    WebserviceParameter(String name, Type type, String... synonyms) {
         this.name = name;
+        this.type = type;
         this.synonyms = Arrays.asList(synonyms);
     }
 
@@ -199,7 +224,13 @@ public enum WebserviceParameter {
         return Long.parseLong(defaultValues.getOrDefault(webserviceParameter, "0"));
     }
 
-    public String value() { return name; }
+    public String value() {
+        return name;
+    }
+
+    public Type type() {
+        return type;
+    }
 
     @Override
     public String toString() { return name; }

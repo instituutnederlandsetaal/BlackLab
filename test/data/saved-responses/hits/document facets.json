@@ -23,7 +23,7 @@
     "params": {
       "facets": "field:pid",
       "indexname": "test",
-      "number": "0",
+      "number": 0,
       "op": "hits",
       "patt": "\"the\""
     },

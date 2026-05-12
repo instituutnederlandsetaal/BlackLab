@@ -75,13 +75,13 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "group": "context:word:i:B1",
       "indexname": "test",
-      "number": "30",
+      "number": 30,
       "op": "hits-grouped",
       "patt": "\"very\"",
-      "sort": "size,identity",
-      "wordsaroundhit": "1"
+      "sort": "size,identity"
     },
     "pattern": {
       "bcql": "\"very\"",

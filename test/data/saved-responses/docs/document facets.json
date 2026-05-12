@@ -21,7 +21,7 @@
     "params": {
       "facets": "field:title",
       "indexname": "test",
-      "number": "0",
+      "number": 0,
       "op": "docs"
     },
     "resultWindow": {

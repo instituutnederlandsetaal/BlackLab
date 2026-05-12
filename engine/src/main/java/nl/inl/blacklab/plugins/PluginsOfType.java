@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.config.BLConfigPlugins;
 import nl.inl.blacklab.exceptions.PluginException;
@@ -136,11 +137,9 @@ public class PluginsOfType<T extends Plugin> {
      * @return the plugin
      * @throws PluginException when the plugin fails to initialize
      */
-    public T get(String id) throws PluginException {
+    public @NonNull T get(String id) throws PluginException {
         return getIfExists(id)
-                .orElseThrow(() -> {
-                    return new IllegalArgumentException("Plugin id " + id + " not found.");
-                });
+                .orElseThrow(() -> new IllegalArgumentException("Plugin id " + id + " not found."));
     }
 
     public boolean exists(String id) {

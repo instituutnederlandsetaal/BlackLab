@@ -33,7 +33,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
         this.corpusName = corpusName;
     }
 
-    private static double parseDouble(String value) {
+    protected static double parseDouble(String value) {
         if (value != null) {
             try {
                 return Double.parseDouble(value);
@@ -55,7 +55,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
         return 0;
     }
 
-    private static long parseLong(String value) {
+    protected static long parseLong(String value) {
         if (value != null) {
             try {
                 return Long.parseLong(value);
@@ -66,7 +66,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
         return 0;
     }
 
-    private static boolean parseBoolean(String value) {
+    protected static boolean parseBoolean(String value) {
         if (value != null) {
             switch (value) {
             case "true":
@@ -302,7 +302,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public boolean getOmitEmptyCaptures() { return getBool(WebserviceParameter.OMIT_EMPTY_CAPTURES); }
 
     @Override
-    public Optional<String> getFacetProps() { return opt(WebserviceParameter.INCLUDE_FACETS); }
+    public Optional<String> getFacetProps() { return opt(WebserviceParameter.FACETS); }
 
     @Override
     public Optional<String> getGroupProps() { return opt(WebserviceParameter.GROUP_BY); }
@@ -462,6 +462,10 @@ public abstract class QueryParamsAbstract implements QueryParams {
     @Override
     public Optional<String> getConverters() {
         return opt(WebserviceParameter.CONVERTERS);
+    }
+    @Override
+    public Optional<String> getScorer() {
+        return opt(WebserviceParameter.SCORER);
     }
 
     @Override

@@ -141,12 +141,12 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "indexname": "test",
       "op": "hits",
       "patt": "\"one\" A:[]",
       "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"one\" A:[]",

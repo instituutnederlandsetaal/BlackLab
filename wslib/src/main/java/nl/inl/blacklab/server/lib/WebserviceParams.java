@@ -9,6 +9,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCount;
 import nl.inl.blacklab.searches.SearchDocGroups;
@@ -114,6 +115,8 @@ public interface WebserviceParams extends QueryParams {
      * @return subcorpus
      */
     SearchDocs subcorpus() throws BlsException;
+
+    HitGroupScorer getHitGroupScorer();
 
     SearchHitGroups hitsGroupedStats() throws BlsException;
 

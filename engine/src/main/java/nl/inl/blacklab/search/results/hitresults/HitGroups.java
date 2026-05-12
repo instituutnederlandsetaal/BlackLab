@@ -28,7 +28,6 @@ import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsPassive;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
-import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.searches.SearchHits;
 
 /**
@@ -40,48 +39,22 @@ import nl.inl.blacklab.searches.SearchHits;
  */
 public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, Iterable<HitGroup> {
 
-    /**
-     * Construct HitGroups from a list of HitGroup instances.
-     *
-     * @param queryInfo query info
-     * @param results list of groups
-     * @param groupCriteria what hits would be grouped by
-     * @param sampleParameters how groups were sampled, or null if not applicable
-     * @param windowStats what groups window this is, or null if not applicable
-     * @param hitsStats hits statistics
-     * @param docsStats docs statistics
-     * @return grouped hits
-     */
-    public static HitGroups fromList(QueryInfo queryInfo, List<HitGroup> results, HitProperty groupCriteria,
-            SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
-        return new HitGroups(queryInfo, results, groupCriteria, sampleParameters, windowStats, hitsStats, docsStats);
-    }
-
-    public static List<HitGroup> fromBasicGroup(QueryInfo queryInfo, Map<PropertyValue, Group> groupings) {
-        List<HitGroup> groups = new ArrayList<>(groupings.size());
-        for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
-            PropertyValue groupId = e.getKey();
-            Group grouped = e.getValue();
-            HitGroup group = HitGroup.fromList(queryInfo, groupId, grouped.getStoredHits(), grouped.getTotalNumberOfHits(), grouped.getHitsInGroupQuery());
-            groups.add(group);
-        }
-        return groups;
-    }
-
-    public static List<HitGroup> fromBasicGroupNoResults(QueryInfo queryInfo, Map<PropertyValue, Group> groupings,
-            CompleteQuery query, HitProperty groupedBy) {
-        List<HitGroup> groups = new ArrayList<>(groupings.size());
-        for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
-            PropertyValue groupId = e.getKey();
-            Group grouped = e.getValue();
-            CompleteQuery hitsInGroupQuery = groupedBy.refine(queryInfo.index(), query, groupId)
-                    .orElseThrow();
-            HitGroup group = HitGroup.withoutResults(queryInfo, groupId, grouped.getTotalNumberOfHits(),
-                    grouped.getTotalNumberOfDocs(), MaxStats.NOT_EXCEEDED, hitsInGroupQuery);
-
-            groups.add(group);
-        }
-        return groups;
+    public static HitGroups withoutStoredHits(SearchHits source, HitProperty groupBy,
+            HitGroupScorer scorer) {
+        SearchSettings searchSettings = source.searchSettings();
+        ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
+        ResultsStatsPassive docsStats = new ResultsStatsPassive();
+        QueryInfo queryInfo = source.queryInfo();
+        List<HitPublisher> publishers = HitResultsFromQuery.getHitPublishers(queryInfo,
+                source.getCombinedSpanFilterQuery(), searchSettings, hitsStats, docsStats);
+        Map<PropertyValue, Group> groups = new ConcurrentHashMap<>();
+        Map<String, CollationKey> collationCache = new ConcurrentHashMap<>();
+        HitsAbstract.performPerPublisher(publishers,
+                () -> new HitSubscriberGrouper(collationCache, groupBy, 0, groups, source.getCompleteQuery()), false);
+        List<HitGroup> hitGroups = HitGroup.listFromBasicGroups(queryInfo, groups, source.getCompleteQuery(),
+                groupBy, false, scorer);
+        return new HitGroups(queryInfo, hitGroups, groupBy, null, null,
+                hitsStats.save(), docsStats.save(), scorer);
     }
 
 
@@ -129,7 +102,12 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
      *  (bigger resultsets won't be kept for as long as smaller resultsets) */
     private long resultObjects;
 
-    protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria, SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats) {
+    /** How we score the groups, or {@link HitGroupScorer#NONE} if we don't score. */
+    private final HitGroupScorer scorer;
+
+    protected HitGroups(QueryInfo queryInfo, List<HitGroup> groups, HitProperty groupCriteria,
+            SampleParameters sampleParameters, WindowStats windowStats, ResultsStats hitsStats, ResultsStats docsStats,
+            HitGroupScorer scorer) {
         super(queryInfo);
         this.groupBy = groupCriteria;
         this.windowStats = windowStats;
@@ -157,22 +135,7 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         resultsStats = new ResultsStatsSaved(groups.size(), groups.size(), hitsStats.maxStats());
         this.hitsStats = hitsStats.save();
         this.docsStats = docsStats.save();
-    }
-
-    public static HitGroups withoutStoredHits(SearchHits source, HitProperty groupBy) {
-        SearchSettings searchSettings = source.searchSettings();
-        ResultsStatsPassive hitsStats = new ResultsStatsPassive(searchSettings.maxHitsToProcess(), searchSettings.maxHitsToCount());
-        ResultsStatsPassive docsStats = new ResultsStatsPassive();
-        QueryInfo queryInfo = source.queryInfo();
-        List<HitPublisher> publishers = HitResultsFromQuery.getHitPublishers(queryInfo,
-                source.getCombinedSpanFilterQuery(), searchSettings, hitsStats, docsStats);
-        Map<PropertyValue, Group> groups = new ConcurrentHashMap<>();
-        Map<String, CollationKey> collationCache = new ConcurrentHashMap<>();
-        HitsAbstract.performPerPublisher(publishers,
-                () -> new HitSubscriberGrouper(collationCache, groupBy, 0, groups, source.getCompleteQuery()), false);
-        List<HitGroup> hitGroups = fromBasicGroupNoResults(queryInfo, groups, source.getCompleteQuery(), groupBy);
-        return new HitGroups(queryInfo, hitGroups, groupBy, null, null,
-                hitsStats.save(), docsStats.save());
+        this.scorer = scorer;
     }
 
     @Override
@@ -195,7 +158,8 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         List<HitGroup> sorted = new ArrayList<>(this.results);
         sorted.sort(sortProp);
         // Sorted contains the same hits as us, so we can pass on our result statistics.
-        return HitGroups.fromList(queryInfo(), sorted, groupBy, null, null, hitsStats, docsStats);
+        QueryInfo queryInfo = queryInfo();
+        return new HitGroups(queryInfo, sorted, groupBy, null, null, hitsStats, docsStats, scorer);
     }
     
     /**
@@ -207,7 +171,10 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
     public HitGroups sample(SampleParameters sampleParameters) {
         List<HitGroup> sample = doSample(this, sampleParameters);
         Pair<ResultsStatsSaved, ResultsStatsSaved> stats = getStatsOfSample(sample, this.hitsStats.maxStats(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), sample, groupCriteria(), sampleParameters, null, stats.getLeft(), stats.getRight());
+        QueryInfo queryInfo = queryInfo();
+        HitProperty groupCriteria = groupCriteria();
+        ResultsStats hitsStats1 = stats.getLeft();
+        return new HitGroups(queryInfo, sample, groupCriteria, sampleParameters, null, hitsStats1, stats.getRight(), scorer);
     }
 
     /**
@@ -247,13 +214,19 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         List<HitGroup> resultsWindow = doWindow(this, first, number);
         boolean hasNext = resultsStats().processedAtLeast(first + resultsWindow.size() + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, number, resultsWindow.size());
-        return HitGroups.fromList(queryInfo(), resultsWindow, groupBy, null, windowStats, this.hitsStats, this.docsStats); // copy actual totals. Window should be "transparent"
+        QueryInfo queryInfo = queryInfo();
+        return new HitGroups(queryInfo, resultsWindow, groupBy, null, windowStats,
+                this.hitsStats, this.docsStats, scorer); // copy actual totals. Window should be "transparent"
     }
 
     public HitGroups filter(HitGroupProperty property, PropertyValue value) {
         List<HitGroup> list = this.results.stream().filter(group -> property.get(group).equals(value)).toList();
         Pair<ResultsStatsSaved, ResultsStatsSaved> stats = getStatsOfSample(list, this.hitsStats.maxStats(), this.docsStats.maxStats());
-        return HitGroups.fromList(queryInfo(), list, groupCriteria(), null, null, stats.getLeft(), stats.getRight());
+        QueryInfo queryInfo = queryInfo();
+        HitProperty groupCriteria = groupCriteria();
+        ResultsStats hitsStats1 = stats.getLeft();
+        return new HitGroups(queryInfo, list, groupCriteria, null, null, hitsStats1,
+                stats.getRight(), scorer);
     }
 
     @Override
@@ -296,5 +269,9 @@ public class HitGroups extends ResultsList<HitGroup> implements ResultGroups, It
         }
         boolean allHitsRetrieved = hitsRetrieved == hitsCounted;
         return Pair.of(new ResultsStatsSaved(hitsRetrieved, hitsCounted, maxHitsStatsOfSource), new ResultsStatsSaved(docsRetrieved, allHitsRetrieved ? docsRetrieved : -1, maxDocsStatsOfSource));
+    }
+
+    public boolean hasScores() {
+        return scorer != HitGroupScorer.NONE;
     }
 }

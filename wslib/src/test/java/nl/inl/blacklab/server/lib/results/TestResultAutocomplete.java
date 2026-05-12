@@ -84,5 +84,10 @@ public class TestResultAutocomplete {
         public Map<WebserviceParameter, String> getParameters() {
             return parameterValues;
         }
+
+        @Override
+        public Map<WebserviceParameter, Object> getTypedParameters() {
+            throw new UnsupportedOperationException();
+        }
     }
 }

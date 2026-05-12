@@ -374,12 +374,12 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "indexname": "test",
       "op": "hits",
       "patt": "[lemma=\"be\" & word=\"are\"]",
       "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "[lemma = \"be\" & word = \"are\"]",

@@ -516,6 +516,7 @@ public class HitGroupsTokenFrequencies {
             }
 
             List<HitGroup> groups;
+            HitGroupScorer scorer = HitGroupScorer.NONE; // do we want to score these..?
             try (final BlockTimer ignored = BlockTimer.create("Resolve string values for tokens")) {
                 final int numMetadataValues = docProperties.size();
                 groups = globalOccurrences.entrySet().parallelStream().map(e -> {
@@ -554,14 +555,14 @@ public class HitGroupsTokenFrequencies {
                         throw new IllegalArgumentException("Group without hits must be able to find them by refining query!");
                     CompleteQuery hitsInGroupQuery = requestedGroupingProperty.refine(queryInfo.index(), completeQuery, groupId).orElseThrow();
                     return HitGroup.withoutResults(queryInfo, groupId, groupSizeHits,
-                            groupSizeDocs, MaxStats.NOT_EXCEEDED, hitsInGroupQuery);
+                            groupSizeDocs, MaxStats.NOT_EXCEEDED, hitsInGroupQuery, scorer);
                 }).toList();
             }
             logger.debug("fast path used for grouping");
 
             ResultsStats hitsStats = new ResultsStatsSaved(numberOfHitsProcessed.get(), numberOfHitsProcessed.get(), MaxStats.get(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
             ResultsStats docsStats = new ResultsStatsSaved((int) numberOfDocsProcessed, (int) numberOfDocsProcessed, MaxStats.get(hitMaxHitsToCount.get(), hitMaxHitsToCount.get()));
-            return HitGroups.fromList(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats);
+            return new HitGroups(queryInfo, groups, requestedGroupingProperty, null, null, hitsStats, docsStats, scorer);
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
         }

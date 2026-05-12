@@ -102,8 +102,7 @@ public class HitSubscriberGrouper implements HitSubscriber {
     public void hits(LeafReaderContext lrc, Hits batchHits, long batchStart, long batchEnd,
             int batchNumDocs,
             long batchOffsetInTotal) {
-        Hits toGroup = batchHits.sublist(batchStart, batchEnd - batchStart);
-        groupHits(toGroup, 0, toGroup.size(), groupBy,
+        groupHits(batchHits, batchStart, batchEnd, groupBy,
                 maxValuesToStorePerGroup, segmentGroups, lrc, collationCache, originalQuery);
     }
 

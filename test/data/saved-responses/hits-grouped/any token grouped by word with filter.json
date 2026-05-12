@@ -363,14 +363,14 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "filter": "pid:PBsve430",
       "group": "hit:word:i",
       "indexname": "test",
-      "number": "30",
+      "number": 30,
       "op": "hits-grouped",
       "patt": "[word != \"abcdefg\"]",
-      "sort": "size,identity",
-      "wordsaroundhit": "1"
+      "sort": "size,identity"
     },
     "pattern": {
       "bcql": "[word != \"abcdefg\"]",

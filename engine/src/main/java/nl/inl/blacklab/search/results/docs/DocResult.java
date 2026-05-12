@@ -4,6 +4,7 @@ import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.PropertyValueDoc;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 
 /**
@@ -21,7 +22,8 @@ public class DocResult extends HitGroup {
     }
 
     protected DocResult(QueryInfo queryInfo, PropertyValueDoc doc, long numberOfHits) {
-        super(doc, HitResults.empty(queryInfo), numberOfHits, 1, null);
+        super(doc, HitResults.empty(queryInfo), numberOfHits, 1,
+                null, HitGroupScorer.NONE);
     }
 
     /**
@@ -32,7 +34,8 @@ public class DocResult extends HitGroup {
      * @param totalNumberOfHits total number of hits in this document
      */
     protected DocResult(PropertyValue doc, HitResults storedHits, long totalNumberOfHits) {
-        super(doc, storedHits, totalNumberOfHits, 1, null);
+        super(doc, storedHits, totalNumberOfHits, 1,
+                null, HitGroupScorer.NONE);
     }
     
     @Override

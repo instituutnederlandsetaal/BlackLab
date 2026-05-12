@@ -112,6 +112,7 @@ These are breaking changes compared to v4.0. Make sure you update your client ac
     - Document and token count have been grouped under a `count` key. A parallel corpus will also include a `docVersions` key that gives the total number of document versions. `annotatedFields` will also include a `count` key that gives the number of docs/tokens for that field.
 - Results pages:
     - `summary` has been restructured to group related values together under `params`, `resultWindow` and `resultStats`. Subkeys have been renamed for clarity.
+    - `summary.params` are now returned as the correct type: string (e.g. `pattlang`), integer (e.g. `first`), boolean (e.g. `waitfortotal`) or JSON (e.g. `scorer`).
     - response keys `left`/`right` have been replaced with `before`/`after` in the `/hits` response.
     - `docInfos` now have a `metadata` subobject instead of mixing metadata with `mayView` and `lengthInTokens`.
     - When using `usecontent=orig`, the value of `escapexmlfragment` now defaults to `true`, so XML fragments from the document will be escaped as CDATA. Set it to `false` to include them as part of the XML structure instead (the old default).

@@ -63,8 +63,12 @@ public abstract class HitGroupProperty extends GroupProperty implements Comparat
         HitGroupProperty result;
         if (propName.equalsIgnoreCase(HitGroupPropertyIdentity.ID))
             result = HitGroupPropertyIdentity.get();
-        else
+        else if (propName.equalsIgnoreCase(HitGroupPropertySize.ID))
             result = HitGroupPropertySize.get();
+        else if (propName.equalsIgnoreCase(HitGroupPropertyScore.ID))
+            result = HitGroupPropertyScore.get();
+        else
+            throw new IllegalArgumentException("Unknown HitGroupProperty: " + propName);
         if (reverse)
             result = result.reverse();
         return result;

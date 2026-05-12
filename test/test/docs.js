@@ -36,7 +36,7 @@ function expectDocsUnchanged(testName, params, filter) {
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid",
-                wordsaroundhit: 1,
+                context: 1,
                 waitfortotal: "true",
                 //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
                 ...params
@@ -75,7 +75,7 @@ expectUrlUnchanged('docs', 'document contents',
 expectUrlUnchanged('docs', 'document snippet wordstart',
         constants.URL_PREFIX + '/docs/PBsve430/snippet?wordstart=5&wordend=15');
 expectUrlUnchanged('docs', 'document snippet hitstart',
-        constants.URL_PREFIX + '/docs/PBsve430/snippet?hitstart=3&hitend=5&wordsaroundhit=2');
+        constants.URL_PREFIX + '/docs/PBsve430/snippet?hitstart=3&hitend=5&context=2');
 
 // Doc facets
 expectUrlUnchanged('docs', 'document facets',

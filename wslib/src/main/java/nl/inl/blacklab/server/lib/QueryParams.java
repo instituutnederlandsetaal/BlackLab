@@ -31,6 +31,8 @@ public interface QueryParams {
      */
     Map<WebserviceParameter, String> getParameters();
 
+    Map<WebserviceParameter, Object> getTypedParameters();
+
     String getCorpusName();
 
     String getPattern();
@@ -172,7 +174,11 @@ public interface QueryParams {
 
     default Optional<String> getInputFormat() { return Optional.empty(); }
 
+    /** Get extra converters specification (JSON) */
     Optional<String> getConverters();
+
+    /** Get scorer specification (JSON) */
+    Optional<String> getScorer();
 
     /**
      * Should the responses include deprecated field information?

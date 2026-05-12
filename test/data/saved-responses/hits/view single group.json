@@ -270,14 +270,14 @@
       ]
     },
     "params": {
+      "context": "1",
       "group": "field:title",
       "indexname": "test",
       "op": "hits",
       "patt": "\"a\"",
       "sort": "field:pid,hitposition",
       "viewgroup": "str:service encounter about visa application for family members",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"a\"",

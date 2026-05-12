@@ -25,6 +25,12 @@ public abstract class FileConverter extends Plugin {
     public record ExtraConverters(List<Parameterized> applyFirst, List<Parameterized> applyLast) {
         public static final ExtraConverters NONE = new ExtraConverters(List.of(), List.of());
 
+        public static ExtraConverters fromConfig(List<Map<String, Object>> first, List<Map<String, Object>> last) {
+            List<FileConverter.Parameterized> convFirst = first.stream().map(FileConverter::fromConfig).toList();
+            List<FileConverter.Parameterized> convLast = last.stream().map(FileConverter::fromConfig).toList();
+            return new FileConverter.ExtraConverters(convFirst, convLast);
+        }
+
         public boolean isEmpty() {
             return applyFirst.isEmpty() && applyLast.isEmpty();
         }

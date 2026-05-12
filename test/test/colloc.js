@@ -21,7 +21,7 @@ function expectCollocUnchanged(testName, params) {
             .query({
                 api: constants.TEST_API_VERSION,
                 calc: 'colloc',
-                wordsaroundhit: 10,
+                context: 10,
                 sensitive: 'false',
                 ...params
             })

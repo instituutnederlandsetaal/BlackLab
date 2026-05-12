@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -20,6 +21,7 @@ import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.MultiBits;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.index.TermVectors;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.queryparser.classic.ParseException;
@@ -39,6 +41,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.ParallelDocTask;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
@@ -50,7 +53,45 @@ public final class LuceneUtil {
 
     private static final Charset LUCENE_DEFAULT_CHARSET = StandardCharsets.UTF_8;
 
-    private LuceneUtil() {}
+    private LuceneUtil() {} // utility class
+
+    /** Determine how often a term occurs in a field in the index */
+    public static long getTermFrequency(AnnotationSensitivity annotSensitivity, String term, boolean slowButAccurate) {
+        String luceneField = annotSensitivity.luceneField();
+        if (slowButAccurate) {
+            // Actually iterate over all non-deleted documents and count up the frequencies for this term.
+            // Accurate but slow.
+            BytesRef bytesRef = new BytesRef(term);
+            Map<Integer, Long> counts = new ConcurrentHashMap<>();
+            BlackLabIndex index = annotSensitivity.annotation().field().index();
+            index.forEachDocument((ParallelDocTask) lrc -> {
+                try {
+                    TermVectors termVectors = lrc.reader().termVectors();
+                    return docId -> {
+                        try {
+                            TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
+                            long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
+                            counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
+                        } catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    };
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            return counts.values().stream().mapToLong(Long::longValue).sum();
+        } else {
+            // Just use totalTermFreq. This doesn't take deleted documents into account,
+            // but that's usually okay if you're using it for a ratio with another frequency
+            // that also doesn't take deletions into account.
+            try {
+                return annotSensitivity.annotation().field().index().reader().totalTermFreq(new Term(luceneField, term));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
 
     /**
      * Query parser that will correctly produce numeric range queries for numeric fields.

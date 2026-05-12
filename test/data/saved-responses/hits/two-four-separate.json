@@ -166,12 +166,12 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "indexname": "test",
       "op": "hits",
       "patt": "\"two\"|\"four\"",
       "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "\"two\" | \"four\"",

@@ -1,13 +1,16 @@
 package nl.inl.blacklab.search.results.hitresults;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.resultproperty.ResultProperty;
 import nl.inl.blacklab.search.results.HitOrDocGroup;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.hits.Group;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.search.results.stats.MaxStats;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
@@ -46,28 +49,55 @@ public class HitGroup implements HitOrDocGroup {
     /** Do we need to fetch hits if storedResults() is called? */
     private boolean needToFetchHits;
 
-    public static HitGroup fromList(QueryInfo queryInfo, PropertyValue groupIdentity, Hits storedResults, long totalSize, CompleteQuery hitsInGroupQuery) {
-        return new HitGroup(groupIdentity, HitResults.list(queryInfo, storedResults), totalSize, -1, hitsInGroupQuery);
+    /** This group's score, as calculated by some scorer function. */
+    private final Double score;
+
+    public static List<HitGroup> listFromBasicGroups(QueryInfo queryInfo, Map<PropertyValue, Group> groupings,
+            CompleteQuery query, HitProperty groupedBy, boolean storeResults, HitGroupScorer scorer) {
+        List<HitGroup> groups = new ArrayList<>(groupings.size());
+        for (Map.Entry<PropertyValue, Group> e : groupings.entrySet()) {
+            PropertyValue groupId = e.getKey();
+            Group grouped = e.getValue();
+            HitGroup group;
+            CompleteQuery hitsInGroupQuery = grouped.getHitsInGroupQuery();
+            if (hitsInGroupQuery == null && query != null && groupedBy != null) {
+                hitsInGroupQuery = groupedBy.refine(queryInfo.index(), query, groupId).orElseThrow();
+            }
+            if (storeResults || hitsInGroupQuery == null) {
+                // Store results
+                group = new HitGroup(groupId, HitResults.list(queryInfo, grouped.getStoredHits()),
+                        grouped.getTotalNumberOfHits(), -1, hitsInGroupQuery, scorer);
+            } else {
+                // Don't store results.
+                group = withoutResults(queryInfo, groupId, grouped.getTotalNumberOfHits(),
+                        grouped.getTotalNumberOfDocs(), MaxStats.NOT_EXCEEDED, hitsInGroupQuery,
+                        scorer);
+            }
+            groups.add(group);
+        }
+        return groups;
     }
 
     public static HitGroup withoutResults(QueryInfo queryInfo, PropertyValue groupIdentity,
-            long totalSize, int totalDocuments, MaxStats maxStats, CompleteQuery hitsInGroupQuery) {
+            long totalSize, int totalDocuments, MaxStats maxStats, CompleteQuery hitsInGroupQuery,
+            HitGroupScorer scorer) {
         HitResultsList results = new HitResultsList(queryInfo,
                 Hits.empty(new Hits.HitsContext(queryInfo.field())), 0,
                 totalSize, totalDocuments, maxStats);
-        return new HitGroup(groupIdentity, results, totalSize, -1, hitsInGroupQuery);
+        return new HitGroup(groupIdentity, results, totalSize, -1, hitsInGroupQuery, scorer);
     }
 
     /**
      * Wraps a list of Hit objects with the HitGroup interface.
-     *
      * NOTE: the list is not copied!
      *
      * @param groupIdentity identity of the group
      * @param storedResults the hits
-     * @param totalHits total group size
+     * @param totalHits     total group size
+     * @param scorer
      */
-    protected HitGroup(PropertyValue groupIdentity, HitResults storedResults, long totalHits, int totalDocs, CompleteQuery hitsInGroupQuery) {
+    protected HitGroup(PropertyValue groupIdentity, HitResults storedResults, long totalHits, int totalDocs, CompleteQuery hitsInGroupQuery,
+            HitGroupScorer scorer) {
         this.groupIdentity = groupIdentity;
         this.totalHits = totalHits;
         assert storedResults != null;
@@ -89,6 +119,9 @@ public class HitGroup implements HitOrDocGroup {
             this.hitsInGroupQuery = hitsInGroupQuery;
             needToFetchHits = storedResults.size() == 0 && hitsInGroupQuery != null;
         }
+
+        score = scorer == HitGroupScorer.NONE ? null : scorer.score(this.groupIdentity, this.totalHits);
+
         // We should either know our hits, or have a query to find them later
         assert hitsInGroupQuery == null || storedResults.size() == 0;
     }
@@ -132,6 +165,10 @@ public class HitGroup implements HitOrDocGroup {
 
     public long size() {
         return totalHits;
+    }
+
+    public Double score() {
+        return score;
     }
 
     public int compareTo(HitOrDocGroup o) {

@@ -13,6 +13,7 @@ import nl.inl.blacklab.resultproperty.PropertyValueInt;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -32,7 +33,7 @@ public class TestResultsGrouper {
         index.setIndexSearcher(indexSearcher);
         HitResults hitResults = HitResults.list(QueryInfo.create(index), doc, start, end);
         HitProperty crit = new HitPropertyDocumentId();
-        HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT);
+        HitGroups grouper = hitResults.group(crit, Results.NO_LIMIT, HitGroupScorer.NONE);
 
         Assert.assertEquals(3, grouper.size());
         PropertyValueInt one = new PropertyValueInt(1);

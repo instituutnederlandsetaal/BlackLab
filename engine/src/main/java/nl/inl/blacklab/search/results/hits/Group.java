@@ -14,8 +14,8 @@ public class Group {
     /** Total number of docs in the group.  */
     private int totalNumberOfDocs;
 
-    /** Query to get hits in this group */
-    private CompleteQuery hitsInGroupQuery = null;
+    /** Query to get hits in this group, or null if unknown */
+    private CompleteQuery hitsInGroupQuery;
 
     public Group(HitsMutable storedHits, long totalNumberOfHits, int totalNumberOfDocs, CompleteQuery hitsInGroupQuery) {
         this.storedHits = storedHits;

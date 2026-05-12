@@ -20,6 +20,7 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
@@ -63,8 +64,8 @@ public class TestSearchHitGroups {
         CompleteQuery completeQuery = new CompleteQuery(tp, filter);
         HitProperty groupBy = new HitPropertyHitText(index, contents.mainAnnotation(), MatchSensitivity.SENSITIVE);
         SearchHits searchHits = index.search(contents, false).find(completeQuery);
-        SearchHitGroups searchHitGroups = fastPath ? searchHits.groupStats(groupBy, 0) :
-                searchHits.groupWithStoredHits(groupBy, 1);
+        SearchHitGroups searchHitGroups = fastPath ? searchHits.groupStats(groupBy, 0, HitGroupScorer.NONE) :
+                searchHits.groupWithStoredHits(groupBy, 1, HitGroupScorer.NONE);
         SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupPropertyIdentity.get());
         HitGroups groups = sortedGroups.execute();
         Assert.assertEquals(title + " # groups", 25, groups.size());
@@ -83,7 +84,7 @@ public class TestSearchHitGroups {
         CompleteQuery completeQuery = new CompleteQuery(tp);
         HitProperty groupBy = new HitPropertyDocumentStoredField(index, "title", "Title");
         SearchHits searchHits = index.search(contents, false).find(completeQuery);
-        SearchHitGroups searchHitGroups = searchHits.groupWithStoredHits(groupBy, 1);
+        SearchHitGroups searchHitGroups = searchHits.groupWithStoredHits(groupBy, 1, HitGroupScorer.NONE);
         SearchHitGroups sortedGroups = searchHitGroups.sort(HitGroupPropertyIdentity.get());
         HitGroups groups = sortedGroups.execute();
         Assert.assertEquals("# groups", 4, groups.size());

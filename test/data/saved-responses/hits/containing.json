@@ -508,12 +508,12 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "indexname": "test",
       "op": "hits",
       "patt": "<u/> containing \"good\"",
       "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "<u/> containing \"good\"",

@@ -32,7 +32,7 @@ function expectHitsUnchanged(testName, params) {
             .query({
                 api: constants.TEST_API_VERSION,
                 sort: "field:pid,hitposition", // fully defined sort
-                wordsaroundhit: 1,
+                context: 1,
                 waitfortotal: "true",
                 //usecache: "no", // causes the search to be executed multiple times (hits, count, etc.)
                 ...params

@@ -56,6 +56,7 @@ import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.Concordances;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hitresults.HitResultsFromQuery;
@@ -898,7 +899,8 @@ public class QueryToolImpl {
 
         // Group results
         HitProperty crit = getCrit(groupBy, annotationName, 1);
-        groups = hitResults.group(crit, Results.NO_LIMIT);
+        HitGroupScorer scorer = HitGroupScorer.NONE; // do we want to score these?
+        groups = hitResults.group(crit, Results.NO_LIMIT, scorer);
         showSetting = ShowSetting.GROUPS;
         sortGroups(HitGroupPropertySize.ID);
         timings.record("group");

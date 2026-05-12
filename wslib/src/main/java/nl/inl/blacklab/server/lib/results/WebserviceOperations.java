@@ -13,7 +13,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -668,27 +667,6 @@ public class WebserviceOperations {
         Index index = params.getIndexManager().getIndex(params.getCorpusName());
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
-        // Structure of the "converters" URL parameter, with lists of converter(s) to apply before and after
-        // the ones declared in .blf.yaml.
-        record ExtraConverterConfigs(List<Map<String, Object>> first, List<Map<String, Object>> last) {}
-
-        List<FileConverter.Parameterized> convFirst = List.of();
-        List<FileConverter.Parameterized> convLast = List.of();
-        Optional<String> jsonConverters = params.getConverters();
-        if (jsonConverters.isPresent()) {
-            ExtraConverterConfigs extraConverterIds;
-            try {
-                extraConverterIds = Json.getJsonObjectMapper().readValue(jsonConverters.get(),
-                        ExtraConverterConfigs.class);
-            } catch (JsonProcessingException e) {
-                throw new BadRequest("INVALID_CONVERTERS",
-                        "The converters parameter does not have the correct JSON structure, please consult the documentation: "
-                                + e.getMessage(), e);
-            }
-            convFirst = extraConverterIds.first().stream().map(FileConverter::fromConfig).toList();
-            convLast = extraConverterIds.last().stream().map(FileConverter::fromConfig).toList();
-        }
-
         User user = params.getUser();
         if (!index.userMayAddData(user))
             throw new NotAuthorized("You (" + user.getId() + ") may not add data to " + params.getCorpusName() + "; you are not the owner.");
@@ -714,11 +692,14 @@ public class WebserviceOperations {
         indexer.setLinkedFileResolver(fileName -> linkedFiles.get(FilenameUtils.getName(fileName).toLowerCase()));
 
         try {
+            // See if we want to apply any extra FileConverters, specifically for this set of files.
+            FileConverter.ExtraConverters extraConverters = params.getConverters()
+                    .map(WebserviceOperations::getExtraConvertersFromJsonParam)
+                    .orElse(FileConverter.ExtraConverters.NONE);
             while (dataFiles.hasNext()) {
                 UploadedFile df = dataFiles.next();
                 String fileName = df.getName();
                 byte[] contents = df.getData();
-                FileConverter.ExtraConverters extraConverters = new FileConverter.ExtraConverters(convFirst, convLast);
                 FileReference fileRef = FileReference.fromBytes(fileName, contents, null);
                 indexer.index(fileRef, null, extraConverters);
             }
@@ -741,6 +722,21 @@ public class WebserviceOperations {
         }
 
         return indexError;
+    }
+
+    private static FileConverter.ExtraConverters getExtraConvertersFromJsonParam(String jsonConverters) {
+        // Structure of the "converters" URL parameter, with lists of converter(s) to apply before and after
+        // the ones declared in .blf.yaml.
+        record ExtraConverterConfigs(List<Map<String, Object>> first, List<Map<String, Object>> last) {}
+        try {
+            ExtraConverterConfigs extraConverterIds = Json.getJsonObjectMapper().readValue(jsonConverters,
+                    ExtraConverterConfigs.class);
+            return FileConverter.ExtraConverters.fromConfig(extraConverterIds.first, extraConverterIds.last);
+        } catch (JsonProcessingException e) {
+            throw new BadRequest("INVALID_CONVERTERS",
+                    "The converters parameter does not have the correct JSON structure, please consult the documentation: "
+                            + e.getMessage(), e);
+        }
     }
 
     public static void deleteUserFormat(WebserviceParams params, String formatIdentifier) {

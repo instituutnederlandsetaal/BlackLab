@@ -115,7 +115,7 @@ public interface HitResults extends Results {
 
     HitResults sorted(HitProperty sortProp);
 
-    HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup);
+    HitGroups group(HitProperty criteria, long maxResultsToStorePerGroup, HitGroupScorer scorer);
 
     /**
      * Select only the hits where the specified property has the specified value.

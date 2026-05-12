@@ -92,12 +92,12 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "indexname": "test",
       "op": "hits",
       "patt": "[word=\"very\"] [word=\"good\"] within <u/>",
       "sort": "field:pid,hitposition",
-      "waitfortotal": "true",
-      "wordsaroundhit": "1"
+      "waitfortotal": true
     },
     "pattern": {
       "bcql": "[word = \"very\"] [word = \"good\"] within <u/>",

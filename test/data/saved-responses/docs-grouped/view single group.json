@@ -409,14 +409,14 @@
   ],
   "summary": {
     "params": {
+      "context": "1",
       "group": "field:title",
       "indexname": "test",
-      "number": "30",
+      "number": 30,
       "op": "docs",
       "patt": "\"a\"",
       "sort": "field:pid",
-      "viewgroup": "str:interview about conference experience and impressions of city",
-      "wordsaroundhit": "1"
+      "viewgroup": "str:interview about conference experience and impressions of city"
     },
     "pattern": {
       "bcql": "\"a\"",

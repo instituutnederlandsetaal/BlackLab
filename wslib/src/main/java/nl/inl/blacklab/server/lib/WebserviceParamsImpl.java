@@ -10,6 +10,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
@@ -28,6 +30,7 @@ import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
@@ -52,6 +55,7 @@ import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.util.Json;
 
 /**
  * Wraps the QueryParams and interprets them to create searches.
@@ -571,16 +575,45 @@ public class WebserviceParamsImpl implements WebserviceParams {
         return search.findDocuments(docFilterQuery);
     }
 
+    /**
+     * Given a JSON config, instantiate the HitGroupScorer.
+     *
+     * @param field field we're searching
+     * @param jsonScorerConfig JSON object with name, type and parameters for the scorer
+     * @return scorer
+     */
+    private static HitGroupScorer getHitGroupScorerFromJsonParam(AnnotatedField field, String jsonScorerConfig) {
+        try {
+            Map<String, Object> config = (Map<String, Object>)Json.getJsonObjectMapper().readValue(jsonScorerConfig,
+                    Map.class);
+            return HitGroupScorer.fromConfig(field, config);
+        } catch (JsonProcessingException e) {
+            throw new BadRequest("INVALID_SCORER",
+                    "The scorer parameter does not have the correct JSON structure, please consult the documentation: "
+                            + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public HitGroupScorer getHitGroupScorer() {
+        AnnotatedField field = getAnnotatedField();
+        return getScorer()
+                .map(config -> getHitGroupScorerFromJsonParam(field, config))
+                .orElse(HitGroupScorer.NONE);
+    }
+
     @Override
     public SearchHitGroups hitsGroupedStats() throws BlsException {
         return hitsSample()
-                .groupStats(getHitGroupProperty(), Results.NO_LIMIT)
+                .groupStats(getHitGroupProperty(), Results.NO_LIMIT,
+                        getHitGroupScorer())
                 .sort(hitGroupSortSettings().sortBy());
     }
 
     @Override
     public SearchHitGroups hitsGroupedWithStoredHits() throws BlsException {
-        return hitsSample().groupWithStoredHits(getHitGroupProperty(), Results.NO_LIMIT)
+        return hitsSample().groupWithStoredHits(getHitGroupProperty(),
+                        Results.NO_LIMIT, getHitGroupScorer())
                 .sort(hitGroupSortSettings().sortBy());
     }
 
@@ -610,6 +643,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Map<WebserviceParameter, String> getParameters() {
         return params.getParameters();
+    }
+
+    @Override
+    public Map<WebserviceParameter, Object> getTypedParameters() {
+        return params.getTypedParameters();
     }
 
     @Override
@@ -837,6 +875,11 @@ public class WebserviceParamsImpl implements WebserviceParams {
     @Override
     public Optional<String> getConverters() {
         return params.getConverters();
+    }
+
+    @Override
+    public Optional<String> getScorer() {
+        return params.getScorer();
     }
 
     @Override

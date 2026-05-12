@@ -11,6 +11,7 @@ import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 
@@ -42,23 +43,27 @@ public abstract class SearchHits extends SearchForResults<HitResults> {
      * @param maxResultsToGatherPerGroup how many results to gather per group
      * @return resulting operation
      */
-    public SearchHitGroups groupWithStoredHits(HitProperty groupBy, long maxResultsToGatherPerGroup) {
-        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup, true);
+    public SearchHitGroups groupWithStoredHits(HitProperty groupBy, long maxResultsToGatherPerGroup,
+            HitGroupScorer scorer) {
+        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy,
+                maxResultsToGatherPerGroup, true, scorer);
     }
 
     /**
      * Group hits by a property, calculating the number of hits per group.
      *
      * (May or may not also store hits with the group. If you need these to be stored, call
-     * {@link #groupWithStoredHits(HitProperty, long)}})
+     * {@link #groupWithStoredHits(HitProperty, long, HitGroupScorer)}})
      *
      * @param groupBy what to group by
      * @param maxResultsToGatherPerGroup how many results to gather at most per group (if hits are stored,
      *                                   which they may not be)
      * @return resulting operation
      */
-    public SearchHitGroups groupStats(HitProperty groupBy, long maxResultsToGatherPerGroup) {
-        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy, maxResultsToGatherPerGroup, false);
+    public SearchHitGroups groupStats(HitProperty groupBy, long maxResultsToGatherPerGroup,
+            HitGroupScorer scorer) {
+        return new SearchHitGroupsFromHits(queryInfo(), this, groupBy,
+                maxResultsToGatherPerGroup, false, scorer);
     }
 
     /**

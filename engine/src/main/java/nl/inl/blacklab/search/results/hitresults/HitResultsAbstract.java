@@ -96,8 +96,6 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         Hits window = hits.sublist(first, windowSize);
         boolean hasNext = hits.sizeAtLeast(first + windowSize + 1);
         WindowStats windowStats = new WindowStats(hasNext, first, windowSize, window.size());
-//        ResultsStats hitsStats = new ResultsStatsSaved(window.size());
-//        ResultsStats docsStats = new ResultsStatsSaved(window.countDocs());
         return new HitResultsList(queryInfo(), window, windowStats, null,
                 this.resultsStats(), this.docsStats());
     }
@@ -137,7 +135,7 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
     }
 
     @Override
-    public HitGroups group(HitProperty groupBy, long maxResultsToStorePerGroup) {
+    public HitGroups group(HitProperty groupBy, long maxResultsToStorePerGroup, HitGroupScorer scorer) {
         if (groupBy == null)
             throw new IllegalArgumentException("Must have criteria to group on");
 
@@ -145,9 +143,11 @@ public abstract class HitResultsAbstract extends ResultsAbstract implements HitR
         Map<PropertyValue, Group> groupedHits = getHits().grouped(groupBy, maxResultsToStorePerGroup);
 
         // (We make a copy of the stats so we don't keep any references to the source hits)
-        List<HitGroup> hitGroups = HitGroups.fromBasicGroup(queryInfo(), groupedHits);
+        QueryInfo queryInfo = queryInfo();
+        List<HitGroup> hitGroups = HitGroup.listFromBasicGroups(queryInfo, groupedHits, null,
+                null, true, scorer);
         return new HitGroups(queryInfo(), hitGroups, groupBy, null, null,
-                resultsStats().save(), docsStats().save());
+                resultsStats().save(), docsStats().save(), scorer);
     }
 
     /**

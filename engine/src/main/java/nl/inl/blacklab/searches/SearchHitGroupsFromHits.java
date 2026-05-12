@@ -6,6 +6,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.resultproperty.HitPropertyContextPart;
 import nl.inl.blacklab.search.results.QueryInfo;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroups;
 import nl.inl.blacklab.search.results.hitresults.HitGroupsTokenFrequencies;
 
@@ -17,6 +18,8 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
     private final SearchHits source;
 
     private final HitProperty property;
+
+    private final HitGroupScorer scorer;
 
     private final long maxResultsToStorePerGroup;
 
@@ -36,12 +39,14 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
      * @param mustStoreHits if true, up to maxResultsToStorePerGroup hits will be stored. If false, no hits may be
      *                      stored, depending on how the grouping is performed.
      */
-    public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy, long maxResultsToStorePerGroup, boolean mustStoreHits) {
+    public SearchHitGroupsFromHits(QueryInfo queryInfo, SearchHits hitsSearch, HitProperty groupBy,
+            long maxResultsToStorePerGroup, boolean mustStoreHits, HitGroupScorer scorer) {
         super(queryInfo);
         this.source = hitsSearch;
         this.property = groupBy;
         this.maxResultsToStorePerGroup = maxResultsToStorePerGroup;
         this.mustStoreHits = mustStoreHits;
+        this.scorer = scorer;
     }
 
     /**
@@ -69,12 +74,12 @@ public class SearchHitGroupsFromHits extends SearchHitGroups {
             if (storeHits || hitsInCache) {
                 // We need to store the hits, or the hits are already cached.
                 // Just find all the hits and group them.
-                return executeChildSearch(activeSearch, source).group(property, maxResultsToStorePerGroup);
+                return executeChildSearch(activeSearch, source).group(property, maxResultsToStorePerGroup, scorer);
             } else {
                 // We don't need to store the hits. Group directly from the query and only keep the stats and the
                 // queries needed to get hits in each group.
                 // Calculate the grouping results by iterating over the hits without storing them.
-                return HitGroups.withoutStoredHits(source, prop);
+                return HitGroups.withoutStoredHits(source, prop, scorer);
             }
         }
     }

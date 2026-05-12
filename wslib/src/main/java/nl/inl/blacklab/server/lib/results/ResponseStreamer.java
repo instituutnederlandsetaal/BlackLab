@@ -120,6 +120,7 @@ public class ResponseStreamer {
 
     /** E.g. index size, document size, field size */
     public static final String KEY_COUNT = "count";
+    public static final String KEY_SCORE = "score"; // hit group score, if a scorer was supplied
 
     // Docs
     public static final String KEY_DOC_INFO = "docInfo";
@@ -357,10 +358,17 @@ public class ResponseStreamer {
     public void summaryCommonFields(ResultSummaryCommonFields summaryFields) throws BlsException {
         WebserviceParams params = summaryFields.getSearchParam();
 
-        // Include parameters
         ds.startEntry(KEY_PARAMS).startMap();
-        for (Map.Entry<WebserviceParameter, String> e: params.getParameters().entrySet()) {
-            ds.dynEntry(e.getKey().value(), e.getValue());
+        if (isNewApi) {
+            // Include parameters as the "correct" type
+            for (Map.Entry<WebserviceParameter, Object> e: params.getTypedParameters().entrySet()) {
+                ds.dynEntry(e.getKey().value(), e.getValue());
+            }
+        } else {
+            // Include parameters as strings
+            for (Map.Entry<WebserviceParameter, String> e: params.getParameters().entrySet()) {
+                ds.dynEntry(e.getKey().value(), e.getValue());
+            }
         }
         ds.endMap().endEntry();
 
@@ -1190,6 +1198,8 @@ public class ResponseStreamer {
                             subcorpusSizeStats(groupInfo.getSubcorpusSize());
                         if (groupInfo.getListOfHits() != null)
                             listOfHits(groupInfo.getListOfHits());
+                        if (hitsGrouped.getGroups().hasScores())
+                            ds.entry(KEY_SCORE, groupInfo.getGroup().score());
                     }
                     ds.endMap().endItem();
                 }
