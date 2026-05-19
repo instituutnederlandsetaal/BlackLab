@@ -13,6 +13,7 @@ import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.resultproperty.DocProperty;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.CorpusSize;
@@ -23,17 +24,26 @@ import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
+import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchCacheEntry;
+import nl.inl.blacklab.searches.SearchCount;
+import nl.inl.blacklab.searches.SearchDocGroups;
+import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.searches.SearchFacets;
+import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.exceptions.BadRequest;
+import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.requests.RequestDocs;
 import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.util.SearchTimer;
 
 public class ResultDocs {
 
-    private final WebserviceParams params;
+    private final RequestDocs requestDocs;
+
+    private final ParamsForResponse paramsForResponse;
 
     private final DocGroups groups;
 
@@ -61,8 +71,8 @@ public class ResultDocs {
 
     DocResults docResults;
 
-    ResultDocs(WebserviceParams params,
-            Collection<MetadataField> metadataFieldsToList,
+    ResultDocs(RequestDocs requestDocs,
+            Collection<MetadataField> metadataToInclude,
             BlackLabIndex blIndex,
             long totalTokens,
             DocResults subcorpusResults,
@@ -73,7 +83,8 @@ public class ResultDocs {
             Collection<Annotation> annotationsToList,
             DocGroups groups,
             List<CorpusSize> corpusSizes) throws InvalidQuery {
-        this.params = params;
+        this.requestDocs = requestDocs;
+        this.paramsForResponse = requestDocs.params();
         this.annotationsToList = annotationsToList;
         this.totalTokens = totalTokens;
         this.subcorpusResults = subcorpusResults;
@@ -85,40 +96,47 @@ public class ResultDocs {
         metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex);
 
         facetInfo = null;
-        if (params.hasFacets()) {
-            Map<DocProperty, DocGroups> counts = params.facets().execute().countsPerFacet();
+        SearchFacets facets = requestDocs.facets();
+        if (facets != null) {
+            Map<DocProperty, DocGroups> counts = facets.execute().countsPerFacet();
             facetInfo = WebserviceOperations.getFacetInfo(counts);
         }
         if (window != null) {
             listResultDocs = new ArrayList<>();
             for (DocResult dr: window) {
-                listResultDocs.add(new ResultDocResult(metadataFieldsToList, params, getAnnotationsToList(), dr));
+                listResultDocs.add(new ResultDocResult(metadataToInclude, requestDocs, getAnnotationsToList(), dr));
             }
         }
         this.docResults = window;
-
         this.groups = groups;
         this.corpusSizes = corpusSizes;
     }
 
-    static ResultDocs docsResponse(WebserviceParams params, long maxWindowSize, long defaultWindowSize) throws InvalidQuery {
-        SearchCacheEntry<ResultsStats> originalHitsSearch = null;
-        if (params.hasPattern()) {
-            originalHitsSearch = WebserviceParamsImpl.determineHitsSearch(RequestHits.fromParams(params)).hitCount().executeAsync();
-        }
+    static ResultDocs docsResponse(RequestDocs requestDocs) throws InvalidQuery {
+        // Retrieve parameters
+        RequestHits optRequestHits = requestDocs.optHits();
 
-        SearchCacheEntry<?> search;
-        SearchCacheEntry<DocGroups> groupsSearch;
+        // Depending on parameters, determine some searches we need
+        SearchHits searchHits = optRequestHits == null ? null : RequestHits.createSearch(optRequestHits);
+        boolean mustGroup = requestDocs.groupBy() != null;
+        boolean isViewGroup = mustGroup && requestDocs.viewGroup() != null;
+        boolean viewingGroups = mustGroup && !isViewGroup;
+        SearchDocs searchDocs = isViewGroup ? null : requestDocs.docsSorted();
+        SearchCount searchCount = isViewGroup ? null : requestDocs.docsCount();
+        SearchDocGroups searchDocGroups = mustGroup ? requestDocs.docsGrouped() : null;
 
-        String groupBy = params.getGroupProps().orElse(null);
-
-        DocResults subcorpusResults = params.subcorpus().execute();
+        SearchCacheEntry<ResultsStats> originalHitsSearch =
+                searchHits == null ? null : searchHits.hitCount().executeAsync();
+        DocResults subcorpusResults = BlackLabIndex.getSubcorpusSearch(requestDocs.index(),
+                requestDocs.filterQuery()).execute();
 
         DocGroups groups = null;
         DocResults docs, window;
-        boolean isViewGroup = false;
-        if (groupBy != null) {
-            search = groupsSearch = params.docsGrouped().executeAsync();
+        SearchCacheEntry<?> search;
+        SearchCacheEntry<DocGroups> groupsSearch;
+
+        if (mustGroup) {
+            search = groupsSearch = searchDocGroups.executeAsync();
             try {
                 groups = groupsSearch.get();
             } catch (InterruptedException e) {
@@ -127,17 +145,14 @@ public class ResultDocs {
             } catch (ExecutionException e) {
                 throw WebserviceOperations.translateSearchException(e);
             }
-
-            String viewGroup = params.getViewGroup().orElse(null);
-            if (viewGroup != null) {
-                isViewGroup = true;
-                PropertyValue viewGroupVal = PropertyValue.deserialize(groups.field(), viewGroup);
+            if (isViewGroup) {
+                PropertyValue viewGroupVal = PropertyValue.deserialize(groups.field(), requestDocs.viewGroup());
                 if (viewGroupVal == null)
                     throw new BadRequest("ERROR_IN_GROUP_VALUE",
-                            "Parameter 'viewgroup' has an illegal value: " + viewGroup);
+                            "Parameter 'viewgroup' has an illegal value: " + requestDocs.viewGroup());
                 DocGroup group = groups.get(viewGroupVal);
                 if (group == null)
-                    throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroup);
+                    throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroupVal);
 
                 docs = group.storedResults();
 
@@ -146,20 +161,17 @@ public class ResultDocs {
                 // Also see SearchParams (hitsSortSettings, docSortSettings, hitGroupsSortSettings, docGroupsSortSettings)
                 // There is probably no reason why we can't just sort/use the sort of the input results, but we need some
                 // more testing to see if everything is correct if we change this
-                String sortBy = params.getSortProps().orElse(null);
-                if (sortBy != null) {
-                    DocProperty sortProp = DocProperty.deserialize(params.blIndex(), sortBy);
-                    if (sortProp != null)
-                        docs = docs.sort(sortProp);
+                if (requestDocs.sortBy() != null) {
+                    docs = docs.sort(requestDocs.sortBy());
                 }
             } else {
-                docs = params.docsSorted().execute();
+                docs = searchDocs.execute();
             }
         } else {
             // Non-grouped doc results
-            search = params.docsSorted().executeAsync();
+            search = searchDocs.executeAsync();
             try {
-                docs = (DocResults)search.get();
+                docs = (DocResults) search.get();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt(); // preserve interrupted status
                 throw WebserviceOperations.translateSearchException(e);
@@ -168,31 +180,20 @@ public class ResultDocs {
             }
 
             // If "waitfortotal=true" was passed, block until all results have been fetched
-            boolean waitForTotal = params.getWaitForTotal();
-            if (waitForTotal)
+            if (requestDocs.waitForTotal())
                 docs.size();
         }
 
-        boolean viewingGroups = groupBy != null && !isViewGroup;
-
         // apply window settings
-        long first = Math.max(0, params.getFirstResultToShow());
-        long number = params.optNumberOfResultsToShow().orElse(defaultWindowSize);
-        if (number < 0)
-            number = defaultWindowSize;
-        if (number > maxWindowSize)
-            number = maxWindowSize;
-        window = viewingGroups ? null : docs.window(first, number);
+
+        WindowSettings windowSettings = requestDocs.windowSettings();
+        window = viewingGroups ? null : docs.window(windowSettings.first(), windowSettings.size());
         if (viewingGroups)
-            groups = groups.window(first, number);
+            groups = groups.window(windowSettings.first(), windowSettings.size());
         WindowStats windowStats = viewingGroups ? groups.windowStats() : window.windowStats();
 
         long totalTime = search.timer().time();
-        boolean waitForTotal = true;
-
-        Collection<Annotation> annotationsToList = WebserviceOperations.getAnnotationsToWrite(params);
-        Collection<MetadataField> metadataFieldsToList = WebserviceOperations.getMetadataToWrite(params);
-        BlackLabIndex index = params.blIndex();
+        //STRANGE!? boolean waitForTotal = true;
 
         CorpusSize subcorpusSize = null;
         DocResults subcorpus = null;
@@ -202,43 +203,45 @@ public class ResultDocs {
                 metadataGroupProperties = groups.groupCriteria();
                 subcorpus = subcorpusResults;
                 subcorpusSize = subcorpus.subcorpusSize();
-            } else if (params.getIncludeSubcorpusSize()) {
-                subcorpusSize = subcorpusResults.subcorpusSize();
+            } else {
+                if (requestDocs.includeSubcorpusSize()) {
+                    subcorpusSize = subcorpusResults.subcorpusSize();
+                }
             }
         }
 
         ResultsStats hitsStats, docsStats;
         hitsStats = isViewGroup ?
                 new ResultsStatsSaved(window.getNumberOfHits(), window.getNumberOfHits()) :
-                originalHitsSearch == null ? null : originalHitsSearch.peek();
+                (originalHitsSearch == null ? null : originalHitsSearch.peek());
         docsStats = isViewGroup ?
                 window.resultsStats() :
-                params.docsCount().executeAsync().peek();
+                searchCount.executeAsync().peek();
 
         SearchTimer timer = search.timer();
         SearchTimings timings = new SearchTimings(timer.time(), totalTime);
-        ResultSummaryCommonFields summaryFields = WebserviceOperations.summaryCommonFields(
-                params,
-                timings, null,
-                groups, windowStats, docs == null ? groups.field() : docs.field(),
-                Collections.emptyList());
+        AnnotatedField searchField = docs == null ? groups.field() : docs.field();
+        TextPattern originalPattern = optRequestHits == null ? null : optRequestHits.patternOriginal();
+        ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(originalPattern, timings, null, groups,
+                windowStats,
+                searchField, Collections.emptyList(), null,
+                requestDocs.params()
+        );
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;
         if (hitsStats == null) {
-            numResultDocs = WebserviceOperations.numResultsSummaryDocs(isViewGroup,
-                    docs, timings, subcorpusSize);
+            numResultDocs = new ResultSummaryNumDocs(isViewGroup, docs, timings, subcorpusSize);
         } else {
-            numResultHits = WebserviceOperations.numResultsSummaryHits(
-                    hitsStats, docsStats, waitForTotal, timings, subcorpusSize);
+            numResultHits = new ResultSummaryNumHits(hitsStats, docsStats, requestDocs.waitForTotal(), timings, subcorpusSize);
         }
 
         // Find subcorpus sizes per group
         List<CorpusSize> corpusSizes = new ArrayList<>();
-        if (metadataGroupProperties != null && params.hasPattern()) {
+        if (metadataGroupProperties != null && searchHits != null) {
             for (long i = windowStats.first(); i <= windowStats.last(); ++i) {
                 DocGroup group = groups.get(i);
                 // Find size of corresponding subcorpus group
-                CorpusSize size = WebserviceOperations.findSubcorpusSize(params.blIndex(), subcorpus.query(),
+                CorpusSize size = WebserviceOperations.findSubcorpusSize(optRequestHits.index(), subcorpus.query(),
                         metadataGroupProperties, group.identity());
                 corpusSizes.add(size);
             }
@@ -246,10 +249,20 @@ public class ResultDocs {
 
         long totalTokens = subcorpusSize == null ? -1 : subcorpusSize.getTotalCount().getTokens();
 
-        return new ResultDocs(params, metadataFieldsToList, index,
-                totalTokens, subcorpusResults, summaryFields, numResultDocs,
-                numResultHits, window, annotationsToList,
-                groups, corpusSizes);
+        return new ResultDocs(
+                requestDocs,
+                requestDocs.metadataToInclude(),
+                requestDocs.index(),
+                totalTokens,
+                subcorpusResults,
+                summaryFields,
+                numResultDocs,
+                numResultHits,
+                window,
+                optRequestHits == null ? null :
+                        optRequestHits.hitsResponseSettings().annotationsToInclude(),
+                groups,
+                corpusSizes);
     }
 
     public Collection<Annotation> getAnnotationsToList() {
@@ -260,8 +273,8 @@ public class ResultDocs {
         return totalTokens;
     }
 
-    public WebserviceParams getParams() {
-        return params;
+    public ParamsForResponse paramsForResponse() {
+        return paramsForResponse;
     }
 
     public ResultSummaryCommonFields getSummaryFields() {
@@ -310,5 +323,9 @@ public class ResultDocs {
 
     public DocResults getDocs() {
         return docResults;
+    }
+
+    public RequestDocs getRequestDocs() {
+        return requestDocs;
     }
 }

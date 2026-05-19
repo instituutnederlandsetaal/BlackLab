@@ -23,7 +23,6 @@
         <module>engine</module>
         <module>query-parser</module>
         <module>tools</module>
-<!--        <module>convert-and-tag</module>-->
         <module>wslib</module>
 
         <!-- Java lib and webservice -->
@@ -34,8 +33,8 @@
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
 
-        <!-- Solr integration (experimental)
-        <module>solr</module> -->
+        <!-- Solr integration (experimental) -->
+        <module>solr</module>
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>

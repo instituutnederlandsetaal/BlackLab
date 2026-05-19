@@ -20,8 +20,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotAuthorized;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
+import nl.inl.blacklab.server.lib.requests.RequestDocContents;
 import nl.inl.blacklab.server.lib.requests.RequestHits;
 
 /**
@@ -50,18 +49,18 @@ public class ResultDocContents {
     public static final Pattern NAMESPACE_PREFIX = Pattern.compile(
             "<([a-z]+):[^ ]+ |<([a-z]+):[^>]+>| ([a-z]+):[^=]+=\"");
 
-    private final WebserviceParams params;
+    private final BlackLabIndex index;
+
+    private final RequestDocContents request;
+
+    private final RequestHits requestHits;
 
     private final String docPid;
 
-    /**
-     * was the full document requested?
-     */
+    /** was the full document requested? */
     private boolean isFullDocument;
 
-    /**
-     * Should an XML declaration be prepended to the results?
-     */
+    /** Should an XML declaration be prepended to the results? */
     private boolean mustOutputXmlDeclaration;
 
     private String content;
@@ -70,9 +69,11 @@ public class ResultDocContents {
 
     private Set<String> anonNamespaces;
 
-    ResultDocContents(WebserviceParams params) throws BlsException, InvalidQuery {
-        this.params = params;
-        this.docPid = params.getDocPid();
+    public ResultDocContents(RequestDocContents request) throws BlsException, InvalidQuery {
+        this.request = request;
+        this.index = request.index();
+        this.requestHits = request.requestHits();
+        this.docPid = request.docPid();
         getDocContents();
     }
 
@@ -101,8 +102,8 @@ public class ResultDocContents {
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
 
         isFullDocument = false;
-        int startAtWord = params.getWordStart();
-        int endAtWord = params.getWordEnd();
+        int startAtWord = request.wordStart();
+        int endAtWord = request.wordEnd();
         if (startAtWord < -1 || endAtWord < -1 || (endAtWord >= 0 && endAtWord <= startAtWord)) {
             // Illegal value. Error will be thrown.
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
@@ -113,7 +114,6 @@ public class ResultDocContents {
             }
         }
 
-        BlackLabIndex index = params.blIndex();
         int docId = index.getDocIdFromPid(docPid);
         if (!index.docExists(docId))
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
@@ -126,14 +126,14 @@ public class ResultDocContents {
                     "Viewing the full contents of this document is not allowed. For more information, read about 'contentViewable': https://blacklab.ivdnt.org/how-to-configure-indexing.html.");
 
         HitResults hitResults = null;
-        if (params.hasPattern()) {
-            hitResults = WebserviceParamsImpl.determineHitsSearch(RequestHits.fromParams(params)).execute();
+        if (requestHits != null) {
+            hitResults = RequestHits.createSearch(requestHits).execute();
         }
 
         // Note: we use the highlighter regardless of whether there's hits because
         // it makes sure our document fragment is well-formed.
         Hits hitsInDoc;
-        AnnotatedField fieldToShow = params.getAnnotatedField();
+        AnnotatedField fieldToShow = request.field();
         if (hitResults == null) {
             hitsInDoc = Hits.empty(new Hits.HitsContext(fieldToShow));
         } else {

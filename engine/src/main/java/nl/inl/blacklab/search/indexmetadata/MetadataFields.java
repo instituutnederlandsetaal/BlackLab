@@ -39,4 +39,5 @@ public interface MetadataFields extends Iterable<MetadataField> {
 
     List<String> names();
 
+    List<MetadataField> toList();
 }

@@ -5,43 +5,15 @@ import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.search.results.stats.ResultsStatsSaved;
 import nl.inl.blacklab.server.lib.SearchTimings;
 
-public class ResultSummaryNumHits {
-    private final ResultsStats hitsStats;
-    private final ResultsStats docsStats;
-    private final boolean waitForTotal;
-    private final SearchTimings timings;
-    private final CorpusSize subcorpusSize;
+public record ResultSummaryNumHits(ResultsStats hitsStats, ResultsStats docsStats, boolean waitForTotal,
+                                   SearchTimings timings, CorpusSize subcorpusSize) {
 
-    public ResultSummaryNumHits(ResultsStats hitsStats, ResultsStats docsStats,
-            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize) {
-        this.hitsStats = hitsStats;
-        this.docsStats = docsStats;
-        this.waitForTotal = waitForTotal;
-        this.timings = timings;
-        this.subcorpusSize = subcorpusSize;
-    }
-
-    public ResultsStats getHitsStats() {
+    @Override
+    public ResultsStats hitsStats() {
         return hitsStats == null ? ResultsStatsSaved.INVALID : hitsStats;
-    }
-
-    public ResultsStats getDocsStats() {
-        return docsStats;
-    }
-
-    public boolean isWaitForTotal() {
-        return waitForTotal;
     }
 
     public boolean isCountFailed() {
         return timings.getCountTime() < 0;
-    }
-
-    public SearchTimings getTimings() {
-        return timings;
-    }
-
-    public CorpusSize getSubcorpusSize() {
-        return subcorpusSize;
     }
 }

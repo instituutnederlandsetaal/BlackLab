@@ -9,7 +9,9 @@ import org.apache.logging.log4j.Logger;
 
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.lib.User;
+import nl.inl.blacklab.server.lib.requests.RequestServerInfo;
 
 public class ResultServerInfo {
 
@@ -17,22 +19,24 @@ public class ResultServerInfo {
 
     private final boolean debugMode;
 
-    private final WebserviceParams params;
+    private final boolean includeCustomInfo;
 
     private final ResultUserInfo userInfo;
 
     private final List<ResultIndexStatus> indexStatuses;
 
-    ResultServerInfo(WebserviceParams params, boolean debugMode) {
-        this.params = params;
-        this.debugMode = debugMode;
+    public ResultServerInfo(RequestServerInfo request) {
+        this.includeCustomInfo = request.includeCustomInfo();
+        this.debugMode = request.debugMode();
 
-        userInfo = WebserviceOperations.userInfo(params);
+        User user = request.user();
+        IndexManager indexManager = request.indexManager();
+        userInfo = new ResultUserInfo(user, indexManager);
         indexStatuses = new ArrayList<>();
-        Collection<Index> indices = params.getIndexManager().getAllAvailableCorpora(params.getUser());
+        Collection<Index> indices = indexManager.getAllAvailableCorpora(user);
         for (Index index: indices) {
             try {
-                indexStatuses.add(WebserviceOperations.resultIndexStatus(index, params.getUser()));
+                indexStatuses.add(WebserviceOperations.resultIndexStatus(index));
             } catch (ErrorOpeningIndex e) {
                 // Cannot open this index; log and skip it.
                 logger.warn("Could not open index " + index.getId() + ": " + e.getMessage());
@@ -40,8 +44,8 @@ public class ResultServerInfo {
         }
     }
 
-    public WebserviceParams getParams() {
-        return params;
+    public boolean includeCustomInfo() {
+        return includeCustomInfo;
     }
 
     public boolean isDebugMode() {

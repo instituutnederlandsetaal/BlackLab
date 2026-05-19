@@ -9,7 +9,6 @@ import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats.IllegalUserFormatIdentifier;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultListInputFormats {
 
@@ -19,13 +18,11 @@ public class ResultListInputFormats {
 
     private final boolean debugMode;
 
-    ResultListInputFormats(WebserviceParams params, boolean debugMode) {
-        userInfo = WebserviceOperations.userInfo(params);
+    ResultListInputFormats(User user, IndexManager indexMan, boolean debugMode) {
+        userInfo = new ResultUserInfo(user, indexMan);
         this.debugMode = debugMode;
 
         // List all available input formats
-        User user = params.getUser();
-        IndexManager indexMan = params.getIndexManager();
         if (user.isLoggedIn() && indexMan.getUserFormatManager() != null) {
             // Make sure users's formats are loaded
             indexMan.getUserFormatManager().loadUserFormats(user.getId(), null);

@@ -75,9 +75,10 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.lib.ConcordanceContext;
+import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WriteCsv;
+import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -356,7 +357,7 @@ public class ResponseStreamer {
      * @param summaryFields info for the fields to write
      */
     public void summaryCommonFields(ResultSummaryCommonFields summaryFields) throws BlsException {
-        WebserviceParams params = summaryFields.getSearchParam();
+        ParamsForResponse params = summaryFields.getParamsForResponse();
 
         ds.startEntry(KEY_PARAMS).startMap();
         if (isNewApi) {
@@ -419,7 +420,7 @@ public class ResponseStreamer {
         }
 
         // Information about hit sampling
-        SampleParameters sample = params.sampleSettings();
+        SampleParameters sample = summaryFields.sampleParams();
         if (sample != null) {
             ds.entry(KEY_SAMPLE_SEED, sample.seed());
             if (sample.isPercentage())
@@ -477,16 +478,16 @@ public class ResponseStreamer {
 
     private void summaryResultsStats(ResultSummaryNumHits result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
-        ResultsStats hitsStats = result.getHitsStats();
-        long hitsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? hitsStats.countedTotal() : hitsStats.countedSoFar());
-        long hitsProcessed = result.isWaitForTotal() ? hitsStats.processedTotal() : hitsStats.processedSoFar();
-        ResultsStats docsStats = result.getDocsStats();
+        ResultsStats hitsStats = result.hitsStats();
+        long hitsCounted = result.isCountFailed() ? -1 : (result.waitForTotal() ? hitsStats.countedTotal() : hitsStats.countedSoFar());
+        long hitsProcessed = result.waitForTotal() ? hitsStats.processedTotal() : hitsStats.processedSoFar();
+        ResultsStats docsStats = result.docsStats();
         if (docsStats == null)
             docsStats = ResultsStatsSaved.INVALID;
-        long docsCounted = result.isCountFailed() ? -1 : (result.isWaitForTotal() ? docsStats.countedTotal() : docsStats.countedSoFar());
-        long docsProcessed = result.isWaitForTotal() ? docsStats.processedTotal() : docsStats.processedSoFar();
+        long docsCounted = result.isCountFailed() ? -1 : (result.waitForTotal() ? docsStats.countedTotal() : docsStats.countedSoFar());
+        long docsProcessed = result.waitForTotal() ? docsStats.processedTotal() : docsStats.processedSoFar();
 
-        CorpusSize subcorpusSize = result.getSubcorpusSize();
+        CorpusSize subcorpusSize = result.subcorpusSize();
         if (isNewApi) {
             // New API v5+: group related values
             boolean limitReached = hitsStats.maxStats().isTooManyToProcess();
@@ -496,7 +497,7 @@ public class ResponseStreamer {
                         STATS_STATUS_FINISHED);
                 ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsProcessed);
                 ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsProcessed);
-                ds.entry(KEY_STATS_TIME_MS, result.getTimings().getProcessingTime());
+                ds.entry(KEY_STATS_TIME_MS, result.timings().getProcessingTime());
                 ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
                 if (limitReached) {
                     ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
@@ -504,7 +505,7 @@ public class ResponseStreamer {
                         ds.entry(KEY_STATS_STATUS, !hitsStats.done() ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
                         ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsCounted);
                         ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsCounted);
-                        ds.entry(KEY_STATS_TIME_MS, result.getTimings().getCountTime());
+                        ds.entry(KEY_STATS_TIME_MS, result.timings().getCountTime());
                         ds.entry(KEY_STATS_STOPPED_TOO_MANY, hitsStats.maxStats().isTooManyToCount());
                     }
                     ds.endMap().endEntry();
@@ -528,7 +529,7 @@ public class ResponseStreamer {
         }
     }
 
-    private void summaryTotalTokens(long totalTokens) {
+    private void summaryTokensInMatchingDocuments(long totalTokens) {
         if (totalTokens >= 0)
             ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
     }
@@ -647,7 +648,7 @@ public class ResponseStreamer {
      * @param result hit to output
      */
     public void snippet(ResultDocSnippet result) {
-        String docPid = result.getParams().getDocPid();
+        String docPid = result.docPid();
         Hits hitsList = result.getHits();
         if (hitsList.isEmpty())
             throw new IllegalStateException("Hit for snippet not found");
@@ -1097,8 +1098,9 @@ public class ResponseStreamer {
             getDataStream().csv(csv);
             return;
         }
-        WebserviceParams params = resultHits.getParams();
-        BlackLabIndex index = params.blIndex();
+        ParamsForResponse params = resultHits.paramsForResponse();
+        RequestHits reqHits = resultHits.getReqHits();
+        BlackLabIndex index = reqHits.index();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
         ResultSummaryCommonFields summaryFields = resultHits.getSummaryCommonFields();
@@ -1112,13 +1114,13 @@ public class ResponseStreamer {
             ResultSummaryNumHits result = resultHits.getSummaryNumHits();
             summaryResultsStats(result, null);
             if (!isNewApi)
-                summaryTotalTokens(resultHits.getTotalTokens());
+                summaryTokensInMatchingDocuments(resultHits.getTokensInMatchingDocuments());
 
             // Write docField (pidField, titleField, etc.) and metadata display names
             // (this information is not specific to this request and can be found elsewhere,
             //  so it probably shouldn't be here - hence the API differences)
             if (!isNewApi) {
-                stringMap("docFields", resultHits.getDocFields());
+                stringMap("docFields", resultHits.getSpecialMetadataFields());
                 stringMap("metadataFieldDisplayNames", resultHits.getMetaDisplayNames());
             }
 
@@ -1129,10 +1131,10 @@ public class ResponseStreamer {
             }
 
             // Include explanation of how the query was executed?
-            if (params.getExplain()) {
-                TextPattern tp = params.pattern().orElseThrow();
+            if (reqHits.explain()) {
+                TextPattern tp = reqHits.pattern();
                 try {
-                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index, params.getAnnotatedField()));
+                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index, reqHits.searchField()));
                     QueryExplanation explanation = index.explain(q);
                     ds.startEntry("explanation").startMap()
                             .entry("originalQuery", explanation.originalQuery())
@@ -1200,7 +1202,7 @@ public class ResponseStreamer {
             }
             ds.endList().endEntry();
 
-            if (hitsGrouped.isIncludeGroupContents()) {
+            if (hitsGrouped.getReqGroup().includeGroupContents()) {
                 documentInfos(hitsGrouped.getDocInfos());
             }
         }
@@ -1262,7 +1264,7 @@ public class ResponseStreamer {
                     groupStats(prop, group);
                     ds.entry(KEY_GROUP_SIZE, group.size());
                     ds.entry(KEY_NUMBER_OF_TOKENS, group.totalTokens());
-                    if (result.getParams().hasPattern()) {
+                    if (result.getRequestDocs().optHits() != null) {
                         subcorpusSizeStats(it.next());
                     }
                     ds.endMap().endItem();
@@ -1292,7 +1294,7 @@ public class ResponseStreamer {
                     summaryResultsStats(result1, null);
                 }
                 if (!isNewApi)
-                    summaryTotalTokens(result.getTotalTokens());
+                    summaryTokensInMatchingDocuments(result.getTotalTokens());
 
                 boolean includeDeprecatedFieldInfo = !isNewApi;
                 if (includeDeprecatedFieldInfo) {
@@ -1391,7 +1393,7 @@ public class ResponseStreamer {
 
             ds.startEntry("corpora").startMap();
             for (ResultIndexStatus corpusInfo: result.getIndexStatuses()) {
-                corpusInfoEntry(corpusInfo, result.getParams().getIncludeCustomInfo());
+                corpusInfoEntry(corpusInfo, result.includeCustomInfo());
             }
             ds.endMap().endEntry();
             if (!isNewApi) {

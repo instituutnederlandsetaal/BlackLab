@@ -2,6 +2,7 @@ package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.requests.RequestDocs;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -16,7 +17,7 @@ public class RequestHandlerDocsGrouped extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opDocs(params, rs, false);
+        WebserviceRequestHandler.opDocs(RequestDocs.fromParams(qpar, false), rs, false);
         return HTTP_OK;
     }
 

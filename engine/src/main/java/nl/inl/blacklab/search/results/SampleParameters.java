@@ -18,11 +18,11 @@ public class SampleParameters {
         return new SampleParameters(true, percentageOfHits, 0, false, 0);
     }
     
-    public static SampleParameters fixedNumber(int numberOfHitsSet, long seedValueSet) {
+    public static SampleParameters fixedNumber(long numberOfHitsSet, long seedValueSet) {
         return new SampleParameters(false, 0, numberOfHitsSet, true, seedValueSet);
     }
     
-    public static SampleParameters fixedNumber(int numberOfHitsSet) {
+    public static SampleParameters fixedNumber(long numberOfHitsSet) {
         return new SampleParameters(false, 0, numberOfHitsSet, false, 0);
     }
     

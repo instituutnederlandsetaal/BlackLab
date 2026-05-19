@@ -24,7 +24,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotations;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.exceptions.BadRequest;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.RequestAutocomplete;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.StringUtil;
 
@@ -34,19 +34,11 @@ public class ResultAutocomplete {
 
     private final List<String> terms;
 
-    ResultAutocomplete(WebserviceParams params) {
-        String fieldName = params.getFieldName();
-        String annotationName = params.getAnnotationName();
-
-        // Annotated field specified but no annotation?
-        if (annotationName == null && params.blIndex().metadata().annotatedFields().exists(fieldName))
-            throw new BadRequest("UNKNOWN_OPERATION",
-                    "Also specify a annotation to autocomplete for annotated field: " + fieldName);
-
-        BlackLabIndex index = params.blIndex();
+    ResultAutocomplete(RequestAutocomplete req) {
+        BlackLabIndex index = req.index();
         IndexMetadata indexMetadata = index.metadata();
 
-        String term = params.getTerm();
+        String term = req.term();
         if (StringUtils.isEmpty(term))
             throw new BadRequest("UNKNOWN_OPERATION", "Bad URL. Pass a parameter 'term' to autocomplete.");
 
@@ -65,6 +57,8 @@ public class ResultAutocomplete {
          * or we might match insensitively on a field that only contains sensitive data, or vice versa
          */
         boolean sensitiveMatching = true;
+        String annotationName = req.annotationName();
+        String fieldName = req.fieldName();
         String luceneField;
         if (!StringUtils.isEmpty(annotationName)) {
             // Annotation on annotated field
@@ -93,7 +87,7 @@ public class ResultAutocomplete {
         }
         IndexReader reader = index.reader();
 
-        if (!params.getAutocompleteType().equalsIgnoreCase("term")) {
+        if (!req.autocompleteType().equalsIgnoreCase("term")) {
             terms = findMetadataFieldValuesByToken(reader, index, luceneField, term);
         } else {
             terms = LuceneUtil.findTermsByPrefix(reader, luceneField, term, sensitiveMatching, MAX_VALUES);

@@ -22,7 +22,7 @@ public class RequestHandlerSharedWithMe extends RequestHandler {
         debug(logger, "REQ shared-with-me: " + indexName);
 
         // Regular request: return the list of users this corpus is shared with
-        List<String> sharedWithMe = WebserviceOperations.getCorporaSharedWithMe(params);
+        List<String> sharedWithMe = WebserviceOperations.getCorporaSharedWithMe(user, indexMan);
         dstreamSharedWithMeResponse(rs, sharedWithMe);
         return HTTP_OK;
     }

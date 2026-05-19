@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.requests.RequestDocSnippet;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -16,7 +17,7 @@ public class RequestHandlerDocSnippet extends RequestHandler {
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
         determineDocPidFromPathInfo();
-        WebserviceRequestHandler.opDocSnippet(params, rs);
+        WebserviceRequestHandler.opDocSnippet(RequestDocSnippet.fromParams(qpar), rs);
         return HTTP_OK;
     }
 

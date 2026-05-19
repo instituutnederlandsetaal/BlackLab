@@ -6,11 +6,13 @@ import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.lucene.search.Query;
 import org.apache.solr.common.params.SolrParams;
 
+import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
-import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.lib.QueryParamsMap;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
@@ -28,9 +30,19 @@ public class QueryParamsSolr extends QueryParamsAbstract {
 
     private final SolrParams solrParams;
 
-    public QueryParamsSolr(String corpusName, SearchManager searchManager, SolrParams params, User user) {
-        super(corpusName, searchManager, user);
-        solrParams = params;
+    /** Filter query to use if filter parameter not specified, if any. Used with Solr.
+     * <p>
+     * (optional) if no filter query specified, use this as the fallback.
+     * We use this with Solr, where we use the Solr result document set if
+     * the filter parameter was omitted.
+     */
+    private final Query fallbackFilterQuery;
+
+    public QueryParamsSolr(String corpusName, SolrParams solrParams, Query fallbackFilterQuery, BLSConfig config,
+            boolean debugMode) {
+        super(corpusName, config, debugMode);
+        this.solrParams = solrParams;
+        this.fallbackFilterQuery = fallbackFilterQuery;
     }
 
     public static boolean shouldRunComponent(SolrParams params) {
@@ -65,4 +77,15 @@ public class QueryParamsSolr extends QueryParamsAbstract {
         return result;
     }
 
+    @Override
+    public Map<WebserviceParameter, Object> getTypedParameters() {
+        // A bit inefficient; probably do this once
+        QueryParams p = new QueryParamsMap(corpusName, getParameters(), null, config(), debugMode());
+        return p.getTypedParameters();
+    }
+
+    @Override
+    public Query getFallbackFilterQuery() {
+        return fallbackFilterQuery;
+    }
 }

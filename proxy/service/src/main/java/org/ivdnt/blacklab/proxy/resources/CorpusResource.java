@@ -101,8 +101,8 @@ public class CorpusResource {
         User user = User.anonymous(""); // TODO detect user
         List<String> listValuesFor = parListValuesFor.isEmpty() ? List.of() :
                 Arrays.asList(parListValuesFor.split(",", -1));
-        RequestRelations reqRel = new RequestRelations(corpusName, null/*each field*/, limitValues, relClasses, true, false);
-        RequestCorpusInfo req = new RequestCorpusInfo(corpusName, user, listValuesFor, limitValues, customInfo, reqRel);
+        RequestRelations reqRel = new RequestRelations(null/*each field*/, limitValues, relClasses, true, false);
+        RequestCorpusInfo req = new RequestCorpusInfo(corpusName, listValuesFor, limitValues, customInfo, reqRel);
         return backend.corpusInfo(getApiVersion(corporaPath, strApiVersion), req);
     }
 

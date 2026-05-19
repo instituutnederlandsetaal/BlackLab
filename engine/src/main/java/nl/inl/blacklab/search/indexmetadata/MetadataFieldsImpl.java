@@ -134,6 +134,11 @@ class MetadataFieldsImpl implements MetadataFieldsWriter, Freezable {
     }
 
     @Override
+    public List<MetadataField> toList() {
+        return new ArrayList<>(metadataFieldInfos.values());
+    }
+
+    @Override
     public Stream<MetadataField> stream() {
         return metadataFieldInfos.values().stream().map(f -> f);
     }

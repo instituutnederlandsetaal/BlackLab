@@ -7,15 +7,14 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import jakarta.servlet.http.HttpServletRequest;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
 import nl.inl.blacklab.server.lib.QueryParamsMap;
-import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
-/** BLS API-specific implementation of WebserviceParams.
+/** BLS API-specific implementation of QueryParams.
  *
  * Extracts the webservice parameters from a HttpServletRequest.
  */
@@ -25,8 +24,9 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
 
     private final Map<WebserviceParameter, Object> typedMap = new EnumMap<>(WebserviceParameter.class);
 
-    public QueryParamsBlackLabServer(String corpusName, SearchManager searchMan, User user, HttpServletRequest request, WebserviceOperation operation) {
-        super(corpusName, searchMan, user);
+
+    public QueryParamsBlackLabServer(String corpusName, WebserviceOperation operation, HttpServletRequest request, BLSConfig config, boolean debugMode) {
+        super(corpusName, config, debugMode);
         for (String name: request.getParameterMap().keySet()) {
             WebserviceParameter par = WebserviceParameter.fromValue(name).orElse(null);
             if (par != null) {
@@ -78,5 +78,4 @@ public class QueryParamsBlackLabServer extends QueryParamsAbstract {
     public String getCorpusName() {
         return get(WebserviceParameter.CORPUS_NAME);
     }
-
 }

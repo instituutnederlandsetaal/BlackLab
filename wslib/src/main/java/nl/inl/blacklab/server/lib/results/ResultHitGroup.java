@@ -51,10 +51,10 @@ public class ResultHitGroup {
             concordanceContext = ConcordanceContext.get(hitsInGroup, contextSettings.concType(),
                     contextSettings.size());
             docIdToPid = WebserviceOperations.collectDocsAndPids(reqGroup.index(), hitsInGroup, luceneDocs);
-            listOfHits = WebserviceOperations.listOfHits(
-                    reqGroup.hitsReponseSettings().annotationsToWrite(), contextSettings,
-                    reqGroup.hitsReponseSettings().omitEmptyCaptures(), groupResults, getConcordanceContext(),
-                    getDocIdToPid());
+            ConcordanceContext concordanceContext1 = getConcordanceContext();
+            listOfHits = new ResultListOfHits(groupResults, concordanceContext1, getDocIdToPid(), contextSettings,
+                    reqGroup.hitsResponseSettings().annotationsToInclude(),
+                    reqGroup.hitsResponseSettings().omitEmptyCaptures());
         }
     }
 

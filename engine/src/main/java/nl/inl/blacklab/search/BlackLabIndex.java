@@ -51,6 +51,7 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPatternTags;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.searches.SearchDocs;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 
@@ -58,6 +59,13 @@ import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
 public interface BlackLabIndex extends AutoCloseable {
 
     String METADATA_FIELD_CONTENT_VIEWABLE = "contentViewable";
+
+    static SearchDocs getSubcorpusSearch(BlackLabIndex index, Query docFilterQuery) {
+        if (docFilterQuery == null) {
+            docFilterQuery = index.getAllRealDocsQuery();
+        }
+        return index.search(index.mainAnnotatedField()).findDocuments(docFilterQuery);
+    }
 
     BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs);

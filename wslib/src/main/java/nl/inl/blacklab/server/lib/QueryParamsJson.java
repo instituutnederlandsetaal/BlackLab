@@ -9,12 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.lucene.search.Query;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.util.PropertySerializeUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
@@ -31,8 +33,13 @@ public class QueryParamsJson extends QueryParamsAbstract {
     /** Our parameters, "re-serialized" from the JSON structure */
     final Map<WebserviceParameter, Object> typedParams;
 
-    public QueryParamsJson(String corpusName, SearchManager searchManager, User user, String json, WebserviceOperation operation) throws JsonProcessingException {
-        super(corpusName, searchManager, user);
+    /** Filter query to use if filter parameter not specified, if any. Used with Solr.  */
+    private final Query fallbackFilterQuery;
+
+    public QueryParamsJson(String corpusName, WebserviceOperation operation, String json, Query fallbackFilterQuery,
+            BLSConfig config, boolean debugMode) throws JsonProcessingException {
+        super(corpusName, config, debugMode);
+        this.fallbackFilterQuery = fallbackFilterQuery;
         JsonNode jsonNode = Json.getJsonObjectMapper().readTree(json);
         if (!jsonNode.isObject())
             throw new IllegalArgumentException("Expected JSON object node");
@@ -148,5 +155,10 @@ public class QueryParamsJson extends QueryParamsAbstract {
             properties.add(value.asText());
         }
         return properties.toArray(new Object[0]);
+    }
+
+    @Override
+    public Query getFallbackFilterQuery() {
+        return fallbackFilterQuery;
     }
 }

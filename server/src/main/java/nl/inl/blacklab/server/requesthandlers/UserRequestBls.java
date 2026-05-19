@@ -10,12 +10,11 @@ import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.auth.AuthMethod;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
@@ -76,16 +75,17 @@ public class UserRequestBls implements UserRequest {
     @Override
     public synchronized User getUser() {
         if (user == null) {
-            SearchManager searchManager = BlsMain.get().getSearchManager();
+            SearchManager searchManager = getSearchManager();
             AuthMethod authObj = searchManager.getAuthSystem().getAuthObject();
 
             // If no auth system is configured, all users are anonymous
+            BLSConfig config = config();
             if (authObj == null) {
                 user = User.anonymous(request.getSession().getId());
             } else {
 
                 // Is client on debug IP and is there a userid parameter?
-                if (searchManager.config().getAuthentication().isOverrideIp(request.getRemoteAddr())
+                if (config.getAuthentication().isOverrideIp(request.getRemoteAddr())
                         && request.getParameter("userid") != null) {
                     user = User.fromIdAndSessionId(request.getParameter("userid"), request.getSession().getId());
                 } else {
@@ -99,7 +99,7 @@ public class UserRequestBls implements UserRequest {
             }
 
             // Override via HTTP header? (insecure, normally disabled)
-            String debugHttpHeaderToken = searchManager.config().getAuthentication().getDebugHttpHeaderAuthToken();
+            String debugHttpHeaderToken = config.getAuthentication().getDebugHttpHeaderAuthToken();
             if (!user.isLoggedIn() && !StringUtils.isEmpty(debugHttpHeaderToken)) {
                 String xBlackLabAccessToken = request.getHeader("X-BlackLabAccessToken");
                 if (xBlackLabAccessToken != null && xBlackLabAccessToken.equals(debugHttpHeaderToken)) {
@@ -140,26 +140,29 @@ public class UserRequestBls implements UserRequest {
     }
 
     @Override
-    public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
+    public QueryParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         String jsonRequest = request.getParameter("req");
         QueryParams blsParams;
+        BLSConfig blsConfig = config();
+        boolean isDebugMode = isDebugMode();
         if (jsonRequest != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                blsParams = new QueryParamsJson(corpusName, getSearchManager(), getUser(), jsonRequest, operation);
+                blsParams = new QueryParamsJson(corpusName, operation, jsonRequest, null, blsConfig,
+                        isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing req parameter (JSON request)", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            blsParams = new QueryParamsBlackLabServer(corpusName, getSearchManager(), getUser(), request, operation);
+            blsParams = new QueryParamsBlackLabServer(corpusName, operation, request, blsConfig, isDebugMode);
         }
-        return WebserviceParamsImpl.get(operation.isDocsOperation(), isDebugMode(), blsParams);
+        return blsParams;
     }
 
     @Override
     public boolean isDebugMode() {
-        return getSearchManager().isDebugMode(ServletUtil.getOriginatingAddress(request));
+        return SearchManager.get().isDebugMode(ServletUtil.getOriginatingAddress(request));
     }
 
     @Override
@@ -178,7 +181,7 @@ public class UserRequestBls implements UserRequest {
     @Override
     public ApiVersion apiVersion() {
         String paramApi = request.getParameter("api");
-        return paramApi == null ? getSearchManager().config().getParameters().getApi() :
+        return paramApi == null ? config().getParameters().getApi() :
                 ApiVersion.fromValue(paramApi);
     }
 }

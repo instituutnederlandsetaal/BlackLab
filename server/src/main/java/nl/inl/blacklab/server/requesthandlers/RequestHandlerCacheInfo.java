@@ -19,7 +19,7 @@ public class RequestHandlerCacheInfo extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) {
-        WebserviceRequestHandler.opCacheInfo(params, rs);
+        WebserviceRequestHandler.opCacheInfo(searchMan.getBlackLabCache(), qpar.isIncludeDebugInfo(), rs);
         return HTTP_OK;
     }
 

@@ -19,7 +19,7 @@ import nl.inl.blacklab.search.results.hitresults.Kwics;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
 import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.RequestDocs;
 
 public class ResultDocResult {
     private final String pid;
@@ -29,14 +29,14 @@ public class ResultDocResult {
     private final Collection<Annotation> annotationsToList;
     private final long numberOfHits;
 
-    public ResultDocResult(Collection<MetadataField> metadataFieldsToList,
-            WebserviceParams params, Collection<Annotation> annotationsToList, DocResult dr) {
+    public ResultDocResult(Collection<MetadataField> metadataToInclude,
+            RequestDocs requestDocs, Collection<Annotation> annotationsToList, DocResult dr) {
         this.annotationsToList = annotationsToList;
         // Find pid
-        BlackLabIndex index = params.blIndex();
+        BlackLabIndex index = requestDocs.index();
         Document document = index.luceneDoc(dr.docId());
         pid = WebserviceOperations.getDocumentPid(index, dr.identity().value(), document);
-        docInfo = WebserviceOperations.docInfo(index, pid, document, metadataFieldsToList);
+        docInfo = new ResultDocInfo(index, pid, document, metadataToInclude);
         // Snippets
         HitResults hitResults = dr.storedResults().window(0, 5);
         numberOfHits = dr.resultsStats().processedTotal();
@@ -44,7 +44,7 @@ public class ResultDocResult {
         concordancesToShow = new ArrayList<>();
         kwicsToShow = new ArrayList<>();
         if (hitResults.resultsStats().processedAtLeast(1)) {
-            ContextSettings contextSettings = params.contextSettings();
+            ContextSettings contextSettings = requestDocs.optHits().contextSettings();
             Concordances theConcordances = null;
             Kwics theKwics = null;
             Hits hitsList = hitResults.getHits();

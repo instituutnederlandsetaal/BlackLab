@@ -1,5 +1,6 @@
 package nl.inl.blacklab.resultproperty;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
@@ -89,6 +90,14 @@ public abstract class DocProperty implements ResultProperty, Comparator<DocResul
     @Override
     public String serializeReverse() {
         return reverse ? "-" : "";
+    }
+
+    public static List<DocProperty> propsFromDesc(BlackLabIndex index, String serialized) {
+        DocProperty docProperty = deserialize(index, serialized);
+        if (docProperty == null)
+            return null;
+        else
+            return new ArrayList<>(docProperty.propsList());
     }
 
     public static DocProperty deserialize(BlackLabIndex index, String serialized) {

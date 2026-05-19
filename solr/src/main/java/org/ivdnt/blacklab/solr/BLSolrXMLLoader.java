@@ -29,12 +29,14 @@ import nl.inl.blacklab.index.DocumentFormats;
 import nl.inl.blacklab.index.Indexer;
 import nl.inl.blacklab.index.InputFormatInfo;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
+import nl.inl.blacklab.plugins.FileConverter;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.util.fileprocessor.FileReference;
 
 /**
  * This class is the main entrypoint for SOLR indexing in BlackLab.
@@ -72,7 +74,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
             Indexer indexer = Indexer.create(index, paramFormat);
             InputStream is = stream.getStream();
 
-            indexer.index(fileName, is);
+            indexer.index(FileReference.fromInputStream(fileName, is, null), null, FileConverter.ExtraConverters.NONE);
             // Do this after indexing, so the metadata is up-to-date
             synchronizeSolrSchema(index, req);
 

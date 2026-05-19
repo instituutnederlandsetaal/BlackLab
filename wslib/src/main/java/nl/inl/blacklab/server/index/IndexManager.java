@@ -32,6 +32,7 @@ import nl.inl.blacklab.indexers.config.ConfigInputFormat;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.BlackLabIndexWriter;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadataWriter;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
@@ -145,6 +146,10 @@ public class IndexManager {
         } catch (Exception ex) {
             throw BlackLabException.wrapRuntime(ex);
         }
+    }
+
+    public static IndexManager get() {
+        return BlsMain.get().getSearchManager().getIndexManager();
     }
 
     private void checkAnyIndexesAvailable() throws ConfigurationException {

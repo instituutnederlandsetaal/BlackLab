@@ -42,7 +42,7 @@ public class RequestHandlerAddFormat extends RequestHandler {
         } catch (IOException e) {
             throw new BadRequest("", e.getMessage());
         }
-        WebserviceOperations.addUserFileFormat(params, fileName, fileInputStream);
+        WebserviceOperations.addUserFileFormat(searchMan, user, fileName, fileInputStream);
         return Response.success(rs, "Format added.");
     }
 }

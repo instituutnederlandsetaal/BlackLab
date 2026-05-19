@@ -3,9 +3,9 @@ package nl.inl.blacklab.server.requesthandlers;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.requests.RequestDocContents;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.ResultDocContents;
-import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
 /**
@@ -31,7 +31,7 @@ public class RequestHandlerDocContents extends RequestHandler {
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
         determineDocPidFromPathInfo();
-        ResultDocContents resultDocContents = WebserviceOperations.docContents(params);
+        ResultDocContents resultDocContents = new ResultDocContents(RequestDocContents.fromParams(qpar));
         rs.docContentsResponsePlain(resultDocContents);
         return HTTP_OK;
     }

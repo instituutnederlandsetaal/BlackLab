@@ -19,6 +19,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
+import nl.inl.blacklab.search.results.ResultGroups;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.HitGroup;
@@ -27,11 +28,15 @@ import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchHitGroups;
+import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.server.lib.requests.RequestHitsGrouped;
 import nl.inl.util.BlockTimer;
 
 public class ResultHitsGrouped {
+
+    private final RequestHitsGrouped reqGroup;
 
     private final HitGroups groups;
 
@@ -55,8 +60,6 @@ public class ResultHitsGrouped {
 
     private final ResultSummaryNumHits summaryNumHits;
 
-    private final boolean includeGroupContents;
-
     /**
      * Get the groups for this request.
      *
@@ -64,13 +67,13 @@ public class ResultHitsGrouped {
      * responses are thrown if any part of the request cannot be fulfilled.
      *
      * @param reqGroup grouping request
-     * @param paramsForResponse query parameters; ONLY used for echoing them in the response
      */
     ResultHitsGrouped(RequestHitsGrouped reqGroup) throws InvalidQuery {
-        this.includeGroupContents = reqGroup.includeGroupContents();
+        this.reqGroup = reqGroup;
 
-        HitResults hitResults = reqGroup.hitsToGroup().execute(); // we need these later to get the match info defs
-        SearchHitGroups searchHitGroups = reqGroup.hitsToGroup()
+        SearchHits searchHits = RequestHits.createSearch(reqGroup.requestHits());
+        HitResults hitResults = searchHits.execute(); // we need these later to get the match info defs
+        SearchHitGroups searchHitGroups = searchHits
                 .groupStats(reqGroup.groupBy(), reqGroup.maxHitsToStorePerGroup(),
                         reqGroup.groupScorer())
                 .sort(reqGroup.sortGroupsBy());
@@ -88,7 +91,7 @@ public class ResultHitsGrouped {
         hitsStats = groups.hitsStats();
         docsStats = groups.docsStats();
         if (docsStats == null)
-            docsStats = reqGroup.docsCount().execute();
+            docsStats = searchHits.docCount().execute();
 
         // The list of groups found
         metadataGroupProperties = groups.groupCriteria().docPropsOnly();
@@ -116,8 +119,8 @@ public class ResultHitsGrouped {
 
         docInfos = null;
         if (reqGroup.includeGroupContents()) {
-            Collection<MetadataField> metadataToWrite = reqGroup.hitsReponseSettings().metadataToWrite();
-            docInfos = WebserviceOperations.getDocInfos(reqGroup.index(), luceneDocs, metadataToWrite);
+            Collection<MetadataField> metadataToInclude = reqGroup.requestHits().metadataToInclude();
+            docInfos = WebserviceOperations.getDocInfos(reqGroup.index(), luceneDocs, metadataToInclude);
         }
 
         // Determine time taken
@@ -131,11 +134,15 @@ public class ResultHitsGrouped {
                 otherFields.add(def.getTargetField());
         }
 
-        summaryFields = WebserviceOperations.summaryCommonFields(reqGroup.paramsForResponse(),
-                timings, matchInfoDefs, getGroups(), getWindow(), groups.field(),
-                otherFields);
-        summaryNumHits = WebserviceOperations.numResultsSummaryHits(
-                getHitsStats(), getDocsStats(), true, timings, getSubcorpusSize());
+        ResultGroups groups1 = getGroups();
+        WindowStats window1 = getWindow();
+        AnnotatedField searchField = groups.field();
+        summaryFields = new ResultSummaryCommonFields(reqGroup.patternOriginal(), timings, matchInfoDefs, groups1, window1, searchField,
+                otherFields, reqGroup.requestHits().sampleParams(), reqGroup.paramsForResponse()
+        );
+        ResultsStats hitsStats1 = getHitsStats();
+        ResultsStats docsStats1 = getDocsStats();
+        summaryNumHits = new ResultSummaryNumHits(hitsStats1, docsStats1, true, timings, getSubcorpusSize());
     }
 
     public HitGroups getGroups() {
@@ -170,8 +177,8 @@ public class ResultHitsGrouped {
         return docInfos;
     }
 
-    public boolean isIncludeGroupContents() {
-        return includeGroupContents;
+    public RequestHitsGrouped getReqGroup() {
+        return reqGroup;
     }
 
     public ResultSummaryCommonFields getSummaryFields() {

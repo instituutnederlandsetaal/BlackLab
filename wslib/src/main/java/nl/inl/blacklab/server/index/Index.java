@@ -48,6 +48,10 @@ public class Index {
 
     private static final String SHARE_WITH_USERS_FILENAME = ".shareWithUsers";
 
+    public String name() {
+        return blIndex().name();
+    }
+
     public enum IndexStatus {
         EMPTY, // index has just been created. can be added to but not searched.
         AVAILABLE, // index is available for searching and adding to

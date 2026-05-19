@@ -11,6 +11,7 @@ import nl.inl.blacklab.exceptions.BlackLabException;
 import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabEngine;
 import nl.inl.blacklab.searches.SearchCache;
+import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.auth.AuthManager;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.ConfigurationException;
@@ -22,6 +23,10 @@ import nl.inl.blacklab.server.index.IndexManager;
 public class SearchManager {
 
     private static final Logger logger = LogManager.getLogger(SearchManager.class);
+
+    public static SearchManager get() {
+        return BlsMain.get().getSearchManager();
+    }
 
     /** Our config */
     private BLSConfig config;

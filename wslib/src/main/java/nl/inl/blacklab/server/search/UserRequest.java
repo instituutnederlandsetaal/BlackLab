@@ -2,8 +2,9 @@ package nl.inl.blacklab.server.search;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.BlsMain;
+import nl.inl.blacklab.server.config.BLSConfig;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 
@@ -21,6 +22,10 @@ public interface UserRequest {
 
     default SearchManager getSearchManager() {
         return BlsMain.get().getSearchManager();
+    }
+
+    default BLSConfig config() {
+        return getSearchManager().config();
     }
 
     /**
@@ -67,7 +72,7 @@ public interface UserRequest {
      * @param operation operation to perform (if not passed as a parameter)
      * @return parameters object
      */
-    WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation);
+    QueryParams getParams(BlackLabIndex index, WebserviceOperation operation);
 
     /**
      * Is this a debug request?

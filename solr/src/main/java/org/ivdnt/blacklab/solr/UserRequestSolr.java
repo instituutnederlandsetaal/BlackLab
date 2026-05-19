@@ -11,12 +11,11 @@ import org.apache.solr.search.DocSet;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -76,36 +75,32 @@ public class UserRequestSolr implements UserRequest {
     }
 
     @Override
-    public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
-        User user = getUser();
+    public QueryParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         SolrParams solrParams = rb.req.getParams();
         String blReq = solrParams.get("bl.req");
+
+        // If no explicit bl.filter specified; use Solr's document results as our filter query
+        DocSetFilter fallbackFilterQuery = null;
+        DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
+        if (docSet != null && docSet.size() > 0 && index != null) {
+            fallbackFilterQuery = new DocSetFilter(docSet, index.metadata().metadataDocId());
+        }
+
+        BLSConfig config = config();
         QueryParams qpSolr;
+        boolean isDebugMode = isDebugMode();
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = new QueryParamsJson(getCorpusName(), getSearchManager(), user, blReq, operation);
+                qpSolr = new QueryParamsJson(getCorpusName(), operation, blReq, fallbackFilterQuery, config, isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = new QueryParamsSolr(getCorpusName(), getSearchManager(), solrParams, user);
+            qpSolr = new QueryParamsSolr(getCorpusName(), solrParams, fallbackFilterQuery, config, isDebugMode);
         }
-        try {
-            operation = qpSolr.getOperation();
-        } catch (UnsupportedOperationException e) {
-            throw new BadRequest("UNKNOWN_OPERATION", "Unknown operation");
-        }
-        boolean isDocs = operation.isDocsOperation();
-        WebserviceParamsImpl params = WebserviceParamsImpl.get(isDocs, isDebugMode(), qpSolr);
-        if (params.getDocumentFilterQuery().isEmpty()) {
-            // No explicit bl.filter specified; use Solr's document results as our filter query
-            DocSet docSet = rb.getResults() != null ? rb.getResults().docSet : null;
-            if (docSet != null && docSet.size() > 0 && index != null)
-                params.setFilterQuery(new DocSetFilter(docSet, index.metadata().metadataDocId()));
-        }
-        return params;
+        return qpSolr;
     }
 
     @Override
@@ -121,7 +116,7 @@ public class UserRequestSolr implements UserRequest {
     @Override
     public ApiVersion apiVersion() {
         String paramApi = rb.req.getParams().get("bl.api");
-        return paramApi == null ? getSearchManager().config().getParameters().getApi() :
+        return paramApi == null ? config().getParameters().getApi() :
                 ApiVersion.fromValue(paramApi);
     }
 }

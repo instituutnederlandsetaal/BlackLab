@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,7 +44,6 @@ import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.TermFrequencyList;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.IndexMetadata;
@@ -53,21 +53,15 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFieldGroup;
 import nl.inl.blacklab.search.indexmetadata.MetadataFieldValues;
 import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.indexmetadata.TruncatableFreqList;
-import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.CorpusSize;
-import nl.inl.blacklab.search.results.ResultGroups;
-import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.results.docs.DocGroup;
 import nl.inl.blacklab.search.results.docs.DocGroups;
-import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
-import nl.inl.blacklab.search.results.stats.ResultsStats;
 import nl.inl.blacklab.server.BlsMain;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.config.DefaultMax;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
@@ -76,14 +70,14 @@ import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.FinderInputFormatUserFormats;
 import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.IndexManager;
-import nl.inl.blacklab.server.jobs.ContextSettings;
-import nl.inl.blacklab.server.lib.ConcordanceContext;
-import nl.inl.blacklab.server.lib.SearchTimings;
+import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
+import nl.inl.blacklab.server.lib.requests.RequestDocs;
+import nl.inl.blacklab.server.lib.requests.RequestHits;
+import nl.inl.blacklab.server.lib.requests.RequestOldCollocations;
+import nl.inl.blacklab.server.lib.requests.RequestTermFrequencies;
 import nl.inl.blacklab.server.search.SearchManager;
-import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.Json;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.fileprocessor.FileReference;
@@ -95,27 +89,6 @@ public class WebserviceOperations {
     private static final int MAX_FIELD_VALUES_TO_RETURN = 500;
 
     private WebserviceOperations() {}
-
-    /**
-     * Returns a list of metadata fields to write out.
-     * <p>
-     * By default, all metadata fields are returned.
-     * Special fields (pidField, titleField, etc...) are always returned.
-     *
-     * @return a list of metadata fields to write out, as specified by the "listmetadatavalues" query parameter.
-     */
-    public static Collection<MetadataField> getMetadataToWrite(WebserviceParams params) {
-        BlackLabIndex index = params.blIndex();
-        MetadataFields fields = index.metadataFields();
-        Collection<String> requestedFields = params.getListMetadataValuesFor();
-        boolean includeAllFields = requestedFields.isEmpty() || requestedFields.contains("*");
-        Set<MetadataField> ret = new HashSet<>();
-        for (MetadataField field: fields) {
-            if (includeAllFields || requestedFields.contains(field.name()))
-                ret.add(field);
-        }
-        return ret;
-    }
 
     /**
      * Get metadata field groups.
@@ -220,50 +193,21 @@ public class WebserviceOperations {
     }
 
     /**
-     * Returns the annotations to write out.
-     * <p>
-     * By default, all annotations are returned.
-     * Annotations are returned in requested order, or in their definition/display order.
-     *
-     * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
-     */
-    public static List<Annotation> getAnnotationsToWrite(WebserviceParams params) {
-        BlackLabIndex index = params.blIndex();
-        AnnotatedFields fields = index.annotatedFields();
-        Collection<String> requestedAnnotations = params.getListValuesFor();
-        boolean all = false;
-        if (requestedAnnotations.contains("*")) {
-            all = true;
-        }
-        // NOTE: we use all fields to make sure this works for parallel corpora too!
-        //       obviously only annotations that are actually from the field(s) searched will be included in the output.
-        List<Annotation> ret = new ArrayList<>();
-        for (AnnotatedField f : fields) {
-            for (Annotation a : f.annotations()) {
-                if (all || requestedAnnotations.isEmpty() || requestedAnnotations.contains(a.name())) {
-                    ret.add(a);
-                }
-            }
-        }
-        return ret;
-    }
-
-    /**
      * Get metadata for a list of documents.
      *
      * @param index index
      * @param luceneDocs documents to get metadata from
-     * @param metadataFieldsToList fields to get
+     * @param metadataToInclude fields to get
      * @return metadata for the documents
      */
     public static Map<String, ResultDocInfo> getDocInfos(BlackLabIndex index, Map<Integer, Document> luceneDocs,
-            Collection<MetadataField> metadataFieldsToList) {
+            Collection<MetadataField> metadataToInclude) {
         Map<String, ResultDocInfo> docInfos = new LinkedHashMap<>();
         for (Map.Entry<Integer, Document> e: luceneDocs.entrySet()) {
             Integer docId = e.getKey();
             Document luceneDoc = e.getValue();
             String pid = getDocumentPid(index, docId, luceneDoc);
-            ResultDocInfo docInfo = new ResultDocInfo(index, pid, luceneDoc, metadataFieldsToList);
+            ResultDocInfo docInfo = new ResultDocInfo(index, pid, luceneDoc, metadataToInclude);
             docInfos.put(pid, docInfo);
         }
         return docInfos;
@@ -328,20 +272,19 @@ public class WebserviceOperations {
     /**
      * Calculate collocations from hits.
      *
-     * @param params operation parameters
+     * @param requestOldCollocations operation parameters
      * @param hitResults hits
      * @return collocations
      */
-    public static TermFrequencyList getCollocations(WebserviceParams params, HitResults hitResults) {
+    public static TermFrequencyList getCollocations(RequestOldCollocations requestOldCollocations, HitResults hitResults) {
         Annotation annotation = hitResults.field().mainAnnotation();
-        boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
-        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
+        MatchSensitivity sensitivity = MatchSensitivity.caseAndDiacriticsSensitive(requestOldCollocations.sensitive());
         ensureHasSensitivity(annotation, sensitivity);
-        ContextSize contextSize = params.getContext();
+        ContextSize contextSize = requestOldCollocations.contextSize();
         return hitResults.collocations(annotation, contextSize, sensitivity, true);
     }
 
-    private static void ensureHasSensitivity(Annotation annotation, MatchSensitivity sensitivity) {
+    public static void ensureHasSensitivity(Annotation annotation, MatchSensitivity sensitivity) {
         if (!annotation.hasSensitivity(sensitivity)) {
             throw new BadRequest("SENSITIVITY_NOT_FOUND",
                     "The annotation '" + annotation.name() + "' does not have the requested sensitivity '" + sensitivity
@@ -357,13 +300,12 @@ public class WebserviceOperations {
      * @param fileName name of the uploaded file
      * @param fileContents contents of the uploaded file
      */
-    public static void addUserFileFormat(WebserviceParams params, String fileName, InputStream fileContents) {
-        SearchManager searchMan = params.getSearchManager();
+    public static void addUserFileFormat(SearchManager searchMan, User user, String fileName, InputStream fileContents) {
         FinderInputFormatUserFormats formatMan = searchMan.getIndexManager().getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_CREATE_INDEX ",
                     "Could not create/overwrite format. The server is not configured with support for user content.");
-        formatMan.createUserFormat(params.getUser(), fileName, fileContents);
+        formatMan.createUserFormat(user, fileName, fileContents);
     }
 
     /**
@@ -494,11 +436,11 @@ public class WebserviceOperations {
      * Find the size of documents matching a filter query and/or property+value.
      * <p>
      *
-     * @param params operation parameters
+     * @param index corpus we're searching
      * @param metadataFilterQuery filter query
      * @param property document property to find subcorpus size for
      * @param value value the document property must have to be included
-     * @return
+     * @return size of subcorpus
      */
     public static CorpusSize findSubcorpusSize(BlackLabIndex index, Query metadataFilterQuery,
             DocProperty property, PropertyValue value) {
@@ -519,64 +461,38 @@ public class WebserviceOperations {
         return index.queryDocuments(query).subcorpusSize(true);
     }
 
-    public static TermFrequencyList getTermFrequencies(WebserviceParams params) {
+    public static TermFrequencyList getTermFrequencies(RequestTermFrequencies reqTermFreq) {
         //TODO: use background job?
 
-        BlackLabIndex blIndex = params.blIndex();
-        AnnotatedField cfd = params.getAnnotatedField();
-        String annotName = params.getAnnotationName();
-        if (annotName.isEmpty())
-            annotName = cfd.mainAnnotation().name();
-        Annotation annotation = cfd.annotation(annotName);
-        if (annotation == null)
-            throw new BadRequest("ANNOTATION_NOT_FOUND",
-                    "Annotation '" + annotName + "' not found in field '" + cfd.name() + "'",
-                    Map.of("annotationName", annotName, "fieldName", cfd.name()));
-        boolean defaultToSensitive = !annotation.hasSensitivity(MatchSensitivity.INSENSITIVE);
-        MatchSensitivity matchSensitivity = MatchSensitivity.caseAndDiacriticsSensitive(params.getSensitive(defaultToSensitive));
-        ensureHasSensitivity(annotation, matchSensitivity);
-        AnnotationSensitivity annotSensitivity = annotation.sensitivity(matchSensitivity);
-
-        // May be null!
-        Query q = params.filterQuery();
-        // May also null/empty to retrieve all terms!
-        Set<String> terms = params.getTerms();
-        TermFrequencyList tfl = blIndex.termFrequencies(annotSensitivity, q, terms);
+        Set<String> terms = reqTermFreq.terms();
+        TermFrequencyList tfl = reqTermFreq.index().termFrequencies(reqTermFreq.annotation(),
+                reqTermFreq.filterQuery(), terms);
 
         if (terms == null || terms.isEmpty()) { // apply pagination only when requesting all terms
-            long first = params.getFirstResultToShow();
+            WindowSettings window = reqTermFreq.window();
+            long first = window.first();
             if (first < 0 || first >= tfl.size())
                 first = 0;
-            long number = params.getNumberOfResultsToShow();
-            DefaultMax pageSize = params.getSearchManager().config().getParameters().getPageSize();
-            if (number < 0 || number > pageSize.getMax())
-                number = pageSize.getMax();
+            long number = window.size();
             long last = first + number;
             if (last > tfl.size())
                 last = tfl.size();
-
             tfl = tfl.subList(first, last);
         }
         return tfl;
     }
 
-    public static List<String> getUsersToShareWith(WebserviceParams params) {
-        IndexManager indexMan = params.getIndexManager();
-        String indexName = params.getCorpusName();
-        User user = params.getUser();
-        Index index = indexMan.getIndex(indexName);
+    public static List<String> getUsersToShareWith(User user, Index index) {
         if (!index.userMayRead(user)) {
             if (index.isUserIndex())
-                throw new NotAuthorized("You (" + user.getId() + ") are not authorized to access corpus " + indexName + "; you are not the owner, and it is not shared with you");
+                throw new NotAuthorized("You (" + user.getId() + ") are not authorized to access corpus " + index.blIndex().name() + "; you are not the owner, and it is not shared with you");
             else
                 throw new NotAuthorized("You (" + user.getId() + ") are not authorized to access this global (non-user) index.");
         }
         return index.getShareWithUsers();
     }
 
-    public static List<String> getCorporaSharedWithMe(WebserviceParams params) {
-        IndexManager indexMan = params.getIndexManager();
-        User user = params.getUser();
+    public static List<String> getCorporaSharedWithMe(User user, IndexManager indexMan) {
         List<String> results = new ArrayList<>();
         // BUG: because private user indices aren't all loaded by default, we may
         //      miss unloaded corpora shared with you. To fix this, we should probably
@@ -591,53 +507,32 @@ public class WebserviceOperations {
         return results;
     }
 
-    public static void setUsersToShareWith(WebserviceParams params, String[] users) {
-        User user = params.getUser();
-        IndexManager indexMan = params.getIndexManager();
-        String indexName = params.getCorpusName();
-        Index index = indexMan.getIndex(indexName);
+    public static void setUsersToShareWith(User user, Index index, String[] users) {
         if (!index.isUserIndex())
-            throw new NotAuthorized("You cannot share global corpus " + indexName + "; it is not a user index.");
+            throw new NotAuthorized("You cannot share global corpus " + index.name() + "; it is not a user index.");
         if (!index.userMayRead(user))
-            throw new NotAuthorized("You (" + user.getId() + ") are not authorized to share " + indexName + "; you are not the owner.");
+            throw new NotAuthorized("You (" + user.getId() + ") are not authorized to share " + index.name() + "; you are not the owner.");
         // Update the list of users to share with
         List<String> shareWithUsers = Arrays.stream(users).map(String::trim).toList();
         index.setShareWithUsers(shareWithUsers);
     }
 
-    public static ResultAutocomplete autocomplete(WebserviceParams params) {
-        return new ResultAutocomplete(params);
+    static ResultDocs docs(RequestDocs requestDocs) throws InvalidQuery {
+        return ResultDocs.docsResponse(requestDocs);
     }
 
-    public static ResultDocContents docContents(WebserviceParams params) throws InvalidQuery {
-        return new ResultDocContents(params);
+    public static ResultHits hits(RequestHits reqHits) throws InvalidQuery {
+        if (StringUtils.isEmpty(reqHits.viewGroup())) {
+            return ResultHits.get(reqHits);
+        } else {
+            return ResultHits.getViewGroup(reqHits);
+        }
     }
 
-    public static ResultDocInfo docInfo(BlackLabIndex blIndex, String docPid, Document document, Collection<MetadataField> metadataToWrite) {
-        return new ResultDocInfo(blIndex, docPid, document, metadataToWrite);
-    }
-
-    static ResultDocs docs(WebserviceParams params, boolean isCsv) throws InvalidQuery {
-        long maxWindowSize = getMaxWindowSize(params.getSearchManager(), isCsv);
-        long defaultWindowSize = isCsv ?
-                maxWindowSize :
-                WebserviceParameter.defaultLong(WebserviceParameter.NUMBER_OF_RESULTS);
-        return ResultDocs.docsResponse(params, maxWindowSize, defaultWindowSize);
-    }
-
-    public static ResultHits hits(WebserviceParams params, boolean isCsv) throws InvalidQuery {
-        return new ResultHits(params, true, isCsv);
-    }
-
-    public static long getMaxWindowSize(SearchManager searchManager, boolean isCsv) {
-        BLSConfig config = searchManager.config();
+    public static long getMaxWindowSize(BLSConfig config, boolean isCsv) {
         return isCsv ?
                 config.getSearch().getMaxHitsToRetrieve() :
                 config.getParameters().getPageSize().getMax();
-    }
-
-    public static TermFrequencyList calculateCollocations(WebserviceParams params) {
-        return getCollocations(params, hits(params, false).getHits());
     }
 
     public static class UploadedFile {
@@ -659,13 +554,11 @@ public class WebserviceOperations {
         }
     }
 
-    public static String addToIndex(WebserviceParams params, Iterator<UploadedFile> dataFiles, Map<String, File> linkedFiles) {
-        Index index = params.getIndexManager().getIndex(params.getCorpusName());
+    public static String addToIndex(User user, Index index, String converters, Iterator<UploadedFile> dataFiles, Map<String, File> linkedFiles) {
         IndexMetadata indexMetadata = index.getIndexMetadata();
 
-        User user = params.getUser();
         if (!index.userMayAddData(user))
-            throw new NotAuthorized("You (" + user.getId() + ") may not add data to " + params.getCorpusName() + "; you are not the owner.");
+            throw new NotAuthorized("You (" + user.getId() + ") may not add data to " + index.name() + "; you are not the owner.");
 
         long maxTokenCount = BlackLab.config().getIndexing().getUserIndexMaxTokenCount();
         if (indexMetadata.countPerField().values().stream().anyMatch(count -> count.getTokens() > maxTokenCount)) {
@@ -689,9 +582,9 @@ public class WebserviceOperations {
 
         try {
             // See if we want to apply any extra FileConverters, specifically for this set of files.
-            FileConverter.ExtraConverters extraConverters = params.getConverters()
-                    .map(WebserviceOperations::getExtraConvertersFromJsonParam)
-                    .orElse(FileConverter.ExtraConverters.NONE);
+            FileConverter.ExtraConverters extraConverters = !StringUtils.isEmpty(converters) ?
+                    WebserviceOperations.getExtraConvertersFromJsonParam(converters) :
+                    FileConverter.ExtraConverters.NONE;
             while (dataFiles.hasNext()) {
                 UploadedFile df = dataFiles.next();
                 String fileName = df.getName();
@@ -735,8 +628,7 @@ public class WebserviceOperations {
         }
     }
 
-    public static void deleteUserFormat(WebserviceParams params, String formatIdentifier) {
-        IndexManager indexMan = params.getIndexManager();
+    public static void deleteUserFormat(User user, IndexManager indexMan, String formatIdentifier) {
         FinderInputFormatUserFormats formatMan = indexMan.getUserFormatManager();
         if (formatMan == null)
             throw new BadRequest("CANNOT_DELETE_INDEX ",
@@ -746,19 +638,20 @@ public class WebserviceOperations {
             throw new NotFound("FORMAT_NOT_FOUND", "Specified format was not found");
         }
 
-        for (Index i : indexMan.getAvailablePrivateCorporaOwnedBy(params.getUser())) {
+        for (Index i : indexMan.getAvailablePrivateCorporaOwnedBy(user)) {
             if (formatIdentifier.equals(i.getIndexMetadata().documentFormat()))
                 throw new BadRequest("CANNOT_DELETE_INDEX ",
                         "Could not delete format. The format is still being used by a corpus.");
         }
 
-        FinderInputFormatUserFormats.deleteUserFormat(params.getUser(), formatIdentifier);
+        FinderInputFormatUserFormats.deleteUserFormat(user, formatIdentifier);
     }
 
-    public static ResultAnnotatedField annotatedField(BlackLabIndex index, AnnotatedField fieldDesc,
+    public static ResultAnnotatedField annotatedField(AnnotatedField fieldDesc,
             Collection<String> listValuesFor, long limitValues, boolean includeIndexName, ResultRelations relations) {
         Map<String, ResultAnnotationInfo> annotInfos = new LinkedHashMap<>();
         boolean all = listValuesFor.contains("*");
+        BlackLabIndex index = fieldDesc.index();
         for (Annotation annotation: fieldDesc.annotations()) {
             boolean showValues = (all || listValuesFor.contains(annotation.name())) &&
                     !annotation.isRelationAnnotation(); // spans/relations are reported separately
@@ -768,7 +661,7 @@ public class WebserviceOperations {
         return new ResultAnnotatedField(index, includeIndexName ? index.name() : null, fieldDesc, annotInfos, relations);
     }
 
-    public static ResultIndexStatus resultIndexStatus(Index index, User user) {
+    public static ResultIndexStatus resultIndexStatus(Index index) {
         IndexListener indexerListener = index.getIndexerListener();
         long files = 0;
         long docs = 0;
@@ -778,19 +671,7 @@ public class WebserviceOperations {
             docs = indexerListener.getDocsDone();
             tokens = indexerListener.getTokensProcessed();
         }
-        boolean ownedBySomeoneElse = index.isUserIndex() && !index.getUserId().equals(user.getId());
         return new ResultIndexStatus(index, files, docs, tokens);
-    }
-
-    public static ResultDocSnippet docSnippet(WebserviceParams params) {
-        return new ResultDocSnippet(params);
-    }
-
-    public static ResultListOfHits listOfHits(Collection<Annotation> annotationsToList, ContextSettings contextSettings,
-            boolean omitEmptyCaptures, HitResults window, ConcordanceContext concordanceContext,
-            Map<Integer, String> docIdToPid) {
-        return new ResultListOfHits(window, concordanceContext, docIdToPid, contextSettings, annotationsToList,
-                omitEmptyCaptures);
     }
 
     public static ResultMetadataField metadataField(long limitValues, MetadataField fieldDesc, String indexName) {
@@ -800,39 +681,17 @@ public class WebserviceOperations {
                 !values.valueList().isTruncated());
     }
 
-    public static ResultSummaryNumDocs numResultsSummaryDocs(boolean isViewGroup, DocResults docResults,
-            SearchTimings timings, CorpusSize subcorpusSize) {
-        return new ResultSummaryNumDocs(isViewGroup, docResults, timings, subcorpusSize);
-    }
-
-    public static ResultSummaryNumHits numResultsSummaryHits(ResultsStats hitsStats, ResultsStats docsStats,
-            boolean waitForTotal, SearchTimings timings, CorpusSize subcorpusSize) {
-        return new ResultSummaryNumHits(hitsStats, docsStats, waitForTotal, timings, subcorpusSize);
-    }
-
-    public static ResultSummaryCommonFields summaryCommonFields(WebserviceParams params,
-            SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups, WindowStats window,
-            AnnotatedField searchField, Collection<AnnotatedField> otherFields) {
-        return new ResultSummaryCommonFields(params, timings, matchInfoDefs,groups, window,
-                searchField, otherFields);
-    }
-
-    public static ResultUserInfo userInfo(WebserviceParams params) {
-        User user = params.getUser();
-        return new ResultUserInfo(user.isLoggedIn(), user.getId(), params.getIndexManager().canCreateIndex(user));
-    }
-
     public static ResultCorpusInfo corpusInfo(RequestCorpusInfo req) {
         Index index = BlsMain.get().getSearchManager().getIndexManager().getIndex(req.corpusName());
         if (index == null)
             throw new IllegalArgumentException("Corpus '" + req.corpusName() + "' not found.");
-        ResultIndexStatus progress = resultIndexStatus(index, req.user());
+        ResultIndexStatus progress = resultIndexStatus(index);
         IndexMetadata metadata = progress.getMetadata();
 
         List<ResultAnnotatedField> afs = new ArrayList<>();
         for (AnnotatedField field: metadata.annotatedFields()) {
-            ResultRelations relations = new ResultRelations(req.relations().withAnnotatedField(field.name()));
-            afs.add(annotatedField(index.blIndex(), field, req.listValuesFor(), req.limitValues(), false, relations));
+            ResultRelations relations = new ResultRelations(req.relations().withAnnotatedField(field));
+            afs.add(annotatedField(field, req.listValuesFor(), req.limitValues(), false, relations));
         }
         afs.sort(ResultAnnotatedField::compare);
         List<ResultMetadataField> mfs = new ArrayList<>();
@@ -848,15 +707,4 @@ public class WebserviceOperations {
         return new ResultCorpusInfo(progress, afs, mainAnnotatedFieldName, mfs, metadataFieldGroups);
     }
 
-    public static ResultServerInfo serverInfo(WebserviceParams params, boolean debugMode) {
-        return new ResultServerInfo(params, debugMode);
-    }
-
-    public static ResultListInputFormats listInputFormats(WebserviceParams params, boolean debugMode) {
-        return new ResultListInputFormats(params, debugMode);
-    }
-
-    public static ResultInputFormat inputFormat(String formatName) {
-        return new ResultInputFormat(formatName);
-    }
 }

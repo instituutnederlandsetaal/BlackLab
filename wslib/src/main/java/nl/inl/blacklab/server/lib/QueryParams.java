@@ -1,55 +1,43 @@
 package nl.inl.blacklab.server.lib;
 
-import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.results.hitresults.ContextSize;
-import nl.inl.blacklab.server.config.BLSConfigParameters;
-import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
-/** API-independent interface to BlackLab operation parameters.
- *
- * <p>In addition to parameters, also knows about SearchManager, IndexManager and User,
- * which are useful to pass around with the parameters.
- *
- * <p>This class only includes "plain" parameters, not any objects derived from them.
+/** BlackLab API endpoint parameters.
+ * <p>
+ * This only manages the "plain" parameters (i.e. string, int, enum value, etc.),
+ * not any complex objects (such as TextPattern or Search instances) derived from them.
  */
-public interface QueryParams {
+public interface QueryParams extends ParamsForResponse {
 
-    /**
-     * Get a view of the parameters.
-     *
-     * @return the view
-     */
-    Map<WebserviceParameter, String> getParameters();
+    /** Config, for determing some parameter defaults */
+    BLSConfig config();
 
-    Map<WebserviceParameter, Object> getTypedParameters();
+    /** Is this a debug request? If not, we may not see cache info or override the FI match factor. */
+    boolean debugMode();
+
+    /** Filter query to use if filter parameter not specified, if any. Used with Solr.  */
+    default Query getFallbackFilterQuery() { return null; }
 
     String getCorpusName();
 
+    /** Get the BCQL query passed in the "patt" parameter */
     String getPattern();
 
     String getPattLanguage();
 
     String getPattGapData();
-
-    SearchManager getSearchManager();
-
-    default BLSConfigParameters configParam() {
-        return getSearchManager().config().getParameters();
-    }
-
-    default IndexManager getIndexManager() { return getSearchManager().getIndexManager(); }
-
-    User getUser();
 
     String getDocPid();
 
@@ -63,7 +51,7 @@ public interface QueryParams {
 
     Optional<Double> getSampleFraction();
 
-    Optional<Integer> getSampleNumber();
+    Optional<Long> getSampleNumber();
 
     Optional<Long> getSampleSeed();
 
@@ -77,23 +65,21 @@ public interface QueryParams {
 
     long getFirstResultToShow();
 
-    Optional<Long> optNumberOfResultsToShow();
-
     long getNumberOfResultsToShow();
 
-    ContextSize getContext();
+    String getContextParam();
 
     ConcordanceType getConcordanceType();
 
-    boolean getIncludeGroupContents();
+    Optional<Boolean> optIncludeGroupContents();
 
-    boolean getOmitEmptyCaptures();
+    Optional<Boolean> optOmitEmptyCaptures();
 
     Optional<String> getFacetProps();
 
-    Optional<String> getGroupProps();
+    Optional<String> getGroupBy();
 
-    Optional<String> getSortProps();
+    Optional<String> getSortBy();
 
     Optional<String> getViewGroup();
 
@@ -103,7 +89,7 @@ public interface QueryParams {
      *
      * @return which annotations to list
      */
-    Collection<String> getListValuesFor();
+    List<String> getListValuesFor();
 
     /**
      * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
@@ -111,7 +97,7 @@ public interface QueryParams {
      *
      * @return which metadata fields to list
      */
-    Collection<String> getListMetadataValuesFor();
+    List<String> getListMetadataValuesFor();
 
     List<String> getListSpanAttributes();
 
@@ -129,7 +115,7 @@ public interface QueryParams {
 
     boolean getExplain();
 
-    boolean getSensitive(boolean defaultValue);
+    Optional<Boolean> optSensitive();
 
     int getWordStart();
 
@@ -170,9 +156,9 @@ public interface QueryParams {
      *
      * @return requested operation
      */
-    default WebserviceOperation getOperation() { return WebserviceOperation.NONE; }
+    WebserviceOperation getOperation();
 
-    default Optional<String> getInputFormat() { return Optional.empty(); }
+    Optional<String> getInputFormat();
 
     /** Get extra converters specification (JSON) */
     Optional<String> getConverters();
@@ -205,4 +191,17 @@ public interface QueryParams {
      * @return true if we should include all overlapping spans
      */
     boolean getWithSpans();
+
+    /** Override some of the parameters.
+     *
+     * @param overrides parameters to override
+     * @return new QueryParams with the given parameters overridden
+     */
+    default QueryParams withOverrides(Map<WebserviceParameter, Object> overrides) {
+        Map<WebserviceParameter, Object> typedParams = new LinkedHashMap<>(getTypedParameters());
+        typedParams.putAll(overrides);
+        return new QueryParamsMap(getCorpusName(), null, typedParams, config(), debugMode());
+    }
+
+
 }

@@ -1,18 +1,14 @@
 package nl.inl.blacklab.server.lib.results;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.lucene.document.Document;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.QueryExecutionContext;
 import nl.inl.blacklab.search.SingleDocIdFilter;
 import nl.inl.blacklab.search.extensions.XFRelations;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.QueryInfo;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
@@ -24,12 +20,12 @@ import nl.inl.blacklab.search.textpattern.TextPatternValue;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.exceptions.NotFound;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.server.lib.requests.RequestDocSnippet;
 import nl.inl.util.StringUtil;
 
 public class ResultDocSnippet {
 
-    private final WebserviceParams params;
+    private final String docPid;
 
     private HitResults hitResults;
 
@@ -39,12 +35,9 @@ public class ResultDocSnippet {
 
     private final List<Annotation> annotsToWrite;
 
-    ResultDocSnippet(WebserviceParams params) {
-        this.params = params;
-
-        BlackLabIndex index = params.blIndex();
-        AnnotatedField field = params.getAnnotatedField();
-        String docPid = params.getDocPid();
+    ResultDocSnippet(RequestDocSnippet request) {
+        docPid = request.docPid();
+        BlackLabIndex index = request.field().index();
         int luceneDocId = index.getDocIdFromPid(docPid);
         if (luceneDocId < 0)
             throw new NotFound("DOC_NOT_FOUND", "Document with pid '" + docPid + "' not found.");
@@ -54,23 +47,17 @@ public class ResultDocSnippet {
                     "INTERR_FETCHING_DOCUMENT_SNIPPET");
 
         // Make sure snippet plus surrounding context don't exceed configured allowable snippet size
-        int maxContextSize = params.getSearchManager().config().getParameters().getContextSize().getMaxInt();
-        int maxSnippetSize = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
-
-        int start, end;
-        Optional<Integer> hitStart = params.getHitStart();
-        if (hitStart.isPresent()) {
+        int maxSnippetSize = request.maxSnippetSize();
+        if (request.hasHitStartEnd()) {
             // A hit was given, and we want some context around it
-            start = hitStart.get();
-            end = params.getHitEnd();
-            context = params.getContext();
+            context = request.context();
         } else {
             // Exact start and end positions to return were given
-            start = params.getWordStart();
-            end = params.getWordEnd();
             context = ContextSize.get(0, maxSnippetSize);
         }
 
+        int start = request.start();
+        int end = request.end();
         if (start < 0 || end < 0 || context.before() < 0 || context.after() < 0 || start > end) {
             throw new BadRequest("ILLEGAL_BOUNDARIES", "Illegal word boundaries specified. Please check parameters.");
         }
@@ -80,11 +67,9 @@ public class ResultDocSnippet {
             TextPatternFunctionCall producer = new TextPatternFunctionCall("_fixed", List.of(TextPatternValue.fromObject(start), TextPatternValue.fromObject(end)));
             String tagNameRegex = StringUtil.escapeLuceneRegexCharacters(context.inlineTagName());
             TextPattern pattern = TextPattern.createRelationCapturingWithinQuery(producer, tagNameRegex, XFRelations.DEFAULT_CONTEXT_REL_NAME);
-            QueryExecutionContext queryContext = QueryExecutionContext.get(index,
-                    params.getAnnotatedField().mainAnnotation(), MatchSensitivity.SENSITIVE);
             SingleDocIdFilter filter = new SingleDocIdFilter(luceneDocId);
             CompleteQuery completeQuery = new CompleteQuery(pattern, filter);
-            hitResults = index.search(field, params.useCache()).find(completeQuery).execute();
+            hitResults = index.search(request.field(), request.useCache()).find(completeQuery).execute();
         }
         if (hitResults != null && !hitResults.resultsStats().processedAtLeast(1)) {
             // We couldn't find the tag for the context; use a context of 0 words instead
@@ -105,15 +90,15 @@ public class ResultDocSnippet {
                 int newAfter = (int)(context.after() * factor);
                 context = ContextSize.get(newBefore, newAfter, maxSnippetSize);
             }
-            hitResults = HitResults.singleHit(QueryInfo.create(index, field), luceneDocId, start, end);
+            hitResults = HitResults.singleHit(QueryInfo.create(index, request.field()), luceneDocId, start, end);
         }
 
-        origContent = params.getConcordanceType() == ConcordanceType.CONTENT_STORE;
-        annotsToWrite = WebserviceOperations.getAnnotationsToWrite(params);
+        origContent = request.concordanceType() == ConcordanceType.CONTENT_STORE;
+        annotsToWrite = request.annotsToWrite();
     }
 
-    public WebserviceParams getParams() {
-        return params;
+    public String docPid() {
+        return docPid;
     }
 
     public Hits getHits() {

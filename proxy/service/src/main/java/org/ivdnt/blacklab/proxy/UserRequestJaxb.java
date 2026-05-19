@@ -3,8 +3,8 @@ package org.ivdnt.blacklab.proxy;
 import jakarta.ws.rs.client.Client;
 import jakarta.ws.rs.core.MultivaluedMap;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -70,7 +70,7 @@ public class UserRequestJaxb implements UserRequest {
     }
 
     @Override
-    public WebserviceParams getParams(BlackLabIndex index, WebserviceOperation operation) {
+    public QueryParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         return null;
     }
 

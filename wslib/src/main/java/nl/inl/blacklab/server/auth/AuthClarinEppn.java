@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.auth;
 import java.util.Map;
 
 import nl.inl.blacklab.plugins.AuthMethodProvider;
+import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.plugins.param.PluginParams;
 import nl.inl.blacklab.server.lib.User;
 
@@ -18,7 +19,7 @@ public class AuthClarinEppn extends AuthMethodProvider {
     public AuthMethod get(PluginParams param) {
         // Use a regular AuthRequestValue that looks at the eppn attribute.
         // We'll check and optionally fix the user id, see below.
-        AuthRequestValue authRequestValue = new AuthRequestValue();
+        AuthRequestValue authRequestValue = (AuthRequestValue)PluginManager.type(AuthMethodProvider.class).get("AuthRequestValue");
         PluginParams config = authRequestValue.descriptor().validate(
                 Map.of("type", "attribute", "name", "eppn"));
         AuthMethod wrapped = authRequestValue.get(config);

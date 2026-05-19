@@ -18,7 +18,7 @@ public class RequestHandlerDeleteFormat extends RequestHandler {
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
         debug(logger, "REQ add format: " + indexName);
-        WebserviceOperations.deleteUserFormat(params, urlResource);
+        WebserviceOperations.deleteUserFormat(user, indexMan, urlResource);
         return Response.success(rs, "Format deleted.");
     }
 

@@ -26,8 +26,8 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
+import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.lib.WebserviceParamsImpl;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.search.SearchManager;
@@ -395,7 +395,7 @@ public abstract class RequestHandler {
     protected HttpServletRequest request;
 
     /** Interprets parameters to create searches. */
-    protected WebserviceParamsImpl params;
+    protected QueryParams qpar;
 
     /**
      * The BlackLab index we want to access, e.g. "opensonar" for
@@ -440,12 +440,13 @@ public abstract class RequestHandler {
         }
 
 
-        // Create the WebserviceParams structure from the UserRequest.
-        // We cast to WebserviceParamsImpl because we need to set some fields based on the URL path.
-        // Better would be to move that logic into UserRequestBls.
+        // Create the WebserviceParamsImpl structure from the UserRequest.
+        // Note that we will set some fields in WebserviceParamsImpl based on the URL path.
+        // Better would be to get rid of the setters in WebserviceParamsImpl if possible and e
+        // .g. move that logic into UserRequestBls.
         Optional<Index> index = index();
         BlackLabIndex blIndex = index.isEmpty() ? null : (index.get().getStatus() == IndexStatus.INDEXING ? null : index.get().blIndex());
-        params = (WebserviceParamsImpl)userRequest.getParams(blIndex, operation);
+        qpar = userRequest.getParams(blIndex, operation);
     }
 
     protected Optional<Index> index() {
@@ -493,7 +494,7 @@ public abstract class RequestHandler {
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         if (docPid.isEmpty())
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
-        params.setDocPid(docPid);
+        qpar = qpar.withOverrides(Map.of(WebserviceParameter.DOC_PID, docPid));
     }
 
     protected boolean isDocsOperation() {
@@ -528,7 +529,7 @@ public abstract class RequestHandler {
     public abstract int handle(ResponseStreamer rs) throws BlsException, InvalidQuery;
 
     public ApiVersion apiCompatibility() {
-        ApiVersion api = params.apiCompatibility();
+        ApiVersion api = qpar.apiCompatibility();
         boolean alwaysRespondWithApiV5 = newCorporaEndpoint || this instanceof RequestHandlerRelations;
         if (alwaysRespondWithApiV5 && api.getMajor() <= 4) {
             // The new /corpora/... endpoints always use the new version of the API.

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.requests.RequestCorpusStatus;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -21,7 +22,7 @@ public class RequestHandlerIndexStatus extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        WebserviceRequestHandler.opCorpusStatus(params, rs);
+        WebserviceRequestHandler.opCorpusStatus(RequestCorpusStatus.fromParams(qpar), rs);
         return HTTP_OK;
     }
 

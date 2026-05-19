@@ -19,9 +19,8 @@ import org.junit.Test;
 import org.mockito.Mockito;
 
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.lib.QueryParamsAbstract;
-import nl.inl.blacklab.server.lib.User;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
 public class TestResultAutocomplete {
@@ -66,7 +65,7 @@ public class TestResultAutocomplete {
         private final Map<WebserviceParameter, String> parameterValues;
 
         TestQueryParams(Map<WebserviceParameter, String> parameterValues) {
-            super("test-index", Mockito.mock(SearchManager.class), User.anonymous("test"));
+            super("test-index", Mockito.mock(BLSConfig.class), true);
             this.parameterValues = parameterValues;
         }
 

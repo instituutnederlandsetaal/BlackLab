@@ -9,9 +9,8 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.search.ConcordanceType;
-import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.webservice.WebserviceOperation;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 
@@ -21,16 +20,29 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  */
 public abstract class QueryParamsAbstract implements QueryParams {
 
-    protected final SearchManager searchMan;
-
-    protected final User user;
-
     protected final String corpusName;
 
-    protected QueryParamsAbstract(String corpusName, SearchManager searchMan, User user) {
-        this.searchMan = searchMan;
-        this.user = user;
+    /** Config, for determining some default values */
+    private final BLSConfig config;
+
+    /** Is this a debug request? If not, we may not see cache info or override the FI match factor. */
+    boolean debugMode;
+
+    /** Get config, for determining some default values */
+    @Override
+    public BLSConfig config() {
+        return config;
+    }
+
+    @Override
+    public boolean debugMode() {
+        return debugMode;
+    }
+
+    protected QueryParamsAbstract(String corpusName, BLSConfig config, boolean debugMode) {
         this.corpusName = corpusName;
+        this.config = config;
+        this.debugMode = debugMode;
     }
 
     protected static double parseDouble(String value) {
@@ -218,6 +230,18 @@ public abstract class QueryParamsAbstract implements QueryParams {
         return opt(par).map(QueryParamsAbstract::parseLong);
     }
 
+    /**
+     * Get parameter value if it was explicitly passed with the request.
+     *
+     * If not explicitly set, will return an empty Optional.
+     *
+     * @param par parameter type
+     * @return value if set
+     */
+    protected Optional<Boolean> optBool(WebserviceParameter par) {
+        return opt(par).map(QueryParamsAbstract::parseBoolean);
+    }
+
     @Override
     public String getPattern() { return get(WebserviceParameter.PATTERN); }
 
@@ -246,7 +270,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<Double> getSampleFraction() { return optDouble(WebserviceParameter.SAMPLE); }
 
     @Override
-    public Optional<Integer> getSampleNumber() { return optInteger(WebserviceParameter.SAMPLE_NUMBER); }
+    public Optional<Long> getSampleNumber() { return optLong(WebserviceParameter.SAMPLE_NUMBER); }
 
     @Override
     public Optional<Long> getSampleSeed() { return optLong(WebserviceParameter.SAMPLE_SEED); }
@@ -267,9 +291,6 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public long getFirstResultToShow() { return getLong(WebserviceParameter.FIRST_RESULT); }
 
     @Override
-    public Optional<Long> optNumberOfResultsToShow() { return optLong(WebserviceParameter.NUMBER_OF_RESULTS); }
-
-    @Override
     public long getNumberOfResultsToShow() {
         // NOTE: this is NOT the same as optNumberOfResultsToShow.orElse(0L) because
         //       getLong() sets the configured default value if "number" param is not set
@@ -278,15 +299,12 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
-    public ContextSize getContext() {
+    public String getContextParam() {
         // ("wordsaroundhit" is deprecated, now called "context")
         WebserviceParameter par = has(WebserviceParameter.WORDS_AROUND_HIT) ?
                 WebserviceParameter.WORDS_AROUND_HIT :
                 WebserviceParameter.CONTEXT;
-        String contextDef = get(par);
-        int maxContextSize = getSearchManager().config().getParameters().getContextSize().getMaxInt();
-        int maxSnippetLength = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
-        return ContextSize.fromContextDef(contextDef, maxSnippetLength);
+        return get(par);
     }
 
     @Override
@@ -296,19 +314,23 @@ public abstract class QueryParamsAbstract implements QueryParams {
     }
 
     @Override
-    public boolean getIncludeGroupContents() { return getBool(WebserviceParameter.INCLUDE_GROUP_CONTENTS); }
+    public Optional<Boolean> optIncludeGroupContents() {
+        return optBool(WebserviceParameter.INCLUDE_GROUP_CONTENTS);
+    }
 
     @Override
-    public boolean getOmitEmptyCaptures() { return getBool(WebserviceParameter.OMIT_EMPTY_CAPTURES); }
+    public Optional<Boolean> optOmitEmptyCaptures() {
+        return optBool(WebserviceParameter.OMIT_EMPTY_CAPTURES);
+    }
 
     @Override
     public Optional<String> getFacetProps() { return opt(WebserviceParameter.FACETS); }
 
     @Override
-    public Optional<String> getGroupProps() { return opt(WebserviceParameter.GROUP_BY); }
+    public Optional<String> getGroupBy() { return opt(WebserviceParameter.GROUP_BY); }
 
     @Override
-    public Optional<String> getSortProps() { return opt(WebserviceParameter.SORT_BY); }
+    public Optional<String> getSortBy() { return opt(WebserviceParameter.SORT_BY); }
 
     @Override
     public Optional<String> getViewGroup() { return opt(WebserviceParameter.VIEW_GROUP); }
@@ -320,7 +342,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
      * @return which annotations to list
      */
     @Override
-    public Set<String> getListValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS); }
+    public List<String> getListValuesFor() { return getList(WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS); }
 
     /**
      * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
@@ -329,7 +351,7 @@ public abstract class QueryParamsAbstract implements QueryParams {
      * @return which metadata fields to list
      */
     @Override
-    public Set<String> getListMetadataValuesFor() { return getSet(WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS); }
+    public List<String> getListMetadataValuesFor() { return getList(WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS); }
 
     /**
      * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
@@ -372,8 +394,8 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public boolean getExplain() { return getBool(WebserviceParameter.EXPLAIN_QUERY_REWRITE); }
 
     @Override
-    public boolean getSensitive(boolean defaultValue) {
-        return has(WebserviceParameter.SENSITIVE) ? getBool(WebserviceParameter.SENSITIVE) : defaultValue;
+    public Optional<Boolean> optSensitive() {
+        return optBool(WebserviceParameter.SENSITIVE);
     }
 
     @Override
@@ -472,12 +494,6 @@ public abstract class QueryParamsAbstract implements QueryParams {
             throw new UnsupportedOperationException("API version " + apiVersion + " is no longer supported");
         return apiVersion;
     }
-
-    @Override
-    public SearchManager getSearchManager() { return searchMan; }
-
-    @Override
-    public User getUser() { return user; }
 
     @Override
     public String getCorpusName() { return corpusName; }

@@ -14,7 +14,7 @@ public class RequestHandlerClearCache extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) {
-        return WebserviceRequestHandler.opClearCache(params, rs, debugMode);
+        return WebserviceRequestHandler.opClearCache(searchMan.getBlackLabCache(), rs, debugMode);
     }
 
 }

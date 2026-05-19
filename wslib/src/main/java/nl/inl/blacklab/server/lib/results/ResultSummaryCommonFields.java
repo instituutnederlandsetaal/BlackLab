@@ -5,37 +5,40 @@ import java.util.Collection;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.results.ResultGroups;
+import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.WindowStats;
 import nl.inl.blacklab.search.textpattern.TextPattern;
+import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 
 public class ResultSummaryCommonFields {
-    private final WebserviceParams searchParam;
-    private TextPattern textPattern = null;
+    private final ParamsForResponse paramsForResponse;
+    private final TextPattern textPattern;
     private final SearchTimings timings;
     private final MatchInfoDefs matchInfoDefs;
     private final ResultGroups groups;
     private final WindowStats window;
     private final AnnotatedField searchField;
     private final Collection<AnnotatedField> otherFields;
+    private final SampleParameters sampleSettings;
 
-    public ResultSummaryCommonFields(WebserviceParams searchParam, SearchTimings timings, MatchInfoDefs matchInfoDefs,
-            ResultGroups groups, WindowStats window, AnnotatedField searchField,
-            Collection<AnnotatedField> otherFields) {
-        this.searchParam = searchParam;
-        if (searchParam.hasPattern())
-            this.textPattern = searchParam.patternNoWithinContextTag().orElse(null);
+    public ResultSummaryCommonFields(TextPattern pattern, SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups,
+            WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields,
+            SampleParameters sampleSettings,
+            ParamsForResponse paramsForResponse) {
+        this.paramsForResponse = paramsForResponse;
+        this.textPattern = pattern;
         this.timings = timings;
         this.matchInfoDefs = matchInfoDefs == null ? MatchInfoDefs.EMPTY : matchInfoDefs;
         this.groups = groups;
         this.window = window;
         this.searchField = searchField;
         this.otherFields = otherFields;
+        this.sampleSettings = sampleSettings;
     }
 
-    public WebserviceParams getSearchParam() {
-        return searchParam;
+    public ParamsForResponse getParamsForResponse() {
+        return paramsForResponse;
     }
 
     public TextPattern getTextPattern() {
@@ -64,5 +67,9 @@ public class ResultSummaryCommonFields {
 
     public Collection<AnnotatedField> getOtherFields() {
         return otherFields;
+    }
+
+    public SampleParameters sampleParams() {
+        return sampleSettings;
     }
 }

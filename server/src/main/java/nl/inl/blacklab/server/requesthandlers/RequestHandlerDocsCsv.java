@@ -3,6 +3,7 @@ package nl.inl.blacklab.server.requesthandlers;
 import nl.inl.blacklab.exceptions.InvalidQuery;
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.blacklab.server.lib.requests.RequestDocs;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
@@ -18,7 +19,7 @@ public class RequestHandlerDocsCsv extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opDocs(params, rs, true);
+        WebserviceRequestHandler.opDocs(RequestDocs.fromParams(qpar, true), rs, true);
         return HTTP_OK;
     }
 

@@ -1,10 +1,13 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Map;
+
 import nl.inl.blacklab.server.datastream.DataFormat;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WebserviceParameter;
 
 /**
  * Get information about supported input formats.
@@ -39,17 +42,18 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
+        String inputFormat = qpar.getInputFormat().orElse(null);
         if (urlResource != null && !urlResource.isEmpty() && isXsltRequest) {
-            params.setInputFormat(urlResource);
-            WebserviceRequestHandler.opInputFormatXslt(params, rs);
+            qpar = qpar.withOverrides(Map.of(WebserviceParameter.INPUT_FORMAT, urlResource));
+            WebserviceRequestHandler.opInputFormatXslt(inputFormat, rs);
         } else {
             if (urlResource != null && !urlResource.isEmpty()) {
                 // Specific input format: either format information or XSLT request
-                params.setInputFormat(urlResource);
-                WebserviceRequestHandler.opInputFormatInfo(params, rs);
+                qpar = qpar.withOverrides(Map.of(WebserviceParameter.INPUT_FORMAT, urlResource));
+                WebserviceRequestHandler.opInputFormatInfo(inputFormat, rs);
             } else {
                 // Show list of supported input formats (for current user)
-                WebserviceRequestHandler.opListInputFormats(params, rs, debugMode);
+                WebserviceRequestHandler.opListInputFormats(user, indexMan, rs, debugMode);
             }
         }
         return HTTP_OK;

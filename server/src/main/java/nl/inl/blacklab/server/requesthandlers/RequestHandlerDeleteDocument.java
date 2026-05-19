@@ -18,9 +18,9 @@ public class RequestHandlerDeleteDocument extends RequestHandler {
                     "No index name specified. Specify a valid index name.");
         }
         try {
-            debug(logger, "REQ delete document " + params.getDocPid() + " from index " + indexName);
+            debug(logger, "REQ delete document " + qpar.getDocPid() + " from index " + indexName);
             determineDocPidFromPathInfo();
-            indexMan.getIndex(indexName).deleteDocumentByPid(params.getDocPid());
+            indexMan.getIndex(indexName).deleteDocumentByPid(qpar.getDocPid());
             return Response.status(rs, "SUCCESS", "Document deleted succesfully.", HTTP_OK);
         } catch (BlsException e) {
             throw e;

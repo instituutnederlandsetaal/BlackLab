@@ -31,6 +31,7 @@
 # Test defines its own container and doesn't need to be included in the main container context
 # (BUT: a unit test uses files from /test/data/input, so we need to make sure those are included)
 /test
+!/test/data/voice-tei.blf.yaml
 !/test/data/input
 
 /test/node_modules

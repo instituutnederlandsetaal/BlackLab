@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import nl.inl.blacklab.server.search.SearchManager;
+import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.webservice.WebserviceParameter;
 import nl.inl.util.Json;
 
@@ -22,8 +22,9 @@ public class QueryParamsMap extends QueryParamsAbstract {
 
     private final Map<WebserviceParameter, Object> typedMap = new EnumMap<>(WebserviceParameter.class);
 
-    public QueryParamsMap(String corpusName, SearchManager searchManager, User user, Map<WebserviceParameter, String> params, Map<WebserviceParameter, Object> typedParams) {
-        super(corpusName, searchManager, user);
+    public QueryParamsMap(String corpusName, Map<WebserviceParameter, String> params,
+            Map<WebserviceParameter, Object> typedParams, BLSConfig config, boolean debugMode) {
+        super(corpusName, config, debugMode);
         if (typedParams == null) {
             this.map.putAll(params);
             for (Map.Entry<WebserviceParameter, String> entry: params.entrySet()) {

@@ -25,7 +25,7 @@ public class ResultDocInfo {
 
     private Document document;
 
-    private final Collection<MetadataField> metadataToWrite;
+    private final Collection<MetadataField> metadataToInclude;
 
     private Map<String, List<String>> metadata;
 
@@ -34,9 +34,9 @@ public class ResultDocInfo {
     private boolean mayView;
 
     ResultDocInfo(BlackLabIndex index, String docPid, Document document,
-            Collection<MetadataField> metadataToWrite) throws BlsException {
+            Collection<MetadataField> metadataToInclude) throws BlsException {
         this.index = index;
-        this.metadataToWrite = metadataToWrite;
+        this.metadataToInclude = metadataToInclude;
         initDoc(docPid, document);
         getDocInfo();
     }
@@ -62,7 +62,7 @@ public class ResultDocInfo {
 
     private void getDocInfo() throws BlsException {
         metadata = new LinkedHashMap<>();
-        for (MetadataField f: metadataToWrite) {
+        for (MetadataField f: metadataToInclude) {
             if (f.name().equals("lengthInTokens") || f.name().equals("mayView"))
                 continue;
             String[] values = document.getValues(f.name());
