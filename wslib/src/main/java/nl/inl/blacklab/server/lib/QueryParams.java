@@ -39,6 +39,44 @@ public interface QueryParams extends ParamsForResponse {
 
     String getPattGapData();
 
+    /** Specifically for collocations: any restrictions on the collocates we're interested in (if any) */
+    Optional<String> getCollocatePattern();
+
+    /** Type of collocations to find */
+    enum CollocationType {
+        /** Proximity-based collocations (i.e. words occurring near specified word) */
+        PROXIMITY("proximity"),
+
+        /** Find all relation sources for the specified target.
+         *  That is: find words that are the source of the specified relation and have the specified relation target. */
+        RELATION_SOURCES("relsources"),
+
+        /** Find all relation targets for the specified source.
+         *  That is: find words that are the target of the specified relation and have the specified relation source. */
+        RELATION_TARGETS("reltargets");
+
+        private final String stringValue;
+
+        CollocationType(String stringValue) {
+            this.stringValue = stringValue;
+        }
+
+        public static CollocationType fromStringValue(String v) {
+            v = v.toLowerCase();
+            for (CollocationType t : CollocationType.values()) {
+                if (t.stringValue.equals(v) || v.equals(t.name().toLowerCase()))
+                    return t;
+            }
+            throw new IllegalArgumentException("Unrecognized value for collocation type: " + v);
+        }
+    }
+
+    /** Type of collocations to find */
+    Optional<CollocationType> getCollocationType();
+
+    /** Relation type filter regex (for relation-based collocations) */
+    Optional<String> getRelationType();
+
     String getDocPid();
 
     String getDocumentFilterQuery();
@@ -163,8 +201,11 @@ public interface QueryParams extends ParamsForResponse {
     /** Get extra converters specification (JSON) */
     Optional<String> getConverters();
 
-    /** Get scorer specification (JSON) */
+    /** Get scorer specification (JSON; for "regular" hits grouping) */
     Optional<String> getScorer();
+
+    /** Get scorer type id (for /collocations) */
+    Optional<String> getScorerType();
 
     /**
      * Should the responses include deprecated field information?
@@ -202,6 +243,4 @@ public interface QueryParams extends ParamsForResponse {
         typedParams.putAll(overrides);
         return new QueryParamsMap(getCorpusName(), null, typedParams, config(), debugMode());
     }
-
-
 }

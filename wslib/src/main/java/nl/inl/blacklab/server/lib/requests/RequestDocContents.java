@@ -20,7 +20,7 @@ public record RequestDocContents(
         return new RequestDocContents(
                 index,
                 WebserviceParams.getAnnotatedField(index, qpar.getFieldName()),
-                RequestHits.optFromParams(qpar, false).orElse(null),
+                RequestHits.optFromParams(qpar, false, null).orElse(null),
                 qpar.getDocPid(),
                 qpar.getWordStart(),
                 qpar.getWordEnd(),

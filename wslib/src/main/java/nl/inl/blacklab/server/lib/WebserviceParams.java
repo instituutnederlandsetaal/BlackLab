@@ -1,6 +1,7 @@
 package nl.inl.blacklab.server.lib;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
+import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
 import nl.inl.blacklab.resultproperty.DocGroupProperty;
 import nl.inl.blacklab.resultproperty.DocGroupPropertySize;
 import nl.inl.blacklab.resultproperty.DocProperty;
@@ -28,6 +30,7 @@ import nl.inl.blacklab.search.indexmetadata.MetadataFields;
 import nl.inl.blacklab.search.results.SampleParameters;
 import nl.inl.blacklab.search.results.SearchSettings;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroupCollocationScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.search.textpattern.TextPatternPositionFilter;
@@ -366,7 +369,23 @@ public class WebserviceParams {
         try {
             Map<String, Object> config = (Map<String, Object>)Json.getJsonObjectMapper().readValue(jsonScorerConfig,
                     Map.class);
-            return HitGroupScorer.fromConfig(field, config);
+
+            // HitGroupScorer expects Query and TextPattern, so parse those from the string values in the config if needed
+            Map<String, Object> configParsed = new LinkedHashMap<>();
+            for (Map.Entry<String, Object> entry : config.entrySet()) {
+                String key = entry.getKey();
+                Object value = entry.getValue();
+                if (key.equals(HitGroupCollocationScorer.KEY_DOC_FILTER) && value instanceof String) {
+                    // Parse doc filter query into a Query object
+                    value = BlsUtils.parseFilter(field.index(), value.toString(), WebserviceParameter.defaultString(WebserviceParameter.FILTER_LANGUAGE));
+                } else if (key.equals(HitGroupCollocationScorer.KEY_PATTERN) && value instanceof String) {
+                    // Parse BCQL pattern into a TextPattern object
+                    value = BcqlQueryLanguageParser.parseQuery(value.toString());
+                }
+                configParsed.put(key, value);
+            }
+
+            return HitGroupScorer.fromConfig(field, configParsed);
         } catch (JsonProcessingException e) {
             throw new BadRequest("INVALID_SCORER",
                     "The scorer parameter does not have the correct JSON structure, please consult the documentation: "

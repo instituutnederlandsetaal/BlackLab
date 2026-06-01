@@ -47,7 +47,7 @@ public record RequestDocs(
         return new RequestDocs(
                 index,
                 WebserviceParams.filterQuery(qpar),
-                RequestHits.optFromParams(qpar, isCsv).orElse(null),
+                RequestHits.optFromParams(qpar, isCsv, null).orElse(null),
                 WebserviceParams.docSortProperty(index, qpar.getGroupBy().orElse(null),
                         qpar.getSortBy().orElse(null), qpar.getViewGroup().orElse(null)),
                 sampleParams,

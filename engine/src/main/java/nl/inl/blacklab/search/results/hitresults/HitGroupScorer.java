@@ -16,19 +16,24 @@ public interface HitGroupScorer {
     /** Pass if no scoring needed */
     HitGroupScorer NONE = null;
 
+    String KEY_ID = "id";
+
     String DEFAULT_TYPE_ID = "coll-dice";
 
     static HitGroupScorer fromConfig(AnnotatedField field, Map<String, Object> config) {
-        String scorerId = config.get("id").toString();
+        String scorerId = config.get(KEY_ID).toString();
         HitGroupScorerType scorerType = PluginManager.type(HitGroupScorerType.class).get(scorerId);
 
         // There is only one type for now
         if (scorerType.getType() != HitGroupScorerType.Type.COLLOCATION)
             throw new IllegalArgumentException("Scorer '" + scorerId + "' is not a collocation scorer");
         Map<String, Object> parameters = new LinkedHashMap<>(config);
-        parameters.remove("id");
-        return HitGroupScorerType.HitGroupCollocationScorer.get(field, scorerType, parameters);
+        parameters.remove(KEY_ID);
+        return HitGroupCollocationScorer.get(field, scorerType, parameters);
     }
+
+    /** Scorer type id, e.g. coll-dice */
+    HitGroupScorerType getType();
 
     /**
      * Calculate the score for a group with this identity and size.

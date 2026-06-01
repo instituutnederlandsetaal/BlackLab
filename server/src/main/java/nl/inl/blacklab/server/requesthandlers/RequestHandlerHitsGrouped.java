@@ -18,7 +18,7 @@ public class RequestHandlerHitsGrouped extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, false), rs, false);
+        WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, false, null), rs, false);
         return HTTP_OK;
     }
 

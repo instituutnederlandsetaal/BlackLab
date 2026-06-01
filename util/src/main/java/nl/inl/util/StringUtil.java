@@ -29,6 +29,12 @@ public final class StringUtil {
     /** Matches one or more whitespace characters. */
     private static final Pattern PATT_WHITESPACE = Pattern.compile(REGEX_WHITESPACE);
 
+    /** Matches any value */
+    public static final String REGEX_ANY_VALUE = ".*";
+
+    /** Matches any value */
+    public static final Pattern PATT_ANY_VALUE = Pattern.compile(REGEX_ANY_VALUE);
+
     private StringUtil() {
     }
 

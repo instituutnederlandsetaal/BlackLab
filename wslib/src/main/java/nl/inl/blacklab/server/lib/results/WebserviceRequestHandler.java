@@ -126,7 +126,7 @@ public class WebserviceRequestHandler {
         if (reqHits.calculateCollocations()) {
             if (isCsv) {
                 // CSV collocations request
-                throw new UnsupportedOperationException("CSV collocations not (yet) implemented");
+                throw new UnsupportedOperationException("CSV collocations currently not implemented");
             } else {
                 // Collocations request
                 RequestOldCollocations request = RequestOldCollocations.fromHitsRequest(reqHits);

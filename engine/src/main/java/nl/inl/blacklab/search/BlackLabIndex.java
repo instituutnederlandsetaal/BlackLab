@@ -67,6 +67,24 @@ public interface BlackLabIndex extends AutoCloseable {
         return index.search(index.mainAnnotatedField()).findDocuments(docFilterQuery);
     }
 
+    /** Count how many hits a query yields.
+     * <p>
+     * This is used to e.g. score collocations, which are calculated based on the frequency of the
+     * terms involved related to the total corpus size.
+     * <p>
+     * This method could bypass storing the hits for efficiency (although it currently doesn't).
+     *
+     * @param field field to search
+     * @param completeQuery query to run
+     * @return number of hits found
+     */
+    default long countHits(AnnotatedField field, CompleteQuery completeQuery) {
+        // TODO: make sure hits aren't saved, only counted here?
+        return search(field)
+                .find(completeQuery)
+                .count().execute().countedTotal();
+    }
+
     BLSpanQuery tagQuery(QueryInfo queryInfo, AnnotationSensitivity luceneField, String tagNameRegex,
             Map<String, String> attributes, TextPatternTags.Adjust adjust, String captureAs);
 

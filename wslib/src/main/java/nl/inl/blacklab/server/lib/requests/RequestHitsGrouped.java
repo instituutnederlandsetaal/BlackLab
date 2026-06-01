@@ -1,8 +1,10 @@
 package nl.inl.blacklab.server.lib.requests;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.lucene.search.Query;
 import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.queryParser.corpusql.BcqlQueryLanguageParser;
@@ -16,6 +18,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.Results;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroupCollocationScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchDocs;
@@ -74,10 +77,20 @@ public record RequestHitsGrouped(
         AnnotatedField annotatedField = WebserviceParams.getAnnotatedField(index, qpar.getFieldName());
         Annotation annotation = StringUtils.isEmpty(qpar.getAnnotationName()) ? annotatedField.mainAnnotation() :
                 annotatedField.annotation(qpar.getAnnotationName());
-        String bcqlQuery = getCollocationQuery(
-                WebserviceParams.getContext(qpar.getContextParam(), qpar.config()),
-                qpar.getTerm(), qpar.getPattern(), annotation);
-        TextPattern pattern = BcqlQueryLanguageParser.parseQuery(bcqlQuery);
+
+        // Determine what we're finding collocations for
+        // (e.g. collocations for "schip", or for [lemma = "bla.*" & pos="N"])
+        String findQuery = qpar.getPattern();
+        String collocateQuery = qpar.getCollocatePattern().orElse("[]");
+        QueryParams.CollocationType collocationType = qpar.getCollocationType()
+                .orElse(QueryParams.CollocationType.PROXIMITY);
+        boolean findRelations = collocationType != QueryParams.CollocationType.PROXIMITY;
+        String relationTypeRegex = qpar.getRelationType().orElse(StringUtil.REGEX_ANY_VALUE);
+
+        // Construct and parse the query that will yield the collocations
+        ContextSize context = WebserviceParams.getContext(qpar.getContextParam(), qpar.config());
+        String bcqlQuery = getCollocationQuery(context, findQuery, collocateQuery, collocationType, relationTypeRegex);
+        TextPattern textPattern = BcqlQueryLanguageParser.parseQuery(bcqlQuery);
 
         // Determine group by
         MatchSensitivity sensitivity = qpar.optSensitive().orElse(false) ? MatchSensitivity.SENSITIVE :
@@ -85,19 +98,21 @@ public record RequestHitsGrouped(
         HitProperty groupBy = new HitPropertyHitText(index, annotation, sensitivity);
 
         // Determine group scorer
-        HitGroupScorer groupScorer = HitGroupScorer.fromConfig(annotatedField, Map.of(
-                "id", qpar.getScorer().orElse(HitGroupScorer.DEFAULT_TYPE_ID),
-                "term", qpar.getTerm(),
-                "pattern", pattern,
-                "annotation", annotation.name(),
-                "sensitive", sensitivity == MatchSensitivity.SENSITIVE
-        ));
+        Query filter = WebserviceParams.filterQuery(qpar);
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put(HitGroupScorer.KEY_ID, qpar.getScorerType().orElse(HitGroupScorer.DEFAULT_TYPE_ID));
+        config.put(HitGroupCollocationScorer.KEY_DOC_FILTER, filter);
+        config.put(HitGroupCollocationScorer.KEY_PATTERN, BcqlQueryLanguageParser.parseQuery(findQuery));
+        config.put(HitGroupCollocationScorer.KEY_ANNOTATION, annotation.name());
+        config.put(HitGroupCollocationScorer.KEY_SENSITIVITY, sensitivity.toString());
+        config.put(HitGroupCollocationScorer.KEY_REL_TYPE, findRelations ? relationTypeRegex : null);
+        HitGroupScorer groupScorer = HitGroupScorer.fromConfig(annotatedField, config);
 
         // Assemble and execute the grouping request and produce the response
         HitGroupProperty sortBy = qpar.getSortBy().isEmpty() ? HitGroupPropertyScore.get() :
                 HitGroupProperty.deserialize(qpar.getSortBy().get());
 
-        RequestHits requestHits = RequestHits.fromParams(qpar, isCsv).withPattern(pattern);
+        RequestHits requestHits = RequestHits.fromParams(qpar, isCsv, textPattern);
 
         return new RequestHitsGrouped(requestHits,
                 groupBy,
@@ -108,19 +123,28 @@ public record RequestHitsGrouped(
         );
     }
 
-    private static @NonNull String getCollocationQuery(ContextSize context, String term, String pattern, Annotation annotation) {
+    /** Determine the query that will yield the collocations we're looking for. */
+    private static @NonNull String getCollocationQuery(ContextSize context, String findQuery, String collocateQuery,
+            QueryParams.CollocationType collocationType, String relTypeRegex) {
         if (context.isInlineTag())
-            throw new UnsupportedOperationException("Collocations with inline context tags are not (yet) supported");
-        String query;
-        if (StringUtils.isEmpty(term)) {
-            // Pattern given. (must be a 1-token pattern, but we don't check that here)
-            query = pattern;
+            throw new UnsupportedOperationException("Collocations with inline context tags are currently not supported");
+        if (collocationType == QueryParams.CollocationType.PROXIMITY) {
+            // Proximity-based collocations.
+            return "meet(" + collocateQuery + ", " + findQuery + "," + (-context.before()) + "," + context.after()
+                    + ")";
         } else {
-            // Term given. Construct a simple [annot="value"] query.
-            query = "[" + annotation.name() + "=\"" +
-                    StringUtil.escapeQuoteForBcql(term, "\"") + "\"]";
+            // Relation-based collocations.
+            String optRelTypeFilter = StringUtils.isEmpty(relTypeRegex) ||
+                    relTypeRegex.equals(StringUtil.REGEX_ANY_VALUE) ? "" :
+                    "(" + relTypeRegex + ")";
+            if (collocationType == QueryParams.CollocationType.RELATION_TARGETS) {
+                // Find all targets for specified source and relation type
+                return "rspan(" + findQuery + " -" + optRelTypeFilter + "-> " + collocateQuery + ", \"target\")";
+            } else {
+                // Find all sources for specified target and relation type
+                return collocateQuery + " -" + optRelTypeFilter + "-> " + findQuery;
+            }
         }
-        return "meet([], " + query + "," + (-context.before()) + "," + context.after() + ")";
     }
 
     public BlackLabIndex index() {

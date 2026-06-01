@@ -62,6 +62,7 @@ import nl.inl.blacklab.search.results.docs.DocGroup;
 import nl.inl.blacklab.search.results.docs.DocGroups;
 import nl.inl.blacklab.search.results.docs.DocResults;
 import nl.inl.blacklab.search.results.hitresults.ContextSize;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
 import nl.inl.blacklab.search.results.hits.Hits;
@@ -1175,8 +1176,12 @@ public class ResponseStreamer {
             ds.startEntry(KEY_SUMMARY).startMap();
             {
                 summaryCommonFields(hitsGrouped.getSummaryFields());
-                ResultSummaryNumHits result = hitsGrouped.getSummaryNumHits();
-                summaryResultsStats(result, hitsGrouped.getGroups());
+                summaryResultsStats(hitsGrouped.getSummaryNumHits(), hitsGrouped.getGroups());
+                if (hitsGrouped.getReqGroup().groupScorer() != HitGroupScorer.NONE) {
+                    ds.startEntry("scorer").startMap();
+                    ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getId());
+                    ds.endMap().endEntry();
+                }
             }
             ds.endMap().endEntry();
 

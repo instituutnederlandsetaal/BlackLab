@@ -56,22 +56,47 @@ public final class LuceneUtil {
     private LuceneUtil() {} // utility class
 
     /** Determine how often a term occurs in a field in the index */
-    public static long getTermFrequency(AnnotationSensitivity annotSensitivity, String term, boolean slowButAccurate) {
+    public static long getTermFrequency(AnnotationSensitivity annotSensitivity, String term,
+            Query docFilter, boolean accurateButSlower) {
         String luceneField = annotSensitivity.luceneField();
-        if (slowButAccurate) {
+        boolean hasDocFilter = docFilter != null;
+        if (hasDocFilter || accurateButSlower) {
             // Actually iterate over all non-deleted documents and count up the frequencies for this term.
             // Accurate but slow.
             BytesRef bytesRef = new BytesRef(term);
             Map<Integer, Long> counts = new ConcurrentHashMap<>();
             BlackLabIndex index = annotSensitivity.annotation().field().index();
+
+            Weight filterWeight;
+            if (hasDocFilter) {
+                try {
+                    docFilter = docFilter.rewrite(index.searcher());
+                    filterWeight = docFilter.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                filterWeight = null;
+            }
+
             index.forEachDocument((ParallelDocTask) lrc -> {
                 try {
+                    Scorer scorer = hasDocFilter ?
+                            filterWeight.scorer(index.searcher().getLeafContexts().get(0)) :
+                            null;
+                    DocIdSetIterator docIt = hasDocFilter ? scorer.iterator() : null;
                     TermVectors termVectors = lrc.reader().termVectors();
                     return docId -> {
                         try {
-                            TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
-                            long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
-                            counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
+                            int matchingDocId = hasDocFilter ?
+                                    docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId) :
+                                    docId;
+                            if (matchingDocId == docId) {
+                                // This doc matches the filter.
+                                TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
+                                long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
+                                counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
+                            }
                         } catch (IOException e) {
                             throw new RuntimeException(e);
                         }

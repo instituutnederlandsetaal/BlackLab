@@ -19,7 +19,7 @@ public class RequestHandlerHitsCsv extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException, InvalidQuery {
-        WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, true), rs, true);
+        WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, true, null), rs, true);
         return HTTP_OK;
     }
 

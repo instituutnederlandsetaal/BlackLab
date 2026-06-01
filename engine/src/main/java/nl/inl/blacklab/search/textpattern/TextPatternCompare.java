@@ -78,7 +78,7 @@ public class TextPatternCompare extends TextPattern {
         }
 
         // Is it "any token"?
-        if (value.equals(".*")) {
+        if (value.equals(StringUtil.REGEX_ANY_VALUE)) {
             return new TextPatternAnyToken(1, 1);
         }
 

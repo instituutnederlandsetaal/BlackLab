@@ -22,6 +22,11 @@ public enum WebserviceParameter {
     PATTERN_LANGUAGE("pattlang"),
     PATTERN_GAP_DATA("pattgapdata"),
 
+    // Collocations parametesr
+    COLLOCATE_PATTERN("collpatt"), // collocations: any restrictions on the collocates (if any)
+    COLLOCATION_TYPE("colltype"), // type of collocations (proximity or relation)
+    RELATION_TYPE("reltype"), // regex filter on relation type (for relation-based collocations)
+
     // Docs to search
     FILTER("filter"),
     FILTER_LANGUAGE("filterlang"),
@@ -117,6 +122,7 @@ public enum WebserviceParameter {
     INPUT_FORMAT("inputformat"),
     CONVERTERS("converters", Type.JSON), // extra FileConverts to apply to uploaded file(s)
     SCORER("scorer", Type.STRING_OR_JSON_OBJECT), // scorer to apply (to grouped results for now, maybe also hits in the future)
+    SCORER_TYPE("scorertype"), // scorer type id to use (for collocations)
     API_VERSION("api");
 
     /** Parameter type */

@@ -1,5 +1,7 @@
 package nl.inl.blacklab.search.results.hitresults;
 
+import org.apache.lucene.search.Query;
+
 import nl.inl.blacklab.plugins.HitGroupScorerType;
 import nl.inl.blacklab.resultproperty.PropertyValue;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
@@ -18,8 +20,13 @@ public class HitGroupScorerSize extends HitGroupScorerType {
     }
 
     @Override
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, long totalFrequency, long wordFrequency) {
-        return new HitGroupCollocationScorer(collocateAnnotation) {
+    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter, long totalFrequency, long wordFrequency) {
+        return new HitGroupCollocationScorer(collocateAnnotation, filter) {
+            @Override
+            public HitGroupScorerType getType() {
+                return HitGroupScorerSize.this;
+            }
+
             @Override
             public double score(PropertyValue identity, long size) {
                 return size;

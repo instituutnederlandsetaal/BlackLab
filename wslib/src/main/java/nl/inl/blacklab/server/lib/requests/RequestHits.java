@@ -79,18 +79,20 @@ public record RequestHits(
         CsvSettings csvSettings,
         ParamsForResponse paramsForResponse) {
 
-    public static RequestHits fromParams(QueryParams params, boolean isCsv) {
-        return optFromParams(params, isCsv).orElseThrow(() -> new IllegalArgumentException("No pattern specified"));
+    public static RequestHits fromParams(QueryParams params, boolean isCsv, TextPattern pattern) {
+        return optFromParams(params, isCsv, pattern).orElseThrow(() -> new IllegalArgumentException("No pattern specified"));
     }
 
-    public static Optional<RequestHits> optFromParams(QueryParams qpar, boolean isCsv) {
+    public static Optional<RequestHits> optFromParams(QueryParams qpar, boolean isCsv, TextPattern overridePattern) {
         BlackLabIndex index = WebserviceParams.index(qpar.getCorpusName());
         ContextSize contextSize = WebserviceParams.getContext(qpar.getContextParam(), qpar.config());
         String optContextTag = contextSize.inlineTagName();
-        Optional<TextPattern> pattern = WebserviceParams.pattern(index, qpar.getPattLanguage(),
-                qpar.getPattern(), qpar.getPattGapData(), optContextTag);
-        if (pattern.isEmpty())
-            return Optional.empty();
+        TextPattern pattern = overridePattern == null ?
+                WebserviceParams.pattern(index, qpar.getPattLanguage(), qpar.getPattern(), qpar.getPattGapData(),
+                        optContextTag).orElse(null) :
+                overridePattern;
+        if (pattern == null)
+            return Optional.empty(); // pattern is required
         String groupBy = qpar.getGroupBy().orElse(null);
         String viewGroup = qpar.getViewGroup().orElse(null);
         String sortBy = qpar.getSortBy().orElse(null);
@@ -117,7 +119,7 @@ public record RequestHits(
                 qpar.debugMode() ? qpar.getForwardIndexMatchFactor() : -1, qpar.config());
         return Optional.of(new RequestHits(
                 searchField,
-                pattern.get(),
+                pattern,
                 patternOriginal,
                 qpar.getAdjustRelationHits(),
                 qpar.getWithSpans(),

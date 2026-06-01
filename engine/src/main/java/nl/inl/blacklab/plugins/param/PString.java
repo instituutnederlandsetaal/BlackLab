@@ -2,14 +2,14 @@ package nl.inl.blacklab.plugins.param;
 
 import java.util.regex.Pattern;
 
+import nl.inl.util.StringUtil;
+
 public record PString(
         String name,
         boolean isRequired,
         Pattern regex,           // must match
         int maxLength
 ) implements PluginParam {
-
-    public static final Pattern REGEX_ANY_VALUE = Pattern.compile(".*");
 
     // letters, digits, underscore, dash, start with letter
     public static final Pattern REGEX_IDENTIFIER = Pattern.compile("[\\p{L}_][\\p{L}0-9_\\-]*");
@@ -37,7 +37,7 @@ public record PString(
     }
 
     public static PString any(String name, boolean isRequired, int maxLength) {
-        return matching(name, REGEX_ANY_VALUE, isRequired, maxLength);
+        return matching(name, StringUtil.PATT_ANY_VALUE, isRequired, maxLength);
     }
 
     public static PString any(String name, boolean isRequired) {

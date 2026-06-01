@@ -252,6 +252,25 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public String getPattGapData() { return get(WebserviceParameter.PATTERN_GAP_DATA); }
 
     @Override
+    public Optional<String> getCollocatePattern() {
+        return opt(WebserviceParameter.COLLOCATE_PATTERN);
+    }
+
+    @Override
+    public Optional<CollocationType> getCollocationType() {
+        String s = get(WebserviceParameter.COLLOCATION_TYPE);
+        if (!StringUtils.isEmpty(s))
+            return Optional.of(CollocationType.fromStringValue(s));
+        else
+            return Optional.empty();
+    }
+
+    @Override
+    public Optional<String> getRelationType() {
+        return opt(WebserviceParameter.RELATION_TYPE);
+    }
+
+    @Override
     public String getDocPid() { return get(WebserviceParameter.DOC_PID); }
 
     @Override
@@ -482,9 +501,15 @@ public abstract class QueryParamsAbstract implements QueryParams {
     public Optional<String> getConverters() {
         return opt(WebserviceParameter.CONVERTERS);
     }
+
     @Override
     public Optional<String> getScorer() {
         return opt(WebserviceParameter.SCORER);
+    }
+
+    @Override
+    public Optional<String> getScorerType() {
+        return opt(WebserviceParameter.SCORER_TYPE);
     }
 
     @Override

@@ -227,7 +227,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 // Find hits or documents
                 case HITS, HITS_GROUPED, HITS_CSV ->
                     // [grouped] hits
-                    WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, true), dstream,
+                    WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, true, null), dstream,
                             qpar.getOperation() == WebserviceOperation.HITS_CSV);
                 case DOCS_CSV -> WebserviceRequestHandler.opDocs(RequestDocs.fromParams(qpar, true), dstream, true);
                 case DOCS, DOCS_GROUPED ->
@@ -251,7 +251,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case CACHE_CLEAR -> WebserviceRequestHandler.opClearCache(searchManager.getBlackLabCache(), dstream, debugMode);
                 case WRITE_INPUT_FORMAT, DELETE_INPUT_FORMAT, CREATE_CORPUS, DELETE_CORPUS, ADD_TO_CORPUS,
                      CORPUS_SHARING ->
-                        throw new UnsupportedOperationException("Not (yet) supported: " + qpar.getOperation());
+                        throw new UnsupportedOperationException("Currently not supported: " + qpar.getOperation());
                 case STATIC_RESPONSE -> throw new UnsupportedOperationException(
                         "This operation shouldn't be called directly: " + qpar.getOperation());
                 case NONE -> {

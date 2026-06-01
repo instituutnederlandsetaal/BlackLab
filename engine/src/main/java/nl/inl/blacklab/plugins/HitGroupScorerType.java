@@ -1,17 +1,10 @@
 package nl.inl.blacklab.plugins;
 
-import java.util.List;
-import java.util.Map;
+import org.apache.lucene.search.Query;
 
 import nl.inl.blacklab.exceptions.PluginException;
-import nl.inl.blacklab.resultproperty.PropertyValue;
-import nl.inl.blacklab.resultproperty.PropertyValueContextWords;
-import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
-import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
-import nl.inl.util.LuceneUtil;
 
 /** Can provide a scorer for a group of hits.
  * <p>
@@ -55,75 +48,15 @@ public abstract class HitGroupScorerType extends Plugin {
      *                            around the lemma "ship", and we're looking case-insensitively, this would be the
      *                            case-insensitive alternative of the word annotation. Used to find frequency from
      *                            group identity.
+     * @param filter document filter
      * @param totalFrequency number of words in the corpus (for proximity collocations), or cardinality of the
      *                       relation (for relation-based collocations).
      * @param wordFrequency total frequency of the search word (or query) we're finding collocations *for* ("ship" in
      *                      the example)
      * @return collocate scorer
      */
-    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, long totalFrequency, long wordFrequency) {
+    public HitGroupScorer getCollocationScorer(AnnotationSensitivity collocateAnnotation, Query filter, long totalFrequency, long wordFrequency) {
         throw new PluginException("HitGroupScorerType " + getId() + " does not support collocation scoring");
     }
 
-    public static abstract class HitGroupCollocationScorer implements HitGroupScorer {
-
-        public static final String KEY_TERM = "term";
-        public static final String KEY_ANNOTATION = "annotation";
-        public static final String KEY_SENSITIVITY = "sensitivity";
-
-        private final BlackLabIndex index;
-
-        private final AnnotationSensitivity collocateAnnotation;
-
-        public HitGroupCollocationScorer(AnnotationSensitivity collocateAnnotation) {
-            this.index = collocateAnnotation.annotation().field().index();
-            this.collocateAnnotation = collocateAnnotation;
-        }
-
-        /** Should getTermFrequency calculate accurate term frequency slowly?
-         * If false, uses totalTermFrequency which doesn't take deleted documents into account.
-         */
-        public static final boolean ACCURATE_TERM_FREQ = false;
-
-        /** Instantiate a collocation scorer from its configuration parameters */
-        public static HitGroupScorer get(AnnotatedField field, HitGroupScorerType type,
-                Map<String, Object> parameters) {
-            // Total number of tokens in this field
-            String annotation = parameters.getOrDefault(KEY_ANNOTATION, "").toString();
-            if (annotation.isEmpty())
-                throw new IllegalArgumentException("Collocation scorer needs annotation");
-            MatchSensitivity sensitivity = MatchSensitivity.fromName(parameters.getOrDefault(KEY_SENSITIVITY, "i").toString());
-            AnnotationSensitivity annotSensitivity = field.annotation(annotation).sensitivity(sensitivity);
-            long totalFrequency = field.index().metadata().countPerField().get(field.name()).getTokens();
-            String term = parameters.getOrDefault(KEY_TERM, "").toString();
-            long termFrequency;
-            // TODO: we don't take a document filter into account here!
-            if (term.isEmpty()) {
-                throw new IllegalArgumentException("Collocation scorer needs term");
-                // TODO: use pattern, and find number of hits for given pattern?
-//                String pattern = parameters.getOrDefault("patt", "").toString();
-//                if (pattern.isEmpty())
-//                    throw new IllegalArgumentException("Collocation scorer needs term");
-//                CompleteQuery cq = new CompleteQuery(tp);
-//                field.index().find(field, cq);
-//                termFrequency = ;
-            } else {
-                termFrequency = LuceneUtil.getTermFrequency(annotSensitivity, term, ACCURATE_TERM_FREQ);
-            }
-            return type.getCollocationScorer(annotSensitivity, totalFrequency, termFrequency);
-        }
-
-        protected long getCollocateFrequency(PropertyValue identity) {
-            if (identity instanceof PropertyValueContextWords pvcw) {
-                List<String> terms = pvcw.terms();
-                if (terms.size() == 1) {
-                    // Determine the term's frequency
-                    String string = pvcw.getSensitivity().desensitize(identity.toString());
-                    return LuceneUtil.getTermFrequency(collocateAnnotation, string, ACCURATE_TERM_FREQ);
-                }
-                throw new UnsupportedOperationException("Only single-term collocates are supported for now");
-            }
-            throw new UnsupportedOperationException("Group identity is not context-based");
-        }
-    }
 }
