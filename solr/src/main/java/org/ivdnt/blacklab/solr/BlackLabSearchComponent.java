@@ -31,6 +31,7 @@ import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.IndexManager;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.requests.RequestAutocomplete;
 import nl.inl.blacklab.server.lib.requests.RequestCorpusInfo;
@@ -51,6 +52,7 @@ import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 public class BlackLabSearchComponent extends SearchComponent implements SolrCoreAware {
 
@@ -170,7 +172,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
      */
     @Override
     public void prepare(ResponseBuilder rb) {
-        if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
+        if (QueryParamsSolrUtil.shouldRunComponent(rb.req.getParams())) {
             rb.setNeedDocSet(true); // we need to know all the matching documents (to filter on them)
         }
 
@@ -186,7 +188,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     @Override
     public synchronized void process(ResponseBuilder rb) {
         // Should we run at all?
-        if (QueryParamsSolr.shouldRunComponent(rb.req.getParams())) {
+        if (QueryParamsSolrUtil.shouldRunComponent(rb.req.getParams())) {
             try {
                 IndexReader reader = rb.req.getSearcher().getIndexReader();
                 String indexName = rb.req.getSearcher().getCore().getName();
@@ -213,11 +215,14 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 //if (outputType == DataFormat.CSV)
 
                 ds.startEntry(Constants.SOLR_BLACKLAB_SECTION_NAME);
-                ResponseStreamer dstream = ResponseStreamer.get(ds, qpar.apiCompatibility());
+                ResponseStreamer dstream = ResponseStreamer.get(ds, ParamUtil.getApiVersion(
+                        qpar.get(WsParam.API)));
                 boolean debugMode = userRequest.isDebugMode();
-                switch (qpar.getOperation()) {
+                switch (ParamUtil.getOperation(qpar)) {
                 // "Root" endpoint
-                case SERVER_INFO -> WebserviceRequestHandler.opServerInfo(RequestServerInfo.fromParams(indexManager, userRequest.getUser(), qpar.getIncludeCustomInfo(), debugMode), dstream);
+                case SERVER_INFO ->
+                        WebserviceRequestHandler.opServerInfo(RequestServerInfo.fromParams(indexManager, userRequest.getUser(),
+                                qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO), debugMode), dstream);
 
                 // Information about the corpus
                 case CORPUS_INFO -> WebserviceRequestHandler.opCorpusInfo(RequestCorpusInfo.fromParams(qpar), dstream);
@@ -228,7 +233,7 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
                 case HITS, HITS_GROUPED, HITS_CSV ->
                     // [grouped] hits
                     WebserviceRequestHandler.opHits(RequestHits.fromParams(qpar, true, null), dstream,
-                            qpar.getOperation() == WebserviceOperation.HITS_CSV);
+                            ParamUtil.getOperation(qpar) == WebserviceOperation.HITS_CSV);
                 case DOCS_CSV -> WebserviceRequestHandler.opDocs(RequestDocs.fromParams(qpar, true), dstream, true);
                 case DOCS, DOCS_GROUPED ->
                     // [grouped] docs
@@ -245,15 +250,18 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
 
                 // Manage user corpora
                 case LIST_INPUT_FORMATS -> WebserviceRequestHandler.opListInputFormats(userRequest.getUser(), indexManager, dstream, debugMode);
-                case INPUT_FORMAT_INFO -> WebserviceRequestHandler.opInputFormatInfo(qpar.getInputFormat().orElse(null), dstream);
-                case INPUT_FORMAT_XSLT -> WebserviceRequestHandler.opInputFormatXslt(qpar.getInputFormat().orElse(null), dstream);
-                case CACHE_INFO -> WebserviceRequestHandler.opCacheInfo(searchManager.getBlackLabCache(), qpar.isIncludeDebugInfo(), dstream);
+                case INPUT_FORMAT_INFO ->
+                        WebserviceRequestHandler.opInputFormatInfo(qpar.opt(WsParam.INPUT_FORMAT).orElse(null), dstream);
+                case INPUT_FORMAT_XSLT ->
+                        WebserviceRequestHandler.opInputFormatXslt(qpar.opt(WsParam.INPUT_FORMAT).orElse(null), dstream);
+                case CACHE_INFO -> WebserviceRequestHandler.opCacheInfo(searchManager.getBlackLabCache(),
+                        qpar.getBool(WsParam.DEBUG), dstream);
                 case CACHE_CLEAR -> WebserviceRequestHandler.opClearCache(searchManager.getBlackLabCache(), dstream, debugMode);
                 case WRITE_INPUT_FORMAT, DELETE_INPUT_FORMAT, CREATE_CORPUS, DELETE_CORPUS, ADD_TO_CORPUS,
-                     CORPUS_SHARING ->
-                        throw new UnsupportedOperationException("Currently not supported: " + qpar.getOperation());
+                     CORPUS_SHARING -> throw new UnsupportedOperationException("Currently not supported: " + qpar.get(
+                        WsParam.OPERATION));
                 case STATIC_RESPONSE -> throw new UnsupportedOperationException(
-                        "This operation shouldn't be called directly: " + qpar.getOperation());
+                        "This operation shouldn't be called directly: " + qpar.get(WsParam.OPERATION));
                 case NONE -> {
                     // do nothing
                 }

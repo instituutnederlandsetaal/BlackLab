@@ -26,6 +26,7 @@ import nl.inl.blacklab.server.index.Index;
 import nl.inl.blacklab.server.index.Index.IndexStatus;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.lib.IndexUtil;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
@@ -35,7 +36,7 @@ import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
 import nl.inl.blacklab.webservice.BlsPath;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Base class for request handlers, to handle the different types of requests.
@@ -319,7 +320,7 @@ public abstract class RequestHandler {
                             }
                         } else if (handlerName.equals(ENDPOINT_HITS) || handlerName.equals(
                                 ENDPOINT_DOCS)) {
-                            boolean hasViewgroup = !StringUtils.isEmpty(request.getParameter(WebserviceParameter.VIEW_GROUP.value()));
+                            boolean hasViewgroup = !StringUtils.isEmpty(request.getParameter(WsParam.VIEW_GROUP.value()));
                             if (!StringUtils.isBlank(request.getParameter("group"))) {
                                 if (!hasViewgroup)
                                     handlerName += "-grouped"; // list of groups instead of contents
@@ -494,7 +495,7 @@ public abstract class RequestHandler {
         String docPid = i >= 0 ? urlPathInfo.substring(0, i) : urlPathInfo;
         if (docPid.isEmpty())
             throw new BadRequest("NO_DOC_ID", "Specify document pid.");
-        qpar = qpar.withOverrides(Map.of(WebserviceParameter.DOC_PID, docPid));
+        qpar = qpar.withOverrides(Map.of(WsParam.DOC_PID, docPid));
     }
 
     protected boolean isDocsOperation() {
@@ -529,7 +530,7 @@ public abstract class RequestHandler {
     public abstract int handle(ResponseStreamer rs) throws BlsException, InvalidQuery;
 
     public ApiVersion apiCompatibility() {
-        ApiVersion api = qpar.apiCompatibility();
+        ApiVersion api = ParamUtil.getApiVersion(qpar.get(WsParam.API));
         boolean alwaysRespondWithApiV5 = newCorporaEndpoint || this instanceof RequestHandlerRelations;
         if (alwaysRespondWithApiV5 && api.getMajor() <= 4) {
             // The new /corpora/... endpoints always use the new version of the API.

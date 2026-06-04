@@ -5,6 +5,7 @@ import java.util.Collection;
 import org.jspecify.annotations.NonNull;
 
 import nl.inl.blacklab.server.lib.QueryParams;
+import nl.inl.blacklab.webservice.WsParam;
 
 /** Request for general information about a corpus
  *
@@ -20,7 +21,8 @@ public record RequestCorpusInfo(String corpusName, Collection<String> listValues
     public static @NonNull RequestCorpusInfo fromParams(QueryParams qpar) {
         RequestRelations relations = RequestRelations.fromParams(qpar); // (null = every field)
         return new RequestCorpusInfo(qpar.getCorpusName(),
-                qpar.getListValuesFor(), qpar.getLimitValues(), qpar.getIncludeCustomInfo(),
+                qpar.getList(WsParam.LIST_VALUES_FOR_ANNOTATIONS), qpar.getLong(WsParam.LIMIT_VALUES),
+                qpar.getBool(WsParam.INCLUDE_CUSTOM_INFO),
                 relations);
     }
 

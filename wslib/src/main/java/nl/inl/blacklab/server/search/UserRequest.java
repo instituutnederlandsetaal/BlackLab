@@ -13,6 +13,7 @@ import nl.inl.blacklab.webservice.WebserviceOperation;
  * HttpServletRequest, etc.
  */
 public interface UserRequest {
+
     /**
      * Use the specified authentication method to determine the current user.
      *

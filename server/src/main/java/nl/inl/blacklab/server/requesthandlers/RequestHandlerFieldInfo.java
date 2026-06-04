@@ -8,7 +8,7 @@ import nl.inl.blacklab.server.lib.requests.RequestFieldInfo;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Get information about a field in the index.
@@ -32,7 +32,7 @@ public class RequestHandlerFieldInfo extends RequestHandler {
             throw new BadRequest("UNKNOWN_OPERATION",
                     "Bad URL. Either specify a field name to show information about, or remove the 'fields' part to get general index information.");
         }
-        qpar = qpar.withOverrides(Map.of(WebserviceParameter.FIELD, fieldName));
+        qpar = qpar.withOverrides(Map.of(WsParam.FIELD, fieldName));
 
         RequestFieldInfo request = RequestFieldInfo.fromParams(qpar);
         WebserviceRequestHandler.opFieldInfo(request, rs);

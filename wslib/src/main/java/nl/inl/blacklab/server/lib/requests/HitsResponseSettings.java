@@ -8,9 +8,10 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedFields;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.WriteCsv;
+import nl.inl.blacklab.webservice.WsParam;
 
 /** What should and shouldn't be included in a hits response.
  * <p>
@@ -23,9 +24,9 @@ public record HitsResponseSettings(boolean omitEmptyCaptures,
                                    List<Annotation> annotationsToInclude,
                                    List<WriteCsv.SpanAndAttributeName> spanAttributes) {
     public static HitsResponseSettings fromParams(QueryParams qpar) {
-        List<WriteCsv.SpanAndAttributeName> andAttributes = qpar.getListSpanAttributes().stream()
+        List<WriteCsv.SpanAndAttributeName> andAttributes = qpar.getList(WsParam.LIST_VALUES_FOR_SPAN_ATTR).stream()
                 .map(WriteCsv.SpanAndAttributeName::fromString).toList();
-        boolean omitEmptyCaptures = qpar.optOmitEmptyCaptures()
+        boolean omitEmptyCaptures = qpar.optBool(WsParam.OMIT_EMPTY_CAPTURES)
                 .orElse(qpar.config().getParameters().isOmitEmptyCaptures());
         return new HitsResponseSettings(
                 omitEmptyCaptures,
@@ -43,9 +44,9 @@ public record HitsResponseSettings(boolean omitEmptyCaptures,
      * @return the annotations to write out, as specified by the (optional) "listvalues" query parameter.
      */
     public static List<Annotation> getAnnotationsToWrite(QueryParams qpar) {
-        BlackLabIndex index = WebserviceParams.index(qpar.getCorpusName());
+        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
         AnnotatedFields fields = index.annotatedFields();
-        Collection<String> requestedAnnotations = qpar.getListValuesFor();
+        Collection<String> requestedAnnotations = qpar.getList(WsParam.LIST_VALUES_FOR_ANNOTATIONS);
         boolean all = false;
         if (requestedAnnotations.contains("*")) {
             all = true;

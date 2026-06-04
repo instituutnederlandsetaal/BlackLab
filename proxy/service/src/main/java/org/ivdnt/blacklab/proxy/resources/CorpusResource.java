@@ -199,7 +199,7 @@ public class CorpusResource {
 
     @Path("/hits")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ProxyParamsUtil.MIME_TYPE_CSV })
     public Response getHits(
             @PathParam("corpora") String corporaPath,
             @QueryParam("api") @DefaultValue ("") String strApiVersion,
@@ -213,7 +213,7 @@ public class CorpusResource {
     @Path("/hits")
     @POST
     @Consumes("application/x-www-form-urlencoded")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ProxyParamsUtil.MIME_TYPE_CSV })
     public Response postHits(
             @PathParam("corpora") String corporaPath,
             @QueryParam("api") @DefaultValue ("") String strApiVersion,
@@ -226,7 +226,7 @@ public class CorpusResource {
 
     @Path("/docs")
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ProxyParamsUtil.MIME_TYPE_CSV })
     public Response getDocs(
             @PathParam("corpora") String corporaPath,
             @QueryParam("api") @DefaultValue ("") String strApiVersion,
@@ -239,7 +239,7 @@ public class CorpusResource {
 
     @Path("/docs")
     @POST
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ParamsUtil.MIME_TYPE_CSV })
+    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, ProxyParamsUtil.MIME_TYPE_CSV })
     public Response postDocs(
             @PathParam("corpora") String corporaPath,
             @QueryParam("api") @DefaultValue ("") String strApiVersion,

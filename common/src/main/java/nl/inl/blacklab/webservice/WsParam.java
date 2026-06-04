@@ -1,8 +1,6 @@
 package nl.inl.blacklab.webservice;
 
-import java.util.Arrays;
 import java.util.EnumMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,7 +13,7 @@ import java.util.Optional;
  * used in operations that have not been extracted to the wslib module yet. They should
  * eventually be added.
  */
-public enum WebserviceParameter {
+public enum WsParam {
 
     // Hits to search
     PATTERN("patt", Type.STRING_OR_JSON_OBJECT),
@@ -49,7 +47,7 @@ public enum WebserviceParameter {
     NUMBER_OF_RESULTS("number", Type.INTEGER), // results window
     WORDS_AROUND_HIT("wordsaroundhit"), // (DEPRECATED, renamed to "context")
     CONTEXT("context"), // KWIC / concordances: words around hit or
-    CREATE_CONCORDANCES_FROM("usecontent"), // create concs from forward index or original content (content store)?
+    USE_CONTENT("usecontent"), // create concs from forward index or original content (content store)?
     OMIT_EMPTY_CAPTURES("omitemptycaptures", Type.BOOLEAN),  // omit capture groups of length 0? (false)
 
     // Doc snippets
@@ -73,10 +71,12 @@ public enum WebserviceParameter {
 
     // How to process results
     FACETS("facets"), // facet(s) to include, if any
-    SUBCORPUS_SIZE("subcorpussize", Type.BOOLEAN, "includetokencount"), // include subcorpus size?
     INCLUDE_CUSTOM_INFO("custom", Type.BOOLEAN), // include custom metadata?
     MAX_HITS_TO_RETRIEVE("maxretrieve", Type.INTEGER),
     MAX_HITS_TO_COUNT("maxcount", Type.INTEGER), // limits to numbers of hits to process
+    // (2 params below: use ParamUtil.includeSubcorpusSize() to check so both parameters are tried)
+    SUBCORPUS_SIZE("subcorpussize", Type.BOOLEAN), // include subcorpus size?
+    INCLUDE_TOKEN_COUNT("includetokencount", Type.BOOLEAN), // (deprecated, now "subcorpussize")
 
     // Alternative views
     CALCULATE_STATS("calc"), // collocations, or other context-based calculations
@@ -103,15 +103,15 @@ public enum WebserviceParameter {
 
     // list relations options
     REL_CLASSES("classes"), // what relation classes to report (default all)
-    REL_ONLY_SPANS("onlyspans", Type.BOOLEAN, "only-spans"),  // only report spans, not other relations [no]
-    REL_SEPARATE_SPANS("separatespans", Type.BOOLEAN, "separate-spans"), // report spans separately from other relations [yes]
+    REL_ONLY_SPANS("onlyspans", Type.BOOLEAN),  // only report spans, not other relations [no]
+    REL_SEPARATE_SPANS("separatespans", Type.BOOLEAN), // report spans separately from other relations [yes]
 
     // for listing values (metadata, annotations, relations, attributes)
     LIMIT_VALUES("limitvalues", Type.INTEGER), // truncate lists/maps of values to this length [200]
 
     // relations querying options
-    REL_ADJUST_HITS("adjusthits", Type.BOOLEAN, "adjust-hits"), // adjust hits to cover all tokens involved in relation [no]
-    WITH_SPANS("withspans", Type.BOOLEAN, "with-spans"), // include all overlapping spans in the response? [no]
+    REL_ADJUST_HITS("adjusthits", Type.BOOLEAN), // adjust hits to cover all tokens involved in relation [no]
+    WITH_SPANS("withspans", Type.BOOLEAN), // include all overlapping spans in the response? [no]
 
     DEBUG("debug", Type.BOOLEAN), // include debug info (cache)
 
@@ -123,7 +123,9 @@ public enum WebserviceParameter {
     CONVERTERS("converters", Type.JSON), // extra FileConverts to apply to uploaded file(s)
     SCORER("scorer", Type.STRING_OR_JSON_OBJECT), // scorer to apply (to grouped results for now, maybe also hits in the future)
     SCORER_TYPE("scorertype"), // scorer type id to use (for collocations)
-    API_VERSION("api");
+    API("api"),
+    JSON_REQUEST("req", Type.JSON); // a BLS request may be passed as a JSON structure
+
 
     /** Parameter type */
     public enum Type {
@@ -142,12 +144,10 @@ public enum WebserviceParameter {
         JSON
     }
 
-    public static Optional<WebserviceParameter> fromValue(String str) {
-        WebserviceParameter[] values = values();
-        for (WebserviceParameter v: values) {
+    public static Optional<WsParam> fromValue(String str) {
+        WsParam[] values = values();
+        for (WsParam v: values) {
             if (v.name.equals(str))
-                return Optional.of(v);
-            if (v.synonyms.contains(str))
                 return Optional.of(v);
         }
         return Optional.empty();
@@ -156,7 +156,7 @@ public enum WebserviceParameter {
     /**
      * Default values for request parameters
      */
-    private static final Map<WebserviceParameter, String> defaultValues;
+    private static final Map<WsParam, Object> defaultValues;
 
     /** Default value for limitvalues parameter (how many metadata/annotation values to return) */
     public static final int DEF_VAL_LIMIT_VALUES = 200;
@@ -164,38 +164,34 @@ public enum WebserviceParameter {
     static {
         // Default values for the parameters. Note that if no default is set, the default will be the empty string.
         // (which for booleans will translate to false, etc.)
-        defaultValues = new EnumMap<>(WebserviceParameter.class);
+        defaultValues = new EnumMap<>(WsParam.class);
         defaultValues.put(CONTEXT, "5"); // previously "wordsaroundhit"
-        defaultValues.put(CREATE_CONCORDANCES_FROM, "fi");
-        defaultValues.put(CSV_DECLARE_SEPARATOR, "yes");
-        defaultValues.put(CSV_INCLUDE_SUMMARY, "yes");
-        defaultValues.put(DEBUG, "no");
-        defaultValues.put(EXPLAIN_QUERY_REWRITE, "no");
+        defaultValues.put(USE_CONTENT, "fi");
+        defaultValues.put(CSV_DECLARE_SEPARATOR, true);
+        defaultValues.put(CSV_INCLUDE_SUMMARY, true);
+        defaultValues.put(DEBUG, false);
+        defaultValues.put(EXPLAIN_QUERY_REWRITE, false);
         defaultValues.put(FILTER_LANGUAGE, "luceneql");
-        defaultValues.put(FIRST_RESULT, "0");
-        defaultValues.put(FORWARD_INDEX_MATCHING_SETTING, "-1");
-        defaultValues.put(HIT_END, "1");
-        defaultValues.put(HIT_START, "0");
-        defaultValues.put(INCLUDE_GROUP_CONTENTS, "no");
-        defaultValues.put(SUBCORPUS_SIZE, "no");
-        defaultValues.put(INCLUDE_CUSTOM_INFO, "no");
-        defaultValues.put(MAX_HITS_TO_COUNT, "10000000");
-        defaultValues.put(MAX_HITS_TO_RETRIEVE, "1000000");
-        defaultValues.put(NUMBER_OF_RESULTS, "50");
-        defaultValues.put(OMIT_EMPTY_CAPTURES, "no");
+        defaultValues.put(FIRST_RESULT, 0);
+        defaultValues.put(FORWARD_INDEX_MATCHING_SETTING, -1);
+        defaultValues.put(HIT_END, 1);
+        defaultValues.put(HIT_START, 0);
+        defaultValues.put(INCLUDE_GROUP_CONTENTS, false);
+        defaultValues.put(SUBCORPUS_SIZE, false);
+        defaultValues.put(INCLUDE_CUSTOM_INFO, false);
+        defaultValues.put(MAX_HITS_TO_COUNT, 10000000);
+        defaultValues.put(MAX_HITS_TO_RETRIEVE, 1000000);
+        defaultValues.put(NUMBER_OF_RESULTS, 50);
+        defaultValues.put(OMIT_EMPTY_CAPTURES, false);
         defaultValues.put(PATTERN_LANGUAGE, "default");
-        defaultValues.put(REL_SEPARATE_SPANS, "yes");
-        defaultValues.put(SENSITIVE, "no");
+        defaultValues.put(REL_SEPARATE_SPANS, true);
+        defaultValues.put(SENSITIVE, false);
         defaultValues.put(AUTOCOMPLETE_TYPE, "term");
-        defaultValues.put(LIMIT_VALUES, "" + DEF_VAL_LIMIT_VALUES);
-        defaultValues.put(USE_CACHE, "yes");
-        defaultValues.put(WAIT_FOR_TOTAL_COUNT, "no");
-        defaultValues.put(WORD_END, "-1");
-        defaultValues.put(WORD_START, "-1");
-    }
-
-    public static void setDefaultValue(WebserviceParameter par, String value) {
-        defaultValues.put(par, value);
+        defaultValues.put(LIMIT_VALUES, DEF_VAL_LIMIT_VALUES);
+        defaultValues.put(USE_CACHE, true);
+        defaultValues.put(WAIT_FOR_TOTAL_COUNT, false);
+        defaultValues.put(WORD_END, -1);
+        defaultValues.put(WORD_START, -1);
     }
 
     /** Canonical parameter name. */
@@ -204,29 +200,13 @@ public enum WebserviceParameter {
     /** Parameter type */
     private final Type type;
 
-    /** Any alternative names for this parameter that will also be recognized. */
-    private final List<String> synonyms;
-
-    WebserviceParameter(String name) {
-        this(name, Type.STRING, new String[0]);
+    WsParam(String name) {
+        this(name, Type.STRING);
     }
 
-    WebserviceParameter(String name, Type type) {
-        this(name, type, new String[0]);
-    }
-
-    WebserviceParameter(String name, Type type, String... synonyms) {
+    WsParam(String name, Type type) {
         this.name = name;
         this.type = type;
-        this.synonyms = Arrays.asList(synonyms);
-    }
-
-    public static String defaultString(WebserviceParameter webserviceParameter) {
-        return defaultValues.getOrDefault(webserviceParameter, "");
-    }
-
-    public static long defaultLong(WebserviceParameter webserviceParameter) {
-        return Long.parseLong(defaultValues.getOrDefault(webserviceParameter, "0"));
     }
 
     public String value() {
@@ -240,8 +220,33 @@ public enum WebserviceParameter {
     @Override
     public String toString() { return name; }
 
-    public String getDefaultValue() {
-        return defaultValues.getOrDefault(this, "");
+    public void setDefaultValue(Object value) {
+        defaultValues.put(this, value);
+    }
+
+    public String getDefaultString() {
+        return defaultValues.getOrDefault(this, "").toString();
+    }
+
+    public boolean getDefaultBool() {
+        if (type != Type.BOOLEAN)
+            throw new IllegalStateException("Parameter " + this + " is not of type BOOLEAN");
+        return (boolean)defaultValues.getOrDefault(this, false);
+    }
+
+    public long getDefaultLong() {
+        if (type != Type.INTEGER)
+            throw new IllegalStateException("Parameter " + this + " is not of type INTEGER");
+        Object v = defaultValues.getOrDefault(this, 0L);
+        if (v instanceof Integer)
+            return (long)(int)v;
+        return (long)v;
+    }
+
+    public double getDefaultFloat() {
+        if (type != Type.FLOAT)
+            throw new IllegalStateException("Parameter " + this + " is not of type FLOAT");
+        return (double)defaultValues.getOrDefault(this, 0.0);
     }
 
 }

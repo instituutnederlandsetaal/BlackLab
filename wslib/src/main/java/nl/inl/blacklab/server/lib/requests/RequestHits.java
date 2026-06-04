@@ -11,6 +11,7 @@ import nl.inl.blacklab.resultproperty.HitGroupProperty;
 import nl.inl.blacklab.resultproperty.HitGroupPropertySize;
 import nl.inl.blacklab.resultproperty.HitProperty;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.search.ConcordanceType;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.SampleParameters;
@@ -25,9 +26,11 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * A request for a hits search.
@@ -84,66 +87,72 @@ public record RequestHits(
     }
 
     public static Optional<RequestHits> optFromParams(QueryParams qpar, boolean isCsv, TextPattern overridePattern) {
-        BlackLabIndex index = WebserviceParams.index(qpar.getCorpusName());
-        ContextSize contextSize = WebserviceParams.getContext(qpar.getContextParam(), qpar.config());
+        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        ContextSize contextSize = ParamUtil.getContext(qpar);
         String optContextTag = contextSize.inlineTagName();
-        TextPattern pattern = overridePattern == null ?
-                WebserviceParams.pattern(index, qpar.getPattLanguage(), qpar.getPattern(), qpar.getPattGapData(),
+        TextPattern pattern;
+        pattern = overridePattern == null ?
+                ParamUtil.pattern(index, qpar.get(WsParam.PATTERN_LANGUAGE), qpar.get(WsParam.PATTERN),
+                        qpar.get(WsParam.PATTERN_GAP_DATA),
                         optContextTag).orElse(null) :
                 overridePattern;
         if (pattern == null)
             return Optional.empty(); // pattern is required
-        String groupBy = qpar.getGroupBy().orElse(null);
-        String viewGroup = qpar.getViewGroup().orElse(null);
-        String sortBy = qpar.getSortBy().orElse(null);
-        AnnotatedField annotatedField = WebserviceParams.getAnnotatedField(index, qpar.getFieldName());
-        AnnotatedField searchField = WebserviceParams.getSearchField(index, qpar.getFieldName(),
-                qpar.getSearchFieldName().orElse(null));
-        HitProperty hitsGroupProperty = WebserviceParams.getHitsGroupProperty(qpar.getOperation(), groupBy,
+        String groupBy = qpar.opt(WsParam.GROUP_BY).orElse(null);
+        String viewGroup = qpar.opt(WsParam.VIEW_GROUP).orElse(null);
+        String sortBy = qpar.opt(WsParam.SORT_BY).orElse(null);
+        AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
+        AnnotatedField searchField = ParamUtil.getSearchField(index, qpar.get(WsParam.FIELD),
+                qpar.opt(WsParam.SEARCH_FIELD).orElse(null));
+        WebserviceOperation operation = ParamUtil.getOperation(qpar);
+        HitProperty hitsGroupProperty = ParamUtil.getHitsGroupProperty(operation, groupBy,
                 annotatedField, contextSize);
-        HitGroupScorer hitGroupScorer = WebserviceParams.getHitGroupScorer(annotatedField,
-                qpar.getScorer().orElse(null));
-        TextPattern patternOriginal = WebserviceParams.patternNoWithinContextTag(index, qpar.getPattLanguage(),
-                qpar.getPattern(), qpar.getPattGapData()).orElse(null);
-        HitProperty hitsSortProperty = WebserviceParams.hitsSortProperty(qpar.getOperation(), annotatedField, groupBy,
+        HitGroupScorer hitGroupScorer = ParamUtil.getHitGroupScorer(annotatedField,
+                qpar.opt(WsParam.SCORER).orElse(null));
+        TextPattern patternOriginal = ParamUtil.patternNoWithinContextTag(index,
+                qpar.get(WsParam.PATTERN_LANGUAGE),
+                qpar.get(WsParam.PATTERN), qpar.get(WsParam.PATTERN_GAP_DATA)).orElse(null);
+        HitProperty hitsSortProperty = ParamUtil.hitsSortProperty(operation, annotatedField, groupBy,
                 viewGroup, sortBy, contextSize);
-        HitGroupProperty sortGroupsBy = WebserviceParams.hitGroupSortProperty(qpar.getOperation(), groupBy, sortBy,
+        HitGroupProperty sortGroupsBy = ParamUtil.hitGroupSortProperty(operation, groupBy, sortBy,
                 viewGroup, HitGroupPropertySize.get());
-        boolean includeGroupContents = WebserviceParams.getIncludeGroupContents(
-                qpar.optIncludeGroupContents().orElse(null), qpar.config());
-        SampleParameters sampleParams = WebserviceParams.sampleParams(
-                qpar.getSampleFraction().orElse(null),
-                qpar.getSampleNumber().orElse(null),
-                qpar.getSampleSeed().orElse(null));
-        SearchSettings searchSettings = WebserviceParams.searchSettings(qpar.getMaxRetrieve(), qpar.getMaxCount(),
-                qpar.debugMode() ? qpar.getForwardIndexMatchFactor() : -1, qpar.config());
+        boolean includeGroupContents = ParamUtil.getIncludeGroupContents(
+                qpar.optBool(WsParam.INCLUDE_GROUP_CONTENTS).orElse(null), qpar.config());
+        SampleParameters sampleParams = ParamUtil.sampleParams(
+                qpar.optDouble(WsParam.SAMPLE).orElse(null),
+                qpar.optLong(WsParam.SAMPLE_NUMBER).orElse(null),
+                qpar.optLong(WsParam.SAMPLE_SEED).orElse(null));
+        SearchSettings searchSettings = ParamUtil.searchSettings(qpar.getLong(WsParam.MAX_HITS_TO_RETRIEVE),
+                qpar.getLong(WsParam.MAX_HITS_TO_COUNT),
+                qpar.debugMode() ? qpar.getInt(WsParam.FORWARD_INDEX_MATCHING_SETTING) : -1, qpar.config());
+        ConcordanceType concordanceType = ParamUtil.getConcordanceType(qpar.get(WsParam.USE_CONTENT));
         return Optional.of(new RequestHits(
                 searchField,
                 pattern,
                 patternOriginal,
-                qpar.getAdjustRelationHits(),
-                qpar.getWithSpans(),
-                WebserviceParams.filterQuery(qpar),
+                qpar.getBool(WsParam.REL_ADJUST_HITS),
+                qpar.getBool(WsParam.WITH_SPANS),
+                ParamUtil.filterQuery(qpar),
                 searchSettings,
                 HitPropFilter.fromParams(qpar),
                 viewGroup,
                 sampleParams,
-                WebserviceParams.contextSettings(contextSize, qpar.getConcordanceType(), qpar.config()),
+                ParamUtil.contextSettings(contextSize, concordanceType, qpar.config()),
                 hitsSortProperty,
                 hitsGroupProperty,
                 hitGroupScorer,
                 sortGroupsBy,
                 includeGroupContents,
-                WebserviceParams.windowSettings(qpar, isCsv),
-                qpar.getFacetProps().orElse(null),
-                qpar.isCalculateCollocations(),
-                qpar.optSensitive().orElse(null),
-                WebserviceParams.useCache(qpar.getUseCache(), qpar.debugMode()),
-                qpar.getWaitForTotal(),
-                qpar.getIncludeSubcorpusSize(),
-                qpar.getExplain(),
+                ParamUtil.windowSettings(qpar, isCsv),
+                qpar.opt(WsParam.FACETS).orElse(null),
+                qpar.get(WsParam.CALCULATE_STATS).equals("colloc"),
+                qpar.optBool(WsParam.SENSITIVE).orElse(null),
+                ParamUtil.useCache(qpar.getBool(WsParam.USE_CACHE), qpar.debugMode()),
+                qpar.getBool(WsParam.WAIT_FOR_TOTAL_COUNT),
+                ParamUtil.includeSubcorpusSize(qpar),
+                qpar.getBool(WsParam.EXPLAIN_QUERY_REWRITE),
                 HitsResponseSettings.fromParams(qpar),
-                WebserviceParams.getMetadataToInclude(index, qpar.getListMetadataValuesFor()),
+                ParamUtil.getMetadataToInclude(index, qpar.getList(WsParam.LIST_VALUES_FOR_METADATA_FIELDS)),
                 isCsv,
                 CsvSettings.fromParams(qpar),
                 qpar)

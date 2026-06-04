@@ -5,6 +5,7 @@ import nl.inl.blacklab.server.lib.requests.RequestDocInfo;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Get information about a document.
@@ -18,7 +19,7 @@ public class RequestHandlerDocInfo extends RequestHandler {
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
         determineDocPidFromPathInfo();
-        debug(logger, "REQ doc info: " + indexName + "-" + qpar.getDocPid());
+        debug(logger, "REQ doc info: " + indexName + "-" + qpar.get(WsParam.DOC_PID));
         WebserviceRequestHandler.opDocInfo(RequestDocInfo.fromParams(qpar), rs);
         return HTTP_OK;
     }

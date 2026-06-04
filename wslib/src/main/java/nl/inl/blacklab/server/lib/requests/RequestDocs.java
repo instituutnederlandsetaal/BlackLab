@@ -17,9 +17,10 @@ import nl.inl.blacklab.searches.SearchDocs;
 import nl.inl.blacklab.searches.SearchFacets;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.webservice.WsParam;
 
 public record RequestDocs(
         BlackLabIndex index,
@@ -39,27 +40,27 @@ public record RequestDocs(
         CsvSettings csvSettings,
         ParamsForResponse params) {
     public static RequestDocs fromParams(QueryParams qpar, boolean isCsv) {
-        BlackLabIndex index = WebserviceParams.index(qpar.getCorpusName());
-        SampleParameters sampleParams = WebserviceParams.sampleParams(
-                qpar.getSampleFraction().orElse(null),
-                qpar.getSampleNumber().orElse(null),
-                qpar.getSampleSeed().orElse(null));
+        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        SampleParameters sampleParams = ParamUtil.sampleParams(
+                qpar.optDouble(WsParam.SAMPLE).orElse(null),
+                qpar.optLong(WsParam.SAMPLE_NUMBER).orElse(null),
+                qpar.optLong(WsParam.SAMPLE_SEED).orElse(null));
         return new RequestDocs(
                 index,
-                WebserviceParams.filterQuery(qpar),
+                ParamUtil.filterQuery(qpar),
                 RequestHits.optFromParams(qpar, isCsv, null).orElse(null),
-                WebserviceParams.docSortProperty(index, qpar.getGroupBy().orElse(null),
-                        qpar.getSortBy().orElse(null), qpar.getViewGroup().orElse(null)),
+                ParamUtil.docSortProperty(index, qpar.opt(WsParam.GROUP_BY).orElse(null),
+                        qpar.opt(WsParam.SORT_BY).orElse(null), qpar.opt(WsParam.VIEW_GROUP).orElse(null)),
                 sampleParams,
-                WebserviceParams.windowSettings(qpar, isCsv),
-                WebserviceParams.docGroupProperty(index, qpar.getGroupBy().orElse(null)),
-                WebserviceParams.docGroupSortProperty(qpar.getGroupBy().orElse(null),
-                        qpar.getSortBy().orElse(null), qpar.getViewGroup().orElse(null)),
-                qpar.getViewGroup().orElse(null),
-                WebserviceParams.getMetadataToInclude(index, qpar.getListMetadataValuesFor()),
-                qpar.getFacetProps().orElse(null),
-                qpar.getWaitForTotal(),
-                qpar.getIncludeSubcorpusSize(),
+                ParamUtil.windowSettings(qpar, isCsv),
+                ParamUtil.docGroupProperty(index, qpar.opt(WsParam.GROUP_BY).orElse(null)),
+                ParamUtil.docGroupSortProperty(qpar.opt(WsParam.GROUP_BY).orElse(null),
+                        qpar.opt(WsParam.SORT_BY).orElse(null), qpar.opt(WsParam.VIEW_GROUP).orElse(null)),
+                qpar.opt(WsParam.VIEW_GROUP).orElse(null),
+                ParamUtil.getMetadataToInclude(index, qpar.getList(WsParam.LIST_VALUES_FOR_METADATA_FIELDS)),
+                qpar.opt(WsParam.FACETS).orElse(null),
+                qpar.getBool(WsParam.WAIT_FOR_TOTAL_COUNT),
+                ParamUtil.includeSubcorpusSize(qpar),
                 isCsv,
                 CsvSettings.fromParams(qpar),
                 qpar);

@@ -11,7 +11,7 @@ import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.search.results.QueryInfo;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Represents the context while evaluating a TextPattern query.
@@ -220,7 +220,7 @@ public class QueryExecutionContext {
         // Otherwise determine the default for this index and use that
         return defaultRelationClass != null ?
                 defaultRelationClass :
-                index().getRelationsStats(field(), WebserviceParameter.DEF_VAL_LIMIT_VALUES)
+                index().getRelationsStats(field(), WsParam.DEF_VAL_LIMIT_VALUES)
                         .getDefaultClass();
     }
 

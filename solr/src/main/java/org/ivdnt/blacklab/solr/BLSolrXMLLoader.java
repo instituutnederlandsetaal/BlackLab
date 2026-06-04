@@ -58,7 +58,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
         SolrParams params = req.getParams();
         IndexReader reader = req.getSearcher().getIndexReader();
 
-        String paramFormat = params.get("bl.format");
+        String paramFormat = params.get(UserRequestSolr.BL_PAR_PREFIX + "format");
         InputFormatInfo inputFormat = DocumentFormats.getFormat(paramFormat).orElse(null);
         ConfigInputFormat formatConfig = inputFormat != null ? inputFormat.getConfig() : null;
         if (formatConfig == null) {
@@ -68,7 +68,7 @@ public class BLSolrXMLLoader extends ContentStreamLoader {
             formatConfig = ConfigInputFormat.read(r, isJson, "");
         }
         
-        String fileName = params.get("bl.filename");
+        String fileName = params.get(UserRequestSolr.BL_PAR_PREFIX + "filename");
         String indexName = req.getCore().getName();
         try (BlackLabIndexWriter index = BlackLab.implicitInstance().openForWriting(indexName, reader, formatConfig)) {
             Indexer indexer = Indexer.create(index, paramFormat);

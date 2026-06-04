@@ -12,7 +12,7 @@ import org.ivdnt.blacklab.proxy.representation.ErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.JsonCsvResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrGeneralErrorResponse;
 import org.ivdnt.blacklab.proxy.representation.SolrResponse;
-import org.ivdnt.blacklab.proxy.resources.ParamsUtil;
+import org.ivdnt.blacklab.proxy.resources.ProxyParamsUtil;
 import org.ivdnt.blacklab.proxy.resources.SimpleResponse;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -26,13 +26,13 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 import nl.inl.util.Json;
 
 /** Performs requests to the BLS nodes we're proxying */
 public class Requests {
 
-    private static final String BL_PAR_NAME_PREFIX = "bl" + ".";
+    private static final String BL_PAR_NAME_PREFIX = "bl.";
 
     private static final int MAX_GROUPS_TO_GET = Integer.MAX_VALUE - 10;
 
@@ -47,49 +47,49 @@ public class Requests {
         return false;
     }
 
-    public static <T> T get(Client client, Map<WebserviceParameter, String> queryParams, Class<T> entityType) {
+    public static <T> T get(Client client, Map<WsParam, String> queryParams, Class<T> entityType) {
         return (T)request(client, queryParams, "GET", List.of(entityType));
     }
 
-    public static Object get(Client client, Map<WebserviceParameter, String> queryParams, List<Class<?>> entityTypes) {
+    public static Object get(Client client, Map<WsParam, String> queryParams, List<Class<?>> entityTypes) {
         return request(client, queryParams, "GET", entityTypes);
     }
 
-    public static <T> T request(Client client, Map<WebserviceParameter, String> queryParams, String method,
+    public static <T> T request(Client client, Map<WsParam, String> queryParams, String method,
             Class<T> entityType) {
         return (T)request(client, queryParams, method, List.of(entityType));
     }
 
-    public static Object request(Client client, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
+    public static Object request(Client client, Map<WsParam, String> queryParams, String method, List<Class<?>> entityTypes) {
         ProxyConfig.ProxyTarget proxyTarget = ProxyConfig.get().getProxyTarget();
         String url = proxyTarget.getUrl();
         WebTarget target = client.target(url);
         boolean isSolr = proxyTarget.getProtocol().equalsIgnoreCase("solr");
-        if (isSolr && !queryParams.containsKey(WebserviceParameter.CORPUS_NAME)) {
+        if (isSolr && !queryParams.containsKey(WsParam.CORPUS_NAME)) {
             // Solr always needs a corpus name even for "server-wide" requests.
             if (proxyTarget.getDefaultCorpusName().isEmpty())
                 throw new IllegalStateException("No corpus name. Please specify proxyTarget.defaultCorpusName in proxy config file");
             queryParams = new HashMap<>(queryParams);
-            queryParams.put(WebserviceParameter.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
+            queryParams.put(WsParam.CORPUS_NAME, proxyTarget.getDefaultCorpusName());
         }
         return isSolr ?
                 requestSolr(target, queryParams, method, entityTypes) :
                 requestBls(target, queryParams, method, entityTypes);
     }
 
-    private static Object requestBls(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
+    private static Object requestBls(WebTarget target, Map<WsParam, String> queryParams, String method, List<Class<?>> entityTypes) {
         if (queryParams != null) {
-            String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
+            String corpusName = queryParams.get(WsParam.CORPUS_NAME);
             if (corpusName != null)
                 target = target.path(corpusName);
-            String operation = queryParams.get(WebserviceParameter.OPERATION);
+            String operation = queryParams.get(WsParam.OPERATION);
             if (operation != null) {
                 WebserviceOperation op = WebserviceOperation.fromValue(operation).orElseThrow();
                 target = target.path(op.path());
             }
-            for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
-                WebserviceParameter key = e.getKey();
-                if (key != WebserviceParameter.CORPUS_NAME && key != WebserviceParameter.OPERATION) {
+            for (Map.Entry<WsParam, String> e: queryParams.entrySet()) {
+                WsParam key = e.getKey();
+                if (key != WsParam.CORPUS_NAME && key != WsParam.OPERATION) {
                     target = target.queryParam(e.getKey().value(), escapeBraces(e.getValue()));
                 }
             }
@@ -129,15 +129,15 @@ public class Requests {
         return value.replaceAll("\\{", "%7B").replaceAll("\\}", "%7D");
     }
 
-    private static Object requestSolr(WebTarget target, Map<WebserviceParameter, String> queryParams, String method, List<Class<?>> entityTypes) {
+    private static Object requestSolr(WebTarget target, Map<WsParam, String> queryParams, String method, List<Class<?>> entityTypes) {
         if (queryParams != null) {
-            String corpusName = queryParams.get(WebserviceParameter.CORPUS_NAME);
+            String corpusName = queryParams.get(WsParam.CORPUS_NAME);
             if (corpusName != null)
                 target = target.path(corpusName);
             target = target.path("select");
-            for (Map.Entry<WebserviceParameter, String> e: queryParams.entrySet()) {
-                WebserviceParameter key = e.getKey();
-                if (key != WebserviceParameter.CORPUS_NAME) {
+            for (Map.Entry<WsParam, String> e: queryParams.entrySet()) {
+                WsParam key = e.getKey();
+                if (key != WsParam.CORPUS_NAME) {
                     target = target.queryParam(BL_PAR_NAME_PREFIX + key, escapeBraces(e.getValue()));
                 }
             }
@@ -195,7 +195,7 @@ public class Requests {
     public static Response requestWithPossibleCsvResponse(Client client, String method, String corpusName,
             MultivaluedMap<String, String> parameters, WebserviceOperation op, List<Class<?>> resultTypes,
             boolean isXml) {
-        Object entity = request(client, ParamsUtil.get(parameters, corpusName, op), method, resultTypes);
+        Object entity = request(client, ProxyParamsUtil.get(parameters, corpusName, op), method, resultTypes);
         if (isXml && entity instanceof EntityWithSummary ews) {
             // Don't try to serialize the pattern to XML, this induces headaches.
             ews.getSummary().pattern = null;
@@ -203,7 +203,7 @@ public class Requests {
         if (entity instanceof JsonCsvResponse jcr) {
             // Return actual CSV contents instead of JSON
             String csv = jcr.csv;
-            return Response.ok().type(ParamsUtil.MIME_TYPE_CSV).entity(csv).build();
+            return Response.ok().type(ProxyParamsUtil.MIME_TYPE_CSV).entity(csv).build();
         } else {
             return SimpleResponse.success(entity);
         }

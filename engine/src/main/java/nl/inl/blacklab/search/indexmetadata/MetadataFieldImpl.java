@@ -7,7 +7,7 @@ import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlTransient;
 import nl.inl.blacklab.indexers.config.ConfigMetadataField;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * A metadata field in an index.
@@ -109,7 +109,7 @@ public class MetadataFieldImpl extends FieldImpl implements MetadataField {
 
     private void ensureValuesCreated() {
         if (this.values == null)
-            this.values = factory.create(fieldName, type, WebserviceParameter.DEF_VAL_LIMIT_VALUES);
+            this.values = factory.create(fieldName, type, WsParam.DEF_VAL_LIMIT_VALUES);
     }
 
     /**

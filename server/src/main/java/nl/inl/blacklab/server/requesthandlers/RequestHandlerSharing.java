@@ -5,11 +5,12 @@ import java.util.List;
 import nl.inl.blacklab.server.datastream.DataStream;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.QueryParams;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Get and change sharing options for a user corpus.
@@ -42,7 +43,7 @@ public class RequestHandlerSharing extends RequestHandler {
     }
 
     private void dstreamUsersResponse(ResponseStreamer responseWriter, List<String> shareWithUsers) {
-        qpar.apiCompatibility();
+        ParamUtil.getApiVersion(qpar.get(WsParam.API)); // throws if too low
         DataStream ds = responseWriter.getDataStream();
         ds.startMap().startDynEntry("users[]").startList();
         for (String userId : shareWithUsers) {

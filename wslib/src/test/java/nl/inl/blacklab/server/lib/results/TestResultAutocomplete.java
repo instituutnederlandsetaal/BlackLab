@@ -20,8 +20,8 @@ import org.mockito.Mockito;
 
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.lib.QueryParamsAbstract;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.server.lib.QueryParamsMap;
+import nl.inl.blacklab.webservice.WsParam;
 
 public class TestResultAutocomplete {
 
@@ -41,8 +41,10 @@ public class TestResultAutocomplete {
 
     @Test
     public void testTokenizedAutocompleteParameterParsing() {
-        TestQueryParams paramsDefault = new TestQueryParams(Map.of());
-        Assert.assertEquals("term", paramsDefault.getAutocompleteType());
+        Map<WsParam, String> parameterValues = Map.of();
+        QueryParamsMap paramsDefault = new QueryParamsMap("test-index", parameterValues, null, null,
+                Mockito.mock(BLSConfig.class), true);
+        Assert.assertEquals("term", paramsDefault.get(WsParam.AUTOCOMPLETE_TYPE));
     }
 
     private static DirectoryReader createReader(Directory directory) throws IOException {
@@ -60,33 +62,4 @@ public class TestResultAutocomplete {
         return doc;
     }
 
-    private static class TestQueryParams extends QueryParamsAbstract {
-
-        private final Map<WebserviceParameter, String> parameterValues;
-
-        TestQueryParams(Map<WebserviceParameter, String> parameterValues) {
-            super("test-index", Mockito.mock(BLSConfig.class), true);
-            this.parameterValues = parameterValues;
-        }
-
-        @Override
-        protected boolean has(WebserviceParameter par) {
-            return parameterValues.containsKey(par);
-        }
-
-        @Override
-        protected String get(WebserviceParameter par) {
-            return parameterValues.getOrDefault(par, WebserviceParameter.defaultString(par));
-        }
-
-        @Override
-        public Map<WebserviceParameter, String> getParameters() {
-            return parameterValues;
-        }
-
-        @Override
-        public Map<WebserviceParameter, Object> getTypedParameters() {
-            throw new UnsupportedOperationException();
-        }
-    }
 }

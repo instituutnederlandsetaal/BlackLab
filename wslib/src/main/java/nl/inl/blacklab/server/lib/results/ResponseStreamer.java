@@ -80,7 +80,7 @@ import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.SearchTimings;
 import nl.inl.blacklab.server.lib.WriteCsv;
 import nl.inl.blacklab.server.lib.requests.RequestHits;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * For serializing BlackLab response objects.
@@ -363,12 +363,12 @@ public class ResponseStreamer {
         ds.startEntry(KEY_PARAMS).startMap();
         if (isNewApi) {
             // Include parameters as the "correct" type
-            for (Map.Entry<WebserviceParameter, Object> e: params.getTypedParameters().entrySet()) {
+            for (Map.Entry<WsParam, Object> e: params.getTypedParameters().entrySet()) {
                 ds.dynEntry(e.getKey().value(), e.getValue());
             }
         } else {
             // Include parameters as strings
-            for (Map.Entry<WebserviceParameter, String> e: params.getParameters().entrySet()) {
+            for (Map.Entry<WsParam, String> e: params.getParameters().entrySet()) {
                 ds.dynEntry(e.getKey().value(), e.getValue());
             }
         }

@@ -1,6 +1,9 @@
 package nl.inl.blacklab.server.lib;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,8 +11,12 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.Query;
+import org.jspecify.annotations.NonNull;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 import nl.inl.blacklab.exceptions.InvalidQuery;
@@ -41,11 +48,12 @@ import nl.inl.blacklab.server.exceptions.NotFound;
 import nl.inl.blacklab.server.index.IndexManager;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.server.util.BlsUtils;
 import nl.inl.blacklab.server.util.GapFiller;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 import nl.inl.util.Json;
 
 /**
@@ -53,10 +61,10 @@ import nl.inl.util.Json;
  * <p>
  * Offers e.g. methods that instantiate Search objects.
  */
-public class WebserviceParams {
+public class ParamUtil {
 
     /** utility class */
-    private WebserviceParams() {}
+    private ParamUtil() {}
 
     /** Resolve the index a request wants to access */
     public static BlackLabIndex index(String corpusName) {
@@ -145,6 +153,13 @@ public class WebserviceParams {
         return pattern;
     }
 
+    public static ContextSize getContext(QueryParams params) {
+        String contextParam = params.get(WsParam.CONTEXT); // context or wordsaroundhit (deprecated)
+        if (StringUtils.isEmpty(contextParam))
+            contextParam = params.get(WsParam.WORDS_AROUND_HIT);
+        return getContext(contextParam, params.config());
+    }
+
     public static ContextSize getContext(String contextParam, BLSConfig config) {
         int maxContextSize = config.getParameters().getContextSize().getMaxInt();
         int maxSnippetLength = ContextSize.maxSnippetLengthFromMaxContextSize(maxContextSize);
@@ -177,14 +192,13 @@ public class WebserviceParams {
     }
 
     public static WindowSettings windowSettings(QueryParams qpar, boolean isCsv) {
-        return windowSettings(qpar.getFirstResultToShow(), qpar.getNumberOfResultsToShow(), qpar.config(), isCsv);
+        return windowSettings(qpar.getLong(WsParam.FIRST_RESULT), qpar.getLong(WsParam.NUMBER_OF_RESULTS), qpar.config(), isCsv);
     }
 
     public static WindowSettings windowSettings(long firstResultToShow, long numberOfResultsToShow, BLSConfig config, boolean isCsv) {
         long maxSize = WebserviceOperations.getMaxWindowSize(config, isCsv);
         if (numberOfResultsToShow < 0)
-            numberOfResultsToShow = isCsv ? maxSize :
-                    WebserviceParameter.defaultLong(WebserviceParameter.NUMBER_OF_RESULTS);
+            numberOfResultsToShow = isCsv ? maxSize : WsParam.NUMBER_OF_RESULTS.getDefaultLong();
         long size = Math.min(numberOfResultsToShow, maxSize);
         if (firstResultToShow < 0)
             firstResultToShow = 0;
@@ -377,7 +391,8 @@ public class WebserviceParams {
                 Object value = entry.getValue();
                 if (key.equals(HitGroupCollocationScorer.KEY_DOC_FILTER) && value instanceof String) {
                     // Parse doc filter query into a Query object
-                    value = BlsUtils.parseFilter(field.index(), value.toString(), WebserviceParameter.defaultString(WebserviceParameter.FILTER_LANGUAGE));
+                    value = BlsUtils.parseFilter(field.index(), value.toString(),
+                            WsParam.FILTER_LANGUAGE.getDefaultString());
                 } else if (key.equals(HitGroupCollocationScorer.KEY_PATTERN) && value instanceof String) {
                     // Parse BCQL pattern into a TextPattern object
                     value = BcqlQueryLanguageParser.parseQuery(value.toString());
@@ -412,9 +427,9 @@ public class WebserviceParams {
     }
 
     public static Query filterQuery(QueryParams qpar) throws BlsException {
-        return filterQuery(index(qpar.getCorpusName()), qpar.getDocumentFilterLanguage(),
-                qpar.getDocumentFilterQuery(),
-                qpar.getDocPid(), qpar.getFallbackFilterQuery());
+        return filterQuery(index(qpar.getCorpusName()), qpar.get(WsParam.FILTER_LANGUAGE),
+                qpar.get(WsParam.FILTER),
+                qpar.get(WsParam.DOC_PID), qpar.getFallbackFilterQuery());
     }
 
     /**
@@ -444,4 +459,106 @@ public class WebserviceParams {
         return result;
     }
 
+    public static ConcordanceType getConcordanceType(String parUseContent) {
+        return parUseContent.equals("orig") ? ConcordanceType.CONTENT_STORE : ConcordanceType.FORWARD_INDEX;
+    }
+
+    public static ApiVersion getApiVersion(String parApi) {
+        ApiVersion apiVersion = ApiVersion.fromValue(parApi);
+        if (apiVersion.getMajor() <= 3)
+            throw new UnsupportedOperationException("API version " + apiVersion + " is no longer supported");
+        return apiVersion;
+    }
+
+    public static WebserviceOperation getOperation(QueryParams qpar) throws BlsException {
+        return determineOperation(qpar.get(WsParam.OPERATION), qpar.opt(WsParam.GROUP_BY).isPresent(), qpar.opt(
+                WsParam.VIEW_GROUP).isPresent());
+    }
+
+    public static WebserviceOperation getOperation(String parOperation, boolean hasGroupBy, boolean hasViewGroup) {
+        return determineOperation(parOperation, hasGroupBy, hasViewGroup);
+    }
+
+    protected static @NonNull WebserviceOperation determineOperation(String strOp, boolean hasGroupBy, boolean hasViewGroup) {
+        WebserviceOperation op = WebserviceOperation.fromValue(strOp)
+                .orElseThrow(() -> new UnsupportedOperationException("Unsupported operation '" + strOp + "'"));
+
+        // BLS has /hits and /docs paths for both ungrouped and grouped operations, so the two WebserviceOperations
+        // are kind of interchangeable at the moment (the proxy will only send op=hits or op=docs, even for grouped
+        // requests).
+        // Here we make sure we send the specific value appropriate to the rest of the parametesr, so responses are
+        // consistent (important for CI testing, among other things)
+        boolean isGroupResponse = hasGroupBy && !hasViewGroup;
+        if (op == WebserviceOperation.DOCS || op == WebserviceOperation.DOCS_GROUPED) {
+            op = isGroupResponse ? WebserviceOperation.DOCS_GROUPED : WebserviceOperation.DOCS;
+        } else if (op == WebserviceOperation.HITS || op == WebserviceOperation.HITS_GROUPED) {
+            op = isGroupResponse ? WebserviceOperation.HITS_GROUPED : WebserviceOperation.HITS;
+        }
+        return op;
+    }
+
+    static Map<WsParam, Object> getTypedParams(WebserviceOperation operation, String json) throws JsonProcessingException {
+        JsonNode jsonNode = Json.getJsonObjectMapper().readTree(json);
+        if (!jsonNode.isObject())
+            throw new IllegalArgumentException("Expected JSON object node");
+        ObjectNode jsonObject = (ObjectNode) jsonNode;
+        Map<WsParam, Object> typedParams = new EnumMap<>(WsParam.class);
+        Iterator<Map.Entry<String, JsonNode>> it = jsonObject.fields();
+        while (it.hasNext()) {
+            Map.Entry<String, JsonNode> entry = it.next();
+            Optional<WsParam> optPar = WsParam.fromValue(entry.getKey());
+            optPar.ifPresent(webserviceParameter -> {
+                typedParams.put(webserviceParameter,
+                        jsonValueToObject(entry.getValue()));
+            });
+        }
+        if (operation != null)
+            typedParams.put(WsParam.OPERATION, operation.value());
+        return typedParams;
+    }
+
+    private static Object jsonValueToObject(JsonNode jsonNode) {
+        if (jsonNode instanceof ArrayNode arrayNode) {
+            return arrayNodeToArray(arrayNode);
+        } else if (jsonNode instanceof ObjectNode objectNode) {
+            return objectNodeToMap(objectNode);
+        } else if (jsonNode.isValueNode()) {
+            if (jsonNode.isTextual())
+                return jsonNode.asText();
+            else if (jsonNode.isInt())
+                return jsonNode.asInt();
+            else if (jsonNode.isNumber())
+                return jsonNode.asDouble();
+            else if (jsonNode.isBoolean())
+                return jsonNode.asBoolean();
+            throw new IllegalArgumentException("Unexpected JSON value type: " + jsonNode.getNodeType());
+        } else {
+            throw new IllegalArgumentException("Unexpected JSON type (not array or value): " + jsonNode.getNodeType());
+        }
+    }
+
+    private static Map<String, Object> objectNodeToMap(ObjectNode objectNode) {
+        Map<String, Object> map = new HashMap<>();
+        Iterator<Map.Entry<String, JsonNode>> it = objectNode.fields();
+        while (it.hasNext()) {
+            Map.Entry<String, JsonNode> entry = it.next();
+            map.put(entry.getKey(), jsonValueToObject(entry.getValue()));
+        }
+        return map;
+    }
+
+    private static Object[] arrayNodeToArray(ArrayNode array) {
+        List<Object> properties = new ArrayList<>();
+        for (int index = 0; index < array.size(); index++) {
+            JsonNode value = array.get(index);
+            if (!value.isValueNode())
+                throw new IllegalArgumentException("Expected array items to be value nodes");
+            properties.add(value.asText());
+        }
+        return properties.toArray(new Object[0]);
+    }
+
+    public static boolean includeSubcorpusSize(QueryParams qpar) {
+        return qpar.getBool(WsParam.SUBCORPUS_SIZE) || qpar.getBool(WsParam.INCLUDE_TOKEN_COUNT);
+    }
 }

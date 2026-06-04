@@ -37,7 +37,7 @@ import nl.inl.blacklab.server.lib.requests.RequestParsePattern;
 import nl.inl.blacklab.server.lib.requests.RequestRelations;
 import nl.inl.blacklab.server.lib.requests.RequestServerInfo;
 import nl.inl.blacklab.server.lib.requests.RequestTermFrequencies;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 import nl.inl.util.JsonSchemaUtil;
 
 /**
@@ -258,7 +258,7 @@ public class WebserviceRequestHandler {
 
     public static void opInputFormatInfo(String inputFormat, ResponseStreamer rs) {
         if (StringUtils.isEmpty(inputFormat))
-            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
+            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WsParam.INPUT_FORMAT.value() + ")");
         ResultInputFormat result = new ResultInputFormat(inputFormat);
         rs.formatInfoResponse(result);
     }
@@ -283,7 +283,7 @@ public class WebserviceRequestHandler {
 
     public static void opInputFormatXslt(String inputFormat, ResponseStreamer rs) {
         if (StringUtils.isEmpty(inputFormat))
-            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WebserviceParameter.INPUT_FORMAT.value() + ")");
+            throw new BadRequest("NO_INPUT_FORMAT", "No input format specified (" + WsParam.INPUT_FORMAT.value() + ")");
         ResultInputFormat result = new ResultInputFormat(inputFormat);
         rs.formatXsltResponse(result);
     }
@@ -297,8 +297,8 @@ public class WebserviceRequestHandler {
         {
             ds.startEntry(rs.KEY_PARAMS).startMap();
             {
-                ds.entry(WebserviceParameter.PATTERN.value(), request.bcqlQuery());
-                ds.entry(WebserviceParameter.PATTERN_LANGUAGE.value(), request.queryLanguage());
+                ds.entry(WsParam.PATTERN.value(), request.bcqlQuery());
+                ds.entry(WsParam.PATTERN_LANGUAGE.value(), request.queryLanguage());
             }
             ds.endMap().endEntry();
             ds.startEntry("parsed").startMap();

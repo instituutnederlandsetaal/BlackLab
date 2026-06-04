@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonSetter;
 
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 public class BLSConfigParameters {
 
@@ -38,12 +38,12 @@ public class BLSConfigParameters {
      */
     public void setParameterDefaults() {
         // Set up the parameter default values
-        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_RETRIEVE, "" + getProcessHits().getDefault());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.MAX_HITS_TO_COUNT, "" + getCountHits().getDefault());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.NUMBER_OF_RESULTS, "" + getPageSize().getDefault());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.SENSITIVE, getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE ? "yes" : "no");
-        WebserviceParameter.setDefaultValue(WebserviceParameter.CONTEXT, "" + getContextSize().getDefault());
-        WebserviceParameter.setDefaultValue(WebserviceParameter.API_VERSION, "" + getApi().toString());
+        WsParam.MAX_HITS_TO_RETRIEVE.setDefaultValue(getProcessHits().getDefault());
+        WsParam.MAX_HITS_TO_COUNT.setDefaultValue(getCountHits().getDefault());
+        WsParam.NUMBER_OF_RESULTS.setDefaultValue(getPageSize().getDefault());
+        WsParam.SENSITIVE.setDefaultValue(getDefaultSearchSensitivity() == MatchSensitivity.SENSITIVE);
+        WsParam.CONTEXT.setDefaultValue(getContextSize().getDefault());
+        WsParam.API.setDefaultValue(getApi().toString());
     }
 
     @JsonGetter("defaultSearchSensitivity")

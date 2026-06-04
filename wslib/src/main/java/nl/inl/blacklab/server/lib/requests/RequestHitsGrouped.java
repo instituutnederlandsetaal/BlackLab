@@ -24,9 +24,10 @@ import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchDocs;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.ParamsForResponse;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.WebserviceParams;
+import nl.inl.blacklab.webservice.WsParam;
 import nl.inl.util.StringUtil;
 
 /**
@@ -73,34 +74,39 @@ public record RequestHitsGrouped(
      * @return object representing the collocations request
      */
     public static @NonNull RequestHitsGrouped fromParamsCollocations(QueryParams qpar, boolean isCsv) {
-        BlackLabIndex index = WebserviceParams.index(qpar.getCorpusName());
-        AnnotatedField annotatedField = WebserviceParams.getAnnotatedField(index, qpar.getFieldName());
-        Annotation annotation = StringUtils.isEmpty(qpar.getAnnotationName()) ? annotatedField.mainAnnotation() :
-                annotatedField.annotation(qpar.getAnnotationName());
+        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        AnnotatedField annotatedField = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
+        Annotation annotation;
+        if (StringUtils.isEmpty(qpar.get(WsParam.ANNOTATION))) {
+            annotation = annotatedField.mainAnnotation();
+        } else {
+            annotation = annotatedField.annotation(qpar.get(WsParam.ANNOTATION));
+        }
 
         // Determine what we're finding collocations for
         // (e.g. collocations for "schip", or for [lemma = "bla.*" & pos="N"])
-        String findQuery = qpar.getPattern();
-        String collocateQuery = qpar.getCollocatePattern().orElse("[]");
-        QueryParams.CollocationType collocationType = qpar.getCollocationType()
-                .orElse(QueryParams.CollocationType.PROXIMITY);
-        boolean findRelations = collocationType != QueryParams.CollocationType.PROXIMITY;
-        String relationTypeRegex = qpar.getRelationType().orElse(StringUtil.REGEX_ANY_VALUE);
+        String findQuery = qpar.get(WsParam.PATTERN);
+        String collocateQuery = qpar.opt(WsParam.COLLOCATE_PATTERN).orElse("[]");
+        CollocationType collocationType = qpar.opt(WsParam.COLLOCATION_TYPE,
+                        CollocationType::fromStringValue)
+                .orElse(CollocationType.PROXIMITY);
+        boolean findRelations = collocationType != CollocationType.PROXIMITY;
+        String relationTypeRegex = qpar.opt(WsParam.RELATION_TYPE).orElse(StringUtil.REGEX_ANY_VALUE);
 
         // Construct and parse the query that will yield the collocations
-        ContextSize context = WebserviceParams.getContext(qpar.getContextParam(), qpar.config());
+        ContextSize context = ParamUtil.getContext(qpar);
         String bcqlQuery = getCollocationQuery(context, findQuery, collocateQuery, collocationType, relationTypeRegex);
         TextPattern textPattern = BcqlQueryLanguageParser.parseQuery(bcqlQuery);
 
         // Determine group by
-        MatchSensitivity sensitivity = qpar.optSensitive().orElse(false) ? MatchSensitivity.SENSITIVE :
+        MatchSensitivity sensitivity = qpar.optBool(WsParam.SENSITIVE).orElse(false) ? MatchSensitivity.SENSITIVE :
                 MatchSensitivity.INSENSITIVE;
         HitProperty groupBy = new HitPropertyHitText(index, annotation, sensitivity);
 
         // Determine group scorer
-        Query filter = WebserviceParams.filterQuery(qpar);
+        Query filter = ParamUtil.filterQuery(qpar);
         Map<String, Object> config = new LinkedHashMap<>();
-        config.put(HitGroupScorer.KEY_ID, qpar.getScorerType().orElse(HitGroupScorer.DEFAULT_TYPE_ID));
+        config.put(HitGroupScorer.KEY_ID, qpar.opt(WsParam.SCORER_TYPE).orElse(HitGroupScorer.DEFAULT_TYPE_ID));
         config.put(HitGroupCollocationScorer.KEY_DOC_FILTER, filter);
         config.put(HitGroupCollocationScorer.KEY_PATTERN, BcqlQueryLanguageParser.parseQuery(findQuery));
         config.put(HitGroupCollocationScorer.KEY_ANNOTATION, annotation.name());
@@ -109,8 +115,12 @@ public record RequestHitsGrouped(
         HitGroupScorer groupScorer = HitGroupScorer.fromConfig(annotatedField, config);
 
         // Assemble and execute the grouping request and produce the response
-        HitGroupProperty sortBy = qpar.getSortBy().isEmpty() ? HitGroupPropertyScore.get() :
-                HitGroupProperty.deserialize(qpar.getSortBy().get());
+        HitGroupProperty sortBy;
+        if (qpar.opt(WsParam.SORT_BY).isEmpty()) {
+            sortBy = HitGroupPropertyScore.get();
+        } else {
+            sortBy = HitGroupProperty.deserialize(qpar.opt(WsParam.SORT_BY).get());
+        }
 
         RequestHits requestHits = RequestHits.fromParams(qpar, isCsv, textPattern);
 
@@ -119,16 +129,16 @@ public record RequestHitsGrouped(
                 Results.NO_LIMIT,
                 groupScorer,
                 sortBy,
-                WebserviceParams.getIncludeGroupContents(qpar.optIncludeGroupContents().orElse(null), qpar.config())
+                ParamUtil.getIncludeGroupContents(qpar.optBool(WsParam.INCLUDE_GROUP_CONTENTS).orElse(null), qpar.config())
         );
     }
 
     /** Determine the query that will yield the collocations we're looking for. */
     private static @NonNull String getCollocationQuery(ContextSize context, String findQuery, String collocateQuery,
-            QueryParams.CollocationType collocationType, String relTypeRegex) {
+            CollocationType collocationType, String relTypeRegex) {
         if (context.isInlineTag())
             throw new UnsupportedOperationException("Collocations with inline context tags are currently not supported");
-        if (collocationType == QueryParams.CollocationType.PROXIMITY) {
+        if (collocationType == CollocationType.PROXIMITY) {
             // Proximity-based collocations.
             return "meet(" + collocateQuery + ", " + findQuery + "," + (-context.before()) + "," + context.after()
                     + ")";
@@ -137,7 +147,7 @@ public record RequestHitsGrouped(
             String optRelTypeFilter = StringUtils.isEmpty(relTypeRegex) ||
                     relTypeRegex.equals(StringUtil.REGEX_ANY_VALUE) ? "" :
                     "(" + relTypeRegex + ")";
-            if (collocationType == QueryParams.CollocationType.RELATION_TARGETS) {
+            if (collocationType == CollocationType.RELATION_TARGETS) {
                 // Find all targets for specified source and relation type
                 return "rspan(" + findQuery + " -" + optRelTypeFilter + "-> " + collocateQuery + ", \"target\")";
             } else {
@@ -175,5 +185,34 @@ public record RequestHitsGrouped(
 
     public ParamsForResponse paramsForResponse() {
         return requestHits.paramsForResponse();
+    }
+
+    /** Type of collocations to find */
+    public enum CollocationType {
+        /** Proximity-based collocations (i.e. words occurring near specified word) */
+        PROXIMITY("proximity"),
+
+        /** Find all relation sources for the specified target.
+         *  That is: find words that are the source of the specified relation and have the specified relation target. */
+        RELATION_SOURCES("relsources"),
+
+        /** Find all relation targets for the specified source.
+         *  That is: find words that are the target of the specified relation and have the specified relation source. */
+        RELATION_TARGETS("reltargets");
+
+        private final String stringValue;
+
+        CollocationType(String stringValue) {
+            this.stringValue = stringValue;
+        }
+
+        public static CollocationType fromStringValue(String v) {
+            v = v.toLowerCase();
+            for (CollocationType t : CollocationType.values()) {
+                if (t.stringValue.equals(v) || v.equals(t.name().toLowerCase()))
+                    return t;
+            }
+            throw new IllegalArgumentException("Unrecognized value for collocation type: " + v);
+        }
     }
 }

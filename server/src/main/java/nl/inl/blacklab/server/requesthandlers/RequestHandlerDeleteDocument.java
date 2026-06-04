@@ -4,6 +4,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 /** Delete document from index */
 public class RequestHandlerDeleteDocument extends RequestHandler {
@@ -18,9 +19,9 @@ public class RequestHandlerDeleteDocument extends RequestHandler {
                     "No index name specified. Specify a valid index name.");
         }
         try {
-            debug(logger, "REQ delete document " + qpar.getDocPid() + " from index " + indexName);
+            debug(logger, "REQ delete document " + qpar.get(WsParam.DOC_PID) + " from index " + indexName);
             determineDocPidFromPathInfo();
-            indexMan.getIndex(indexName).deleteDocumentByPid(qpar.getDocPid());
+            indexMan.getIndex(indexName).deleteDocumentByPid(qpar.get(WsParam.DOC_PID));
             return Response.status(rs, "SUCCESS", "Document deleted succesfully.", HTTP_OK);
         } catch (BlsException e) {
             throw e;

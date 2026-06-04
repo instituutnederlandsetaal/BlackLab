@@ -10,7 +10,7 @@ import nl.inl.blacklab.server.lib.requests.RequestAutocomplete;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Autocompletion for metadata and annotated fields. Annotations must be
@@ -44,8 +44,8 @@ public class RequestHandlerAutocomplete extends RequestHandler {
         String fieldName = StringUtils.isEmpty(annotatedFieldName) ? fieldNameOrAnnotation : annotatedFieldName;
         String annotationName = StringUtils.isEmpty(annotatedFieldName) ? "" : fieldNameOrAnnotation;
 
-        Map<WebserviceParameter, Object> overrides = Map.of(WebserviceParameter.FIELD, fieldName,
-                WebserviceParameter.ANNOTATION, annotationName);
+        Map<WsParam, Object> overrides = Map.of(WsParam.FIELD, fieldName,
+                WsParam.ANNOTATION, annotationName);
         qpar = qpar.withOverrides(overrides);
 
         WebserviceRequestHandler.opAutocomplete(RequestAutocomplete.fromParams(qpar), rs);

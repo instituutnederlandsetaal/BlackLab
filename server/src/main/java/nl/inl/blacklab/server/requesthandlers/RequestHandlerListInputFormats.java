@@ -7,7 +7,7 @@ import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceRequestHandler;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Get information about supported input formats.
@@ -42,14 +42,14 @@ public class RequestHandlerListInputFormats extends RequestHandler {
 
     @Override
     public int handle(ResponseStreamer rs) throws BlsException {
-        String inputFormat = qpar.getInputFormat().orElse(null);
+        String inputFormat = qpar.opt(WsParam.INPUT_FORMAT).orElse(null);
         if (urlResource != null && !urlResource.isEmpty() && isXsltRequest) {
-            qpar = qpar.withOverrides(Map.of(WebserviceParameter.INPUT_FORMAT, urlResource));
+            qpar = qpar.withOverrides(Map.of(WsParam.INPUT_FORMAT, urlResource));
             WebserviceRequestHandler.opInputFormatXslt(inputFormat, rs);
         } else {
             if (urlResource != null && !urlResource.isEmpty()) {
                 // Specific input format: either format information or XSLT request
-                qpar = qpar.withOverrides(Map.of(WebserviceParameter.INPUT_FORMAT, urlResource));
+                qpar = qpar.withOverrides(Map.of(WsParam.INPUT_FORMAT, urlResource));
                 WebserviceRequestHandler.opInputFormatInfo(inputFormat, rs);
             } else {
                 // Show list of supported input formats (for current user)

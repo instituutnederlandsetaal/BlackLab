@@ -13,13 +13,13 @@ import nl.inl.blacklab.server.auth.AuthMethod;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 /** Represents a servlet request to the webservice. */
 public class UserRequestBls implements UserRequest {
@@ -141,21 +141,21 @@ public class UserRequestBls implements UserRequest {
 
     @Override
     public QueryParams getParams(BlackLabIndex index, WebserviceOperation operation) {
-        String jsonRequest = request.getParameter("req");
+        String jsonRequest = request.getParameter(WsParam.JSON_REQUEST.toString());
         QueryParams blsParams;
         BLSConfig blsConfig = config();
         boolean isDebugMode = isDebugMode();
         if (jsonRequest != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                blsParams = new QueryParamsJson(corpusName, operation, jsonRequest, null, blsConfig,
+                blsParams = QueryParams.fromJson(corpusName, operation, jsonRequest, null, blsConfig,
                         isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing req parameter (JSON request)", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            blsParams = new QueryParamsBlackLabServer(corpusName, operation, request, blsConfig, isDebugMode);
+            blsParams = QueryParams.fromServletRequest(corpusName, operation, request, blsConfig, isDebugMode);
         }
         return blsParams;
     }

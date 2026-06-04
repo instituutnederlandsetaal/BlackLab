@@ -38,7 +38,7 @@ import nl.inl.blacklab.server.requesthandlers.UserRequestBls;
 import nl.inl.blacklab.server.search.SearchManager;
 import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.server.util.WebserviceUtil;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 public class BlackLabServer extends HttpServlet {
 
@@ -278,7 +278,7 @@ public class BlackLabServer extends HttpServlet {
     private boolean ensureInitialized(HttpServletRequest request, HttpServletResponse responseObject) {
         if (initializationException != null) {
             boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, true);
-            String strApiVersion = ServletUtil.getParameter(request, WebserviceParameter.API_VERSION.value(),
+            String strApiVersion = ServletUtil.getParameter(request, WsParam.API.value(),
                     ApiVersion.CURRENT.toString());
             ApiVersion apiVersion = ApiVersion.fromValue(strApiVersion);
             DataFormat outputType = ServletUtil.getOutputType(request);

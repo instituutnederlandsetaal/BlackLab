@@ -3,33 +3,32 @@ package org.ivdnt.blacklab.proxy.resources;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
+
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.MultivaluedMap;
-
-import org.apache.commons.lang3.StringUtils;
-
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
-public class ParamsUtil {
+public class ProxyParamsUtil {
     public static final String MIME_TYPE_CSV = "text/csv";
     private static final MediaType MEDIA_TYPE_CSV = MediaType.valueOf(MIME_TYPE_CSV);
 
-    public static Map<WebserviceParameter, String> get(MultivaluedMap<String, String> parameters, String corpusName,
+    public static Map<WsParam, String> get(MultivaluedMap<String, String> parameters, String corpusName,
             WebserviceOperation op) {
-        Map<WebserviceParameter, String> params = get(parameters, op);
-        params.put(WebserviceParameter.CORPUS_NAME, corpusName);
+        Map<WsParam, String> params = get(parameters, op);
+        params.put(WsParam.CORPUS_NAME, corpusName);
         return params;
     }
 
-    public static Map<WebserviceParameter, String> get(MultivaluedMap<String,String> parameters, WebserviceOperation op) {
-        Map<WebserviceParameter, String> params = parameters.entrySet().stream()
-                .filter(e -> WebserviceParameter.fromValue(e.getKey()).isPresent()) // keep only known parameters
-                .map(e -> Map.entry(WebserviceParameter.fromValue(e.getKey()).orElse(null),
+    public static Map<WsParam, String> get(MultivaluedMap<String,String> parameters, WebserviceOperation op) {
+        Map<WsParam, String> params = parameters.entrySet().stream()
+                .filter(e -> WsParam.fromValue(e.getKey()).isPresent()) // keep only known parameters
+                .map(e -> Map.entry(WsParam.fromValue(e.getKey()).orElse(null),
                         StringUtils.join(e.getValue(), ",")))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        params.put(WebserviceParameter.OPERATION, op.value());
+        params.put(WsParam.OPERATION, op.value());
         return params;
     }
 

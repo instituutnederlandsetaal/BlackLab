@@ -12,9 +12,10 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.indexmetadata.MatchSensitivity;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.jobs.WindowSettings;
+import nl.inl.blacklab.server.lib.ParamUtil;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.WebserviceParams;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
+import nl.inl.blacklab.webservice.WsParam;
 
 public record RequestTermFrequencies(
         AnnotationSensitivity annotation,
@@ -24,17 +25,17 @@ public record RequestTermFrequencies(
 ) {
 
     public static RequestTermFrequencies fromParams(QueryParams qpar) {
-        BlackLabIndex index = WebserviceParams.index(qpar.getCorpusName());
-        AnnotatedField field = WebserviceParams.getAnnotatedField(index, qpar.getFieldName());
+        BlackLabIndex index = ParamUtil.index(qpar.getCorpusName());
+        AnnotatedField field = ParamUtil.getAnnotatedField(index, qpar.get(WsParam.FIELD));
         AnnotationSensitivity annotSensitivity = getAnnotationSensitivity(
                 field,
-                qpar.getAnnotationName(),
-                qpar.optSensitive().orElse(null));
+                qpar.get(WsParam.ANNOTATION),
+                qpar.optBool(WsParam.SENSITIVE).orElse(null));
         return new RequestTermFrequencies(
                 annotSensitivity,
-                WebserviceParams.filterQuery(qpar),
-                qpar.getTerms(),
-                WebserviceParams.windowSettings(qpar, false));
+                ParamUtil.filterQuery(qpar),
+                qpar.getSet(WsParam.TERMS),
+                ParamUtil.windowSettings(qpar, false));
     }
 
     /** Find the AnnotationSensitivity */

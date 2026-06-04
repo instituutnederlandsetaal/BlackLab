@@ -1,5 +1,6 @@
 package nl.inl.blacklab.server.lib;
 
+import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,11 +9,13 @@ import java.util.Set;
 
 import org.apache.lucene.search.Query;
 
-import nl.inl.blacklab.search.ConcordanceType;
+import com.fasterxml.jackson.core.JsonProcessingException;
+
+import jakarta.servlet.http.HttpServletRequest;
 import nl.inl.blacklab.server.config.BLSConfig;
-import nl.inl.blacklab.server.lib.results.ApiVersion;
+import nl.inl.blacklab.server.util.ServletUtil;
 import nl.inl.blacklab.webservice.WebserviceOperation;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /** BlackLab API endpoint parameters.
  * <p>
@@ -20,6 +23,33 @@ import nl.inl.blacklab.webservice.WebserviceParameter;
  * not any complex objects (such as TextPattern or Search instances) derived from them.
  */
 public interface QueryParams extends ParamsForResponse {
+
+    /** Get query parameters from a HttpServletRequest */
+    static QueryParamsMap fromServletRequest(String corpusName, WebserviceOperation operation,
+            HttpServletRequest request, BLSConfig config, boolean debugMode) {
+        Map<WsParam, Object> typedParams = new EnumMap<>(WsParam.class);
+        for (String name: request.getParameterMap().keySet()) {
+            WsParam par = WsParam.fromValue(name).orElse(null);
+            if (par != null) {
+                String value = ServletUtil.getParameter(request, name, "");
+                if (value.isEmpty())
+                    continue;
+                typedParams.put(par, QueryParamsMap.toAppropriateType(par, value));
+            }
+        }
+        typedParams.put(WsParam.CORPUS_NAME, corpusName);
+        if (operation != null && operation != WebserviceOperation.NONE) {
+            typedParams.put(WsParam.OPERATION, operation.value());
+        }
+        return new QueryParamsMap(corpusName, null, typedParams, null, config, debugMode);
+    }
+
+    /** Get query parameters from a JSON structure */
+    static QueryParamsMap fromJson(String corpusName, WebserviceOperation operation, String json,
+            Query fallbackFilterQuery,
+            BLSConfig config, boolean debugMode) throws JsonProcessingException {
+        return new QueryParamsMap(corpusName, null, ParamUtil.getTypedParams(operation, json), fallbackFilterQuery, config, debugMode);
+    }
 
     /** Config, for determing some parameter defaults */
     BLSConfig config();
@@ -32,215 +62,63 @@ public interface QueryParams extends ParamsForResponse {
 
     String getCorpusName();
 
-    /** Get the BCQL query passed in the "patt" parameter */
-    String getPattern();
-
-    String getPattLanguage();
-
-    String getPattGapData();
-
-    /** Specifically for collocations: any restrictions on the collocates we're interested in (if any) */
-    Optional<String> getCollocatePattern();
-
-    /** Type of collocations to find */
-    enum CollocationType {
-        /** Proximity-based collocations (i.e. words occurring near specified word) */
-        PROXIMITY("proximity"),
-
-        /** Find all relation sources for the specified target.
-         *  That is: find words that are the source of the specified relation and have the specified relation target. */
-        RELATION_SOURCES("relsources"),
-
-        /** Find all relation targets for the specified source.
-         *  That is: find words that are the target of the specified relation and have the specified relation source. */
-        RELATION_TARGETS("reltargets");
-
-        private final String stringValue;
-
-        CollocationType(String stringValue) {
-            this.stringValue = stringValue;
-        }
-
-        public static CollocationType fromStringValue(String v) {
-            v = v.toLowerCase();
-            for (CollocationType t : CollocationType.values()) {
-                if (t.stringValue.equals(v) || v.equals(t.name().toLowerCase()))
-                    return t;
-            }
-            throw new IllegalArgumentException("Unrecognized value for collocation type: " + v);
-        }
-    }
-
-    /** Type of collocations to find */
-    Optional<CollocationType> getCollocationType();
-
-    /** Relation type filter regex (for relation-based collocations) */
-    Optional<String> getRelationType();
-
-    String getDocPid();
-
-    String getDocumentFilterQuery();
-
-    String getDocumentFilterLanguage();
-
-    String getHitFilterCriterium();
-
-    String getHitFilterValue();
-
-    Optional<Double> getSampleFraction();
-
-    Optional<Long> getSampleNumber();
-
-    Optional<Long> getSampleSeed();
-
-    boolean getUseCache();
-
-    int getForwardIndexMatchFactor();
-
-    long getMaxRetrieve();
-
-    long getMaxCount();
-
-    long getFirstResultToShow();
-
-    long getNumberOfResultsToShow();
-
-    String getContextParam();
-
-    ConcordanceType getConcordanceType();
-
-    Optional<Boolean> optIncludeGroupContents();
-
-    Optional<Boolean> optOmitEmptyCaptures();
-
-    Optional<String> getFacetProps();
-
-    Optional<String> getGroupBy();
-
-    Optional<String> getSortBy();
-
-    Optional<String> getViewGroup();
+    /**
+     * Was a value for this parameter explicitly passed?
+     *
+     * This disregards any default values configured for the parameter,
+     * and only checks if this request included a value for it.
+     *
+     * @param par parameter type
+     * @return true if this request included an explicit value for the parameter
+     */
+    boolean has(WsParam par);
 
     /**
-     * Which annotations to list actual or available values for in hit results/hit exports/indexmetadata requests.
-     * IDs are not validated and may not actually exist!
+     * Get the parameter value.
      *
-     * @return which annotations to list
-     */
-    List<String> getListValuesFor();
-
-    /**
-     * Which metadata fields to list actual or available values for in search results/result exports/indexmetadata requests.
-     * IDs are not validated and may not actually exist!
+     * If this request didn't include an explicit value, use the configured default value.
      *
-     * @return which metadata fields to list
+     * @param par parameter type
+     * @return value
      */
-    List<String> getListMetadataValuesFor();
+    String get(WsParam par);
 
-    List<String> getListSpanAttributes();
+    boolean getBool(WsParam par);
 
-    boolean getWaitForTotal();
+    int getInt(WsParam par);
 
-    boolean getIncludeSubcorpusSize();
+    long getLong(WsParam par);
 
-    boolean getIncludeCustomInfo();
+    double getDouble(WsParam par);
 
-    boolean getCsvIncludeSummary();
+    Set<String> getSet(WsParam par);
 
-    boolean getCsvDeclareSeparator();
+    List<String> getList(WsParam par);
 
-    String getCsvDescription();
+    Optional<String> opt(WsParam par);
 
-    boolean getExplain();
+    Optional<Double> optDouble(WsParam par);
 
-    Optional<Boolean> optSensitive();
+    Optional<Integer> optInteger(WsParam par);
 
-    int getWordStart();
+    Optional<Long> optLong(WsParam par);
 
-    int getWordEnd();
+    Optional<Boolean> optBool(WsParam par);
 
-    Optional<Integer> getHitStart();
+    Optional<Set<String>> optSet(WsParam par);
 
-    int getHitEnd();
+    Optional<List<String>> optList(WsParam par);
 
-    String getTerm();
-    
-    String getAutocompleteType();
-
-    String getRelClasses();
-
-    boolean getRelOnlySpans();
-
-    boolean getRelSeparateSpans();
-
-    long getLimitValues();
-
-    boolean isCalculateCollocations();
-
-    String getAnnotationName();
-
-    Set<String> getTerms();
-
-    boolean isIncludeDebugInfo();
-
-    String getFieldName();
-
-    Optional<String> getSearchFieldName();
-
-    /**
-     * Get the operation, for webservices that pass operation via a parameter.
-     * <p>
-     * For example, BLS chooses an operation based on the URL path, and doesn't use this method.
-     *
-     * @return requested operation
-     */
-    WebserviceOperation getOperation();
-
-    Optional<String> getInputFormat();
-
-    /** Get extra converters specification (JSON) */
-    Optional<String> getConverters();
-
-    /** Get scorer specification (JSON; for "regular" hits grouping) */
-    Optional<String> getScorer();
-
-    /** Get scorer type id (for /collocations) */
-    Optional<String> getScorerType();
-
-    /**
-     * Should the responses include deprecated field information?
-     * <p>
-     * A few requests would always include information that was not specific to that request,
-     * and available elsewhere, like metadata field groups, special fields, and metadata display names.
-     * This toggle is for applications that rely on these deprecated parts of the response.
-     * Caution, this will be removed in the future.
-     *
-     * @return should we include deprecated field info?
-     */
-    ApiVersion apiCompatibility();
-
-    /**
-     * Should relations queries automatically be adjusted so the hit covers all words involved in the relation?
-     *
-     * @return should we auto-adjust relations?
-     */
-    boolean getAdjustRelationHits();
-
-    /**
-     * Should we include all overlapping spans in the response?
-     *
-     * @return true if we should include all overlapping spans
-     */
-    boolean getWithSpans();
+    <T> Optional<T> opt(WsParam par, QueryParamsMap.StringInterpreter<T> interpreter);
 
     /** Override some of the parameters.
      *
      * @param overrides parameters to override
      * @return new QueryParams with the given parameters overridden
      */
-    default QueryParams withOverrides(Map<WebserviceParameter, Object> overrides) {
-        Map<WebserviceParameter, Object> typedParams = new LinkedHashMap<>(getTypedParameters());
+    default QueryParams withOverrides(Map<WsParam, Object> overrides) {
+        Map<WsParam, Object> typedParams = new LinkedHashMap<>(getTypedParameters());
         typedParams.putAll(overrides);
-        return new QueryParamsMap(getCorpusName(), null, typedParams, config(), debugMode());
+        return new QueryParamsMap(getCorpusName(), null, typedParams, getFallbackFilterQuery(), config(), debugMode());
     }
 }

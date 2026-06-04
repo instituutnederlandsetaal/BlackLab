@@ -18,11 +18,11 @@ import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
 import nl.inl.blacklab.server.exceptions.InternalServerError;
 import nl.inl.blacklab.server.index.Index;
-import nl.inl.blacklab.server.lib.QueryParams;
 import nl.inl.blacklab.server.lib.Response;
 import nl.inl.blacklab.server.lib.results.ResponseStreamer;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 import nl.inl.util.FileUtil;
 
 /**
@@ -86,7 +86,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
         };
 
         Index index = indexMan.getIndex(qpar.getCorpusName());
-        String converters = qpar.getConverters().orElse(null);
+        String converters = qpar.opt(WsParam.CONVERTERS).orElse(null);
         String indexError = WebserviceOperations.addToIndex(user, index, converters, dataFilesIt, linkedFiles);
         if (indexError != null)
             throw new BadRequest("INDEX_ERROR", "An error occurred during indexing. (error text: " + indexError + ")");

@@ -61,7 +61,7 @@ import nl.inl.blacklab.server.lib.results.ResultHitsGrouped;
 import nl.inl.blacklab.server.lib.results.ResultSummaryCommonFields;
 import nl.inl.blacklab.server.lib.results.ResultSummaryNumHits;
 import nl.inl.blacklab.server.lib.results.WebserviceOperations;
-import nl.inl.blacklab.webservice.WebserviceParameter;
+import nl.inl.blacklab.webservice.WsParam;
 
 /**
  * Utility methods for writing CSV responses.
@@ -363,11 +363,11 @@ public class WriteCsv {
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
         ParamsForResponse params = scf.getParamsForResponse();
         ResultGroups groups = scf.getGroups();
-        for (Map.Entry<WebserviceParameter, Object> param : params.getTypedParameters().entrySet()) {
-            WebserviceParameter par = param.getKey();
-            if (par == WebserviceParameter.LIST_VALUES_FOR_ANNOTATIONS ||
-                    par == WebserviceParameter.LIST_VALUES_FOR_METADATA_FIELDS ||
-                    par == WebserviceParameter.LIST_VALUES_FOR_SPAN_ATTR)
+        for (Map.Entry<WsParam, Object> param : params.getTypedParameters().entrySet()) {
+            WsParam par = param.getKey();
+            if (par == WsParam.LIST_VALUES_FOR_ANNOTATIONS ||
+                    par == WsParam.LIST_VALUES_FOR_METADATA_FIELDS ||
+                    par == WsParam.LIST_VALUES_FOR_SPAN_ATTR)
                 continue;
             writeRow(printer, numColumns, summ + rs.KEY_PARAMS + "." + par, param.getValue());
         }

@@ -14,13 +14,16 @@ import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.lib.QueryParams;
-import nl.inl.blacklab.server.lib.QueryParamsJson;
 import nl.inl.blacklab.server.lib.User;
 import nl.inl.blacklab.server.lib.results.ApiVersion;
 import nl.inl.blacklab.server.search.UserRequest;
 import nl.inl.blacklab.webservice.WebserviceOperation;
+import nl.inl.blacklab.webservice.WsParam;
 
 public class UserRequestSolr implements UserRequest {
+
+    /** BlackLab parameters are prefixed with this in Solr requests */
+    public static final String BL_PAR_PREFIX = "bl.";
 
     private final ResponseBuilder rb;
 
@@ -77,7 +80,7 @@ public class UserRequestSolr implements UserRequest {
     @Override
     public QueryParams getParams(BlackLabIndex index, WebserviceOperation operation) {
         SolrParams solrParams = rb.req.getParams();
-        String blReq = solrParams.get("bl.req");
+        String blReq = solrParams.get(BL_PAR_PREFIX + WsParam.JSON_REQUEST);
 
         // If no explicit bl.filter specified; use Solr's document results as our filter query
         DocSetFilter fallbackFilterQuery = null;
@@ -92,13 +95,13 @@ public class UserRequestSolr implements UserRequest {
         if (blReq != null) {
             // Request was passed as a JSON structure. Parse that.
             try {
-                qpSolr = new QueryParamsJson(getCorpusName(), operation, blReq, fallbackFilterQuery, config, isDebugMode);
+                qpSolr = QueryParams.fromJson(getCorpusName(), operation, blReq, fallbackFilterQuery, config, isDebugMode);
             } catch (JsonProcessingException e) {
                 throw new BadRequest("INVALID_JSON", "Error parsing bl.req parameter", e);
             }
         } else {
             // Request was passed as separate bl.* parameters. Parse them.
-            qpSolr = new QueryParamsSolr(getCorpusName(), solrParams, fallbackFilterQuery, config, isDebugMode);
+            qpSolr = QueryParamsSolrUtil.getParams(getCorpusName(), solrParams, fallbackFilterQuery, config, isDebugMode);
         }
         return qpSolr;
     }
@@ -115,7 +118,7 @@ public class UserRequestSolr implements UserRequest {
 
     @Override
     public ApiVersion apiVersion() {
-        String paramApi = rb.req.getParams().get("bl.api");
+        String paramApi = rb.req.getParams().get(BL_PAR_PREFIX + WsParam.API);
         return paramApi == null ? config().getParameters().getApi() :
                 ApiVersion.fromValue(paramApi);
     }
