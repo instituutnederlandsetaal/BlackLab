@@ -26,8 +26,9 @@
         <module>instrumentation/instrumentation</module>
         <module>instrumentation/instrumentation-impl</module>
 
-        <!-- Solr integration (experimental) -->
-        <module>solr</module>
+        <!-- Solr integration (experimental)
+        DISABLED FOR LUCENE 10 / SOLR 10, see
+        <module>solr</module> -->
 
         <!-- BlackLab Proxy (experimental) -->
         <module>proxy</module>
