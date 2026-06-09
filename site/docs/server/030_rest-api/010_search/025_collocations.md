@@ -9,7 +9,7 @@ Collocations in BlackLab can be proximity-based (i.e. words that occur within 5 
 You can find collocations using a regular `/hits` request with the `group` parameter, but there is also a `/collocations` endpoint that makes it a bit more convenient. It takes the components that make up a collocation request and constructs the correct query, grouping property, and group scorer configuration.
 
 **URL**
-- `/blacklab-server/<corpus-name>/collocations` (API `v5`)
+- `/blacklab-server/<corpus-name>/collocations` (API `v4`)
 - `/blacklab-server/corpora/<corpus-name>/collocations` (future API `v5`)
 
 **Method** : `GET`
