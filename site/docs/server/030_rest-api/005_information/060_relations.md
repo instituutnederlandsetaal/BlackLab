@@ -1,6 +1,6 @@
 # Spans and relations
 
-::: warn DEPRECATED (`dev`/`5.x`)
+::: warning DEPRECATED (`dev`/`5.x`)
 
 Now that this information is included with the annotated field info (on the `/corpora/CORPUSNAME` and `corpora/CORPUSNAME/field/FIELDNAME` pages), this separate endpoint is no longer needed and will be phased out.
 

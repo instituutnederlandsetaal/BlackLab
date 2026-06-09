@@ -4,6 +4,7 @@ The main endpoints for searching corpora:
 
 * [Find hits](find-hits) : `GET /blacklab-server/<corpus-name>/hits`<br>Find matches for a text pattern and optionally group them.
 * [Find documents](find-documents) : `GET /blacklab-server/<corpus-name>/docs`<br>Find documents and optionally group them.
+* [Find collocations](collocations) : `GET /blacklab-server/<corpus-name>/collocations`<br>Find collocations (words that often occur together) for a term in a field
 
 There's also a few less common search endpoints:
 
