@@ -28,9 +28,10 @@ public class InternalServerError extends BlsException {
         super(HttpURLConnection.HTTP_INTERNAL_ERROR, "INTERNAL_ERROR",
                 msg + (cause == null ? "" : " (" + cause + ")"), cause);
         this.internalErrorCode = internalErrorCode;
-        logger.debug("INTERNAL ERROR " + internalErrorCode + (cause == null ? " (no cause given): " : ": ") + msg);
+        String optCausePrompt = cause == null ? " (no cause given): " : ": ";
+        logger.error("INTERNAL ERROR {}{}{}", internalErrorCode, optCausePrompt, msg);
         if (cause != null)
-            cause.printStackTrace();
+            logger.error(cause);
     }
 
 }

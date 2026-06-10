@@ -3,8 +3,6 @@ package org.ivdnt.blacklab.solr;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -294,8 +292,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         err.add("code", code);
         err.add("message", message);
         if (e != null) {
-            StringWriter sw = new StringWriter();
-            e.printStackTrace(new PrintWriter(sw));
             logger.error(e);
             err.add("stackTrace", sw.toString());
         }

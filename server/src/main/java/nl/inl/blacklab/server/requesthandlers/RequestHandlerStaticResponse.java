@@ -65,8 +65,8 @@ public class RequestHandlerStaticResponse extends RequestHandler {
     // Highest internal error code so far: 31
 
     public RequestHandlerStaticResponse internalError(Exception e, boolean debugMode, String code) {
-        logger.debug("INTERNAL ERROR " + code + ":");
-        e.printStackTrace();
+        logger.error("INTERNAL ERROR " + code + ":");
+        logger.error(e);
         this.exception = e;
         this.debugMode = debugMode;
         internalErrorCode = code;
