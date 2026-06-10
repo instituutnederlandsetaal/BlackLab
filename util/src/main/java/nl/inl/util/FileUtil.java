@@ -297,7 +297,7 @@ public class FileUtil {
                 if (pathToFile == null) // can happen if not all paths are always set on the caller's side
                     continue;
                 if (extensions == null) {
-                    File configFile = checkFileInDir(new File(dir, pathToFile), dir);
+                    File configFile = ensureFileInDir(new File(dir, pathToFile), dir);
                     if (configFile != null)
                         return configFile;
                 } else {
@@ -306,7 +306,7 @@ public class FileUtil {
                         if (ext == null)
                             throw new IllegalArgumentException("extensions[" + j + "] == null!");
                         j++;
-                        File configFile = checkFileInDir(new File(dir, pathToFile + "." + ext), dir);
+                        File configFile = ensureFileInDir(new File(dir, pathToFile + "." + ext), dir);
                         if (configFile != null)
                             return configFile;
                     }
@@ -316,9 +316,20 @@ public class FileUtil {
         return null;
     }
 
-    private static File checkFileInDir(File file, File parentDir) {
+    public static boolean isWithinDirectory(File candidate, File parent) {
+        try {
+            Path parentPath = parent.getCanonicalFile().toPath().normalize();
+            Path candidatePath = candidate.getCanonicalFile().toPath().normalize();
+            return candidatePath.startsWith(parentPath);
+        } catch (IOException e) {
+            logger.error("Could not validate directory containment: {}", e.getMessage());
+            return false;
+        }
+    }
+
+    private static File ensureFileInDir(File file, File parentDir) {
+        boolean reallyInsideDir = isWithinDirectory(file, parentDir);
         boolean fileExists = file.exists();
-        boolean reallyInsideDir = file.getAbsolutePath().startsWith(parentDir.getAbsolutePath());
         if (fileExists && reallyInsideDir)
             return file;
         if (!fileExists)

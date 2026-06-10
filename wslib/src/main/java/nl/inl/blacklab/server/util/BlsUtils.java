@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import org.apache.logging.log4j.LogManager;
@@ -22,6 +23,7 @@ import nl.inl.blacklab.search.textpattern.CompleteQuery;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.exceptions.BlsException;
+import nl.inl.util.FileUtil;
 import nl.inl.util.LuceneUtil;
 
 /**
@@ -123,28 +125,31 @@ public class BlsUtils {
     }
 
     /**
-     * Delete an entire tree with files, subdirectories, etc.
-     *
-     * CAREFUL, DANGEROUS!
-     *
-     * TODO: We also have FileUtil.deleteTree(), use that instead?
+     * Delete an entire tree with files, subdirectories, etc., but only if it is
+     * contained within an allowed parent directory.
      *
      * @param root the directory tree to delete
+     * @param allowedParent allowed parent directory; if null, no containment check is performed
      */
-    public static void delTree(File root) {
+    public static void delTree(File root, File allowedParent) {
         if (root == null)
             throw new IllegalArgumentException("Root directory is null");
         if (!root.isDirectory())
             throw new IllegalArgumentException("Not a directory: " + root);
-        for (File f: root.listFiles()) {
-            if (f.isDirectory())
-                delTree(f);
-            else
-                try {
-                    Files.delete(f.toPath());
-                } catch (IOException e) {
-                    logger.error(e.getMessage());
-                }
+        if (allowedParent != null && !FileUtil.isWithinDirectory(root, allowedParent))
+            throw new IllegalArgumentException("Refusing to delete directory outside allowed parent: " + root);
+        File[] files = root.listFiles();
+        if (files != null) {
+            for (File f: files) {
+                if (f.isDirectory())
+                    delTree(f, allowedParent);
+                else
+                    try {
+                        Files.delete(f.toPath());
+                    } catch (IOException e) {
+                        logger.error(e.getMessage());
+                    }
+            }
         }
         if (!root.delete())
             logger.error("Unable to delete directory: {}", root);

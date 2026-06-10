@@ -271,7 +271,7 @@ public class IndexManager {
         // TODO this should be handled by Index
         if (isPendingDeletion(indexDir)) {
             // Don't let any deletion markers linger around (when index used to exist and couldn't be fully deleted)
-            BlsUtils.delTree(indexDir);
+            BlsUtils.delTree(indexDir, userDir);
         }
         boolean contentViewable = true; // user may view his own private corpus documents
         InputFormatInfo inputFormat = DocumentFormats.getFormat(formatIdentifier).orElse(null);
@@ -375,7 +375,7 @@ public class IndexManager {
         System.gc();
         System.runFinalization();
 
-        BlsUtils.delTree(indexDir);
+        BlsUtils.delTree(indexDir, userDir);
         // didn't fully delete, this can happen under windows when some memmapped buffers haven't been gc'd yet
         // This is a system bug, not something we can do anything about, the gc first needs to clean up all references to those maps
         // Mark the directory and attempt to delete it next time we come across it
@@ -628,14 +628,17 @@ public class IndexManager {
         if (allUserCorporaLoaded || userCollectionsDir == null)
             return;
         allUserCorporaLoaded = true;
-        for (File userDir: userCollectionsDir.listFiles(BlsUtils.readableDirFilter)) {
-            File userIdFile = new File(userDir, USER_ID_FILE_NAME);
-            if (userIdFile.exists() && userIdFile.canRead()) {
-                try {
-                    String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
-                    loadUserCorporaInDir(User.fromId(userId), userDir);
-                } catch (IOException e) {
-                    throw new IllegalStateException(e);
+        File[] files = userCollectionsDir.listFiles(BlsUtils.readableDirFilter);
+        if (files != null) {
+            for (File userDir: files) {
+                File userIdFile = new File(userDir, USER_ID_FILE_NAME);
+                if (userIdFile.exists() && userIdFile.canRead()) {
+                    try {
+                        String userId = FileUtils.readFileToString(userIdFile, StandardCharsets.UTF_8).trim();
+                        loadUserCorporaInDir(User.fromId(userId), userDir);
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
                 }
             }
         }
@@ -653,26 +656,30 @@ public class IndexManager {
          * so the index can be recognised as a private index.
          */
         logger.debug("Scanning userDir: " + userDir);
-        for (File f : userDir.listFiles(BlsUtils.readableDirFilter)) {
-            if (isPendingDeletion(f)) {
-                BlsUtils.delTree(f);
-                if (f.canRead())
-                    markForDeletion(f); // Deleting didn't work (yet)
-                continue;
-            }
+        File[] files = userDir.listFiles(BlsUtils.readableDirFilter);
+        if (files != null) {
+            for (File f: files) {
+                if (isPendingDeletion(f)) {
+                    BlsUtils.delTree(f, userDir);
+                    if (f.canRead())
+                        markForDeletion(f); // Deleting didn't work (yet)
+                    continue;
+                }
 
-            if (!f.canRead() || !BlackLabIndex.isIndex(f))
-                continue;
-
-            try {
-                String indexId = Index.getIndexId(f.getName(), user.getId());
-                if (indices.containsKey(indexId))
+                if (!f.canRead() || !BlackLabIndex.isIndex(f))
                     continue;
 
-                logger.debug("User index found: " + indexId + " (" + f + ")");
-                indices.put(indexId, new Index(indexId, f, searchMan));
-            } catch (Exception e) {
-                logger.info("Error while loading index " + f.getName() + " at location " + f + "; " + e.getMessage());
+                try {
+                    String indexId = Index.getIndexId(f.getName(), user.getId());
+                    if (indices.containsKey(indexId))
+                        continue;
+
+                    logger.debug("User index found: " + indexId + " (" + f + ")");
+                    indices.put(indexId, new Index(indexId, f, searchMan));
+                } catch (Exception e) {
+                    logger.info(
+                            "Error while loading index " + f.getName() + " at location " + f + "; " + e.getMessage());
+                }
             }
         }
     }
