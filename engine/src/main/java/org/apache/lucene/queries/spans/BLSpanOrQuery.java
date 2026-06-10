@@ -791,7 +791,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
         SpanQuery[] clauses = getClauses();
         if (clauses.length == 0)
             return 0;
-        int cost = 0;
+        long cost = 0;
         int skip = getCostCalculationSkip(clauses.length);
         int clausesCalculated = 0;
         for (int i = 0; i < clauses.length; i++) {
@@ -800,7 +800,7 @@ public final class BLSpanOrQuery extends BLSpanQuery {
             clausesCalculated++;
             i += skip;
         }
-        return (long) cost * clauses.length / clausesCalculated;
+        return cost * clauses.length / clausesCalculated;
     }
 
     /**

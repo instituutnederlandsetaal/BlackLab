@@ -20,7 +20,7 @@ public class Facets implements SearchResult {
     
     private final Map<DocProperty, DocGroups> counts;
     
-    private int resultObjects = 0;
+    private long resultObjects = 0;
 
     public Facets(DocResults source, List<DocProperty> facets) {
         this.facets = facets;

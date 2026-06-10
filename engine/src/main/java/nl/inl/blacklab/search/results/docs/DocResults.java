@@ -491,7 +491,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
      */
     public long intSum(Function<DocResult, Long> f) {
         ensureResultsRead(-1);
-        int sum = 0;
+        long sum = 0;
         for (DocResult result : results)
             sum += f.apply(result);
         return sum;

@@ -231,7 +231,7 @@ public class WebserviceOperations {
             String facetName = facetBy.name();
             List<Pair<String,  Long>> facetItems = new ArrayList<>();
             int n = 0, maxFacetValues = 10;
-            int totalSize = 0;
+            long totalSize = 0;
             for (DocGroup count : facetCounts) {
                 String value = count.identity().toString();
                 long size = count.size();
