@@ -54,9 +54,6 @@ public class BlackLabServer extends HttpServlet {
     /** Include XML fragments from document escaped as CDATA or not (i.e. as part of the XML structure)? */
     public static final String PARAM_ESCAPE_XML_FRAGMENT = "escapexmlfragment";
 
-    /** Servlet-independent main web service code */
-    BlsMain blsMain;
-
     /** If a startup error occurred, save it so we can produce an error response later. */
     private Exception initializationException;
 
@@ -67,7 +64,7 @@ public class BlackLabServer extends HttpServlet {
         logger.debug("Running from dir: " + servletPath);
 
         try {
-            blsMain = BlsMain.get();
+            BlsMain.get();
         } catch (Exception e) {
             initializationException = e;
         }
@@ -118,7 +115,7 @@ public class BlackLabServer extends HttpServlet {
         } catch (ServletException|IOException e) {
             DataFormat outputType = ServletUtil.getOutputType(request);
             if (outputType == null)
-                outputType = blsMain.getDefaultOutputType();
+                outputType = BlsMain.get().getDefaultOutputType();
             ApiVersion api = ApiVersion.CURRENT;
             DataStream es = DataStreamAbstract.create(outputType, true, api);
             es.outputProlog();
@@ -146,7 +143,8 @@ public class BlackLabServer extends HttpServlet {
     }
 
     private String optAddAllowOriginHeader(HttpServletResponse responseObject) {
-        String allowOrigin = blsMain == null ? "*" : blsMain.getSearchManager().config().getProtocol().getAccessControlAllowOrigin();
+        String allowOrigin = BlsMain.get() == null ? "*" :
+                BlsMain.get().getSearchManager().config().getProtocol().getAccessControlAllowOrigin();
         if (allowOrigin != null)
             responseObject.addHeader("Access-Control-Allow-Origin", allowOrigin);
         return allowOrigin;
@@ -186,7 +184,7 @@ public class BlackLabServer extends HttpServlet {
         ApiVersion api = ApiVersion.CURRENT;
         boolean prettyPrint = ServletUtil.getParameter(request, PARAM_PRETTYPRINT, userRequest.isDebugMode());
         DataStream ds = DataStreamAbstract.create(outputType, prettyPrint, api);
-        ds.setOmitEmptyAnnotations(blsMain.getSearchManager().config().getProtocol().isOmitEmptyProperties());
+        ds.setOmitEmptyAnnotations(BlsMain.get().getSearchManager().config().getProtocol().isOmitEmptyProperties());
         if (request.getParameterMap().containsKey(PARAM_ESCAPE_XML_FRAGMENT)) {
             // We want to override whether XML fragments are output as CDATA or not
             // (defaults to true for v5, false before)
@@ -204,12 +202,12 @@ public class BlackLabServer extends HttpServlet {
                 throw new BadRequest("OUTPUT_TYPE_NOT_SUPPORTED", "This request doesn't support requested type " + outputType.getContentType() + ", only " + requestHandler.getOverrideType().getContentType());
             }
             if (outputType == null)
-                outputType = blsMain.getDefaultOutputType();
+                outputType = BlsMain.get().getDefaultOutputType();
 
             // For some auth systems, we need to persist the logged-in user, e.g. by setting a cookie
-            blsMain.getSearchManager().getAuthSystem().persistUser(userRequest, requestHandler.getUser());
+            BlsMain.get().getSearchManager().getAuthSystem().persistUser(userRequest, requestHandler.getUser());
 
-            cacheTime = requestHandler.isCacheAllowed() ? blsMain.getSearchManager().config().getCache().getClientCacheTimeSec() : 0;
+            cacheTime = requestHandler.isCacheAllowed() ? BlsMain.get().getSearchManager().config().getCache().getClientCacheTimeSec() : 0;
 
             String rootEl = requestHandler.omitBlackLabResponseRootElement() ? null : ResponseStreamer.BLACKLAB_RESPONSE_ROOT_ELEMENT;
             ds.startDocument(rootEl);
@@ -318,7 +316,7 @@ public class BlackLabServer extends HttpServlet {
     @Override
     public void destroy() {
         // Cleans up search manager
-        blsMain.cleanup();
+        BlsMain.get().cleanup();
         super.destroy();
     }
 
@@ -337,6 +335,6 @@ public class BlackLabServer extends HttpServlet {
     }
 
     public synchronized SearchManager getSearchManager() {
-        return blsMain.getSearchManager();
+        return BlsMain.get().getSearchManager();
     }
 }

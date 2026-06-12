@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -656,32 +657,33 @@ public class IndexManager {
          * so the index can be recognised as a private index.
          */
         logger.debug("Scanning userDir: " + userDir);
-        File[] files = userDir.listFiles(BlsUtils.readableDirFilter);
-        if (files != null) {
-            for (File f: files) {
-                if (isPendingDeletion(f)) {
-                    BlsUtils.delTree(f, userDir);
-                    if (f.canRead())
-                        markForDeletion(f); // Deleting didn't work (yet)
-                    continue;
-                }
-
-                if (!f.canRead() || !BlackLabIndex.isIndex(f))
+        for (File f: Objects.requireNonNull(userDir.listFiles(BlsUtils.readableDirFilter))) {
+            if (removeIfPendingDeletion(userDir, f))
+                continue;
+            if (!f.canRead() || !BlackLabIndex.isIndex(f))
+                continue;
+            try {
+                String indexId = Index.getIndexId(f.getName(), user.getId());
+                if (indices.containsKey(indexId))
                     continue;
 
-                try {
-                    String indexId = Index.getIndexId(f.getName(), user.getId());
-                    if (indices.containsKey(indexId))
-                        continue;
-
-                    logger.debug("User index found: " + indexId + " (" + f + ")");
-                    indices.put(indexId, new Index(indexId, f, searchMan));
-                } catch (Exception e) {
-                    logger.info(
-                            "Error while loading index " + f.getName() + " at location " + f + "; " + e.getMessage());
-                }
+                logger.debug("User index found: " + indexId + " (" + f + ")");
+                indices.put(indexId, new Index(indexId, f, searchMan));
+            } catch (Exception e) {
+                logger.info("Error while loading index " + f.getName() + " at location " + f + "; " +
+                                e.getMessage());
             }
         }
+    }
+
+    private static boolean removeIfPendingDeletion(File userDir, File f) {
+        if (isPendingDeletion(f)) {
+            BlsUtils.delTree(f, userDir);
+            if (f.canRead())
+                markForDeletion(f); // Deleting didn't work (yet)
+            return true;
+        }
+        return false;
     }
 
     /**

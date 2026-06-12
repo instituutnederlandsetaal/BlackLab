@@ -49,6 +49,7 @@ import nl.inl.blacklab.server.lib.requests.RequestHits;
 
 public class ResultHits {
     private static final Logger logger = LogManager.getLogger(ResultHits.class);
+    public static final String LOG_MSG_SEARCHING_THREW_AN_EXCEPTION = "Searching threw an exception";
 
     private final RequestHits reqHits;
 
@@ -129,7 +130,7 @@ public class ResultHits {
                 throw e;
             }
         } catch (InvalidQuery e) {
-            logger.debug("Searching threw an exception", e);
+            logger.debug(LOG_MSG_SEARCHING_THREW_AN_EXCEPTION, e);
             throw WebserviceOperations.translateSearchException(e);
         }
     }
@@ -162,10 +163,10 @@ public class ResultHits {
             );
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt(); // preserve interrupted status
-            logger.debug("Searching threw an exception", e);
+            logger.debug(LOG_MSG_SEARCHING_THREW_AN_EXCEPTION, e);
             throw WebserviceOperations.translateSearchException(e);
         } catch (ExecutionException | InvalidQuery e) {
-            logger.debug("Searching threw an exception", e);
+            logger.debug(LOG_MSG_SEARCHING_THREW_AN_EXCEPTION, e);
             throw WebserviceOperations.translateSearchException(e);
         }
     }

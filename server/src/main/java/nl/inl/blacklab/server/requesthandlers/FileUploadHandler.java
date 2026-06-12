@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.fileupload2.core.DiskFileItemFactory;
-import org.apache.commons.fileupload2.core.FileItem;
 import org.apache.commons.fileupload2.core.FileUploadException;
 import org.apache.commons.fileupload2.core.FileUploadSizeException;
 import org.apache.commons.fileupload2.jakarta.JakartaServletFileUpload;
@@ -39,7 +38,7 @@ public class FileUploadHandler {
      * @throws BlsException on invalid upload parameter/missing file/too large
      *             file/general IO errors
      */
-    public static List<? extends FileItem<?>> getFiles(HttpServletRequest request) throws BlsException {
+    public static List<DiskFileItem> getFiles(HttpServletRequest request) throws BlsException {
         // Check that we have a file upload request
         boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
         if (!isMultipart) {
@@ -64,7 +63,7 @@ public class FileUploadHandler {
             if (items.isEmpty())
                 throw new BadRequest("NO_FILE", "No file(s) were uploaded");
 
-            for (FileItem<DiskFileItem> f: items) {
+            for (DiskFileItem f: items) {
                 if (f.isFormField())
                     throw new BadRequest("CANNOT_UPLOAD_FILE", "File must not be uploaded as a form field.");
                 if (f.getSize() > MAX_UPLOAD_SIZE)

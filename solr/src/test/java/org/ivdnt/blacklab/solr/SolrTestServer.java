@@ -4,7 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Properties;
+import java.util.Objects;
 
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrRequest;
@@ -18,11 +18,8 @@ import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.NodeConfig;
 import org.apache.solr.logging.LogWatcherConfig;
-import org.apache.solr.logging.log4j2.Log4j2Watcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import nl.inl.blacklab.exceptions.InvalidIndex;
 
 import nl.inl.blacklab.exceptions.InvalidIndex;
 
@@ -57,12 +54,9 @@ public class SolrTestServer {
             File srcDir = srcFilePath.toFile();
             File targetDir = targetFilePath.toFile();
             if (!targetDir.mkdir())
-                throw new InvalidIndex("Cannot create dir: " + targetFilePath);
-            File[] files = srcDir.listFiles();
-            if (files != null) {
-                for (File f: files) {
-                    copy(srcFilePath, targetFilePath, f.getName());
-                }
+            throw new InvalidIndex("Cannot create dir: " + targetFilePath);
+            for (File f: Objects.requireNonNull(srcDir.listFiles())) {
+                copy(srcFilePath, targetFilePath, f.getName());
             }
         } else {
             try {
@@ -75,12 +69,9 @@ public class SolrTestServer {
     }
 
     static boolean deleteDirectoryTree(File dir) {
-        File[] allContents = dir.listFiles();
-        if (allContents != null) {
-            for (File file: allContents) {
-                if (!deleteDirectoryTree(file))
-                    return false;
-            }
+        for (File file: Objects.requireNonNull(dir.listFiles())) {
+            if (!deleteDirectoryTree(file))
+                return false;
         }
         return dir.delete();
     }

@@ -28,7 +28,6 @@ import nl.inl.blacklab.plugins.PluginManager;
 import nl.inl.blacklab.queryParser.JsonParserProvider;
 import nl.inl.blacklab.queryParser.contextql.ContextQLParserProvider;
 import nl.inl.blacklab.queryParser.corpusql.BcqlParserProvider;
-import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.server.auth.AuthClarinEppn;
 import nl.inl.blacklab.server.auth.AuthDebugFixed;
@@ -82,9 +81,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private String configFilePath;
 
     private RequestInstrumentationProvider instrumentationProvider = RequestInstrumentationProvider.noOpProvider();
-
-    public BlackLabSearchComponent() {
-    }
 
     /**
      * Called when component is assigned to a core.

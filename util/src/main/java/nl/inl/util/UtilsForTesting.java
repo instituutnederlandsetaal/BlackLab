@@ -1,7 +1,9 @@
 package nl.inl.util;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -58,19 +60,16 @@ public final class UtilsForTesting {
     static {
         File tempDir = new File(System.getProperty("java.io.tmpdir"));
         long now = System.currentTimeMillis();
-        File[] l = tempDir.listFiles((parentDir, name) -> name.startsWith(TEST_DIR_PREFIX));
-
-        if (l != null) {
             // Remove old ContentStore test dirs from temp dir, if possible
             // (may not be possible because of memory mapping lock on Windows;
             //  in this case we just leave the files and continue)
-            for (File testDir: l) {
-                File markerFile = new File(testDir, MARKER_FILE_NAME);
-                if (!markerFile.exists()) {
-                    createMarkerFile(testDir);
-                } else if (now - markerFile.lastModified() > REMOVE_TEST_DIRS_OLDER_THAN_MS) {
-                    deleteDirectory(testDir);
-                }
+        FilenameFilter filenameFilter = (parentDir, name) -> name.startsWith(TEST_DIR_PREFIX);
+        for (File testDir: Objects.requireNonNull(tempDir.listFiles(filenameFilter))) {
+            File markerFile = new File(testDir, MARKER_FILE_NAME);
+            if (!markerFile.exists()) {
+                createMarkerFile(testDir);
+            } else if (now - markerFile.lastModified() > REMOVE_TEST_DIRS_OLDER_THAN_MS) {
+                deleteDirectory(testDir);
             }
         }
     }

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.plugins;
 
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -241,7 +242,8 @@ public class PluginManager {
 
     private static URLClassLoader getPluginsDirClassLoader(ClassLoader parent) {
         List<URL> urlList = new ArrayList<>();
-        File[] files = pluginsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".jar"));
+        FilenameFilter filenameFilter = (dir, name) -> name.toLowerCase().endsWith(".jar");
+        File[] files = pluginsDir.listFiles(filenameFilter);
         if (files != null) {
             for (File f: files) {
                 if (f.isFile() && f.canRead()) {
@@ -258,9 +260,10 @@ public class PluginManager {
     }
 
     private static synchronized void findGroovyScripts(BLConfigPlugins pluginConfig) {
-        File[] scriptFiles = pluginsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".groovy"));
-        if (scriptFiles != null) {
-            for (File scriptFile: scriptFiles) {
+        FilenameFilter filenameFilter = (dir, name) -> name.toLowerCase().endsWith(".groovy");
+        File[] files = pluginsDir.listFiles(filenameFilter);
+        if (files != null) {
+            for (File scriptFile: files) {
                 if (scriptFile.isFile() && scriptFile.canRead()) {
                     String scriptFileName = scriptFile.getName().replaceAll("\\.groovy$", "");
                     unloadedGroovyScripts.put(scriptFileName, new UnloadedGroovyPlugin(scriptFile, pluginConfig));

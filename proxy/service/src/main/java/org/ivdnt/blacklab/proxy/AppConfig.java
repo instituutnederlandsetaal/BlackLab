@@ -5,7 +5,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.jackson.JacksonFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.ivdnt.blacklab.proxy.backend.Backend;
-import org.ivdnt.blacklab.proxy.backend.ProxyBackend;
+import org.ivdnt.blacklab.proxy.backend.blacklab.BlacklabBackend;
 import org.ivdnt.blacklab.proxy.resources.CorpusResource;
 import org.ivdnt.blacklab.proxy.resources.RootResource;
 
@@ -52,7 +52,7 @@ public class AppConfig extends ResourceConfig {
 
         @Override
         public Backend provide() {
-            return new ProxyBackend(client); // new BlacklabBackend();
+            return new BlacklabBackend(); //new ProxyBackend(client);
         }
 
         @Override

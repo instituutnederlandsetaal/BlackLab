@@ -29,7 +29,6 @@ public class BlacklabBackend implements Backend {
 
     @Override
     public Response corpusInfo(ApiVersion apiVersion, RequestCorpusInfo req) {
-        // TODO: full API version handling
         Corpus corpus = conv(apiVersion).corpus(req, WebserviceOperations.corpusInfo(req));
         return SimpleResponse.success(corpus);
     }

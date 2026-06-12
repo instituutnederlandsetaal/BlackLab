@@ -35,6 +35,7 @@ import org.apache.lucene.search.SimpleCollector;
 import org.apache.lucene.search.Weight;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
+import org.jspecify.annotations.Nullable;
 
 import nl.inl.blacklab.codec.BLTerms;
 import nl.inl.blacklab.exceptions.BlackLabException;
@@ -59,53 +60,10 @@ public final class LuceneUtil {
     public static long getTermFrequency(AnnotationSensitivity annotSensitivity, String term,
             Query docFilter, boolean accurateButSlower) {
         String luceneField = annotSensitivity.luceneField();
-        boolean hasDocFilter = docFilter != null;
-        if (hasDocFilter || accurateButSlower) {
+        if (docFilter != null || accurateButSlower) {
             // Actually iterate over all non-deleted documents and count up the frequencies for this term.
             // Accurate but slow.
-            BytesRef bytesRef = new BytesRef(term);
-            Map<Integer, Long> counts = new ConcurrentHashMap<>();
-            BlackLabIndex index = annotSensitivity.annotation().field().index();
-
-            Weight filterWeight;
-            if (hasDocFilter) {
-                try {
-                    docFilter = docFilter.rewrite(index.searcher());
-                    filterWeight = docFilter.createWeight(index.searcher(), ScoreMode.COMPLETE_NO_SCORES, 1.0f);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            } else {
-                filterWeight = null;
-            }
-
-            index.forEachDocument((ParallelDocTask) lrc -> {
-                try {
-                    Scorer scorer = hasDocFilter ?
-                            filterWeight.scorer(index.searcher().getLeafContexts().get(0)) :
-                            null;
-                    DocIdSetIterator docIt = hasDocFilter ? scorer.iterator() : null;
-                    TermVectors termVectors = lrc.reader().termVectors();
-                    return docId -> {
-                        try {
-                            int matchingDocId = hasDocFilter ?
-                                    docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId) :
-                                    docId;
-                            if (matchingDocId == docId) {
-                                // This doc matches the filter.
-                                TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
-                                long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
-                                counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
-                            }
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                    };
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
-            return counts.values().stream().mapToLong(Long::longValue).sum();
+            return getTermFrequencyIterOverDocs(annotSensitivity, term, docFilter, luceneField);
         } else {
             // Just use totalTermFreq. This doesn't take deleted documents into account,
             // but that's usually okay if you're using it for a ratio with another frequency
@@ -116,6 +74,60 @@ public final class LuceneUtil {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    private static long getTermFrequencyIterOverDocs(AnnotationSensitivity annotSensitivity, String term, Query docFilter,
+            String luceneField) {
+        BlackLabIndex index = annotSensitivity.annotation().field().index();
+        Weight filterWeight = determineFilterWeight(docFilter, index.searcher());
+
+        BytesRef bytesRef = new BytesRef(term);
+        Map<Integer, Long> counts = new ConcurrentHashMap<>();
+        index.forEachDocument((ParallelDocTask) lrc -> {
+            try {
+                Scorer scorer = docFilter == null ? null :
+                        filterWeight.scorer(index.searcher().getLeafContexts().get(0));
+                DocIdSetIterator docIt = docFilter == null ? null : scorer.iterator();
+                TermVectors termVectors = lrc.reader().termVectors();
+                return docId -> {
+                    try {
+                        int matchingDocId = docFilter == null ? docId :
+                                docIt.docID() >= docId ? docIt.docID() : docIt.advance(docId);
+                        if (matchingDocId == docId) {
+                            // This doc matches the filter.
+                            countDocTermFrequency(luceneField, lrc, docId, termVectors, bytesRef, counts);
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                };
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+        return counts.values().stream().mapToLong(Long::longValue).sum();
+    }
+
+    private static @Nullable Weight determineFilterWeight(Query docFilter, IndexSearcher searcher) {
+        Weight filterWeight;
+        if (docFilter != null) {
+            try {
+                docFilter = docFilter.rewrite(searcher);
+                filterWeight = docFilter.createWeight(searcher, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            filterWeight = null;
+        }
+        return filterWeight;
+    }
+
+    private static void countDocTermFrequency(String luceneField, LeafReaderContext lrc, int docId, TermVectors termVectors,
+            BytesRef bytesRef, Map<Integer, Long> counts) throws IOException {
+        TermsEnum termsEnum = termVectors.get(docId).terms(luceneField).iterator();
+        long countInDoc = termsEnum.seekExact(bytesRef) ? termsEnum.totalTermFreq() : 0L;
+        counts.compute(lrc.docBase, (k, v) -> (v == null ? 0L : v) + countInDoc);
     }
 
     /**

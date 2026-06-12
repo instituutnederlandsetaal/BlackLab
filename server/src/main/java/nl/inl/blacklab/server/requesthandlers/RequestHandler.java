@@ -64,16 +64,20 @@ public abstract class RequestHandler {
             ENDPOINT_SHARED_WITH_ME
     );
 
+    public static final String SUFFIX_GROUPED = "-grouped";
+    public static final String SUFFIX_GROUPED_CSV = "-grouped-csv";
+    public static final String SUFFIX_CSV = "-csv";
+
     // Corpus-level endpoints e.g. /blacklab-server/corpora/CORPUS_NAME/hits
     private static final String ENDPOINT_HITS             = BlsPath.HITS.path();
-    private static final String ENDPOINT_HITS_CSV         = BlsPath.HITS.path() + "-csv";
-    private static final String ENDPOINT_HITS_GROUPED     = BlsPath.HITS.path() + "-grouped";
-    private static final String ENDPOINT_HITS_GROUPED_CSV = BlsPath.HITS.path() + "-grouped-csv";
+    private static final String ENDPOINT_HITS_CSV         = BlsPath.HITS.path() + SUFFIX_CSV;
+    private static final String ENDPOINT_HITS_GROUPED     = BlsPath.HITS.path() + SUFFIX_GROUPED;
+    private static final String ENDPOINT_HITS_GROUPED_CSV = BlsPath.HITS.path() + SUFFIX_GROUPED_CSV;
     private static final String ENDPOINT_COLLOCATIONS     = BlsPath.COLLOCATIONS.path();
     private static final String ENDPOINT_DOCS             = BlsPath.DOCS.path();
-    private static final String ENDPOINT_DOCS_CSV         = BlsPath.DOCS.path() + "-csv";
-    private static final String ENDPOINT_DOCS_GROUPED     = BlsPath.DOCS.path() + "-grouped";
-    private static final String ENDPOINT_DOCS_GROUPED_CSV = BlsPath.DOCS.path() + "-grouped-csv";
+    private static final String ENDPOINT_DOCS_CSV         = BlsPath.DOCS.path() + SUFFIX_CSV;
+    private static final String ENDPOINT_DOCS_GROUPED     = BlsPath.DOCS.path() + SUFFIX_GROUPED;
+    private static final String ENDPOINT_DOCS_GROUPED_CSV = BlsPath.DOCS.path() + SUFFIX_GROUPED_CSV;
     private static final String ENDPOINT_PARSE_PATTERN    = BlsPath.PARSE_PATTERN.path();
     private static final String ENDPOINT_RELATIONS        = BlsPath.RELATIONS.path();
     private static final String ENDPOINT_FIELDS           = BlsPath.FIELDS.path();
@@ -323,14 +327,14 @@ public abstract class RequestHandler {
                             boolean hasViewgroup = !StringUtils.isEmpty(request.getParameter(WsParam.VIEW_GROUP.value()));
                             if (!StringUtils.isBlank(request.getParameter("group"))) {
                                 if (!hasViewgroup)
-                                    handlerName += "-grouped"; // list of groups instead of contents
+                                    handlerName += SUFFIX_GROUPED; // list of groups instead of contents
                             } else if (hasViewgroup) {
                                 // "viewgroup" parameter without "group" parameter; error.
                                 return errorObj.badRequest("ERROR_IN_GROUP_VALUE",
                                         "Parameter 'viewgroup' specified, but required 'group' parameter is missing.");
                             }
                             if (outputType == DataFormat.CSV)
-                                handlerName += "-csv";
+                                handlerName += SUFFIX_CSV;
                         }
 
                         if (!availableHandlers.containsKey(handlerName))

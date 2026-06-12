@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.fileupload2.core.FileItem;
+import org.apache.commons.fileupload2.core.DiskFileItem;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -40,10 +40,10 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
         // Read uploaded files before checking for errors, or the client won't see our response :(
         // See https://stackoverflow.com/questions/18367824/how-to-cancel-http-upload-from-data-events/18370751#18370751
-        List<FileItem> dataFiles = new ArrayList<>();
+        List<DiskFileItem> dataFiles = new ArrayList<>();
         Map<String, File> linkedFiles = new HashMap<>();
         try {
-            for (FileItem f : FileUploadHandler.getFiles(request)) {
+            for (DiskFileItem f : FileUploadHandler.getFiles(request)) {
                 switch (f.getFieldName()) {
                 case "data":
                 case "data[]":
@@ -71,7 +71,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
         // Convert dataFiles to a generic data structure
         final Iterator<WebserviceOperations.UploadedFile> dataFilesIt = new Iterator<>() {
-            final Iterator<FileItem> it = dataFiles.iterator();
+            final Iterator<DiskFileItem> it = dataFiles.iterator();
 
             @Override
             public boolean hasNext() {
@@ -80,7 +80,7 @@ public class RequestHandlerAddToIndex extends RequestHandler {
 
             @Override
             public WebserviceOperations.UploadedFile next() {
-                FileItem df = it.next();
+                DiskFileItem df = it.next();
                 return new WebserviceOperations.UploadedFile(df.getName(), df.get());
             }
         };

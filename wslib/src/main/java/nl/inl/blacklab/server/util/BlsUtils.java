@@ -4,8 +4,8 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -138,18 +138,15 @@ public class BlsUtils {
             throw new IllegalArgumentException("Not a directory: " + root);
         if (allowedParent != null && !FileUtil.isWithinDirectory(root, allowedParent))
             throw new IllegalArgumentException("Refusing to delete directory outside allowed parent: " + root);
-        File[] files = root.listFiles();
-        if (files != null) {
-            for (File f: files) {
-                if (f.isDirectory())
-                    delTree(f, allowedParent);
-                else
-                    try {
-                        Files.delete(f.toPath());
-                    } catch (IOException e) {
-                        logger.error(e.getMessage());
-                    }
-            }
+        for (File f: Objects.requireNonNull(root.listFiles())) {
+            if (f.isDirectory())
+                delTree(f, allowedParent);
+            else
+                try {
+                    Files.delete(f.toPath());
+                } catch (IOException e) {
+                    logger.error(e.getMessage());
+                }
         }
         if (!root.delete())
             logger.error("Unable to delete directory: {}", root);

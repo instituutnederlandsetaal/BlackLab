@@ -124,6 +124,10 @@ public class ResponseStreamer {
     public static final String KEY_COUNT = "count";
     public static final String KEY_SCORE = "score"; // hit group score, if a scorer was supplied
 
+    // Deprecated index info fields in results responses
+    public static final String KEY_DOC_FIELDS = "docFields";
+    public static final String KEY_METADATA_FIELD_DISPLAY_NAMES = "metadataFieldDisplayNames";
+
     // Docs
     public static final String KEY_DOC_INFO = "docInfo";
     public static final String KEY_DOC_LENGTH_TOKENS = "lengthInTokens"; // v3/4: main field token count (docInfo)
@@ -1121,8 +1125,8 @@ public class ResponseStreamer {
             // (this information is not specific to this request and can be found elsewhere,
             //  so it probably shouldn't be here - hence the API differences)
             if (!isNewApi) {
-                stringMap("docFields", resultHits.getSpecialMetadataFields());
-                stringMap("metadataFieldDisplayNames", resultHits.getMetaDisplayNames());
+                stringMap(KEY_DOC_FIELDS, resultHits.getSpecialMetadataFields());
+                stringMap(KEY_METADATA_FIELD_DISPLAY_NAMES, resultHits.getMetaDisplayNames());
             }
 
             if (resultHits.getGroup() != null) {
@@ -1307,8 +1311,8 @@ public class ResponseStreamer {
                     //  so it probably shouldn't be here)
                     Map<String, String> docFields = result.getDocFields();
                     Map<String, String> metaDisplayNames = result.getMetaDisplayNames();
-                    stringMap("docFields", docFields);
-                    stringMap("metadataFieldDisplayNames", metaDisplayNames);
+                    stringMap(KEY_DOC_FIELDS, docFields);
+                    stringMap(KEY_METADATA_FIELD_DISPLAY_NAMES, metaDisplayNames);
                 }
             }
             ds.endMap().endEntry();
@@ -1765,8 +1769,8 @@ public class ResponseStreamer {
                 // (this information is not specific to this document and can be found elsewhere,
                 //  so it probably shouldn't be here)
                 metadataGroupInfo(metadataFieldGroups);
-                stringMap("docFields", docFields);
-                stringMap("metadataFieldDisplayNames", metaDisplayNames);
+                stringMap(KEY_DOC_FIELDS, docFields);
+                stringMap(KEY_METADATA_FIELD_DISPLAY_NAMES, metaDisplayNames);
             }
         }
         ds.endMap();
