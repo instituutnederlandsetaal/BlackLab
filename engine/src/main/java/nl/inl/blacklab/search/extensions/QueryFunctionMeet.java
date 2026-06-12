@@ -94,8 +94,4 @@ public class QueryFunctionMeet extends QueryFunction {
         return new SpanQuerySequence(findClause, lookaheadEdge);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

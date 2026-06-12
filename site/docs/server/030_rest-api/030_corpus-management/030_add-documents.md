@@ -45,7 +45,7 @@ You can use the `converters` parameter to request extra `FileConverter` [plugins
 
 Converters under `first` will be applied _before_ any converters that may be defined in the `.blf.yaml` input format config you're using. Converters under `last` will be applied _after_ these converters. You can specify either `first` or `last`, or both.
 
-The plugins referred to must be web-safe. That is, the plugin's `isWebSafe()` method must return true, or the plugin id must be specified in the [`plugins.allowed`](/server/configuration#plugins) list in `blacklab-server.yaml`. If neither of these is true, the plugin is not allowed to run. This is intended to be a safety measure. You as the administrator of the server are responsible for making sure any plugins that are enabled this way are actually safe.
+The plugins referred to must be indicated to be "web-safe". That is, the plugin id must be specified in the [`plugins.allowed`](/server/configuration#plugins) list in `blacklab-server.yaml`. If not, the plugin is not allowed to run. This is intended to be a safety measure. You as the administrator of the server are responsible for making sure any plugins that are enabled this way are actually safe.
 
 :::
 

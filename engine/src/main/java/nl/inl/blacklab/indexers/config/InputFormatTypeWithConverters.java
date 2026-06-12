@@ -136,8 +136,4 @@ public class InputFormatTypeWithConverters extends InputFormatTypeBase {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

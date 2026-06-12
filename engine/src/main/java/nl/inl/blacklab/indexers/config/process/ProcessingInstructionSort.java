@@ -52,9 +52,4 @@ public class ProcessingInstructionSort extends ProcessingInstruction {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
-
 }

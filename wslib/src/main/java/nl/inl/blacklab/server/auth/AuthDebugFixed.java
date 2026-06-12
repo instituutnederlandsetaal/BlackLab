@@ -33,8 +33,4 @@ public class AuthDebugFixed extends AuthMethodProvider {
         return request -> User.fromIdAndSessionId(userId, request.getSessionId());
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

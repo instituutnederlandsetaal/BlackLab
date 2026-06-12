@@ -21,9 +21,4 @@ public class AuthDebugUrl extends AuthMethodProvider {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
-
 }

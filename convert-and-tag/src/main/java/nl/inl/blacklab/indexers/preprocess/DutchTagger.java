@@ -151,8 +151,4 @@ public class DutchTagger extends FileConverter {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

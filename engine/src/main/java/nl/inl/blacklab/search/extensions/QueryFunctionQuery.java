@@ -22,8 +22,4 @@ public class QueryFunctionQuery extends QueryFunction {
         throw new IllegalArgumentException("Argument to query() must be a query, got: " + o);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

@@ -43,8 +43,4 @@ public class AddMessage extends FileConverter {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

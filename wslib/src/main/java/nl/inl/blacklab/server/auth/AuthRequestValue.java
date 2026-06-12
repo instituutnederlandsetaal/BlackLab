@@ -104,9 +104,4 @@ public class AuthRequestValue extends AuthMethodProvider {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
-
 }

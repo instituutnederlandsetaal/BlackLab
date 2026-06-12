@@ -38,8 +38,4 @@ public class QueryFunctionLen extends QueryFunction {
         return ConstraintValue.get(result);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

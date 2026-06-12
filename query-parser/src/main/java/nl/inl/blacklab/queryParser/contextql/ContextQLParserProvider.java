@@ -17,8 +17,4 @@ public class ContextQLParserProvider extends QueryParserProvider {
         return new ContextualQueryLanguageParser(index, config);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

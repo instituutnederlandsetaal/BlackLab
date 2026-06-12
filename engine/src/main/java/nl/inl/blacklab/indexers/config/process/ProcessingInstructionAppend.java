@@ -117,8 +117,4 @@ public class ProcessingInstructionAppend extends ProcessingInstruction {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

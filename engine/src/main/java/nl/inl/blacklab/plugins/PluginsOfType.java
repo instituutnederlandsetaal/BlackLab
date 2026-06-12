@@ -94,12 +94,12 @@ public class PluginsOfType<T extends Plugin> {
     }
 
     private void add(String id, PluginData<T> data) {
-        if (BlackLab.isPluginAllowed(id) || data.getPlugin().isWebSafe()) {
+        if (BlackLab.isPluginAllowed(data.getPlugin())) {
             synchronized (pluginsById) {
                 pluginsById.putIfAbsent(id.toLowerCase(), data);
             }
         } else
-            logger.warn("Skipping plugin '" + id + "'; isWebSafe() returned false and it's not on the plugins.allowed whitelist)");
+            logger.warn("Skipping plugin '" + id + "'; it's not on the plugins.allowed list)");
     }
 
     public Collection<T> getAll() {

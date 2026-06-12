@@ -30,8 +30,4 @@ public class JsonParserProvider extends QueryParserProvider {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

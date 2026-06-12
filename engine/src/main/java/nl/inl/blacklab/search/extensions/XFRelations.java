@@ -130,10 +130,6 @@ public class XFRelations implements ExtensionFunctionClass {
                 return TextPatternRelationMatch.createRelMatchQuery(context, tps);
             }
 
-            @Override
-            public boolean isWebSafe() {
-                return true;
-            }
         });
 
         /*

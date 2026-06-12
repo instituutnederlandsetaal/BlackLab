@@ -7,6 +7,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import nl.inl.blacklab.plugins.Plugin;
+import nl.inl.blacklab.plugins.PluginManager;
 
 public class BLConfigPlugins {
 
@@ -84,7 +85,7 @@ public class BLConfigPlugins {
         this.allowed = allowed;
     }
 
-    public boolean isAllowed(String pluginId) {
-        return allowAll || allowed.contains(pluginId);
+    public boolean isAllowed(Plugin plugin) {
+        return allowAll || allowed.contains(plugin.getId()) || PluginManager.isAllowed(plugin);
     }
 }

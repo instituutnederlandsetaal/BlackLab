@@ -9,9 +9,11 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 /** Scorer that just uses the group size */
 public class HitGroupScorerSize extends HitGroupScorerType {
 
+    public static final String TYPE_ID = "coll-groupsize";
+
     @Override
     public String getId() {
-        return "coll-groupsize";
+        return TYPE_ID;
     }
 
     @Override
@@ -34,8 +36,4 @@ public class HitGroupScorerSize extends HitGroupScorerType {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

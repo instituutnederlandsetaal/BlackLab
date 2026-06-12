@@ -22,8 +22,4 @@ public class QueryFunctionList extends QueryFunction {
         return ConstraintValue.get((List<Object>)parameters.get(0));
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

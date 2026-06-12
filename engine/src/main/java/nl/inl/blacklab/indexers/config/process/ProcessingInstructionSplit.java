@@ -131,8 +131,4 @@ public class ProcessingInstructionSplit extends ProcessingInstruction {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

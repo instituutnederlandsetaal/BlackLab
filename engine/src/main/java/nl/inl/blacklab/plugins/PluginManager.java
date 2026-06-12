@@ -8,10 +8,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ServiceLoader;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.commons.io.FileUtils;
@@ -21,6 +23,41 @@ import org.apache.logging.log4j.Logger;
 import groovy.lang.GroovyShell;
 import nl.inl.blacklab.config.BLConfigPlugins;
 import nl.inl.blacklab.exceptions.PluginException;
+import nl.inl.blacklab.indexers.config.InputFormatTypeBase;
+import nl.inl.blacklab.indexers.config.InputFormatTypeChat;
+import nl.inl.blacklab.indexers.config.InputFormatTypeCoNLLU;
+import nl.inl.blacklab.indexers.config.InputFormatTypePlainText;
+import nl.inl.blacklab.indexers.config.InputFormatTypeTabular;
+import nl.inl.blacklab.indexers.config.InputFormatTypeWithConverters;
+import nl.inl.blacklab.indexers.config.InputFormatTypeXml;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionAppend;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionConcatDate;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionIdentity;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionIfEmpty;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionMapValues;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionMultiple;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionParsePos;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionReplace;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionSort;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionSplit;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionStrip;
+import nl.inl.blacklab.indexers.config.process.ProcessingInstructionUnique;
+import nl.inl.blacklab.search.BlackLab;
+import nl.inl.blacklab.search.extensions.QueryFunctionEnd;
+import nl.inl.blacklab.search.extensions.QueryFunctionFixedSpan;
+import nl.inl.blacklab.search.extensions.QueryFunctionFuzzy;
+import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
+import nl.inl.blacklab.search.extensions.QueryFunctionLen;
+import nl.inl.blacklab.search.extensions.QueryFunctionList;
+import nl.inl.blacklab.search.extensions.QueryFunctionMeet;
+import nl.inl.blacklab.search.extensions.QueryFunctionQuery;
+import nl.inl.blacklab.search.extensions.QueryFunctionStart;
+import nl.inl.blacklab.search.extensions.QueryFunctionStr;
+import nl.inl.blacklab.search.extensions.QueryFunctionSymbol;
+import nl.inl.blacklab.search.extensions.QueryFunctionUnion;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorerDice;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorerSalience;
+import nl.inl.blacklab.search.results.hitresults.HitGroupScorerSize;
 
 /**
  * Responsible for loading file conversion and tagging plugins.
@@ -66,6 +103,73 @@ public class PluginManager {
 
     private static final Map<Class<? extends Plugin>, PluginsOfType<? extends Plugin>> pluginsByType = new HashMap<>();
 
+    private static final Set<Class<? extends Plugin>> safePluginClasses = new HashSet<>();
+
+    static {
+        addWebSafePlugins(List.of(
+                // FileConverter
+                // DocTaskType
+                // IndexSourceType
+                // (whitelist explicitly if needed)
+
+                // HitGroupScorerType
+                HitGroupScorerDice.class,
+                HitGroupScorerSalience.class,
+                HitGroupScorerSize.class,
+
+                // InputFormatType
+                InputFormatTypeWithConverters.class,
+                InputFormatTypeXml.class,
+                InputFormatTypePlainText.class,
+                InputFormatTypeBase.class,
+                InputFormatTypeTabular.class,
+                InputFormatTypeCoNLLU.class,
+                InputFormatTypeChat.class,
+
+                // ProcessingInstruction
+                ProcessingInstructionUnique.class,
+                ProcessingInstructionSort.class,
+                ProcessingInstructionReplace.class,
+                ProcessingInstructionConcatDate.class,
+                ProcessingInstructionMultiple.class,
+                ProcessingInstructionMapValues.class,
+                ProcessingInstructionParsePos.class,
+                ProcessingInstructionAppend.class,
+                ProcessingInstructionIdentity.class,
+                ProcessingInstructionSplit.class,
+                ProcessingInstructionStrip.class,
+                ProcessingInstructionIfEmpty.class,
+
+                // QueryFunction
+                QueryFunctionUnion.class,
+                QueryFunctionStr.class,
+                QueryFunctionFixedSpan.class,
+                QueryFunctionLambda.class,
+                QueryFunctionEnd.class,
+                QueryFunctionList.class,
+                QueryFunctionSymbol.class,
+                QueryFunctionFuzzy.class,
+                QueryFunctionStart.class,
+                QueryFunctionMeet.class,
+                QueryFunctionQuery.class,
+                QueryFunctionLen.class
+        ));
+    }
+
+    public static synchronized void addWebSafePlugins(List<Class<? extends Plugin>> pluginClasses) {
+        safePluginClasses.addAll(pluginClasses);
+    }
+
+    public static synchronized <T extends Plugin> boolean isAllowed(Plugin plugin) {
+        ensureInitialized();
+        return safePluginClasses.contains(plugin.getClass());
+    }
+
+    private static synchronized void ensureInitialized() {
+        if (!isInitialized)
+            initialize(BlackLab.config().getPlugins(), BlackLab.configDir());
+    }
+
     /** Groovy plugin script we've found but not loaded yet. We don't yet know its plugin type. */
     record UnloadedGroovyPlugin(File scriptFile, BLConfigPlugins pluginConfig) {}
 
@@ -85,7 +189,7 @@ public class PluginManager {
         return pluginsDir;
     }
 
-    public static void addPluginType(Class<? extends Plugin> pluginType) {
+    public static synchronized void addPluginType(Class<? extends Plugin> pluginType) {
         if (isInitialized)
             throw new IllegalStateException("Cannot add plugin type after initialization");
         pluginTypes.add(pluginType);
@@ -99,7 +203,7 @@ public class PluginManager {
      * @param pluginConfig configurations per plugin id
      * @param configDir directory where plugins and their configs can be found
      */
-    public static void initialize(BLConfigPlugins pluginConfig, File configDir) {
+    public static synchronized void initialize(BLConfigPlugins pluginConfig, File configDir) {
         if (isInitialized)
             throw new IllegalStateException("PluginManager already initialized");
         isInitialized = true;
@@ -153,7 +257,7 @@ public class PluginManager {
         return new URLClassLoader(urls, parent);
     }
 
-    private synchronized static void findGroovyScripts(BLConfigPlugins pluginConfig) {
+    private static synchronized void findGroovyScripts(BLConfigPlugins pluginConfig) {
         File[] scriptFiles = pluginsDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".groovy"));
         if (scriptFiles != null) {
             for (File scriptFile: scriptFiles) {
@@ -172,6 +276,7 @@ public class PluginManager {
      * to be loaded first.
      */
     static void loadAllGroovyScripts() {
+        ensureInitialized();
         ArrayList<String> ids = new ArrayList<>(unloadedGroovyScripts.keySet());
         for (String id: ids) {
             getUnloaded(id);
@@ -184,7 +289,8 @@ public class PluginManager {
      * @param id  plugin id (groovy script name)
      * @param <T> plugin type
      */
-    synchronized static <T extends Plugin> void getUnloaded(String id) {
+    static synchronized <T extends Plugin> void getUnloaded(String id) {
+        ensureInitialized();
         UnloadedGroovyPlugin unloaded;
         synchronized (unloadedGroovyScripts) {
             unloaded = unloadedGroovyScripts.remove(id);
@@ -211,6 +317,7 @@ public class PluginManager {
     }
 
     private static void register(Plugin plugin, BLConfigPlugins pluginConfig, String scriptFileName) {
+        ensureInitialized();
         for (Class<? extends Plugin> pluginClass: pluginTypes) {
             if (pluginClass.isInstance(plugin)) {
                 type(pluginClass).register(pluginClass.cast(plugin), pluginConfig, scriptFileName);
@@ -221,8 +328,7 @@ public class PluginManager {
     /** Get the manager for one type of plugins. */
     @SuppressWarnings("unchecked")
     public static <T extends Plugin> PluginsOfType<T> type(Class<T> pluginType) {
-        if (!isInitialized)
-            throw new IllegalStateException("Plugin system is not initialized.");
+        ensureInitialized();
         PluginsOfType<T> tPluginsOfType = (PluginsOfType<T>) pluginsByType.get(pluginType);
         if (tPluginsOfType == null)
             throw new IllegalArgumentException("Unknown plugin type: " + pluginType.getName());

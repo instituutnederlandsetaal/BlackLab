@@ -8,9 +8,11 @@ import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 
 public class HitGroupScorerSalience extends HitGroupScorerType {
 
+    public static final String TYPE_ID = "coll-salience";
+
     @Override
     public String getId() {
-        return "coll-salience";
+        return TYPE_ID;
     }
 
     @Override
@@ -38,8 +40,4 @@ public class HitGroupScorerSalience extends HitGroupScorerType {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

@@ -34,8 +34,4 @@ public class QueryFunctionFuzzy extends QueryFunction {
         return new SpanFuzzyQuery(context.queryInfo(), term, maxEdits, prefixLength);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

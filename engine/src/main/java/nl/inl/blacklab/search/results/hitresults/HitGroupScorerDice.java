@@ -39,8 +39,4 @@ public class HitGroupScorerDice extends HitGroupScorerType {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

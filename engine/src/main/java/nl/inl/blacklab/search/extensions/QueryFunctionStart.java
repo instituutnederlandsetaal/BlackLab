@@ -20,8 +20,4 @@ public class QueryFunctionStart extends QueryFunction {
         return ConstraintValue.get(((MatchInfo)parameters.get(0)).getSpanStart());
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

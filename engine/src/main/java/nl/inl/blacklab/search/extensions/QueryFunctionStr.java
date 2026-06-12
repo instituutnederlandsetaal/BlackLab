@@ -35,8 +35,4 @@ public class QueryFunctionStr extends QueryFunction {
         return ConstraintValue.get(o.toString());
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

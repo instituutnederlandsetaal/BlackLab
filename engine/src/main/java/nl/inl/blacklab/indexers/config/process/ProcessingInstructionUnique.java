@@ -51,9 +51,4 @@ public class ProcessingInstructionUnique extends ProcessingInstruction {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
-
 }

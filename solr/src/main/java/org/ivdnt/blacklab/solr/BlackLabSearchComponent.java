@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -24,7 +25,16 @@ import nl.inl.blacklab.Constants;
 import nl.inl.blacklab.instrumentation.RequestInstrumentationProvider;
 import nl.inl.blacklab.plugins.AuthMethodProvider;
 import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.queryParser.JsonParserProvider;
+import nl.inl.blacklab.queryParser.contextql.ContextQLParserProvider;
+import nl.inl.blacklab.queryParser.corpusql.BcqlParserProvider;
+import nl.inl.blacklab.search.BlackLab;
 import nl.inl.blacklab.search.BlackLabIndex;
+import nl.inl.blacklab.server.auth.AuthClarinEppn;
+import nl.inl.blacklab.server.auth.AuthDebugFixed;
+import nl.inl.blacklab.server.auth.AuthDebugUrl;
+import nl.inl.blacklab.server.auth.AuthHttpBasic;
+import nl.inl.blacklab.server.auth.AuthRequestValue;
 import nl.inl.blacklab.server.config.BLSConfig;
 import nl.inl.blacklab.server.config.BLSConfigDebug;
 import nl.inl.blacklab.server.datastream.DataStream;
@@ -74,8 +84,6 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
     private RequestInstrumentationProvider instrumentationProvider = RequestInstrumentationProvider.noOpProvider();
 
     public BlackLabSearchComponent() {
-        // Before the plugin system is initialized, add our plugin type to it
-        PluginManager.addPluginType(AuthMethodProvider.class);
     }
 
     /**
@@ -90,6 +98,18 @@ public class BlackLabSearchComponent extends SearchComponent implements SolrCore
         this.core = core;
 
         BLSConfig config = getConfig(core);
+
+        // Before the plugin system is initialized, add our plugin type to it
+        PluginManager.addPluginType(AuthMethodProvider.class);
+        PluginManager.addWebSafePlugins(List.of(
+                AuthHttpBasic.class,
+                AuthDebugFixed.class,
+                AuthClarinEppn.class,
+                AuthDebugUrl.class,
+                AuthRequestValue.class,
+                BcqlParserProvider.class,
+                JsonParserProvider.class,
+                ContextQLParserProvider.class));
 
         // Instantiate our search manager from the config
         config.setIsSolr(true);

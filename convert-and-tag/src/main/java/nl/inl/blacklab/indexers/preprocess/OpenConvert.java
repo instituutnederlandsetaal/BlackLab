@@ -167,8 +167,4 @@ public class OpenConvert extends FileConverter {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

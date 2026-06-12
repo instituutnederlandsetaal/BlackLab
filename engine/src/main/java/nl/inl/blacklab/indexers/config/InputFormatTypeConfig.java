@@ -397,8 +397,4 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

@@ -32,8 +32,4 @@ public class QueryFunctionFixedSpan extends QueryFunction {
         return new SpanQueryFixedSpan(context.queryInfo(), context.luceneField(), start, end);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

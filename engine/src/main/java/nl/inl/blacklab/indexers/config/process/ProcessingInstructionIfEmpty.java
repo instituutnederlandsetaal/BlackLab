@@ -90,8 +90,4 @@ public class ProcessingInstructionIfEmpty extends ProcessingInstruction {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

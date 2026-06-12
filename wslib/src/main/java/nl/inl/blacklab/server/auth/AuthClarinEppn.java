@@ -39,8 +39,4 @@ public class AuthClarinEppn extends AuthMethodProvider {
         };
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

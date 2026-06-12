@@ -20,8 +20,4 @@ public class QueryFunctionEnd extends QueryFunction {
         return ConstraintValue.get(((MatchInfo)parameters.get(0)).getSpanEnd());
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

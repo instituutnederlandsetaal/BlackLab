@@ -123,9 +123,7 @@ A carelessly written plugin could introduce a security vulnerability, e.g. by al
 
 For this reason, BlackLab Server only allows some built-in plugins to run by default. The commandline tools like `IndexTool`, by contrast, will allow any plugin to run. If you want to use your own plugins with BlackLab Server, you need to explicitly allow them.
 
-There two ways to allow a plugin to run from BlackLab Server:
-- override the `isWebSafe()` method and have it return `true`, OR
-- add the plugin id to the [`plugins.allowed`](/server/configuration#plugins) list in `blacklab-server.yaml`
+To allow a plugin to run from BlackLab Server, add the plugin id to the [`plugins.allowed`](/server/configuration#plugins) list in `blacklab-server.yaml`.
 
 Especially if your plugin takes parameters (or other arbitrary user input such as files to be indexed), you should be extra careful to validate and sanitize this input to avoid vulnerabilities like code injection, path traversal, etc.
 

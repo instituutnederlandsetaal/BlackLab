@@ -116,8 +116,4 @@ public class ProcessingInstructionConcatDate extends ProcessingInstruction {
         }
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

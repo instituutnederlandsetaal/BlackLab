@@ -24,7 +24,7 @@ import nl.inl.blacklab.config.BlackLabConfig;
 import nl.inl.blacklab.exceptions.ErrorOpeningIndex;
 import nl.inl.blacklab.exceptions.InvalidConfiguration;
 import nl.inl.blacklab.indexers.config.ConfigInputFormat;
-import nl.inl.blacklab.plugins.PluginManager;
+import nl.inl.blacklab.plugins.Plugin;
 import nl.inl.util.DownloadCache;
 import nl.inl.util.FileUtil;
 import nl.inl.util.ZipHandleManager;
@@ -431,9 +431,6 @@ public final class BlackLab {
             BLConfigIndexing indexing = config().getIndexing();
             DownloadCache.setConfig(indexing.downloadCacheConfig());
             ZipHandleManager.setMaxOpen(indexing.getZipFilesMaxOpen());
-
-            // Plugins settings
-            PluginManager.initialize(config().getPlugins(), configDir());
         }
     }
 
@@ -462,7 +459,7 @@ public final class BlackLab {
         return fieldValueSortCollator;
     }
 
-    public static boolean isPluginAllowed(String pluginId) {
-        return config().getPlugins().isAllowed(pluginId);
+    public static boolean isPluginAllowed(Plugin plugin) {
+        return config().getPlugins().isAllowed(plugin);
     }
 }

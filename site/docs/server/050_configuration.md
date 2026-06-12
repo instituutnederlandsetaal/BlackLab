@@ -474,8 +474,8 @@ plugins:
     # (default: false)
     delayInitialization: false
 
-    # Explicitly allow these plugin ids to be used from BlackLab Server, even if their
-    # isWebSafe() method returns false. CAUTION: use at your own risk!
+    # Allow these plugin ids to be used from BlackLab Server.
+    # CAUTION: use at your own risk!
     allowed:
         - my-new-plugin
         - another-great-plugin

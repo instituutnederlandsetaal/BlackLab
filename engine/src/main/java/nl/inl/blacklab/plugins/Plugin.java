@@ -271,7 +271,6 @@ public abstract class Plugin {
      * If specified, the file must exist and be readable.
      *
      * @param name setting name
-     * @param mustExistIfSpecified check if the file exists?
      * @return file found (although it may not exist)
      * @throws PluginException if value not found, not a string, or not readable
      */
@@ -280,23 +279,6 @@ public abstract class Plugin {
         if (path == null)
             return Optional.empty();
         return Optional.of(new File(path));
-    }
-
-    /**
-     * May this plugin safely be called by a BlackLab Server client?
-     *
-     * This method should return false, unless the plugin validates its input
-     * to prevent any misuse, particularly if the plugin can access resources
-     * on the filesystem or network.
-     *
-     * Plugins that don't declare themselves as web-safe may still be explicitly
-     * whitelisted in blacklab-server.yaml, although doing so comes with
-     * potential risks.
-     *
-     * @return true if the plugin may be called by a REST API client, false if not
-     */
-    public boolean isWebSafe() {
-        return false;
     }
 
 }

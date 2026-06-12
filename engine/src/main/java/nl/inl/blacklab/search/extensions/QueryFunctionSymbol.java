@@ -20,8 +20,4 @@ public class QueryFunctionSymbol extends QueryFunction {
         return ConstraintValue.symbol(name);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

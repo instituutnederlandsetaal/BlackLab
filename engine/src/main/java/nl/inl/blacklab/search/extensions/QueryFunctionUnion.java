@@ -32,8 +32,4 @@ public class QueryFunctionUnion extends QueryFunction {
         return new BLSpanOrQuery(clauses);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }

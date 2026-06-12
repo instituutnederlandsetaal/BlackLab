@@ -23,8 +23,4 @@ public class QueryFunctionLambda extends QueryFunction {
         return func.apply(context.queryInfo(), context, parameters);
     }
 
-    @Override
-    public boolean isWebSafe() {
-        return true;
-    }
 }
