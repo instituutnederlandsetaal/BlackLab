@@ -472,7 +472,7 @@ meet("platypus", !("weird"), -5, 5)
 
 The `meet` function was inspired by the function with the same name in the [Sketch Engine](https://www.sketchengine.eu/documentation/cql-meet-union/).
 
-Note that the `meet` function is just syntactic sugar for a "regular" BCQL query. For example, the last example is equivalent to:
+Note that the `meet` function is just syntactic sugar for a "regular" BCQL query. For example, `meet("fish", "in" "water", 2, 5)` is equivalent to:
 
 ```
 "fish" (?= []{1,4} "in" "water" )
