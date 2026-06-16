@@ -144,7 +144,7 @@
         <dependency>
             <groupId>net.sf.saxon</groupId>
             <artifactId>Saxon-HE</artifactId>
-            <version>12.7</version>
+            <version>12.9</version>
             <exclusions>
                 <exclusion>
                     <artifactId>xml-apis</artifactId>

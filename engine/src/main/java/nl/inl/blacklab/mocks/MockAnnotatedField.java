@@ -72,6 +72,11 @@ public class MockAnnotatedField implements AnnotatedField {
             }
 
             @Override
+            public Annotation defaultSearch() {
+                return main();
+            }
+
+            @Override
             public Iterator<Annotation> iterator() {
                 return annotations.iterator();
             }

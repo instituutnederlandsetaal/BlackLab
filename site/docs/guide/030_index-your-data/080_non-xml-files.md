@@ -33,7 +33,7 @@ fileTypeOptions:
 annotatedFields:
   contents:
     annotations:
-    - name: word  # First annotation becomes the main annotation
+    - name: word
       valuePath: 2    # (1-based) column number or column name (if file has them) 
       sensitivity: sensitive_insensitive
     - name: lemma
@@ -85,7 +85,7 @@ documentPath: doc   # looks for document elements such as in Sketch WPL format
 annotatedFields:
   contents:
     annotations:
-    - name: word  # First annotation becomes the main annotation
+    - name: word
       valuePath: 1
       sensitivity: sensitive_insensitive
     - name: lemma

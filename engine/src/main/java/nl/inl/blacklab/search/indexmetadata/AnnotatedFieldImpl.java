@@ -32,7 +32,7 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
 
     public final class AnnotationsImpl implements Annotations {
         @Override
-        public Annotation main() {
+        public synchronized Annotation main() {
             if (mainAnnotation == null && mainAnnotationName != null) {
                 // Set during indexing, when we don't actually have annotation information
                 // available (because the index is being built up, so we couldn't detect
@@ -42,6 +42,23 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
                 //mainAnnotationName = null;
             }
             return mainAnnotation;
+        }
+
+        @Override
+        public synchronized Annotation defaultSearch() {
+            if (defaultSearchAnnotation == null) {
+                if (defaultSearchAnnotationName != null) {
+                    // Set during indexing, when we don't actually have annotation information
+                    // available (because the index is being built up, so we couldn't detect
+                    // it on startup).
+                    // Just retrieve it now.
+                    defaultSearchAnnotation = annots.get(defaultSearchAnnotationName);
+                    //defaultSearchAnnotationName = null;
+                } else {
+                    defaultSearchAnnotation = main();
+                }
+            }
+            return defaultSearchAnnotation;
         }
 
         @Override
@@ -90,6 +107,14 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
      */
     @JsonProperty("mainAnnotation")
     private String mainAnnotationName;
+
+    /** The field's default search annotation */
+    @XmlTransient
+    private Annotation defaultSearchAnnotation = null;
+
+    /** The field's main annotation */
+    @JsonProperty("defaultSearchAnnotation")
+    private String defaultSearchAnnotationName;
 
     /** Are there XML tag locations stored for this field? */
     @JsonProperty("hasXmlTags")
@@ -164,6 +189,15 @@ public class AnnotatedFieldImpl extends FieldImpl implements AnnotatedField {
             this.mainAnnotationName = mainAnnotationName;
             if (annots.containsKey(mainAnnotationName))
                 mainAnnotation = annots.get(mainAnnotationName);
+        }
+    }
+
+    synchronized void setDefaultSearchAnnotation(String defaultSearchAnnotationName) {
+        if (this.defaultSearchAnnotationName == null || !this.defaultSearchAnnotationName.equals(defaultSearchAnnotationName)) {
+            ensureNotFrozen();
+            this.defaultSearchAnnotationName = defaultSearchAnnotationName;
+            if (annots.containsKey(defaultSearchAnnotationName))
+                defaultSearchAnnotation = annots.get(defaultSearchAnnotationName);
         }
     }
 

@@ -47,6 +47,14 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private String punctPath = null;
 
+    /** Main annotation (i.e. the one containing the words from the text). Defaults to the first one defined. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String mainAnnotation = null;
+
+    /** Default annotation to search on, if not the main annotation */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private String defaultSearchAnnotation = null;
+
     /** All annotations on our words. */
     private final List<ConfigAnnotation> annotations = new ArrayList<>();
 
@@ -57,6 +65,23 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
     /** All annotations on our words, with subannotations flattened. */
     @JsonIgnore
     private List<ConfigAnnotation> annotationsFlattened;
+
+    public static ConfigAnnotation determineMainAnnotation(ConfigAnnotatedField configField) {
+        ConfigAnnotation mainAnnotation;
+        if (configField.getMainAnnotation() != null) {
+            // Explicitly configured takes precedence
+            mainAnnotation = configField.getAnnotation(configField.getMainAnnotation());
+        } else {
+            // Default: first non-forEach annotation
+            mainAnnotation = configField.getAnnotations().stream()
+                    .filter(a -> !a.isForEach())
+                    .findFirst()
+                    .orElseThrow(() -> new InvalidInputFormatConfig(
+                            "Could not determine main annotation for field " + configField.getName() +
+                                    " (no non-forEach fields found)"));
+        }
+        return mainAnnotation;
+    }
 
     public List<ConfigAnnotation> getAnnotations() {
         return Collections.unmodifiableList(annotations);
@@ -143,6 +168,8 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
         result.setWordPath(wordPath);
         result.setTokenIdPath(tokenIdPath);
         result.setPunctPath(punctPath);
+        result.setDefaultSearchAnnotation(defaultSearchAnnotation);
+        result.setMainAnnotation(mainAnnotation);
         for (ConfigAnnotation a: annotations)
             result.addAnnotation(a.copy());
         for (ConfigStandoffAnnotations a: standoffAnnotations)
@@ -170,6 +197,14 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public void setPunctPath(String punctPath) {
         this.punctPath = punctPath;
+    }
+
+    public void setMainAnnotation(String mainAnnotation) {
+        this.mainAnnotation = mainAnnotation;
+    }
+
+    public void setDefaultSearchAnnotation(String defaultSearchAnnotation) {
+        this.defaultSearchAnnotation = defaultSearchAnnotation;
     }
 
     public void addInlineTag(ConfigInlineTag inlineTag) {
@@ -206,6 +241,14 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     public String getPunctPath() {
         return punctPath;
+    }
+
+    public String getMainAnnotation() {
+        return mainAnnotation;
+    }
+
+    public String getDefaultSearchAnnotation() {
+        return defaultSearchAnnotation;
     }
 
     public List<ConfigStandoffAnnotations> getStandoffAnnotations() {
@@ -246,8 +289,6 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
         if (o == null || getClass() != o.getClass())
             return false;
         ConfigAnnotatedField that = (ConfigAnnotatedField) o;
@@ -255,17 +296,19 @@ public class ConfigAnnotatedField implements ConfigWithAnnotations {
                 that.name) && Objects.equals(displayName, that.displayName) && Objects.equals(
                 description, that.description) && Objects.equals(containerPath, that.containerPath)
                 && Objects.equals(wordPath, that.wordPath) && Objects.equals(tokenIdPath,
-                that.tokenIdPath) && Objects.equals(punctPath, that.punctPath) && Objects.equals(
-                annotations, that.annotations) && Objects.equals(standoffAnnotations, that.standoffAnnotations)
-                && Objects.equals(inlineTags, that.inlineTags) && Objects.equals(annotationsFlattened,
-                that.annotationsFlattened);
+                that.tokenIdPath) && Objects.equals(punctPath, that.punctPath) &&
+                Objects.equals(mainAnnotation, that.mainAnnotation) &&
+                Objects.equals(defaultSearchAnnotation, that.defaultSearchAnnotation) &&
+                Objects.equals(annotations,
+                that.annotations) && Objects.equals(standoffAnnotations, that.standoffAnnotations)
+                && Objects.equals(inlineTags, that.inlineTags);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(name, displayName, description, containerPath, wordPath, tokenIdPath, punctPath,
-                annotationsMap,
-                standoffAnnotations, inlineTags, annotationsFlattened, dummyForStoringLinkedDocument);
+                mainAnnotation, defaultSearchAnnotation, annotations, standoffAnnotations, inlineTags,
+                dummyForStoringLinkedDocument);
     }
 
     public void setTokenPositionIdPath(String tokenPositionIdPath) {

@@ -617,10 +617,10 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Unknown annotated field: null");
-        Annotation mainAnnotation = annotatedField.mainAnnotation();
-        if (mainAnnotation == null)
-            throw new IllegalArgumentException("Main annotation not found for " + annotatedField.name());
-        return QueryExecutionContext.get(this, mainAnnotation, defaultMatchSensitivity);
+        Annotation defaultSearchAnnotation = annotatedField.defaultSearchAnnotation();
+        if (defaultSearchAnnotation == null)
+            throw new IllegalArgumentException("Default search annotation not found for " + annotatedField.name());
+        return QueryExecutionContext.get(this, defaultSearchAnnotation, defaultMatchSensitivity);
     }
 
     @Override

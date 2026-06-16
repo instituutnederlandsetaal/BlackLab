@@ -15,11 +15,21 @@ annotatedFields:
     
         # What are our word tags? (relative to containerPath)
         wordPath: .//w
+        
+        # The main annotations, i.e. the words from the text.
+        # Defaults to the first annotation defined in the annotations section.
+        # (from v5)
+        #mainAnnotation: word
+        
+        # What annotation to search if none specified in BCQL query.
+        # Defaults to the main annotation.
+        # (from v5)
+        #defaultSearchAnnotation: word
     
         annotations:
     
         # Text of the <w/> element contains the word form
-        # (first annotation becomes the main annotation)
+        # (first annotation becomes the main annotation unless explicitly overridden, see mainAnnotation above)
         - name: word
           valuePath: .
           sensitivity: sensitive_insensitive
@@ -30,11 +40,11 @@ annotatedFields:
           sensitivity: sensitive_insensitive
 ```
 
-Please note that when declaring annotations, the first annotation you declare will become the _main annotation_. The main annotation will:
+Please note the two special annotations: the _main annotation_ and the _default search annotation_. The first annotation declared will be used for both unless you explicitly set them; that's why they are not needed in the above example.
 
-- be searched when omitting annotation name in CQL (e.g. search for `"ship"` and it searches the main annotation).
-- be used to generate concordances (the KWIC view).
-- be returned as the value (text content) of the `<w>` tag (in the XML response).
+The default search annotation is the one that's searched when you omit the annotation name in CQL (e.g. if your query just reads `"ship"`, and the main annotation is `word`, it's the same as the query `[word="ship"]`).
+
+The main annotation is used as the default annotatoin in all other situations where an annotation is needed, e.g. displaying snippets from a document.
 
 The following sections will look at the various options you can use to configure annotations.
 
@@ -370,7 +380,7 @@ annotatedFields:
     wordPath: .//w
 
     annotations:
-    - name: word  # First annotation becomes the main annotation
+    - name: word
       valuePath: t
       sensitivity: sensitive_insensitive
     - name: lemma

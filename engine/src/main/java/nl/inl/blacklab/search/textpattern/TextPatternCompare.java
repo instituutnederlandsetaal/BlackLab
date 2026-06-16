@@ -137,7 +137,7 @@ public class TextPatternCompare extends TextPattern {
     @Override
     public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
         TextPattern actualLeft = left instanceof TextPatternDefaultValue ? // use default annotation
-                new TextPatternValue(ConstraintValue.symbol(context.field().mainAnnotation().name())) :
+                new TextPatternValue(ConstraintValue.symbol(context.field().defaultSearchAnnotation().name())) :
                 left;
         if (context.isInConstraint()) {
             // Constraint.

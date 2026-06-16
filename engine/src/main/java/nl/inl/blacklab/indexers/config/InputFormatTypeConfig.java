@@ -131,15 +131,11 @@ public abstract class InputFormatTypeConfig extends InputFormatTypeBase {
                     List<ConfigAnnotation> annotations = af.getAnnotationsFlattened();
                     if (annotations.isEmpty())
                         throw new InvalidInputFormatConfig("No annotations defined for field " + af.getName());
-                    ConfigAnnotation mainAnnotation = annotations.stream()
-                            .filter(a -> !a.isForEach())
-                            .findFirst()
-                            .orElseThrow(() -> new InvalidInputFormatConfig(
-                                    "No main annotation defined for field " + af.getName()));
+                    ConfigAnnotation mainAnnotation = ConfigAnnotatedField.determineMainAnnotation(af);
                     boolean needsPrimaryValuePayloads = getDocWriter().needsPrimaryValuePayloads();
                     AnnotatedFieldWriter fieldWriter = new AnnotatedFieldWriter(getDocWriter(), af.getName(),
                             mainAnnotation.getName(), mainAnnotation.getSensitivitySetting(), false,
-                            needsPrimaryValuePayloads);
+                            needsPrimaryValuePayloads, af.getDefaultSearchAnnotation());
 
                     String relAnnotName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
                     AnnotationSensitivities relAnnotSensitivity = AnnotationSensitivities.defaultForAnnotation(

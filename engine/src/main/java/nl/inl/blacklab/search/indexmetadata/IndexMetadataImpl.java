@@ -637,6 +637,7 @@ public class IndexMetadataImpl implements IndexMetadataWriter {
         String mainAnnotName = fieldWriter.mainAnnotation().name();
         cf.getOrCreateAnnotation(mainAnnotName); // create main annotation
         cf.setMainAnnotationName(mainAnnotName); // set main annotation
+        cf.setDefaultSearchAnnotation(fieldWriter.defaultSearchAnnotation());
         fieldWriter.setAnnotatedField(cf);
 
         return cf;

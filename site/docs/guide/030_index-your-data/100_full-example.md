@@ -71,12 +71,18 @@ annotatedFields:
     # can refer back to it for standoff annotations later. (relative to wordPath)
     tokenIdPath: "@xml:id"
 
+    # The main annotation, i.e. the original words from the text.
+    # (defaults to the first annotation defined in "annotations")
+    mainAnnotation: word
+
+    # Default search annotation in BCQL, if not the main annotation
+    defaultSearchAnnotation: lemma
+    
     # What annotation can each word have? How do we index them?
     # (annotations are also called "(word) properties" in BlackLab)
     # (valuePaths relative to word path)
     annotations:
 
-    # First annotation is the main annotation
     - name: word
       displayName: Words in the text
       description: The word forms occurring in the document text.

@@ -173,10 +173,8 @@ public final class AnnotatedFieldsImpl implements AnnotatedFields, Freezable {
         List<String> displayOrder = new ArrayList<>();
 
         // Set main annotation name (determined by first non-forEach annotation)
-        configField.getAnnotations().stream()
-                .filter(a -> !a.isForEach())
-                .findFirst()
-                .ifPresent(a -> annotatedField.setMainAnnotationName(a.getName()));
+        annotatedField.setMainAnnotationName(ConfigAnnotatedField.determineMainAnnotation(configField).getName());
+        annotatedField.setDefaultSearchAnnotation(configField.getDefaultSearchAnnotation());
 
         boolean isFirstAnnotation = true;
         boolean hasOffsets;

@@ -16,8 +16,29 @@ public interface AnnotatedField extends Field {
      */
     Annotations annotations();
 
+    /**
+     * Main annotation, i.e. the words from the text.
+     *
+     * This is always the first annotation defined in the .blf.yaml config format file.
+     * This is used for display, sorting and grouping (unless you explicitly request another annotation).
+     * This is also the default for search, unless you explicitly specify another default search annotation.
+     *
+     * @return main annotation
+     */
     default Annotation mainAnnotation() {
         return annotations().main();
+    }
+
+    /**
+     * Default search annotation for BCQL queries.
+     *
+     * In BCQL, a double-quoted string without square brackets means a search on the default annotion.
+     * This gives the annotation that will be searched. Defaults to the main annotation.
+     *
+     * @return default search anntotation
+     */
+    default Annotation defaultSearchAnnotation() {
+        return annotations().defaultSearch();
     }
 
     default Annotation annotation(String name) {

@@ -13,6 +13,8 @@ public interface Annotations extends Iterable<Annotation> {
      */
     Annotation main();
 
+    Annotation defaultSearch();
+
     /**
      * Iterate over the annotations.
      *

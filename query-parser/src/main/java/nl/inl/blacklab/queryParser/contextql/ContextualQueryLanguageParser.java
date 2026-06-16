@@ -83,12 +83,12 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
     CompleteQuery contains(BlackLabIndex index, String field, String value) {
 
         boolean isContentsSearch = false;
-        String annotation = index.mainAnnotatedField().mainAnnotation().name();
+        String annotation = index.mainAnnotatedField().defaultSearchAnnotation().name();
         boolean isProperty;
         if (index != null && !index.getClass().getSimpleName().startsWith("Mock"))
             isProperty = index.mainAnnotatedField().annotations().exists(field);
         else
-            isProperty = field.equals(index.mainAnnotatedField().mainAnnotation().name()) || field.equals("lemma") || field.equals("pos"); // common case
+            isProperty = field.equals(index.mainAnnotatedField().defaultSearchAnnotation().name()) || field.equals("lemma") || field.equals("pos"); // common case
         if (isProperty) {
             isContentsSearch = true;
             annotation = field;
@@ -149,7 +149,7 @@ public class ContextualQueryLanguageParser implements BLQueryParser {
     }
 
     public void setDefaultProperty(IndexMetadata indexMetadata, String fieldName) {
-        defaultProperty = fieldName + "." + indexMetadata.annotatedField(fieldName).mainAnnotation().name();
+        defaultProperty = fieldName + "." + indexMetadata.annotatedField(fieldName).defaultSearchAnnotation().name();
     }
 
     public void setDefaultProperty(Annotation annotation) {

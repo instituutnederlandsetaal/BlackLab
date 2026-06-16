@@ -59,6 +59,8 @@ public class AnnotatedFieldWriter {
 
     private final AnnotationWriter mainAnnotation;
 
+    private final String defaultSearchAnnotation;
+
     private final Set<String> noForwardIndexAnnotations = new HashSet<>();
 
     private final boolean needsPrimaryValuePayloads;
@@ -90,7 +92,7 @@ public class AnnotatedFieldWriter {
      * @param needsPrimaryValuePayloads should payloads indicate whether value is primary or not?
      */
     public AnnotatedFieldWriter(DocWriter docWriter, String name, String mainAnnotationName, AnnotationSensitivities sensitivity,
-            boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads) {
+            boolean mainPropHasPayloads, boolean needsPrimaryValuePayloads, String defaultSearchAnnotation) {
         this.docWriter = docWriter;
         relationsStrategy = docWriter.getRelationsStrategy();
         relationAnnotationName = AnnotatedFieldNameUtil.RELATIONS_ANNOT_NAME;
@@ -100,6 +102,7 @@ public class AnnotatedFieldWriter {
         mainAnnotation = new AnnotationWriter(this, mainAnnotationName, sensitivity, includeOffsets,
                 mainPropHasPayloads, needsPrimaryValuePayloads);
         annotations.put(mainAnnotationName, mainAnnotation);
+        this.defaultSearchAnnotation = defaultSearchAnnotation == null ? mainAnnotationName : defaultSearchAnnotation;
     }
 
     public int numberOfTokens() {
@@ -182,6 +185,10 @@ public class AnnotatedFieldWriter {
 
     public AnnotationWriter mainAnnotation() {
         return mainAnnotation;
+    }
+
+    public String defaultSearchAnnotation() {
+        return defaultSearchAnnotation;
     }
 
     public AnnotationWriter tagsAnnotation() {

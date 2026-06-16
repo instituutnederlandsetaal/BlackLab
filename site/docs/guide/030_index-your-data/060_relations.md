@@ -43,7 +43,7 @@ annotatedFields:
         tokenIdPath: "@xml:id"
 
         annotations:
-        - name: word  # First annotation becomes the main annotation
+        - name: word
           valuePath: .
           sensitivity: sensitive_insensitive
 
