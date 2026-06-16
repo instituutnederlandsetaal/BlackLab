@@ -38,7 +38,7 @@ public enum WsParam {
     HIT_FILTER_VALUE("hitfilterval"),
 
     // How to search (debug)
-    FORWARD_INDEX_MATCHING_SETTING("fimatch"),
+    FORWARD_INDEX_MATCHING_SETTING("fimatch", Type.INTEGER),
     USE_CACHE("usecache", Type.BOOLEAN),
 
     // How to present results
