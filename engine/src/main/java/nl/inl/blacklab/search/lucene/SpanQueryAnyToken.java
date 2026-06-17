@@ -3,7 +3,6 @@ package nl.inl.blacklab.search.lucene;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -89,6 +88,12 @@ public class SpanQueryAnyToken extends BLSpanQuery {
 
     public SpanQueryAnyToken(QueryInfo queryInfo, int min, int max, String luceneField) {
         super(queryInfo);
+        if (min < 0)
+            throw new IllegalArgumentException("min cannot be negative");
+        if (max < 1)
+            throw new IllegalArgumentException("max must be at least 1");
+        if (min > max)
+            throw new IllegalArgumentException("min cannot be greater than max");
         this.min = min;
         this.max = max;
         this.luceneField = luceneField;
