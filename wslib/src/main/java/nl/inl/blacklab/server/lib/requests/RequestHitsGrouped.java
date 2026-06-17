@@ -140,7 +140,9 @@ public record RequestHitsGrouped(
             throw new UnsupportedOperationException("Collocations with inline context tags are currently not supported");
         if (collocationType == CollocationType.PROXIMITY) {
             // Proximity-based collocations.
-            return "meet(" + collocateQuery + ", " + findQuery + "," + (-context.before()) + "," + context.after()
+            int lower = context.before() == 0 ? 1 : -context.before();
+            int upper = context.after() == 0 ? -1 : context.after();
+            return "meet(" + collocateQuery + ", " + findQuery + "," + lower + "," + upper
                     + ")";
         } else {
             // Relation-based collocations.
