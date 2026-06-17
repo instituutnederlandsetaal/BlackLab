@@ -44,8 +44,12 @@ public class QueryFunctionMeet extends QueryFunction {
             negate = true;
             nearClause = sqn.inverted();
         }
-        if (contextEnd < 0) {
+        if (contextEnd <= 0) {
             // Both negative; near before find
+            if (contextStart == 0)
+                contextStart = -1;
+            if (contextEnd == 0)
+                contextEnd = -1;
             result = nearBeforeFind(context, findClause, nearClause, negate, contextStart, contextEnd);
         } else if (contextStart >= 0) {
             // Both non-negative; near after find
