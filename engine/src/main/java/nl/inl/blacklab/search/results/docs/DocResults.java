@@ -571,8 +571,9 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
             if (query != null) {
 
                 // Rewrite query (we store the original query, not the rewritten one)
+                Query rewritten;
                 try {
-                    query = query.rewrite(queryInfo().index().reader());
+                    rewritten = query.rewrite(queryInfo().index().reader());
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
@@ -581,7 +582,7 @@ public class DocResults extends ResultsList<DocResult> implements ResultGroups, 
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
-                    Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+                    Weight weight = queryInfo().index().searcher().createWeight(rewritten, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
                     List<AnnotatedField> tokenLengthFields = queryInfo().index().annotatedFields().stream().toList();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         LeafReader reader = r.reader();

@@ -1,6 +1,7 @@
 package nl.inl.blacklab.resultproperty;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.search.Query;
@@ -8,7 +9,6 @@ import org.apache.lucene.search.TermQuery;
 
 import nl.inl.blacklab.analysis.BuiltinAnalyzers;
 import nl.inl.blacklab.search.BlackLabIndex;
-import nl.inl.blacklab.search.indexmetadata.FieldType;
 import nl.inl.blacklab.search.indexmetadata.MetadataField;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.util.PropertySerializeUtil;
@@ -179,16 +179,24 @@ public class DocPropertyStoredField extends DocProperty {
         MetadataField metadataField = index.metadataField(fieldName);
         if (value.toString().isEmpty())
             return null; // Cannot search for empty string (to avoid this problem, configure an "Unknown value")
-        if (!value.toString().isEmpty() && metadataField.type() == FieldType.TOKENIZED) {
-            String strValue = "\"" + value.toString().replace("\"", "\\\"") + "\"";
-            try {
-                Analyzer analyzer = BuiltinAnalyzers.fromString(metadataField.analyzerName()).getAnalyzer();
-                return LuceneUtil.parseLuceneQuery(index, strValue, analyzer, fieldName);
-            } catch (ParseException e) {
-                return null;
+        switch (metadataField.type()) {
+            case TOKENIZED -> {
+                // Perform a phrase search on the value.
+                String strValue = "\"" + value.toString().replace("\"", "\\\"") + "\"";
+                try {
+                    Analyzer analyzer = BuiltinAnalyzers.fromString(metadataField.analyzerName()).getAnalyzer();
+                    return LuceneUtil.parseLuceneQuery(index, strValue, analyzer, fieldName);
+                } catch (ParseException e) {
+                    return null;
+                }
             }
-        } else {
-            return new TermQuery(new Term(fieldName, StringUtil.desensitize(value.toString())));
+            case UNTOKENIZED -> {
+                return new TermQuery(new Term(fieldName, StringUtil.desensitize(value.toString())));
+            }
+            case NUMERIC -> {
+                return IntPoint.newExactQuery(fieldName, Integer.parseInt(value.toString()));
+            }
+            default -> throw new UnsupportedOperationException("Unsupported type: " + metadataField.type());
         }
     }
 
