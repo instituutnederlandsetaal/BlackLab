@@ -559,8 +559,9 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
             if (query != null) {
 
                 // Rewrite query (we store the original query, not the rewritten one)
+                Query rewritten;
                 try {
-                    query = query.rewrite(index().reader());
+                    rewritten = query.rewrite(queryInfo().index().reader());
                 } catch (IOException e) {
                     throw new InvalidIndex(e);
                 }
@@ -569,9 +570,9 @@ public class DocResults extends ResultsList<DocResult, DocProperty> implements R
                 try {
                     numberOfTokens = countTokens ? 0 : -1;
                     numberOfDocuments = 0;
-                    Weight weight = queryInfo().index().searcher().createWeight(query, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
+                    Weight weight = queryInfo().index().searcher().createWeight(rewritten, ScoreMode.COMPLETE_NO_SCORES, 1.0f);
                     String queryField = queryInfo().field().name();
-                    List<AnnotatedField> tokenLengthFields = index().annotatedFields().stream().toList();
+                    List<AnnotatedField> tokenLengthFields = queryInfo().index().annotatedFields().stream().toList();
                     for (LeafReaderContext r: queryInfo().index().reader().leaves()) {
                         LeafReader reader = r.reader();
                         Bits liveDocs = reader.getLiveDocs();
