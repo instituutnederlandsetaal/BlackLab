@@ -29,17 +29,17 @@ public class TestSpansRelations {
         // Test getting full spans
         full = new MockSpans(aDoc, aStart, aEnd);
         TestUtil.assertEquals(full, new SpansRelationSpanAdjust(
-                createSpans.call(), RelationInfo.SpanMode.FULL_SPAN, null), skipFirstNextDoc);
+                createSpans.call(), null, RelationInfo.SpanMode.FULL_SPAN, null), skipFirstNextDoc);
 
         // Test getting source spans
         BLSpans sources = new MockSpans(aDoc, aStart, aStart);
         TestUtil.assertEquals(sources, new SpansRelationSpanAdjust(
-                createSpans.call(), RelationInfo.SpanMode.SOURCE, null), skipFirstNextDoc);
+                createSpans.call(), null, RelationInfo.SpanMode.SOURCE, null), skipFirstNextDoc);
 
         // Test getting target spans
         BLSpans targets = new MockSpans(aDoc, aEnd, aEnd);
         TestUtil.assertEquals(targets, new SpansRelationSpanAdjust(
-                createSpans.call(), RelationInfo.SpanMode.TARGET, null), skipFirstNextDoc);
+                createSpans.call(), null, RelationInfo.SpanMode.TARGET, null), skipFirstNextDoc);
     }
 
     @Test

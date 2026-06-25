@@ -30,41 +30,51 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     private final BLSpanQuery clause;
 
-    private final RelationInfo.SpanMode mode;
-
     private final AnnotatedField overriddenField;
 
-    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, RelationInfo.SpanMode mode, AnnotatedField overriddenField) {
+    private final RelationInfo.SpanMode mode;
+
+    private final String adjustToCapture;
+
+    public SpanQueryRelationSpanAdjust(BLSpanQuery clause, AnnotatedField overriddenField, RelationInfo.SpanMode mode,
+            String adjustToCapture) {
         super(clause.queryInfo);
         this.clause = clause;
-        this.mode = mode;
-
-        this.guarantees = createGuarantees(clause.guarantees(), mode);
         this.overriddenField = overriddenField;
+        this.mode = mode;
+        this.adjustToCapture = adjustToCapture;
+        if (mode != null && adjustToCapture != null) {
+            throw new IllegalArgumentException("Set either span mode or capture name, not both");
+        }
+
+        this.guarantees = adjustToCapture == null ? createGuarantees(clause.guarantees(), mode) :
+            SpanGuarantees.NONE; /* capture can be anything */
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         BLSpanQuery rewritten = clause.rewrite(reader);
-        if (rewritten instanceof SpanQueryRelations) {
+        if (rewritten instanceof SpanQueryRelations && mode != null) {
             // We're just changing the span mode of a SpanQueryRelations;
             // more efficient to get the right span mode in the first place.
             RelationInfo.SpanMode m = mode == RelationInfo.SpanMode.ALL_SPANS ? RelationInfo.SpanMode.FULL_SPAN : mode;
             return ((SpanQueryRelations) rewritten).withSpanMode(m);
-        } else if (rewritten instanceof SpanQueryRelationSpanAdjust) {
+        } else if (rewritten instanceof SpanQueryRelationSpanAdjust && mode != null) {
             // We're just changing the span mode of a SpanQueryRelationSpanAdjust;
             // more efficient to get the right span mode in the first place.
             return ((SpanQueryRelationSpanAdjust) rewritten).withSpanMode(mode);
         }
         if (rewritten == clause)
             return this;
-        return new SpanQueryRelationSpanAdjust(rewritten, mode, overriddenField);
+        return new SpanQueryRelationSpanAdjust(rewritten, overriddenField, mode, adjustToCapture);
     }
 
     private BLSpanQuery withSpanMode(RelationInfo.SpanMode mode) {
+        if (this.adjustToCapture != null)
+            throw new IllegalArgumentException("Cannot change span mode, adjustToCapture is set");
         if (this.mode == mode)
             return this;
-        return new SpanQueryRelationSpanAdjust(clause, mode, overriddenField);
+        return new SpanQueryRelationSpanAdjust(clause, overriddenField, mode, null);
     }
 
     @Override
@@ -105,7 +115,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            spans = new SpansRelationSpanAdjust(spans, mode, clause.getAnnotatedField());
+            spans = new SpansRelationSpanAdjust(spans, clause.getAnnotatedField(), mode, adjustToCapture);
             if (overriddenField != null && !overriddenField.name().equals(clause.getField()))
                 spans = new SpansOverrideField(spans, overriddenField);
             return spans;
@@ -114,7 +124,7 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
 
     @Override
     public String toString(String field) {
-        return "RSPAN(" + clause + ", " + mode + ")";
+        return "RSPAN(" + clause + ", " + mode + ", " + adjustToCapture + ")";
     }
 
     @Override
@@ -123,12 +133,12 @@ public class SpanQueryRelationSpanAdjust extends BLSpanQuery {
             return false;
         SpanQueryRelationSpanAdjust that = (SpanQueryRelationSpanAdjust) o;
         return Objects.equals(clause, that.clause) && mode == that.mode && Objects.equals(
-                overriddenField, that.overriddenField);
+                overriddenField, that.overriddenField) && Objects.equals(adjustToCapture, that.adjustToCapture);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(clause, mode, overriddenField);
+        return Objects.hash(clause, mode, overriddenField, adjustToCapture);
     }
 
     /**

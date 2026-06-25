@@ -65,7 +65,7 @@ public class XFRelations implements ExtensionFunctionClass {
             ((SpanQueryAnd) relAndTarget).setFilter(SpansAndFilterFactoryUniqueRelations.INSTANCE); // don't match the same relation twice
             if (spanMode != RelationInfo.SpanMode.TARGET) {
                 // Not in the target but the source field. Adjust spans accordingly.
-                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, spanMode, context.field());
+                relAndTarget = new SpanQueryRelationSpanAdjust(relAndTarget, context.field(), spanMode, null);
             }
             return relAndTarget;
         } else {
@@ -147,7 +147,25 @@ public class XFRelations implements ExtensionFunctionClass {
                         throw new IllegalArgumentException("rspan() requires a query and a span mode as arguments");
                     BLSpanQuery relations = (BLSpanQuery) args.get(0);
                     RelationInfo.SpanMode mode = RelationInfo.SpanMode.fromCode((String) args.get(1));
-                    return new SpanQueryRelationSpanAdjust(relations, mode, null);
+                    return new SpanQueryRelationSpanAdjust(relations, null, mode, null);
+                });
+
+        /*
+         * rspan: change span mode of a query with an active relation.
+         * <p>
+         * That is, change the spans the query produces to the source or target
+         * spans of the active relation, or the full relation span, or to a span
+         * covering all matched relations.
+         */
+        QueryExtensions.register("cspan", List.of(PQuery.required("query"),
+                        PString.identifier("captureName", true)),
+                Arrays.asList(null, null),
+                (queryInfo, context, args) -> {
+                    if (args.size() < 2)
+                        throw new IllegalArgumentException("cspan() requires a query and a capture name as arguments");
+                    BLSpanQuery relations = (BLSpanQuery) args.get(0);
+                    String captureName = (String) args.get(1);
+                    return new SpanQueryRelationSpanAdjust(relations, null, null, captureName);
                 });
 
         /*

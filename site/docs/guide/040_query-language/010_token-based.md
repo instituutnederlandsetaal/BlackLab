@@ -429,7 +429,6 @@ This is NOT valid (may not produce an error, but the results are undefined):
 A:[] ("and" B:[] :: A.word = B.word) "again"   # BAD
 ```
 
-
 ## Functions
 
 <!-- @include: ../../_from_v5.md -->
@@ -481,6 +480,19 @@ Note that the `meet` function is just syntactic sugar for a "regular" BCQL query
 (read as: find those occurrences of _fish_ that are followed by 1-4 tokens, followed by the phrase _in water_)
 
 :::
+
+### cspan: adjust hit to capture
+
+Occasionally, you might not want your hits to span your whole query, but you're just interested in one part of it. You can use the `cspan()` function to adjust the hit:
+
+```
+# Find adjectives with tree
+cspan(A:[pos="ADJ"]+ "tree", "A")
+```
+
+The hits will be anything captured as `A`, so just the adjectives in this case.
+
+(of course, the same result can often be achieved using a lookahead, e.g. `[pos="ADJ"]+ (?= "tree")` in this case)
 
 ### union: combine matches
 

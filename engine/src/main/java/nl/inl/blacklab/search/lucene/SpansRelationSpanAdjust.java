@@ -12,8 +12,14 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
  */
 class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
-    /** how to adjust spans */
+    /** how to adjust spans (if adjustToCapture != null) */
     private final RelationInfo.SpanMode spanMode;
+
+    /** if non-null, adjust to this capture (instead of relation span mode) */
+    private final String adjustToCapture;
+
+    /** if adjustToCapture != null, the match info index we're capturing */
+    private int captureIndex;
 
     /** Adjusted start position of current hit */
     private int startAdjusted = -1;
@@ -28,16 +34,21 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     /** What field is our clause in? */
     private final AnnotatedField clauseField;
 
+    /** Whether or not the current hit should be included. */
+    private FilterSpans.AcceptStatus filterResult = FilterSpans.AcceptStatus.YES;
+
     /**
      * Constructs a SpansRelationSpanAdjust.
      *
-     * @param in spans to adjust
+     * @param in       spans to adjust
      * @param spanMode how to adjust spans
      */
-    public SpansRelationSpanAdjust(BLSpans in, RelationInfo.SpanMode spanMode, AnnotatedField clauseField) {
-        super(in, SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
-        this.spanMode = spanMode;
+    public SpansRelationSpanAdjust(BLSpans in, AnnotatedField clauseField, RelationInfo.SpanMode spanMode,
+            String adjustToCapture) {
+        super(in, adjustToCapture != null ? SpanGuarantees.NONE : SpanQueryRelationSpanAdjust.createGuarantees(in.guarantees(), spanMode));
         this.clauseField = clauseField;
+        this.spanMode = spanMode;
+        this.adjustToCapture = adjustToCapture;
     }
 
     @Override
@@ -47,7 +58,7 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
             return FilterSpans.AcceptStatus.NO;
         }
         setAdjustedStartEnd();
-        return FilterSpans.AcceptStatus.YES;
+        return filterResult;
     }
 
     @Override
@@ -93,21 +104,37 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
     protected void passHitQueryContextToClauses(HitQueryContext context) {
         this.context = context;
         super.passHitQueryContextToClauses(context.withField(clauseField));
+        this.captureIndex = adjustToCapture == null ? -1 : context.getMatchInfoDefs().indexOf(adjustToCapture);
     }
 
     private void setAdjustedStartEnd() {
+        filterResult = FilterSpans.AcceptStatus.YES;
         if (startPos == NO_MORE_POSITIONS) {
             startAdjusted = endAdjusted = NO_MORE_POSITIONS;
         } else if (atFirstInCurrentDoc || startPos < 0) {
             startAdjusted = endAdjusted = -1;
         } else {
-            if (spanMode == RelationInfo.SpanMode.ALL_SPANS) {
-                // We need all match info because we want to expand the current span to include all matched relations
+            boolean needMatchInfo = spanMode == RelationInfo.SpanMode.ALL_SPANS || adjustToCapture != null;
+            if (needMatchInfo) {
+                // We need all match info because we want to expand the current span to include all matched relations,
+                // or adjust the current span to be one of the captures
                 if (matchInfo == null)
                     matchInfo = new MatchInfo[context.numberOfMatchInfos()];
                 else
                     Arrays.fill(matchInfo, null);
                 in.getMatchInfo(matchInfo);
+            }
+            if (adjustToCapture != null) {
+                // We want to adjust the current span to one of the captures.
+                MatchInfo info = matchInfo[captureIndex];
+                if (info != null) {
+                    startAdjusted = info.getSpanStart();
+                    endAdjusted = info.getSpanEnd();
+                } else {
+                    // Nothing captured for this hit; skip
+                    filterResult = FilterSpans.AcceptStatus.NO;
+                }
+            } else if (spanMode == RelationInfo.SpanMode.ALL_SPANS) {
                 startAdjusted = in.startPosition();
                 endAdjusted = in.endPosition();
                 for (MatchInfo info: matchInfo) {
@@ -179,7 +206,8 @@ class SpansRelationSpanAdjust extends BLFilterSpans<BLSpans> {
 
     @Override
     public String toString() {
-        return "RSPAN(" + in + ", " + spanMode + ")";
+        String name = (spanMode == null ? "CSPAN" : "RSPAN");
+        return name + "(" + in + ", " + (spanMode == null ? adjustToCapture : spanMode) + ")";
     }
 
 }
