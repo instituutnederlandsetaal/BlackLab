@@ -25,10 +25,11 @@ Only `patt` is required; other parameters are optional.
 | `collpatt`   | Collocate filtering (BCQL) pattern, e.g. `[pos="NOUN"]` to find only noun collocates                                                                                                                                       |
 | `colltype`   | type of collocations to find: `proximity` (default) or `relsources`/`reltargets` (for relation-based collocations; see below)                                                                                              |
 | `context`    | (proximity-based collocations) how close a word has to occur to be considered a collocate. Examples: `5` gives 5 words around the word, `5:10` gives 5 before and 10 after. Default: `5`                                   |
+| `within`     | (proximity-based collocations) whether a collocation needs to be contained within a specific tag. Example: `s` will require both parts to be `within <s/>`. Default: none                                                  |
 | `reltype`    | (relation-based collocations; optional) a specific relation type to match, or a regular expression to filter relation types.                                                                                               |
 | `annotation` | annotation to use for gathering collocates (i.e. annotation to group on). Default: main annotation, usually `word`.                                                                                                        |
 | `sensitive`  | whether to group case- and accent-sensitively or not. Default: `false`                                                                                                                                                     |
-| `scorertype` | collocations found will be scored. This gives the hit group scorer to use. Builtin scorers are `coll-dice` (default) and `coll-salience`. See below.                                                  |
+| `scorertype` | collocations found will be scored. This gives the hit group scorer to use. Builtin scorers are `coll-dice` (default) and `coll-salience`. See below.                                                                       |
 
 In addition to these basic parameters, any parameter that can be added to a regular grouped hits request can be used (e.g. `first`, `number`, etc.). See [here](find-hits).
 

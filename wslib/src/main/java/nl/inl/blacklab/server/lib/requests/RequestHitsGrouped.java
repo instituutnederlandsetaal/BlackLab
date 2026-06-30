@@ -94,8 +94,9 @@ public record RequestHitsGrouped(
         String relationTypeRegex = qpar.opt(WsParam.RELATION_TYPE).orElse(StringUtil.REGEX_ANY_VALUE);
 
         // Construct and parse the query that will yield the collocations
-        ContextSize context = ParamUtil.getContext(qpar);
-        String bcqlQuery = getCollocationQuery(context, findQuery, collocateQuery, collocationType, relationTypeRegex);
+        String within = qpar.has(WsParam.WITHIN) ? "<" + qpar.get(WsParam.WITHIN) + "/>" : "";
+        ContextSize context = qpar.has(WsParam.CONTEXT) ? ParamUtil.getContext(qpar) : ContextSize.ZERO;
+        String bcqlQuery = getCollocationQuery(context, findQuery, collocateQuery, collocationType, relationTypeRegex, within);
         TextPattern textPattern = BcqlQueryLanguageParser.parseQuery(bcqlQuery);
 
         // Determine group by
@@ -135,16 +136,36 @@ public record RequestHitsGrouped(
 
     /** Determine the query that will yield the collocations we're looking for. */
     private static @NonNull String getCollocationQuery(ContextSize context, String findQuery, String collocateQuery,
-            CollocationType collocationType, String relTypeRegex) {
-        if (context.isInlineTag())
-            throw new UnsupportedOperationException("Collocations with inline context tags are currently not supported");
+            CollocationType collocationType, String relTypeRegex, String within) {
+        if (context.isInlineTag()) {
+            if (within != null)
+                throw new IllegalArgumentException("Both within and a tag context specified! If you specify within, context may be omitted or must be in number of tokens");
+            // You can either specify within=s (optionally combined with e.g. context=3:5), or you can specify
+            // context=s to just find collocations within sentences without any proximity restriction.
+            within = context.inlineTagName();
+            context = ContextSize.ZERO;
+        }
         if (collocationType == CollocationType.PROXIMITY) {
             // Proximity-based collocations.
-            int lower = context.before() == 0 ? 1 : -context.before();
-            int upper = context.after() == 0 ? -1 : context.after();
-            return "meet(" + collocateQuery + ", " + findQuery + "," + lower + "," + upper
-                    + ")";
+            int lower, upper;
+            if (context == ContextSize.ZERO) {
+                lower = -1;
+                upper = 1;
+            } else {
+                lower = context.before() == 0 ? 1 : -context.before();
+                upper = context.after() == 0 ? -1 : context.after();
+            }
+            String optLowerUpper = "," + lower + "," + upper;
+            if (!within.isEmpty() && context == ContextSize.ZERO) {
+                // We only care about within (e.g. within <s/>), not about proximity.
+                optLowerUpper = "";
+            }
+            return within.isEmpty() ?
+                    "meet(" + collocateQuery + ", " + findQuery + optLowerUpper + ")" :
+                    "meet_within(" + collocateQuery + ", " + findQuery + ", " + within + optLowerUpper + ")";
         } else {
+            if (within != null)
+                throw new UnsupportedOperationException("Relational and within not (yet) implemented");
             // Relation-based collocations.
             String optRelTypeFilter = StringUtils.isEmpty(relTypeRegex) ||
                     relTypeRegex.equals(StringUtil.REGEX_ANY_VALUE) ? "" :

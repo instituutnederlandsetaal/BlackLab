@@ -69,6 +69,14 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
     /** if true, return the trailing edges; if false, the leading ones */
     final boolean trailingEdge;
 
+    public static SpanQueryEdge leading(BLSpanQuery clause) {
+        return new SpanQueryEdge(clause, false);
+    }
+
+    public static SpanQueryEdge trailing(BLSpanQuery clause) {
+        return new SpanQueryEdge(clause, true);
+    }
+
     /**
      * Construct SpanQueryEdge object.
      * 
@@ -169,7 +177,8 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
 
     @Override
     public boolean canInternalizeNeighbour(BLSpanQuery clause, boolean addAtEnd) {
-        boolean atLeastOneConstantLength = guarantees().hitsAllSameLength() || clause.guarantees().hitsAllSameLength();
+        boolean atLeastOneConstantLength = this.clauses.get(0).guarantees().hitsAllSameLength() ||
+                clause.guarantees().hitsAllSameLength();
         return atLeastOneConstantLength && isTrailingEdge() == addAtEnd;
     }
 
@@ -182,12 +191,13 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
                 clauseToInternalize, addAtEnd);
         if (clauseToInternalize.guarantees().hitsAllSameLength()) {
             // We're trying to internalize a fixed-length clause.
+            int otherClauseLength = clauseToInternalize.guarantees().hitsLengthMin();
             if (isTrailingEdge()) {
                 // We need the trailing edge of our clause.
                 if (addAtEnd) {
                     // Internalize the fixed-length clause to the leading side, adjusting the trailing edge of the result hit
                     // e.g. (?<= "the" []{1,3} ) "dog"  --> _adjust(_edge("the" []{1,3} "dog", "trailing"), -1, 0)
-                    return new SpanQueryAdjustHits(new SpanQueryEdge(internalizedSequence, true), -1, 0);
+                    return new SpanQueryAdjustHits(SpanQueryEdge.trailing(internalizedSequence), -otherClauseLength, 0);
                 } else {
                     // Internalize the fixed-length clause by ANDing it to the trailing side of our clause.
                     // e.g. "dog" (?<= "the" []{1,3} )  --> _adjust(_edge("the" []{0,2} "dog", "trailing"), -1, 0)
@@ -204,17 +214,18 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
                 } else {
                     // Internalize the fixed-length clause to the leading side, adjusting the leading edge of the result hit
                     // e.g. "dog" (?= "the" []{1,3} )  --> _adjust(_edge("dog" "the" []{1,3}, "leading"), 0, 1)
-                    return new SpanQueryAdjustHits(new SpanQueryEdge(internalizedSequence, false), 0, 1);
+                    return new SpanQueryAdjustHits(SpanQueryEdge.leading(internalizedSequence), 0, otherClauseLength);
                 }
             }
         } else {
             // Our clause is fixed-length, the clause we're internalizing is not.
+            int myClauseLength = this.clauses.get(0).guarantees().hitsLengthMin();
             if (isTrailingEdge()) {
                 // We need the trailing edge of our clause.
                 if (addAtEnd) {
                     // Internalize the clause to the trailing side, adjusting the result hit
                     // e.g. (?<= "the" ) []{1,3} "dog"  --> _adjust("the" []{1,3} "dog", 1, 0)
-                    return new SpanQueryAdjustHits(internalizedSequence, 1, 0);
+                    return new SpanQueryAdjustHits(internalizedSequence, myClauseLength, 0);
                 } else {
                     // Internalize the clause by ANDing it to the trailing side of our clause.
                     // e.g. "dog" []{1,3} (?<= "the" )  --> _adjust("dog" []{0, 2} "the", 0, -1)
@@ -231,7 +242,7 @@ public class SpanQueryEdge extends BLSpanQueryAbstract {
                 } else {
                     // Internalize the clause to the leading side, adjusting the result hit
                     // e.g. "dog" []{1,3} (?= "the" )  --> _adjust("dog" []{1,3} "the", 0, -1)
-                    return new SpanQueryAdjustHits(internalizedSequence, 0, -1);
+                    return new SpanQueryAdjustHits(internalizedSequence, 0, -myClauseLength);
                 }
             }
         }

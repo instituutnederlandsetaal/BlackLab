@@ -745,6 +745,10 @@ public class TestSearches {
         });
     }
 
+    public void assertMatches(List<String> expected, String query) throws InvalidQuery {
+        assertMatches(query, expected, query);
+    }
+
     public void assertMatches(String message, List<String> expected, String query) throws InvalidQuery {
         TextPattern patt = BcqlQueryLanguageParser.parseToTextPattern(PluginParams.NONE, query);
         BLSpanQuery blQuery = patt.toQuery(testIndex.index().defaultExecutionContext(testIndex.index().mainAnnotatedField()));
@@ -754,12 +758,33 @@ public class TestSearches {
 
     @Test
     public void testResults() throws InvalidQuery {
-//        assertMatches("Lookahead", List.of("To [find] or"), "'find' (?= 'or')");
-//        assertMatches("Negative lookahead", List.of("To [find] or"), "'find' (?! 'That' 'is')");
+        assertMatches("Lookahead", List.of("To [find] or"), "'find' (?= 'or')");
+        assertMatches("Negative lookahead", List.of("To [find] or"), "'find' (?! 'That' 'is')");
         assertMatches("Lookbehind", List.of("to [find] That"), "(?<= 'not' 'to' ) 'find'");
         assertMatches("Negative lookbehind", List.of("To [find] or"), "(?<! 'not' 'to' ) 'find'");
         assertMatches("Punct before", List.of("To [find or] not"), "'find' [punctBefore='\\(']");
         assertMatches("Punct after", List.of("to [find That] is"), "[punctAfter='\\)\\.'] 'That'");
+    }
+
+    @Test
+    public void testMeet() throws InvalidQuery {
+        assertMatches(List.of("To [find] or"), "meet('find', 'not', 2, 2)");
+        assertMatches(List.of("to [find] That"), "meet('find', !'not', 2, 2)");
+        assertMatches(List.of(), "meet('find', 'not', 3, 5)");
+        assertMatches(List.of("to [find] That"), "meet('find', 'not', -3, -1)");
+        assertMatches(List.of("to [find] That"), "meet('find', 'That', 1, 3)");
+        assertMatches(List.of("To [find] or"), "meet('find', 'not'+, 2, 2)");
+        assertMatches(List.of("To [find] or"), "meet('find'+, 'not', 2, 2)");
+        assertMatches(List.of("To [find] or"), "meet('find'+, 'not'+, 2, 2)");
+    }
+
+    @Test
+    public void testMeetWithin() throws InvalidQuery {
+        assertMatches(List.of("To [find] or"), "meet_within('find', 'not', <s/>, 2, 2)");
+        assertMatches(List.of(), "meet_within('find', 'That', <s/>, 1, 3)");
+        assertMatches(List.of(), "meet_within('find', 'That'+, <s/>, 1, 3)");
+        assertMatches(List.of(), "meet_within('find'+, 'That', <s/>, 1, 3)");
+        assertMatches(List.of(), "meet_within('find'+, 'That'+, <s/>, 1, 3)");
     }
 
 }

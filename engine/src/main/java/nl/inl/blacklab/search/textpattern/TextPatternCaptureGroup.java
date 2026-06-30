@@ -37,7 +37,7 @@ public class TextPatternCaptureGroup extends TextPattern {
 
     @Override
     public EvalResult evaluate(QueryExecutionContext context) throws InvalidQuery {
-        return new SpanQueryCaptureGroup(clause.toQuery(context), captureAs, 0, 0, null);
+        return new SpanQueryCaptureGroup(clause.toQuery(context), captureAs);
     }
     
     @Override

@@ -51,6 +51,7 @@ import nl.inl.blacklab.search.extensions.QueryFunctionLambda;
 import nl.inl.blacklab.search.extensions.QueryFunctionLen;
 import nl.inl.blacklab.search.extensions.QueryFunctionList;
 import nl.inl.blacklab.search.extensions.QueryFunctionMeet;
+import nl.inl.blacklab.search.extensions.QueryFunctionMeetWithin;
 import nl.inl.blacklab.search.extensions.QueryFunctionQuery;
 import nl.inl.blacklab.search.extensions.QueryFunctionStart;
 import nl.inl.blacklab.search.extensions.QueryFunctionStr;
@@ -152,6 +153,7 @@ public class PluginManager {
                 QueryFunctionFuzzy.class,
                 QueryFunctionStart.class,
                 QueryFunctionMeet.class,
+                QueryFunctionMeetWithin.class,
                 QueryFunctionQuery.class,
                 QueryFunctionLen.class
         ));

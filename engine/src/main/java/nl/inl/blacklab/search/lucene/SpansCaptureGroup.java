@@ -35,11 +35,6 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
      */
     private final int rightAdjust;
 
-    /** If set: capture as type TAG, with this tag name.
-     *  Note that this only exists to support the legacy external index format.
-     *  For the integrated format, tag capturing is handled by SpansRelations directly. */
-    private final String tagName;
-
     /**
      * Constructs a SpansCaptureGroup.
      *
@@ -47,14 +42,12 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
      * @param name group name
      * @param leftAdjust how to adjust the captured group's start position
      * @param rightAdjust how to adjust the captured group's end position
-     * @param tagName if set: capture as type TAG, with this tag name (old external index only)
      */
-    public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust, String tagName) {
+    public SpansCaptureGroup(BLSpans clause, String name, int leftAdjust, int rightAdjust) {
         super(clause);
         this.name = name;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
-        this.tagName = tagName;
     }
 
     @Override
@@ -80,8 +73,7 @@ class SpansCaptureGroup extends BLFilterSpans<BLSpans> {
         // Place our start and end position at the correct index in the array
         int start = startPosition() + leftAdjust;
         int end = endPosition() + rightAdjust;
-        matchInfo[groupIndex] = tagName == null ? SpanInfo.create(start, end, getOverriddenField()) :
-            RelationInfo.createTag(start, end, tagName, getOverriddenField());
+        matchInfo[groupIndex] = SpanInfo.create(start, end, getOverriddenField());
     }
 
     @Override

@@ -67,7 +67,7 @@ public class Kwics {
                                 null; // null should only happen in testing...
                         boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
                                 def != null && def.getName()
-                                .endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
+                                .endsWith(SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT);
                         minMaxPerField = updateMinMaxForMatchInfo(lrc, mi, defaultField, minMaxPerField,
                                 afisPerField, isTargetHit);
                     }

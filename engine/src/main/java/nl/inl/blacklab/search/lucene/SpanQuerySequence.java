@@ -365,7 +365,7 @@ public class SpanQuerySequence extends BLSpanQueryAbstract {
 
     @Override
     public BLSpanQuery optimize(IndexReader reader) throws IOException {
-        super.optimize(reader);
+        //super.optimize(reader);
         // Make a copy, because our methods rewrite things in-place.
         List<BLSpanQuery> cl = new ArrayList<>(clauses);
 

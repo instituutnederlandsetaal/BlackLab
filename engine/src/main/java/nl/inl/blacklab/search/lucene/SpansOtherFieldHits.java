@@ -73,7 +73,7 @@ class SpansOtherFieldHits extends BLFilterSpans<BLSpans> {
                     continue;
                 if (mi.getField().equals(targetField) && mi.getType() == MatchInfo.Type.SPAN &&
                         defs.get(i).getName().endsWith(
-                                SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)) {
+                                SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT)) {
                     // This is the special target field capture. Adjust the hit boundaries.
                     startAdjusted = Math.min(startAdjusted, mi.getSpanStart());
                     endAdjusted = Math.max(endAdjusted, mi.getSpanEnd());

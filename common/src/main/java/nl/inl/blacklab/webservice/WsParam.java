@@ -46,7 +46,8 @@ public enum WsParam {
     FIRST_RESULT("first", Type.INTEGER), // results window
     NUMBER_OF_RESULTS("number", Type.INTEGER), // results window
     WORDS_AROUND_HIT("wordsaroundhit"), // (DEPRECATED, renamed to "context")
-    CONTEXT("context"), // KWIC / concordances: words around hit or
+    CONTEXT("context"), // KWIC / concordances / collocations: words around hit or
+    WITHIN("within"), // collocations, e.g. to find collocs within sentence
     USE_CONTENT("usecontent"), // create concs from forward index or original content (content store)?
     OMIT_EMPTY_CAPTURES("omitemptycaptures", Type.BOOLEAN),  // omit capture groups of length 0? (false)
 

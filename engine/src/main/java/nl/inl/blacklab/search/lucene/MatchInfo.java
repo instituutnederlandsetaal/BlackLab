@@ -230,7 +230,7 @@ public abstract class MatchInfo implements Comparable<MatchInfo> {
         }
 
         public boolean isForeignHit() {
-            return name.endsWith(SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT);
+            return name.endsWith(SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT);
         }
     }
 }

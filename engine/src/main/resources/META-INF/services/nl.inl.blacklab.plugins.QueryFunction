@@ -4,6 +4,7 @@ nl.inl.blacklab.search.extensions.QueryFunctionFuzzy
 nl.inl.blacklab.search.extensions.QueryFunctionLen
 nl.inl.blacklab.search.extensions.QueryFunctionList
 nl.inl.blacklab.search.extensions.QueryFunctionMeet
+nl.inl.blacklab.search.extensions.QueryFunctionMeetWithin
 nl.inl.blacklab.search.extensions.QueryFunctionQuery
 nl.inl.blacklab.search.extensions.QueryFunctionStart
 nl.inl.blacklab.search.extensions.QueryFunctionStr

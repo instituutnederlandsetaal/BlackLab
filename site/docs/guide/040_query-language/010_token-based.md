@@ -439,11 +439,13 @@ Some of these functions exist in some form in other dialects of Corpus Query Lan
 
 Functions to do with relations search are described [there](./relations.html).
 
-### meet: nearby words
+### meet, meet_within: nearby words
 
 <!-- @include: ../../_from_v5.md -->
 
-You can use the `meet` function to filter matches based on the presence of other words nearby. For example, to find all occurrences of the word _cat_ that are within 5 tokens of the word _fluffy_ (before or after), you can use:
+You can use either the `meet` or the `meet_within` function to filter matches based on the presence of other words nearby.
+
+For example, to find all occurrences of the word _cat_ that are within 5 tokens of the word _fluffy_ (before or after), you can use:
 
 ```
 meet("cat", "fluffy", -5, 5)
@@ -455,7 +457,7 @@ To find occurrences of the phrase _black dog_ with the word _good_ occurring up 
 meet("black" "dog", "good", -10, -1)
 ```
 
-To find occurrences of the word _fish_ with the phrase _in water_ occurring between 2 and 5 tokens after it:
+To find occurrences of the word _fish_ with the phrase _in water_ occurring between 2 and 5 tokens after it (i.e. 1-4 tokens between _fish_ and _in_):
 
 ```
 meet("fish", "in" "water", 2, 5)
@@ -464,7 +466,7 @@ meet("fish", "in" "water", 2, 5)
 To find occurrences of `platypus` where `weird` does NOT occur within 5 tokens:
 
 ```
-meet("platypus", !("weird"), -5, 5)
+meet("platypus", !"weird", -5, 5)
 ```
 
 ::: details How `meet` works
@@ -479,9 +481,31 @@ Note that the `meet` function is just syntactic sugar for a "regular" BCQL query
 
 (read as: find those occurrences of _fish_ that are followed by 1-4 tokens, followed by the phrase _in water_)
 
+Different calls to `meet` and `meet_within` are rewritten to different queries, trying to choose the optimal variant for the situation.
+
 :::
 
+You may only want to find words that occur in the same sentence. This is what `meet_within` is for. To find _cat_ and _fluffy_ in the same sentence:
+
+```
+meet_within("cat", "fluffy", <s/>)
+```
+
+To also require that they must occur within 5 words of each other:
+
+```
+meet_within("cat", "fluffy", <s/>, -5, 5)
+```
+
+To find _cat_ provided that the sentence does not have _fluffy_ within 5 words of it:
+
+```
+meet_within("cat", !"fluffy", <s/>, -5, 5)
+```
+
 ### cspan: adjust hit to capture
+
+<!-- @include: ../../_from_v5.md -->
 
 Occasionally, you might not want your hits to span your whole query, but you're just interested in one part of it. You can use the `cspan()` function to adjust the hit:
 

@@ -90,7 +90,7 @@ public abstract class HitPropertyContextBase extends HitProperty {
                 continue;
             if (mi.getField().equals(field) && mi.getType() == MatchInfo.Type.SPAN &&
                     context.hits().matchInfoDefs().get(i).getName().endsWith(
-                    SpanQueryCaptureRelationsBetweenSpans.TAG_MATCHINFO_TARGET_HIT)) {
+                    SpanQueryCaptureRelationsBetweenSpans.MATCHINFO_SUFFIX_TARGET_HIT)) {
                 // This is the special target field capture. Adjust the hit boundaries.
                 startEnd[0] = Math.min(startEnd[0], mi.getSpanStart());
                 startEnd[1] = Math.max(startEnd[1], mi.getSpanEnd());

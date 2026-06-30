@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReaderContext;
@@ -17,6 +17,10 @@ import org.apache.lucene.search.ScoreMode;
  * Captures its clause as a captured group.
  */
 public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
+
+    public static final String STR_INTERNAL_CAPTURE_GROUP_INDICATOR = "__@";
+
+    public static final String MATCHINFO_SUFFIX_INTERNAL = STR_INTERNAL_CAPTURE_GROUP_INDICATOR + "internal";
 
     final String name;
 
@@ -34,33 +38,48 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
      */
     final int rightAdjust;
 
-    /** If set: capture as type TAG, with this tag name.
-     *  Note that this only exists to support the legacy external index format.
-     *  For the integrated format, tag capturing is handled by SpansRelations directly. */
-    private final String tagName;
+    /**
+     * Construct SpanQueryCaptureGroup object.
+     *
+     * @param query the query to capture a group from
+     * @param name captured group name, or null to generate a unique internal capture group name
+     */
+    public SpanQueryCaptureGroup(BLSpanQuery query, String name) {
+        this(query, name, 0, 0);
+    }
 
     /**
      * Construct SpanQueryCaptureGroup object.
      * 
      * @param query the query to capture a group from
-     * @param name captured group name
+     * @param name captured group name, or null to generate a unique internal capture group name
      * @param leftAdjust how to adjust the captured group's start position
      * @param rightAdjust how to adjust the captured group's end position
-     * @param tagName if set: capture as type TAG, with this tag name (old external index only)
      */
-    public SpanQueryCaptureGroup(BLSpanQuery query, String name, int leftAdjust, int rightAdjust, String tagName) {
+    public SpanQueryCaptureGroup(BLSpanQuery query, String name, int leftAdjust, int rightAdjust) {
         super(query);
-        this.name = name;
+        this.name = name == null ? SpanQueryCaptureGroup.generateCaptureName() : name;
         this.leftAdjust = leftAdjust;
         this.rightAdjust = rightAdjust;
-        this.tagName = tagName;
         this.guarantees = query.guarantees();
+    }
+
+    static final AtomicLong NEXT_ID = new AtomicLong(0);
+
+    /**
+     * Return a unique name for an internal capture group (that is used during matching but not returned to the user)
+     *
+     * @param clause clause we're capturing
+     * @return unique capture name
+     */
+    public static String generateCaptureName() {
+        return "CAP-" + Long.toHexString(NEXT_ID.getAndIncrement()) + MATCHINFO_SUFFIX_INTERNAL;
     }
 
     @Override
     public BLSpanQuery rewrite(IndexReader reader) throws IOException {
         List<BLSpanQuery> rewritten = rewriteClauses(reader);
-        return rewritten == null ? this : new SpanQueryCaptureGroup(rewritten.get(0), name, leftAdjust, rightAdjust, tagName);
+        return rewritten == null ? this : new SpanQueryCaptureGroup(rewritten.get(0), name, leftAdjust, rightAdjust);
     }
 
     @Override
@@ -72,7 +91,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     public BLSpanQuery noEmpty() {
         if (!matchesEmptySequence())
             return this;
-        return new SpanQueryCaptureGroup(clauses.get(0).noEmpty(), name, leftAdjust, rightAdjust, tagName);
+        return new SpanQueryCaptureGroup(clauses.get(0).noEmpty(), name, leftAdjust, rightAdjust);
     }
 
     @Override
@@ -90,7 +109,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
     }
 
     public BLSpanQuery copyWith(BLSpanQuery query) {
-        return new SpanQueryCaptureGroup(query, name, leftAdjust, rightAdjust, tagName);
+        return new SpanQueryCaptureGroup(query, name, leftAdjust, rightAdjust);
     }
 
     class SpanWeightCaptureGroup extends BLSpanWeight {
@@ -118,7 +137,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
             BLSpans spans = weight.getSpans(context, requiredPostings);
             if (spans == null)
                 return null;
-            return new SpansCaptureGroup(spans, name, leftAdjust, rightAdjust, tagName);
+            return new SpansCaptureGroup(spans, name, leftAdjust, rightAdjust);
         }
 
     }
@@ -146,7 +165,7 @@ public class SpanQueryCaptureGroup extends BLSpanQueryAbstract {
         else
             nla += clauseLength;
         return new SpanQueryCaptureGroup(SpanQuerySequence.sequenceInternalize(clauses.get(0), clause, onTheRight),
-                name, nla, nra, tagName);
+                name, nla, nra);
     }
 
     @Override

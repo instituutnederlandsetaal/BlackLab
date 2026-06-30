@@ -32,6 +32,7 @@ import nl.inl.blacklab.search.indexmetadata.RelationUtil;
 import nl.inl.blacklab.search.lucene.MatchInfo;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.RelationListInfo;
+import nl.inl.blacklab.search.lucene.SpanQueryCaptureGroup;
 import nl.inl.blacklab.search.results.QueryTimings;
 import nl.inl.blacklab.search.results.docs.DocResult;
 import nl.inl.blacklab.search.results.docs.DocResults;
@@ -509,10 +510,9 @@ public class Output {
         for (EphemeralHit hit: windowHits) {
             HitToShow hitToShow;
             if (kwics != null) {
-                Map<String, MatchInfo> matchInfo;
-                matchInfo = windowHits.hasMatchInfo() ?
+                Map<String, MatchInfo> matchInfo = filterMatchInfo(windowHits.hasMatchInfo() ?
                         windowHits.matchInfoDefs().getMap(hit.matchInfos(), false) :
-                        Collections.emptyMap();
+                        Collections.emptyMap());
                 hitToShow = showHitFromForwardIndex(hit, kwics.get(hit), matchInfo, window.field());
 
                 Map<AnnotatedField, Kwic> fkwics = kwics.getForeignKwics(hit);
@@ -595,6 +595,16 @@ public class Output {
             queryTool.getTimings().record("count");
         }
         line(msg);
+    }
+
+    private static Map<String, MatchInfo> filterMatchInfo(Map<String, MatchInfo> map) {
+        return map.entrySet().stream()
+                        .filter(e ->
+                                // don't include internal captures (see comment in summaryCommonFields)
+                                !e.getKey().contains(SpanQueryCaptureGroup.STR_INTERNAL_CAPTURE_GROUP_INDICATOR) &&
+                                        // make sure we should include this match info here
+                                        e.getValue() != null)
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private HitToShow showHitFromForwardIndex(EphemeralHit hit, Kwic kwic, Map<String, MatchInfo> matchInfo, AnnotatedField annotatedField) {
