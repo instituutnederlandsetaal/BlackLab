@@ -290,7 +290,7 @@ BlackLab will abort queries that run for too long. This can be configured, but t
 
 **Aborted queries**
 
-BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.resultsStats`, the subkeys `processed.stoppedBecauseTooMany` and/or `countOnly.stoppedBecauseTooMany` will be true. The first means not all hits can be fetched from the result set, but counting the total number of hits continued. The second means BlackLab has given up counting hits altogether.
+BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.results.stats`, the subkeys `processed.stoppedBecauseTooMany` and/or `counted.stoppedBecauseTooMany` will be true. The first means not all hits can be fetched from the result set, but counting the total number of hits continued. The second means BlackLab has given up counting hits altogether.
 
 ```jsonc
 // API v5: /blacklab-server/corpora/chn-intern/hits?patt="waterval"
@@ -310,18 +310,28 @@ BlackLab will abort queries that run for too long. This can be configured, but t
       "bcql": "\"waterval\"",
       "fieldName": "contents"
     },
-    "resultWindow": {
-      "firstResult": 0,
-      "requestedSize": 20,
-      "actualSize": 20,
-      "hasPrevious": false,
-      "hasNext": true
-    },
-    "resultsStats": {
-      "status": "finished",
-      "hits": 8982,
-      "documents": 6521,
-      "timeMs": 307
+    "results": {
+      "window": {
+        "firstResult": 0,
+        "requestedSize": 20,
+        "actualSize": 20,
+        "hasPrevious": false,
+        "hasNext": true
+      },
+      "stats": {
+        "processed": {
+          "status": "finished",
+          "hits": 8982,
+          "documents": 6521,
+          "timeMs": 307
+        },
+        "counted": {
+          "status": "finished",
+          "hits": 8982,
+          "documents": 6521,
+          "timeMs": 307
+        }
+      }
     }
   },
   "hits": [
@@ -389,6 +399,6 @@ BlackLab will abort queries that run for too long. This can be configured, but t
 
 The major differences between API `v4` and `v5` are:
 
-- The `summary` object became more structured in API `v5`, with separate `params`, `pattern`, `resultWindow` and `resultsStats` objects.
+- The `summary` object became more structured in API `v5`, with separate `params`, `pattern`, `results.window` and `results.stats` objects.
 - API `v5`'s `docInfos` separates properties like `mayView` and the number of tokens in the document from the actual document metadata such as author, title, etc. by putting the latter in a separate `metadata` object.
 - API `v5` drops `lengthInTokens` because it's already available in `tokenCounts`. The latter specifies length per annotated field, providing better support for corpora with multiple annotated fields, such as parallel corpora.
