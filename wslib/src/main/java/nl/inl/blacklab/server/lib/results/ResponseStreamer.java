@@ -112,6 +112,7 @@ public class ResponseStreamer {
     // resultsStats section
     public static final String KEY_STATS_STATUS = "status";
     public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
+    public static final String KEY_STATS_PROCESSED = "processed";
     public static final String KEY_STATS_COUNT_ONLY = "countOnly";
     public static final String KEY_STATS_NUMBER_OF_HITS = "hits";
     public static final String KEY_STATS_NUMBER_OF_DOCS = "documents";
@@ -465,7 +466,7 @@ public class ResponseStreamer {
     private void summaryWindow(WindowStats window) {
         if (isNewApi) {
             // New API: group related values
-            ds.startEntry("resultWindow").startMap();
+            ds.startEntry("resultsWindow").startMap();
             {
                 ds.entry("firstResult", window.first());
                 ds.entry("requestedSize", window.requestedWindowSize());
@@ -501,23 +502,25 @@ public class ResponseStreamer {
             boolean limitReached = hitsStats.maxStats().isTooManyToProcess();
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
             {
-                ds.entry(KEY_STATS_STATUS, !hitsStats.done() && !limitReached ? STATS_STATUS_WORKING :
-                        STATS_STATUS_FINISHED);
-                ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsProcessed);
-                ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsProcessed);
-                ds.entry(KEY_STATS_TIME_MS, result.timings().getProcessingTime());
-                ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
-                if (limitReached) {
-                    ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
-                    {
-                        ds.entry(KEY_STATS_STATUS, !hitsStats.done() ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
-                        ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsCounted);
-                        ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsCounted);
-                        ds.entry(KEY_STATS_TIME_MS, result.timings().getCountTime());
-                        ds.entry(KEY_STATS_STOPPED_TOO_MANY, hitsStats.maxStats().isTooManyToCount());
-                    }
-                    ds.endMap().endEntry();
+                ds.startEntry(KEY_STATS_PROCESSED).startMap();
+                {
+                    ds.entry(KEY_STATS_STATUS, !hitsStats.done() && !limitReached ? STATS_STATUS_WORKING :
+                            STATS_STATUS_FINISHED);
+                    ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsProcessed);
+                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsProcessed);
+                    ds.entry(KEY_STATS_TIME_MS, result.timings().getProcessingTime());
+                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
                 }
+                ds.endMap().endEntry();
+                ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
+                {
+                    ds.entry(KEY_STATS_STATUS, !hitsStats.done() ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
+                    ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsCounted);
+                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsCounted);
+                    ds.entry(KEY_STATS_TIME_MS, result.timings().getCountTime());
+                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, hitsStats.maxStats().isTooManyToCount());
+                }
+                ds.endMap().endEntry();
                 summaryGroupStats(groups);
                 subcorpusSizeStats(subcorpusSize);
             }
@@ -550,21 +553,26 @@ public class ResponseStreamer {
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
             boolean limitReached = docResults.resultsStats().maxStats().isTooManyToProcess();
             {
-                ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
-                ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
-                ds.entry(KEY_STATS_NUMBER_OF_DOCS, docResults.size());
-                ds.entry(KEY_STATS_TIME_MS, result.getTimings().getProcessingTime());
-                if (limitReached) {
+                ds.startEntry(KEY_STATS_PROCESSED).startMap();
+                {
+                    ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
+                    ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
+                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docResults.size());
+                    ds.entry(KEY_STATS_TIME_MS, result.getTimings().getProcessingTime());
                     ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
-                    ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
-                    {
-                        ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
-                        ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
-                        ds.entry(KEY_STATS_NUMBER_OF_DOCS, docResults.size());
-                        ds.entry(KEY_STATS_TIME_MS, result.getTimings().getCountTime());
-                    }
-                    ds.endMap().endEntry();
                 }
+                ds.endMap().endEntry();
+                ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
+                {
+                    ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
+                    ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
+                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docResults.size());
+                    ds.entry(KEY_STATS_TIME_MS, result.getTimings().getCountTime());
+                    boolean limitReachedCount = docResults.resultsStats().maxStats().isTooManyToCount();
+                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReachedCount);
+                }
+                ds.endMap().endEntry();
+
                 summaryGroupStats(groups);
                 subcorpusSizeStats(result.getSubcorpusSize());
             }
@@ -595,22 +603,24 @@ public class ResponseStreamer {
         if (subcorpusSize != null) {
             CorpusSize.Count totalCount = subcorpusSize.getTotalCount();
             ds.startEntry(KEY_SUBCORPUS_SIZE).startMap();
-            ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, totalCount.getDocuments());
-            if (subcorpusSize.getDocumentVersions() > totalCount.getDocuments())
-                ds.entry(KEY_DOCUMENT_VERSION_COUNT, subcorpusSize.getDocumentVersions());
-            if (totalCount.hasTokenCount())
-                ds.entry("tokens", totalCount.getTokens()); // always use "tokens" here
-            if (subcorpusSize.getCountsPerField().size() > 1) {
-                // Multiple annotated fields. Show size per field.
-                ds.startEntry(KEY_ANNOTATED_FIELDS).startList();
-                for (Map.Entry<String, CorpusSize.Count> entry : subcorpusSize.getCountsPerField().entrySet()) {
-                    ds.startItem(KEY_ANNOTATED_FIELD).startMap();
-                    ds.entry(KEY_FIELD_NAME, entry.getKey());
-                    ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, entry.getValue().getDocuments());
-                    ds.entry("tokens", entry.getValue().getTokens()); // always use "tokens" here
-                    ds.endMap().endItem();
+            {
+                ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, totalCount.getDocuments());
+                if (subcorpusSize.getDocumentVersions() > totalCount.getDocuments())
+                    ds.entry(KEY_DOCUMENT_VERSION_COUNT, subcorpusSize.getDocumentVersions());
+                if (totalCount.hasTokenCount())
+                    ds.entry("tokens", totalCount.getTokens()); // always use "tokens" here
+                if (subcorpusSize.getCountsPerField().size() > 1) {
+                    // Multiple annotated fields. Show size per field.
+                    ds.startEntry(KEY_ANNOTATED_FIELDS).startList();
+                    for (Map.Entry<String, CorpusSize.Count> entry: subcorpusSize.getCountsPerField().entrySet()) {
+                        ds.startItem(KEY_ANNOTATED_FIELD).startMap();
+                        ds.entry(KEY_FIELD_NAME, entry.getKey());
+                        ds.entry(KEY_SUBCORPUS_SIZE_DOCUMENTS, entry.getValue().getDocuments());
+                        ds.entry("tokens", entry.getValue().getTokens()); // always use "tokens" here
+                        ds.endMap().endItem();
+                    }
+                    ds.endList().endEntry();
                 }
-                ds.endList().endEntry();
             }
             ds.endMap().endEntry();
         }
@@ -724,7 +734,9 @@ public class ResponseStreamer {
                         ds.xmlFragment(c.match());
                     }
                 } else {
+                    ds.startEntry(KEY_BEFORE).xmlFragment("").endEntry();
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).xmlFragment(c.match()).endEntry();
+                    ds.startEntry(KEY_AFTER).xmlFragment("").endEntry();
                 }
             }
         } else {
@@ -738,7 +750,9 @@ public class ResponseStreamer {
                 if (isSnippet) {
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.tokens()).endEntry();
                 } else {
+                    ds.startEntry(KEY_BEFORE).contextList(c.annotations(), annotationsToList, List.of()).endEntry();
                     ds.startEntry(KEY_MATCHING_PART_OF_HIT).contextList(c.annotations(), annotationsToList, c.match()).endEntry();
+                    ds.startEntry(KEY_AFTER).contextList(c.annotations(), annotationsToList, List.of()).endEntry();
                 }
             }
             Map<AnnotatedField, Kwic> foreignKwics = concordanceContext.getForeignKwics(hit);
@@ -1108,7 +1122,6 @@ public class ResponseStreamer {
         }
         ParamsForResponse params = resultHits.paramsForResponse();
         RequestHits reqHits = resultHits.getReqHits();
-        BlackLabIndex index = reqHits.index();
         // Search time should be time user (originally) had to wait for the response to this request.
         // Count time is the time it took (or is taking) to iterate through all the results to count the total.
         ResultSummaryCommonFields summaryFields = resultHits.getSummaryCommonFields();
@@ -1138,20 +1151,8 @@ public class ResponseStreamer {
                 ds.endMap().endEntry();
             }
 
-            // Include explanation of how the query was executed?
-            if (reqHits.explain()) {
-                TextPattern tp = reqHits.pattern();
-                try {
-                    BLSpanQuery q = tp.toQuery(QueryInfo.create(index, reqHits.searchField()));
-                    QueryExplanation explanation = index.explain(q);
-                    ds.startEntry("explanation").startMap()
-                            .entry("originalQuery", explanation.originalQuery())
-                            .entry("rewrittenQuery", explanation.rewrittenQuery())
-                            .endMap().endEntry();
-                } catch (InvalidQuery e) {
-                    throw new BadRequest("INVALID_QUERY", e.getMessage());
-                }
-            }
+            // Optionally include explanation of how the query was executed
+            optExplain(reqHits);
         }
         ds.endMap().endEntry();
 
@@ -1172,6 +1173,23 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
+    private void optExplain(RequestHits reqHits) {
+        BlackLabIndex index = reqHits.index();
+        if (reqHits.explain()) {
+            TextPattern tp = reqHits.pattern();
+            try {
+                BLSpanQuery q = tp.toQuery(QueryInfo.create(index, reqHits.searchField()));
+                QueryExplanation explanation = index.explain(q);
+                ds.startEntry("explanation").startMap()
+                        .entry("originalQuery", explanation.originalQuery())
+                        .entry("rewrittenQuery", explanation.rewrittenQuery())
+                        .endMap().endEntry();
+            } catch (InvalidQuery e) {
+                throw new BadRequest("INVALID_QUERY", e.getMessage());
+            }
+        }
+    }
+
     public void hitsGroupedResponse(ResultHitsGrouped hitsGrouped, boolean isCsv) {
         if (isCsv) {
             String csv = WriteCsv.hitsGroupsResponse(hitsGrouped, this);
@@ -1189,6 +1207,9 @@ public class ResponseStreamer {
                     ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getId());
                     ds.endMap().endEntry();
                 }
+
+                // Optionally include explanation of how the query was executed
+                optExplain(hitsGrouped.getReqGroup().requestHits());
             }
             ds.endMap().endEntry();
 

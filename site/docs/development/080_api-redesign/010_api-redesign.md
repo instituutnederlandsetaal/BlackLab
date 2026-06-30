@@ -22,14 +22,17 @@ the API trickier. Some of these keys should probably always be included (and be 
 Regular API optional keys:
 
 - user.id alleen als user.loggedIn == true  (anders ""?)
-- summary.indexStatus alleen als status != AVAILABLE (altijd?)
-- summary.matchInfos alleen als er matchInfos zijn (anders leeg object?)
-- summary.matchInfos[..].fieldName alleen als het anders is dan summary.fieldName (altijd?)
-- summary.sample* alleen als er gesampled is (ok? but should be grouped)
+  (misschien null maken?)
+- summary.indexStatus alleen als status != AVAILABLE
+  (altijd?)
+- summary.matchInfos alleen als er matchInfos zijn (zo laten)
+- summary.matchInfos[..].fieldName alleen als het anders is dan summary.fieldName (zo laten)
+- summary.sample* alleen als er gesampled is
+  (ok? but should be grouped)
   either summary.samplePercentage/sampleSize (better to have .type: percentage / .number: 30 ?)
 - summary.window* als window != null (maar komt ws nooit voor..?)
 - summary.numberOfGroups / largestGroupSize alleen als gegroepeer (ok? but should be grouped?)
-- summary.resultsStats.stoppedBecauseTooMany: alleen als dat zo is (altijd!)
+- summary.resultsStats.processed.stoppedBecauseTooMany: alleen als dat zo is (altijd!)
 - summary.resultsStats.countOnly: alleen als stoppedBecauseTooMany (altijd!)
 - summary.subcorpusSize.tokens: alleen als beschikaar (wanneer niet beschikbaar...?)
 - summary.subcorpusSize.annotatedFields: alleen als er meerdere annotated fields zijn (altijd?)

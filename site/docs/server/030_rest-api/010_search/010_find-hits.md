@@ -177,13 +177,11 @@ The available collocation scorers (the only type of hit group scorer at the mome
 ### Content examples
 
 ::: tabs
-=== API `v4`
+=== API v4
 
-::: warn Aborted queries
+**Aborted queries**
 
-BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary` object in the response will contain `"stoppedRetrievingHits": true` and/or `"stoppedCountingHits": true`. The first means counting continued, but not all hits can be fetched from the result set. The second means BlackLab has given up counting hits altogether.
-
-:::
+BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary` object in the response will contain `"stoppedRetrievingHits": true` and/or `"stoppedCountingHits": true`. The first means not all hits can be fetched from the result set, but counting the total number of hits continued. The second means BlackLab has given up counting hits altogether.
 
 ```jsonc
 // API v5: /blacklab-server/chn-intern/hits?patt="waterval"
@@ -288,50 +286,11 @@ BlackLab will abort queries that run for too long. This can be configured, but t
 ```
 
 
+=== API v5
 
+**Aborted queries**
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-=== API `v5`
-
-::: warn Aborted queries
-
-BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but the `summary.resultsStats.stoppedBecauseTooMany` and/or `"summary.resultsStats.countOnly.stoppedBecauseTooMany` will be true. The first means counting continued, but not all hits can be fetched from the result set. The second means BlackLab has given up counting hits altogether.
-
-:::
+BlackLab will abort queries that run for too long. This can be configured, but the default is 300 seconds (5 minutes). If a query is aborted, the HTTP response will still be `200 OK`, but under `summary.resultsStats`, the subkeys `processed.stoppedBecauseTooMany` and/or `countOnly.stoppedBecauseTooMany` will be true. The first means not all hits can be fetched from the result set, but counting the total number of hits continued. The second means BlackLab has given up counting hits altogether.
 
 ```jsonc
 // API v5: /blacklab-server/corpora/chn-intern/hits?patt="waterval"
