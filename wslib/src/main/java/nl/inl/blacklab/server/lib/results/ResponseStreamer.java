@@ -101,7 +101,9 @@ public class ResponseStreamer {
     public static final String KEY_NUMBER_OF_DOCS = "numberOfDocs";
     public static final String KEY_NUMBER_OF_GROUPS = "numberOfGroups";
     public static final String KEY_LARGEST_GROUP_SIZE = "largestGroupSize";
-    public static final String KEY_SUMMARY_RESULTS_STATS = "resultsStats";
+    public static final String KEY_RESULTS = "results"; // from v5
+    public static String KEY_WINDOW;
+    public static String KEY_SUMMARY_RESULTS_STATS;
     public static final String KEY_TOKENS_IN_MATCHING_DOCUMENTS = "tokensInMatchingDocuments";
     public static final String KEY_SUBCORPUS_SIZE = "subcorpusSize";
 
@@ -158,11 +160,12 @@ public class ResponseStreamer {
     public static final String KEY_VALUE_LIST_COMPLETE = "valueListComplete";
     public static final String KEY_ATTRIBUTES = "attributes";
 
-    // Sampling
-    public static final String KEY_SAMPLE_SEED = "sampleSeed";
-    public static final String KEY_SAMPLE_PERCENTAGE = "samplePercentage";
-    public static final String KEY_SAMPLE_SIZE = "sampleSize";
-    public static final String KEY_GROUP_SIZE = "size";
+    // Sampling (v4; v5 determined below)
+    public static String KEY_SAMPLE;
+    public static String KEY_SAMPLE_SEED;
+    public static String KEY_SAMPLE_PERCENTAGE;
+    public static String KEY_SAMPLE_SIZE;
+    public static String KEY_GROUP_SIZE;
 
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;
@@ -222,6 +225,12 @@ public class ResponseStreamer {
             KEY_DOCUMENT_COUNT = KEY_STATS_NUMBER_OF_DOCS;
             KEY_NUMBER_OF_TOKENS = KEY_SUBCORPUS_SIZE_TOKENS = "tokens";
             KEY_PARAMS = "params";
+            KEY_SUMMARY_RESULTS_STATS = "stats";
+            KEY_WINDOW = "window";
+            KEY_SAMPLE = "sample";
+            KEY_SAMPLE_SEED = "seed";
+            KEY_SAMPLE_PERCENTAGE = "percentage";
+            KEY_SAMPLE_SIZE = "size";
         } else {
             KEY_BEFORE = "left";
             KEY_AFTER = "right";
@@ -233,6 +242,12 @@ public class ResponseStreamer {
             KEY_DOCUMENT_COUNT = "documentCount";
             KEY_NUMBER_OF_TOKENS = KEY_SUBCORPUS_SIZE_TOKENS = "numberOfTokens";
             KEY_PARAMS = "searchParam";
+            KEY_SUMMARY_RESULTS_STATS = "resultsStats";
+            KEY_WINDOW = "resultsWindow";
+            KEY_SAMPLE = ""; // not used
+            KEY_SAMPLE_SEED = "sampleSeed";
+            KEY_SAMPLE_PERCENTAGE = "samplePercentage";
+            KEY_SAMPLE_SIZE = "sampleSize";
         }
     }
 
@@ -428,15 +443,35 @@ public class ResponseStreamer {
             ds.endMap().endEntry();
         }
 
+        if (isNewApi)
+            ds.startEntry(KEY_RESULTS).startMap();
+
         // Information about hit sampling
         SampleParameters sample = summaryFields.sampleParams();
         if (sample != null) {
-            ds.entry(KEY_SAMPLE_SEED, sample.seed());
-            if (sample.isPercentage())
-                ds.entry(KEY_SAMPLE_PERCENTAGE, Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
-            else
-                ds.entry(KEY_SAMPLE_SIZE, sample.numberOfHitsSet());
+            if (isNewApi)
+                ds.startEntry(KEY_SAMPLE).startMap();
+            {
+                ds.entry(KEY_SAMPLE_SEED, sample.seed());
+                if (sample.isPercentage())
+                    ds.entry(KEY_SAMPLE_PERCENTAGE, Math.round(sample.percentageOfHits() * 100 * 100) / 100.0);
+                else
+                    ds.entry(KEY_SAMPLE_SIZE, sample.numberOfHitsSet());
+            }
+            if (isNewApi)
+                ds.endMap().endEntry();
         }
+
+        // Information about our viewing window
+        WindowStats window = summaryFields.getWindow();
+        if (window != null) {
+            summaryWindow(window);
+        }
+
+        summaryResultsStatsDocsHits(summaryFields);
+
+        if (isNewApi)
+            ds.endMap().endEntry();
 
         if (!isNewApi) {
             // Legacy API: information about search progress
@@ -449,11 +484,6 @@ public class ResponseStreamer {
             summaryGroupStats(summaryFields.getGroups());
         }
 
-        // Information about our viewing window
-        WindowStats window = summaryFields.getWindow();
-        if (window != null) {
-            summaryWindow(window);
-        }
     }
 
     private void summaryGroupStats(ResultGroups groups) {
@@ -466,7 +496,7 @@ public class ResponseStreamer {
     private void summaryWindow(WindowStats window) {
         if (isNewApi) {
             // New API: group related values
-            ds.startEntry("resultsWindow").startMap();
+            ds.startEntry(KEY_WINDOW).startMap();
             {
                 ds.entry("firstResult", window.first());
                 ds.entry("requestedSize", window.requestedWindowSize());
@@ -482,6 +512,17 @@ public class ResponseStreamer {
                     .entry("actualWindowSize", window.windowSize())
                     .entry("windowHasPrevious", window.hasPrevious())
                     .entry("windowHasNext", window.hasNext());
+        }
+    }
+
+    private void summaryResultsStatsDocsHits(ResultSummaryCommonFields summaryCommonFields) {
+        ResultSummaryNumDocs numDocs = summaryCommonFields.getNumDocs();
+        ResultGroups groups = summaryCommonFields.getGroups();
+        if (numDocs != null)
+            summaryNumDocs(numDocs, groups);
+        else {
+            ResultSummaryNumHits numHits = summaryCommonFields.getNumHits();
+            summaryResultsStats(numHits, groups);
         }
     }
 
@@ -540,11 +581,6 @@ public class ResponseStreamer {
         }
     }
 
-    private void summaryTokensInMatchingDocuments(long totalTokens) {
-        if (totalTokens >= 0)
-            ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
-    }
-
     public void summaryNumDocs(ResultSummaryNumDocs result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         DocResults docResults = result.getDocResults();
@@ -597,6 +633,11 @@ public class ResponseStreamer {
             ds.entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
             subcorpusSizeStats(result.getSubcorpusSize());
         }
+    }
+
+    private void summaryTokensInMatchingDocuments(long totalTokens) {
+        if (totalTokens >= 0)
+            ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
     }
 
     public void subcorpusSizeStats(CorpusSize subcorpusSize) {
@@ -1132,8 +1173,6 @@ public class ResponseStreamer {
         ds.startEntry(KEY_SUMMARY).startMap();
         {
             summaryCommonFields(summaryFields);
-            ResultSummaryNumHits result = resultHits.getSummaryNumHits();
-            summaryResultsStats(result, null);
             if (!isNewApi)
                 summaryTokensInMatchingDocuments(resultHits.getTokensInMatchingDocuments());
 
@@ -1201,7 +1240,6 @@ public class ResponseStreamer {
             ds.startEntry(KEY_SUMMARY).startMap();
             {
                 summaryCommonFields(hitsGrouped.getSummaryFields());
-                summaryResultsStats(hitsGrouped.getSummaryNumHits(), hitsGrouped.getGroups());
                 if (hitsGrouped.getReqGroup().groupScorer() != HitGroupScorer.NONE) {
                     ds.startEntry("scorer").startMap();
                     ds.entry("id", hitsGrouped.getReqGroup().groupScorer().getType().getId());
@@ -1273,12 +1311,6 @@ public class ResponseStreamer {
             ds.startEntry(KEY_SUMMARY).startMap();
             {
                 summaryCommonFields(result.getSummaryFields());
-                if (result.getNumResultDocs() != null)
-                    summaryNumDocs(result.getNumResultDocs(), groups);
-                else {
-                    ResultSummaryNumHits result1 = result.getNumResultHits();
-                    summaryResultsStats(result1, groups);
-                }
             }
             ds.endMap().endEntry();
 
@@ -1320,12 +1352,6 @@ public class ResponseStreamer {
             ds.startEntry(KEY_SUMMARY).startMap();
             {
                 summaryCommonFields(result.getSummaryFields());
-                if (result.getNumResultDocs() != null) {
-                    summaryNumDocs(result.getNumResultDocs(), null);
-                } else {
-                    ResultSummaryNumHits result1 = result.getNumResultHits();
-                    summaryResultsStats(result1, null);
-                }
                 if (!isNewApi)
                     summaryTokensInMatchingDocuments(result.getTotalTokens());
 

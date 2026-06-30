@@ -137,12 +137,13 @@ public class ResultHitsGrouped {
         ResultGroups groups1 = getGroups();
         WindowStats window1 = getWindow();
         AnnotatedField searchField = groups.field();
-        summaryFields = new ResultSummaryCommonFields(reqGroup.patternOriginal(), timings, matchInfoDefs, groups1, window1, searchField,
-                otherFields, reqGroup.requestHits().sampleParams(), reqGroup.paramsForResponse()
-        );
         ResultsStats hitsStats1 = getHitsStats();
         ResultsStats docsStats1 = getDocsStats();
         summaryNumHits = new ResultSummaryNumHits(hitsStats1, docsStats1, true, timings, getSubcorpusSize());
+        summaryFields = new ResultSummaryCommonFields(reqGroup.patternOriginal(), timings, matchInfoDefs, groups1, window1, searchField,
+                otherFields, reqGroup.requestHits().sampleParams(), reqGroup.paramsForResponse(),
+                null, summaryNumHits
+        );
     }
 
     public HitGroups getGroups() {

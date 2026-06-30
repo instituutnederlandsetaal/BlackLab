@@ -32,7 +32,7 @@ public enum WsParam {
 
     // What hits to select
     SAMPLE("sample", Type.FLOAT),
-    SAMPLE_NUMBER("samplenum", Type.FLOAT),
+    SAMPLE_NUMBER("samplenum", Type.INTEGER),
     SAMPLE_SEED("sampleseed", Type.INTEGER),
     HIT_FILTER_CRITERIUM("hitfiltercrit"),
     HIT_FILTER_VALUE("hitfilterval"),

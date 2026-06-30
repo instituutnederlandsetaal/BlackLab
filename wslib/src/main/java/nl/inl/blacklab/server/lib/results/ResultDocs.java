@@ -47,10 +47,6 @@ public class ResultDocs {
 
     private final DocGroups groups;
 
-    private final ResultSummaryNumDocs numResultDocs;
-
-    private final ResultSummaryNumHits numResultHits;
-
     private final ResultSummaryCommonFields summaryFields;
 
     private final Collection<Annotation> annotationsToList;
@@ -77,8 +73,6 @@ public class ResultDocs {
             long totalTokens,
             DocResults subcorpusResults,
             ResultSummaryCommonFields summaryFields,
-            ResultSummaryNumDocs numResultDocs,
-            ResultSummaryNumHits numResultHits,
             DocResults window,
             Collection<Annotation> annotationsToList,
             DocGroups groups,
@@ -89,8 +83,6 @@ public class ResultDocs {
         this.totalTokens = totalTokens;
         this.subcorpusResults = subcorpusResults;
         this.summaryFields = summaryFields;
-        this.numResultDocs = numResultDocs;
-        this.numResultHits = numResultHits;
 
         docFields = WebserviceOperations.getDocFields(blIndex);
         metaDisplayNames = WebserviceOperations.getMetaDisplayNames(blIndex);
@@ -222,11 +214,6 @@ public class ResultDocs {
         SearchTimings timings = new SearchTimings(timer.time(), totalTime);
         AnnotatedField searchField = docs == null ? groups.field() : docs.field();
         TextPattern originalPattern = optRequestHits == null ? null : optRequestHits.patternOriginal();
-        ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(originalPattern, timings, null, groups,
-                windowStats,
-                searchField, Collections.emptyList(), null,
-                requestDocs.params()
-        );
         ResultSummaryNumDocs numResultDocs = null;
         ResultSummaryNumHits numResultHits = null;
         if (hitsStats == null) {
@@ -234,6 +221,10 @@ public class ResultDocs {
         } else {
             numResultHits = new ResultSummaryNumHits(hitsStats, docsStats, requestDocs.waitForTotal(), timings, subcorpusSize);
         }
+        ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(originalPattern, timings,
+                null, groups, windowStats, searchField, Collections.emptyList(), null,
+                requestDocs.params(), numResultDocs, numResultHits
+        );
 
         // Find subcorpus sizes per group
         List<CorpusSize> corpusSizes = new ArrayList<>();
@@ -256,8 +247,6 @@ public class ResultDocs {
                 totalTokens,
                 subcorpusResults,
                 summaryFields,
-                numResultDocs,
-                numResultHits,
                 window,
                 optRequestHits == null ? null :
                         optRequestHits.hitsResponseSettings().annotationsToInclude(),
@@ -279,14 +268,6 @@ public class ResultDocs {
 
     public ResultSummaryCommonFields getSummaryFields() {
         return summaryFields;
-    }
-
-    public ResultSummaryNumDocs getNumResultDocs() {
-        return numResultDocs;
-    }
-
-    public ResultSummaryNumHits getNumResultHits() {
-        return numResultHits;
     }
 
     public Map<String, String> getDocFields() {

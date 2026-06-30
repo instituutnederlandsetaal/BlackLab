@@ -454,13 +454,14 @@ public class WriteCsv {
             CSVPrinter printer = createHeader(row, csvSettings.declareSeparator());
             if (csvSettings.includeSummary()) {
                 TextPattern pattern = requestDocs.optHits() == null ? null : requestDocs.optHits().patternOriginal();
-                ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(pattern, null,
-                        null, groups, null, null,
-                        null, requestDocs.sampleParams(), result.paramsForResponse()
-                );
                 ResultsStats docsStats = inputDocsForGroups.resultsStats();
                 ResultSummaryNumHits summaryNumHits = new ResultSummaryNumHits(null, docsStats, true, null,
                         subcorpusResults.subcorpusSize());
+                ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(pattern, null,
+                        null, groups, null, null,
+                        null, requestDocs.sampleParams(), result.paramsForResponse(),
+                        null, summaryNumHits
+                );
                 summaryCsvDocs(printer, row.size(), inputDocsForGroups,
                         rs, summaryFields, summaryNumHits);
             }
@@ -528,13 +529,13 @@ public class WriteCsv {
             CsvSettings csvSettings = requestDocs.csvSettings();
             CSVPrinter printer = createHeader(row, csvSettings.declareSeparator());
             TextPattern pattern = requestDocs.optHits() == null ? null : requestDocs.optHits().patternOriginal();
-            ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(pattern, null,
-                    null, null, null, null, null,
-                    requestDocs.sampleParams(), result.paramsForResponse()
-            );
             ResultsStats docsStats = docs.resultsStats();
             ResultSummaryNumHits summaryNumHits = new ResultSummaryNumHits(null, docsStats, true, null,
                     globalSubcorpusSize.subcorpusSize());
+            ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(pattern, null,
+                    null, null, null, null, null,
+                    requestDocs.sampleParams(), result.paramsForResponse(), null, summaryNumHits
+            );
             summaryCsvDocs(printer, row.size(), docs,
                     rs, summaryFields, summaryNumHits);
 

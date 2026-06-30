@@ -21,11 +21,13 @@ public class ResultSummaryCommonFields {
     private final AnnotatedField searchField;
     private final Collection<AnnotatedField> otherFields;
     private final SampleParameters sampleSettings;
+    private final ResultSummaryNumDocs numDocs;
+    private final ResultSummaryNumHits numHits;
 
     public ResultSummaryCommonFields(TextPattern pattern, SearchTimings timings, MatchInfoDefs matchInfoDefs, ResultGroups groups,
             WindowStats window, AnnotatedField searchField, Collection<AnnotatedField> otherFields,
-            SampleParameters sampleSettings,
-            ParamsForResponse paramsForResponse) {
+            SampleParameters sampleSettings, ParamsForResponse paramsForResponse,
+            ResultSummaryNumDocs numDocs, ResultSummaryNumHits numHits) {
         this.paramsForResponse = paramsForResponse;
         this.textPattern = pattern;
         this.timings = timings;
@@ -35,6 +37,8 @@ public class ResultSummaryCommonFields {
         this.searchField = searchField;
         this.otherFields = otherFields;
         this.sampleSettings = sampleSettings;
+        this.numDocs = numDocs;
+        this.numHits = numHits;
     }
 
     public ParamsForResponse getParamsForResponse() {
@@ -71,5 +75,13 @@ public class ResultSummaryCommonFields {
 
     public SampleParameters sampleParams() {
         return sampleSettings;
+    }
+
+    public ResultSummaryNumDocs getNumDocs() {
+        return numDocs;
+    }
+
+    public ResultSummaryNumHits getNumHits() {
+        return numHits;
     }
 }

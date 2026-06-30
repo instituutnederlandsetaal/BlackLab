@@ -277,7 +277,7 @@ public class ResultHits {
         WindowStats window1 = window.windowStats();
         AnnotatedField searchField = hitResults.field();
         summaryCommonFields = new ResultSummaryCommonFields(reqHits.patternOriginal(), searchTimings, matchInfoDefs, null, window1, searchField,
-                otherFields, reqHits.sampleParams(), paramsForResponse
+                otherFields, reqHits.sampleParams(), paramsForResponse, null, summaryNumHits
         );
         ConcordanceContext concordanceContext1 = getConcordanceContext();
         listOfHits = new ResultListOfHits(window, concordanceContext1, getDocIdToPid(), contextSettings,
