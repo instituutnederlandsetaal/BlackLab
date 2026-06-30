@@ -79,25 +79,36 @@
         "type": "compare"
       }
     },
-    "resultWindow": {
-      "actualSize": 3,
-      "firstResult": 0,
-      "hasNext": false,
-      "hasPrevious": false,
-      "requestedSize": 30
-    },
-    "resultsStats": {
-      "documents": 3,
-      "hits": 17,
-      "largestGroupSize": 8,
-      "numberOfGroups": 3,
-      "status": "finished",
-      "stoppedBecauseTooMany": false,
-      "subcorpusSize": {
-        "documents": 3,
-        "tokens": 766
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 3,
+          "hits": 17,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "largestGroupSize": 8,
+        "numberOfGroups": 3,
+        "processed": {
+          "documents": 3,
+          "hits": 17,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "subcorpusSize": {
+          "documents": 3,
+          "tokens": 766
+        }
       },
-      "timeMs": "VALUE_REMOVED"
+      "window": {
+        "actualSize": 3,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 30
+      }
     }
   }
 }

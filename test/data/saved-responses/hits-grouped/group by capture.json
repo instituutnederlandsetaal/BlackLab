@@ -174,25 +174,36 @@
         }
       }
     },
-    "resultWindow": {
-      "actualSize": 10,
-      "firstResult": 0,
-      "hasNext": false,
-      "hasPrevious": false,
-      "requestedSize": 30
-    },
-    "resultsStats": {
-      "documents": 1,
-      "hits": 13,
-      "largestGroupSize": 2,
-      "numberOfGroups": 10,
-      "status": "finished",
-      "stoppedBecauseTooMany": false,
-      "subcorpusSize": {
-        "documents": 1,
-        "tokens": 334
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 13,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "largestGroupSize": 2,
+        "numberOfGroups": 10,
+        "processed": {
+          "documents": 1,
+          "hits": 13,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "subcorpusSize": {
+          "documents": 1,
+          "tokens": 334
+        }
       },
-      "timeMs": "VALUE_REMOVED"
+      "window": {
+        "actualSize": 10,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 30
+      }
     }
   }
 }

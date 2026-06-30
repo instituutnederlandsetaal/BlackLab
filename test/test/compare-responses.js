@@ -58,8 +58,15 @@ function sanitizeBlsResponse(response) {
         summary: {
             searchTime: true,
             countTime: true,
-            resultsStats: {
-                timeMs: true
+            results: {
+                stats: {
+                    processed: {
+                        timeMs: true
+                    },
+                    counted: {
+                        timeMs: true
+                    }
+                }
             }
         },
 

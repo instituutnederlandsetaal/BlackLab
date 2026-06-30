@@ -381,25 +381,36 @@
         "type": "anytoken"
       }
     },
-    "resultWindow": {
-      "actualSize": 30,
-      "firstResult": 0,
-      "hasNext": true,
-      "hasPrevious": false,
-      "requestedSize": 30
-    },
-    "resultsStats": {
-      "documents": 3,
-      "hits": 766,
-      "largestGroupSize": 43,
-      "numberOfGroups": 210,
-      "status": "finished",
-      "stoppedBecauseTooMany": false,
-      "subcorpusSize": {
-        "documents": 3,
-        "tokens": 766
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 3,
+          "hits": 766,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "largestGroupSize": 43,
+        "numberOfGroups": 210,
+        "processed": {
+          "documents": 3,
+          "hits": 766,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "subcorpusSize": {
+          "documents": 3,
+          "tokens": 766
+        }
       },
-      "timeMs": "VALUE_REMOVED"
+      "window": {
+        "actualSize": 30,
+        "firstResult": 0,
+        "hasNext": true,
+        "hasPrevious": false,
+        "requestedSize": 30
+      }
     }
   }
 }

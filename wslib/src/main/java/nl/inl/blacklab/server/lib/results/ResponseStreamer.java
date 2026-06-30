@@ -115,7 +115,7 @@ public class ResponseStreamer {
     public static final String KEY_STATS_STATUS = "status";
     public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
     public static final String KEY_STATS_PROCESSED = "processed";
-    public static final String KEY_STATS_COUNT_ONLY = "countOnly";
+    public static final String KEY_STATS_COUNT_ONLY = "counted";
     public static final String KEY_STATS_NUMBER_OF_HITS = "hits";
     public static final String KEY_STATS_NUMBER_OF_DOCS = "documents";
     public static final String KEY_STATS_TIME_MS = "timeMs";
@@ -165,7 +165,8 @@ public class ResponseStreamer {
     public static String KEY_SAMPLE_SEED;
     public static String KEY_SAMPLE_PERCENTAGE;
     public static String KEY_SAMPLE_SIZE;
-    public static String KEY_GROUP_SIZE;
+
+    public static final String KEY_GROUP_SIZE = "size";
 
     /** Key to use for corpus name (indexName/corpusName) */
     public String KEY_CORPUS_NAME;

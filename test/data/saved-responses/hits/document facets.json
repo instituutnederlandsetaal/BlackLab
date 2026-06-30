@@ -47,19 +47,30 @@
         "type": "compare"
       }
     },
-    "resultWindow": {
-      "actualSize": 0,
-      "firstResult": 0,
-      "hasNext": true,
-      "hasPrevious": false,
-      "requestedSize": 0
-    },
-    "resultsStats": {
-      "documents": 3,
-      "hits": 21,
-      "status": "finished",
-      "stoppedBecauseTooMany": false,
-      "timeMs": "VALUE_REMOVED"
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 3,
+          "hits": 21,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 3,
+          "hits": 21,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 0,
+        "firstResult": 0,
+        "hasNext": true,
+        "hasPrevious": false,
+        "requestedSize": 0
+      }
     }
   }
 }

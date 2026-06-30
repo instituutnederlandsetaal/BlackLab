@@ -393,25 +393,36 @@
         "type": "compare"
       }
     },
-    "resultWindow": {
-      "actualSize": 30,
-      "firstResult": 0,
-      "hasNext": true,
-      "hasPrevious": false,
-      "requestedSize": 30
-    },
-    "resultsStats": {
-      "documents": 1,
-      "hits": 334,
-      "largestGroupSize": 22,
-      "numberOfGroups": 118,
-      "status": "finished",
-      "stoppedBecauseTooMany": false,
-      "subcorpusSize": {
-        "documents": 1,
-        "tokens": 334
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 334,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "largestGroupSize": 22,
+        "numberOfGroups": 118,
+        "processed": {
+          "documents": 1,
+          "hits": 334,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "subcorpusSize": {
+          "documents": 1,
+          "tokens": 334
+        }
       },
-      "timeMs": "VALUE_REMOVED"
+      "window": {
+        "actualSize": 30,
+        "firstResult": 0,
+        "hasNext": true,
+        "hasPrevious": false,
+        "requestedSize": 30
+      }
     }
   }
 }

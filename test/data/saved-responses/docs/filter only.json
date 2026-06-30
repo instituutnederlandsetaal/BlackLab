@@ -33,18 +33,30 @@
       "sort": "field:pid",
       "waitfortotal": true
     },
-    "resultWindow": {
-      "actualSize": 1,
-      "firstResult": 0,
-      "hasNext": false,
-      "hasPrevious": false,
-      "requestedSize": 50
-    },
-    "resultsStats": {
-      "documents": 1,
-      "hits": 0,
-      "status": "finished",
-      "timeMs": "VALUE_REMOVED"
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 0,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 50
+      }
     }
   }
 }
