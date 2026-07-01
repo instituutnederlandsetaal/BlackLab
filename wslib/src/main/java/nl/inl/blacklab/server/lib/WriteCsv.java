@@ -353,7 +353,7 @@ public class WriteCsv {
      * @param scf           common fields for the summary
      * @param snh           number of hits etc. information for the summary
      */
-    private static void addSummaryCsvCommon(
+    static void addSummaryCsvCommon(
             CSVPrinter printer,
             int numColumns,
             ResponseStreamer rs,
@@ -363,11 +363,17 @@ public class WriteCsv {
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
         ParamsForResponse params = scf.getParamsForResponse();
         ResultGroups groups = scf.getGroups();
-        for (Map.Entry<WsParam, Object> param : params.getTypedParameters().entrySet()) {
+        Map<WsParam, Object> typedParameters = params.getTypedParameters();
+        Object description = typedParameters.get(WsParam.CSV_DESCRIPTION);
+        if (description instanceof String desc && !desc.isEmpty()) {
+            writeRow(printer, numColumns, summ + "description", desc);
+        }
+        for (Map.Entry<WsParam, Object> param : typedParameters.entrySet()) {
             WsParam par = param.getKey();
             if (par == WsParam.LIST_VALUES_FOR_ANNOTATIONS ||
                     par == WsParam.LIST_VALUES_FOR_METADATA_FIELDS ||
-                    par == WsParam.LIST_VALUES_FOR_SPAN_ATTR)
+                    par == WsParam.LIST_VALUES_FOR_SPAN_ATTR ||
+                    par == WsParam.CSV_DESCRIPTION)
                 continue;
             writeRow(printer, numColumns, summ + rs.KEY_PARAMS + "." + par, param.getValue());
         }
