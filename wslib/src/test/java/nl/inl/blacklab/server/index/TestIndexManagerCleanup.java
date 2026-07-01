@@ -43,7 +43,7 @@ public class TestIndexManagerCleanup {
 
     private static boolean isMonitorRunning(FileAlterationMonitor monitor) throws Exception {
         Thread thread = (Thread)getPrivateField(monitor, "thread");
-        return (boolean)getPrivateField(monitor, "running") || thread != null && thread.isAlive();
+        return ((boolean)getPrivateField(monitor, "running")) || (thread != null && thread.isAlive());
     }
 
     private static Object getPrivateField(Object object, String fieldName) throws Exception {
