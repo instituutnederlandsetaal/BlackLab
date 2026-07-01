@@ -353,7 +353,7 @@ public class WriteCsv {
      * @param scf           common fields for the summary
      * @param snh           number of hits etc. information for the summary
      */
-    private static void addSummaryCsvCommon(
+    static void addSummaryCsvCommon(
             CSVPrinter printer,
             int numColumns,
             ResponseStreamer rs,
