@@ -455,6 +455,10 @@
           "status": "finished",
           "stoppedBecauseTooMany": false,
           "timeMs": "VALUE_REMOVED"
+        },
+        "subcorpusSize": {
+          "documents": 1,
+          "tokens": 268
         }
       },
       "window": {

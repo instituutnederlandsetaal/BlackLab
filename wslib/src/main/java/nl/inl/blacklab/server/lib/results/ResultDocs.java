@@ -119,14 +119,13 @@ public class ResultDocs {
 
         SearchCacheEntry<ResultsStats> originalHitsSearch =
                 searchHits == null ? null : searchHits.hitCount().executeAsync();
-        DocResults subcorpusResults = BlackLabIndex.getSubcorpusSearch(requestDocs.index(),
-                requestDocs.filterQuery()).execute();
 
         DocGroups groups = null;
         DocResults docs, window;
         SearchCacheEntry<?> search;
         SearchCacheEntry<DocGroups> groupsSearch;
 
+        DocGroup group = null;
         if (mustGroup) {
             search = groupsSearch = searchDocGroups.executeAsync();
             try {
@@ -142,7 +141,7 @@ public class ResultDocs {
                 if (viewGroupVal == null)
                     throw new BadRequest("ERROR_IN_GROUP_VALUE",
                             "Parameter 'viewgroup' has an illegal value: " + requestDocs.viewGroup());
-                DocGroup group = groups.get(viewGroupVal);
+                group = groups.get(viewGroupVal);
                 if (group == null)
                     throw new BadRequest("GROUP_NOT_FOUND", "Group not found: " + viewGroupVal);
 
@@ -187,6 +186,8 @@ public class ResultDocs {
         long totalTime = search.timer().time();
         //STRANGE!? boolean waitForTotal = true;
 
+        DocResults subcorpusResults = BlackLabIndex.getSubcorpusSearch(requestDocs.index(), requestDocs.filterQuery())
+                .execute();
         CorpusSize subcorpusSize = null;
         DocResults subcorpus = null;
         DocProperty metadataGroupProperties = null;
@@ -200,6 +201,10 @@ public class ResultDocs {
                     subcorpusSize = subcorpusResults.subcorpusSize();
                 }
             }
+        } else {
+            // Viewing a single group. Determine the subcorpus size.
+            subcorpusSize = WebserviceOperations.findSubcorpusSize(requestDocs.index(), subcorpusResults.query(),
+                    groups.groupCriteria(), group.identity());
         }
 
         ResultsStats hitsStats, docsStats;
@@ -230,10 +235,10 @@ public class ResultDocs {
         List<CorpusSize> corpusSizes = new ArrayList<>();
         if (metadataGroupProperties != null && searchHits != null) {
             for (long i = windowStats.first(); i <= windowStats.last(); ++i) {
-                DocGroup group = groups.get(i);
+                DocGroup currentGroup = groups.get(i);
                 // Find size of corresponding subcorpus group
                 CorpusSize size = WebserviceOperations.findSubcorpusSize(optRequestHits.index(), subcorpus.query(),
-                        metadataGroupProperties, group.identity());
+                        metadataGroupProperties, currentGroup.identity());
                 corpusSizes.add(size);
             }
         }

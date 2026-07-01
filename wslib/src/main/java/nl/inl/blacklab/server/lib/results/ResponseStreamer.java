@@ -115,7 +115,7 @@ public class ResponseStreamer {
     public static final String KEY_STATS_STATUS = "status";
     public static final String KEY_STATS_STOPPED_TOO_MANY = "stoppedBecauseTooMany";
     public static final String KEY_STATS_PROCESSED = "processed";
-    public static final String KEY_STATS_COUNT_ONLY = "counted";
+    public static final String KEY_STATS_COUNTED = "counted";
     public static final String KEY_STATS_NUMBER_OF_HITS = "hits";
     public static final String KEY_STATS_NUMBER_OF_DOCS = "documents";
     public static final String KEY_STATS_TIME_MS = "timeMs";
@@ -541,30 +541,24 @@ public class ResponseStreamer {
         CorpusSize subcorpusSize = result.subcorpusSize();
         if (isNewApi) {
             // New API v5+: group related values
-            boolean limitReached = hitsStats.maxStats().isTooManyToProcess();
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
             {
-                ds.startEntry(KEY_STATS_PROCESSED).startMap();
                 {
-                    ds.entry(KEY_STATS_STATUS, !hitsStats.done() && !limitReached ? STATS_STATUS_WORKING :
-                            STATS_STATUS_FINISHED);
-                    ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsProcessed);
-                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsProcessed);
-                    ds.entry(KEY_STATS_TIME_MS, result.timings().getProcessingTime());
-                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
+                    // processed
+                    boolean limitReached = hitsStats.maxStats().isTooManyToProcess();
+                    boolean done = hitsStats.done() || limitReached;
+                    long timeMs = result.timings().getProcessingTime();
+                    stats(KEY_STATS_PROCESSED, done, hitsProcessed, docsProcessed, timeMs, limitReached);
                 }
-                ds.endMap().endEntry();
-                ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
                 {
-                    ds.entry(KEY_STATS_STATUS, !hitsStats.done() ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
-                    ds.entry(KEY_STATS_NUMBER_OF_HITS, hitsCounted);
-                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docsCounted);
-                    ds.entry(KEY_STATS_TIME_MS, result.timings().getCountTime());
-                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, hitsStats.maxStats().isTooManyToCount());
+                    // counted
+                    boolean done = hitsStats.done();
+                    long timeMs = result.timings().getCountTime();
+                    boolean limitReached = hitsStats.maxStats().isTooManyToCount();
+                    stats(KEY_STATS_COUNTED, done, hitsCounted, docsCounted,  timeMs, limitReached);
                 }
-                ds.endMap().endEntry();
                 summaryGroupStats(groups);
-                subcorpusSizeStats(subcorpusSize);
+                optSubcorpusSize(subcorpusSize);
             }
             ds.endMap().endEntry();
         } else {
@@ -576,42 +570,40 @@ public class ResponseStreamer {
                     .entry("stoppedRetrievingHits", hitsStats.maxStats().isTooManyToProcess());
             ds.entry(KEY_NUMBER_OF_DOCS, docsCounted)
                     .entry("numberOfDocsRetrieved", docsProcessed);
-            subcorpusSizeStats(subcorpusSize);
+            optSubcorpusSize(subcorpusSize);
             if (subcorpusSize != null && subcorpusSize.getTotalCount().getTokens() >= 0)
                 ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, subcorpusSize.getTotalCount().getTokens());
         }
     }
 
+    private void stats(String key, boolean done, long numHits, long numDocs, long timeMs, boolean limitReached) {
+        ds.startEntry(key).startMap();
+        {
+            ds.entry(KEY_STATS_STATUS, !done ? STATS_STATUS_WORKING : STATS_STATUS_FINISHED);
+            ds.entry(KEY_STATS_NUMBER_OF_HITS, numHits);
+            ds.entry(KEY_STATS_NUMBER_OF_DOCS, numDocs);
+            ds.entry(KEY_STATS_TIME_MS, timeMs);
+            ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
+        }
+        ds.endMap().endEntry();
+    }
+
     public void summaryNumDocs(ResultSummaryNumDocs result, ResultGroups groups) {
         // Information about the number of hits/docs, and whether there were too many to retrieve/count
         DocResults docResults = result.getDocResults();
+        ResultsStats resultsStats = docResults.resultsStats();
         if (isNewApi) {
             // New API v5+: group related values
             ds.startEntry(KEY_SUMMARY_RESULTS_STATS).startMap();
-            boolean limitReached = docResults.resultsStats().maxStats().isTooManyToProcess();
             {
-                ds.startEntry(KEY_STATS_PROCESSED).startMap();
-                {
-                    ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
-                    ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
-                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docResults.size());
-                    ds.entry(KEY_STATS_TIME_MS, result.getTimings().getProcessingTime());
-                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReached);
-                }
-                ds.endMap().endEntry();
-                ds.startEntry(KEY_STATS_COUNT_ONLY).startMap();
-                {
-                    ds.entry(KEY_STATS_STATUS, STATS_STATUS_FINISHED);
-                    ds.entry(KEY_STATS_NUMBER_OF_HITS, docResults.getNumberOfHits());
-                    ds.entry(KEY_STATS_NUMBER_OF_DOCS, docResults.size());
-                    ds.entry(KEY_STATS_TIME_MS, result.getTimings().getCountTime());
-                    boolean limitReachedCount = docResults.resultsStats().maxStats().isTooManyToCount();
-                    ds.entry(KEY_STATS_STOPPED_TOO_MANY, limitReachedCount);
-                }
-                ds.endMap().endEntry();
-
+                stats(KEY_STATS_PROCESSED, true, docResults.getNumberOfHits(),
+                        docResults.size(), result.getTimings().getProcessingTime(),
+                        resultsStats.maxStats().isTooManyToProcess());
+                stats(KEY_STATS_COUNTED, true, docResults.getNumberOfHits(),
+                        docResults.size(), result.getTimings().getCountTime(),
+                        resultsStats.maxStats().isTooManyToCount());
                 summaryGroupStats(groups);
-                subcorpusSizeStats(result.getSubcorpusSize());
+                optSubcorpusSize(result.getSubcorpusSize());
             }
             ds.endMap().endEntry();
         } else {
@@ -632,7 +624,7 @@ public class ResponseStreamer {
                 numberOfDocsCounted = -1;
             ds.entry(KEY_NUMBER_OF_DOCS, numberOfDocsCounted);
             ds.entry("numberOfDocsRetrieved", numberOfDocsRetrieved);
-            subcorpusSizeStats(result.getSubcorpusSize());
+            optSubcorpusSize(result.getSubcorpusSize());
         }
     }
 
@@ -641,7 +633,7 @@ public class ResponseStreamer {
             ds.entry(KEY_TOKENS_IN_MATCHING_DOCUMENTS, totalTokens);
     }
 
-    public void subcorpusSizeStats(CorpusSize subcorpusSize) {
+    public void optSubcorpusSize(CorpusSize subcorpusSize) {
         if (subcorpusSize != null) {
             CorpusSize.Count totalCount = subcorpusSize.getTotalCount();
             ds.startEntry(KEY_SUBCORPUS_SIZE).startMap();
@@ -1263,7 +1255,7 @@ public class ResponseStreamer {
                         ds.entry(KEY_GROUP_SIZE, groupInfo.getGroup().size());
                         ds.entry(KEY_NUMBER_OF_DOCS, groupInfo.getNumberOfDocsInGroup());
                         if (hitsGrouped.getMetadataGroupProperties() != null)
-                            subcorpusSizeStats(groupInfo.getSubcorpusSize());
+                            optSubcorpusSize(groupInfo.getSubcorpusSize());
                         if (groupInfo.getListOfHits() != null)
                             listOfHits(groupInfo.getListOfHits());
                         if (hitsGrouped.getGroups().hasScores())
@@ -1331,7 +1323,7 @@ public class ResponseStreamer {
                     ds.entry(KEY_GROUP_SIZE, group.size());
                     ds.entry(KEY_NUMBER_OF_TOKENS, group.totalTokens());
                     if (result.getRequestDocs().optHits() != null) {
-                        subcorpusSizeStats(it.next());
+                        optSubcorpusSize(it.next());
                     }
                     ds.endMap().endItem();
                 }
