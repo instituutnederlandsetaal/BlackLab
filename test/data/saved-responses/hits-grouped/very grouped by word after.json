@@ -81,7 +81,8 @@
       "number": 30,
       "op": "hits-grouped",
       "patt": "\"very\"",
-      "sort": "size,identity"
+      "sort": "size,identity",
+      "subcorpussize": true
     },
     "pattern": {
       "bcql": "\"very\"",

@@ -22,6 +22,7 @@ function expectHitsGroupedUnchanged(testName, params) {
             .get(constants.URL_PREFIX + '/hits')
             .query({
                 api: constants.TEST_API_VERSION,
+                subcorpussize: true,
                 sort: "size,identity",
                 context: 1,
                 number: 30,

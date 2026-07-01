@@ -370,7 +370,8 @@
       "number": 30,
       "op": "hits-grouped",
       "patt": "[word != \"abcdefg\"]",
-      "sort": "size,identity"
+      "sort": "size,identity",
+      "subcorpussize": true
     },
     "pattern": {
       "bcql": "[word != \"abcdefg\"]",

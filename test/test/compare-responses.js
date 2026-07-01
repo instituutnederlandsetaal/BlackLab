@@ -114,6 +114,9 @@ function sanitizeBlsResponse(response) {
 function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v, k = undefined) => v),
                           transformKeyFunc = ((k, _) => k )) {
 
+    if (response === null)
+        return null;
+
     if (Array.isArray(response)) {
         // Process each element in the array recursively
         return response.map(v => sanitizeResponse(v, keysToMakeConstant, transformValueFunc, transformKeyFunc));

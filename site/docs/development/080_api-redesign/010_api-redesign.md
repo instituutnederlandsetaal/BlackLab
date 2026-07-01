@@ -21,29 +21,19 @@ the API trickier. Some of these keys should probably always be included (and be 
 
 Regular API optional keys:
 
-- user.id alleen als user.loggedIn == true  (anders ""?)
-  (misschien null maken?)
-- summary.indexStatus alleen als status != AVAILABLE
-  (altijd?)
+- annotatedFields (verschillende plekken): list(nu) of dictionary(logischer?)?
+- 
 - summary.matchInfos alleen als er matchInfos zijn (zo laten)
 - summary.matchInfos[..].fieldName alleen als het anders is dan summary.fieldName (zo laten)
-- summary.sample* alleen als er gesampled is
-  (ok? but should be grouped)
-  either summary.samplePercentage/sampleSize (better to have .type: percentage / .number: 30 ?)
-- summary.window* als window != null (maar komt ws nooit voor..?)
-- summary.numberOfGroups / largestGroupSize alleen als gegroepeer (ok? but should be grouped?)
-- summary.results.stats.processed.stoppedBecauseTooMany: alleen als dat zo is (altijd!)
-- summary.results.stats.counted: alleen als stoppedBecauseTooMany (altijd!)
+- summary.numberOfGroups / largestGroupSize alleen als gegroepeer (ok? maybe group these?)
 - summary.subcorpusSize.tokens: alleen als beschikaar (wanneer niet beschikbaar...?)
 - summary.subcorpusSize.annotatedFields: alleen als er meerdere annotated fields zijn (altijd?)
 - hit/snippet docPid/start/end: alleen als docPid niet leeg is (zou nooit mogen gebeuren; velden altijd includen?)
-- hit/snippet matchInfos: alleen als niet leeg (anders leeg object?)
-- matchInfo attributes: alleen als aanwezig (anders leeg object?)
+- hit/snippet matchInfos: alleen als niet leeg (anders leeg object? maar is bij hit ook niet zo)
 - indexProgress: alleen als status == INDEXING (ok?)
-- annotatedField/metadataField.indexName: alleen voor /fields/... request? (weg?)
 - annotation.parentAnnotation: alleen als subannotation (ok? kijken of subannotation weg kunnen)
 
-Parallel corpora are a relatively uncommon use case, so it makes sense not to "pollute" the regular API with parallel-only fields. We still might want to always include these fields for parallel corpora, though.
+Parallel corpora are a relatively uncommon use case, so it makes sense not to "pollute" the regular API with parallel-only fields. We still might want to always include these fields for parallel corpora, though. (although for the frontend typing that won't make a difference - fields will still be optional)
 
 Parallel corpora optional response keys:
 

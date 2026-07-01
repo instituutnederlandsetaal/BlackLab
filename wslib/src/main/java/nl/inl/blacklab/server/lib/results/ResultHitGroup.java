@@ -35,7 +35,7 @@ public class ResultHitGroup {
         this.group = group;
         PropertyValue id = group.identity();
 
-        if (metadataGroupProperties != null) {
+        if (metadataGroupProperties != null && subcorpus != null) {
             // Find size of corresponding subcorpus group
             PropertyValue docPropValues = groups.groupCriteria().docPropValues(id);
             subcorpusSize = WebserviceOperations.findSubcorpusSize(reqGroup.index(), subcorpus.query(), metadataGroupProperties,

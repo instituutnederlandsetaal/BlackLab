@@ -192,7 +192,6 @@
       "sensitivity": "SENSITIVE_AND_INSENSITIVE"
     }
   },
-  "corpusName": "test",
   "count": {
     "documents": 3,
     "tokens": 766

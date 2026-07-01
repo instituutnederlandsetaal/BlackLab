@@ -416,6 +416,7 @@
       "op": "docs",
       "patt": "\"a\"",
       "sort": "field:pid",
+      "subcorpussize": true,
       "viewgroup": "str:interview about conference experience and impressions of city"
     },
     "pattern": {

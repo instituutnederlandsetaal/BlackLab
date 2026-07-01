@@ -531,7 +531,7 @@ public class WriteCsv {
             TextPattern pattern = requestDocs.optHits() == null ? null : requestDocs.optHits().patternOriginal();
             ResultsStats docsStats = docs.resultsStats();
             ResultSummaryNumHits summaryNumHits = new ResultSummaryNumHits(null, docsStats, true, null,
-                    globalSubcorpusSize.subcorpusSize());
+                    globalSubcorpusSize == null ? null : globalSubcorpusSize.subcorpusSize());
             ResultSummaryCommonFields summaryFields = new ResultSummaryCommonFields(pattern, null,
                     null, null, null, null, null,
                     requestDocs.sampleParams(), result.paramsForResponse(), null, summaryNumHits

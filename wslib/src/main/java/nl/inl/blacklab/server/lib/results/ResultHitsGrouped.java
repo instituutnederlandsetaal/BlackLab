@@ -95,9 +95,16 @@ public class ResultHitsGrouped {
 
         // The list of groups found
         metadataGroupProperties = groups.groupCriteria().docPropsOnly();
-        DocResults subcorpus = reqGroup.subcorpus().execute();
-        subcorpusQuery = subcorpus.query();
-        subcorpusSize = subcorpus.subcorpusSize();
+        DocResults subcorpus;
+        if (reqGroup.requestHits().includeSubcorpusSize()) {
+            subcorpus = reqGroup.subcorpus().execute();
+            subcorpusQuery = subcorpus.query();
+            subcorpusSize = subcorpus.subcorpusSize();
+        } else {
+            subcorpus = null;
+            subcorpusQuery = null;
+            subcorpusSize = null;
+        }
 
         /* Gather group values per property:
          * In the case we're grouping by multiple values, the DocPropertyMultiple and PropertyValueMultiple will

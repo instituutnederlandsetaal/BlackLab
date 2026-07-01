@@ -57,7 +57,8 @@
       "number": 30,
       "op": "docs-grouped",
       "patt": "\"a\"",
-      "sort": "field:pid"
+      "sort": "field:pid",
+      "subcorpussize": true
     },
     "pattern": {
       "bcql": "\"a\"",

@@ -130,7 +130,8 @@
       "number": 30,
       "op": "hits-grouped",
       "patt": "\"a|the\" X:[]",
-      "sort": "size,identity"
+      "sort": "size,identity",
+      "subcorpussize": true
     },
     "pattern": {
       "bcql": "\"a|the\" X:[]",

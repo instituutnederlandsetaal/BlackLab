@@ -186,25 +186,27 @@ public class ResultDocs {
         long totalTime = search.timer().time();
         //STRANGE!? boolean waitForTotal = true;
 
-        DocResults subcorpusResults = BlackLabIndex.getSubcorpusSearch(requestDocs.index(), requestDocs.filterQuery())
-                .execute();
         CorpusSize subcorpusSize = null;
         DocResults subcorpus = null;
         DocProperty metadataGroupProperties = null;
-        if (!isViewGroup) { // viewgroup response doesn't include subcorpus size (or should it...?)
-            if (groups != null) {
-                metadataGroupProperties = groups.groupCriteria();
-                subcorpus = subcorpusResults;
-                subcorpusSize = subcorpus.subcorpusSize();
-            } else {
-                if (requestDocs.includeSubcorpusSize()) {
+        DocResults subcorpusResults = null;
+        if (requestDocs.includeSubcorpusSize()) {
+            subcorpusResults = BlackLabIndex.getSubcorpusSearch(requestDocs.index(),
+                            requestDocs.filterQuery())
+                    .execute();
+            if (!isViewGroup) { // viewgroup response doesn't include subcorpus size (or should it...?)
+                if (groups != null) {
+                    metadataGroupProperties = groups.groupCriteria();
+                    subcorpus = subcorpusResults;
+                    subcorpusSize = subcorpus.subcorpusSize();
+                } else {
                     subcorpusSize = subcorpusResults.subcorpusSize();
                 }
+            } else {
+                // Viewing a single group. Determine the subcorpus size.
+                subcorpusSize = WebserviceOperations.findSubcorpusSize(requestDocs.index(), subcorpusResults.query(),
+                        groups.groupCriteria(), group.identity());
             }
-        } else {
-            // Viewing a single group. Determine the subcorpus size.
-            subcorpusSize = WebserviceOperations.findSubcorpusSize(requestDocs.index(), subcorpusResults.query(),
-                    groups.groupCriteria(), group.identity());
         }
 
         ResultsStats hitsStats, docsStats;

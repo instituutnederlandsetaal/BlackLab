@@ -116,6 +116,7 @@
   "user": {
     "canCreateIndex": false,
     "debugMode": false,
+    "id": null,
     "loggedIn": false
   }
 }

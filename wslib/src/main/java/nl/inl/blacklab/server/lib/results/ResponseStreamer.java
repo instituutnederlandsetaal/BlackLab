@@ -263,6 +263,8 @@ public class ResponseStreamer {
             ds.entry("loggedIn", userInfo.isLoggedIn());
             if (userInfo.isLoggedIn())
                 ds.entry("id", userInfo.getUserId());
+            else if (isNewApi)
+                ds.entry("id", null);
             ds.entry("canCreateIndex", userInfo.canCreateIndex());
             ds.entry("debugMode", debugMode);
         }
@@ -915,15 +917,13 @@ public class ResponseStreamer {
         ds.endMap();
     }
 
-    /** If attribute values are avaiable, include those in the response. */
+    /** If attribute values are available, include those in the response. */
     private static void optAttributes(DataStream ds, RelationInfo inlineTag) {
-        if (!inlineTag.getAttributes().isEmpty()) {
-            ds.startEntry(KEY_ATTRIBUTES).startMap();
-            for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
-                ds.elEntry(attr.getKey(), attr.getValue());
-            }
-            ds.endMap().endEntry();
+        ds.startEntry(KEY_ATTRIBUTES).startMap();
+        for (Map.Entry<String, List<String>> attr: inlineTag.getAttributes().entrySet()) {
+            ds.elEntry(attr.getKey(), attr.getValue());
         }
+        ds.endMap().endEntry();
     }
 
     private static void matchInfoRelation(DataStream ds, RelationInfo relationInfo) {
@@ -973,7 +973,6 @@ public class ResponseStreamer {
     }
 
     public void metadataField(ResultMetadataField metadataField, boolean includeCustom) {
-        String indexName = metadataField.getIndexName();
         MetadataField fd = metadataField.getFieldDesc();
         boolean listValues = metadataField.isListValues();
         Map<String, Long> fieldValuesInOrder = metadataField.getFieldValues();
@@ -982,8 +981,8 @@ public class ResponseStreamer {
         ds.startMap();
 
         // Assemble response
-        if (indexName != null)
-            ds.entry(KEY_CORPUS_NAME, indexName);
+        if (!isNewApi && metadataField.getIndexName() != null)
+            ds.entry(KEY_CORPUS_NAME, metadataField.getIndexName());
         ds.entry(KEY_FIELD_NAME, fd.name());
         ds.entry(KEY_FIELD_IS_ANNOTATED, false);
         ds.entry("type", fd.type().toString());
@@ -1029,13 +1028,12 @@ public class ResponseStreamer {
     }
 
     public void annotatedField(ResultAnnotatedField annotatedField, boolean includeCustom) {
-        String indexName = annotatedField.getIndexName();
         AnnotatedField fieldDesc = annotatedField.getFieldDesc();
         Map<String, ResultAnnotationInfo> annotInfos = annotatedField.getAnnotInfos();
 
         ds.startMap();
-        if (indexName != null)
-            ds.entry(KEY_CORPUS_NAME, indexName);
+        if (!isNewApi && annotatedField.getIndexName() != null)
+            ds.entry(KEY_CORPUS_NAME, annotatedField.getIndexName());
         Annotations annotations = fieldDesc.annotations();
         ds
                 .entry(KEY_FIELD_NAME, fieldDesc.name())
@@ -1322,7 +1320,7 @@ public class ResponseStreamer {
                     groupStats(prop, group);
                     ds.entry(KEY_GROUP_SIZE, group.size());
                     ds.entry(KEY_NUMBER_OF_TOKENS, group.totalTokens());
-                    if (result.getRequestDocs().optHits() != null) {
+                    if (result.getRequestDocs().optHits() != null && it.hasNext()) {
                         optSubcorpusSize(it.next());
                     }
                     ds.endMap().endItem();

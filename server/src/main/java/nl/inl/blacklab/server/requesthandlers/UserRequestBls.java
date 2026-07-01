@@ -1,5 +1,7 @@
 package nl.inl.blacklab.server.requesthandlers;
 
+import java.util.Map;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.ThreadContext;
 
@@ -157,6 +159,12 @@ public class UserRequestBls implements UserRequest {
             // Request was passed as separate bl.* parameters. Parse them.
             blsParams = QueryParams.fromServletRequest(corpusName, operation, request, blsConfig, isDebugMode);
         }
+
+        if (apiVersion().getMajor() <= 4 && !blsParams.get(WsParam.GROUP_BY).isEmpty()) {
+            // In API v4, subcorpussize=true is implicit for grouped requests
+            blsParams = blsParams.withOverrides(Map.of(WsParam.SUBCORPUS_SIZE, true));
+        }
+
         return blsParams;
     }
 
