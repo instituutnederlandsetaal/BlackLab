@@ -80,6 +80,8 @@ public class SearchManager {
      * searches.
      */
     public synchronized void cleanup() {
+        if (indexMan != null)
+            indexMan.cleanup();
 
         // Stop any running searches
         cache.cleanup();

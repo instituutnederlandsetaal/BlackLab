@@ -79,6 +79,8 @@ public class IndexManager {
      */
     private File userCollectionsDir;
 
+    private FileAlterationMonitor removedIndicesMonitor;
+
     /**
      * Manages the loaded user document formats and exposes them to BlackLab-core
      * for use.
@@ -143,7 +145,7 @@ public class IndexManager {
         if (userCollectionsDir != null)
             allDirs.add(userCollectionsDir);
         try {
-            startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
+            removedIndicesMonitor = startRemovedIndicesMonitor(allDirs, REMOVED_INDICES_MONITOR_CHECK_IN_MS);
         } catch (Exception ex) {
             throw BlackLabException.wrapRuntime(ex);
         }
@@ -151,6 +153,18 @@ public class IndexManager {
 
     public static IndexManager get() {
         return BlsMain.get().getSearchManager().getIndexManager();
+    }
+
+    public synchronized void cleanup() {
+        if (removedIndicesMonitor == null)
+            return;
+        try {
+            removedIndicesMonitor.stop();
+        } catch (Exception e) {
+            logger.warn("Error stopping removed indices monitor", e);
+        } finally {
+            removedIndicesMonitor = null;
+        }
     }
 
     private void checkAnyIndexesAvailable() throws ConfigurationException {
