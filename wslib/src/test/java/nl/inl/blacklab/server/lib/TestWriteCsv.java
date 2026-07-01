@@ -43,7 +43,7 @@ public class TestWriteCsv {
     }
 
     @Test
-    public void testSummaryIncludesCsvDescriptionAtTop() throws IOException, ReflectiveOperationException {
+    public void testCsvDescriptionWrittenAsSummaryDescriptionNotParam() throws IOException {
         Map<WsParam, Object> parameterValues = new EnumMap<>(WsParam.class);
         parameterValues.put(WsParam.CSV_DESCRIPTION, "Export for issue 655");
         parameterValues.put(WsParam.WAIT_FOR_TOTAL_COUNT, true);
