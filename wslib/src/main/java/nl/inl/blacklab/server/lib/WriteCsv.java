@@ -364,9 +364,9 @@ public class WriteCsv {
         ParamsForResponse params = scf.getParamsForResponse();
         ResultGroups groups = scf.getGroups();
         Map<WsParam, Object> typedParameters = params.getTypedParameters();
-        String description = typedParameters.get(WsParam.CSV_DESCRIPTION).toString();
-        if (StringUtils.isNotEmpty(description)) {
-            writeRow(printer, numColumns, summ + "description", description);
+        Object description = typedParameters.get(WsParam.CSV_DESCRIPTION);
+        if (description instanceof String desc && !desc.isEmpty()) {
+            writeRow(printer, numColumns, summ + "description", desc);
         }
         for (Map.Entry<WsParam, Object> param : typedParameters.entrySet()) {
             WsParam par = param.getKey();
