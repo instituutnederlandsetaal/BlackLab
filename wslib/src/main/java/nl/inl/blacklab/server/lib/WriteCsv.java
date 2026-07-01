@@ -363,11 +363,12 @@ public class WriteCsv {
         String summ = ResponseStreamer.KEY_SUMMARY + ".";
         ParamsForResponse params = scf.getParamsForResponse();
         ResultGroups groups = scf.getGroups();
-        String description = params.getParameters().get(WsParam.CSV_DESCRIPTION);
+        Map<WsParam, Object> typedParameters = params.getTypedParameters();
+        String description = typedParameters.get(WsParam.CSV_DESCRIPTION).toString();
         if (StringUtils.isNotEmpty(description)) {
             writeRow(printer, numColumns, summ + "description", description);
         }
-        for (Map.Entry<WsParam, Object> param : params.getTypedParameters().entrySet()) {
+        for (Map.Entry<WsParam, Object> param : typedParameters.entrySet()) {
             WsParam par = param.getKey();
             if (par == WsParam.LIST_VALUES_FOR_ANNOTATIONS ||
                     par == WsParam.LIST_VALUES_FOR_METADATA_FIELDS ||
