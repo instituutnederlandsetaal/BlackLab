@@ -137,7 +137,17 @@ export default stripNumbersFromLinksInSidebar(defineConfig(withSidebar({
     ],
 
     search: {
-      provider: 'local'
+      provider: 'local',
+      options: {
+        miniSearch: {
+          searchOptions: {
+            // Keep search strict for short terms (e.g. avoid loose "cat" matches on "at"),
+            // but still allow prefix/fuzzy search for longer terms.
+            prefix: term => term.length > 3,
+            fuzzy: term => term.length > 3 ? 0.2 : false,
+          },
+        },
+      },
     },
     editLink: {
       pattern: `https://github.com/instituutnederlandsetaal/blacklab/edit/dev/site/docs/:path`,
