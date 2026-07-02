@@ -1,0 +1,70 @@
+processor: saxon
+documentPath: /doc
+
+namespaces:
+  xml: http://www.w3.org/XML/1998/namespace
+
+annotatedFields:
+
+  contents__nl:
+    containerPath: text[@lang='nl']
+    wordPath: .//w
+    tokenIdPath: "@xml:id"
+
+    annotations:
+    - name: word
+      valuePath: .
+      sensitivity: sensitive_insensitive
+
+    standoffAnnotations:
+    - path: .//link
+      type: relation
+      relationClass: al
+      targetVersionPath: "replace(@target, '^(\\w+)_.*$', '$1')"
+      sourcePath: "@source"
+      targetPath: "@target"
+      valuePath: "@type"
+
+    inlineTags:
+    - path: .//s
+      tokenIdPath: "@xml:id"
+
+  contents__en:
+    containerPath: text[@lang='en']
+    wordPath: .//w
+    tokenIdPath: "@xml:id"
+
+    annotations:
+    - name: word
+      valuePath: .
+      sensitivity: sensitive_insensitive
+
+    inlineTags:
+    - path: .//s
+      tokenIdPath: "@xml:id"
+
+  contents__de:
+    containerPath: text[@lang='de']
+    wordPath: .//w
+    tokenIdPath: "@xml:id"
+
+    annotations:
+    - name: word
+      valuePath: .
+      sensitivity: sensitive_insensitive
+
+    inlineTags:
+    - path: .//s
+      tokenIdPath: "@xml:id"
+
+corpusConfig:
+  displayName: parallel
+
+  specialFields:
+    pidField: pid
+
+metadata:
+  containerPath: .
+  fields:
+  - name: pid
+    valuePath: "@xml:id"

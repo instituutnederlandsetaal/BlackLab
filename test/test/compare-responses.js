@@ -25,11 +25,7 @@ function sanitizeBlsResponse(response) {
         blacklabBuildTime: true,
         blacklabVersion: true,
         blacklabScmRevision: true,
-        corpora: { // API v4/5
-            test: {
-                timeModified: true
-            }
-        },
+        corpora: {}, // API v4/5; filled below with the corpora present in the response
         // indices: { // API v3/4
         //     test: {
         //         timeModified: true
@@ -73,6 +69,11 @@ function sanitizeBlsResponse(response) {
         // Top-level timeModified key on index status page (e.g. /test/status/)
         timeModified: true
     };
+
+    if (response && typeof response === 'object' && response.corpora && typeof response.corpora === 'object') {
+        keysToMakeConstant.corpora = Object.fromEntries(
+                Object.keys(response.corpora).map(corpusName => [corpusName, { timeModified: true }]));
+    }
 
     const transformValues = (value, key) => {
         if (key === 'displayName' && value === 'Starttag') {

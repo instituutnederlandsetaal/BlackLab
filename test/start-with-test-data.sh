@@ -15,5 +15,8 @@ cd /usr/local/lib/blacklab-tools || exit
 java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/test '/test-data/input/PBsve435.xml' voice-tei
 java -cp '*' nl.inl.blacklab.tools.IndexTool add    /data/index/test '/test-data/input/PBsve430.xml' voice-tei
 java -cp '*' nl.inl.blacklab.tools.IndexTool add    /data/index/test '/test-data/input/PRint602.xml' voice-tei
+
+# Small parallel corpus for direct BLS response regression tests.
+java -cp '*' nl.inl.blacklab.tools.IndexTool create /data/index/parallel '/test-data/parallel/minimal-parallel.xml' '/test-data/parallel/minimal-parallel.blf.yaml'
 #cd /usr/local/tomcat && catalina.sh jpda run
 cd /usr/local/tomcat && catalina.sh run

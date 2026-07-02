@@ -22,14 +22,17 @@ const LATEST_TEST_OUTPUT_PATH = `${LATEST_TEST_OUTPUT_BASE_PATH}${OPT_INDEX_TYPE
 const TEST_API_VERSION = undefined; // (if undefined, automatically uses current stable version)
 
 const URL_PREFIX = '/corpora/test';
+const PARALLEL_URL_PREFIX = '/corpora/parallel';
 
 module.exports = {
     SERVER_URL,
     BLACKLAB_USER,
     BLACKLAB_PASSWORD,
     TEST_DATA_ROOT,
+    INDEX_TYPE,
     SAVED_RESPONSES_PATH,
     LATEST_TEST_OUTPUT_PATH,
     TEST_API_VERSION,
-    URL_PREFIX
+    URL_PREFIX,
+    PARALLEL_URL_PREFIX
 };
