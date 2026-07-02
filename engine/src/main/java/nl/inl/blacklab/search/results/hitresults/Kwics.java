@@ -18,6 +18,7 @@ import nl.inl.blacklab.search.indexmetadata.AnnotatedFieldNameUtil;
 import nl.inl.blacklab.search.indexmetadata.Annotation;
 import nl.inl.blacklab.search.indexmetadata.AnnotationSensitivity;
 import nl.inl.blacklab.search.lucene.MatchInfo;
+import nl.inl.blacklab.search.lucene.MatchInfoDefs;
 import nl.inl.blacklab.search.lucene.RelationInfo;
 import nl.inl.blacklab.search.lucene.SpanQueryCaptureRelationsBetweenSpans;
 import nl.inl.blacklab.search.results.hits.EphemeralHit;
@@ -58,12 +59,13 @@ public class Kwics {
                 Map<AnnotatedField, int[]> minMaxPerField = null; // start and end of the "foreign match"
                 MatchInfo[] matchInfo = hit.matchInfos();
                 if (matchInfo != null) {
-                    Iterator<MatchInfo.Def> defIt = hits.matchInfoDefs().currentList().iterator();
-                    for (MatchInfo mi: matchInfo) {
+                    MatchInfoDefs matchInfoDefs = hits.matchInfoDefs();
+                    for (int i = 0; i < matchInfo.length; i++) {
+                        MatchInfo mi = matchInfo[i];
                         if (mi == null)
                             continue; // not captured for this hit
-                        MatchInfo.Def def = defIt.hasNext() ?
-                                defIt.next() :
+                        MatchInfo.Def def = i < matchInfoDefs.currentSize() ?
+                                matchInfoDefs.get(i) :
                                 null; // null should only happen in testing...
                         boolean isTargetHit = mi.getType() == MatchInfo.Type.SPAN &&
                                 def != null && def.getName()

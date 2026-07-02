@@ -84,15 +84,15 @@ public class QueryExecutionContext {
         this.field = version == null ? field : field.withParallelFieldVersion(version);
         this.version = version;
         this.annotationName = annotationName;
-        Annotation annotation = field.annotation(annotationName);
+        Annotation annotation = this.field.annotation(annotationName);
         if (annotation == null)
-            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName + " on field " + field);
+            throw new IllegalArgumentException("Annotation doesn't exist: " + annotationName + " on field " + this.field);
         this.requestedSensitivity = matchSensitivity;
         sensitivity = getAppropriateSensitivity(annotation, matchSensitivity);
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        queryInfo = QueryInfo.create(index, field);
+        queryInfo = QueryInfo.create(index, this.field);
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
