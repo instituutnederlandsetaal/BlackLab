@@ -1,7 +1,5 @@
 # Docker Compose file for running BlackLab CI tests.
 
-version: '3.9'
-
 services:
 
   # Indexes the test data and starts the BLS server
@@ -14,6 +12,8 @@ services:
         args:
           # Allow for custom configuration of tomcat/blacklab server if necessary
           CONFIG_ROOT: ${CONFIG_ROOT:-docker/config}
+          # The integration harness runs its own tests against this image.
+          SKIP_TESTS: "true"
 
     environment:
       # JPDA settings, to allow remote debugging
