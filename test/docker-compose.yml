@@ -1,7 +1,5 @@
 # Docker Compose file for running BlackLab CI tests.
 
-version: '3.9'
-
 services:
 
   # Indexes the test data and starts the BLS server
@@ -14,6 +12,8 @@ services:
         args:
           # Allow for custom configuration of tomcat/blacklab server if necessary
           CONFIG_ROOT: ${CONFIG_ROOT:-docker/config}
+          # Run the unit tests by default to prevent accidentally pushing a broken image
+          SKIP_TESTS: "false"
 
     environment:
       # JPDA settings, to allow remote debugging

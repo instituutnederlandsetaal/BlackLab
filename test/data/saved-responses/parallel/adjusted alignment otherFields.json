@@ -1,0 +1,254 @@
+{
+  "docInfos": {
+    "parallel-1": {
+      "mayView": false,
+      "metadata": {
+        "fromInputFile": [
+          "minimal-parallel.xml"
+        ],
+        "pid": [
+          "parallel-1"
+        ]
+      },
+      "tokenCounts": [
+        {
+          "fieldName": "contents__de",
+          "tokens": 11
+        },
+        {
+          "fieldName": "contents__en",
+          "tokens": 11
+        },
+        {
+          "fieldName": "contents__nl",
+          "tokens": 11
+        }
+      ]
+    }
+  },
+  "hits": [
+    {
+      "after": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "is"
+        ]
+      },
+      "before": {
+        "punct": [
+        ],
+        "word": [
+        ]
+      },
+      "docPid": "parallel-1",
+      "end": 1,
+      "match": {
+        "punct": [
+          " "
+        ],
+        "word": [
+          "Dit"
+        ]
+      },
+      "matchInfos": {
+        "w__en": {
+          "end": 4,
+          "infos": [
+            {
+              "attributes": {
+              },
+              "end": 1,
+              "relClass": "al__en",
+              "relType": "w",
+              "sourceEnd": 1,
+              "sourceStart": 0,
+              "start": 0,
+              "targetEnd": 1,
+              "targetField": "contents__en",
+              "targetStart": 0,
+              "type": "relation"
+            },
+            {
+              "attributes": {
+              },
+              "end": 4,
+              "relClass": "al__en",
+              "relType": "s",
+              "sourceEnd": 4,
+              "sourceStart": 0,
+              "start": 0,
+              "targetEnd": 4,
+              "targetField": "contents__en",
+              "targetStart": 0,
+              "type": "relation"
+            }
+          ],
+          "start": 0,
+          "type": "list"
+        },
+        "with-spans": {
+          "end": 4,
+          "infos": [
+            {
+              "attributes": {
+                "id": [
+                  "nl_s1"
+                ]
+              },
+              "end": 4,
+              "start": 0,
+              "tagName": "s",
+              "type": "tag"
+            }
+          ],
+          "start": 0,
+          "type": "list"
+        }
+      },
+      "otherFields": {
+        "contents__en": {
+          "after": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "is"
+            ]
+          },
+          "before": {
+            "punct": [
+            ],
+            "word": [
+            ]
+          },
+          "end": 1,
+          "match": {
+            "punct": [
+              " "
+            ],
+            "word": [
+              "This"
+            ]
+          },
+          "matchInfos": {
+            "with-spans2": {
+              "end": 4,
+              "infos": [
+                {
+                  "attributes": {
+                    "id": [
+                      "en_s1"
+                    ]
+                  },
+                  "end": 4,
+                  "start": 0,
+                  "tagName": "s",
+                  "type": "tag"
+                }
+              ],
+              "start": 0,
+              "type": "list"
+            }
+          },
+          "start": 0
+        }
+      },
+      "start": 0
+    }
+  ],
+  "summary": {
+    "params": {
+      "adjusthits": true,
+      "context": "1",
+      "field": "contents__nl",
+      "first": 0,
+      "indexname": "parallel",
+      "number": 10,
+      "op": "hits",
+      "patt": "[word='Dit'] =w=>en _",
+      "waitfortotal": true,
+      "withspans": true
+    },
+    "pattern": {
+      "bcql": "[word = \"Dit\"] =w=>en _",
+      "fieldName": "contents__nl",
+      "json": {
+        "bcqlFragment": "[word = \"Dit\"] =w=>en _",
+        "children": [
+          {
+            "alignment": true,
+            "bcqlFragment": " =w=>en _",
+            "clause": {
+              "bcqlFragment": "_",
+              "type": "defval"
+            },
+            "relType": "w",
+            "targetVersion": "en",
+            "type": "reltarget"
+          }
+        ],
+        "parent": {
+          "bcqlFragment": "[word = \"Dit\"]",
+          "clauses": [
+            {
+              "bcqlFragment": "word",
+              "type": "symbol",
+              "value": "word"
+            },
+            {
+              "bcqlFragment": "\"Dit\"",
+              "type": "string",
+              "value": "Dit"
+            }
+          ],
+          "operation": "=",
+          "type": "compare"
+        },
+        "type": "relmatch"
+      },
+      "matchInfos": {
+        "w__en": {
+          "targetField": "contents__en",
+          "type": "list"
+        },
+        "with-spans": {
+          "type": "list"
+        },
+        "with-spans2": {
+          "targetField": "contents__en",
+          "type": "list"
+        }
+      },
+      "otherFields": [
+        "contents__en"
+      ]
+    },
+    "results": {
+      "stats": {
+        "counted": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        },
+        "processed": {
+          "documents": 1,
+          "hits": 1,
+          "status": "finished",
+          "stoppedBecauseTooMany": false,
+          "timeMs": "VALUE_REMOVED"
+        }
+      },
+      "window": {
+        "actualSize": 1,
+        "firstResult": 0,
+        "hasNext": false,
+        "hasPrevious": false,
+        "requestedSize": 10
+      }
+    }
+  }
+}

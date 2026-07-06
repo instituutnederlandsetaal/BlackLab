@@ -25,8 +25,8 @@ function sanitizeBlsResponse(response) {
         blacklabBuildTime: true,
         blacklabVersion: true,
         blacklabScmRevision: true,
-        corpora: { // API v4/5
-            test: {
+        corpora: {
+            '*': {
                 timeModified: true
             }
         },
@@ -75,10 +75,6 @@ function sanitizeBlsResponse(response) {
     };
 
     const transformValues = (value, key) => {
-        if (key === 'displayName' && value === 'Starttag') {
-            // Renamed to _relation in integrated index format
-            return '_relation';
-        }
         if (key === 'fromInputFile' && typeof value === 'string') {
             // Strip directory from fromInputFile field values
             return value.replace(/^.*[/\\]([^/\\]+)$/, "$1");
@@ -88,7 +84,7 @@ function sanitizeBlsResponse(response) {
 
     const transformKeys = (key) => {
         // starttag annotation has been renamed to _relation in integrated index format
-        return key === 'starttag' ? '_relation' : key;
+        return key;
     }
 
     return sanitizeResponse(response, keysToMakeConstant, transformValues, transformKeys);
@@ -143,14 +139,16 @@ function sanitizeResponse(response, keysToMakeConstant, transformValueFunc = ((v
     for (let origKey in response) {
         const value = response[origKey];
         const key = transformKeyFunc(origKey, value);
-        if (keysToMakeConstant.hasOwnProperty(key)) {
+        const makeConstant = keysToMakeConstant.hasOwnProperty(key) ? keysToMakeConstant[key] :
+                (keysToMakeConstant['*'] ?? undefined);
+        if (makeConstant) {
             // This is (or contains) a variable value we don't want to compare.
-            if (recursive && typeof keysToMakeConstant[key] === 'object' && typeof value === 'object' && !Array.isArray(value)) {
+            if (recursive && typeof makeConstant === 'object' && typeof value === 'object' && !Array.isArray(value)) {
                 // Subobject; recursively fix this part of the response
-                cleanedData[key] = sanitizeResponse(value, keysToMakeConstant[key], transformValueFunc, transformKeyFunc);
+                cleanedData[key] = sanitizeResponse(value, makeConstant, transformValueFunc, transformKeyFunc);
             } else {
                 // Single value or array. Delete or make fixed value
-                if (keysToMakeConstant[key] !== 'DELETE') {
+                if (makeConstant !== 'DELETE') {
                     cleanedData[key] = "VALUE_REMOVED";
                 }
             }
