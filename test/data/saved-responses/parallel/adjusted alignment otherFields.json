@@ -161,7 +161,6 @@
   "summary": {
     "params": {
       "adjusthits": true,
-      "api": "5",
       "context": "1",
       "field": "contents__nl",
       "first": 0,
