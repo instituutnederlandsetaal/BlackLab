@@ -12,8 +12,8 @@ services:
         args:
           # Allow for custom configuration of tomcat/blacklab server if necessary
           CONFIG_ROOT: ${CONFIG_ROOT:-docker/config}
-          # The integration harness runs its own tests against this image.
-          SKIP_TESTS: "true"
+          # Run the unit tests by default to prevent accidentally pushing a broken image
+          SKIP_TESTS: "false"
 
     environment:
       # JPDA settings, to allow remote debugging
