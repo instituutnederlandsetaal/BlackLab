@@ -22,6 +22,7 @@ import nl.inl.blacklab.search.results.hitresults.HitGroupCollocationScorer;
 import nl.inl.blacklab.search.results.hitresults.HitGroupScorer;
 import nl.inl.blacklab.search.textpattern.TextPattern;
 import nl.inl.blacklab.searches.SearchDocs;
+import nl.inl.blacklab.server.exceptions.BadRequest;
 import nl.inl.blacklab.server.jobs.ContextSettings;
 import nl.inl.blacklab.server.jobs.WindowSettings;
 import nl.inl.blacklab.server.lib.ParamUtil;
@@ -86,6 +87,8 @@ public record RequestHitsGrouped(
         // Determine what we're finding collocations for
         // (e.g. collocations for "schip", or for [lemma = "bla.*" & pos="N"])
         String findQuery = qpar.get(WsParam.PATTERN);
+        if (findQuery.isEmpty())
+            throw new BadRequest("NO_PATTERN_GIVEN", "Missing required parameter: patt (pattern to find collocations for)");
         String collocateQuery = qpar.opt(WsParam.COLLOCATE_PATTERN).orElse("[]");
         CollocationType collocationType = qpar.opt(WsParam.COLLOCATION_TYPE,
                         CollocationType::fromStringValue)
@@ -137,6 +140,8 @@ public record RequestHitsGrouped(
     /** Determine the query that will yield the collocations we're looking for. */
     private static @NonNull String getCollocationQuery(ContextSize context, String findQuery, String collocateQuery,
             CollocationType collocationType, String relTypeRegex, String within) {
+        if (findQuery.isEmpty())
+            throw new IllegalArgumentException("Missing findQuery (pattern to find collocations for)");
         if (context.isInlineTag()) {
             if (within != null)
                 throw new IllegalArgumentException("Both within and a tag context specified! If you specify within, context may be omitted or must be in number of tokens");
