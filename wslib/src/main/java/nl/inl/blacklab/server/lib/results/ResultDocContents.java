@@ -127,7 +127,7 @@ public class ResultDocContents {
 
         HitResults hitResults = null;
         if (requestHits != null) {
-            hitResults = RequestHits.createSearch(requestHits).execute();
+            hitResults = requestHits.getSearch().execute();
         }
 
         // Note: we use the highlighter regardless of whether there's hits because

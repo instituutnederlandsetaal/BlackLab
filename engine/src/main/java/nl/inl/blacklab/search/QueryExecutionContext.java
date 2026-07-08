@@ -27,9 +27,9 @@ import nl.inl.blacklab.webservice.WsParam;
 public class QueryExecutionContext {
 
     public static QueryExecutionContext get(BlackLabIndex index, Annotation annotation,
-            MatchSensitivity matchSensitivity) {
+            MatchSensitivity matchSensitivity, QueryInfo queryInfo) {
         return new QueryExecutionContext(index, annotation.field(), null, annotation.name(),
-                matchSensitivity, null, null, false);
+                matchSensitivity, null, null, false, queryInfo);
     }
 
     /** The index object, representing the BlackLab index */
@@ -75,9 +75,12 @@ public class QueryExecutionContext {
      * @param matchSensitivity whether search defaults to case-/diacritics-sensitive
      * @param defaultRelationClass default relation class to search (or null to use global default)
      * @param captures unique capture names assigned so far
+     * @param inConstraint true if we're currently inside a constraints (i.e. after ::), false if not
+     * @param queryInfo QueryInfo to use, or null to create a new one
      */
     private QueryExecutionContext(BlackLabIndex index, AnnotatedField field, String version, String annotationName,
-            MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint) {
+            MatchSensitivity matchSensitivity, String defaultRelationClass, Set<String> captures, boolean inConstraint,
+            QueryInfo queryInfo) {
         this.index = index;
         if (field == null)
             throw new IllegalArgumentException("field == null");
@@ -92,7 +95,7 @@ public class QueryExecutionContext {
         this.defaultRelationClass = defaultRelationClass;
         this.captures = captures == null ? new HashSet<>() : captures;
         this.inConstraint = inConstraint;
-        queryInfo = QueryInfo.create(index, this.field);
+        this.queryInfo = queryInfo == null ? QueryInfo.create(index, this.field) : queryInfo;
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(Annotation annotation, MatchSensitivity matchSensitivity) {
@@ -101,7 +104,7 @@ public class QueryExecutionContext {
         if (matchSensitivity == null)
             matchSensitivity = requestedSensitivity;
         return new QueryExecutionContext(index, field, version, annotation.name(), matchSensitivity,
-                defaultRelationClass, captures, inConstraint);
+                defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
     public QueryExecutionContext withAnnotationAndSensitivity(String annotationName, MatchSensitivity matchSensitivity)
@@ -131,7 +134,7 @@ public class QueryExecutionContext {
         if (version == null && this.version == null || Objects.equals(version, this.version))
             return this;
         return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
-                defaultRelationClass, captures, inConstraint);
+                defaultRelationClass, captures, inConstraint, queryInfo);
     }
 
     /**
@@ -144,7 +147,7 @@ public class QueryExecutionContext {
         if (relClass == null && defaultRelationClass == null || Objects.equals(relClass, defaultRelationClass))
             return this;
         return new QueryExecutionContext(index, field, version, annotationName, requestedSensitivity,
-                relClass, captures, inConstraint);
+                relClass, captures, inConstraint, queryInfo);
     }
 
     public String optDesensitize(String value) {
@@ -263,6 +266,6 @@ public class QueryExecutionContext {
         if (inConstraint)
             return this;
         return new QueryExecutionContext(index, field, version, annotationName,
-                requestedSensitivity, defaultRelationClass, captures, true);
+                requestedSensitivity, defaultRelationClass, captures, true, queryInfo);
     }
 }

@@ -104,8 +104,9 @@ public class MockBlackLabIndex implements BlackLabIndex {
     }
 
     @Override
-    public QueryExecutionContext defaultExecutionContext(AnnotatedField field) {
-        return QueryExecutionContext.get(this, field.defaultSearchAnnotation(), MatchSensitivity.INSENSITIVE);
+    public QueryExecutionContext defaultExecutionContext(AnnotatedField field, QueryInfo queryInfo) {
+        return QueryExecutionContext.get(this, field.defaultSearchAnnotation(),
+                MatchSensitivity.INSENSITIVE, queryInfo);
     }
 
     @Override

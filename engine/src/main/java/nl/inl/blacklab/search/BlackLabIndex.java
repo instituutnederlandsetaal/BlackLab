@@ -223,7 +223,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @return the hits found
      */
     default HitResults find(BLSpanQuery query, SearchSettings settings) {
-        return find(QueryInfo.create(this, fieldFromQuery(query), true), query, settings);
+        return find(QueryInfo.create(this, fieldFromQuery(query)), query, settings);
     }
 
     HitResults find(QueryInfo queryInfo, BLSpanQuery spanQuery, SearchSettings searchSettings);
@@ -423,7 +423,7 @@ public interface BlackLabIndex extends AutoCloseable {
      * @param field field to search
      * @return query execution context
      */
-    QueryExecutionContext defaultExecutionContext(AnnotatedField field);
+    QueryExecutionContext defaultExecutionContext(AnnotatedField field, QueryInfo queryInfo);
 
     /**
      * Get the collator being used for sorting.

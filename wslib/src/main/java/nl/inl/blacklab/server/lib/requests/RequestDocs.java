@@ -68,7 +68,7 @@ public record RequestDocs(
 
     public static SearchDocs docsSearch(BlackLabIndex index, Query docFilterQuery, RequestHits requestHits) throws BlsException {
         if (requestHits != null) {
-            return RequestHits.createSearch(requestHits).docs(-1);
+            return requestHits.getSearch().docs(-1);
         }
         return BlackLabIndex.getSubcorpusSearch(index, docFilterQuery);
     }
@@ -90,7 +90,7 @@ public record RequestDocs(
 
     public SearchCount docsCount() throws BlsException {
         if (optHits() != null)
-            return RequestHits.createSearch(optHits()).docCount();
+            return optHits().getSearch().docCount();
         return docsSearch(index(), filterQuery(), null).count();
     }
 

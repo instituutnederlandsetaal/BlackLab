@@ -3,6 +3,7 @@ package nl.inl.blacklab.search.results;
 import nl.inl.blacklab.search.BlackLabIndex;
 import nl.inl.blacklab.search.indexmetadata.AnnotatedField;
 import nl.inl.blacklab.search.lucene.BLSpanQuery;
+import nl.inl.blacklab.searches.SearchCache;
 
 /**
  * Information about the original query.
@@ -10,15 +11,15 @@ import nl.inl.blacklab.search.lucene.BLSpanQuery;
 public final class QueryInfo {
 
     public static QueryInfo create(BlackLabIndex index) {
-        return create(index, null, true);
+        return create(index, null, index.cache());
     }
 
     public static QueryInfo create(BlackLabIndex index, AnnotatedField field) {
-        return create(index, field, true);
+        return create(index, field, index.cache());
     }
 
-    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, boolean useCache) {
-        return new QueryInfo(index, field, useCache);
+    public static QueryInfo create(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
+        return new QueryInfo(index, field, cacheToUse);
     }
 
     private final BlackLabIndex index;
@@ -26,17 +27,17 @@ public final class QueryInfo {
     /** The field these hits came from (will also be used as concordance field) */
     private final AnnotatedField field;
 
-    /** Should we use the cache for this query, or bypass it? */
-    private final boolean useCache;
+    /** Cache to use for this query (either the main shared cache, or one just for this request that we'll dump after). */
+    private final SearchCache cacheToUse;
 
     /** How long executing certain parts of the operation took. */
     private final QueryTimings timings = new QueryTimings();
 
-    private QueryInfo(BlackLabIndex index, AnnotatedField field, boolean useCache) {
+    private QueryInfo(BlackLabIndex index, AnnotatedField field, SearchCache cacheToUse) {
         super();
         this.index = index;
         this.field = field == null ? index.mainAnnotatedField() : field;
-        this.useCache = useCache;
+        this.cacheToUse = cacheToUse;
     }
 
     /** @return the index that was searched. */
@@ -49,9 +50,9 @@ public final class QueryInfo {
         return field;
     }
 
-    /** @return should we use the cache for this query, or bypass it? */
-    public boolean useCache() {
-        return useCache;
+    /** @return what cache should we use for this query? (i.e. main or disposable) */
+    public SearchCache cache() {
+        return cacheToUse;
     }
 
     /** Get timings objects.
@@ -108,7 +109,7 @@ public final class QueryInfo {
     public QueryInfo optOverrideField(BLSpanQuery query) {
         if (query.getAnnotatedField().equals(field))
             return this;
-        return new QueryInfo(index, query.getAnnotatedField(), useCache);
+        return new QueryInfo(index, query.getAnnotatedField(), cacheToUse);
     }
 }
 

@@ -109,7 +109,7 @@ public class ResultDocs {
         RequestHits optRequestHits = requestDocs.optHits();
 
         // Depending on parameters, determine some searches we need
-        SearchHits searchHits = optRequestHits == null ? null : RequestHits.createSearch(optRequestHits);
+        SearchHits searchHits = optRequestHits == null ? null : optRequestHits.getSearch();
         boolean mustGroup = requestDocs.groupBy() != null;
         boolean isViewGroup = mustGroup && requestDocs.viewGroup() != null;
         boolean viewingGroups = mustGroup && !isViewGroup;

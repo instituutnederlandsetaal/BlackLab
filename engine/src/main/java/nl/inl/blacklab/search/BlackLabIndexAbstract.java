@@ -68,6 +68,7 @@ import nl.inl.blacklab.search.results.hitresults.ContextSize;
 import nl.inl.blacklab.search.results.hitresults.HitResults;
 import nl.inl.blacklab.searches.SearchCache;
 import nl.inl.blacklab.searches.SearchCacheDummy;
+import nl.inl.blacklab.searches.SearchCacheMap;
 import nl.inl.blacklab.searches.SearchEmpty;
 import nl.inl.util.LuceneUtil;
 import nl.inl.util.XmlHighlighter.UnbalancedTagsStrategy;
@@ -374,7 +375,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     public QueryExplanation explain(BLSpanQuery query) {
         try {
             IndexReader indexReader = reader();
-            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query), true));
+            query.setQueryInfo(QueryInfo.create(this, fieldFromQuery(query)));
             return new QueryExplanation(query, query.optimize(indexReader).rewrite(indexReader));
         } catch (IOException e) {
             throw BlackLabException.wrapRuntime(e);
@@ -437,7 +438,7 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public DocResults queryDocuments(Query documentFilterQuery) {
-        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField(), true), documentFilterQuery);
+        return DocResults.fromQuery(QueryInfo.create(this, mainAnnotatedField()), documentFilterQuery);
     }
 
     private static DirectoryReader openIndexForReading(File indexLocation, boolean trace) throws IOException, IndexVersionMismatch {
@@ -614,13 +615,13 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
     protected abstract void openContentStore(Field field, boolean createNewContentStore, File indexDir) throws ErrorOpeningIndex;
 
     @Override
-    public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField) {
+    public QueryExecutionContext defaultExecutionContext(AnnotatedField annotatedField, QueryInfo queryInfo) {
         if (annotatedField == null)
             throw new IllegalArgumentException("Unknown annotated field: null");
         Annotation defaultSearchAnnotation = annotatedField.defaultSearchAnnotation();
         if (defaultSearchAnnotation == null)
             throw new IllegalArgumentException("Default search annotation not found for " + annotatedField.name());
-        return QueryExecutionContext.get(this, defaultSearchAnnotation, defaultMatchSensitivity);
+        return QueryExecutionContext.get(this, defaultSearchAnnotation, defaultMatchSensitivity, queryInfo);
     }
 
     @Override
@@ -748,7 +749,8 @@ public abstract class BlackLabIndexAbstract implements BlackLabIndexWriter, Blac
 
     @Override
     public SearchEmpty search(AnnotatedField field, boolean useCache) {
-        return new SearchEmpty(QueryInfo.create(this, field, useCache));
+        SearchCache cacheToUse = useCache ? cache : new SearchCacheMap();
+        return new SearchEmpty(QueryInfo.create(this, field, cacheToUse));
     }
 
     @Override

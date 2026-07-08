@@ -242,7 +242,7 @@ public abstract class TextPattern implements TextPatternStruct {
     }
 
     public BLSpanQuery toQuery(QueryInfo queryInfo, Query filter) throws InvalidQuery {
-        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(queryInfo.field()));
+        EvalResult result = evaluate(queryInfo.index().defaultExecutionContext(queryInfo.field(), queryInfo));
         if (result == null)
             throw new InvalidQuery("Pattern evaluated to null");
         if (result instanceof BLSpanQuery spanQuery) {

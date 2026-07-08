@@ -29,7 +29,7 @@ public abstract class AbstractSearch<R extends SearchResult> implements Search<R
 
     @Override
     public SearchCacheEntry<R> executeAsync(boolean allowQueue) {
-        return queryInfo.index().cache().getAsync(this, allowQueue);
+        return queryInfo.cache().getAsync(this, allowQueue);
     }
 
     /**

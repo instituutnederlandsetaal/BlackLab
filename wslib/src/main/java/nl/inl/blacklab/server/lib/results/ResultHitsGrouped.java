@@ -30,7 +30,6 @@ import nl.inl.blacklab.searches.SearchCacheEntry;
 import nl.inl.blacklab.searches.SearchHitGroups;
 import nl.inl.blacklab.searches.SearchHits;
 import nl.inl.blacklab.server.lib.SearchTimings;
-import nl.inl.blacklab.server.lib.requests.RequestHits;
 import nl.inl.blacklab.server.lib.requests.RequestHitsGrouped;
 import nl.inl.util.BlockTimer;
 
@@ -71,7 +70,7 @@ public class ResultHitsGrouped {
     ResultHitsGrouped(RequestHitsGrouped reqGroup) throws InvalidQuery {
         this.reqGroup = reqGroup;
 
-        SearchHits searchHits = RequestHits.createSearch(reqGroup.requestHits());
+        SearchHits searchHits = reqGroup.requestHits().getSearch();
         HitResults hitResults = searchHits.execute(); // we need these later to get the match info defs
         SearchHitGroups searchHitGroups = searchHits
                 .groupStats(reqGroup.groupBy(), reqGroup.maxHitsToStorePerGroup(),

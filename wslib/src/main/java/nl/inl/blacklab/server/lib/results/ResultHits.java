@@ -105,7 +105,7 @@ public class ResultHits {
     public static @NonNull ResultHits get(RequestHits reqHits) {
         try {
             // Create the search objects
-            SearchHits searchHits = RequestHits.createSearch(reqHits);
+            SearchHits searchHits = reqHits.getSearch();
             SearchCount searchHitCount = searchHits.hitCount();
             SearchCount searchDocCount = searchHits.docCount();
             // Start the search.
@@ -144,7 +144,7 @@ public class ResultHits {
     public static @NonNull ResultHits getViewGroup(RequestHits reqHits) {
         try {
             // Find hits
-            SearchHits searchHits = RequestHits.createSearch(reqHits);
+            SearchHits searchHits = reqHits.getSearch();
 
             // Group them
             SearchHitGroups hitsGrouped = searchHits.groupStats(reqHits.groupBy(), Results.NO_LIMIT,
@@ -287,7 +287,7 @@ public class ResultHits {
 
     private SearchHits hitsWindow(RequestHits reqHits) {
         WindowSettings windowSettings = reqHits.windowSettings();
-        SearchHits sample = RequestHits.createSearch(reqHits);
+        SearchHits sample = reqHits.getSearch();
         return windowSettings == null ? sample : sample.window(windowSettings.first(), windowSettings.size());
     }
 

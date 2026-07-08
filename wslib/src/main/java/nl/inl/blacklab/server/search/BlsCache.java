@@ -183,7 +183,7 @@ public class BlsCache implements SearchCache {
     public synchronized <R extends SearchResult> BlsCacheEntry<R> getAsync(Search<R> search, boolean allowQueue) {
         //if (trace) logger.debug("getFromCache({}, allowQueue={})", search, allowQueue);
         BlsCacheEntry<R> future;
-        boolean useCache = search.queryInfo().useCache() && !cacheDisabled;
+        boolean useCache = /*search.queryInfo().useCache() &&*/ !cacheDisabled;
         future = useCache ? (BlsCacheEntry<R>) searches.get(search) : null;
         if (future == null) {
             logger.info("not found in cache, starting search: " + search);
